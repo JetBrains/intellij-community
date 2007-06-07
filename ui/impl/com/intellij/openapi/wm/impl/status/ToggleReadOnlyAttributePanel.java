@@ -65,7 +65,7 @@ public class ToggleReadOnlyAttributePanel extends JLabel {
   }
 
   private boolean isReadOnlyApplicable(final VirtualFile[] files) {
-    return files.length > 0 && files[0].getFileSystem() instanceof LocalFileSystem;
+    return files.length > 0 && !files[0].getFileSystem().isReadOnly();
   }
 
   private FileEditorManager getEditor() {

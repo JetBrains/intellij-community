@@ -81,8 +81,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public FileStatus calcStatus(@NotNull VirtualFile virtualFile) {
-    final VirtualFileSystem fileSystem = virtualFile.getFileSystem();
-    if (fileSystem == LocalFileSystem.getInstance()) {
+    if (virtualFile.isInLocalFileSystem()) {
       return calcLocalFileStatus(virtualFile);
     } else {
       return FileStatus.NOT_CHANGED;

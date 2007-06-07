@@ -123,6 +123,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
       public void run() {
         Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());
+        /*
         Editor[] editors = EditorFactory.getInstance().getAllEditors();
         for (Editor editor : editors) {
           VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
@@ -134,8 +135,10 @@ public class PropertiesFilesManager implements ApplicationComponent {
             filesToRefresh.remove(virtualFile);
           }
         }
+        */
         VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
-        LocalFileSystem.getInstance().forceRefreshFiles(true, virtualFiles);
+//        LocalFileSystem.getInstance().forceRefreshFiles(true, virtualFiles);
+        FileDocumentManager.getInstance().reloadFiles(virtualFiles);
       }
     });
   }

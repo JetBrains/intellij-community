@@ -299,7 +299,7 @@ public class MappedFile {
 
   private void unmap() {
     if (myHolder != null) {
-      flush();
+     /* flush(); TODO: Don't commit... */
       myHolder.unmap();
     }
   }

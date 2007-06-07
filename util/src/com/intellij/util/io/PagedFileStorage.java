@@ -15,7 +15,9 @@ import java.util.Arrays;
  * @author max
  */
 public final class PagedFileStorage {
-  private MappedBufferWrapper myBuffer;
+  private final static int BUFFER_SIZE = 512 * 1024; // half a meg
+  private MappedBufferWrapper[] myBuffers = null;
+
   private final File myFile;
   private long mySize = -1;
   @NonNls private static final String RW = "rw";
@@ -24,45 +26,98 @@ public final class PagedFileStorage {
     myFile = file;
   }
 
-  private void map() throws IOException {
-    myBuffer = new ReadWriteMappedBufferWrapper(myFile);
+  private synchronized void map() throws IOException {
     mySize = myFile.length();
+    int intSize = (int)mySize;
+    myBuffers = new MappedBufferWrapper[intSize / BUFFER_SIZE + 1];
+    for (int i = 0; i < myBuffers.length; i++) {
+      final int offset = i * BUFFER_SIZE;
+      if (offset < intSize) {
+        myBuffers[i] = new ReadWriteMappedBufferWrapper(myFile, offset, Math.min(intSize - offset, BUFFER_SIZE));
+      }
+    }
   }
 
   public short getShort(int index) {
-    return getBuffer().getShort(index);
+    int page = index / BUFFER_SIZE;
+    int offset = index % BUFFER_SIZE;
+
+    return getBuffer(page).getShort(offset);
   }
 
   public void putShort(int index, short value) {
-    getBuffer().putShort(index, value);
+    int page = index / BUFFER_SIZE;
+    int offset = index % BUFFER_SIZE;
+
+    getBuffer(page).putShort(offset, value);
   }
 
   public int getInt(int index) {
-    return getBuffer().getInt(index);
+    int page = index / BUFFER_SIZE;
+    int offset = index % BUFFER_SIZE;
+
+    return getBuffer(page).getInt(offset);
   }
 
   public void putInt(int index, int value) {
-    getBuffer().putInt(index, value);
+    int page = index / BUFFER_SIZE;
+    int offset = index % BUFFER_SIZE;
+
+    getBuffer(page).putInt(offset, value);
   }
 
   public byte get(int index) {
-    return getBuffer().get(index);
+    int page = index / BUFFER_SIZE;
+    int offset = index % BUFFER_SIZE;
+
+    return getBuffer(page).get(offset);
   }
 
   public void put(int index, byte value) {
-    getBuffer().put(index, value);
+    int page = index / BUFFER_SIZE;
+    int offset = index % BUFFER_SIZE;
+
+    getBuffer(page).put(offset, value);
   }
 
   public void get(int index, byte[] dst, int offset, int length) {
-    final ByteBuffer buffer = getBuffer().duplicate();
-    buffer.position(index);
-    buffer.get(dst, offset, length);
+    int i = index;
+    int o = offset;
+    int l = length;
+
+    while (l > 0) {
+      int page = i / BUFFER_SIZE;
+      int page_offset = i % BUFFER_SIZE;
+
+      int page_len = Math.min(l, BUFFER_SIZE - page_offset);
+      final ByteBuffer buffer = getBuffer(page);
+      buffer.position(page_offset);
+      buffer.get(dst, o, page_len);
+
+      l -= page_len;
+      o += page_len;
+      i += page_len;
+    }
   }
 
   public void put(int index, byte[] src, int offset, int length) {
-    final ByteBuffer buffer = getBuffer().duplicate();
-    buffer.position(index);
-    buffer.put(src, offset, length);
+    int i = index;
+    int o = offset;
+    int l = length;
+
+    while (l > 0) {
+      int page = i / BUFFER_SIZE;
+      int page_offset = i % BUFFER_SIZE;
+
+      int page_len = Math.min(l, BUFFER_SIZE - page_offset);
+      final ByteBuffer buffer = getBuffer(page);
+      buffer.position(page_offset);
+      buffer.put(src, o, page_len);
+
+      l -= page_len;
+      o += page_len;
+      i += page_len;
+    }
   }
 
   public void close() {
@@ -100,7 +155,7 @@ public final class PagedFileStorage {
   }
 
 
-  public final long length() {
+  public synchronized final long length() {
     if (mySize == -1) {
       try {
         map();
@@ -112,18 +167,25 @@ public final class PagedFileStorage {
     return mySize;
   }
 
-  private void unmap() {
-    if (myBuffer != null) {
-      myBuffer.unmap();
-      myBuffer = null;
+  private synchronized void unmap() {
+    if (myBuffers != null) {
+      for (int i = 0; i < myBuffers.length; i++) {
+        MappedBufferWrapper buffer = myBuffers[i];
+        if (buffer != null) {
+          buffer.dispose();
+          myBuffers[i] = null;
+        }
+      }
     }
   }
 
-  private ByteBuffer getBuffer() {
-    return myBuffer.buf();
+  private ByteBuffer getBuffer(int page) {
+    return myBuffers[page].buf();
   }
 
   public void flush() {
-    myBuffer.flush();
+    for (MappedBufferWrapper wrapper : myBuffers) {
+      wrapper.flush();
+    }
   }
 }

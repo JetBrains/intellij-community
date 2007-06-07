@@ -55,7 +55,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
         if (file == null) {
           continue; // filter invalid entries
         }
-        if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+        if (!file.isInLocalFileSystem()) {
           continue; // skip content roots inside jar and zip archives
         }
         final VirtualFile dirSetRoot = getDirSetRoot(contentEntry);

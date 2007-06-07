@@ -169,6 +169,13 @@ public class ArrayUtil {
     return result;
   }
 
+  public static <T> T[] remove(@NotNull final T[] src, T element) {
+    final int idx = find(src, element);
+    if (idx == -1) return src;
+
+    return remove(src, idx);
+  }
+
   public static int[] remove(@NotNull final int[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {

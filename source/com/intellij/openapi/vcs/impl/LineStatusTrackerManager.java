@@ -231,7 +231,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
         return;
       }
 
-      if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
+      if (!virtualFile.isInLocalFileSystem()) return;
 
       if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
 

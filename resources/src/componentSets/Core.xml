@@ -31,6 +31,10 @@
       <implementation-class>com.intellij.openapi.vfs.impl.VirtualFileManagerImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.vfs.newvfs.ManagingFS</interface-class>
+      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFS</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.vfs.watcher.FileSystemTracker</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.watcher.FileSystemTrackerImpl</implementation-class>
     </component>
@@ -39,12 +43,12 @@
       <implementation-class>com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.vfs.JarFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vfs.LocalFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.vfs.JarFileSystem</interface-class>
+      <implementation-class>com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vfs.ex.dummy.DummyFileSystem</implementation-class>

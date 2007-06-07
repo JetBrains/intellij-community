@@ -76,4 +76,6 @@ public abstract class FileDocumentManager {
     }
 
   }
+
+  public abstract void reloadFiles(VirtualFile... files);
 }

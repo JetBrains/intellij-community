@@ -160,6 +160,8 @@ public class PendingEventDispatcher <T extends EventListener> {
                      "Event cannot be raised when dispatching another event is in progress. Dispatching " + myCurrentDispatchMethod.getName());
     }
 
+    method.setAccessible(true);
+
     ourDispatchingEventsCounter++;
     myCurrentDispatchMethod = method;
     myCurrentDispatchArgs = args;

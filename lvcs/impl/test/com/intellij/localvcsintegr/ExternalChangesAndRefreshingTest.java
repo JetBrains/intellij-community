@@ -12,6 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Semaphore;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshingSynchronously() throws Exception {
@@ -23,18 +24,20 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void doTestRefreshing(boolean async) throws Exception {
-    String path1 = createFileExternally("f1.java");
-    String path2 = createFileExternally("f2.java");
+    final String path1 = createFileExternally("f1.java");
+    final String path2 = createFileExternally("f2.java");
 
     assertFalse(hasVcsEntry(path1));
     assertFalse(hasVcsEntry(path2));
 
-    refreshVFS(async);
+    refreshVFS(async, new Runnable() {
+      public void run() {
+        assertTrue(hasVcsEntry(path1));
+        assertTrue(hasVcsEntry(path2));
 
-    assertTrue(hasVcsEntry(path1));
-    assertTrue(hasVcsEntry(path2));
-
-    assertEquals(2, getVcsRevisionsFor(root).size());
+        assertEquals(2, getVcsRevisionsFor(root).size());
+      }
+    });
   }
 
   public void testRefreshDuringCommand() {
@@ -158,17 +161,10 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void refreshVFS() {
-    refreshVFS(false);
+    refreshVFS(false, null);
   }
 
-  private void refreshVFS(boolean async) {
-    LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-
-    fs.startAsynchronousTasksMonitoring();
-
-    VirtualFileManager.getInstance().refresh(async);
-
-    fs.waitForAsynchronousTasksCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+  private void refreshVFS(final boolean async, Runnable after) {
+    VirtualFileManager.getInstance().refresh(async, after);
   }
 }

@@ -3,14 +3,27 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
-public class VFileEvent {
-  private boolean myIsFromRefresh;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 
-  public VFileEvent(final boolean isFromRefresh) {
+public abstract class VFileEvent {
+  private boolean myIsFromRefresh;
+  private Object myRequestor;
+
+  public VFileEvent(Object requestor, final boolean isFromRefresh) {
+    myRequestor = requestor;
     myIsFromRefresh = isFromRefresh;
   }
 
   public boolean isFromRefresh() {
     return myIsFromRefresh;
   }
+
+  public Object getRequestor() {
+    return myRequestor;
+  }
+
+  public abstract String getPath();
+
+  public abstract VirtualFileSystem getFileSystem();
 }

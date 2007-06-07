@@ -114,7 +114,7 @@ public class IdeaGateway {
     vcs.beginChangeSet();
     for (Document d : getUnsavedDocuments()) {
       VirtualFile f = getDocumentFile(d);
-      if (!getFileFilter().isAllowedAndUnderContentRoot(f)) continue;
+      if (!f.isValid() || !getFileFilter().isAllowedAndUnderContentRoot(f)) continue;
       vcs.changeFileContent(f.getPath(), contentFactoryFor(d), Clock.getCurrentTimestamp());
     }
     vcs.endChangeSet(null);

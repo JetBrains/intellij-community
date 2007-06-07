@@ -94,7 +94,7 @@ public class CvsActionVisibility {
   private boolean containsFileFromUnsupportedFileSystem(VirtualFile[] selectedFiles) {
     for (int i = 0; i < selectedFiles.length; i++) {
       VirtualFile selectedFile = selectedFiles[i];
-      if (!(selectedFile.getFileSystem() instanceof LocalFileSystem)) return true;
+      if (!selectedFile.isInLocalFileSystem()) return true;
     }
     return false;
   }

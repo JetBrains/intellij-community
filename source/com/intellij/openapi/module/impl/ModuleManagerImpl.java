@@ -897,8 +897,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       final List<Module> modules = new ArrayList<Module>();
       for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
         ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
+        moduleModel.myPathToModule.remove(module.getModuleFilePath());
         modules.add(module);
         module.rename(modulesToNewNamesMap.get(module));
+        moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
         cleanCachedStuff();
       }
       fireModulesRenamed(modules);

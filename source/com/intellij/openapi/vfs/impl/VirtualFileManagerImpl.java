@@ -1,29 +1,30 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.io.File;
+import java.io.IOException;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
@@ -38,20 +39,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster =
     EventDispatcher.create(ModificationAttemptListener.class);
 
-  private ProgressIndicator myRefreshIndicator = new StatusBarProgress();
-  private ProgressIndicator myAsyncRefreshIndicator = new StatusBarProgress();
-
   private ArrayList<FileContentProvider> myContentProviders = new ArrayList<FileContentProvider>();
   private PendingEventDispatcher<VirtualFileListener> myContentProvidersDispatcher =
     PendingEventDispatcher.create(VirtualFileListener.class);
-  private ArrayList<CacheUpdater> myRefreshParticipants = new ArrayList<CacheUpdater>();
+  @NonNls private static final String USER_HOME = "user.home";
 
-  private int myRefreshCount = 0;
-  private int mySynchronousRefreshCount = 0;
-  private ArrayList<Runnable> myRefreshEventsToFire = null;
-  private Stack<Runnable> myPostRefreshRunnables = new Stack<Runnable>();
-
-  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems) {
+  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus) {
     myFileSystems = new ArrayList<VirtualFileSystem>();
     myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
     for (VirtualFileSystem fileSystem : fileSystems) {
@@ -63,6 +56,78 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
     addVirtualFileListener(myContentProvidersDispatcher.getMulticaster());
 
+    bus.connect().subscribe(VFS_CHANGES, new BulkFileListener() {
+      public void before(final List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          fireBefore(event);
+        }
+      }
+
+      public void after(final List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          fireAfter(event);
+        }
+      }
+    });
+  }
+
+  private void fireAfter(final VFileEvent event) {
+    if (event instanceof VFileContentChangeEvent) {
+      final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
+      final VirtualFile file = ce.getFile();
+      myVirtualFileListenerMulticaster.getMulticaster()
+        .contentsChanged(new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+    }
+    else if (event instanceof VFileCopyEvent) {
+      final VFileCopyEvent ce = (VFileCopyEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster()
+        .fileCopied(new VirtualFileCopyEvent(event.getRequestor(), ce.getFile(), ce.getNewParent().findChild(ce.getNewChildName())));
+    }
+    else if (event instanceof VFileCreateEvent) {
+      final VFileCreateEvent ce = (VFileCreateEvent)event;
+      final VirtualFile newChild = ce.getParent().findChild(ce.getChildName());
+      if (newChild != null) {
+        myVirtualFileListenerMulticaster.getMulticaster().fileCreated(
+        new VirtualFileEvent(event.getRequestor(), newChild, ce.getChildName(), ce.getParent()));
+      }
+    }
+    else if (event instanceof VFileDeleteEvent) {
+      final VFileDeleteEvent de = (VFileDeleteEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster()
+        .fileDeleted(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
+    }
+    else if (event instanceof VFileMoveEvent) {
+      final VFileMoveEvent me = (VFileMoveEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster().fileMoved(new VirtualFileMoveEvent(event.getRequestor(), me.getFile(), me.getOldParent(), me.getNewParent()));
+    }
+    else if (event instanceof VFilePropertyChangeEvent) {
+      final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster().propertyChanged(
+        new VirtualFilePropertyEvent(event.getRequestor(), pce.getFile(), pce.getPropertyName(), pce.getOldValue(), pce.getNewValue()));
+    }
+  }
+
+  private void fireBefore(final VFileEvent event) {
+    if (event instanceof VFileContentChangeEvent) {
+      final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
+      final VirtualFile file = ce.getFile();
+      myVirtualFileListenerMulticaster.getMulticaster()
+        .beforeContentsChange(new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+    }
+    else if (event instanceof VFileDeleteEvent) {
+      final VFileDeleteEvent de = (VFileDeleteEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster()
+        .beforeFileDeletion(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
+    }
+    else if (event instanceof VFileMoveEvent) {
+      final VFileMoveEvent me = (VFileMoveEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster().beforeFileMovement(new VirtualFileMoveEvent(event.getRequestor(), me.getFile(), me.getOldParent(), me.getNewParent()));
+    }
+    else if (event instanceof VFilePropertyChangeEvent) {
+      final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+      myVirtualFileListenerMulticaster.getMulticaster().beforePropertyChange(
+        new VirtualFilePropertyEvent(event.getRequestor(), pce.getFile(), pce.getPropertyName(), pce.getOldValue(), pce.getNewValue()));
+    }
   }
 
   @NotNull
@@ -78,7 +143,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void registerFileSystem(VirtualFileSystem fileSystem) {
     myFileSystems.add(fileSystem);
-    fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
+    if (!(fileSystem instanceof NewVirtualFileSystem)) {
+      fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
+    }
     myProtocolToSystemMap.put(fileSystem.getProtocol(), fileSystem);
   }
 
@@ -100,6 +167,21 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     refresh(asynchronous, null);
   }
 
+  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+    if (!asynchronous) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
+
+    for (VirtualFileSystem fileSystem : myFileSystems) {
+      if (fileSystem instanceof NewVirtualFileSystem) {
+        ((NewVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
+      }
+      else {
+        fileSystem.refresh(asynchronous);
+      }
+    }
+  }
+
   public void refresh(boolean asynchronous, final Runnable postAction) {
     final ModalityState modalityState = calcModalityStateForRefreshEventsPosting(asynchronous);
 
@@ -110,8 +192,19 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().assertIsDispatchThread();
       }
 
+      //RefreshQueue.getInstance().refresh(asynchronous, true, postAction, ManagingFS.getInstance().getRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
+
+      final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
+      for (int i = 0; i < managedRoots.length; i++) {
+        VirtualFile root = managedRoots[i];
+        boolean last = i + 1 == managedRoots.length;
+        RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
+      }
+
       for (VirtualFileSystem fileSystem : myFileSystems) {
-        fileSystem.refresh(asynchronous);
+        if (!(fileSystem instanceof NewVirtualFileSystem)) {
+          fileSystem.refresh(asynchronous);
+        }
       }
     }
     finally {
@@ -175,173 +268,25 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myVirtualFileManagerListeners.remove(listener);
   }
 
-  private void fireBeforeRefreshStart(boolean asynchronous) {
+  public void fireBeforeRefreshStart(boolean asynchronous) {
     for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
       listener.beforeRefreshStart(asynchronous);
     }
   }
 
-  private void fireAfterRefreshFinish(boolean asynchronous) {
+  public void fireAfterRefreshFinish(boolean asynchronous) {
     for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
       listener.afterRefreshFinish(asynchronous);
     }
   }
 
   public void beforeRefreshStart(final boolean asynchronous, ModalityState modalityState, final Runnable postAction) {
-    Runnable action = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        final ProgressIndicator indicator = asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
-        if (asynchronous) {
-          if (getAsynchronousRefreshCount() == 0) {
-            indicator.start();
-          }
-        }
-        else {
-          if (mySynchronousRefreshCount == 0) {
-            indicator.start();
-          }
-        }
-        indicator.setText(VfsBundle.message("file.synchronize.progress"));
-
-        myRefreshCount++;
-        if (!asynchronous) mySynchronousRefreshCount++;
-        myPostRefreshRunnables.push(postAction);
-        if (myRefreshCount == 1) {
-          myRefreshEventsToFire = new ArrayList<Runnable>();
-        }
-      }
-    };
-    if (asynchronous) {
-      ApplicationManager.getApplication().invokeLater(action, modalityState);
-    }
-    else {
-      action.run();
-    }
-  }
-
-  private int getAsynchronousRefreshCount() {
-    return myRefreshCount - mySynchronousRefreshCount;
   }
 
   public void afterRefreshFinish(final boolean asynchronous, final ModalityState modalityState) {
-    Runnable action = new Runnable() {
-      public void run() {
-        final Application application = ApplicationManager.getApplication();
-        if (application.isDisposed()) return;
-
-        application.assertIsDispatchThread();
-        Runnable postRunnable = myPostRefreshRunnables.pop();
-
-        myRefreshCount--;
-        if (!asynchronous) mySynchronousRefreshCount--;
-        LOG.assertTrue(myRefreshCount >= 0 && mySynchronousRefreshCount >= 0);
-
-        try {
-          if (mySynchronousRefreshCount != 0 || asynchronous && myRefreshCount != 0) {
-            return;
-          }
-
-          application.runWriteAction(new Runnable() {
-            public void run() {
-
-              fireBeforeRefreshStart(asynchronous);
-              //noinspection ForLoopReplaceableByForEach
-              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
-                Runnable runnable = myRefreshEventsToFire.get(i);
-                try {
-                  runnable.run();
-                }
-                catch (Exception e) {
-                  LOG.error(e);
-                }
-              }
-              myRefreshEventsToFire.clear();
-
-              final ProgressIndicator indicator = asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
-              if (asynchronous) {
-                if (getAsynchronousRefreshCount() == 0) {
-                  indicator.stop();
-                }
-              }
-              else {
-                if (mySynchronousRefreshCount == 0) {
-                  indicator.stop();
-                }
-              }
-
-              if (myRefreshCount > 0) {
-                if (!asynchronous && mySynchronousRefreshCount == 0) {
-                  fireAfterRefreshFinish(asynchronous);
-                }
-              }
-              else {
-                final FileSystemSynchronizer synchronizer;
-                if (asynchronous) {
-                  synchronizer = new FileSystemSynchronizer();
-                  //noinspection ForLoopReplaceableByForEach
-                  for (int i = 0; i < myRefreshParticipants.size(); i++) {
-                    CacheUpdater participant = myRefreshParticipants.get(i);
-                    synchronizer.registerCacheUpdater(participant);
-                  }
-                }
-                else {
-                  synchronizer = null;
-                }
-
-                myRefreshEventsToFire = null;
-                fireAfterRefreshFinish(asynchronous);
-
-                if (asynchronous) {
-                  int filesCount = synchronizer.collectFilesToUpdate();
-                  if (filesCount > 0) {
-                    boolean runWithProgress = !application.isUnitTestMode() && filesCount > 5;
-                    if (runWithProgress) {
-                      Runnable process = new Runnable() {
-                        public void run() {
-                          synchronizer.execute();
-                        }
-                      };
-                      ProgressManager.getInstance()
-                        .runProcessWithProgressSynchronously(process, VfsBundle.message("file.update.modified.progress"), false, null);
-                    }
-                    else {
-                      synchronizer.execute();
-                    }
-                  }
-                }
-              }
-            }
-          });
-        }
-        finally {
-          if (postRunnable != null) {
-            postRunnable.run();
-          }
-        }
-      }
-    };
-
-    if (asynchronous) {
-      ApplicationManager.getApplication().invokeLater(action, modalityState);
-    }
-    else {
-      action.run();
-    }
   }
 
   public void addEventToFireByRefresh(final Runnable action, boolean asynchronous, ModalityState modalityState) {
-    if (asynchronous) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myRefreshEventsToFire.add(action);
-        }
-      }, modalityState);
-    }
-    else {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      myRefreshEventsToFire.add(action);
-    }
   }
 
   public void registerFileContentProvider(FileContentProvider provider) {
@@ -355,12 +300,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void registerRefreshUpdater(CacheUpdater updater) {
-    myRefreshParticipants.add(updater);
+    RefreshQueue.getInstance().registerRefreshUpdater(updater);
   }
 
   public void unregisterRefreshUpdater(CacheUpdater updater) {
-    boolean success = myRefreshParticipants.remove(updater);
-    LOG.assertTrue(success);
+    RefreshQueue.getInstance().unregisterRefreshUpdater(updater);
   }
 
   public ProvidedContent getProvidedContent(VirtualFile file) {
@@ -379,6 +323,41 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public static ModalityState calcModalityStateForRefreshEventsPosting(final boolean asynchronous) {
     return asynchronous ? ModalityState.NON_MODAL : ModalityState.current();
+  }
+
+  private static String convertLocalPathToUrl(@NonNls @NotNull String path) {
+    if (path.startsWith("~")) {
+      path = System.getProperty(USER_HOME) + path.substring(1);
+    }
+
+    if (SystemInfo.isWindows || SystemInfo.isOS2) {
+      if (path.endsWith(":/")) { // instead of getting canonical path - see below
+        path = Character.toUpperCase(path.charAt(0)) + path.substring(1);
+      }
+    }
+
+    if (path.length() == 0) {
+      try {
+        path = new File("").getCanonicalPath();
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+
+    if (SystemInfo.isWindows) {
+      if (path.charAt(0) == '/') path = path.substring(1); //hack over new File(path).toUrl().getFile()
+      if (path.contains("~")) {
+        try {
+          path = new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
+        }
+        catch (IOException e) {
+          return null;
+        }
+      }
+    }
+
+    return LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
   }
 
   private static class LoggingListener implements VirtualFileListener {

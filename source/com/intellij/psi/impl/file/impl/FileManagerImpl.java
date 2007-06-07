@@ -402,9 +402,12 @@ public class FileManagerImpl implements FileManager {
     }
 
     if (!vFile.isDirectory()) return null;
-
     dispatchPendingEvents();
 
+    return findDirectoryImpl(vFile);
+  }
+
+  private PsiDirectory findDirectoryImpl(final VirtualFile vFile) {
     PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
@@ -412,8 +415,9 @@ public class FileManagerImpl implements FileManager {
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?
-      findDirectory(parent);// need to cache parent directory - used for firing events
+      findDirectoryImpl(parent);// need to cache parent directory - used for firing events
     }
+
     psiDir = new PsiDirectoryImpl(myManager, vFile);
     return myVFileToPsiDirMap.cacheOrGet(vFile, psiDir);
   }

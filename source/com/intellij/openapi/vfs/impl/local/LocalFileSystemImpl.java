@@ -1,36 +1,26 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.impl.VFileImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.io.fs.IFile;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vfs.local.win32.FileWatcher;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -45,24 +35,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   private final List<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
   private WatchRequest[] myCachedNormalizedRequests = null;
-  private BidirectionalMap<VirtualFile, String> myFSRootsToPaths = null;
 
-  private List<String> myFilePathsToWatchManual = new ArrayList<String>();
   private final Set<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
   private final Set<String> myDeletedFiles = new HashSet<String>();
 
-  private final ExecutorService mySynchronizeExecutor = ConcurrencyUtil.newSingleThreadExecutor("File System Synchronize Executor");
-  private List<Future<?>> myFutures;
-
-  private final Map<VirtualFile, Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
-  private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");
-  private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
-
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
-  public final Map<String, VirtualFileImpl> myUnaccountedFiles = SystemInfo.isFileSystemCaseSensitive
-                                                                 ? new THashMap<String, VirtualFileImpl>()
-                                                                 : new THashMap<String, VirtualFileImpl>(
-                                                                   new CaseInsensitiveStringHashingStrategy());
+  private List<String> myManualWatchRoots = new ArrayList<String>();
 
   private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
@@ -133,67 +111,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  private void initRoots() {
-    if (myFSRootsToPaths != null) return;
-
-    WRITE_LOCK.lock();
-    try {
-      final BidirectionalMap<VirtualFile, String> map = new BidirectionalMap<VirtualFile, String>();
-
-      final File[] files = File.listRoots();
-      for (File file : files) {
-        String path = file.getPath();
-        if (path != null) {
-          path = path.replace(File.separatorChar, '/');
-          final VirtualFileImpl root = new VirtualFileImpl(path);
-          map.put(root, path);
-        }
-      }
-      myFSRootsToPaths = map;
-    }
-    finally {
-      WRITE_LOCK.unlock();
-    }
-  }
-
-  private void refreshFSRoots() {
-    if (myFSRootsToPaths == null) {
-      initRoots();
-    }
-    else {
-      final File[] files = File.listRoots();
-
-      WRITE_LOCK.lock();
-      try {
-        Set<String> newRootPaths = new HashSet<String>();
-        for (File file : files) {
-          String path = file.getPath();
-          if (path != null) {
-            path = path.replace(File.separatorChar, '/');
-            final List<VirtualFile> roots = myFSRootsToPaths.getKeysByValue(path);
-            if (roots == null) {
-              final VirtualFileImpl root = new VirtualFileImpl(path);
-              myFSRootsToPaths.put(root, path);
-            }
-
-            newRootPaths.add(path);
-          }
-        }
-
-        for (Iterator<Map.Entry<VirtualFile, String>> iterator = myFSRootsToPaths.entrySet().iterator(); iterator.hasNext();) {
-          Map.Entry<VirtualFile, String> entry = iterator.next();
-          if (!newRootPaths.contains(entry.getValue())) {
-            iterator.remove();
-          }
-        }
-      }
-      finally {
-        WRITE_LOCK.unlock();
-      }
-    }
-  }
-
-
   public void initComponent() {
   }
 
@@ -208,8 +125,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     });
 
     myRootsToWatch.clear();
-    myUnaccountedFiles.clear();
-    myFSRootsToPaths = null;
     myDirtyFiles.clear();
     myDeletedFiles.clear();
 
@@ -232,120 +147,25 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  boolean isRoot(VirtualFileImpl file) {
-    READ_LOCK.lock();
-    try {
-      initRoots();
-      return myFSRootsToPaths.containsKey(file);
-    }
-    finally {
-      READ_LOCK.unlock();
-    }
-  }
-
   public String getProtocol() {
     return PROTOCOL;
   }
 
   @Nullable
   public VirtualFile findFileByPath(@NotNull String path) {
+    /*
     if (File.separatorChar == '\\') {
       if (path.indexOf('\\') >= 0) return null;
     }
+    */
 
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return findFileByPath(canonicalPath, true, false);
+    return super.findFileByPath(canonicalPath);
   }
 
-  private VirtualFile findFileByPath(String path, boolean createIfNoCache, final boolean refreshIfNotFound) {
-    if (SystemInfo.isWindows || SystemInfo.isOS2) {
-      if (path.endsWith(":/")) { // instead of getting canonical path - see below
-        path = Character.toUpperCase(path.charAt(0)) + path.substring(1);
-      }
-    }
-
-    initRoots();
-    for (VirtualFile root : myFSRootsToPaths.keySet()) {
-      //noinspection NonConstantStringShouldBeStringBuffer
-      String runPath = root.getPath();
-      if (runPath.endsWith("/")) runPath = runPath.substring(0, runPath.length() - 1);
-      if (!FileUtil.startsWith(path, runPath)) continue;
-      if (path.length() == runPath.length()) return root;
-      String tail;
-      if (path.charAt(runPath.length()) == '/') {
-        tail = path.substring(runPath.length() + 1);
-      }
-      else if (StringUtil.endsWithChar(runPath, '/')) {
-        tail = path.substring(runPath.length());
-      }
-      else {
-        continue;
-      }
-      StringTokenizer tokenizer = new StringTokenizer(tail, "/");
-      while (tokenizer.hasMoreTokens()) {
-        final String name = tokenizer.nextToken();
-        if (".".equals(name)) continue;
-        if ("..".equals(name)) {
-          final int index = runPath.lastIndexOf("/");
-          if (index >= 0) {
-            runPath = runPath.substring(0, index);
-          }
-          else {
-            return null;
-          }
-          root = root.getParent();
-          if (root == null) return null;
-        }
-        else {
-          runPath = runPath + "/" + name;
-          if (!((VirtualFileImpl)root).areChildrenCached()) {
-            VirtualFile child = myUnaccountedFiles.get(runPath);
-            if (child == null || !child.isValid()) {
-              if (!createIfNoCache) return null;
-              if (myUnaccountedFiles.containsKey(runPath)) {
-                if (refreshIfNotFound) {
-                  root.refresh(false, false);
-                  child = ((VirtualFileImpl)root).findSingleChild(name, true);
-                  if (child == null) return null;
-                  //need to fire event here since refresh did not fire, because children are not cached
-                  fireFileCreated(null, child);
-                  root = child;
-                }
-                else {
-                  return null;
-                }
-              }
-              else {
-                root = ((VirtualFileImpl)root).findSingleChild(name, true);
-                if (root == null) return null;
-              }
-            }
-            else {
-              root = child;
-            }
-          }
-          else {
-            VirtualFile child = root.findChild(name);
-            if (child == null) {
-              if (refreshIfNotFound) {
-                root.refresh(false, false);
-                child = root.findChild(name);
-                if (child == null) return null;
-              }
-              else {
-                return null;
-              }
-            }
-            root = child;
-          }
-        }
-      }
-
-      return root;
-    }
-
-    return null;
+  private VirtualFile findFileByPathIfCached(String path) {
+    return findFileByPath(path); // TODO
   }
 
   @Nullable
@@ -353,7 +173,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
-    return findFileByPath(canonicalPath, true, true);
+    return super.refreshAndFindFileByPath(canonicalPath);
+  }
+
+  public String normalize(final String path) {
+    return getVfsCanonicalPath(path);
   }
 
   public VirtualFile findFileByIoFile(File file) {
@@ -383,196 +207,28 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void refreshIoFiles(Iterable<File> files) {
-    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(false);
-    myManager.beforeRefreshStart(false, modalityState, null);
     for (File file : files) {
       final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
       if (virtualFile != null) virtualFile.refresh(false, false);
     }
-    myManager.afterRefreshFinish(false, modalityState);
   }
 
   public void refreshFiles(Iterable<VirtualFile> files) {
-    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(false);
-    myManager.beforeRefreshStart(false, modalityState, null);
     for (VirtualFile file : files) {
       file.refresh(false, false);
     }
-    myManager.afterRefreshFinish(false, modalityState);
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
-    if (!(virtualFile instanceof VirtualFileImpl)) return virtualFile.contentsToByteArray();
-    VirtualFileImpl virtualFileImpl = (VirtualFileImpl)virtualFile;
-    InputStream inputStream = virtualFileImpl.getPhysicalFileInputStream();
-    try {
-      int physicalFileLength = virtualFileImpl.getPhysicalFileLength();
-      LOG.assertTrue(physicalFileLength >= 0);
-      return FileUtil.loadBytes(inputStream, physicalFileLength);
-    }
-    finally {
-      inputStream.close();
-    }
+    return virtualFile.contentsToByteArray();
   }
 
   public long physicalLength(final VirtualFile virtualFile) throws IOException {
-    if (virtualFile instanceof VirtualFileImpl) {
-      return ((VirtualFileImpl)virtualFile).getPhysicalFileLength();
-    }
     return virtualFile.getLength();
   }
 
   public String extractPresentableUrl(String path) {
     return super.extractPresentableUrl(path);
-  }
-
-  public void refresh(final boolean asynchronous) {
-    if (!asynchronous) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-    }
-
-    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
-
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        getManager().beforeRefreshStart(asynchronous, modalityState, null);
-
-        storeRefreshStatusToFiles();
-
-        refreshFSRoots();
-        WatchRequest[] requests;
-        WRITE_LOCK.lock();
-        try {
-          requests = normalizeRootsForRefresh();
-        }
-        finally {
-          WRITE_LOCK.unlock();
-        }
-
-        for (final WatchRequest request : requests) {
-          String runPath = request.getRootPath();
-          final VirtualFileImpl rootFile = (VirtualFileImpl)findFileByPath(runPath, true, false);
-          if (rootFile != null) {
-
-            final File file = rootFile.getPhysicalFile();
-            final boolean recursively = request.isToWatchRecursively();
-
-            if (!file.exists()) {
-              final Runnable action = new Runnable() {
-                public void run() {
-                  if (!rootFile.isValid()) return;
-                  fireBeforeFileDeletion(null, rootFile);
-                  WRITE_LOCK.lock();
-                  try {
-                    final VirtualFileImpl parent = rootFile.getParent();
-                    if (parent != null) parent.removeChild(rootFile);
-                  }
-                  finally {
-                    WRITE_LOCK.unlock();
-                  }
-                  fireFileDeleted(null, rootFile, rootFile.getName(), null);
-                }
-              };
-              getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
-            }
-            else {
-              refresh(rootFile, recursively, false, modalityState, asynchronous, false);
-              if (!recursively && rootFile.areChildrenCached()) {
-                for (VirtualFileImpl child : rootFile.getChildren()) {
-                  refreshInner(child, false, modalityState, asynchronous, false);
-                }
-              }
-            }
-          }
-          else {
-            final String fileSystemPath = request.getFileSystemRootPath();
-            checkFileCreated(fileSystemPath, runPath, asynchronous, modalityState);
-          }
-        }
-
-        final Set<Map.Entry<String, VirtualFileImpl>> entries =
-          new HashSet<Map.Entry<String, VirtualFileImpl>>(myUnaccountedFiles.entrySet());
-        for (final Map.Entry<String, VirtualFileImpl> entry : entries) {
-          final VirtualFileImpl file = entry.getValue();
-          if (file != null && file.isValid()) {
-            if (!file.getPhysicalFile().exists()) {
-              final Runnable action = new Runnable() {
-                public void run() {
-                  if (!file.isValid()) return;
-                  fireBeforeFileDeletion(null, file);
-                  WRITE_LOCK.lock();
-                  try {
-                    myUnaccountedFiles.put(entry.getKey(), null);
-                    file.setParent(null);
-                  }
-                  finally {
-                    WRITE_LOCK.unlock();
-                  }
-                  fireFileDeleted(null, file, file.getName(), null);
-                }
-              };
-              getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
-
-            }
-            else {
-              refresh(file, true, false, modalityState, asynchronous, false);
-            }
-          }
-          else {
-            final String vfsPath = entry.getKey();
-            final String fsPath = vfsPath.replace('/', File.separatorChar);
-            checkFileCreated(fsPath, vfsPath, asynchronous, modalityState);
-          }
-        }
-
-        FileWatcher.resyncedManually();
-
-        getManager().afterRefreshFinish(asynchronous, modalityState);
-      }
-    };
-
-    if (asynchronous) {
-      submitAsynchronousTask(new Runnable() {
-        public void run() {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Executing request:" + this);
-          }
-          runnable.run();
-        }
-      });
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-  private void checkFileCreated(final String fileSystemPath,
-                                String vfsPath,
-                                final boolean asynchronous,
-                                final ModalityState modalityState) {
-    final boolean physicalExists = new File(fileSystemPath).exists();
-    if (physicalExists) {
-      int index = vfsPath.lastIndexOf('/');
-      while (index >= 0) {
-        String parentPath = vfsPath.substring(0, index);
-        final VirtualFileImpl vParent = (VirtualFileImpl)findFileByPath(parentPath, true, false);
-        if (vParent != null) {
-          final String path = vfsPath;
-          getManager().addEventToFireByRefresh(new Runnable() {
-            public void run() {
-              if (vParent.findSingleChild(new File(path).getName(), false) != null) return;
-              final VirtualFileImpl newVFile = new VirtualFileImpl(path);
-              vParent.addChild(newVFile);
-              fireFileCreated(null, newVFile);
-            }
-          }, asynchronous, modalityState);
-          break;
-        }
-
-        vfsPath = parentPath;
-        index = vfsPath.lastIndexOf('/');
-      }
-    }
   }
 
   private WatchRequest[] normalizeRootsForRefresh() {
@@ -608,131 +264,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return myCachedNormalizedRequests;
   }
 
-  ExecutorService getSynchronizeExecutor() {
-    return mySynchronizeExecutor;
-  }
-
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull final VirtualFile... files) {
-    if (files.length == 0) return;
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
-        getManager().beforeRefreshStart(asynchronous, modalityState, null);
-
-        for (VirtualFile file : files) {
-          LOG.assertTrue(!file.isDirectory());
-          ((VirtualFileImpl)file).refreshInternal(false, modalityState, true, asynchronous, false);
-        }
-
-        getManager().afterRefreshFinish(asynchronous, modalityState);
-      }
-    };
-    if (asynchronous) {
-      submitAsynchronousTask(runnable);
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-  void submitAsynchronousTask(final Runnable task) {
-    Future<?> future = mySynchronizeExecutor.submit(task);
-    if (myFutures != null) {
-      myFutures.add(future);
-    }
-  }
-
-  //for use in tests only
-  public void startAsynchronousTasksMonitoring() {
-    myFutures = new ArrayList<Future<?>>();
-  }
-
-  //for use in tests only
-  public void waitForAsynchronousTasksCompletion() {
-    LOG.assertTrue(myFutures != null, "tasks monitoring should have been started");
-
-    for (Future<?> future : myFutures) {
-      try {
-        future.get();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      catch (ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-
-      myFutures = null;
-    }
-  }
-
-  @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  void refresh(VirtualFileImpl file,
-               boolean recursive,
-               boolean storeStatus,
-               ModalityState modalityState,
-               boolean asynchronous,
-               final boolean noWatcher) {
-    final List<String> manualPaths;
-    READ_LOCK.lock();
-    try {
-      manualPaths = new ArrayList<String>(myFilePathsToWatchManual);
-    }
-    finally {
-      READ_LOCK.unlock();
-    }
-
-    if (!manualPaths.isEmpty()) {
-      final String filePath = file.getPath();
-      for (int i = 0; i < manualPaths.size(); i++) {
-        String pathToWatchManual = manualPaths.get(i);
-        if (FileUtil.startsWith(filePath, pathToWatchManual)) {
-          file.refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
-          return;
-        }
-      }
-    }
-
-    if (storeStatus) {
-      storeRefreshStatusToFiles();
-    }
-
-    refreshInner(file, recursive, modalityState, asynchronous, noWatcher);
-  }
-
-  void refreshInner(VirtualFileImpl file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean noWatcher) {
-    if (noWatcher || !FileWatcher.isAvailable() ||
-        !recursive && !asynchronous) { // We're unable to definitely refresh synchronously by means of file watcher.
-      file.refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
-    }
-    else {
-      Key status;
-      synchronized (myRefreshStatusMap) {
-        status = myRefreshStatusMap.remove(file);
-      }
-      if (status == DELETED_STATUS) {
-        if (file.getPhysicalFile().exists()) { // file was deleted but later restored - need to rescan the whole subtree
-          file.refreshInternal(true, modalityState, false, asynchronous, noWatcher);
-        }
-      }
-      else {
-        if (status == DIRTY_STATUS) {
-          file.refreshInternal(false, modalityState, false, asynchronous, noWatcher);
-        }
-        if (recursive &&
-            file.areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
-          for (VirtualFileImpl child : file.getChildren()) {
-            if (status == DIRTY_STATUS && !child.getPhysicalFile().exists()) {
-              continue; // should be already handled above (see SCR6145)
-            }
-            refreshInner(child, recursive, modalityState, asynchronous, noWatcher);
-          }
-        }
-      }
-    }
-  }
-
-  private void storeRefreshStatusToFiles() {
+  public void storeRefreshStatusToFiles() {
     if (FileWatcher.isAvailable()) {
       final String[] dirtyFiles;
       synchronized (myDirtyFiles) {
@@ -741,13 +273,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       for (String dirtyFile : dirtyFiles) {
         String path = dirtyFile.replace(File.separatorChar, '/');
-        VirtualFile file = findFileByPath(path, false, false);
-        if (file != null) {
-          synchronized (myRefreshStatusMap) {
-            if (myRefreshStatusMap.get(file) == null) {
-              myRefreshStatusMap.put(file, DIRTY_STATUS);
-            }
-          }
+        VirtualFile file = findFileByPathIfCached(path);
+        if (file instanceof NewVirtualFile) {
+          ((NewVirtualFile)file).markDirty();
         }
       }
 
@@ -758,56 +286,45 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       for (String deletedFile : deletedFiles) {
         String path = deletedFile.replace(File.separatorChar, '/');
-        VirtualFile file = findFileByPath(path, false, false);
-        if (file != null) {
-          synchronized (myRefreshStatusMap) {
-            myRefreshStatusMap.put(file, DELETED_STATUS);
-          }
-          // when moving file in Explorer FILE_MODIFIED is not fired for the parent...
-          VirtualFile parent = file.getParent();
-          if (parent != null) {
-            synchronized (myRefreshStatusMap) {
-              if (myRefreshStatusMap.get(parent) == null) {
-                myRefreshStatusMap.put(parent, DIRTY_STATUS);
-              }
-            }
-          }
+        VirtualFile file = findFileByPathIfCached(path);
+        if (file instanceof NewVirtualFile) {
+          ((NewVirtualFile)file).markDirty();
         }
       }
     }
   }
 
-  protected void fireContentsChanged(Object requestor, VirtualFile file, long oldModificationStamp) {
-    super.fireContentsChanged(requestor, file, oldModificationStamp);
-  }
+  public void markSuspicousFilesDirty(VirtualFile... files) {
+    storeRefreshStatusToFiles();
 
-  protected void fireFileCreated(Object requestor, VirtualFile file) {
-    super.fireFileCreated(requestor, file);
-  }
-
-  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, parent);
-  }
-
-  protected void fireBeforePropertyChange(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
-    super.fireBeforePropertyChange(requestor, file, propertyName, oldValue, newValue);
-  }
-
-  protected void firePropertyChanged(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
-    super.firePropertyChanged(requestor, file, propertyName, oldValue, newValue);
-  }
-
-  protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {
-    super.fireBeforeContentsChange(requestor, file);
-  }
-
-  protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
-    super.fireBeforeFileDeletion(requestor, file);
+    if (FileWatcher.isAvailable()) {
+      for (String root : myManualWatchRoots) {
+        final VirtualFile suspicousRoot = findFileByPathIfCached(root);
+        if (suspicousRoot != null) {
+          ((NewVirtualFile)suspicousRoot).markDirtyReqursively();
+        }
+      }
+    }
+    else {
+      for (VirtualFile file : files) {
+        if (file.getFileSystem() == this) {
+          ((NewVirtualFile)file).markDirtyReqursively();
+        }
+      }
+    }
   }
 
   @Nullable
   private static String getVfsCanonicalPath(String path) {
-    if (path.length() == 0) return path;
+    if (path.length() == 0) {
+      try {
+        return new File("").getCanonicalPath();
+      }
+      catch (IOException e) {
+        return path;
+      }
+    }
+
     if (SystemInfo.isWindows) {
       if (path.charAt(0) == '/') path = path.substring(1); //hack over new File(path).toUrl().getFile()
       if (path.contains("~")) {
@@ -890,16 +407,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
             final Vector<String> watchManual = new Vector<String>();
             FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
-/*
-            if (numDir == 0) {
-              FileWatcher.setup(new String[]{PathManager.getBinPath()}, new boolean[] {false}, new Vector());
-            }
-            */
-            myFilePathsToWatchManual.clear();
+
+            myManualWatchRoots = new ArrayList<String>();
             for (int i = 0; i < watchManual.size(); i++) {
-              String path = watchManual.elementAt(i);
-              path = path.replace(File.separatorChar, '/');
-              myFilePathsToWatchManual.add(path);
+              myManualWatchRoots.add(watchManual.elementAt(i));
             }
           }
           finally {
@@ -943,10 +454,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     WRITE_LOCK.lock();
     try {
       final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
-      final VirtualFile existingFile = findFileByPath(rootPath, false, false);
+      final VirtualFile existingFile = findFileByPathIfCached(rootPath);
       if (existingFile != null) {
         if (!isAlreadyWatched(result)) {
-          synchronizeFiles(toWatchRecursively, existingFile);
+          existingFile.refresh(false, toWatchRecursively);
         }
       }
       myRootsToWatch.add(result);
@@ -976,7 +487,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       for (String rootPath : rootPaths) {
         LOG.assertTrue(rootPath != null);
         final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
-        final VirtualFile existingFile = findFileByPath(rootPath, false, false);
+        final VirtualFile existingFile = findFileByPathIfCached(rootPath);
         if (existingFile != null) {
           if (!isAlreadyWatched(request)) {
             filesToSynchronize.add(existingFile);
@@ -988,7 +499,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       myCachedNormalizedRequests = null;
       setUpFileWatcher();
       if (!filesToSynchronize.isEmpty()) {
-        synchronizeFiles(toWatchRecursively, filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));
+        for (VirtualFile file : filesToSynchronize) {
+          file.refresh(false, toWatchRecursively);
+        }
       }
     }
     finally {
@@ -996,26 +509,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
 
     return result;
-  }
-
-  private void synchronizeFiles(final boolean recursively, final VirtualFile... files) {
-    for (final VirtualFile file : files) {
-      ((VirtualFileImpl)file).refresh(true, recursively, true, null);
-      if (!recursively) {
-        if (((VirtualFileImpl)file).areChildrenCached()) {
-          for (final VirtualFile child : file.getChildren()) {
-            ((VirtualFileImpl)child).refresh(true, false, true, null);
-          }
-        }
-        else {
-          for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
-            if (unaccounted != null && file.equals(unaccounted.getParent())) {
-              unaccounted.refresh(true, false, true, null);
-            }
-          }
-        }
-      }
-    }
   }
 
   public void removeWatchedRoot(final WatchRequest watchRequest) {
@@ -1047,31 +540,20 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public boolean processCachedFilesInSubtree(final VirtualFile file, Processor<VirtualFile> processor) {
     if (file.getFileSystem() != this) return true;
 
-    if (!processFile(file, processor)) return false;
-
-    if (file.isDirectory()) {
-      final Collection<VirtualFile> unaccountedFiles = new HashSet<VirtualFile>(myUnaccountedFiles.values());
-      for (final VirtualFile unaccounted : unaccountedFiles) {
-        if (unaccounted != null && VfsUtil.isAncestor(file, unaccounted, true)) {
-          if (!processFile(unaccounted, processor)) return false;
-        }
-      }
-    }
-
-    return true;
+    return processFile((NewVirtualFile)file, processor);
   }
 
-  private static boolean processFile(VirtualFile file, Processor<VirtualFile> processor) {
+  private static boolean processFile(NewVirtualFile file, Processor<VirtualFile> processor) {
     if (!processor.process(file)) return false;
-    if (file.isDirectory() && ((VirtualFileImpl)file).areChildrenCached()) {
-      for (final VirtualFile child : file.getChildren()) {
-        if (!processFile(child, processor)) return false;
+    if (file.isDirectory()) {
+      for (final VirtualFile child : file.getCachedChildren()) {
+        if (!processFile((NewVirtualFile)child, processor)) return false;
       }
     }
     return true;
   }
 
-  private boolean auxDelete(VirtualFileImpl file) throws IOException {
+  private boolean auxDelete(VirtualFile file) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.delete(file)) return true;
     }
@@ -1129,15 +611,152 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  protected VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName)
+  private static void delete(File physicalFile) throws IOException {
+    File[] list = physicalFile.listFiles();
+    if (list != null) {
+      for (File aList : list) {
+        delete(aList);
+      }
+    }
+    if (!physicalFile.delete()) {
+      throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
+    }
+  }
+
+  public boolean isReadOnly() {
+    return false;
+  }
+
+  @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
+  private static File convertToIOFile(VirtualFile file) {
+    String path = file.getPath();
+    if (path.endsWith(":") && path.length() == 2 && (SystemInfo.isWindows || SystemInfo.isOS2)) {
+      path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
+    }
+
+    return new File(path);
+  }
+
+  public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
+    final File ioDir = new File(convertToIOFile(parent), dir);
+    final boolean succ = auxCreateDirectory(parent, dir) || ioDir.mkdirs();
+    if (!succ) {
+      throw new IOException("Failed to create directory: " + ioDir.getPath());
+    }
+
+    return new VFileImpl(dir, parent, this, 0);
+  }
+
+  public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
+    final File ioFile = new File(convertToIOFile(parent), file);
+    final boolean succ = auxCreateFile(parent, file) || ioFile.createNewFile();
+    if (!succ) {
+      throw new IOException("Failed to create child file at " + ioFile.getPath());
+    }
+
+    return new VFileImpl(file, parent, this, 0);
+  }
+
+  public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
+    if (!auxDelete(file)) {
+      delete(convertToIOFile(file));
+    }
+  }
+
+  public boolean exists(final VirtualFile fileOrDirectory) {
+    if (fileOrDirectory.getParent() == null) return true;
+    return convertToIOFile(fileOrDirectory).exists();
+  }
+
+  public long getCRC(final VirtualFile file) {
+    return -1;
+  }
+
+  public long getLength(final VirtualFile file) {
+    return convertToIOFile(file).length();
+  }
+
+  public boolean isCaseSensitive() {
+    return SystemInfo.isFileSystemCaseSensitive;
+  }
+
+  public InputStream getInputStream(final VirtualFile file) throws FileNotFoundException {
+    return new BufferedInputStream(new FileInputStream(convertToIOFile(file)));
+  }
+
+  public long getTimeStamp(final VirtualFile file) {
+    return convertToIOFile(file).lastModified();
+  }
+
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
+    final File ioFile = convertToIOFile(file);
+    return new BufferedOutputStream(new FileOutputStream(ioFile)) {
+      public void close() throws IOException {
+        super.close();
+        if (timeStamp > 0) {
+          ioFile.setLastModified(timeStamp);
+        }
+      }
+    };
+  }
+
+  public boolean isDirectory(final VirtualFile file) {
+    return convertToIOFile(file).isDirectory();
+  }
+
+  public boolean isWritable(final VirtualFile file) {
+    return convertToIOFile(file).canWrite();
+  }
+
+  public String[] list(final VirtualFile file) {
+    if (file.getParent() == null) {
+      final File[] roots = File.listRoots();
+      if (roots.length == 1 && roots[0].getName().length() == 0) {
+        return roots[0].list();
+      }
+
+      String[] names = new String[roots.length];
+      for (int i = 0; i < roots.length; i++) {
+        names[i] = roots[i].getName();
+      }
+      return names;
+    }
+
+    final String[] names = convertToIOFile(file).list();
+    return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  public void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException {
+    if (!auxMove(file, newParent)) {
+      final File ioFrom = convertToIOFile(file);
+      final File ioParent = convertToIOFile(newParent);
+      ioFrom.renameTo(new File(ioParent, file.getName()));
+    }
+  }
+
+  public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
+    if (!file.exists()) {
+      throw new IOException("File to move does not exist: " + file.getPath());
+    }
+
+    final VirtualFile parent = file.getParent();
+    assert parent != null;
+
+    if (!auxRename(file, newName)) {
+      if (!convertToIOFile(file).renameTo(new File(convertToIOFile(parent), newName))) {
+        throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
+      }
+    }
+  }
+
+  public VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName)
     throws IOException {
-    final VirtualFileImpl file = (VirtualFileImpl)vFile;
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 
     if (physicalCopy == null) {
-      File physicalFile = file.getPhysicalFile();
+      File physicalFile = convertToIOFile(vFile);
 
-      File newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
+      File newPhysicalParent = convertToIOFile(newParent);
       physicalCopy = new File(newPhysicalParent, copyName);
 
       try {
@@ -1155,162 +774,69 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
     }
 
-    final VirtualFileImpl created = new VirtualFileImpl((VirtualFileImpl)newParent, physicalCopy, physicalCopy.isDirectory());
-    ((VirtualFileImpl)newParent).addChild(created);
-    fireFileCopied(requestor, vFile, created);
-    return created;
+    return new VFileImpl(copyName, newParent, this, 0);
   }
 
-  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
-    final VirtualFileImpl file = (VirtualFileImpl)vFile;
-    String name = vFile.getName();
-    VirtualFileImpl oldParent = file.getParent();
-    final boolean handled = auxMove(vFile, newParent);
+  public void setTimeStamp(final VirtualFile file, final long modstamp) {
+    convertToIOFile(file).setLastModified(modstamp);
+  }
 
-    fireBeforeFileMovement(requestor, vFile, newParent);
+  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+    FileUtil.setReadOnlyAttribute(file.getPath(), !writableFlag);
+  }
 
-    newParent.getChildren(); // Init children.
+  @NonNls
+  public String toString() {
+    return "LocalFileSystem";
+  }
 
-    File physicalFile = file.getPhysicalFile();
-    boolean isDirectory = file.isDirectory();
-
-    if (!handled) {
-      File newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
-      File newPhysicalFile = new File(newPhysicalParent, name);
-      if (!physicalFile.renameTo(newPhysicalFile)) {
-        throw new IOException(VfsBundle.message("file.move.to.error", physicalFile.getPath(), newPhysicalParent.getPath()));
+  public String extractRootPath(final String path) {
+    if (path.length() == 0) {
+      try {
+        return extractRootPath(new File("").getCanonicalPath());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
 
-    oldParent.removeChild(file);
-
-    file.setParent((VirtualFileImpl)newParent);
-    ((VirtualFileImpl)newParent).addChild(file);
-    //myModificationStamp = LocalTimeCounter.currentTime();
-    //myTimeStamp = -1;
-    fireFileMoved(requestor, file, oldParent);
-
-    if (handled && isDirectory && physicalFile.exists()) {
-      // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
-      // So if the direcotry haven't been deleted actually we must recreate VFS structure for this.
-      VirtualFileImpl newMe = new VirtualFileImpl(oldParent, physicalFile, true);
-      oldParent.addChild(newMe);
-      fireFileCreated(requestor, newMe);
-    }
-  }
-
-  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
-    final VirtualFileImpl file = (VirtualFileImpl)vFile;
-
-    final boolean handled = auxRename(file, newName);
-
-    String oldName = file.getName();
-    fireBeforePropertyChange(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
-
-    if (!handled) {
-      File physicalFile = file.getPhysicalFile();
-      file.setName(newName);
-      File newFile = file.getPhysicalFile();
-      if (!physicalFile.renameTo(newFile)) {
-        file.setName(physicalFile.getName());
-        throw new IOException(VfsBundle.message("file.rename.error", physicalFile.getPath(), newFile.getPath()));
-      }
-    }
-    else {
-      file.setName(newName);
-    }
-
-    firePropertyChanged(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
-  }
-
-  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
-    final VirtualFileImpl file = (VirtualFileImpl)vFile;
-    File physicalFile = file.getPhysicalFile();
-    VirtualFileImpl parent = file.getParent();
-    if (parent == null) {
-      throw new IOException(VfsBundle.message("file.delete.root.error", physicalFile.getPath()));
-    }
-
-    final String name = file.getName();
-    final boolean handled = auxDelete(file);
-
-    if (!handled) {
-      delete(physicalFile);
-    }
-
-    fireBeforeFileDeletion(requestor, file);
-
-    boolean isDirectory = file.isDirectory();
-
-    parent.removeChild(file);
-
-    fireFileDeleted(requestor, file, name, parent);
-
-    if (handled && isDirectory && physicalFile.exists()) {
-      // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
-      // So if the direcotry haven't been deleted actually we must recreate VFS structure for this.
-      VirtualFileImpl newMe = new VirtualFileImpl(parent, physicalFile, true);
-      parent.addChild(newMe);
-      fireFileCreated(requestor, newMe);
-    }
-  }
-
-  private static void delete(File physicalFile) throws IOException {
-    File[] list = physicalFile.listFiles();
-    if (list != null) {
-      for (File aList : list) {
-        delete(aList);
-      }
-    }
-    if (!physicalFile.delete()) {
-      throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
-    }
-  }
-
-  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
-    final VirtualFileImpl dir = (VirtualFileImpl)vDir;
-
-    VirtualFile existingFile = dir.findChild(dirName);
-
-    final boolean auxCommand = auxCreateDirectory(vDir, dirName);
-
-    File physicalFile = new File(dir.getPhysicalFile(), dirName);
-
-    if (!auxCommand) {
-      if (existingFile != null || physicalFile.exists()) {
-        throw new IOException(VfsBundle.message("file.already.exists.error", physicalFile.getPath()));
+    if (SystemInfo.isWindows) {
+      if (path.length() >= 2 && path.charAt(1) == ':') {
+        // Drive letter
+        return path.substring(0, 2).toUpperCase(Locale.US);
       }
 
-      if (!physicalFile.mkdir()) {
-        throw new IOException(VfsBundle.message("file.create.error", physicalFile.getPath()));
+      if (path.startsWith("//") || path.startsWith("\\\\")) {
+        // UNC. Must skip exactly two path elements like [\\ServerName\ShareName]\pathOnShare\file.txt
+        // Root path is in square brackets here.
+
+        int slashCount = 0;
+        int idx;
+        for (idx = 2; idx < path.length() && slashCount < 2; idx++) {
+          final char c = path.charAt(idx);
+          if (c == '\\' || c == '/') {
+            slashCount++;
+            idx--;
+          }
+        }
+
+        return path.substring(0, idx);
       }
     }
-    else {
-      if (existingFile != null) return existingFile;
-    }
 
-    VirtualFileImpl child = new VirtualFileImpl(dir, physicalFile, true);
-    dir.addChild(child);
-    fireFileCreated(requestor, child);
-    return child;
+    return "/";
   }
 
-  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
-    final VirtualFileImpl dir = (VirtualFileImpl)vDir;
-    final boolean handled = auxCreateFile(vDir, fileName);
+  public int getRank() {
+    return 1;
+  }
 
-    File physicalFile = new File(dir.getPhysicalFile(), fileName);
-    if (!handled) {
-      VirtualFile file = dir.findChild(fileName);
-      if (file != null || physicalFile.exists()) {
-        throw new IOException(VfsBundle.message("file.already.exists.error", physicalFile.getPath()));
-      }
-      new FileOutputStream(physicalFile).close();
+
+  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+    for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
+      ((NewVirtualFile)root).markDirtyReqursively();
     }
 
-    VirtualFileImpl child = new VirtualFileImpl(dir, physicalFile, false);
-    dir.addChild(child);
-    fireFileCreated(requestor, child);
-    return child;
+    super.refreshWithoutFileWatcher(asynchronous);
   }
 }

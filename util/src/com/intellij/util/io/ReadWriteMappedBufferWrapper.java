@@ -18,6 +18,10 @@ public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
     super(file, 0, file.length());
   }
 
+  public ReadWriteMappedBufferWrapper(final File file, int offset, int len) {
+    super(file, offset, len);
+  }
+
   public MappedByteBuffer map() {
     MappedByteBuffer buf;
     try {
@@ -25,7 +29,7 @@ public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
       final FileChannel channel = raf.getChannel();
       buf = null;
       try {
-        buf = channel.map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
+        buf = channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
       }
       catch (IOException e) {
         throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath(), e);

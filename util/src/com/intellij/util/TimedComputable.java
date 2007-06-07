@@ -20,6 +20,10 @@ public abstract class TimedComputable<T>  extends Timed<T> {
     return myT;
   }
 
+  protected synchronized T getIfCached() {
+    return myT;
+  }
+
   public synchronized void release() {
     myAcquireCount--;
 

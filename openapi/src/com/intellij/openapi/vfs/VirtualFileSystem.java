@@ -21,8 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents a virtual file system.
@@ -33,8 +31,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public abstract class VirtualFileSystem {
   protected VirtualFileSystem() {
   }
-
-  protected final List<VirtualFileListener> myFileListeners = new CopyOnWriteArrayList<VirtualFileListener>();
 
   /**
    * Gets the protocol for this file system. Protocols should differ for all file systems.
@@ -107,22 +103,14 @@ public abstract class VirtualFileSystem {
    * @see VirtualFileListener
    * @see VirtualFileManager#addVirtualFileListener
    */
-  public void addVirtualFileListener(VirtualFileListener listener) {
-    synchronized (myFileListeners) {
-      myFileListeners.add(listener);
-    }
-  }
+  public abstract void addVirtualFileListener(VirtualFileListener listener);
 
   /**
    * Removes listener form the file system.
    *
    * @param listener the listener
    */
-  public void removeVirtualFileListener(VirtualFileListener listener) {
-    synchronized (myFileListeners) {
-      myFileListeners.remove(listener);
-    }
-  }
+  public abstract void removeVirtualFileListener(VirtualFileListener listener);
 
   public void forceRefreshFile(final boolean asynchronous, @NotNull VirtualFile file) {
     forceRefreshFiles(asynchronous, file);
@@ -178,7 +166,9 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#copy(Object,VirtualFile,String)
    */
   protected abstract VirtualFile copyFile(final Object requestor,
-                                          final VirtualFile virtualFile,
-                                          final VirtualFile newParent,
-                                          final String copyName) throws IOException;
+                                       final VirtualFile virtualFile,
+                                       final VirtualFile newParent,
+                                       final String copyName) throws IOException;
+
+  public abstract boolean isReadOnly();
 }

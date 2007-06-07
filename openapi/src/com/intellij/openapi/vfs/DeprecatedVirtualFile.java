@@ -10,4 +10,8 @@ public abstract class DeprecatedVirtualFile extends VirtualFile{
     public String getUrl() {
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }
+
+  public boolean isInLocalFileSystem() {
+    return getFileSystem() instanceof LocalFileSystem;
+  }
 }

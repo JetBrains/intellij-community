@@ -89,7 +89,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
   }
 
   public boolean isValid() {
-    throw new UnsupportedOperationException();
+    return true;
   }
 
   @Nullable

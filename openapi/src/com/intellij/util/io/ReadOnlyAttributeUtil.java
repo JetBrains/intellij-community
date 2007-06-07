@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.io.IOException;
 
@@ -32,16 +33,22 @@ public class ReadOnlyAttributeUtil {
    * @throws IOException if some <code>IOExecption</code> occurred.
    */
   public static void setReadOnlyAttribute(VirtualFile file, boolean readOnlyStatus) throws IOException {
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+    if (file.getFileSystem().isReadOnly()) {
       throw new IllegalArgumentException("Wrong file system: "+file.getFileSystem());
     }
+
     if(file.isWritable()==!readOnlyStatus){
       return;
     }
-    String path = file.getPresentableUrl();
 
-    setReadOnlyAttribute(path, readOnlyStatus);
-    file.refresh(false, false);
+    if (file instanceof NewVirtualFile) {
+      ((NewVirtualFile)file).setWritable(!readOnlyStatus);
+    }
+    else {
+      String path = file.getPresentableUrl();
+      setReadOnlyAttribute(path, readOnlyStatus);
+      file.refresh(false, false);
+    }
   }
 
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {

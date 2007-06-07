@@ -10,6 +10,7 @@ import java.io.OutputStream;
 public class ReplicatorInputStream extends InputStream {
   private final OutputStream myTarget;
   private final InputStream mySource;
+  private int myBytesRead = 0;
 
   public ReplicatorInputStream(final InputStream source, final OutputStream target) {
     mySource = source;
@@ -20,6 +21,7 @@ public class ReplicatorInputStream extends InputStream {
     final int b = mySource.read();
     if (b == -1) return -1;
     myTarget.write(b);
+    myBytesRead++;
     return b;
   }
 
@@ -39,6 +41,7 @@ public class ReplicatorInputStream extends InputStream {
     final int count = mySource.read(b);
     if (count < 0) return count;
     myTarget.write(b, 0, count);
+    myBytesRead += count;
     return count;
   }
 
@@ -46,12 +49,15 @@ public class ReplicatorInputStream extends InputStream {
     final int count = mySource.read(b, off, len);
     if (count < 0) return count;
     myTarget.write(b, off, count);
+    myBytesRead += count;
     return count;
   }
 
 
   public long skip(final long n) throws IOException {
-    return read(new byte[(int)n]);
+    final int skipped = read(new byte[(int)n]);
+    myBytesRead += skipped;
+    return skipped;
   }
 
   public int available() throws IOException {
@@ -61,5 +67,9 @@ public class ReplicatorInputStream extends InputStream {
   public void close() throws IOException {
     mySource.close();
     myTarget.close();
+  }
+
+  public int getBytesRead() {
+    return myBytesRead;
   }
 }

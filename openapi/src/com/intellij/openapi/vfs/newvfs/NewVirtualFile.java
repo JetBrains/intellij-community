@@ -5,54 +5,89 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Collection;
 
 public abstract class NewVirtualFile extends VirtualFile {
-  @NotNull
-  public abstract String getName();
-
-  public abstract boolean isDirectory();
+  private long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {
     return exists();
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    return FileUtil.adaptiveLoadBytes(getInputStream());
+    final InputStream is = getInputStream();
+    final byte[] bytes;
+    try {
+      bytes = FileUtil.adaptiveLoadBytes(is);
+    }
+    finally {
+      is.close();
+    }
+    return bytes;
   }
 
-  @NotNull
-  public abstract VirtualFileSystem getFileSystem();
-  public abstract VirtualFile getParent();
+  @Nullable
+  public abstract NewVirtualFile findChild(@NotNull @NonNls final String name);
 
   @NotNull
-  public abstract VirtualFile[] getChildren();
+  public abstract NewVirtualFileSystem getFileSystem();
 
-  public abstract @Nullable VirtualFile findChild(String name);
-
-  public abstract @NotNull String getUrl();
-  public abstract @NotNull String getPath();
-
-  public abstract @NotNull InputStream getInputStream() throws IOException;
-  public abstract @NotNull OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException;
-
-  public abstract @NotNull VirtualFile createChildDirectory(final Object requestor, String name) throws IOException;
-  public abstract @NotNull VirtualFile createChildData(final Object requestor, String name) throws IOException;
-
-  public abstract boolean isWritable();
-  public abstract long getTimeStamp();
   public abstract void setTimeStamp(final long time) throws IOException;
-  public abstract long getLength();
 
   public abstract int getId();
 
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
-    // TODO
+    RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }
+
+  public long getModificationStamp() {
+    return myModificationStamp;
+  }
+
+  public void setModificationStamp(long modificationStamp) {
+    myModificationStamp = modificationStamp;
+  }
+
+  public abstract void setWritable(boolean writable) throws IOException;
+
+  public abstract void markDirty();
+
+  public abstract void markDirtyReqursively();
+
+  public abstract boolean isDirty();
+
+  public abstract void markClean();
+
+  public void move(final Object requestor, final VirtualFile newParent) throws IOException {
+    if (!exists()) {
+      throw new IOException("File to move does not exist: " + getPath());
+    }
+
+    if (!newParent.exists()) {
+      throw new IOException("Destination folder does not exist: " + newParent.getPath());
+    }
+
+    if (!newParent.isDirectory()) {
+      throw new IOException("Destination is not a folder: " + newParent.getPath());
+    }
+
+    final VirtualFile child = newParent.findChild(getName());
+    if (child != null) {
+      throw new IOException("Destination already exists: " + newParent.getPath() + "/" + getName());
+    }
+
+    getFileSystem().moveFile(requestor, this, newParent);
+  }
+
+  public abstract Collection<VirtualFile> getCachedChildren();
+
+  @Nullable
+  public abstract NewVirtualFile refreshAndFindChild(final String name);
 }

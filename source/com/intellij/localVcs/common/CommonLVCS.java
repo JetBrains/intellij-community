@@ -312,7 +312,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized boolean isUnderVcs(VirtualFile file) {
     checkOldLvcsEnabled();
 
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+    if (!file.isInLocalFileSystem()) {
       return false;
     }
     if (!myFileIndex.isInContent(file)) return false;

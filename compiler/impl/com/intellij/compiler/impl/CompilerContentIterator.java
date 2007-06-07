@@ -32,7 +32,7 @@ public class CompilerContentIterator implements ContentIterator {
 
   public boolean processFile(VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) return true;
-    if (!(fileOrDir.getFileSystem() instanceof LocalFileSystem)) return true;
+    if (!fileOrDir.isInLocalFileSystem()) return true;
     if (myInSourceOnly && !myFileIndex.isInSourceContent(fileOrDir)) return true;
     if (myFileType == null || myFileType == fileTypeManager.getFileTypeByFile(fileOrDir)) {
       myFiles.add(fileOrDir);

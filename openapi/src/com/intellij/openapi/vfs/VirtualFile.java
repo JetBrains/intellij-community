@@ -561,4 +561,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public boolean exists() {
     return isValid();
   }
+
+  public boolean isInLocalFileSystem() {
+    return false;
+  }
 }

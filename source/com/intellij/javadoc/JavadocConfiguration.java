@@ -300,7 +300,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     }
 
     public boolean processFile(VirtualFile fileOrDir) {
-      if (!(fileOrDir.getFileSystem() instanceof LocalFileSystem)) {
+      if (!fileOrDir.isInLocalFileSystem()) {
         return true;
       }
       final Module module = ModuleUtil.findModuleForFile(fileOrDir, myPsiManager.getProject());

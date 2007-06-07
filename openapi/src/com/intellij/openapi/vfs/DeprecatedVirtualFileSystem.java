@@ -7,7 +7,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
+  protected final List<VirtualFileListener> myFileListeners = new CopyOnWriteArrayList<VirtualFileListener>();
+
+  public void addVirtualFileListener(VirtualFileListener listener) {
+    synchronized (myFileListeners) {
+      myFileListeners.add(listener);
+    }
+  }
+
+  /**
+   * Removes listener form the file system.
+   *
+   * @param listener the listener
+   */
+  public void removeVirtualFileListener(VirtualFileListener listener) {
+    synchronized (myFileListeners) {
+      myFileListeners.remove(listener);
+    }
+  }
+
   protected void firePropertyChanged(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
     assertWriteAccessAllowed();
 
@@ -125,5 +147,9 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
 
   protected void assertWriteAccessAllowed() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+  }
+
+  public boolean isReadOnly() {
+    return true;
   }
 }

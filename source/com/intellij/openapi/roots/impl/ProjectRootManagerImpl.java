@@ -395,7 +395,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return "ProjectRootManager";
   }
 
-  public void initComponent() {                                                     
+  public void initComponent() {
   }
 
   public void disposeComponent() {
@@ -632,6 +632,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           rootPaths.addAll(getRootsToTrack(library, OrderRootType.SOURCES));
           rootPaths.addAll(getRootsToTrack(library, OrderRootType.JAVADOC));
         }
+        else if (entry instanceof JdkOrderEntry) {
+          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.CLASSES));
+          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.SOURCES));
+          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.JAVADOC));
+        }
       }
     }
 
@@ -651,16 +656,22 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private static Collection<String> getRootsToTrack(final Library library, final OrderRootType rootType) {
+    return library != null ? getRootsToTrack(library.getUrls(rootType)) : Collections.<String>emptyList();
+  }
+
+  private static Collection<String> getRootsToTrack(final OrderEntry library, final OrderRootType rootType) {
+    return library != null ? getRootsToTrack(library.getUrls(rootType)) : Collections.<String>emptyList();
+  }
+
+  private static List<String> getRootsToTrack(final String[] urls) {
     List<String> result = new ArrayList<String>();
-    if (library != null) {
-      final String[] urls = library.getUrls(rootType);
-      for (String url : urls) {
-        if (url != null) {
-          String path = extractLocalPath(url);
-          result.add(path);
-        }
+    for (String url : urls) {
+      if (url != null) {
+        String path = extractLocalPath(url);
+        result.add(path);
       }
     }
+
     return result;
   }
 

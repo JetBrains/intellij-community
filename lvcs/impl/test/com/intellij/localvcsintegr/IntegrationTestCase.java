@@ -130,7 +130,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     FileWriter w = new FileWriter(f);
     w.write(content);
     w.close();
-    f.setLastModified(f.lastModified() + 100);
+    f.setLastModified(f.lastModified() + 2000);
   }
 
   protected void setDocumentTextFor(VirtualFile f, byte[] bytes) {

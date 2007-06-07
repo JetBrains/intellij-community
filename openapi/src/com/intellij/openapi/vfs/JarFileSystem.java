@@ -16,14 +16,16 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.zip.ZipFile;
 
-public abstract class JarFileSystem extends DeprecatedVirtualFileSystem {
+public abstract class JarFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "jar";
-  public static final String JAR_SEPARATOR = "!/";
+  @NonNls public static final String PROTOCOL_PREFIX = "jar://";
+  @NonNls public static final String JAR_SEPARATOR = "!/";
 
   public static JarFileSystem getInstance(){
     return ApplicationManager.getApplication().getComponent(JarFileSystem.class);

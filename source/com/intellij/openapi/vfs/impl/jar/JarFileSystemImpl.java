@@ -1,83 +1,78 @@
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl");
+  private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+  private final Lock r = rwl.readLock();
+  private final Lock w = rwl.writeLock();
 
-  final Object LOCK = new Object();
-
-  private ConcurrentMap<String, JarFileInfo> myPathToFileInfoMap = new ConcurrentHashMap<String, JarFileInfo>();
   private Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
-  private Set<String> myContentChangingJars = new ConcurrentHashSet<String>();
-
-  private VirtualFileManagerEx myManager;
-  @NonNls private static final String JARS_FOLDER = "jars";
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
   @NonNls private static final String IDEA_JAR = "idea.jar";
 
-  public JarFileSystemImpl(LocalFileSystem localFileSystem) {
-    localFileSystem.addVirtualFileListener(
-      new VirtualFileAdapter() {
-        public void contentsChanged(VirtualFileEvent event) {
-          JarFileInfo info = myPathToFileInfoMap.get(event.getFile().getPath());
-          if (info != null) {
-            refreshInfo(info, true, false);
-          }
-        }
+  private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
 
-        public void fileDeleted(VirtualFileEvent event) {
-          VirtualFile parent = event.getParent();
-          if (parent != null) {
-            String oldPath = parent.getPath() + '/' + event.getFileName();
-            JarFileInfo info = myPathToFileInfoMap.get(oldPath);
-            if (info != null) {
-              refreshInfo(info, true, false);
+  public JarFileSystemImpl(MessageBus bus) {
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      public void before(final List<? extends VFileEvent> events) { }
+
+      public void after(final List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event.getFileSystem() instanceof LocalFileSystem) {
+            final String path = event.getPath();
+            List<String> jarPaths = new ArrayList<String>();
+            r.lock();
+            try {
+              jarPaths.addAll(myHandlers.keySet());
             }
-          }
-        }
+            finally{
+              r.unlock();
+            }
 
-        public void fileMoved(VirtualFileMoveEvent event) {
-          //TODO: real move
-          String oldPath = event.getOldParent().getPath() + '/' + event.getFileName();
-          JarFileInfo info = myPathToFileInfoMap.get(oldPath);
-          if (info != null) {
-            refreshInfo(info, true, false);
-          }
-        }
-
-        public void propertyChanged(VirtualFilePropertyEvent event) {
-          if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-            //TODO: real rename
-            VirtualFile parent = event.getParent();
-            String oldPath = (parent == null ? "" : parent.getPath() + '/') + event.getOldValue();
-            JarFileInfo info = myPathToFileInfoMap.get(oldPath);
-            if (info != null) {
-              refreshInfo(info, true, false);
+            for (String jarPath : jarPaths) {
+              if (FileUtil.startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()), path, SystemInfo.isFileSystemCaseSensitive)) {
+                markDirty(jarPath);
+              }
             }
           }
         }
       }
-    );
+    });
+  }
+
+  private void markDirty(final String path) {
+    r.lock();
+    final JarHandler handler;
+    try {
+      handler = myHandlers.get(path);
+    }
+    finally {
+      r.unlock();
+    }
+
+    if (handler != null) {
+      handler.markDirty();
+    }
   }
 
   @NotNull
@@ -98,73 +93,55 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     path = path.replace('/', File.separatorChar);
     if (!SystemInfo.isFileSystemCaseSensitive) {
       path = path.toLowerCase();
-    }
+  }
     myNoCopyJarPaths.add(path);
   }
 
-  boolean isValid(JarFileInfo info) {
-    String path = info.getFile().getPath();
-    JarFileInfo info1 = myPathToFileInfoMap.get(path);
-    return info1 == info;
-  }
 
   public VirtualFile getVirtualFileForJar(VirtualFile entryVFile) {
-    String rootPath = ((VirtualFileImpl)entryVFile).getFileInfo().getRootPath();
-    LOG.assertTrue(rootPath.endsWith(JAR_SEPARATOR));
-    return LocalFileSystem.getInstance().findFileByPath(rootPath.substring(0, rootPath.length() - JAR_SEPARATOR.length()));
+    final String path = entryVFile.getPath();
+    String localPath = path.substring(0, path.indexOf(JarFileSystem.JAR_SEPARATOR));
+    return LocalFileSystem.getInstance().findFileByPath(localPath);
   }
 
   public ZipFile getJarFile(VirtualFile entryVFile) throws IOException {
-    return ((VirtualFileImpl)entryVFile).getFileInfo().getZipFile();
+    JarHandler handler = getHandler(entryVFile);
+
+    return handler.getZip();
+  }
+
+  private JarHandler getHandler(final VirtualFile entryVFile) {
+    final String jarRootPath = extractRootPath(entryVFile.getPath());
+
+    JarHandler handler;
+    r.lock();
+    try {
+      handler = myHandlers.get(jarRootPath);
+      if (handler == null) {
+        r.unlock();
+        w.lock();
+        try {
+          handler = myHandlers.get(jarRootPath);
+          if (handler == null) {
+            handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
+            myHandlers.put(jarRootPath, handler);
+          }
+        }
+        finally {
+          r.lock();
+          w.unlock();
+        }
+      }
+    }
+    finally{
+      r.unlock();
+    }
+
+    return handler;
   }
 
   public String getProtocol() {
     return PROTOCOL;
-  }
-
-  public VirtualFile findFileByPath(@NotNull String path) {
-    int index = path.lastIndexOf(JAR_SEPARATOR);
-    if (index < 0) return null;
-    String jarPath = path.substring(0, index);
-    String relPath = path.substring(index + JAR_SEPARATOR.length());
-
-    JarFileInfo info = myPathToFileInfoMap.get(jarPath);
-    if (info == null) {
-      if (myContentChangingJars.contains(jarPath)) return null;
-      File file = new File(jarPath);
-      try {
-        jarPath = file.getCanonicalPath();
-      }
-      catch (IOException e) {
-        LOG.info("Could not fetch canonical path for " + jarPath);
-        return null;
-      }
-
-      if (jarPath == null) {
-        LOG.info("Canonical path is null for " + file.getPath());
-        return null;
-      }
-
-      info = myPathToFileInfoMap.get(jarPath);
-      if (info != null) {
-        return info.findFile(relPath);
-      }
-
-      if (myContentChangingJars.contains(jarPath)) return null;
-
-      file = new File(jarPath);
-      if (!file.exists()) {
-        LOG.info("Jar file " + file.getPath() + " not found");
-        return null;
-      }
-
-      File mirrorFile = getMirrorFile(file);
-      info = new JarFileInfo(this, file, mirrorFile);
-
-      info = ConcurrencyUtil.cacheOrGet(myPathToFileInfoMap, jarPath, info);
-    }
-
-    return info.findFile(relPath);
   }
 
   public String extractPresentableUrl(String path) {
@@ -175,124 +152,36 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return path;
   }
 
-  public void refresh(final boolean asynchronous) {
-    JarFileInfo[] infos = myPathToFileInfoMap.values().toArray(new JarFileInfo[myPathToFileInfoMap.size()]);
-    if (infos.length == 0) return;
-
-    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
-    final VirtualFileManagerEx manager = getManager();
-    manager.beforeRefreshStart(asynchronous, modalityState, null);
-
-    final Ref<Integer> joinCount = new Ref<Integer>(infos.length);
-    for (final JarFileInfo info : infos) {
-      final VirtualFile localRoot = getVirtualFileForJar(info.getRootFile());
-      if (localRoot != null) {
-        localRoot.refresh(asynchronous, false, new Runnable() {
-          public void run() {
-            postAfterRefreshFinishWhenAllJoined(joinCount, manager, asynchronous, modalityState);
-            if (!localRoot.isValid() || localRoot.getTimeStamp() != info.getTimeStamp()) {
-              refreshInfo(info, asynchronous, false);
-            }
-          }
-        });
-      }
-      else {
-        refreshInfo(info, asynchronous, false);
-        postAfterRefreshFinishWhenAllJoined(joinCount, manager, asynchronous, modalityState);
-      }
-    }
+  public String extractRootPath(final String path) {
+    return path.substring(0, path.indexOf(JAR_SEPARATOR) + JAR_SEPARATOR.length());
   }
 
-  private static void postAfterRefreshFinishWhenAllJoined(final Ref<Integer> joinCount,
-                                                   final VirtualFileManagerEx manager,
-                                                   final boolean asynchronous,
-                                                   final ModalityState modalityState) {
-    int cnt = joinCount.get();
-    if (--cnt == 0) {
-      manager.afterRefreshFinish(asynchronous, modalityState);
-    }
-    joinCount.set(cnt);
+  public boolean isCaseSensitive() {
+    return true;
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
-    for (VirtualFile file : files) {
-      String path = file.getPath();
-      JarFileInfo jarFileInfo = myPathToFileInfoMap.get(path);
-      if (jarFileInfo == null) {
-        refreshAndFindFileByPath(path);
-        continue;
-      }
-      refreshInfo(jarFileInfo, asynchronous, true);
-    }
+  public boolean exists(final VirtualFile fileOrDirectory) {
+    return getHandler(fileOrDirectory).exists(fileOrDirectory);
   }
 
-  private void refreshInfo(final JarFileInfo info, boolean asynchronous, final boolean forceRefresh) {
-    ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
-
-    getManager().beforeRefreshStart(asynchronous, modalityState, null);
-
-    if (!info.getFile().exists()) {
-      LOG.info("file deleted");
-
-      final VirtualFile rootFile = info.getRootFile();
-      getManager().addEventToFireByRefresh(
-        new Runnable() {
-          public void run() {
-            fireBeforeFileDeletion(null, rootFile);
-            myPathToFileInfoMap.remove(info.getFile().getPath());
-            info.close();
-            fireFileDeleted(null, rootFile, rootFile.getName(), null);
-          }
-        },
-        asynchronous,
-        modalityState
-      );
-    }
-    else if (info.getTimeStamp() != info.getFile().lastModified() || forceRefresh) {
-      LOG.info("timestamp changed");
-
-      final VirtualFile rootFile = info.getRootFile();
-      getManager().addEventToFireByRefresh(
-        new Runnable() {
-          public void run() {
-            if (!rootFile.isValid()) return;
-            fireBeforeFileDeletion(null, rootFile);
-            final String path = info.getFile().getPath();
-            myPathToFileInfoMap.remove(path);
-            myContentChangingJars.add(path);
-            info.close();
-            fireFileDeleted(null, rootFile, rootFile.getName(), null);
-            myContentChangingJars.remove(path);
-            fireFileCreated(null, findFileByPath(path + JAR_SEPARATOR));
-          }
-        },
-        asynchronous,
-        modalityState
-      );
-    }
-
-    getManager().afterRefreshFinish(asynchronous, modalityState);
+  public long getCRC(final VirtualFile file) {
+    return getHandler(file).getCRC(file);
   }
 
-  public VirtualFile refreshAndFindFileByPath(String path) {
-    return findFileByPath(path);
+  public InputStream getInputStream(final VirtualFile file) throws IOException {
+    return getHandler(file).getInputStream(file);
   }
 
-  public File getMirrorFile(File originalFile) {
-    if (!isMakeCopyOfJar(originalFile)) return originalFile;
-
-    String folderPath = PathManager.getSystemPath() + File.separatorChar + JARS_FOLDER;
-    if (!new File(folderPath).exists()) {
-      if (!new File(folderPath).mkdirs()) {
-        return originalFile;
-      }
-    }
-
-    String fileName = originalFile.getName() + "." + Integer.toHexString(originalFile.getPath().hashCode());
-    return new File(folderPath, fileName);
+  public long getLength(final VirtualFile file) {
+    return getHandler(file).getLength(file);
   }
 
-  private boolean isMakeCopyOfJar(File originalJar) {
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws
+                                                                                                                                 IOException {
+    return getHandler(file).getOutputStream(file, requestor, modStamp, timeStamp);
+  }
+
+  public boolean isMakeCopyOfJar(File originalJar) {
     String property = System.getProperty(IDEA_JARS_NOCOPY);
     if (Boolean.TRUE.toString().equalsIgnoreCase(property)) return false;
 
@@ -312,34 +201,55 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return true;
   }
 
-  public VirtualFileManagerEx getManager() {
-    if (myManager == null) {
-      myManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
-    }
-    return myManager;
+  public long getTimeStamp(final VirtualFile file) {
+    return getHandler(file).getTimeStamp(file);
+  }
+
+  public boolean isDirectory(final VirtualFile file) {
+    return getHandler(file).isDirectory(file);
+  }
+
+  public boolean isWritable(final VirtualFile file) {
+    return getHandler(file).isDirectory(file);
+  }
+
+  public String[] list(final VirtualFile file) {
+    return getHandler(file).list(file);
+  }
+
+  public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
+    getHandler(file).setTimeStamp(file, modstamp);
+  }
+
+  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+    getHandler(file).setWritable(file, writableFlag);
   }
 
   public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vDir).getFile().getPath()));
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }
 
   public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vDir).getFile().getPath()));
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }
 
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
   public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
   public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
+  }
+
+  public int getRank() {
+    return 2;
   }
 }

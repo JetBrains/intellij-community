@@ -17,6 +17,8 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.NonNls;
  * @see JarFileSystem
  */
 public abstract class VirtualFileManager {
+  public static Topic<BulkFileListener> VFS_CHANGES = new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
+
   /**
    * Gets the instance of <code>VirtualFileManager</code>.
    *
@@ -65,6 +69,8 @@ public abstract class VirtualFileManager {
    * otherwise will be performed immediately
    */
   public abstract void refresh(boolean asynchronous);
+
+  public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
    * The same as {@link #refresh(boolean asynchronous)} but also runs <code>postRunnable</code>

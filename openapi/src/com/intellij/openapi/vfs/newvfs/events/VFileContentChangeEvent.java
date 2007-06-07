@@ -4,34 +4,45 @@
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 
 public class VFileContentChangeEvent extends VFileEvent {
   private VirtualFile myFile;
-  private final long myOldTimestamp;
-  private final long myNewTimestamp;
+  private final long myOldModificationStamp;
+  private final long myNewModificationStamp;
 
-  public VFileContentChangeEvent(final VirtualFile file, long oldTimestamp, long newTimestamp, boolean isFromRefresh) {
-    super(isFromRefresh);
+  public VFileContentChangeEvent(final Object requestor, final VirtualFile file, long oldModificationStamp, long newModificationStamp, boolean isFromRefresh) {
+    super(requestor, isFromRefresh);
+
     myFile = file;
-    myOldTimestamp = oldTimestamp;
-    myNewTimestamp = newTimestamp;
+    myOldModificationStamp = oldModificationStamp;
+    myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
   }
 
   public VirtualFile getFile() {
     return myFile;
   }
 
-  public long getNewTimestamp() {
-    return myNewTimestamp;
+  public long getModificationStamp() {
+    return myNewModificationStamp;
   }
 
-  public long getOldTimestamp() {
-    return myOldTimestamp;
+  public long getOldModificationStamp() {
+    return myOldModificationStamp;
   }
 
   @NonNls
   public String toString() {
     return "VfsEvent[update: " + myFile.getUrl() + "]";
+  }
+
+  public String getPath() {
+    return myFile.getPath();
+  }
+
+  public VirtualFileSystem getFileSystem() {
+    return myFile.getFileSystem();
   }
 }

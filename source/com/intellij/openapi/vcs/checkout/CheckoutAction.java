@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import org.apache.oro.io.GlobFilenameFilter;
 
@@ -38,7 +39,8 @@ public class CheckoutAction extends AnAction {
         assert vDir != null;
         final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
         assert watchRequest != null;
-        ((VirtualFileImpl)vDir).refresh(false, true, true, null);
+        ((NewVirtualFile)vDir).markDirtyReqursively();
+        vDir.refresh(false, true);
         lfs.removeWatchedRoot(watchRequest);
       }
     });

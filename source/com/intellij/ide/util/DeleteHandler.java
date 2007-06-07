@@ -136,7 +136,7 @@ public class DeleteHandler {
           if (!elementToDelete.isValid()) continue; //was already deleted
           if (elementToDelete instanceof PsiDirectory) {
             VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
-            if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
+            if (virtualFile.isInLocalFileSystem()) {
 
               ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
               getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
@@ -162,7 +162,7 @@ public class DeleteHandler {
             final PsiFile file = elementToDelete.getContainingFile();
             if (file != null) {
               final VirtualFile virtualFile = file.getVirtualFile();
-              if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
+              if (virtualFile.isInLocalFileSystem()) {
                 int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
                   .setTitle(IdeBundle.message("title.delete"))
                   .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))

@@ -5,9 +5,11 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.TimedComputable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,12 +19,8 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-public abstract class MappedBufferWrapper {
+public abstract class MappedBufferWrapper extends TimedComputable<ByteBuffer> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
 
   @NonNls public static final String BBU_TEMP_FILE_NAME = "BBU";
@@ -35,40 +33,11 @@ public abstract class MappedBufferWrapper {
   protected long myPosition;
   protected long myLength;
 
-
-  private ByteBuffer myBuffer;
-
-  private int myAccessCounter = 0;
-  private int myAccessCounterDisposerLastCheckedMe = -1;
-
-  private static List<MappedBufferWrapper> ourMappedWrappers = new ArrayList<MappedBufferWrapper>();
-
-  private static final Object LOCK = new Object();
-
-  static {
-    ScheduledExecutorService service = ConcurrencyUtil.newSingleScheduledThreadExecutor("Memory mapped files disposer");
-    service.scheduleWithFixedDelay(new Runnable() {
-      public void run() {
-        MappedBufferWrapper[] wrappers;
-        synchronized (LOCK) {
-          wrappers = ourMappedWrappers.toArray(new MappedBufferWrapper[ourMappedWrappers.size()]);
-        }
-
-        for (MappedBufferWrapper wrapper : wrappers) {
-          synchronized (wrapper) {
-            if (wrapper.myAccessCounter == wrapper.myAccessCounterDisposerLastCheckedMe) {
-              wrapper.unmap();
-            }
-            else {
-              wrapper.myAccessCounterDisposerLastCheckedMe = wrapper.myAccessCounter;
-            }
-          }
-        }
-      }
-    }, 60, 60, TimeUnit.SECONDS);
-  }
+  private static int totalSize = 0;
 
   public MappedBufferWrapper(final File file, final long pos, final long length) {
+    super(null);
+
     myFile = file;
     myPosition = pos;
     myLength = length;
@@ -77,15 +46,17 @@ public abstract class MappedBufferWrapper {
   protected abstract MappedByteBuffer map();
 
   public final void unmap() {
-    synchronized (LOCK) {
-      ourMappedWrappers.remove(this);
-      if (myBuffer instanceof MappedByteBuffer) {
-        ((MappedByteBuffer)myBuffer).force();
-      }
+    totalSize -= myLength;
 
-      if (!unmapMappedByteBuffer142b19(this)) {
-        unmapMappedByteBuffer141(this);
-      }
+    /* TODO: not sure we need this. Everything seem to be forced, when native cleaner winishes its work.
+    final ByteBuffer buffer = getIfCached();
+    if (buffer instanceof MappedByteBuffer) {
+      ((MappedByteBuffer)buffer).force();
+    }
+    */
+
+    if (!unmapMappedByteBuffer142b19(this)) {
+      unmapMappedByteBuffer141(this);
     }
   }
 
@@ -93,32 +64,49 @@ public abstract class MappedBufferWrapper {
    * An assumption made here that any retreiver of the buffer will not use it for time longer than 60 seconds.
    */
   public ByteBuffer buf() {
-    synchronized (this) {
-      myAccessCounter++;
-
-      ByteBuffer buffer = myBuffer;
-      if (buffer == null) {
-        synchronized (LOCK) {
-          buffer = myBuffer;
-          if (buffer == null) { // Double checking
-            buffer = map();
-
-            ourMappedWrappers.add(this);
-            myBuffer = buffer;
-          }
-        }
-      }
-
-      return buffer;
-    }
+    final ByteBuffer buf = acquire(); // hack, makes buffer live for 120sec without disposing. TODO: make disposing explicit
+    acquire();
+    release();
+    release();
+    return buf;
   }
 
+  @NotNull
+  protected ByteBuffer calc() {
+    totalSize += myLength;
+    /*
+    System.out.println("mapped total: " + StringUtil.formatFileSize(totalSize));
+    */
+    return map();
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final MappedBufferWrapper that = (MappedBufferWrapper)o;
+
+    /*
+    if (myLength != that.myLength) return false;
+    if (myPosition != that.myPosition) return false;
+    */
+    if (!myFile.equals(that.myFile)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myFile.hashCode();
+    result = 31 * result + (int)(myPosition ^ (myPosition >>> 32));
+    result = 31 * result + (int)(myLength ^ (myLength >>> 32));
+    return result;
+  }
 
   private static void unmapMappedByteBuffer141(MappedBufferWrapper holder) {
-    ByteBuffer buffer = holder.myBuffer;
+    ByteBuffer buffer = holder.getIfCached();
 
     unmapBuffer(buffer);
-    holder.myBuffer = null;
 
     boolean needGC = SystemInfo.JAVA_VERSION.startsWith("1.4.0");
 
@@ -145,8 +133,7 @@ public abstract class MappedBufferWrapper {
   }
 
   private static boolean unmapMappedByteBuffer142b19(MappedBufferWrapper holder) {
-    if (clean(holder.myBuffer)) {
-      holder.myBuffer = null;
+    if (clean(holder.getIfCached())) {
       return true;
     }
 
@@ -161,6 +148,8 @@ public abstract class MappedBufferWrapper {
           Method getCleanerMethod = buffer.getClass().getMethod(CLEANER_METHOD, ArrayUtil.EMPTY_CLASS_ARRAY);
           getCleanerMethod.setAccessible(true);
           Object cleaner = getCleanerMethod.invoke(buffer, ArrayUtil.EMPTY_OBJECT_ARRAY); // cleaner is actually of sun.misc.Cleaner
+          if (cleaner == null) return null; // Already cleaned
+          
           Class cleanerClass = Class.forName("sun.misc.Cleaner");
           Method cleanMethod = cleanerClass.getMethod(CLEAN_METHOD, ArrayUtil.EMPTY_CLASS_ARRAY);
           cleanMethod.invoke(cleaner, ArrayUtil.EMPTY_OBJECT_ARRAY);
@@ -193,16 +182,21 @@ public abstract class MappedBufferWrapper {
   }
 
   public synchronized boolean isMapped() {
-    return myBuffer != null;
+    return getIfCached() != null;
   }
 
   public synchronized void flush() {
-    final ByteBuffer buffer = myBuffer;
+    final ByteBuffer buffer = getIfCached();
     if (buffer != null) {
       if (buffer instanceof MappedByteBuffer) {
         final MappedByteBuffer mappedByteBuffer = (MappedByteBuffer)buffer;
         mappedByteBuffer.force();
       }
     }
+  }
+
+  public synchronized void dispose() {
+    unmap();
+    super.dispose();
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Set;
 
@@ -105,25 +108,86 @@ public class MockLocalFileSystem extends LocalFileSystem {
   public void forceRefreshFiles(final boolean asynchronous, @NotNull final VirtualFile... files) {
   }
 
-  protected void deleteFile(final Object requestor, final VirtualFile vFile) throws IOException {
+  public void deleteFile(final Object requestor, final VirtualFile vFile) throws IOException {
   }
 
-  protected void moveFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent) throws IOException {
+  public void moveFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent) throws IOException {
   }
 
-  protected void renameFile(final Object requestor, final VirtualFile vFile, final String newName) throws IOException {
+  public void renameFile(final Object requestor, final VirtualFile vFile, final String newName) throws IOException {
   }
 
-  protected VirtualFile createChildFile(final Object requestor, final VirtualFile vDir, final String fileName) throws IOException {
+  public VirtualFile createChildFile(final Object requestor, final VirtualFile vDir, final String fileName) throws IOException {
     return myDelegate.createChildFile(requestor, vDir, fileName);
   }
 
-  protected VirtualFile createChildDirectory(final Object requestor, final VirtualFile vDir, final String dirName) throws IOException {
+  public VirtualFile createChildDirectory(final Object requestor, final VirtualFile vDir, final String dirName) throws IOException {
     return myDelegate.createChildDirectory(requestor, vDir, dirName);
   }
 
-  protected VirtualFile copyFile(final Object requestor, final VirtualFile virtualFile, final VirtualFile newParent, final String copyName)
+  public VirtualFile copyFile(final Object requestor, final VirtualFile virtualFile, final VirtualFile newParent, final String copyName)
     throws IOException {
     return myDelegate.copyFile(requestor, virtualFile, newParent, copyName);
+  }
+
+  public String extractRootPath(final String path) {
+    return path;
+  }
+
+  public boolean isCaseSensitive() {
+    return false;
+  }
+
+  public boolean exists(final VirtualFile fileOrDirectory) {
+    return false;
+  }
+
+  public long getCRC(final VirtualFile file) {
+    return 0;
+  }
+
+  public InputStream getInputStream(final VirtualFile file) throws IOException {
+    return null;
+  }
+
+  public long getLength(final VirtualFile file) {
+    return 0;
+  }
+
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws
+                                                                                                                                 IOException {
+    return null;
+  }
+
+  public long getTimeStamp(final VirtualFile file) {
+    return 0;
+  }
+
+  public boolean isDirectory(final VirtualFile file) {
+    return false;
+  }
+
+  public boolean isWritable(final VirtualFile file) {
+    return false;
+  }
+
+  public String[] list(final VirtualFile file) {
+    return new String[0];
+  }
+
+  public VirtualFile[] listFiles(final VirtualFile file) {
+    return new VirtualFile[0];
+  }
+
+  public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
+
+  }
+
+  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+
+  }
+
+  public int getRank() {
+    return 1;
   }
 }

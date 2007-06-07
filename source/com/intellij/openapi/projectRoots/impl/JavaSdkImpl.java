@@ -14,10 +14,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -38,12 +40,10 @@ public class JavaSdkImpl extends JavaSdk {
   public static final Icon ICON = IconLoader.getIcon("/nodes/ppJdkClosed.png");
   private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
   private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
-  private final JarFileSystem myJarFileSystem;
   @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
 
-  public JavaSdkImpl(JarFileSystem jarFileSystem) {
+  public JavaSdkImpl() {
     super("JavaSDK");
-    myJarFileSystem = jarFileSystem;
   }
 
   public String getPresentableName() {
@@ -171,7 +171,7 @@ public class JavaSdkImpl extends JavaSdk {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void setupSdkPaths(Sdk sdk) {
     final File jdkHome = new File(sdk.getHomePath());
-    VirtualFile[] classes = findClasses(jdkHome, false, JarFileSystem.getInstance());
+    VirtualFile[] classes = findClasses(jdkHome, false);
     VirtualFile sources = findSources(jdkHome);
     VirtualFile docs = findDocs(jdkHome, "docs/api");
 
@@ -253,7 +253,7 @@ public class JavaSdkImpl extends JavaSdk {
     jdk.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
 
     File jdkHomeFile = new File(home);
-    addClasses(jdkHomeFile, sdkModificator, isJre, myJarFileSystem);
+    addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
     addDocs(jdkHomeFile, sdkModificator);
     sdkModificator.commitChanges();
@@ -285,21 +285,21 @@ public class JavaSdkImpl extends JavaSdk {
     sdkModificator.setVersionString(versionName); // must be set after home path, otherwise setting home path clears the version string
 
     addSources(jdkHomeFile, sdkModificator);
-    addClasses(jdkHomeFile, sdkModificator, false, JarFileSystem.getInstance());
-    addClasses(jdkHomeFile, sdkModificator, true, JarFileSystem.getInstance());
+    addClasses(jdkHomeFile, sdkModificator, false);
+    addClasses(jdkHomeFile, sdkModificator, true);
     sdkModificator.commitChanges();
 
     return jdk;
   }
 
-  private static void addClasses(File file, SdkModificator sdkModificator, final boolean isJre, JarFileSystem jarFileSystem) {
-    VirtualFile[] classes = findClasses(file, isJre, jarFileSystem);
+  private static void addClasses(File file, SdkModificator sdkModificator, final boolean isJre) {
+    VirtualFile[] classes = findClasses(file, isJre);
     for (VirtualFile virtualFile : classes) {
       sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
     }
   }
 
-  public static VirtualFile[] findClasses(File file, boolean isJre, JarFileSystem jarFileSystem) {
+  private static VirtualFile[] findClasses(File file, boolean isJre) {
     FileFilter jarFileFilter = new FileFilter(){
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f){
@@ -335,9 +335,8 @@ public class JavaSdkImpl extends JavaSdk {
 
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File child : childrenList) {
-      String path = child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      jarFileSystem.setNoCopyJarForPath(path);
-      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      String url = JarFileSystem.PROTOCOL + "://" + child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
       }
@@ -345,9 +344,8 @@ public class JavaSdkImpl extends JavaSdk {
 
     @NonNls File classesZipFile = new File(new File(file, "lib"), "classes.zip");
     if(!classesZipFile.isDirectory() && classesZipFile.exists()){
-      String path = classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      jarFileSystem.setNoCopyJarForPath(path);
-      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      String url = JarFileSystem.PROTOCOL + "://" + classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null){
         result.add(vFile);
       }
@@ -363,6 +361,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile findSources(File file) {
     File srcfile = new File(file, "src");
@@ -393,14 +392,14 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  @Nullable
   private static VirtualFile findInJar(File jarFile, String relativePath) {
     if (!jarFile.exists()) return null;
-    JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + relativePath;
-    jarFileSystem.setNoCopyJarForPath(path);
-    return jarFileSystem.findFileByPath(path);
+    String url = JarFileSystem.PROTOCOL + "://" + jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + relativePath;
+    return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
+  @Nullable
   public static VirtualFile findDocs(File file, final String relativePath) {
     file = new File(file.getAbsolutePath() + File.separator + relativePath.replace('/', File.separatorChar));
     if (!file.exists() || !file.isDirectory()) return null;

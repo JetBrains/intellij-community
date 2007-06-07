@@ -25,7 +25,7 @@ public class ToggleReadOnlyAttributeAction extends AnAction{
     VirtualFile[] files=(VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
     for(int i=0;files!=null&&i<files.length;i++){
       VirtualFile file=files[i];
-      if(file.getFileSystem() instanceof LocalFileSystem){
+      if(file.isInLocalFileSystem()){
         filesList.add(file);
       }
     }

@@ -557,7 +557,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   public static boolean isPackageNonNls(final PsiPackage psiPackage) {
-    if (psiPackage == null) {
+    if (psiPackage == null || psiPackage.getName() == null) {
       return false;
     }
     final PsiModifierList pkgModifierList = psiPackage.getAnnotationList();

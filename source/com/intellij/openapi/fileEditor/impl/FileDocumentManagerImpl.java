@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightVirtualFile;
@@ -85,7 +86,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void disposeComponent() {
   }
 
-  public Document getDocument(@NotNull VirtualFile file) {
+  public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null){
       if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
@@ -101,6 +102,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         document.addDocumentListener(
         new DocumentAdapter() {
             public void documentChanged(DocumentEvent e) {
+              if (!file.isValid()) {
+                System.out.println("Oops!");
+              }
+              
               final Document document = e.getDocument();
               myUnsavedDocuments.add(document);
               final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
@@ -269,7 +274,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private static boolean needsRefresh(final VirtualFile file) {
-    return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp();
+    final VirtualFileSystem fs = file.getFileSystem();
+    return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
   private static String getLineSeparator(Document document, VirtualFile file) {
@@ -291,6 +297,17 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
     else {
       return lineSeparator;
+    }
+  }
+
+  public void reloadFiles(final VirtualFile... files) {
+    for (VirtualFile file : files) {
+      if (file.exists()) {
+        final Document doc = getCachedDocument(file);
+        if (doc != null) {
+          reloadFromDisk(doc);
+        }
+      }
     }
   }
 

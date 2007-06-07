@@ -5,75 +5,75 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Map;
+import java.util.HashMap;
 
-public abstract class NewVirtualFileSystem extends VirtualFileSystem {
-  @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
-
-  @NonNls
-  public abstract String getProtocol();
-
-  @NonNls
-  public abstract String getBaseUrl();
-
-  public abstract boolean exists(VirtualFile fileOrDirectory);
-
-  public abstract String[] list(VirtualFile file);
-  public abstract VirtualFile[] listFiles(VirtualFile file);
-
-  public abstract boolean isDirectory(VirtualFile file);
-
-  public abstract long getTimeStamp(VirtualFile file);
-  public abstract void setTimeStamp(VirtualFile file, long modstamp) throws IOException;
-
-  public abstract boolean isWritable(VirtualFile file);
-  public abstract void setWritable(VirtualFile file, boolean writableFlag) throws IOException;
-
-  public abstract VirtualFile createChildDirectory(final Object requestor, VirtualFile parent, String dir) throws IOException;
-  public abstract VirtualFile createChildFile(final Object requestor, VirtualFile parent, String file) throws IOException;
-
-  public abstract void deleteFile(final Object requestor, VirtualFile file) throws IOException;
-  public abstract void moveFile(final Object requestor, VirtualFile from, VirtualFile newParent) throws IOException;
-  public abstract void renameFile(final Object requestor, VirtualFile from, String newName) throws IOException;
-  public abstract VirtualFile copyFile(final Object requestor, VirtualFile from, VirtualFile newParent, final String copyName) throws IOException;
-
-  public abstract InputStream getInputStream(VirtualFile file) throws IOException;
-  public abstract OutputStream getOutputStream(VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
-
-  public abstract String extractPresentableUrl(String path);
-
-  /**
-   * @return the CRC-32 checksum of the file content, or -1 if not known
-   */
-  public abstract long getCRC(VirtualFile file);
-
-  public abstract long getLength(VirtualFile file);
+public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface {
+  @NonNls protected static final String FILE_SEPARATORS = "/" + File.separator;
+  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new HashMap<VirtualFileListener, VirtualFileListener>();
 
   public abstract boolean isCaseSensitive();
 
-  public abstract VirtualFile getRoot();
-
-  public abstract int getId(final VirtualFile parent, final String childName);
-
   @Nullable
   public VirtualFile findFileByPath(@NotNull @NonNls final String path) {
-    final String basePath = getRoot().getPath();
-    VirtualFile file = getRoot();
-    for (String pathElement : StringUtil.tokenize(path.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0) continue;
-      file = file.findChild(pathElement);
+    final String normalizedPath = normalize(path);
+    final String basePath = extractRootPath(normalizedPath);
+    VirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
+    if (file == null || !file.exists()) return null;
+
+    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
+      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
+      if ("..".equals(pathElement)) {
+        file = file.getParent();
+      }
+      else {
+        file = file.findChild(pathElement);
+      }
+
       if (file == null) return null;
     }
 
     return file;
+  }
+
+  @Nullable
+  public VirtualFile refreshAndFindFileByPath(final String path) {
+    final String normalizedPath = normalize(path);
+    final String basePath = extractRootPath(normalizedPath);
+    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
+    if (!file.exists()) return null;
+
+    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
+      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
+      if ("..".equals(pathElement)) {
+        file = (NewVirtualFile)file.getParent();
+      }
+      else {
+        file = file.refreshAndFindChild(pathElement);
+      }
+
+      if (file == null) return null;
+    }
+
+    return file;
+  }
+
+  public String normalize(final String path) {
+    return path;
+  }
+
+  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+    refresh(asynchronous);
   }
 
   public void forceRefreshFiles(final boolean asynchronous, @NotNull final VirtualFile... files) {
@@ -81,12 +81,39 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem {
   }
 
   public void refresh(final boolean asynchronous) {
-    //TODO
+    RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }
 
-  @Nullable
-  public VirtualFile refreshAndFindFileByPath(final String path) {
-    refresh(false);
-    return findFileByPath(path);
+  public boolean isReadOnly() {
+    return true;
   }
+
+  public abstract String extractRootPath(String path);
+
+  public void addVirtualFileListener(final VirtualFileListener listener) {
+    synchronized (myListenerWrappers) {
+      VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
+      VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
+      myListenerWrappers.put(listener, wrapper);
+    }
+  }
+
+  public void removeVirtualFileListener(final VirtualFileListener listener) {
+    synchronized (myListenerWrappers) {
+      final VirtualFileListener wrapper = myListenerWrappers.get(listener);
+      if (wrapper != null) {
+        VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
+        myListenerWrappers.remove(wrapper);
+      }
+    }
+  }
+
+  public abstract int getRank();
+
+  public abstract VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName) throws IOException;
+  public abstract VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException;
+  public abstract VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException;
+  public abstract void deleteFile(final Object requestor, final VirtualFile file) throws IOException;
+  public abstract void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException;
+  public abstract void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException;
 }

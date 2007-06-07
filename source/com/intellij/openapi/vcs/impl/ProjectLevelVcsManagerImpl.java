@@ -337,7 +337,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (file == null) return null;
     if (myProject.isDisposed()) return null;
 
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+    if (!file.isInLocalFileSystem()) {
       return null;
     }
 

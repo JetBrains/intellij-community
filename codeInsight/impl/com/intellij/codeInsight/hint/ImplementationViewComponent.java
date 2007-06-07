@@ -176,7 +176,7 @@ public class ImplementationViewComponent extends JPanel {
       myFileChooser = new JComboBox(files.toArray(new FileDescriptor[files.size()]));
       myFileChooser.setRenderer(new DefaultListCellRenderer() {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
           VirtualFile file = ((FileDescriptor)value).myFile;
           setIcon(file.getIcon());
           setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());

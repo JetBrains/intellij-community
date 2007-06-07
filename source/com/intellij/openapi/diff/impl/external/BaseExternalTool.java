@@ -7,11 +7,11 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.StringProperty;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,8 +61,9 @@ abstract class BaseExternalTool implements DiffTool {
     return externalize(request, index).getContentFile().getAbsolutePath();
   }
 
-  protected VirtualFile getLocalFile(VirtualFile file) {
-    if (file != null && (file.getFileSystem() instanceof LocalFileSystem)) return file;
+  @Nullable
+  protected static VirtualFile getLocalFile(VirtualFile file) {
+    if (file != null && file.isInLocalFileSystem()) return file;
     return null;
   }
 
@@ -81,9 +82,10 @@ abstract class BaseExternalTool implements DiffTool {
       return myFile;
     }
 
+    @Nullable
     public static LocalFileExternalizer tryCreate(VirtualFile file) {
       if (file == null || !file.isValid()) return null;
-      if (!(file.getFileSystem() instanceof LocalFileSystem)) return null;
+      if (!file.isInLocalFileSystem()) return null;
       return new LocalFileExternalizer(new File(file.getPath().replace('/', File.separatorChar)));
     }
   }

@@ -4,6 +4,7 @@
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 
 public class VFileCreateEvent extends VFileEvent {
@@ -11,8 +12,8 @@ public class VFileCreateEvent extends VFileEvent {
   private final boolean myDirectory;
   private String myChildName;
 
-  public VFileCreateEvent(final VirtualFile parent, final String childName, boolean isDirectory, boolean isFromRefresh) {
-    super(isFromRefresh);
+  public VFileCreateEvent(final Object requestor, final VirtualFile parent, final String childName, boolean isDirectory, boolean isFromRefresh) {
+    super(requestor, isFromRefresh);
     myChildName = childName;
     myParent = parent;
     myDirectory = isDirectory;
@@ -33,5 +34,13 @@ public class VFileCreateEvent extends VFileEvent {
   @NonNls
   public String toString() {
     return "VfsEvent[create " + (isDirectory() ? "dir " : "file ") + myChildName +  " in " + myParent.getUrl() + "]";
+  }
+
+  public String getPath() {
+    return myParent.getPath() + "/" + myChildName;
+  }
+
+  public VirtualFileSystem getFileSystem() {
+    return myParent.getFileSystem();
   }
 }

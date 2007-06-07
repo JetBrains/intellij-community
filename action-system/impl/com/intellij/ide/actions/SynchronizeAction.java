@@ -9,6 +9,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 public class SynchronizeAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    VirtualFileManager.getInstance().refresh(true);
+    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 }

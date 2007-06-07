@@ -29,9 +29,9 @@ public class FileAttribute {
 
   @Nullable
   public DataInputStream readAttribute(VirtualFile file) {
-    LOG.assertTrue(((NewVirtualFile)file).getId() > 0, "File must belong to managed FS in order to support attributes");
+    LOG.assertTrue(((NewVirtualFile)file).getId() > 0, "File is either invalid or doesn't belong to a managed FS");
 
-    final DataInputStream stream = ((ManagingFS)file.getFileSystem()).readAttribute(file, this);
+    final DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
     if (stream != null) {
       try {
         int actualVersion = stream.readInt();
@@ -48,9 +48,9 @@ public class FileAttribute {
   }
 
   public DataOutputStream writeAttribute(VirtualFile file) {
-    LOG.assertTrue(((NewVirtualFile)file).getId() > 0, "File must belong to managed FS in order to support attributes");
+    LOG.assertTrue(((NewVirtualFile)file).getId() > 0, "File is either invalid or doesn't belong to a managed FS");
 
-    final DataOutputStream stream = ((ManagingFS)file.getFileSystem()).writeAttribute(file, this);
+    final DataOutputStream stream = ManagingFS.getInstance().writeAttribute(file, this);
     try {
       stream.writeInt(myVersion);
     }

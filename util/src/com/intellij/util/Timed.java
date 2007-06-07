@@ -30,6 +30,13 @@ abstract class Timed<T> implements Disposable {
   }
 
   public synchronized void dispose() {
+    final Object t = myT;
+    myT = null;
+    if (t instanceof Disposable) {
+      Disposable disposable = (Disposable)t;
+      Disposer.dispose(disposable);
+    }
+
     remove();
   }
 
@@ -60,13 +67,7 @@ abstract class Timed<T> implements Disposable {
             if (timed == null) continue;
             synchronized (timed) {
               if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.isLocked()) {
-                final Object t = timed.myT;
-                timed.myT = null;
-                if (t instanceof Disposable) {
-                  Disposable disposable = (Disposable)t;
-                  Disposer.dispose(disposable);
-                }
-                timed.remove();
+                timed.dispose();
               }
               else {
                 timed.myLastCheckedAccessCount = timed.myAccessCount;

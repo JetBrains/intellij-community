@@ -25,4 +25,8 @@ public abstract class VirtualFileManagerEx extends VirtualFileManager {
 
   @Nullable
   public abstract ProvidedContent getProvidedContent(VirtualFile file);
+
+  public abstract void fireBeforeRefreshStart(boolean asynchronous);
+
+  public abstract void fireAfterRefreshFinish(boolean asynchronous);
 }

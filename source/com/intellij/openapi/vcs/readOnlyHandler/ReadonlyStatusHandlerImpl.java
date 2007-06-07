@@ -124,7 +124,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   private static boolean isLocal(final VirtualFile file) {
-    return file.getFileSystem() == LocalFileSystem.getInstance();
+    return file.isInLocalFileSystem();
   }
 
   public void projectOpened() {

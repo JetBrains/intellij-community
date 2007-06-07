@@ -23,6 +23,10 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
     return null;
   }
 
+  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+    refresh(asynchronous);
+  }
+
   public void refresh(boolean asynchronous) {
   }
 
@@ -89,6 +93,14 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   public void unregisterFileSystem(VirtualFileSystem fileSystem) {
+  }
+
+  public void fireAfterRefreshFinish(final boolean asynchronous) {
+
+  }
+
+  public void fireBeforeRefreshStart(final boolean asynchronous) {
+    
   }
 
   @Nullable

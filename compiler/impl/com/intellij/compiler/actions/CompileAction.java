@@ -153,7 +153,7 @@ public class CompileAction extends CompileActionBase {
       if (!fileIndex.isInSourceContent(file)) {
         continue;
       }
-      if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+      if (!file.isInLocalFileSystem()) {
         continue;
       }
       if (file.isDirectory()) {

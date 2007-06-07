@@ -104,7 +104,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   private static boolean isLocal(VirtualFile virtualFile) {
-    return virtualFile.getFileSystem() == LocalFileSystem.getInstance();
+    return virtualFile.isInLocalFileSystem();
   }
 
   private static VirtualFile[] filterLocalFiles(VirtualFile[] fileArray) {

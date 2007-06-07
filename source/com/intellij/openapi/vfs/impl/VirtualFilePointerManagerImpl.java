@@ -28,7 +28,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private MyVirtualFileManagerListener myVirtualFileManagerListener;
   private MyCommandListener myCommandListener;
 
-  private boolean myInsideRefresh = false;
+  private int myInsideRefresh = 0;
   private boolean myInsideCommand = false;
   private boolean myChangesDetected = false;
   private VirtualFileManagerEx myVirtualFileManager;
@@ -270,7 +270,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     private void handleEvent() {
-      if (!myInsideRefresh && !myInsideCommand) {
+      if (myInsideRefresh == 0 && !myInsideCommand) {
         validate();
       }
       else {
@@ -304,12 +304,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
     public void beforeRefreshStart(boolean asynchonous) {
-      myInsideRefresh = true;
+      myInsideRefresh++;
     }
 
     public void afterRefreshFinish(boolean asynchonous) {
-      myInsideRefresh = false;
-      if (myChangesDetected && !myInsideCommand) {
+      myInsideRefresh--;
+      if (/*myChangesDetected  &&*/ !myInsideCommand) {
         myChangesDetected = false;
         validate();
       }
@@ -323,7 +323,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     public void commandFinished(CommandEvent event){
       myInsideCommand = false;
-      if (myChangesDetected && !myInsideRefresh) {
+      if (myChangesDetected && myInsideRefresh == 0) {
         myChangesDetected = false;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
