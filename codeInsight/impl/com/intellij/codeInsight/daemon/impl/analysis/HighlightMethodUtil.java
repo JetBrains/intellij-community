@@ -458,7 +458,9 @@ public class HighlightMethodUtil {
     ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new StaticImportMethodFix(methodCall));
+    if (methodCandidates.length == 0) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, new StaticImportMethodFix(methodCall));
+    }
   }
 
   private static void registerMethodAccessLevelIntentions(CandidateInfo[] methodCandidates,
