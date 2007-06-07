@@ -6,5 +6,6 @@ public class A extends groovy.lang.GroovyObjectSupport implements Comparable {
   public int compare(A anotherA) {
     return 0;
   }
+
 }
 ---

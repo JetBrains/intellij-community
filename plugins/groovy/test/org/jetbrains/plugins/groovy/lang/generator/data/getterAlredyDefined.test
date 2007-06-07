@@ -1,0 +1,11 @@
+def foo = ""
+
+def getFoo () {
+}
+-----
+public class getterAlredyDefined extends groovy.lang.Script {
+  public java.lang.Object run() {
+    return null;
+  }
+}
+---
