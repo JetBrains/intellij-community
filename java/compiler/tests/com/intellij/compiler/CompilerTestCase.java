@@ -18,6 +18,8 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.testFramework.ModuleTestCase;
 import org.apache.log4j.Level;
@@ -445,7 +447,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           VirtualFile destChild = destDir.findChild(name);
           if (destChild != null && destChild.isValid()) {
 //            System.out.println("Replacing " + destChild.getPath() + " with " + name + "; current timestamp is " + destChild.getPhysicalTimeStamp());
-            currentTimeStamp = ((VirtualFileImpl)destChild).getActualTimeStamp();
+            currentTimeStamp = ((NewVirtualFileSystem)destChild.getFileSystem()).getTimeStamp(destChild);
             final String destChildPath = destChild.getPath().replace('/', File.separatorChar);
             destChild.delete(this);
             assertTrue("File " + destChildPath + " should be deleted in order for the test to work properly!",
@@ -462,7 +464,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 //        System.out.println("time before copying= " + System.currentTimeMillis());
         VirtualFile newChild = VfsUtil.copyFile(this, child, destDir, name);
         assertTrue("Timestamps of test data files must differ in order for the test to work properly!\n " + child.getPath(),
-                   currentTimeStamp != ((VirtualFileImpl)newChild).getActualTimeStamp());
+                   currentTimeStamp != ((NewVirtualFileSystem)newChild.getFileSystem()).getTimeStamp(newChild));
 //        System.out.println("time after copying= " + System.currentTimeMillis());
 //        System.out.println("{TestCase:} copied " + child.getPath() + "origin timestamp is " + child.getPhysicalTimeStamp() + "; new timestamp is "+newChild.getPhysicalTimeStamp());
       }
