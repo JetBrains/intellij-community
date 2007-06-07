@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -116,7 +115,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Find occurences
     final PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     // Getting settings
-    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurences, false, null);
+    Validator validator = new GroovyVariableValidator(this, project, selectedExpr, tempContainer);
+    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurences, false, validator);
 
     if (!settings.isOK()) {
       return false;
@@ -164,6 +164,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
           } else {
             firstOccurence = selectedExpr;
           }
+
+          assert varDecl.getVariables().length > 0;
+          resolveLocalConflicts(tempContainer, varDecl.getVariables()[0]);
           // Replace at the place of first occurence
           boolean alreadyDefined = replaceAloneExpression(firstOccurence, selectedExpr, tempContainer, varDecl);
           if (!alreadyDefined) {
@@ -225,6 +228,28 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             ApplicationManager.getApplication().runWriteAction(runnable);
           }
         }, REFACTORING_NAME, null);
+  }
+
+  private void resolveLocalConflicts(PsiElement tempContainer, GrVariable varDef) {
+    for (PsiElement child : tempContainer.getChildren()) {
+      if (child instanceof GrReferenceExpression &&
+          !child.getText().contains(".")) {
+        PsiReference psiReference = child.getReference();
+        if (psiReference != null &&
+            psiReference.resolve() != null &&
+            psiReference.resolve() instanceof GrField &&
+            varDef.getNameIdentifierGroovy().getText().equals(((GrField) psiReference.resolve()).getNameIdentifierGroovy().getText())) {
+          GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
+          try {
+            ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this."+ child.getText()));
+          } catch (IncorrectOperationException e) {
+            e.printStackTrace();
+          }
+        }
+      } else {
+        resolveLocalConflicts(child, varDef);
+      }
+    }
   }
 
   private void refreshPositionMarker(PsiElement position) {
@@ -416,6 +441,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   protected abstract void showErrorMessage(String message, Project project);
 
   protected abstract void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences);
+
+  protected abstract boolean reportConflicts(final ArrayList<String> conflicts, final Project project);
 
   private static boolean isAppropriateContainer(PsiElement tempContainer) {
     return tempContainer instanceof GrOpenBlock ||

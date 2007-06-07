@@ -71,10 +71,17 @@ public class GroovyAnnotator implements Annotator {
     } else if (element instanceof GrVariable) {
       checkVariable(holder, (GrVariable) element);
     } else if (element instanceof GrAssignmentExpression) {
-      checkAssignmentExpression((GrAssignmentExpression)element, holder);
+      checkAssignmentExpression((GrAssignmentExpression) element, holder);
     } else if (element instanceof GrTraditionalForClauseImpl) {
       forbidTraditionalForClause(((GrTraditionalForClauseImpl) element), holder);
+    } else if (element instanceof GrField) {
+      annotateField((GrField) element, holder);
     }
+  }
+
+  private void annotateField(GrField grField, AnnotationHolder holder) {
+    Annotation annotation = holder.createInfoAnnotation(grField, null);
+    annotation.setEnforcedTextAttributes(new TextAttributes(Color.MAGENTA, null, Color.black, null, 1));
   }
 
   private void checkAssignmentExpression(GrAssignmentExpression assignment, AnnotationHolder holder) {
@@ -92,7 +99,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void forbidTraditionalForClause(GrTraditionalForClauseImpl clause, AnnotationHolder holder){
+  private void forbidTraditionalForClause(GrTraditionalForClauseImpl clause, AnnotationHolder holder) {
     holder.createErrorAnnotation(clause, "\"Traditional\" for-loop clause is not implemented in Groovy yet");
   }
 
@@ -128,7 +135,7 @@ public class GroovyAnnotator implements Annotator {
         holder.createWarningAnnotation(refExpr, message);
       } else if (element instanceof PsiMethod && element.getUserData(GrMethod.BUILDER_METHOD) == null) {
         PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
-        if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod)element)) {
+        if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod) element)) {
           GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(refExpr);
           LOG.assertTrue(elementToHighlight != null);
           //todo more specific error message
@@ -163,6 +170,14 @@ public class GroovyAnnotator implements Annotator {
 
       annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.MAGENTA, EffectType.LINE_UNDERSCORE, 0));
     }
+
+/*
+    if (refExpr.getReference().resolve() instanceof GrField) {
+      Annotation annotation = holder.createInfoAnnotation(refExpr, null);
+      annotation.setEnforcedTextAttributes(new TextAttributes(Color.CYAN, null, Color.black, null, 2));
+    }
+*/
+
   }
 
   private boolean isAssignmentLHS(GrReferenceExpression refExpr) {

@@ -92,5 +92,4 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 
-
 }

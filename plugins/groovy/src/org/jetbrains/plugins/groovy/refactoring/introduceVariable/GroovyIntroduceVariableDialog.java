@@ -63,6 +63,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   private JCheckBox myCbTypeSpec;
   private JComboBox myTypeSelector;
   private JLabel myTypeLabel;
+  private JLabel myNameLabel;
   private JButton buttonOK;
 
   public GroovyIntroduceVariableDialog(Project project,
@@ -128,6 +129,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
     myNameComboBox.setFocusCycleRoot(true);
     myNameComboBox.setFocusTraversalPolicyProvider(true);
+    myNameLabel.setLabelFor(myNameComboBox);
+    myTypeLabel.setLabelFor(myTypeSelector);
 
     // Type specification
     if (myType == null) {
@@ -161,7 +164,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myNameComboBox.setEditor(comboEditor);
     myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
     // todo implement name contributor
-//    comboEditor.setItem("preved");
 
     myNameComboBox.setEditable(true);
     myNameComboBox.setMaximumRowCount(8);

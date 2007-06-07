@@ -65,6 +65,8 @@ public abstract class GroovyElementFactory {
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String idText);
 
+  public abstract GrExpression createExpressionFromText(String idText);
+
   public abstract GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal);
 
   public abstract PsiElement createIdentifierFromText(String idText);

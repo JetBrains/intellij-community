@@ -69,6 +69,12 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0];
   }
 
+  public GrExpression createExpressionFromText(String idText) {
+    PsiFile file = createGroovyFile(idText);
+    assert ((GroovyFile) file).getTopStatements()[0] instanceof GrExpression;
+    return (GrExpression) ((GroovyFile) file).getTopStatements()[0];
+  }
+
   public GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal) {
     StringBuffer text = new StringBuffer();
     text.append("def ");

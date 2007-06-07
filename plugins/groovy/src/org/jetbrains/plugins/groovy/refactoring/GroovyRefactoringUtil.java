@@ -23,10 +23,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -174,5 +171,28 @@ public abstract class GroovyRefactoringUtil {
       operand = ((GrParenthesizedExpr) operand).getOperand();
     }
     return operand;
+  }
+
+  public static boolean declarationCanConflictWithExpr(GrVariable variable, GrExpression expr){
+    PsiElement varParent = variable;
+    PsiElement exprParent = expr;
+    while (!(varParent instanceof GrCodeBlock ||
+        isLoopOrForkStatement(varParent) ||
+        varParent instanceof GroovyFile)) {
+      varParent = varParent.getParent();
+    }
+    while (!(exprParent instanceof GrCodeBlock ||
+        isLoopOrForkStatement(exprParent) ||
+        exprParent instanceof GroovyFile)) {
+      exprParent = exprParent.getParent();
+    }
+    assert varParent != null && exprParent != null;
+
+    if (varParent instanceof GroovyFile &&
+        !(exprParent instanceof GroovyFile)) {
+      return exprParent.getTextOffset() >= varParent.getTextOffset();
+    }
+
+    return varParent.getTextRange().intersects(exprParent.getTextRange());
   }
 }
