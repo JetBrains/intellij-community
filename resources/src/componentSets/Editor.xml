@@ -66,11 +66,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.codeEditor.printing.ExportToHTMLSettings</interface-class>
-      <implementation-class>com.intellij.codeEditor.printing.ExportToHTMLSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</implementation-class>
       <option name="workspace" value="true"/>

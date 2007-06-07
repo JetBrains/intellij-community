@@ -6,12 +6,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.compiler.CompilerWorkspaceConfiguration</interface-class>
-      <implementation-class>com.intellij.compiler.CompilerWorkspaceConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.compiler.impl.javaCompiler.javac.JavacSettings</implementation-class>
       <skipForDummyProject/>
     </component>

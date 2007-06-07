@@ -1,18 +1,22 @@
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
-/**
- *
- */
-public class ExportToHTMLSettings implements NamedJDOMExternalizable, ProjectComponent {
+@State(
+  name = "ExportToHTMLSettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$PROJECT_FILE$"
+    )}
+)
+public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {
   public boolean PRINT_LINE_NUMBERS;
   public boolean OPEN_IN_BROWSER;
   @NonNls public String OUTPUT_DIRECTORY;
@@ -23,22 +27,7 @@ public class ExportToHTMLSettings implements NamedJDOMExternalizable, ProjectCom
   private boolean isGenerateHyperlinksToClasses = false;
 
   public static ExportToHTMLSettings getInstance(Project project) {
-    return project.getComponent(ExportToHTMLSettings.class);
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public String getExternalFileName() {
-    return "export2html";
+    return ServiceManager.getService(project, ExportToHTMLSettings.class);
   }
 
   public int getPrintScope() {
@@ -65,16 +54,11 @@ public class ExportToHTMLSettings implements NamedJDOMExternalizable, ProjectCom
     isGenerateHyperlinksToClasses = generateHyperlinksToClasses;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public ExportToHTMLSettings getState() {
+    return this;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(ExportToHTMLSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
-
-  public String getComponentName() {
-    return "ExportToHTMLSettings";
-  }
-
 }

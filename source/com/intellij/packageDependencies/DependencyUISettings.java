@@ -1,14 +1,20 @@
 package com.intellij.packageDependencies;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
-public class DependencyUISettings implements JDOMExternalizable, ApplicationComponent {
+@State(
+  name = "DependencyUISettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class DependencyUISettings implements PersistentStateComponent<DependencyUISettings> {
   public boolean UI_FLATTEN_PACKAGES = true;
   public boolean UI_SHOW_FILES = true;
   public boolean UI_SHOW_MODULES = true;
@@ -18,21 +24,14 @@ public class DependencyUISettings implements JDOMExternalizable, ApplicationComp
   public boolean UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
 
   public static DependencyUISettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(DependencyUISettings.class);
+    return ServiceManager.getService(DependencyUISettings.class);
   }
 
-  public String getComponentName() {
-    return "DependencyUISettings";
+  public DependencyUISettings getState() {
+    return this;
   }
 
-  public void initComponent() {}
-  public void disposeComponent() {}
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(DependencyUISettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

@@ -3,15 +3,22 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
-public class CompilerWorkspaceConfiguration  implements JDOMExternalizable, ProjectComponent {
+@State(
+  name = "CompilerWorkspaceConfiguration",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
 
   public boolean COMPILE_IN_BACKGROUND = false;
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
@@ -20,32 +27,15 @@ public class CompilerWorkspaceConfiguration  implements JDOMExternalizable, Proj
   public boolean CLEAR_OUTPUT_DIRECTORY = false;
   public boolean ASSERT_NOT_NULL = true;
 
-
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
-    return project.getComponent(CompilerWorkspaceConfiguration.class);
+    return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public CompilerWorkspaceConfiguration getState() {
+    return this;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(CompilerWorkspaceConfiguration state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public String getComponentName() {
-    return "CompilerWorkspaceConfiguration";
-  }
-
 }
