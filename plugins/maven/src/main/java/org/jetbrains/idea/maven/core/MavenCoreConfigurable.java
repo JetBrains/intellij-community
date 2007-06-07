@@ -53,9 +53,9 @@ public class MavenCoreConfigurable implements Configurable {
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox mavenSettingsFileOverrideCheckBox;
   private JCheckBox localRepositoryOverrideCheckBox;
-  Overrider mavenHomeOverrider;
-  Overrider mavenSettingsFileOverrider;
-  Overrider localRepositoryOverrider;
+  private Overrider mavenHomeOverrider;
+  private Overrider mavenSettingsFileOverrider;
+  private Overrider localRepositoryOverrider;
   private final DefaultComboBoxModel comboboxModelOutputLevel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelChecksumPolicy = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelMultiprojectBuildFailPolicy = new DefaultComboBoxModel();
@@ -65,12 +65,9 @@ public class MavenCoreConfigurable implements Configurable {
 
   public MavenCoreConfigurable(MavenCore mavenCore) {
     myMavenCore = mavenCore;
+  }
 
-    fillComboboxOutputLevel();
-    fillComboboxChecksumPolicy();
-    fillComboboxFailureBehavior();
-    fillComboboxPluginUpdatePolicy();
-
+  private void initPathEditors() {
     mavenHomeComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.maven.home.directory"), "", null,
                                                               new FileChooserDescriptor(false, true, false, false, false, false));
     mavenHomeOverrider = new Overrider(mavenHomeComponent, mavenHomeOverrideCheckBox, new Overrider.DefaultFileProvider() {
@@ -102,6 +99,7 @@ public class MavenCoreConfigurable implements Configurable {
   }
 
   private void fillComboboxFailureBehavior() {
+    comboboxModelMultiprojectBuildFailPolicy.removeAllElements();
     ComboBoxUtil.addToModel(comboboxModelMultiprojectBuildFailPolicy, new Object[][]{
       {MavenExecutionRequest.REACTOR_FAIL_FAST, "Stop at first failure"}, {MavenExecutionRequest.REACTOR_FAIL_AT_END, "Fail at the end"},
       {MavenExecutionRequest.REACTOR_FAIL_NEVER, "Never fail"}});
@@ -110,12 +108,14 @@ public class MavenCoreConfigurable implements Configurable {
   }
 
   private void fillComboboxPluginUpdatePolicy() {
+    comboboxModelPluginUpdatePolicy.removeAllElements();
     ComboBoxUtil.addToModel(comboboxModelPluginUpdatePolicy, new Object[][]{{"true", "Check For Updates"}, {"false", "Supress Checking"}});
 
     comboboxPluginUpdatePolicy.setModel(comboboxModelPluginUpdatePolicy);
   }
 
   private void fillComboboxChecksumPolicy() {
+    comboboxModelChecksumPolicy.removeAllElements();
     ComboBoxUtil.addToModel(comboboxModelChecksumPolicy, new Object[][]{{"", "No Global Policy"},
       {MavenExecutionRequest.CHECKSUM_POLICY_FAIL, "Strict (Fail)"}, {MavenExecutionRequest.CHECKSUM_POLICY_WARN, "Lax (Warn Only)"}});
 
@@ -123,6 +123,7 @@ public class MavenCoreConfigurable implements Configurable {
   }
 
   private void fillComboboxOutputLevel() {
+    comboboxModelOutputLevel.removeAllElements();
     ComboBoxUtil.addToModel(comboboxModelOutputLevel, new Object[][]{{MavenExecutionRequest.LOGGING_LEVEL_DEBUG, "Debug"},
       {MavenExecutionRequest.LOGGING_LEVEL_INFO, "Info"}, {MavenExecutionRequest.LOGGING_LEVEL_WARN, "Warn"},
       {MavenExecutionRequest.LOGGING_LEVEL_ERROR, "Error"}, {MavenExecutionRequest.LOGGING_LEVEL_FATAL, "Fatal"},
@@ -131,12 +132,14 @@ public class MavenCoreConfigurable implements Configurable {
     comboboxOutputLevel.setModel(comboboxModelOutputLevel);
   }
 
-  JComponent getRootComponent() {
-    return panel;
-  }
-
   public JComponent createComponent() {
-    return getRootComponent();
+    fillComboboxOutputLevel();
+    fillComboboxChecksumPolicy();
+    fillComboboxFailureBehavior();
+    fillComboboxPluginUpdatePolicy();
+
+    initPathEditors();
+    return panel;
   }
 
   public boolean isModified() {
@@ -188,6 +191,9 @@ public class MavenCoreConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
+    mavenHomeOverrider.dispose();
+    mavenSettingsFileOverrider.dispose();
+    localRepositoryOverrider.dispose();
   }
 
   @Nls
@@ -227,6 +233,11 @@ public class MavenCoreConfigurable implements Configurable {
     private final DefaultTextProvider defaultTextProvider;
 
     private String overrideText;
+    private ActionListener listener = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        update();
+      }
+    };
 
     public Overrider(final LabeledComponent<TextFieldWithBrowseButton> component,
                      final JCheckBox checkBox,
@@ -234,11 +245,11 @@ public class MavenCoreConfigurable implements Configurable {
       this.component = component.getComponent();
       this.checkBox = checkBox;
       this.defaultTextProvider = defaultTextProvider;
-      checkBox.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          update();
-        }
-      });
+      checkBox.addActionListener(listener);
+    }
+
+    public void dispose () {
+      checkBox.removeActionListener(listener);
     }
 
     private void update() {
