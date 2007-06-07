@@ -111,7 +111,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
-  public void _testFieldInitializedWithVarConflict() throws Exception {
+  public void testFieldInitializedWithVarConflict() throws Exception {
     doTest(false);
   }
 

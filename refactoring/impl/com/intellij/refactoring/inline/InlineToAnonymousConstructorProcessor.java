@@ -1,28 +1,26 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.impl.MatchingContext;
-import com.intellij.patterns.impl.TraverseContext;
 import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.StandardPatterns;
-import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
 import static com.intellij.patterns.impl.StandardPatterns.psiElement;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.diagnostic.Logger;
+import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
+import com.intellij.patterns.impl.TraverseContext;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -39,9 +37,9 @@ class InlineToAnonymousConstructorProcessor {
   private final PsiClass myClass;
   private final PsiNewExpression myNewExpression;
   private PsiType mySuperType;
-  private final Map<String, FieldInfo> myFields = new HashMap<String, FieldInfo>();
-  private final Map<String, FieldInfo> myParameters = new HashMap<String, FieldInfo>();
-  private boolean myIsInMethod;
+  private final Map<String, PsiExpression> myFieldInitializers = new HashMap<String, PsiExpression>();
+  private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<PsiParameter, PsiVariable>();
+  private PsiStatement myNewStatement;
   private final PsiElementFactory myElementFactory;
   private PsiMethod myConstructor;
   private PsiExpressionList myConstructorArguments;
@@ -52,7 +50,7 @@ class InlineToAnonymousConstructorProcessor {
     myClass = aClass;
     myNewExpression = psiNewExpression;
     mySuperType = superType;
-    myIsInMethod = (PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class) != null);
+    myNewStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class);
     myElementFactory = myClass.getManager().getElementFactory();
   }
 
@@ -89,9 +87,11 @@ class InlineToAnonymousConstructorProcessor {
       final PsiExpressionList argumentList = superNewExpressionTemplate.getArgumentList();
       assert argumentList != null;
 
+      if (myNewStatement != null) {
+        generateLocalsForArguments();
+      }
       analyzeConstructor(initializerBlock);
       addSuperConstructorArguments(argumentList);
-      generateLocalsForFields();
     }
 
     ChangeContextUtil.encodeContextInfo(myClass.getNavigationElement(), true);
@@ -107,25 +107,18 @@ class InlineToAnonymousConstructorProcessor {
     for(PsiElement child: classCopy.getChildren()) {
       if ((child instanceof PsiMethod && !((PsiMethod) child).isConstructor()) ||
           child instanceof PsiClassInitializer || child instanceof PsiClass) {
-        if (!myFields.isEmpty() || !myParameters.isEmpty() || classResolveSubstitutor != PsiSubstitutor.EMPTY || outerClassLocal != null) {
+        if (!myFieldInitializers.isEmpty() || !myLocalsForParameters.isEmpty() || classResolveSubstitutor != PsiSubstitutor.EMPTY || outerClassLocal != null) {
           replaceReferences((PsiMember) child, substitutedParameters, outerClassLocal);
         }
         child = anonymousClass.addBefore(child, anonymousClass.getRBrace());
       }
       else if (child instanceof PsiField) {
         PsiField field = (PsiField) child;
-        FieldInfo info = myFields.get(field.getName());
-        if (info == null || !info.replaceWithLocal) {
-          boolean noInitializer = (field.getInitializer() == null);
-          field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
-          if (info != null) {
-            if (info.localVar != null) {
-              field.setInitializer(myElementFactory.createExpressionFromText(info.localVar.getName(), field));
-            }
-            else if (info.initializer != null && noInitializer) {
-              field.setInitializer(info.initializer);
-            }
-          }
+        PsiExpression initializer = myFieldInitializers.get(field.getName());
+        boolean noInitializer = (field.getInitializer() == null);
+        field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
+        if (initializer != null && noInitializer) {
+          field.setInitializer(initializer);
         }
       }
     }
@@ -177,32 +170,6 @@ class InlineToAnonymousConstructorProcessor {
         initializerBlock.addBefore(child, initializerBlock.getRBrace());
       }
     }
-    checkFieldWriteUsages();
-  }
-
-  private void checkFieldWriteUsages() {
-    for(FieldInfo info: myFields.values()) {
-      if (info.generateLocal) {
-        PsiField field = myClass.findFieldByName(info.name, false);
-        assert field != null;
-        boolean hasOnlyReadUsages = ReferencesSearch.search(field, new LocalSearchScope(myClass)).forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference psiReference) {
-            PsiElement psiElement = psiReference.getElement();
-            if (psiElement instanceof PsiExpression) {
-              PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
-              if (method == null || !method.isConstructor()) {
-                return !PsiUtil.isAccessedForWriting((PsiExpression)psiElement);
-              }
-            }
-
-            return true;
-          }
-        });
-        if (hasOnlyReadUsages) {
-          info.replaceWithLocal = true;
-        }
-      }
-    }
   }
 
   private boolean processAssignmentInConstructor(final PsiAssignmentExpression expression) {
@@ -214,30 +181,20 @@ class InlineToAnonymousConstructorProcessor {
       if (psiElement instanceof PsiField) {
         PsiField field = (PsiField) psiElement;
         if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
-          FieldInfo info = getNewFieldInfo(field);
-
-          Object constantValue = myClass.getManager().getConstantEvaluationHelper().computeConstantExpression(rExpr);
-          final boolean isConstantInitializer = constantValue != null || ourNullPattern.accepts(rExpr);
-          if (!isConstantInitializer) {
-            final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
-            final PsiExpression initializer;
-            try {
-              initializer = replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return true;
-            }
-            if (!localVarRefs.isEmpty()) {
-              return false;
-            }
-
-            info.initializer = initializer;
-            info.generateLocal = true;
+          final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
+          final PsiExpression initializer;
+          try {
+            initializer = replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs);
           }
-          else {
-            info.initializer = (PsiExpression) rExpr.copy();
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+            return true;
           }
+          if (!localVarRefs.isEmpty()) {
+            return false;
+          }
+
+          myFieldInitializers.put(field.getName(), initializer);
         }
       }
       else if (psiElement instanceof PsiVariable) {
@@ -252,20 +209,27 @@ class InlineToAnonymousConstructorProcessor {
     return true;
   }
 
+  private boolean isConstant(final PsiExpression expr) {
+    Object constantValue = myClass.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+    return constantValue != null || ourNullPattern.accepts(expr);
+  }
+
   private PsiVariable generateOuterClassLocal() {
+    PsiClass outerClass = myClass.getContainingClass();
+    assert outerClass != null;
+    return generateLocal(StringUtil.decapitalize(outerClass.getName()),
+                         myElementFactory.createType(outerClass), myNewExpression.getQualifier());
+  }
+
+  private PsiVariable generateLocal(final String baseName, final PsiType type, final PsiExpression initializer) {
     final CodeStyleManager codeStyleManager = myClass.getManager().getCodeStyleManager();
 
-    String outerClassName = StringUtil.decapitalize(myClass.getContainingClass().getName());
-    String localName = codeStyleManager.suggestUniqueVariableName(outerClassName, myNewExpression, true);
+    String localName = codeStyleManager.suggestUniqueVariableName(baseName, myNewExpression, true);
     try {
-      final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName,
-                                                                                             myElementFactory.createType(myClass.getContainingClass()),
-                                                                                             myNewExpression.getQualifier());
+      final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
       variable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-      final PsiStatement newStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class);
-      assert newStatement != null;
-      newStatement.getParent().addBefore(declaration, newStatement);
+      myNewStatement.getParent().addBefore(declaration, myNewStatement);
       return variable;
     }
     catch (IncorrectOperationException e) {
@@ -274,24 +238,14 @@ class InlineToAnonymousConstructorProcessor {
     }
   }
 
-  private void generateLocalsForFields() {
-    final CodeStyleManager codeStyleManager = myClass.getManager().getCodeStyleManager();
-    final PsiStatement newStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class);
-
-    for(FieldInfo info: getLocalsToGenerate()) {
-      final String fieldName = info.name;
-      String varName = codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.FIELD);
-      String localName = codeStyleManager.suggestUniqueVariableName(varName, myNewExpression, true);
-      try {
-        final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, info.type, info.initializer);
-        PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
-        variable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-        assert newStatement != null;
-        newStatement.getParent().addBefore(declaration, newStatement);
-        info.localVar = variable;
-      }
-      catch(IncorrectOperationException ex) {
-        LOG.error(ex);
+  private void generateLocalsForArguments() {
+    PsiExpression[] expressions = myConstructorArguments.getExpressions();
+    for (int i = 0; i < expressions.length; i++) {
+      PsiExpression expr = expressions[i];
+      if (!isConstant(expr)) {
+        PsiParameter parameter = myConstructorParameters.getParameters()[i];
+        PsiVariable variable = generateLocal(parameter.getName(), parameter.getType(), expr);
+        myLocalsForParameters.put(parameter, variable);
       }
     }
   }
@@ -326,7 +280,11 @@ class InlineToAnonymousConstructorProcessor {
     if (argument instanceof PsiReferenceExpression) {
       PsiElement element = ((PsiReferenceExpression)argument).resolve();
       if (element instanceof PsiParameter) {
-        int index = myConstructorParameters.getParameterIndex((PsiParameter) element);
+        PsiParameter parameter = (PsiParameter)element;
+        if (myLocalsForParameters.containsKey(parameter)) {
+          return (PsiExpression) argument.replace(getParameterReference(parameter));
+        }
+        int index = myConstructorParameters.getParameterIndex(parameter);
         return (PsiExpression) argument.replace(myConstructorArguments.getExpressions() [index]);
       }
     }
@@ -345,13 +303,13 @@ class InlineToAnonymousConstructorProcessor {
       }
     });
     for (Pair<PsiReferenceExpression, PsiParameter> pair: parameterReferences) {
+      PsiReferenceExpression ref = pair.first;
       PsiParameter param = pair.second;
-      int index = myConstructorParameters.getParameterIndex(param);
-      if (myIsInMethod) {
-        addParameter(param, myConstructorArguments.getExpressions() [index]);
+      if (myLocalsForParameters.containsKey(param)) {
+        ref.replace(getParameterReference(param));
       }
       else {
-        PsiReferenceExpression ref = pair.first;
+        int index = myConstructorParameters.getParameterIndex(param);
         if (ref == argument) {
           argument = (PsiExpression)argument.replace(myConstructorArguments.getExpressions() [index]);
         }
@@ -361,6 +319,11 @@ class InlineToAnonymousConstructorProcessor {
       }
     }
     return argument;
+  }
+
+  private PsiExpression getParameterReference(final PsiParameter parameter) throws IncorrectOperationException {
+    PsiVariable variable = myLocalsForParameters.get(parameter);
+    return myElementFactory.createExpressionFromText(variable.getName(), myClass);
   }
 
   private void replaceReferences(final PsiMember method,
@@ -373,14 +336,7 @@ class InlineToAnonymousConstructorProcessor {
         if (element instanceof PsiField) {
           try {
             PsiField field = (PsiField)element;
-            if (field.getContainingClass() == method.getContainingClass()) {
-              FieldInfo info = myFields.get(field.getName());
-              if (info != null && info.replaceWithLocal) {
-                final PsiExpression localRefExpr = myElementFactory.createExpressionFromText(info.localVar.getName(), method);
-                elementsToReplace.put(expression, localRefExpr);
-              }
-            }
-            else if (myClass.getContainingClass() != null && field.getContainingClass() == myClass.getContainingClass() &&
+            if (myClass.getContainingClass() != null && field.getContainingClass() == myClass.getContainingClass() &&
                      outerClassLocal != null) {
               PsiReferenceExpression expr = (PsiReferenceExpression)expression.copy();
               PsiExpression qualifier = myElementFactory.createExpressionFromText(outerClassLocal.getName(), field.getContainingClass());
@@ -414,49 +370,5 @@ class InlineToAnonymousConstructorProcessor {
     for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
       e.getKey().replace(e.getValue());
     }
-  }
-
-  private FieldInfo getNewFieldInfo(PsiField field) {
-    FieldInfo info = myFields.get(field.getName());
-    if (info == null) {
-      info = new FieldInfo(field.getName(), field.getType());
-      myFields.put(field.getName(), info);
-    }
-    return info;
-  }
-
-  private Collection<FieldInfo> getLocalsToGenerate() {
-    List<FieldInfo> fieldInfos = new ArrayList<FieldInfo>();
-    for(FieldInfo info: myFields.values()) {
-      if (info.generateLocal) {
-        fieldInfos.add(info);
-      }
-    }
-    fieldInfos.addAll(myParameters.values());
-    return fieldInfos;
-  }
-
-  private FieldInfo addParameter(PsiParameter param, PsiExpression initializer) {
-    FieldInfo info = myParameters.get(param.getName());
-    if (info == null) {
-      info = new FieldInfo(param.getName(), param.getType());
-      myParameters.put(param.getName(), info);
-      info.initializer = initializer;
-    }
-    return info;
-  }
-
-  private static class FieldInfo {
-    public FieldInfo(final String name, final PsiType type) {
-      this.name = name;
-      this.type = type;
-    }
-
-    String name;
-    PsiType type;
-    PsiVariable localVar;
-    PsiExpression initializer;
-    boolean generateLocal;
-    boolean replaceWithLocal;
   }
 }
