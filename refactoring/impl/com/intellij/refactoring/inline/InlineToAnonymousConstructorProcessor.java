@@ -100,7 +100,9 @@ class InlineToAnonymousConstructorProcessor {
     final PsiClass anonymousClass = superNewExpressionTemplate.getAnonymousClass();
     assert anonymousClass != null;
 
-    if (initializerBlock.getStatements().length > 0) {
+    int fieldCount = myClass.getFields().length;
+    int processedFields = 0;
+    if (initializerBlock.getStatements().length > 0 && fieldCount == 0) {
       anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
     }
 
@@ -119,6 +121,10 @@ class InlineToAnonymousConstructorProcessor {
         field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
         if (initializer != null && noInitializer) {
           field.setInitializer(initializer);
+        }
+        processedFields++;
+        if (processedFields == fieldCount && initializerBlock.getStatements().length > 0) {
+          anonymousClass.addBefore(initializerBlock, anonymousClass.getRBrace());
         }
       }
     }
