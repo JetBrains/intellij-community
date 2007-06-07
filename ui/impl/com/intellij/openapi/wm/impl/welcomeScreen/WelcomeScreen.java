@@ -1,6 +1,5 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.help.impl.HelpManagerImpl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenProjectAction;
@@ -14,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -327,7 +327,7 @@ public class WelcomeScreen {
   private void addDefaultDocsActions(final ActionGroupDescriptor docsGroup, final ActionManager actionManager) {
     MyActionButton readHelp = new MyActionButton(READ_HELP_ICON, null) {
       protected void onPress(InputEvent e) {
-        HelpManagerImpl.getInstance().invokeHelp("");
+        HelpManager.getInstance().invokeHelp("");
       }
     };
     docsGroup.addButton(readHelp, UIBundle.message("welcome.screen.read.help.action.name"),
