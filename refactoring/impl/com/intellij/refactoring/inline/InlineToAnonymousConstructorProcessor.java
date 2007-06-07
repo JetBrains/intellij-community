@@ -258,8 +258,31 @@ class InlineToAnonymousConstructorProcessor {
     PsiExpression[] expressions = myConstructorArguments.getExpressions();
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expr = expressions[i];
-      if (!isConstant(expr)) {
-        PsiParameter parameter = myConstructorParameters.getParameters()[i];
+      PsiParameter parameter = myConstructorParameters.getParameters()[i];
+      if (parameter.isVarArgs()) {
+        PsiEllipsisType ellipsisType = (PsiEllipsisType)parameter.getType();
+        PsiType baseType = ellipsisType.getComponentType();
+        StringBuilder exprBuilder = new StringBuilder("new ");
+        exprBuilder.append(baseType.getCanonicalText());
+        exprBuilder.append("[] { }");
+        try {
+          PsiNewExpression newExpr = (PsiNewExpression) myElementFactory.createExpressionFromText(exprBuilder.toString(), myClass);
+          PsiArrayInitializerExpression arrayInitializer = newExpr.getArrayInitializer();
+          assert arrayInitializer != null;
+          for(int j=i; j < expressions.length; j++) {
+            arrayInitializer.add(expressions [j]);
+          }
+
+          PsiVariable variable = generateLocal(parameter.getName(), ellipsisType.toArrayType(), newExpr);
+          myLocalsForParameters.put(parameter, variable);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+
+        break;
+      }
+      else if (!isConstant(expr)) {
         PsiVariable variable = generateLocal(parameter.getName(), parameter.getType(), expr);
         myLocalsForParameters.put(parameter, variable);
       }
