@@ -1,5 +1,6 @@
 package com.intellij.localvcsintegr;
 
+import com.intellij.localvcs.integration.ui.actions.LocalHistoryAction;
 import com.intellij.localvcs.integration.ui.actions.ShowHistoryAction;
 import com.intellij.localvcs.integration.ui.actions.ShowSelectionHistoryAction;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -10,12 +11,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class ShowHistoryActionsTest extends IntegrationTestCase {
+public class LocalHistoryActionsTest extends IntegrationTestCase {
   VirtualFile f;
   Editor editor;
   Document document;
@@ -54,11 +56,20 @@ public class ShowHistoryActionsTest extends IntegrationTestCase {
     assertStatus(a, notUnderContentRoot, false);
   }
 
+  public void testLocalHistoryActionDisabledWithoutProject() throws IOException {
+    LocalHistoryAction a = new LocalHistoryAction() {
+      public void actionPerformed(AnActionEvent e) {
+      }
+    };
+    assertStatus(a, root, myProject, true);
+    assertStatus(a, root, null, false);
+  }
+
   public void testShowSelectionHistoryActionForSelection() throws Exception {
     editor.getSelectionModel().setSelection(0, 2);
 
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
-    AnActionEvent e = createEventFor(a, f);
+    AnActionEvent e = createEventFor(a, f, myProject);
     a.update(e);
 
     assertTrue(e.getPresentation().isEnabled());
@@ -78,18 +89,22 @@ public class ShowHistoryActionsTest extends IntegrationTestCase {
   }
 
   private void assertStatus(AnAction a, VirtualFile f, boolean isEnabled) {
-    AnActionEvent e = createEventFor(a, f);
+    assertStatus(a, f, myProject, isEnabled);
+  }
+
+  private void assertStatus(AnAction a, VirtualFile f, Project p, boolean isEnabled) {
+    AnActionEvent e = createEventFor(a, f, p);
     a.update(e);
     assertEquals(isEnabled, e.getPresentation().isEnabled());
   }
 
-  private AnActionEvent createEventFor(AnAction a, final VirtualFile f) {
+  private AnActionEvent createEventFor(AnAction a, final VirtualFile f, final Project p) {
     DataContext dc = new DataContext() {
       @Nullable
       public Object getData(String id) {
         if (id.equals(DataKeys.VIRTUAL_FILE.getName())) return f;
         if (id.equals(DataKeys.EDITOR.getName())) return editor;
-        if (id.equals(DataKeys.PROJECT.getName())) return myProject;
+        if (id.equals(DataKeys.PROJECT.getName())) return p;
         return null;
       }
     };
