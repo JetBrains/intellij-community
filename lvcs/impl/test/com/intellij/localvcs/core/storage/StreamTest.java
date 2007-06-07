@@ -317,7 +317,7 @@ public class StreamTest extends LocalVcsTestCase {
     Entry r = new RootEntry();
     createDirectory(r, 1, "dir");
 
-    Change c = new PutLabelChange(123, "name", true);
+    Change c = new PutLabelChange("name", 123, true);
     c.applyTo(r);
 
     os.writeChange(c);
@@ -335,7 +335,7 @@ public class StreamTest extends LocalVcsTestCase {
     Entry r = new RootEntry();
     createDirectory(r, 1, "dir");
 
-    Change c = new PutEntryLabelChange(123, "dir", "name", false);
+    Change c = new PutEntryLabelChange("dir", "name", 123, false);
     c.applyTo(r);
 
     os.writeChange(c);

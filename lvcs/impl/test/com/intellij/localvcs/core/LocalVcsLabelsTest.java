@@ -110,4 +110,18 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     assertEquals(20, rr.get(0).getTimestamp());
     assertEquals(10, rr.get(1).getTimestamp());
   }
+
+  @Test
+  public void testLabelsDuringChangeSet() {
+    vcs.createFile("f", null, -1);
+    vcs.beginChangeSet();
+    vcs.changeFileContent("f", null, -1);
+    vcs.putLabel("label");
+    vcs.endChangeSet("changeSet");
+
+    List<Revision> rr = vcs.getRevisionsFor("f");
+    assertEquals(2, rr.size());
+    assertEquals("changeSet", rr.get(0).getCauseChangeName());
+    assertEquals(null, rr.get(1).getCauseChangeName());
+  }
 }

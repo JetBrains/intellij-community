@@ -10,8 +10,8 @@ public class PutEntryLabelChange extends PutLabelChange {
   private String myPath; // transient
   private IdPath myAffectedIdPath;
 
-  public PutEntryLabelChange(long timestamp, String path, String name, boolean isSystemMark) {
-    super(timestamp, name, isSystemMark);
+  public PutEntryLabelChange(String path, String name, long timestamp, boolean isMark) {
+    super(name, timestamp, isMark);
     myPath = path;
   }
 

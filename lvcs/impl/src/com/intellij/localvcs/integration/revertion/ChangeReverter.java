@@ -32,7 +32,7 @@ public class ChangeReverter extends Reverter {
 
     myVcs.accept(new ChangeVisitor() {
       @Override
-      public void visit(ChangeSet c) throws StopVisitingException {
+      public void begin(ChangeSet c) throws StopVisitingException {
         if (isBeforeMyChange(c, false)) stop();
         if (!isInTheChain(c)) return;
 

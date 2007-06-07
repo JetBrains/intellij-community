@@ -179,19 +179,34 @@ public class ChangeList {
     }
 
     @Override
-    public void visit(ChangeSet c) {
-      myDoNotAddAnythingAlseFromCurrentChangeSet = false;
+    public void begin(ChangeSet c) {
       myChangeToAdd = c;
+    }
+
+    @Override
+    public void end(ChangeSet c) {
+      myChangeToAdd = null;
+      myDoNotAddAnythingAlseFromCurrentChangeSet = false;
     }
 
     @Override
     public void visit(PutLabelChange c) {
-      myChangeToAdd = c;
-      visit((Change)c);
+      if (myChangeToAdd == null) {
+        myChangeToAdd = c;
+        doVisit(c);
+        myChangeToAdd = null;
+      }
+      else {
+        doVisit(c);
+      }
     }
 
     @Override
-    public void visit(Change c) {
+    public void visit(StructuralChange c) {
+      doVisit(c);
+    }
+
+    private void doVisit(Change c) {
       if (skippedDueToNonexistence(c)) return;
       addIfAffectsAndRevert(c);
 

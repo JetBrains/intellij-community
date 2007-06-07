@@ -11,7 +11,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("changeSet createEntry changeSet createEntry ");
+    assertVisitorLog("beginChangeSet createEntry endChangeSet beginChangeSet createEntry endChangeSet ");
   }
 
   @Test
@@ -21,7 +21,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
 
-    assertVisitorLog("changeSet createEntry createEntry ");
+    assertVisitorLog("beginChangeSet createEntry createEntry endChangeSet ");
   }
 
   @Test
@@ -30,7 +30,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("changeSet createEntry createEntry ");
+    assertVisitorLog("beginChangeSet createEntry createEntry endChangeSet ");
   }
 
   @Test
@@ -42,7 +42,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.rename("dir", "newDir");
 
-    assertVisitorLog("changeSet rename changeSet createEntry changeSet createEntry ");
+    assertVisitorLog("beginChangeSet rename endChangeSet beginChangeSet createEntry endChangeSet beginChangeSet createEntry endChangeSet ");
   }
 
   @Test
@@ -54,14 +54,14 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
       int count = 0;
 
       @Override
-      public void visit(final ChangeSet c) throws StopVisitingException {
+      public void begin(final ChangeSet c) throws StopVisitingException {
         if (++count == 2) stop();
-        super.visit(c);
+        super.begin(c);
       }
     };
 
     vcs.accept(visitor);
-    assertEquals("changeSet createEntry ", visitor.getLog());
+    assertEquals("beginChangeSet createEntry endChangeSet ", visitor.getLog());
   }
 
   private void assertVisitorLog(final String expected) throws Exception {
@@ -74,8 +74,13 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     private String log = "";
 
     @Override
-    public void visit(ChangeSet c) throws StopVisitingException {
-      log += "changeSet ";
+    public void begin(ChangeSet c) throws StopVisitingException {
+      log += "beginChangeSet ";
+    }
+
+    @Override
+    public void end(ChangeSet c) throws StopVisitingException {
+      log += "endChangeSet ";
     }
 
     @Override

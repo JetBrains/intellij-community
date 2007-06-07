@@ -127,15 +127,15 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void putLabel(String name) {
-    applyLabel(new PutLabelChange(getCurrentTimestamp(), name, false));
+    applyLabel(new PutLabelChange(name, getCurrentTimestamp(), false));
   }
 
   public void putLabel(String path, String name) {
-    applyLabel(new PutEntryLabelChange(getCurrentTimestamp(), path, name, false));
+    applyLabel(new PutEntryLabelChange(path, name, getCurrentTimestamp(), false));
   }
 
   public void mark(String path) {
-    applyLabel(new PutEntryLabelChange(getCurrentTimestamp(), path, "Marked", true));
+    applyLabel(new PutEntryLabelChange(path, "Marked", getCurrentTimestamp(), true));
   }
 
   private void applyLabel(PutLabelChange c) {

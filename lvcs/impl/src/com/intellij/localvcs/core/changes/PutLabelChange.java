@@ -10,11 +10,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class PutLabelChange extends Change {
-  private long myTimestamp;
   private String myName;
+  private long myTimestamp;
   private boolean myIsMark;
 
-  public PutLabelChange(long timestamp, String name, boolean isMark) {
+  public PutLabelChange(String name, long timestamp, boolean isMark) {
     myTimestamp = timestamp;
     myName = name;
     myIsMark = isMark;

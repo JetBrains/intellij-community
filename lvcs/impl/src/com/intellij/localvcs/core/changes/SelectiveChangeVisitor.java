@@ -10,7 +10,7 @@ public abstract class SelectiveChangeVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ChangeSet c) throws StopVisitingException, IOException {
+  public void begin(ChangeSet c) throws StopVisitingException, IOException {
     if (isFinished(c)) stop();
   }
 
