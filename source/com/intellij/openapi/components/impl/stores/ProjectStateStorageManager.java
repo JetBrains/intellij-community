@@ -21,10 +21,11 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
   protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
     if (storageSpec.equals(ProjectStoreImpl.PROJECT_FILE_STORAGE)) return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
-    return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME);
+    if (storageSpec.equals(ProjectStoreImpl.WS_FILE_STORAGE)) return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
+    return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
   }
 
-  protected String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation) throws
+  protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
                                                                                                                               StateStorage.StateStorageException {
     final ComponentConfig config = myProject.getConfig(component.getClass());
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();

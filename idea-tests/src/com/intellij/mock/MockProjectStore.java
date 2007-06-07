@@ -129,7 +129,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getPresentableUrl not implemented in " + getClass());
   }
 
-  public boolean reload() {
+  public boolean reload(final Set<VirtualFile> changedFiles) {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 }

@@ -592,8 +592,24 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public void loadState(ModuleRootManagerState object) {
     try {
-      myLanguageLevel = object.getLanguageLevel();
-      myRootModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager);
+      final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager);
+
+      boolean throwEvent = myRootModel != null;
+
+      if (throwEvent) {
+        fireBeforeRootsChange();
+        myLanguageLevel = object.getLanguageLevel();
+        setModel(newModel);
+        final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
+        for (RootModelComponentBase rootModelComponentBase : components) {
+          rootModelComponentBase.moduleAdded();
+        }
+        fireRootsChanged();
+      }
+      else {
+        myLanguageLevel = object.getLanguageLevel();
+        myRootModel = newModel;
+      }
     }
     catch (InvalidDataException e) {
       LOG.error(e);

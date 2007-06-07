@@ -50,6 +50,10 @@ public interface StorageAnnotationsDefaultValues {
     public void finishSave(SaveSession saveSession) {
       throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
     }
+
+    public void reload(final Set<String> changedComponents) throws StateStorageException {
+      throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
+    }
   }
 
   class NullStateStorageChooser implements StateStorageChooser {

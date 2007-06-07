@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -243,12 +244,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return projectFile != null ? projectFile.getPresentableUrl() : null;
   }
 
-  public boolean reload() {
-    System.out.println("***** reloading: " + myProject);
-    return false;
-  }
-
-
   public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     load();
     myProject.init();
@@ -371,21 +366,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
 
   static class  ProjectStorageData extends BaseStorageData {
-    public ProjectStorageData(final String rootElementName) {
+    protected final Project myProject;
+
+    public ProjectStorageData(final String rootElementName, Project project) {
       super(rootElementName);
+      myProject = project;
     }
 
     protected ProjectStorageData(ProjectStorageData storageData) {
       super(storageData);
-    }
-
-    protected void load(@NotNull final Element rootElement) throws IOException {
-      super.load(rootElement);
-    }
-
-    @NotNull
-    protected Element save() {
-      return super.save();
+      myProject = storageData.myProject;
     }
 
     public XmlElementStorage.StorageData clone() {
@@ -393,20 +383,55 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
+  static class WsStorageData extends ProjectStorageData {
+
+    public WsStorageData(final String rootElementName, final Project project) {
+      super(rootElementName, project);
+    }
+
+    public WsStorageData(final WsStorageData storageData) {
+      super(storageData);
+    }
+
+    protected void load(@NotNull final Element rootElement) throws IOException {
+      final ProjectConversionHelper conversionHelper = getConversionHelper(myProject);
+
+      if (conversionHelper != null) {
+        conversionHelper.convertWorkspaceRootToNewFormat(rootElement);
+      }
+
+      super.load(rootElement);
+    }
+
+    @NotNull
+    protected Element save() {
+      final Element result = super.save();
+
+      final ProjectConversionHelper conversionHelper = getConversionHelper(myProject);
+
+      if (conversionHelper != null) {
+        conversionHelper.convertWorkspaceRootToOldFormat(result);
+      }
+
+      return result;
+    }
+
+    public XmlElementStorage.StorageData clone() {
+      return new WsStorageData(this);
+    }
+  }
+
   static class IprStorageData extends ProjectStorageData {
     private final Set<String> myUsedMacros;
-    private final Project myProject;
 
     public IprStorageData(final String rootElementName, Project project) {
-      super(rootElementName);
-      myProject = project;
+      super(rootElementName, project);
       myUsedMacros = new TreeSet<String>();
     }
 
     public IprStorageData(final IprStorageData storageData) {
       super(storageData);
       myUsedMacros = new TreeSet<String>(storageData.myUsedMacros);
-      myProject = storageData.myProject;
     }
 
     protected void load(@NotNull final Element rootElement) throws IOException {
@@ -415,30 +440,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
       }
 
+      final Element usedMacros = rootElement.getChild(USED_MACROS_ELEMENT_NAME);
+      if (usedMacros != null) {
+        for (Element e : JDOMUtil.getElements(usedMacros)) {
+          myUsedMacros.add(e.getAttributeValue(NAME_ATTR));
+        }
+      }
+
       super.load(rootElement);
     }
 
     @NotNull
     protected Element save() {
       final Element root = super.save();
-      final ProjectConversionHelper conversionHelper = getConversionHelper(myProject);
-
-      if (conversionHelper != null) {
-        conversionHelper.convertWorkspaceRootToOldFormat(root);
-      }
-
-      final PathMacros pathMacros = PathMacros.getInstance();
-      final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
-
-      for (Iterator<String> i = myUsedMacros.iterator(); i.hasNext();) {
-        String macro = i.next();
-
-        for (String systemMacroName : systemMacroNames) {
-          if (macro.equals(systemMacroName) || macro.indexOf("$" + systemMacroName + "$") >= 0) {
-            i.remove();
-          }
-        }
-      }
 
       root.removeChildren(USED_MACROS_ELEMENT_NAME);
 
@@ -467,9 +481,29 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return super.computeHash()*31 + myUsedMacros.hashCode();
     }
 
+    @Nullable
+    public Set<String> getDifference(final XmlElementStorage.StorageData storageData) {
+      final IprStorageData data = (IprStorageData)storageData;
+      if (!myUsedMacros.equals(data.myUsedMacros)) return null;
+      return super.getDifference(storageData);
+    }
+
     protected void setUsedMacros(Collection<String> m) {
       myUsedMacros.clear();
       myUsedMacros.addAll(m);
+
+      final PathMacros pathMacros = PathMacros.getInstance();
+      final Set<String> systemMacroNames = pathMacros.getSystemMacroNames();
+
+      for (Iterator<String> i = myUsedMacros.iterator(); i.hasNext();) {
+        String macro = i.next();
+
+        for (String systemMacroName : systemMacroNames) {
+          if (macro.equals(systemMacroName) || macro.indexOf("$" + systemMacroName + "$") >= 0) {
+            i.remove();
+          }
+        }
+      }
       clearHash();
     }
   }
@@ -537,7 +571,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super.commit();
 
       //todo: make it clearer
-      final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)mySaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
+      final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
       final XmlElementStorage.StorageData data = session.getData();
 
       if (data instanceof IprStorageData) {
@@ -545,6 +579,20 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         storageData.setUsedMacros(getUsedMacros());
       }
+    }
+
+    @Nullable
+    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+      final Set<String> result = super.analyzeExternalChanges(changedFiles);
+      if (result == null) return null;
+
+      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        final Set<String> s = moduleSaveSession.analyzeExternalChanges(changedFiles);
+        if (s == null) return null;
+        result.addAll(s);
+      }
+
+      return result;
     }
 
     public void finishSave() {
@@ -636,6 +684,32 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Nullable
   protected StateStorageChooser getDefaultStateStorageChooser() {
     return myStateStorageChooser;
+  }
+
+  protected void doReload(final Set<VirtualFile> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
+    super.doReload(changedFiles, componentNames);
+
+    for (Module module : getPersistentModules()) {
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).doReload(changedFiles, componentNames);
+    }
+  }
+
+  protected void reinitComponents(final Set<String> componentNames, final Set<VirtualFile> changedFiles) {
+    super.reinitComponents(componentNames, changedFiles);
+
+    for (Module module : getPersistentModules()) {
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponents(componentNames, changedFiles);
+    }
+  }
+
+  protected boolean isReloadPossible(final Set<String> componentNames) {
+    if (!super.isReloadPossible(componentNames)) return false;
+
+    for (Module module : getPersistentModules()) {
+      if (!((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).isReloadPossible(componentNames)) return false;
+    }
+
+    return true;
   }
 }
 

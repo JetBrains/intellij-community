@@ -277,12 +277,21 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         assert mySession == this;
         return DirectoryBasedStorage.this.getUsedMacros();
       }
+
+      @Nullable
+      public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+        return null;
+      }
     };
   }
 
   public void finishSave(final SaveSession saveSession) {
     assert mySession == saveSession;
     mySession = null;
+  }
+
+  public void reload(final Set<String> changedComponents) throws StateStorageException {
+    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 
   public void dispose() {

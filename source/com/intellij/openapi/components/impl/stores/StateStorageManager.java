@@ -26,6 +26,7 @@ public interface StateStorageManager {
 
   List<VirtualFile> getAllStorageFiles();
 
+  void reload(final Set<VirtualFile> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException;
 
   ExternalizationSession startExternalization();
   SaveSession startSave(ExternalizationSession externalizationSession) throws StateStorage.StateStorageException;
@@ -34,12 +35,17 @@ public interface StateStorageManager {
   @Nullable
   StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException;
 
+
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, Object component, final String componentName, Object state) throws StateStorage.StateStorageException;
     void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorage.StateStorageException;
   }
 
   interface SaveSession {
+    //returns set of component which were changed, null if changes are much more than just component state.
+    @Nullable
+    Set<String> analyzeExternalChanges(Set<VirtualFile> files);
+
     List<VirtualFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException;
     void save() throws StateStorage.StateStorageException;
 

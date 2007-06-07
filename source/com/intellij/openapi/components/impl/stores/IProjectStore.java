@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Set;
 
 public interface IProjectStore extends IComponentStore {
 
@@ -36,7 +37,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getPresentableUrl();
 
-  boolean reload();
+  boolean reload(final Set<VirtualFile> changedFiles) throws StateStorage.StateStorageException, IOException;
 
   enum StorageFormat {
     FILE_BASED, DIRECTORY_BASED

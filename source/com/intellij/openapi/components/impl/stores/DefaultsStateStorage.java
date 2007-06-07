@@ -80,6 +80,14 @@ class DefaultsStateStorage implements StateStorage {
     throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
   }
 
+  public void reload(final Set<String> changedComponents) throws StateStorageException {
+    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
+  }
+
+  public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+    throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
+  }
+
   public boolean needsSave() throws StateStorageException {
     throw new UnsupportedOperationException("Method needsSave is not supported in " + getClass());
   }

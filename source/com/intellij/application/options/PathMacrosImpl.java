@@ -38,6 +38,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>();
+  @NonNls public static final String EXT_FILE_NAME = "path.macros";
+
   {
     ourSystemMacroNames.add(APPLICATION_HOME_MACRO_NAME);
     ourSystemMacroNames.add(PROJECT_DIR_MACRO_NAME);
@@ -58,7 +60,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public String getExternalFileName() {
-    return "path.macros";
+    return EXT_FILE_NAME;
   }
 
   public Set<String> getUserMacroNames() {

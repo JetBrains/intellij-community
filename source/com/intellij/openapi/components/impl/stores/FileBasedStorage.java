@@ -112,6 +112,7 @@ public class FileBasedStorage extends XmlElementStorage {
     return Collections.emptyList();
   }
 
+
   @Nullable
   public VirtualFile getVirtualFile() {
     return StorageUtil.getVirtualFile(myFile);

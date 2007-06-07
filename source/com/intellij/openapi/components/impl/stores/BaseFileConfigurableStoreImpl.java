@@ -6,7 +6,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
@@ -64,6 +63,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
       final String rel = rootElement.getAttributeValue(RELATIVE_PATHS_OPTION);
       if (rel != null) mySavePathsRelative = Boolean.parseBoolean(rel);
+      myVersion = Integer.parseInt(rootElement.getAttributeValue(VERSION_OPTION));
     }
 
     @NotNull
@@ -87,6 +87,13 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       result = result*31 + myVersion;
 
       return result;
+    }
+
+    @Nullable
+    public Set<String> getDifference(final XmlElementStorage.StorageData storageData) {
+      final BaseStorageData data = (BaseStorageData)storageData;
+      if (mySavePathsRelative != data.mySavePathsRelative || myVersion != data.myVersion) return null;
+      return super.getDifference(storageData);
     }
   }
 
@@ -181,11 +188,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   public BaseStorageData getMainStorageData() throws StateStorage.StateStorageException {
     return (BaseStorageData) getMainStorage().getStorageData();
   }
-
-  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
-    return getStateStorageManager().getAllStorageFiles();
-  }
-
 
   @Override
   protected StateStorage getDefaultsStorage() {

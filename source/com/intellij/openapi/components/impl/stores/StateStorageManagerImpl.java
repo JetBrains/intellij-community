@@ -132,11 +132,15 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
     assert expandedFile.indexOf("$") < 0 : "Can't expand all macroses in: " + fileSpec;
 
-    return new FileBasedStorage(myPathMacroSubstitutor, expandedFile, myRootTagName, this, myPicoContainer) {
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec), expandedFile, myRootTagName, this, myPicoContainer) {
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
       }
     };
+  }
+
+  protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
+    return myPathMacroSubstitutor;
   }
 
 
@@ -226,10 +230,10 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   @Nullable
   public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws StateStorage.StateStorageException {
-    return getFileStateStorage(getOldStorageFilename(component, componentName, operation));
+    return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
   }
 
-  protected abstract String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation)
+  protected abstract String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation)
     throws StateStorage.StateStorageException;
 
   protected class MySaveSession implements SaveSession {
@@ -264,8 +268,44 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       assert mySession == this;
       myCompoundSaveSession.finishSave();
     }
+
+    //returns set of component which were changed, null if changes are much more than just component state.
+    @Nullable
+    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+      Set<String> result = new HashSet<String>();
+
+      nextSorage: for (StateStorage storage : myStorages.values()) {
+        final List<VirtualFile> virtualFiles = storage.getAllStorageFiles();
+
+        for (VirtualFile virtualFile : virtualFiles) {
+          if (changedFiles.contains(virtualFile)) {
+            final Set<String> s = myCompoundSaveSession.getSaveSession(storage).analyzeExternalChanges(changedFiles);
+
+            if (s == null) return null;
+            result.addAll(s);
+
+            continue nextSorage;
+          }
+        }
+      }
+
+      return result;
+    }
   }
 
   public void dispose() {
+  }
+
+  public void reload(final Set<VirtualFile> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException {
+    nextSorage: for (StateStorage storage : myStorages.values()) {
+      final List<VirtualFile> virtualFiles = storage.getAllStorageFiles();
+
+      for (VirtualFile virtualFile : virtualFiles) {
+        if (changedFiles.contains(virtualFile)) {
+          storage.reload(changedComponents);
+          continue nextSorage;
+        }
+      }
+    }
   }
 }

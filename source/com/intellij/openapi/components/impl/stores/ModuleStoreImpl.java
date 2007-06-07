@@ -82,6 +82,11 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     }
 
     protected void load(@NotNull final Element rootElement) throws IOException {
+      final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
+      if (conversionHelper != null) {
+        conversionHelper.convertModuleRootToNewFormat(rootElement, myModule.getName());
+      }
+
       super.load(rootElement);
 
       final List attributes = rootElement.getAttributes();
@@ -119,6 +124,13 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
     protected int computeHash() {
       return super.computeHash()*31 + myOptions.hashCode();
+    }
+
+    @Nullable
+    public Set<String> getDifference(final XmlElementStorage.StorageData storageData) {
+      final ModuleFileData data = (ModuleFileData)storageData;
+      if (!myOptions.equals(data.myOptions)) return null;
+      return super.getDifference(storageData);
     }
 
     public void setOption(final String optionName, final String optionValue) {

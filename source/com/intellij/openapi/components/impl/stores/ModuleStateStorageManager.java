@@ -19,7 +19,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
     return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
   }
 
-  protected String getOldStorageFilename(Object component, final String componentName, final StateStorageOperation operation) {
+  protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
     return ModuleStoreImpl.DEFAULT_STATE_STORAGE;
   }
 }

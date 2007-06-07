@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -74,7 +75,13 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected StorageData getStorageData() throws StateStorageException {
     if (myLoadedData != null) return myLoadedData;
 
-    myLoadedData = createStorageData();
+    myLoadedData = loadData();
+
+    return myLoadedData;
+  }
+
+  private StorageData loadData() throws StateStorageException {
+    StorageData result = createStorageData();
 
     final Document document = loadDocument();
 
@@ -86,14 +93,14 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       }
 
       try {
-        myLoadedData.load(rootElement);
+        result.load(rootElement);
       }
       catch (IOException e) {
         throw new StateStorageException(e);
       }
     }
 
-    return myLoadedData;
+    return result;
   }
 
   protected StorageData createStorageData() {
@@ -235,6 +242,20 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     public StorageData getData() {
       return myStorageData;
     }
+
+    @Nullable
+    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+      try {
+        final StorageData storageData = loadData();
+
+        return storageData.getDifference(myStorageData);
+      }
+      catch (StateStorageException e) {
+        LOG.info(e);
+      }
+
+      return null;
+    }
   }
 
   public void dispose() {
@@ -271,7 +292,6 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
           element.detach();
 
           if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-            element.removeAttribute(NAME);
             myComponentStates.put(name, element);
           }
         }
@@ -284,25 +304,6 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
       for (String componentName : myComponentStates.keySet()) {
         final Element element = myComponentStates.get(componentName);
-
-        element.setName(COMPONENT);
-
-        //componentName should be first!
-
-        
-        final List attributes = new ArrayList(element.getAttributes());
-        for (Object attribute : attributes) {
-          Attribute attr = (Attribute)attribute;
-          element.removeAttribute(attr);
-        }
-
-        element.setAttribute(NAME, componentName);
-
-        for (Object attribute : attributes) {
-          Attribute attr = (Attribute)attribute;
-          element.setAttribute(attr.getName(), attr.getValue());
-        }
-
         rootElement.addContent((Element)element.clone());
       }
 
@@ -311,7 +312,11 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
     @Nullable
     public Element getState(final String name) {
-      return myComponentStates.get(name);
+      final Element e = myComponentStates.get(name);
+      if (e != null) {
+        e.removeAttribute(NAME);
+      }
+      return e;
     }
 
     public void removeState(final String componentName) {
@@ -320,6 +325,22 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     public void setState(final String componentName, final Element element) {
+      element.setName(COMPONENT);
+
+      //componentName should be first!
+      final List attributes = new ArrayList(element.getAttributes());
+      for (Object attribute : attributes) {
+        Attribute attr = (Attribute)attribute;
+        element.removeAttribute(attr);
+      }
+
+      element.setAttribute(NAME, componentName);
+
+      for (Object attribute : attributes) {
+        Attribute attr = (Attribute)attribute;
+        element.setAttribute(attr.getName(), attr.getValue());
+      }
+
       myComponentStates.put(componentName, element);
       clearHash();
     }
@@ -350,5 +371,38 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       myHash = null;
     }
 
+    public Set<String> getDifference(final StorageData storageData) {
+      Set<String> bothStates = new HashSet<String>(myComponentStates.keySet());
+      bothStates.retainAll(storageData.myComponentStates.keySet());
+
+      Set<String> diffs = new HashSet<String>();
+      diffs.addAll(storageData.myComponentStates.keySet());
+      diffs.addAll(myComponentStates.keySet());
+      diffs.removeAll(bothStates);
+
+      for (String componentName : bothStates) {
+        final Element e1 = myComponentStates.get(componentName);
+        final Element e2 = storageData.myComponentStates.get(componentName);
+
+        if (!JDOMUtil.areElementsEqual(e1, e2)) {
+          diffs.add(componentName);
+        }
+      }
+
+
+      return diffs;
+    }
+  }
+
+  public void reload(final Set<String> changedComponents) throws StateStorageException {
+    final StorageData storageData = loadData();
+
+    final StorageData oldLoadedData = myLoadedData;
+
+    Set<String> componentsToRetain = new HashSet<String>(oldLoadedData.myComponentStates.keySet());
+    componentsToRetain.addAll(changedComponents);
+
+    storageData.myComponentStates.keySet().retainAll(componentsToRetain);
+    myLoadedData = storageData;
   }
 }

@@ -371,7 +371,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private boolean shouldReloadProject(final Project project) {
     if (project.isDisposed()) return false;
     List<VirtualFile> causes = myChangedProjectFiles.get(project);
-    Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
+    final Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
     for (VirtualFile cause : causes) {
       if (!cause.isValid()) liveCauses.remove(cause);
     }
@@ -379,7 +379,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (liveCauses.isEmpty()) return false;
 
 
-    if (((ProjectImpl)project).getStateStore().reload()) return false;
+    final boolean[] reloadOk = new boolean[]{false};
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          reloadOk[0] = ((ProjectImpl)project).getStateStore().reload(liveCauses);
+        }
+        catch (StateStorage.StateStorageException e) {
+          Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                     ProjectBundle.message("project.reload.failed.title"));
+        }
+        catch (IOException e) {
+          Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                     ProjectBundle.message("project.reload.failed.title"));
+        }
+      }
+    });
+    if (reloadOk[0]) return false;
 
     String message;
     if (liveCauses.size() == 1) {

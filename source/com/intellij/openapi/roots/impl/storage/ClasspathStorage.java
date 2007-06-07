@@ -125,6 +125,11 @@ abstract public class ClasspathStorage implements StateStorage {
         assert mySession == this;
         return Collections.EMPTY_SET;
       }
+
+      @Nullable
+      public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+        return null;
+      }
     };
 
     mySession = session;
@@ -135,6 +140,7 @@ abstract public class ClasspathStorage implements StateStorage {
     assert mySession == saveSession;
     mySession = null;
   }
+
   public List<VirtualFile> getAllStorageFiles() {
     final List<VirtualFile> list = new ArrayList<VirtualFile>();
     getFileSet(myModule).listFiles(list);

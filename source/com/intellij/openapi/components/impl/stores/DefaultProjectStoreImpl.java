@@ -117,10 +117,20 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
+      //returns set of component which were changed, null if changes are much more than just component state.
+      @Nullable
+      public Set<String> analyzeExternalChanges(final Set<VirtualFile> files) {
+        throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
+      }
+
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
       throws StateStorage.StateStorageException {
         return storage;
+      }
+
+      public void reload(final Set<VirtualFile> changedFiles, final Set<String> changedComponents) {
+        throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
       }
     };
   }
@@ -160,6 +170,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     public MySaveSession(final XmlElementStorage storage, final StateStorageManager.ExternalizationSession externalizationSession) {
       saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
+    }
+
+    //returns set of component which were changed, null if changes are much more than just component state.
+    @Nullable
+    public Set<String> analyzeExternalChanges(Set<VirtualFile> files) {
+      throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
     public List<VirtualFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {

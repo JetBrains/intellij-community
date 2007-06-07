@@ -25,6 +25,8 @@ public interface StateStorage {
   SaveSession startSave(ExternalizationSession externalizationSession);
   void finishSave(SaveSession saveSession);
 
+  void reload(final Set<String> changedComponents) throws StateStorageException;
+
   interface ExternalizationSession {
     void setState(Object component, final String componentName, Object state, @Nullable final Storage storageSpec) throws StateStorageException;
   }
@@ -34,6 +36,9 @@ public interface StateStorage {
     void save() throws StateStorageException;
 
     Set<String> getUsedMacros() throws StateStorageException;
+
+    @Nullable
+    Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles);
   }
 
   class StateStorageException extends Exception {
