@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class FileChooserFactory {
@@ -31,4 +32,6 @@ public abstract class FileChooserFactory {
 
   public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent);
   public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent);
+
+  public abstract void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, final Disposable parent);
 }

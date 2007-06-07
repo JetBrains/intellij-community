@@ -7,6 +7,7 @@ package com.intellij.util.ui.update;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Disposer;
 
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
@@ -85,7 +86,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
 
     private void disposeIfNeeded() {
       if (myShown && myHidden) {
-        dispose();
+        Disposer.dispose(this);
       }
     }
   }

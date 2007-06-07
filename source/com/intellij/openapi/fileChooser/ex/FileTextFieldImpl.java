@@ -50,12 +50,16 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private int myCurrentCompletionsPos = 1;
   private String myFileSpitRegExp;
+  private static final String KEY = "fileTextField";
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter) {
-    this(finder, filter, null, null);
+    this(new JTextField(), finder, filter, null, null);
   }
-  public FileTextFieldImpl(Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater, WorkerThread worker) {
-    myPathTextField = new JTextField();
+  public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater, WorkerThread worker) {
+    myPathTextField = field;
+
+    if (myPathTextField.getClientProperty(KEY) != null) return;
+    myPathTextField.putClientProperty(KEY, this);
 
     if (uiUpdater == null) {
       myUiUpdater = new MergingUpdateQueue("FileTextField.UiUpdater", 200, false, myPathTextField);
@@ -407,16 +411,16 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       super(new LocalFsFinder(), filter);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden) {
-      super(new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden));
+    public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field) {
+      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), null, null);
     }
 
     public Vfs(FileChooserDescriptor filter, boolean showHidden, final MergingUpdateQueue uiUpdater, final WorkerThread worker) {
-      super(new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), uiUpdater, worker);
+      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), uiUpdater, worker);
     }
 
     public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater, final WorkerThread worker) {
-      super(new LocalFsFinder(), filter, uiUpdater, worker);
+      super(new JTextField(), new LocalFsFinder(), filter, uiUpdater, worker);
     }
 
     public VirtualFile getSelectedFile() {

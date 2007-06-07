@@ -13,7 +13,9 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.update.ComponentDisposable;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class FileChooserFactoryImpl extends FileChooserFactory {
@@ -30,12 +32,18 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   public FileTextField createFileTextField(final FileChooserDescriptor descriptor, final boolean showHidden, Disposable parent) {
-    FileTextFieldImpl.Vfs field = new FileTextFieldImpl.Vfs(descriptor, showHidden);
+    FileTextFieldImpl.Vfs field = new FileTextFieldImpl.Vfs(descriptor, showHidden, new JTextField());
     Disposer.register(parent, field);
     return field;
   }
 
   public FileTextField createFileTextField(final FileChooserDescriptor descriptor, Disposable parent) {
     return createFileTextField(descriptor, true, parent);
+  }
+
+  public void installFileCompletion(final JTextField field, final FileChooserDescriptor descriptor, final boolean showHidden,
+                                    final Disposable parent) {
+    FileTextFieldImpl.Vfs vfsField = new FileTextFieldImpl.Vfs(descriptor, showHidden, field);
+    Disposer.register(parent, vfsField);
   }
 }
