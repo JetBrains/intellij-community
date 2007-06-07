@@ -12,6 +12,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -47,12 +48,15 @@ public class TestNGConfigurationProducer extends RuntimeConfigurationProducer im
     final Project project = location.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
+    final Module[] modules = configuration.getModules();
+    final Module originalModule = modules == null || modules.length == 0 ? null : modules[0];
     configuration.setClassConfiguration(psiClass);
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && TestNGUtil.hasTest(method)) {
       configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
       myPsiElement = method;
     }
+    configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
     return (RunnerAndConfigurationSettingsImpl)settings;
   }

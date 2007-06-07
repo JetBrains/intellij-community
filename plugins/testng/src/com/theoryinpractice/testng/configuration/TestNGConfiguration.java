@@ -14,6 +14,7 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import org.testng.xml.Parser;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration
 {
@@ -300,4 +302,11 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
       }
       return null;
     }
+
+  public void restoreOriginalModule(final Module originalModule) {
+    if (originalModule == null) return;
+    final Module[] classModules = getModules();
+    final Collection<Module> modules = ModuleUtil.collectModulesDependsOn(Arrays.asList(classModules));
+    if (modules.contains(originalModule)) setModule(originalModule);
+  }
 }
