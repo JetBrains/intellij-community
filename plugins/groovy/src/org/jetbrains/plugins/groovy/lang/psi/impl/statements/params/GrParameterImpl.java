@@ -43,10 +43,10 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     return "Parameter";
   }
 
-  @NotNull
-  public PsiType getType() {
+  @Nullable
+  public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement!= null) return typeElement.getType();
+    if (typeElement != null) return typeElement.getType();
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
@@ -74,7 +74,8 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
         }
       }
     }
-    return getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+
+    return null;
   }
 
   @Nullable

@@ -173,7 +173,7 @@ public class GroovyPsiManager implements ProjectComponent {
       "slider", "javax.swing.JSlider",
       "spinner", "javax.swing.JSpinner",
       "splitPane", "javax.swing.JSplitPane",
-      "tabbededPane", "javax.swing.JTabbedPane",
+      "tabbedPane", "javax.swing.JTabbedPane",
       "table", "javax.swing.JTable",
       "textArea", "javax.swing.JTextArea",
       "textPane", "javax.swing.JTextPane",

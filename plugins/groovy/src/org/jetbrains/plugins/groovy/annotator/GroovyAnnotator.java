@@ -24,6 +24,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
@@ -44,6 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
+
+import java.awt.*;
 
 /**
  * @author ven
@@ -131,10 +136,12 @@ public class GroovyAnnotator implements Annotator {
           holder.createWarningAnnotation(elementToHighlight, message);
         }
       }
+      if (isAssignmentLHS(refExpr) || element instanceof PsiPackage) return;
     } else {
       if (isAssignmentLHS(refExpr)) return;
 
-      if (refExpr.getQualifierExpression() == null) {
+      GrExpression qualifier = refExpr.getQualifierExpression();
+      if (qualifier == null) {
         GroovyPsiElement context = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrField.class, GrClosableBlock.class);
         if (context instanceof PsiModifierListOwner && ((PsiModifierListOwner) context).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
@@ -146,6 +153,13 @@ public class GroovyAnnotator implements Annotator {
           }
         }
       }
+    }
+
+    if (refExpr.getType() == null) {
+      Annotation annotation = holder.createInformationAnnotation(refExpr.getReferenceNameElement(),
+          GroovyBundle.message("untyped.access", refExpr.getReferenceName()));
+
+      annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.MAGENTA, EffectType.LINE_UNDERSCORE, 0));
     }
   }
 
