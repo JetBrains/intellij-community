@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -611,6 +611,9 @@ public class FileUtil {
             }
             else {
               builder.append("[^/]*?");
+              if (isSlash) {
+                builder.append("/"); // do not forget the slash, because it will not be processed on the next iteration
+              }
             }
             break;
 

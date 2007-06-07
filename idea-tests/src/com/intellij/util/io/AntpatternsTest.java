@@ -57,6 +57,14 @@ public class AntpatternsTest extends TestCase {
     final Pattern pattern = convertToPattern("/aaa.txt");
     assertTrue(pattern.matcher("/aaa.txt").matches());
     assertFalse(pattern.matcher("aaa.txt").matches());
+
+    final Pattern samplePattern = convertToPattern("dir/subdi*/sample.txt");
+    assertTrue(samplePattern.matcher("dir/subdir/sample.txt").matches());
+
+    final Pattern samplePattern2 = convertToPattern("dir/subdi*/");
+    assertTrue(samplePattern2.matcher("dir/subdir/sample.txt").matches());
+    assertTrue(samplePattern2.matcher("dir/subdir/foo.txt").matches());
+    assertTrue(samplePattern2.matcher("dir/subdir/aaa/foo.txt").matches());
   }
 
   private Pattern convertToPattern(final String antPattern) {
