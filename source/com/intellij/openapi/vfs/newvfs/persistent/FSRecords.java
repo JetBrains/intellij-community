@@ -207,7 +207,7 @@ public class FSRecords implements Disposable {
     try {
       final int next = myConnection.getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
 
-      if (next == 0) {
+      if (true /*next == 0*/) {
         final int filelength = (int)myConnection.getRecords().length();
         LOG.assertTrue(filelength % RECORD_SIZE == 0);
         int result = filelength / RECORD_SIZE;
@@ -250,7 +250,7 @@ public class FSRecords implements Disposable {
     deleteRecord(id);
   }
 
-  public void deleteRecord(final int id) {
+  private void deleteRecord(final int id) {
     w.lock();
     try {
       int att_page = myConnection.getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
