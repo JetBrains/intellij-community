@@ -69,7 +69,7 @@ public final class EditExternalyAction extends AnAction {
                 StringBuffer commandLine = new StringBuffer(executable.exists() ? executable.getAbsolutePath() : executablePath);
                 ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                 for (VirtualFile file : files) {
-                    if ((file.getFileSystem() instanceof LocalFileSystem) && typeManager.isImage(file)) {
+                    if (file.isInLocalFileSystem() && typeManager.isImage(file)) {
                         commandLine.append(" \"");
                         commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
                         commandLine.append('\"');
@@ -109,7 +109,7 @@ public final class EditExternalyAction extends AnAction {
             for (VirtualFile file : files) {
                 boolean isImage = typeManager.isImage(file);
                 isImagesFound |= isImage;
-                if (!(file.getFileSystem() instanceof LocalFileSystem) || !isImage) {
+                if (!file.isInLocalFileSystem() || !isImage) {
                     return false;
                 }
             }
