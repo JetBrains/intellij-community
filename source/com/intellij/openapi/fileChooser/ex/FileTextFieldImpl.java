@@ -51,7 +51,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private int myCurrentCompletionsPos = 1;
   private String myFileSpitRegExp;
-  private static final String KEY = "fileTextField";
+  public static final String KEY = "fileTextField";
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter) {
     this(new JTextField(), finder, filter, null, null);
