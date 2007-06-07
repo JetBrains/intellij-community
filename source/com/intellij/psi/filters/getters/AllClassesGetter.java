@@ -1,15 +1,26 @@
 package com.intellij.psi.filters.getters;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -23,9 +34,45 @@ import java.util.*;
 public class AllClassesGetter implements ContextGetter{
   @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
   @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
+  private final ElementFilter myFilter;
+  private static final SimpleInsertHandler INSERT_HANDLER = new SimpleInsertHandler() {
+    public int handleInsert(final Editor editor, final int startOffset, final SimpleLookupItem item, final LookupItem[] allItems, final TailType tailType) {
+      final PsiClass psiClass = (PsiClass)item.getObject();
+      final int endOffset = editor.getCaretModel().getOffset();
+      final String qname = psiClass.getQualifiedName();
+      if (qname == null) return endOffset;
 
-  public Object[] get(PsiElement context, CompletionContext completionContext) {
+      if (endOffset == 0) return endOffset;
+
+      final Document document = editor.getDocument();
+      final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document);
+      final PsiElement element = file.findElementAt(endOffset - 1);
+      if (element == null || !(element instanceof XmlElement)) return endOffset;
+
+      int i = endOffset - 1;
+      while (i >= 0) {
+        final char ch = document.getCharsSequence().charAt(i);
+        if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+        i--;
+      }
+      document.replaceString(i + 1, endOffset, qname);
+      return endOffset;
+    }
+  };
+
+  public AllClassesGetter(final ElementFilter filter) {
+    myFilter = filter;
+  }
+
+  public Object[] get(final PsiElement context, CompletionContext completionContext) {
     if(context == null || !context.isValid()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+
+    String prefix = context.getText().substring(0, completionContext.startOffset - context.getTextRange().getStartOffset());
+    final int i = prefix.lastIndexOf('.');
+    String packagePrefix = "";
+    if (i > 0) {
+      packagePrefix = prefix.substring(0, i);
+    }
 
     final PsiManager manager = context.getManager();
     final Set<PsiClass> classesSet = new THashSet<PsiClass>(new TObjectHashingStrategy<PsiClass>() {
@@ -53,15 +100,17 @@ public class AllClassesGetter implements ContextGetter{
 
     for (final String name : names) {
       if (!completionContext.prefixMatches(name)) continue;
-      final PsiClass[] classesByName = cache.getClassesByName(name, scope);
-      
-      for (PsiClass psiClass : classesByName) {
-        if (lookingForAnnotations && !psiClass.isAnnotationType()) {
-          continue;
-        }
-        if (CompletionUtil.isInExcludedPackage(psiClass)) {
-          continue;
-        }
+
+      for (PsiClass psiClass : cache.getClassesByName(name, scope)) {
+        if (lookingForAnnotations && !psiClass.isAnnotationType()) continue;
+
+        if (CompletionUtil.isInExcludedPackage(psiClass)) continue;
+
+        final String qualifiedName = psiClass.getQualifiedName();
+        if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) continue;
+
+        if (!myFilter.isAcceptable(psiClass, context)) continue;
+
         classesSet.add(psiClass);
       }
     }
@@ -88,6 +137,15 @@ public class AllClassesGetter implements ContextGetter{
       }
     });
 
-    return classesList.toArray(PsiClass.EMPTY_ARRAY);
+    return ContainerUtil.map2Array(classesList, SimpleLookupItem.class, new NotNullFunction<PsiClass, SimpleLookupItem>() {
+      @NotNull
+      public SimpleLookupItem fun(final PsiClass psiClass) {
+        final SimpleLookupItem item = new SimpleLookupItem(psiClass);
+        if (context instanceof XmlElement) {
+          item.setInsertHandler(INSERT_HANDLER);
+        }
+        return item;
+      }
+    });
   }
 }
