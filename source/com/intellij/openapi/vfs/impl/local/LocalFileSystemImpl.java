@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.impl.VFileImpl;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Processor;
 import com.intellij.util.ArrayUtil;
@@ -644,7 +644,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       throw new IOException("Failed to create directory: " + ioDir.getPath());
     }
 
-    return new VFileImpl(dir, parent, this, 0);
+    return new FakeVirtualFile(dir, parent);
   }
 
   public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
@@ -654,7 +654,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       throw new IOException("Failed to create child file at " + ioFile.getPath());
     }
 
-    return new VFileImpl(file, parent, this, 0);
+    return new FakeVirtualFile(file, parent);
   }
 
   public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
@@ -774,7 +774,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
     }
 
-    return new VFileImpl(copyName, newParent, this, 0);
+    return new FakeVirtualFile(copyName, newParent);
   }
 
   public void setTimeStamp(final VirtualFile file, final long modstamp) {

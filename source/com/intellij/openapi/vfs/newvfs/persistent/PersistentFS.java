@@ -10,7 +10,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.VFileImpl;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.LimitedInputStream;
@@ -24,6 +27,7 @@ import java.io.*;
 import java.util.*;
 
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
   private final static FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
 
   private static final int LOAD_THROUGH_BUFFER_THRESHOULD = 1024 * 1024; // megabyte
@@ -95,7 +99,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     String[] currentNames = listPersisted(file);
     int[] currentIds = myRecords.list(id);
 
-    String[] names = getDelegate(file).list(file);
+    final NewVirtualFileSystem delegate = getDelegate(file);
+    String[] names = delegate.list(file);
     final int[] childrenIds = new int[names.length];
 
     for (int i = 0; i < names.length; i++) {
@@ -106,8 +111,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
       else {
         int childId = myRecords.createRecord();
-        VFileImpl fakeFile = new VFileImpl(name, file, getDelegate(file), childId);
-        copyRecordFromDelegateFS(childId, id, fakeFile);
+        copyRecordFromDelegateFS(childId, id, new FakeVirtualFile(name, file), delegate);
         childrenIds[i] = childId;
       }
     }
@@ -153,10 +157,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return myRecords.getModCount();
   }
 
-  private void copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file) {
+  private void copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file, NewVirtualFileSystem delegate) {
     String name = file.getName();
 
-    if (name.length() > 0 && namesEqual(file.getFileSystem(), name, myRecords.getName(id))) return; // TODO: Handle root attributes change.
+    if (name.length() > 0 && namesEqual(delegate, name, myRecords.getName(id))) return; // TODO: Handle root attributes change.
 
     if (name.length() == 0) {            // TODO: hack
       if (areChildrenLoaded(id)) return;
@@ -165,7 +169,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     myRecords.setParent(id, parentId);
     myRecords.setName(id, name);
 
-    final NewVirtualFileSystem delegate = getDelegate(file);
     myRecords.setCRC(id, delegate.getCRC(file));
     myRecords.setTimestamp(id, delegate.getTimeStamp(file));
     myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) |
@@ -178,6 +181,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public boolean isDirectory(final VirtualFile file) {
     final int id = getFileId(file);
+    return isDirectory(id);
+  }
+
+  public boolean isDirectory(final int id) {
     return (myRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
   }
 
@@ -233,10 +240,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if (namesEqual(delegate, childName, myRecords.getName(childId))) return childId;
     }
 
-    VirtualFile fake = new VFileImpl(childName, parent, delegate, 0);
+    VirtualFile fake = new FakeVirtualFile(childName, parent);
     if (delegate.exists(fake)) {
       int child = myRecords.createRecord();
-      copyRecordFromDelegateFS(child, parentId, fake);
+      copyRecordFromDelegateFS(child, parentId, fake, delegate);
       myRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
     }
@@ -412,10 +419,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if (root == null) {
         try {
           final int rootId = myRecords.findRootRecord(rootUrl);
-          root = new VFileImpl(basePath, null, fs, rootId);
+          root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
           if (!fs.exists(root)) return null;
 
-          copyRecordFromDelegateFS(rootId, 0, root);
+          copyRecordFromDelegateFS(rootId, 0, root, fs);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -505,14 +512,15 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private void executeCreateChild(final VirtualFile parent, final String name) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
-    VFileImpl fakeFile = new VFileImpl(name, parent, delegate, 0);
+    VirtualFile fakeFile = new FakeVirtualFile(name, parent);
     if (delegate.exists(fakeFile)) {
       final int parentId = getFileId(parent);
       int childId = myRecords.createRecord();
-      copyRecordFromDelegateFS(childId, parentId, fakeFile);
+      copyRecordFromDelegateFS(childId, parentId, fakeFile, delegate);
 
       appendIdToParentList(parentId, childId);
-      ((VFileImpl)parent).addChild(new VFileImpl(name, parent, delegate, childId));
+      final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
+      dir.addChild(dir.createChild(name, childId));
     }
   }
 
@@ -523,28 +531,33 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private void executeDelete(final VirtualFile file) {
-    final int id = getFileId(file);
-
-    final VirtualFile parent = file.getParent();
-    final int parentId = parent != null ? getFileId(parent) : 0;
-
-    myRecords.deleteRecordRecursively(id);
-
-    if (parentId != 0) {
-      removeIdFromParentList(parentId, id);
-      ((VFileImpl)file.getParent()).removeChild(file);
+    if (!file.exists()) {
+      LOG.error("Deleting a file, which does not exist: " + file.getPath());
     }
     else {
-      synchronized (LOCK) {
-        myRoots.remove(file.getUrl());
-      }
-    }
+      final int id = getFileId(file);
 
-    invalidateSubtree(file);
+      final VirtualFile parent = file.getParent();
+      final int parentId = parent != null ? getFileId(parent) : 0;
+
+      myRecords.deleteRecordRecursively(id);
+
+      if (parentId != 0) {
+        removeIdFromParentList(parentId, id);
+        ((VirtualDirectoryImpl)file.getParent()).removeChild(file);
+      }
+      else {
+        synchronized (LOCK) {
+          myRoots.remove(file.getUrl());
+        }
+      }
+
+      invalidateSubtree(file);
+    }
   }
 
   private static void invalidateSubtree(final VirtualFile file) {
-    final VFileImpl impl = (VFileImpl)file;
+    final VirtualFileSystemEntry impl = (VirtualFileSystemEntry)file;
     impl.invalidate();
     for (VirtualFile child : impl.getCachedChildren()) {
       invalidateSubtree(child);
@@ -558,7 +571,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private void executeRename(final VirtualFile file, final String newName) {
-    ((VFileImpl)file).setName(newName);
+    ((VirtualFileSystemEntry)file).setName(newName);
     final int id = getFileId(file);
     myRecords.setName(id, newName);
   }
@@ -606,7 +619,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     removeIdFromParentList(oldParentId, whatId);
     appendIdToParentList(newParentId, whatId);
 
-    ((VFileImpl)what).setParent(newParent);
+    ((VirtualFileSystemEntry)what).setParent(newParent);
   }
 
   public String getName(final int id) {

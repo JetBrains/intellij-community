@@ -8,7 +8,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.VFileImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.containers.Stack;
 
 import java.util.*;
@@ -35,11 +37,12 @@ public class RefreshRequest {
       final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();
 
       while (!myRefreshQueue.isEmpty()) {
-        final VFileImpl file = (VFileImpl)myRefreshQueue.pop();
+        final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pop();
         if (!file.isDirty()) continue;
 
         if (file.isDirectory()) {
-          final boolean fullSync = file.allChildrenLoaded();
+          VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
+          final boolean fullSync = dir.allChildrenLoaded();
           if (fullSync) {
             Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
             Set<String> uptodateNames = new HashSet<String>(Arrays.asList(delegate.list(file)));
@@ -55,7 +58,7 @@ public class RefreshRequest {
             }
 
             for (String name : newNames) {
-              boolean isDirectory = delegate.isDirectory(new VFileImpl(name, file, delegate, 0));
+              boolean isDirectory = delegate.isDirectory(new FakeVirtualFile(name, file));
               scheduleCreation(file, name, isDirectory);
             }
 
@@ -75,9 +78,9 @@ public class RefreshRequest {
               }
             }
 
-            final List<String> names = file.getSuspicousNames();
+            final List<String> names = dir.getSuspicousNames();
             for (String name : names) {
-              final VFileImpl fake = new VFileImpl(name, file, delegate, 0);
+              final VirtualFile fake = new FakeVirtualFile(name, file);
               if (delegate.exists(fake)) {
                 scheduleCreation(file, name, delegate.isDirectory(fake));
               }
@@ -105,7 +108,7 @@ public class RefreshRequest {
     }
   }
 
-  private void scheduleChildRefresh(final VFileImpl file, final VirtualFile child, final NewVirtualFileSystem delegate) {
+  private void scheduleChildRefresh(final VirtualFileSystemEntry file, final VirtualFile child, final NewVirtualFileSystem delegate) {
     final boolean currentIsDirectory = child.isDirectory();
     final boolean uptodateisDirectory = delegate.isDirectory(child);
     if (currentIsDirectory != uptodateisDirectory) {
@@ -117,16 +120,16 @@ public class RefreshRequest {
     }
   }
 
-  private void scheduleWritableAttributeChange(final VFileImpl file, final boolean currentWritable, final boolean uptodateWritable) {
+  private void scheduleWritableAttributeChange(final VirtualFileSystemEntry file, final boolean currentWritable, final boolean uptodateWritable) {
     myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, Boolean.valueOf(currentWritable),
                                               Boolean.valueOf(uptodateWritable), true));
   }
 
-  private void scheduleUpdateContent(final VFileImpl file) {
+  private void scheduleUpdateContent(final VirtualFileSystemEntry file) {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
-  private void scheduleCreation(final VFileImpl parent, final String childName, final boolean isDirectory) {
+  private void scheduleCreation(final VirtualFileSystemEntry parent, final String childName, final boolean isDirectory) {
     myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
   }
 
