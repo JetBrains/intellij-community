@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -134,8 +135,8 @@ public class GroovyAnnotator implements Annotator {
       if (isAssignmentLHS(refExpr)) return;
 
       if (refExpr.getQualifierExpression() == null) {
-        PsiModifierListOwner method = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrField.class); //todo for static fields as well
-        if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+        GroovyPsiElement context = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrField.class, GrClosableBlock.class);
+        if (context instanceof PsiModifierListOwner && ((PsiModifierListOwner) context).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         } else {
