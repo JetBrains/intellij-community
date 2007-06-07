@@ -4,7 +4,6 @@ import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.core.tree.Entry;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class LocalVcsStoringTest extends TempDirTestCase {
@@ -64,51 +63,13 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  @Ignore("unignore after moving save postponding to service level")
-  public void testSavingDuringChangeSetThrowsException() {
-    vcs.beginChangeSet();
-    try {
-      vcs.save();
-      fail();
-    }
-    catch (IllegalStateException e) {
-    }
-  }
-
-  @Test
-  public void testPospondingSaveUntilChangeSetFinished() {
+  public void testSavingDuringChangeSet() {
     vcs.beginChangeSet();
     vcs.createFile("file", cf(""), -1);
 
     vcs.save();
-    assertFalse(hasSavedEntry("file"));
-
-    vcs.endChangeSet(null);
-    assertTrue(hasSavedEntry("file"));
-  }
-
-  @Test
-  public void testDoesNotSaveAfterNextChangeSetIfSaveWasPospondedDuringPriorOne() {
-    vcs.beginChangeSet();
-    vcs.createFile("one", cf(""), -1);
-    vcs.save();
-    vcs.endChangeSet(null);
-
-    assertTrue(hasSavedEntry("one"));
-
-    vcs.beginChangeSet();
-    vcs.createFile("two", cf(""), -1);
-    vcs.endChangeSet(null);
-
-    assertTrue(hasSavedEntry("one"));
-    assertFalse(hasSavedEntry("two"));
-  }
-
-  private boolean hasSavedEntry(String path) {
-    Storage s = new Storage(tempDir);
-    LocalVcs vcs = new LocalVcs(s);
-    boolean result = vcs.hasEntry(path);
-    s.close();
-    return result;
+    initVcs();
+    assertTrue(vcs.hasEntry("file"));
+    assertEquals(1, vcs.getRevisionsFor("file").size());
   }
 }

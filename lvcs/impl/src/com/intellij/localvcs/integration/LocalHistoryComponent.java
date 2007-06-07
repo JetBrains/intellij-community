@@ -33,9 +33,14 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private ILocalVcs myVcs;
   private LocalHistoryService myService;
 
+  // todo test-support
+  public static LocalHistoryComponent getComponentInstance(Project p) {
+    return (LocalHistoryComponent)getInstance(p);
+  }
+
   // todo bad method - extend interface instead
   public static ILocalVcs getLocalVcsFor(Project p) {
-    return ((LocalHistoryComponent)getInstance(p)).getLocalVcs();
+    return getComponentInstance(p).getLocalVcs();
   }
 
   public LocalHistoryComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, CommandProcessor cp) {

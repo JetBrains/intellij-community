@@ -25,12 +25,12 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testVisitingPendingChanges() throws Exception {
+  public void testVisitingChangesInNotFinishedChangeSet() throws Exception {
     vcs.beginChangeSet();
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("createEntry createEntry ");
+    assertVisitorLog("changeSet createEntry createEntry ");
   }
 
   @Test
@@ -42,7 +42,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.rename("dir", "newDir");
 
-    assertVisitorLog("rename changeSet createEntry changeSet createEntry ");
+    assertVisitorLog("changeSet rename changeSet createEntry changeSet createEntry ");
   }
 
   @Test

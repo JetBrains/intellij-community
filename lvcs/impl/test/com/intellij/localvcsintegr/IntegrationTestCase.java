@@ -140,7 +140,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   }
 
   protected LocalHistoryComponent getVcsComponent() {
-    return (LocalHistoryComponent)LocalHistoryComponent.getInstance(myProject);
+    return LocalHistoryComponent.getComponentInstance(myProject);
   }
 
   protected ILocalVcs getVcs() {

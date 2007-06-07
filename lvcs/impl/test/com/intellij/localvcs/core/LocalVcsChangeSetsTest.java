@@ -8,25 +8,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
-  // todo clean up LocalVcs tests
-  private LocalVcs vcs = new TestLocalVcs();
-
-  @Test
-  public void testClearingChangesOnEachChange() {
-    vcs.createFile("file", cf("content"), -1);
-    assertTrue(vcs.isClean());
-  }
-
-  @Test
-  public void testClearingChangesAfterChangeSetFinifhed() {
-    vcs.beginChangeSet();
-
-    vcs.createFile("file", cf("content"), -1);
-    assertFalse(vcs.isClean());
-
-    vcs.endChangeSet(null);
-    assertTrue(vcs.isClean());
-  }
+  LocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testApplyingChangesRightAfterChange() {

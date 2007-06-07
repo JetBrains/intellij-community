@@ -4,6 +4,7 @@ import com.intellij.localvcs.core.IdPath;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Stream;
 import com.intellij.localvcs.core.tree.Entry;
+import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.utils.Reversed;
 
 import java.io.IOException;
@@ -14,6 +15,8 @@ import java.util.List;
 
 public class ChangeList {
   private List<Change> myChanges = new ArrayList<Change>();
+  private ChangeSet myCurrentChangeSet;
+  private int myChangeSetDepth;
 
   public ChangeList() {
   }
@@ -32,7 +35,35 @@ public class ChangeList {
     }
   }
 
-  // todo test support
+  public void addChange(Change c) {
+    if (myChangeSetDepth == 0) {
+      myChanges.add(c);
+    }
+    else {
+      myCurrentChangeSet.addChange(c);
+    }
+  }
+
+  public void beginChangeSet() {
+    myChangeSetDepth++;
+    if (myChangeSetDepth == 1) {
+      myCurrentChangeSet = new ChangeSet(Clock.getCurrentTimestamp());
+      myChanges.add(myCurrentChangeSet);
+    }
+  }
+
+  public void endChangeSet(String name) {
+    myChangeSetDepth--;
+    if (myChangeSetDepth == 0) {
+      if (myCurrentChangeSet.getChanges().isEmpty()) {
+        myChanges.remove(myChanges.size() - 1);
+        return;
+      }
+      myCurrentChangeSet.setName(name);
+      myCurrentChangeSet = null;
+    }
+  }
+
   public List<Change> getChanges() {
     List<Change> result = new ArrayList<Change>(myChanges);
     Collections.reverse(result);
@@ -58,27 +89,25 @@ public class ChangeList {
     return after.affectsSameAs(cc);
   }
 
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
-    for (Change change : Reversed.list(myChanges)) {
-      change.accept(v);
+  public void accept(ChangeVisitor v) throws IOException {
+    try {
+      for (Change change : Reversed.list(myChanges)) {
+        change.accept(v);
+      }
+    }
+    catch (ChangeVisitor.StopVisitingException e) {
     }
   }
 
   public List<Change> getChangesFor(Entry r, String path) {
-    ChangeCollectingVisitor v = new ChangeCollectingVisitor(r, path);
     try {
+      ChangeCollectingVisitor v = new ChangeCollectingVisitor(r, path);
       accept(v);
+      return v.getResult();
     }
     catch (IOException ex) {
       throw new RuntimeException(ex);
     }
-    catch (ChangeVisitor.StopVisitingException ex) {
-    }
-    return v.getResult();
-  }
-
-  public void addChange(Change c) {
-    myChanges.add(c);
   }
 
   public void revertUpTo(Entry r, Change target, boolean revertTargetChange) {

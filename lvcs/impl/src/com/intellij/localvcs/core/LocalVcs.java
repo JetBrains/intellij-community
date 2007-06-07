@@ -8,7 +8,6 @@ import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.integration.RevisionTimestampComparator;
-import com.intellij.localvcs.utils.Reversed;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,10 +21,6 @@ public class LocalVcs implements ILocalVcs {
   private Entry myRoot;
   private int myEntryCounter;
 
-  private int myInnerChangeSetCounter = 0;
-  private boolean wasSaveRequestedDuringChangeSet = false;
-
-  private List<Change> myPendingChanges = new ArrayList<Change>();
   private Change myLastChange;
 
   public LocalVcs(Storage s) {
@@ -42,9 +37,6 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void save() {
-    // todo a bit of hack... move it to service state
-    if (shouldPostpondSave()) return;
-
     purgeObsolete(getPurgingPeriod());
 
     Memento m = new Memento();
@@ -54,13 +46,6 @@ public class LocalVcs implements ILocalVcs {
 
     myStorage.store(m);
     myStorage.save();
-  }
-
-  private boolean shouldPostpondSave() {
-    if (!isInChangeSet()) return false;
-
-    wasSaveRequestedDuringChangeSet = true;
-    return true;
   }
 
   public boolean hasEntry(String path) {
@@ -84,26 +69,11 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void beginChangeSet() {
-    // todo hack. remove after moving update into service state
-    myInnerChangeSetCounter++;
+    myChangeList.beginChangeSet();
   }
 
   public void endChangeSet(String name) {
-    // todo hack. remove after moving update into service state
-    if (myInnerChangeSetCounter == 1) registerChangeSet(name);
-    myInnerChangeSetCounter--;
-    if (!isInChangeSet()) doPostpondedSave();
-  }
-
-  private void doPostpondedSave() {
-    // todo the easiest way to do that i need, but still a hack...
-    if (!wasSaveRequestedDuringChangeSet) return;
-    save();
-    wasSaveRequestedDuringChangeSet = false;
-  }
-
-  private boolean isInChangeSet() {
-    return myInnerChangeSetCounter > 0;
+    myChangeList.endChangeSet(name);
   }
 
   public void createFile(String path, ContentFactory f, long timestamp) {
@@ -174,33 +144,20 @@ public class LocalVcs implements ILocalVcs {
   }
 
   private void applyChange(Change c) {
-    c.applyTo(myRoot);
-    myPendingChanges.add(c);
-    myLastChange = c;
-
     // todo forbid the ability of making changes outside of changeset
-    if (!isInChangeSet()) registerChangeSet(null);
-  }
+    c.applyTo(myRoot);
 
-  private void registerChangeSet(String name) {
-    if (myPendingChanges.isEmpty()) return;
-
-    Change c = new ChangeSet(getCurrentTimestamp(), name, myPendingChanges);
+    // todo get rid of wrapping changeset here
+    myChangeList.beginChangeSet();
     myChangeList.addChange(c);
-    clearPendingChanges();
-  }
+    myChangeList.endChangeSet(null);
 
-  private void clearPendingChanges() {
-    myPendingChanges = new ArrayList<Change>();
+    myLastChange = c;
   }
 
   // test-support
   protected ChangeList getChangeList() {
     return myChangeList;
-  }
-
-  protected Boolean isClean() {
-    return myPendingChanges.isEmpty();
   }
 
   public Change getLastChange() {
@@ -287,14 +244,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void accept(ChangeVisitor v) throws IOException {
-    try {
-      for (Change c : Reversed.list(myPendingChanges)) {
-        c.accept(v);
-      }
-      myChangeList.accept(v);
-    }
-    catch (ChangeVisitor.StopVisitingException e) {
-    }
+    myChangeList.accept(v);
   }
 
   private byte[] getByteContentOf(Revision r) {

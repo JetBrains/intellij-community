@@ -246,6 +246,17 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRevisionsIfSomeFilesWereDeletedDuringChangeSet() {
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/f", null, -1);
+    vcs.beginChangeSet();
+    vcs.delete("dir/f");
+
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(3, rr.size());
+  }
+
+  @Test
   public void testGettingEntryFromRevision() {
     vcs.createFile("file", cf("content"), 123L);
     vcs.changeFileContent("file", cf("new content"), 456L);

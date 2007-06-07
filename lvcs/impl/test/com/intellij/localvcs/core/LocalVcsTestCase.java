@@ -87,7 +87,6 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected void createFile(Entry r, int id, String path, Content c, long timestamp) {
-    //return r.createFile(id, path, c, timestamp);
     new CreateFileChange(id, path, c, timestamp).applyTo(r);
   }
 

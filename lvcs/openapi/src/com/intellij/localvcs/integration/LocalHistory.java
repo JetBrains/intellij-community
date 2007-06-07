@@ -5,11 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class LocalHistory implements SettingsSavingComponent {
-  // make it private
-  public static LocalHistory getInstance(Project p) {
-    return p.getComponent(LocalHistory.class);
-  }
-
   public static LocalHistoryAction startAction(Project p, String name) {
     return getInstance(p).startAction(name);
   }
@@ -45,6 +40,11 @@ public abstract class LocalHistory implements SettingsSavingComponent {
 
   public static boolean isEnabled(Project p) {
     return System.getProperty("UseOldLocalHistory") == null;
+  }
+
+  // todo make it private
+  protected static LocalHistory getInstance(Project p) {
+    return p.getComponent(LocalHistory.class);
   }
 
   protected abstract LocalHistoryAction startAction(String name);

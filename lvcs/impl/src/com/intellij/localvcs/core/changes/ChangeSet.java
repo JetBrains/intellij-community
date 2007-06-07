@@ -21,6 +21,11 @@ public class ChangeSet extends Change {
     myName = name;
   }
 
+  public ChangeSet(long timestamp) {
+    myTimestamp = timestamp;
+    myChanges = new ArrayList<Change>();
+  }
+
   public ChangeSet(Stream s) throws IOException {
     // todo get rid of null here
     myName = s.readStringOrNull();
@@ -43,6 +48,10 @@ public class ChangeSet extends Change {
     }
   }
 
+  public void setName(String name) {
+    myName = name;
+  }
+
   @Override
   public String getName() {
     return myName;
@@ -51,6 +60,10 @@ public class ChangeSet extends Change {
   @Override
   public long getTimestamp() {
     return myTimestamp;
+  }
+
+  public void addChange(Change c) {
+    myChanges.add(c);
   }
 
   @Override
