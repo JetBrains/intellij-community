@@ -5,6 +5,7 @@
  */
 package com.intellij.compiler.progress;
 
+import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompileDriver;
@@ -46,6 +47,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import java.util.concurrent.Semaphore;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
@@ -88,11 +90,17 @@ public class CompilerTask extends Task.Backgroundable {
   public void run(final ProgressIndicator indicator) {
     myIndicator = indicator;
 
-    if (!isHeadless()) {
-      addIndicatorDelegate();
+    final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
+    semaphore.acquireUninterruptibly();
+    try {
+      if (!isHeadless()) {
+        addIndicatorDelegate();
+      }
+      myCompileWork.run();
     }
-
-    myCompileWork.run();
+    finally {
+      semaphore.release();
+    }
   }
 
   private void prepareMessageView() {

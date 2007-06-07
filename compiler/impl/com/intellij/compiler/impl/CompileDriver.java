@@ -58,7 +58,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Semaphore;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -290,8 +289,6 @@ public class CompileDriver {
 
     indicator.start(new Runnable() {
       public void run() {
-        final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
-        semaphore.acquireUninterruptibly();
         try {
           if (LOG.isDebugEnabled()) {
             LOG.debug("COMPILATION STARTED");
@@ -302,7 +299,6 @@ public class CompileDriver {
           doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
         }
         finally {
-          semaphore.release();
           if (LOG.isDebugEnabled()) {
             LOG.debug("COMPILATION FINISHED");
           }
