@@ -32,16 +32,12 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
   }
 
 
-  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  public GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     final PsiElementFactory psiElementFactory = aClass.getManager().getElementFactory();
     try {
       final String name = myMemberType == PropertyMemberType.FIELD? myAttributeName : aClass.getManager().getCodeStyleManager().propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
       final PsiField psiField = psiElementFactory.createField(name, myType);
-      final GenerationInfo[] objects = new GenerateGetterAndSetterHandler() {
-        public GenerationInfo[] generateMemberPrototypes(final PsiClass aClass, final ClassMember original) throws IncorrectOperationException {
-          return super.generateMemberPrototypes(aClass, original);
-        }
-      }.generateMemberPrototypes(aClass, new PsiFieldMember(psiField));
+      final GenerationInfo[] objects = new GenerateGetterAndSetterHandler().generateMemberPrototypes(aClass, new PsiFieldMember(psiField));
       final GenerationInfo getter = objects[0];
       final GenerationInfo setter = objects[1];
       if (myAnnotations.length > 0) {

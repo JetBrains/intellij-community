@@ -14,7 +14,7 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
     super(CodeInsightBundle.message("generate.getter.setter.title"));
   }
 
-  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+  public GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
     GenerationInfo[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
     GenerationInfo[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
