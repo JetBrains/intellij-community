@@ -95,9 +95,11 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier</implementation-class>
       <skipForDummyProject/>
+      <headless-implementation-class/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
+      <headless-implementation-class/>
       <skipForDummyProject/>
     </component>
   </project-components>
