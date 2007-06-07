@@ -156,7 +156,9 @@ public class GroovyAnnotator implements Annotator {
     }
 
     if (refExpr.getType() == null) {
-      Annotation annotation = holder.createInformationAnnotation(refExpr.getReferenceNameElement(),
+      PsiElement refNameElement = refExpr.getReferenceNameElement();
+      PsiElement elt = refNameElement == null ? refExpr : refNameElement;
+      Annotation annotation = holder.createInformationAnnotation(elt,
           GroovyBundle.message("untyped.access", refExpr.getReferenceName()));
 
       annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.MAGENTA, EffectType.LINE_UNDERSCORE, 0));
