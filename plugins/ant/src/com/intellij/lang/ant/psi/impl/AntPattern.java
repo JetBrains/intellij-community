@@ -67,7 +67,7 @@ public class AntPattern extends AntElementVisitor {
       // todo: add support to includefile and excludefile
       if ("include".equals(antTypeId.getName())) {
         if (isEnabled(element)) {
-          final String value = element.getSourceElement().getAttributeValue("name");
+          final String value = element.computeAttributeValue(element.getSourceElement().getAttributeValue("name"));
           if (value != null) {
             addIncludePattern(value);
           }
@@ -75,7 +75,7 @@ public class AntPattern extends AntElementVisitor {
       }
       else if ("exclude".equals(antTypeId.getName())) {
         if (isEnabled(element)) {
-          final String value = element.getSourceElement().getAttributeValue("name");
+          final String value = element.computeAttributeValue(element.getSourceElement().getAttributeValue("name"));
           if (value != null) {
             addExcludePattern(value);
           }
@@ -83,11 +83,11 @@ public class AntPattern extends AntElementVisitor {
       }
       else {
         // todo: add support to includesfile and excludesfile
-        final String includeAttribs = element.getSourceElement().getAttributeValue("includes");
+        final String includeAttribs = element.computeAttributeValue(element.getSourceElement().getAttributeValue("includes"));
         if (includeAttribs != null) {
           addPatterns(true, includeAttribs);
         }
-        final String excludeAttribs = element.getSourceElement().getAttributeValue("excludes");
+        final String excludeAttribs = element.computeAttributeValue(element.getSourceElement().getAttributeValue("excludes"));
         if (excludeAttribs != null) {
           addPatterns(false, excludeAttribs);
         }
