@@ -3,6 +3,5 @@ while (true) {
 }
 -----
 while (true) {
-  def preved = foo()
-  preved<caret>
+  def preved = foo()<caret>
 }

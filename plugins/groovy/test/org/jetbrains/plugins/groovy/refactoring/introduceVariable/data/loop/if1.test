@@ -3,6 +3,5 @@ if (true) <all>({x -> 1})<end>
 -----
 foo {x->x}
 if (true) {
-  def preved = {x -> 1}
-  preved<caret>
+  def preved = {x -> 1}<caret>
 }
