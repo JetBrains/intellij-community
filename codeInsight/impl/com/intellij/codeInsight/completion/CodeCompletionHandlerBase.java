@@ -80,7 +80,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final int offset1 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
     final int offset2 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : offset1;
-    final CompletionContext context = new CompletionContextImpl(project, editor, file, offset1, offset2);
+    final CompletionContext context = new CompletionContext(project, editor, file, offset1, offset2);
 
     final LookupData data = getLookupData(context);
     final LookupItem[] items = data.items;
@@ -402,7 +402,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       int newOffset2 = editorDelegate
         .logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
       PsiFile injectedFile = editorDelegate.getInjectedFile();
-      CompletionContext newContext = new CompletionContextImpl(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
+      CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
       newContext.offset = newContext.startOffset;
       PsiElement element = injectedFile.findElementAt(newContext.startOffset);
       return Pair.create(newContext, element);
