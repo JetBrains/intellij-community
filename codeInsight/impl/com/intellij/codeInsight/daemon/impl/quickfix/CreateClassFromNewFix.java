@@ -27,18 +27,21 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     myNewExpression = SmartPointerManager.getInstance(newExpression.getProject()).createSmartPsiElementPointer(newExpression);
   }
 
-  private PsiNewExpression getNewExpression() {
+  protected PsiNewExpression getNewExpression() {
     return (PsiNewExpression)myNewExpression.getElement();
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    PsiManager psiManager = getNewExpression().getManager();
-    final Project project = psiManager.getProject();
-    final PsiElementFactory elementFactory = psiManager.getElementFactory();
+    PsiNewExpression newExpression = getNewExpression();
 
-    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(getNewExpression()),
+    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(newExpression),
                                                                CreateClassKind.CLASS,
                                                                null);
+    setupClassFromNewExpression(psiClass, newExpression);
+  }
+
+  public static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
+    final PsiElementFactory elementFactory = newExpression.getManager().getElementFactory();
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
@@ -46,20 +49,21 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
             PsiClass aClass = psiClass;
             if (aClass == null) return;
 
-            setupInheritance(getNewExpression(), aClass);
-            setupGenericParameters(getNewExpression(), aClass);
+            setupInheritance(newExpression, aClass);
+            setupGenericParameters(newExpression, aClass);
 
-            PsiExpressionList argList = getNewExpression().getArgumentList();
+            PsiExpressionList argList = newExpression.getArgumentList();
+            Project project = aClass.getProject();
             if (argList != null && argList.getExpressions().length > 0) {
               PsiMethod constructor = elementFactory.createConstructor();
               constructor = (PsiMethod) aClass.add(constructor);
 
               TemplateBuilder templateBuilder = new TemplateBuilder(aClass);
-              CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(getNewExpression()));
+              CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
 
               setupSuperCall(aClass, constructor, templateBuilder);
 
-              getReferenceElement(getNewExpression()).bindToElement(aClass);
+              getReferenceElement(newExpression).bindToElement(aClass);
               aClass = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(aClass);
               Template template = templateBuilder.buildTemplate();
 
@@ -126,10 +130,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
   }
 
-  private void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
+  private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
     if (element.getParent() instanceof PsiReferenceExpression) return;
 
-    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(getNewExpression().getProject()).getExpectedTypes(element, false);
+    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(element.getProject()).getExpectedTypes(element, false);
 
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       PsiType type = expectedType.getType();
@@ -197,11 +201,16 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, getNewExpression())) {
-      setText(QuickFixBundle.message("create.class.from.new.text", nameElement.getText()));
+      String varName = nameElement.getText();
+      setText(getText(varName));
       return true;
     }
 
     return false;
+  }
+
+  protected String getText(final String varName) {
+    return QuickFixBundle.message("create.class.from.new.text", varName);
   }
 
   private static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {
