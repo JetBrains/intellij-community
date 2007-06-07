@@ -156,4 +156,10 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
     assertEquals("java.lang.Class", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
   }
+
+  public void testComplexOveroad() throws Exception {
+    PsiReference ref = configureByFile("complexOverload/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
 }

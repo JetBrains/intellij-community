@@ -86,6 +86,15 @@ public class TypesUtil {
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
+  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+    //all numeric types are assignable
+
+    rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
+    lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
+
+    return TypeConversionUtil.isAssignable(lType, rType);
+  }
+
   private static boolean isNumericType(PsiType type) {
     if (type instanceof PsiClassType) {
       return TYPE_TO_RANK.contains(type.getCanonicalText());

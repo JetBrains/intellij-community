@@ -94,7 +94,7 @@ public class PsiUtil {
       }
       parameterTypeToCheck = TypeConversionUtil.erasure(parameterTypeToCheck);
 
-      if (!TypesUtil.isAssignable(parameterTypeToCheck, argType, manager, scope)) return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(parameterTypeToCheck, argType, manager, scope)) return false;
     }
 
     return true;
