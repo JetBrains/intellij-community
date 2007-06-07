@@ -2,6 +2,7 @@ package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -43,7 +44,11 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   public void installFileCompletion(final JTextField field, final FileChooserDescriptor descriptor, final boolean showHidden,
                                     final Disposable parent) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
     FileTextFieldImpl.Vfs vfsField = new FileTextFieldImpl.Vfs(descriptor, showHidden, field);
-    Disposer.register(parent, vfsField);
+    if (field.getClientProperty(FileTextFieldImpl.KEY) == vfsField) {
+      Disposer.register(parent, vfsField);
+    }
   }
 }
