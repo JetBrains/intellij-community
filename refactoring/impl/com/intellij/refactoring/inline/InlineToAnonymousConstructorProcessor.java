@@ -29,9 +29,10 @@ class InlineToAnonymousConstructorProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineToAnonymousConstructorProcessor");
 
   private static Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
+  private static Key<PsiCallExpression> ourCallKey = Key.create("call");
   private static Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
   private static Pattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
-  private static Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
+  private static Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
   private static Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
 
   private final PsiClass myClass;
@@ -293,22 +294,17 @@ class InlineToAnonymousConstructorProcessor {
     final PsiCodeBlock body = myConstructor.getBody();
     assert body != null;
     PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0 || !(statements [0] instanceof PsiExpressionStatement)) {
+    if (statements.length == 0) {
       return;
     }
-    PsiExpressionStatement stmt = (PsiExpressionStatement) statements [0];
-    if (!(stmt.getExpression() instanceof PsiCallExpression)) {
+    MatchingContext context = new MatchingContext();
+    if (!ourSuperCallPattern.accepts(statements [0], context, new TraverseContext())) {
       return;
     }
-    PsiCallExpression expr = (PsiCallExpression) stmt.getExpression();
-    final PsiElement superKeyword = expr.getFirstChild();
-    if (superKeyword == null || !superKeyword.getText().equals(PsiKeyword.SUPER)) {
-      return;
-    }
-    PsiExpressionList superArguments = expr.getArgumentList();
+    PsiExpressionList superArguments = context.get(ourCallKey).getArgumentList();
     if (superArguments != null) {
       for(PsiExpression argument: superArguments.getExpressions()) {
-        argumentList.add(replaceParameterReferences(argument,
+        argumentList.add(replaceParameterReferences((PsiExpression) argument.copy(),
                                                     new ArrayList<PsiReferenceExpression>()));
       }
     }
