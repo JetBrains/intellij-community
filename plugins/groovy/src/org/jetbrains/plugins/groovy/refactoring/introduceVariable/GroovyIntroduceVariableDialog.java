@@ -15,44 +15,42 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.util.ArrayUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.StringComboboxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
-import java.awt.event.KeyEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.EventListener;
 import java.util.HashMap;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GroovyIntroduceVariableSettings {
 
   private Project myProject;
-  private final PsiElement myExpression;
+  private final GrExpression myExpression;
   private final PsiType myType;
   private final int myOccurrencesCount;
-  private final boolean myDeclareFinalIfAll;
-  private final IntroduceVariableHandler.Validator myValidator;
+  private final GroovyIntroduceVariableBase.Validator myValidator;
   private HashMap<String, PsiType> myTypeMap = null;
   private EventListenerList myListenerList = new EventListenerList();
 
@@ -68,17 +66,15 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   private JButton buttonOK;
 
   public GroovyIntroduceVariableDialog(Project project,
-                                       PsiElement expression,
+                                       GrExpression expression,
                                        PsiType psiType,
                                        int occurrencesCount,
-                                       boolean declareFinalIfAll,
-                                       IntroduceVariableHandler.Validator validator) {
+                                       GroovyIntroduceVariableBase.Validator validator) {
     super(project, true);
     myProject = project;
     myExpression = expression;
     myType = psiType;
     myOccurrencesCount = occurrencesCount;
-    myDeclareFinalIfAll = declareFinalIfAll;
     myValidator = validator;
     setUpNameComboBox();
 
@@ -169,7 +165,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
     myNameComboBox.setEditable(true);
     myNameComboBox.setMaximumRowCount(8);
-
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
 
     myNameComboBox.addItemListener(
@@ -200,13 +195,19 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   }
 
   protected void doOKAction() {
-    // todo implement validator!
+    if (!myValidator.isOK(this)) {
+      return;
+    }
     super.doOKAction();
   }
 
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
+  }
+
+  GrExpression getExpression() {
+    return myExpression;
   }
 
   class DataChangedListener implements EventListener {

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
@@ -316,25 +315,28 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       boolean inThenIfBranch = realContainer instanceof GrIfStatement &&
           anchorElement.equals(((GrIfStatement) realContainer).getThenBranch());
       String refId = varDecl.getVariables()[0].getNameIdentifierGroovy().getText();
+      GrOpenBlock newBody;
       if (tempStatement.equals(selectedExpr)) {
-        tempStatement = factory.createReferenceExpressionFromText(refId);
+        newBody = factory.createOpenBlockFromStatements(varDecl);
       } else {
         replaceExpressionOccurencesInStatement(tempStatement, selectedExpr, refId, replaceAllOccurences);
+        newBody = factory.createOpenBlockFromStatements(varDecl, tempStatement);
       }
 
-      GrOpenBlock newBody = factory.createOpenBlockFromStatements(varDecl, tempStatement);
       assert newBody.getStatements().length > 1;
 
+      GrCodeBlock tempBlock = newBody;
       if (realContainer instanceof GrLoopStatement) {
-        refreshPositionMarker(((GrCodeBlock) ((GrLoopStatement) realContainer).replaceBody(newBody)).getStatements()[1]);
+        tempBlock = ((GrCodeBlock) ((GrLoopStatement) realContainer).replaceBody(newBody));
       } else if (realContainer instanceof GrIfStatement) {
         GrIfStatement ifStatement = ((GrIfStatement) realContainer);
         if (inThenIfBranch) {
-          refreshPositionMarker(((GrCodeBlock) ifStatement.replaceThenBranch(newBody)).getStatements()[1]);
+          tempBlock = ((GrCodeBlock) ifStatement.replaceThenBranch(newBody));
         } else {
-          refreshPositionMarker(((GrCodeBlock) ifStatement.replaceElseBranch(newBody)).getStatements()[1]);
+          tempBlock = ((GrCodeBlock) ifStatement.replaceElseBranch(newBody));
         }
       }
+      refreshPositionMarker(tempBlock.getStatements()[tempBlock.getStatements().length - 1]);
     }
   }
 
@@ -379,12 +381,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                                          GrExpression selectedExpr,
                                          @NotNull PsiElement context,
                                          @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
+/*
     if (expr instanceof GrMethodCall ||
         expr instanceof GrApplicationExpression) {
       return false;
     }
+*/
     if (context.equals(expr.getParent()) &&
-        !GroovyRefactoringUtil.isResultExpression(expr) &&
         !GroovyRefactoringUtil.isLoopOrForkStatement(context)) {
       if (expr.equals(selectedExpr)) {
         refreshPositionMarker(expr.replaceWithStatement(definition));
@@ -406,9 +409,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Does nothing
   }
 
-  protected abstract GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, PsiElement expr,
+  protected abstract GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, GrExpression expr,
                                                                  PsiType type, PsiElement[] occurrences, boolean decalreFinal,
-                                                                 InputValidator validator);
+                                                                 Validator validator);
 
   protected abstract void showErrorMessage(String message, Project project);
 
@@ -442,4 +445,10 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     editor.getSelectionModel().setSelection(start, end);
 
   }
+
+  public interface Validator {
+    boolean isOK(GroovyIntroduceVariableDialog dialog);
+  }
+
+
 }

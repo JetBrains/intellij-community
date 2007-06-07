@@ -25,13 +25,12 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableDialog;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.ArrayList;
 
@@ -50,9 +49,9 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     return conflictsDialog.isOK();
   }
 
-  protected GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, PsiElement expr,
+  protected GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, GrExpression expr,
                                                         PsiType exprType, PsiElement[] occurrences, boolean declareFinal,
-                                                        InputValidator validator) {
+                                                        Validator validator) {
 
     // Add occurences highlighting
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
@@ -66,7 +65,7 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
       }
     }
 
-    GroovyIntroduceVariableDialog dialog = new GroovyIntroduceVariableDialog(project, expr, exprType, occurrences.length, declareFinal, validator);
+    GroovyIntroduceVariableDialog dialog = new GroovyIntroduceVariableDialog(project, expr, exprType, occurrences.length, validator);
     dialog.show();
     if (!dialog.isOK()) {
       if (occurrences.length > 1) {
