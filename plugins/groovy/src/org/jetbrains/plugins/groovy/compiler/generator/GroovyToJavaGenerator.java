@@ -330,7 +330,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     if (isScript) {
       text.append("extends ");
-      text.append("groovy.lang.Script");
+      text.append("groovy.lang.Script ");
     } else {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
@@ -342,13 +342,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         if (isClassDef) {
           text.append("extends ");
           text.append(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
+          text.append(" ");
         }
       }
 
       PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
 
       if (implementsTypes.length > 0) {
-        text.append(" implements ");
+        text.append("implements ");
         int i = 0;
         while (i < implementsTypes.length) {
           if (i > 0) text.append(", ");
@@ -359,7 +360,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
     }
 
-    text.append(" ");
     text.append("{");
     text.append("\n");
 
@@ -373,7 +373,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           text.append("\n");
         }
         writeMethod(text, method, isInteraface);
-        text.append("\n");
 
         if ("run".equals(method.getName())) {
           PsiType returnType = method.getReturnType();
@@ -390,7 +389,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
     }
 
-    if (isScript && !isRunMethodPresent) writeRunMethod(text);
+    if (isScript && !isRunMethodPresent) {
+      writeRunMethod(text);
+    }
 
     text.append("\n}");
   }
@@ -604,10 +605,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     PsiModifierList modifierList = method.getModifierList();
 
+    text.append("  ");
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
     //append qualified type name
-    text.append("  ");
     text.append(qualifiedTypeName);
     text.append(" ");
 
@@ -641,8 +642,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     if (!isIntefraceMethod) {
       /************* body **********/
-      text.append("{");
-      text.append(" return ");
+      text.append("{\n");
+      text.append("    return ");
 
       if (typesToInitialValues.containsKey(qualifiedTypeName))
         text.append(typesToInitialValues.get(qualifiedTypeName));
@@ -651,11 +652,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       text.append(";");
 
-      text.append("\n}");
+      text.append("\n  }");
     } else {
       text.append(";");
     }
-
   }
 
   private boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {

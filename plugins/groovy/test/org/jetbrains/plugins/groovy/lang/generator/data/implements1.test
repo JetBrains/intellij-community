@@ -1,0 +1,10 @@
+class A implements Comparable {
+   def int compare(A anotherA) {}
+}
+-----
+public class A extends groovy.lang.GroovyObjectSupport implements Comparable {
+  public int compare(A anotherA) {
+    return 0;
+  }
+}
+---

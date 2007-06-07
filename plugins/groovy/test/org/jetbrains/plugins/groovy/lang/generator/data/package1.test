@@ -1,0 +1,10 @@
+package a.b
+
+class D {
+}
+-----
+package a.b;
+public class D extends groovy.lang.GroovyObjectSupport {
+
+}
+---

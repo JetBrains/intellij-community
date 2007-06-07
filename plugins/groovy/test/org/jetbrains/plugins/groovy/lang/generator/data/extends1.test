@@ -1,0 +1,13 @@
+class b {
+}
+class a extends b {
+}
+-----
+public class b extends groovy.lang.GroovyObjectSupport {
+
+}
+---
+public class a extends b {
+
+}
+---
