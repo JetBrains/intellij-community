@@ -158,6 +158,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private void copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file, NewVirtualFileSystem delegate) {
+    if (id == parentId) {
+      LOG.error("Cyclic parent-child relations for file: " + file);
+      return;
+    }
+
     String name = file.getName();
 
     if (name.length() > 0 && namesEqual(delegate, name, myRecords.getName(id))) return; // TODO: Handle root attributes change.
@@ -171,8 +176,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     myRecords.setCRC(id, delegate.getCRC(file));
     myRecords.setTimestamp(id, delegate.getTimeStamp(file));
-    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) |
-                           (!delegate.isWritable(file) ? IS_READ_ONLY : 0));
+    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (!delegate.isWritable(file) ? IS_READ_ONLY : 0));
 
     myRecords.setLength(id, -1);
 

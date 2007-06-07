@@ -404,7 +404,13 @@ public class FSRecords implements Disposable {
   public int getParent(int id) {
     r.lock();
     try {
-      return myConnection.getRecords().getInt(id * RECORD_SIZE + PARENT_OFFSET);
+      final int parentId = myConnection.getRecords().getInt(id * RECORD_SIZE + PARENT_OFFSET);
+      if (parentId == id) {
+        LOG.error("Cyclic parent child relations in the database. id = " + id);
+        return 0;
+      }
+
+      return parentId;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -417,6 +423,7 @@ public class FSRecords implements Disposable {
   public void setParent(int id, int parent) {
     if (id == parent) {
       LOG.error("Cyclic parent/child relations");
+      return;
     }
 
     w.lock();

@@ -19,7 +19,7 @@ import gnu.trove.THashSet;
 import gnu.trove.THashMap;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
-  private volatile NewVirtualFileSystem myFS;
+  private final NewVirtualFileSystem myFS;
   private volatile Object myChildren; // Either HashMap<String, VFile> or VFile[]
 
   public VirtualDirectoryImpl(final String name, final VirtualDirectoryImpl parent, final NewVirtualFileSystem fs, final int id) {
