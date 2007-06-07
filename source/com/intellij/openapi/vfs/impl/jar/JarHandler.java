@@ -242,7 +242,7 @@ public class JarHandler implements FileSystemInterface {
     lock.lock();
     try {
       final ZipEntry entry = convertToEntry(file);
-      return entry != null ? entry.getSize() : -1L;
+      return entry != null ? entry.getSize() : 0;
     }
     finally {
       lock.unlock();
