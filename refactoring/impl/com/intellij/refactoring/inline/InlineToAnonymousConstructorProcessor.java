@@ -230,7 +230,17 @@ class InlineToAnonymousConstructorProcessor {
   private PsiVariable generateLocal(final String baseName, final PsiType type, final PsiExpression initializer) {
     final CodeStyleManager codeStyleManager = myClass.getManager().getCodeStyleManager();
 
-    String localName = codeStyleManager.suggestUniqueVariableName(baseName, myNewExpression, true);
+    String baseNameForIndex = baseName;
+    int index = 0;
+    String localName;
+    while(true) {
+      localName = codeStyleManager.suggestUniqueVariableName(baseNameForIndex, myNewExpression, true);
+      if (myClass.findFieldByName(localName, false) == null) {
+        break;
+      }
+      index++;
+      baseNameForIndex = baseName + index;
+    }
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
