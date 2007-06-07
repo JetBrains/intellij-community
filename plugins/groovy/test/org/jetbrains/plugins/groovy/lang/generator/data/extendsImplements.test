@@ -1,0 +1,7 @@
+class a extends GroovyObjectSupport implements GroovyObject {
+}
+-----
+public class a extends GroovyObjectSupport implements GroovyObject {
+
+}
+---
