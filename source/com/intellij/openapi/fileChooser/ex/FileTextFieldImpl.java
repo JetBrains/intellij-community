@@ -1,7 +1,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -66,19 +67,24 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     myPathTextField.putClientProperty(KEY, this);
+    final boolean headless = ApplicationManager.getApplication().isUnitTestMode();
 
     if (uiUpdater == null) {
       myUiUpdater = new MergingUpdateQueue("FileTextField.UiUpdater", 200, false, myPathTextField);
-      new UiNotifyConnector(myPathTextField, myUiUpdater);
-      Disposer.register(this, myUiUpdater);
+      if (!headless) {
+        new UiNotifyConnector(myPathTextField, myUiUpdater);
+        Disposer.register(this, myUiUpdater);
+      }
     } else {
       myUiUpdater = uiUpdater;
     }
 
     if (worker == null) {
       myWorker = new WorkerThread("FileTextField.FileLocator", 200);
-      myWorker.start();
-      Disposer.register(this, myWorker);
+      if (!headless) {
+        myWorker.start();
+        Disposer.register(this, myWorker);
+      }
     } else {
       myWorker = worker;
     }
