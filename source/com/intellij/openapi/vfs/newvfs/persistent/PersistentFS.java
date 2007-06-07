@@ -472,7 +472,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private void applyEvent(final VFileEvent event) {
-    System.out.println("Apply: " + event);
+    /*System.out.println("Apply: " + event);*/
     
     if (event instanceof VFileCreateEvent) {
       final VFileCreateEvent createEvent = (VFileCreateEvent)event;
