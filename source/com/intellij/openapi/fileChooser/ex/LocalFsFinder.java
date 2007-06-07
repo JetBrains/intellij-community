@@ -76,7 +76,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       VirtualFile[] kids = myFile.getChildren();
       for (VirtualFile each : kids) {
         LookupFile eachFile = myFinder.getLookupFile(each.getPath(), each);
-        if (filter.isAccepted(eachFile)) {
+        if (eachFile != null && filter.isAccepted(eachFile)) {
           result.add(eachFile);
         }
       }
