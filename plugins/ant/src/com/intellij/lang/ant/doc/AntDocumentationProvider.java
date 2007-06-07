@@ -28,11 +28,6 @@ public class AntDocumentationProvider implements DocumentationProvider {
     if (!(originalElement instanceof AntElement)) {
       return null;
     }
-    final AntElement antElement = (AntElement)originalElement;
-    String doc = generateDocForElement(antElement);
-    if (doc != null) {
-      return doc;
-    }
     
     final File helpFile = getHelpFile(originalElement);
     if (helpFile == null) {
@@ -47,10 +42,24 @@ public class AntDocumentationProvider implements DocumentationProvider {
     if (fileByIoFile == null) {
       return null;
     }
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc(); 
     try {
-      return VfsUtil.loadText(fileByIoFile);
+      final AntElement antElement = (AntElement)originalElement;
+      final String additionalDoc = generateDocForElement(antElement);
+      if (additionalDoc != null) {
+        builder.append(additionalDoc);
+      }
+
+      final String mainDoc = VfsUtil.loadText(fileByIoFile);
+      if (mainDoc != null) {
+        builder.append(mainDoc);
+      }
+      return builder.toString();
     }
     catch (IOException ignored) {
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
     }
     return null;
   }
@@ -115,26 +124,26 @@ public class AntDocumentationProvider implements DocumentationProvider {
   @Nullable
   private static File getHelpFile(AntElement antElement, final String path) {
 
+    final XmlTag xmlTag = (XmlTag) antElement.getSourceElement();
+    @NonNls final String helpFileShortName = xmlTag.getName()+ ".html";
+    @NonNls File candidateHelpFile = null;
+    
     if (antElement instanceof AntTask) {
-
-      final XmlTag xmlTag = (XmlTag) antElement.getSourceElement();
-      @NonNls final String helpFileShortName = xmlTag.getName()+ ".html";
-
-      File candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
-      if (candidateHelpFile.exists()) return candidateHelpFile;
-
-      candidateHelpFile = new File(path + CORE_TYPES_FOLDER_NAME + helpFileShortName);
+      candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
       if (candidateHelpFile.exists()) return candidateHelpFile;
 
       candidateHelpFile = new File(path + OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
       if (candidateHelpFile.exists()) return candidateHelpFile;
-
-      candidateHelpFile = new File(path + OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
-      if (candidateHelpFile.exists()) return candidateHelpFile;
     }
+
+    candidateHelpFile = new File(path + CORE_TYPES_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile.exists()) return candidateHelpFile;
+
+    candidateHelpFile = new File(path + OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile.exists()) return candidateHelpFile;
     
     if(antElement instanceof AntTarget || antElement instanceof AntProject) {
-      @NonNls File candidateHelpFile = new File(path + "/using.html");
+      candidateHelpFile = new File(path + "/using.html");
       if (candidateHelpFile.exists()) return candidateHelpFile;
     }
 
