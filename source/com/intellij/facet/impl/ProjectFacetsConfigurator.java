@@ -16,7 +16,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
@@ -244,7 +243,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     }
 
     public Library createProjectLibrary(final String baseName, final VirtualFile[] roots) {
-      LibraryTableModifiableModelProvider provider = myProjectRootConfigurable.createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL, false);
+      LibraryTableModifiableModelProvider provider = myProjectRootConfigurable.getProjectLibrariesProvider(false);
       LibraryTable.ModifiableModel model = provider.getModifiableModel();
       Library library = model.createLibrary(getUniqueLibraryName(baseName, model));
       LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
@@ -254,5 +253,14 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
       return library;
     }
 
+    public VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType) {
+      LibraryTable.ModifiableModel model = myProjectRootConfigurable.getProjectLibrariesProvider(false).getModifiableModel();
+      LibrariesModifiableModel librariesModifiableModel = (LibrariesModifiableModel)model;
+      if (librariesModifiableModel.hasLibraryEditor(library)) {
+        LibraryEditor libraryEditor = librariesModifiableModel.getLibraryEditor(library);
+        return libraryEditor.getFiles(rootType);
+      }
+      return super.getLibraryFiles(library, rootType);
+    }
   }
 }

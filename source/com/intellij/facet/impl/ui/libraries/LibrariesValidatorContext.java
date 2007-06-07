@@ -7,6 +7,7 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,4 +34,6 @@ public interface LibrariesValidatorContext {
   Project getProject();
 
   Library createProjectLibrary(String name, VirtualFile[] roots);
+
+  VirtualFile[] getFiles(final Library library, final OrderRootType rootType);
 }

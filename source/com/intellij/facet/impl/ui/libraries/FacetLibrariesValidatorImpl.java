@@ -183,7 +183,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     roots.addAll(myAddedRoots);
     for (Library library : myAddedLibraries) {
-      roots.addAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+      roots.addAll(Arrays.asList(myContext.getFiles(library, OrderRootType.CLASSES)));
     }
     if (rootModel != null) {
       RootPolicy<List<VirtualFile>> policy = new CollectingLibrariesPolicy();
@@ -194,7 +194,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
   private class CollectingLibrariesPolicy extends RootPolicy<List<VirtualFile>> {
     public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
-      value.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.CLASSES)));
+      Library library = libraryOrderEntry.getLibrary();
+      if (library != null) {
+        value.addAll(Arrays.asList(myContext.getFiles(library, OrderRootType.CLASSES)));
+      }
       return value;
     }
 
@@ -224,7 +227,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       for (Library library : allLibraries) {
         if (myAddedLibraries.contains(library)) continue;
 
-        if (missingLibrariesInfo.checkLibraries(library.getFiles(OrderRootType.CLASSES)) == null) {
+        if (missingLibrariesInfo.checkLibraries(myContext.getFiles(library, OrderRootType.CLASSES)) == null) {
           suitableLibraries.add(library);
         }
       }

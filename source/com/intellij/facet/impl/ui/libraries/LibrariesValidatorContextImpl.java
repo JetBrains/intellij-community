@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -60,5 +61,9 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
 
   public Library createProjectLibrary(String name, VirtualFile[] roots) {
     return FacetEditorContextBase.createLibraryInTable(name, roots, getProjectLibraryTable());
+  }
+
+  public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {
+    return library.getFiles(rootType);
   }
 }

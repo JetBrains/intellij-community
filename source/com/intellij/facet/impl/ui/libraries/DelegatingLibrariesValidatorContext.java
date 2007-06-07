@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -51,5 +52,9 @@ public class DelegatingLibrariesValidatorContext implements LibrariesValidatorCo
 
   public Library createProjectLibrary(final String name, final VirtualFile[] roots) {
     return myDelegate.createProjectLibrary(name, roots);
+  }
+
+  public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {
+    return myDelegate.getLibraryFiles(library, rootType);
   }
 }

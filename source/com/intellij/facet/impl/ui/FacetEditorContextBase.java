@@ -47,6 +47,10 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries();
   }
 
+  public VirtualFile[] getLibraryFiles(final Library library, final OrderRootType rootType) {
+    return library.getFiles(rootType);
+  }
+
   @Nullable
   public Library findLibrary(@NotNull String name) {
     for (Library library : getLibraries()) {

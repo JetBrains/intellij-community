@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -76,4 +77,6 @@ public interface FacetEditorContext extends UserDataHolder {
   WizardContext getWizardContext();
 
   Library createProjectLibrary(String name, final VirtualFile[] roots);
+
+  VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType);
 }
