@@ -9,8 +9,11 @@ import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 public class Disposer {
   private static final ObjectTree ourTree = new ObjectTree();
@@ -25,12 +28,32 @@ public class Disposer {
   private Disposer() {
   }
 
+  private static Map<String, Disposable> ourKeyDisposables = new WeakHashMap<String, Disposable>();
+
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
-    assert parent != child : " Cannot register to intself";
+    register(parent, child, null);
+  }
+
+  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @Nullable final String key) {
+    assert parent != child : " Cannot register to itself";
 
     synchronized (ourTree) {
       ourTree.register(parent, child);
+
+      if (key == null) return;
+
+      assert get(key) == null;
+      ourKeyDisposables.put(key, child);
+      register(child, new Disposable() {
+        public void dispose() {
+          ourKeyDisposables.remove(key);
+        }
+      });
     }
+  }
+
+  public static Disposable get(String key) {
+    return ourKeyDisposables.get(key);
   }
 
   public static void dispose(Disposable disposable) {

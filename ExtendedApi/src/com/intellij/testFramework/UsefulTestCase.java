@@ -22,7 +22,9 @@ import java.util.*;
  * @author peter
  */
 public abstract class UsefulTestCase extends TestCase {
+
   protected Disposable myTestRootDisposable;
+  protected Disposable myUiResourcesRoot;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -30,6 +32,11 @@ public abstract class UsefulTestCase extends TestCase {
       public void dispose() {
       }
     };
+    myUiResourcesRoot = new Disposable() {
+      public void dispose() {
+      }
+    };
+    Disposer.register(myTestRootDisposable, myUiResourcesRoot, "ui");
   }
 
   protected void tearDown() throws Exception {
