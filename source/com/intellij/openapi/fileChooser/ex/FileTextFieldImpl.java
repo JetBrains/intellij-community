@@ -58,7 +58,13 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater, WorkerThread worker) {
     myPathTextField = field;
 
-    if (myPathTextField.getClientProperty(KEY) != null) return;
+    FileTextFieldImpl assigned = (FileTextFieldImpl)myPathTextField.getClientProperty(KEY);
+    if (assigned != null) {
+      assigned.myFinder = finder;
+      assigned.myFilter = filter;
+      return;
+    }
+
     myPathTextField.putClientProperty(KEY, this);
 
     if (uiUpdater == null) {

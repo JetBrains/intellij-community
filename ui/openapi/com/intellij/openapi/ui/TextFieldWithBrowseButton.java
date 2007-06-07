@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.update.ComponentDisposable;
 
@@ -34,6 +35,8 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(JTextField field, ActionListener browseActionListener) {
     super(field, browseActionListener);
+    FileChooserDescriptor local = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), local, true, new ComponentDisposable(getChildComponent()));
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
