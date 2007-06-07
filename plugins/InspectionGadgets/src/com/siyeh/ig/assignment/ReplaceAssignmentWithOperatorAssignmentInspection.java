@@ -18,8 +18,8 @@ package com.siyeh.ig.assignment;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -94,10 +94,6 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         return lhs.getText() + ' ' + signText + "= " + rhsRhs.getText();
     }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new ReplaceAssignmentWithOperatorAssignmentVisitor();
-    }
-
     public InspectionGadgetsFix buildFix(PsiElement location){
         return new ReplaceAssignmentWithOperatorAssignmentFix(
                 (PsiAssignmentExpression) location);
@@ -148,6 +144,10 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     }
 
+    public BaseInspectionVisitor buildVisitor(){
+        return new ReplaceAssignmentWithOperatorAssignmentVisitor();
+    }
+
     private class ReplaceAssignmentWithOperatorAssignmentVisitor
             extends BaseInspectionVisitor{
 
@@ -171,18 +171,19 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             }
             final IElementType expressionTokenType =
                     binaryRhs.getOperationTokenType();
-            if (expressionTokenType.equals(JavaTokenType.EQEQ)) {
+            if (JavaTokenType.EQEQ.equals(expressionTokenType) ||
+                    JavaTokenType.NE.equals(expressionTokenType)) {
                 return;
             }
             if (ignoreLazyOperators) {
-                if (expressionTokenType.equals(JavaTokenType.ANDAND) ||
-                        expressionTokenType.equals(JavaTokenType.OROR)) {
+                if (JavaTokenType.ANDAND.equals(expressionTokenType) ||
+                        JavaTokenType.OROR.equals(expressionTokenType)) {
                     return;
                 }
             }
             if (ignoreObscureOperators) {
-                if (expressionTokenType.equals(JavaTokenType.XOR) ||
-                        expressionTokenType.equals(JavaTokenType.PERC)) {
+                if (JavaTokenType.XOR.equals(expressionTokenType) ||
+                        JavaTokenType.PERC.equals(expressionTokenType)) {
                     return;
                 }
             }

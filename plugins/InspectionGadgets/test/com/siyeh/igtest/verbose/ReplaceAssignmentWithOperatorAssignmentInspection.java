@@ -18,5 +18,8 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
         System.out.println("x = " + x);
 
+        boolean b = true;
+        b = b != false;
+
     }
 }
