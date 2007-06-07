@@ -37,6 +37,11 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  @Nullable
+  public NewVirtualFile findChildIfCached(final String name) {
+    return null;
+  }
+
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }

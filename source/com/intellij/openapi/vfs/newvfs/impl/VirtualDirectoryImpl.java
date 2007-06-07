@@ -98,6 +98,26 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, true);
   }
 
+  @Nullable
+  public NewVirtualFile findChildIfCached(final String name) {
+    final VirtualFile[] a = asArray();
+    if (a != null) {
+      for (VirtualFile file : a) {
+        if (namesEqual(name, file.getName())) return (NewVirtualFile)file;
+      }
+
+      return null;
+    }
+
+    final Map<String, VirtualFile> map = asMap();
+    if (map != null) {
+      final VirtualFile file = map.get(name);
+      return file instanceof NewVirtualFile ? (NewVirtualFile)file : null;
+    }
+
+    return null;
+  }
+
   @NotNull
   public VirtualFile[] getChildren() {
     if (myChildren instanceof VirtualFile[]) {

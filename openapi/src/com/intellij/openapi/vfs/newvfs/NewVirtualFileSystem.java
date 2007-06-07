@@ -28,7 +28,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public VirtualFile findFileByPath(@NotNull @NonNls final String path) {
     final String normalizedPath = normalize(path);
     final String basePath = extractRootPath(normalizedPath);
-    VirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
+    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
     if (file == null || !file.exists()) return null;
 
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
@@ -38,6 +38,28 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
       }
       else {
         file = file.findChild(pathElement);
+      }
+
+      if (file == null) return null;
+    }
+
+    return file;
+  }
+
+  @Nullable
+  public VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path) {
+    final String normalizedPath = normalize(path);
+    final String basePath = extractRootPath(normalizedPath);
+    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
+    if (file == null || !file.exists()) return null;
+
+    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
+      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
+      if ("..".equals(pathElement)) {
+        file = file.getParent();
+      }
+      else {
+        file = file.findChildIfCached(pathElement);
       }
 
       if (file == null) return null;

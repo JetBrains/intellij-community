@@ -33,11 +33,20 @@ public abstract class NewVirtualFile extends VirtualFile {
     return bytes;
   }
 
+  @NotNull
+  public abstract NewVirtualFileSystem getFileSystem();
+
+  public abstract NewVirtualFile getParent();
+
   @Nullable
   public abstract NewVirtualFile findChild(@NotNull @NonNls final String name);
 
-  @NotNull
-  public abstract NewVirtualFileSystem getFileSystem();
+  @Nullable
+  public abstract NewVirtualFile refreshAndFindChild(final String name);
+
+  @Nullable
+  public abstract NewVirtualFile findChildIfCached(final String name);
+
 
   public abstract void setTimeStamp(final long time) throws IOException;
 
@@ -87,7 +96,4 @@ public abstract class NewVirtualFile extends VirtualFile {
   }
 
   public abstract Collection<VirtualFile> getCachedChildren();
-
-  @Nullable
-  public abstract NewVirtualFile refreshAndFindChild(final String name);
 }

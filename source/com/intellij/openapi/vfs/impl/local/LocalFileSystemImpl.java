@@ -164,8 +164,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return super.findFileByPath(canonicalPath);
   }
 
-  private VirtualFile findFileByPathIfCached(String path) {
-    return findFileByPath(path); // TODO
+  public VirtualFile findFileByPathIfCached(@NotNull String path) {
+    String canonicalPath = getVfsCanonicalPath(path);
+    if (canonicalPath == null) return null;
+    return super.findFileByPathIfCached(canonicalPath);
   }
 
   @Nullable
