@@ -49,7 +49,7 @@ import java.util.*;
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final @NonNls String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
-  public static final int DEPENDENCY_FORMAT_VERSION = 46;
+  public static final int DEPENDENCY_FORMAT_VERSION = 47;
   @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
   public String DEFAULT_COMPILER;
