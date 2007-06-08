@@ -99,7 +99,6 @@ public class IntroduceVariableTest extends ActionTestCase {
       PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
       String varName = "preved";
       final boolean isFinal = false;
-      // todo rework me!
       final PsiType varType = null;
       final GrVariableDeclaration varDecl = GroovyElementFactory.getInstance(project).createVariableDeclaration(varName,
           GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
