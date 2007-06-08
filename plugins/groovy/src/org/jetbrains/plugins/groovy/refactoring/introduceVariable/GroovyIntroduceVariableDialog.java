@@ -38,9 +38,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.EventListener;
 import java.util.HashMap;
 
@@ -131,6 +129,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myNameComboBox.setFocusTraversalPolicyProvider(true);
     myNameLabel.setLabelFor(myNameComboBox);
     myTypeLabel.setLabelFor(myTypeSelector);
+    
 
     // Type specification
     if (myType == null) {
@@ -149,7 +148,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     if (myOccurrencesCount > 1) {
       myCbReplaceAllOccurences.setSelected(false);
       myCbReplaceAllOccurences.setEnabled(true);
-      myCbReplaceAllOccurences.setText(myCbReplaceAllOccurences.getText() + " (" + myOccurrencesCount + " occurences)");
+      myCbReplaceAllOccurences.setText(myCbReplaceAllOccurences.getText() + " (" + myOccurrencesCount + " occurrences)");
     } else {
       myCbReplaceAllOccurences.setSelected(false);
       myCbReplaceAllOccurences.setEnabled(false);
@@ -186,6 +185,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       }
     }
     );
+
+    contentPane.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myNameComboBox.requestFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   public JComponent getPreferredFocusedComponent() {
