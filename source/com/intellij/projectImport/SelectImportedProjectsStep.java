@@ -18,6 +18,8 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   public interface Context<T> {
     List<T> getList();
 
+    boolean isMarked(final T element);
+
     void setList(List<T> list);
 
     boolean isOpenProjectSettingsAfter();
@@ -70,7 +72,10 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   }
 
   public void updateStep() {
-    fileChooser.setElements(myContext.getList(), true);
+    fileChooser.clear();
+    for (T element : myContext.getList()) {
+      fileChooser.addElement(element, myContext.isMarked(element));
+    }
     openModuleSettingsCheckBox.setSelected(myContext.isOpenProjectSettingsAfter());
   }
 
