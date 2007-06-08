@@ -58,7 +58,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Variable of type:"/>
+              <text value="&lt;HTML&gt;Variable of t&lt;u&gt;y&lt;/u&gt;pe:"/>
             </properties>
           </component>
           <component id="81499" class="com.intellij.openapi.ui.ComboBox" binding="myNameComboBox">
@@ -78,7 +78,7 @@
               <text value="&lt;HTML&gt;&lt;u&gt;N&lt;/u&gt;ame:"/>
             </properties>
           </component>
-          <component id="d1990" class="javax.swing.JComboBox" binding="myTypeSelector">
+          <component id="d1990" class="javax.swing.JComboBox" binding="myTypeComboBox">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

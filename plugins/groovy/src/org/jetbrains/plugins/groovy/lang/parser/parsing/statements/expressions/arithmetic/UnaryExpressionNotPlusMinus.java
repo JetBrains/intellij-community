@@ -38,7 +38,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
         if (!result.equals(WRONGWAY)) {
           marker.done(CAST_EXPRESSION);
         } else {
-          marker.drop();
+          marker.rollbackTo();
           result = PostfixExpression.parse(builder);
         }
       } else {

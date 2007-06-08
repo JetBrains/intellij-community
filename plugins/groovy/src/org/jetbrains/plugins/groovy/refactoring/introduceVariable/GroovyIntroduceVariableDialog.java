@@ -21,10 +21,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -59,7 +57,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   private JCheckBox myCbIsFinal;
   private JCheckBox myCbReplaceAllOccurences;
   private JCheckBox myCbTypeSpec;
-  private JComboBox myTypeSelector;
+  private JComboBox myTypeComboBox;
   private JLabel myTypeLabel;
   private JLabel myNameLabel;
   private JButton buttonOK;
@@ -116,7 +114,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     if (!myCbTypeSpec.isSelected()) {
       return null;
     } else {
-      return myTypeMap.get(myTypeSelector.getSelectedItem());
+      return myTypeMap.get(myTypeComboBox.getSelectedItem());
     }
   }
 
@@ -128,19 +126,19 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myNameComboBox.setFocusCycleRoot(true);
     myNameComboBox.setFocusTraversalPolicyProvider(true);
     myNameLabel.setLabelFor(myNameComboBox);
-    myTypeLabel.setLabelFor(myTypeSelector);
+    myTypeLabel.setLabelFor(myTypeComboBox);
     
 
     // Type specification
     if (myType == null) {
       myCbTypeSpec.setSelected(false);
       myCbTypeSpec.setEnabled(false);
-      myTypeSelector.setEnabled(false);
+      myTypeComboBox.setEnabled(false);
     } else {
       myCbTypeSpec.setSelected(true);
       myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
       for (String typeName : myTypeMap.keySet()) {
-        myTypeSelector.addItem(typeName);
+        myTypeComboBox.addItem(typeName);
       }
     }
 
@@ -191,6 +189,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
         myNameComboBox.requestFocus();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+    contentPane.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myTypeComboBox.requestFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   public JComponent getPreferredFocusedComponent() {
