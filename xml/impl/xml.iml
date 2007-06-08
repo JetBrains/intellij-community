@@ -14,6 +14,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="CSS" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

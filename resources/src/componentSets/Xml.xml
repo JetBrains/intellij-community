@@ -5,5 +5,10 @@
       <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <interface-class>com.intellij.html.preview.ImageOrColorPreviewProjectComponent</interface-class>
+      <implementation-class>com.intellij.html.preview.ImageOrColorPreviewProjectComponent</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 </components>
