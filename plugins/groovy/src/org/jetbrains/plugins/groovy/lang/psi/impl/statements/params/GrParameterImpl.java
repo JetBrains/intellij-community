@@ -52,7 +52,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
       GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
       if (iteratedExpression instanceof GrRangeExpression) {
         return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
-      } else {
+      } else if (iteratedExpression != null) {
         PsiType iterType = iteratedExpression.getType();
         if (iterType instanceof PsiArrayType) return ((PsiArrayType) iterType).getComponentType();
         if (iterType instanceof PsiClassType) {
