@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         final PsiManager mgr = expression.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final PsiExpression newCall =
-                factory.createExpressionFromText(newExpression, null);
+                factory.createExpressionFromText(newExpression, expression);
         final PsiElement insertedElement = expression.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
@@ -76,7 +76,6 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             throws IncorrectOperationException{
         final PsiManager manager = expression.getManager();
         final PsiElementFactory factory = manager.getElementFactory();
-
         PsiExpression expressionToReplace = expression;
         final String newExpressionText = newExpression.getText();
         final String expString;
@@ -102,7 +101,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             }
         }
         final PsiExpression newCall =
-                factory.createExpressionFromText(expString, null);
+                factory.createExpressionFromText(expString, expression);
         assert expressionToReplace != null;
         final PsiElement insertedElement = expressionToReplace.replace(newCall);
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
@@ -125,7 +124,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             expString = "!(" + newExpression + ')';
         }
         final PsiExpression newCall =
-                factory.createExpressionFromText(expString, null);
+                factory.createExpressionFromText(expString, expression);
         assert expressionToReplace != null;
         final PsiElement insertedElement = expressionToReplace.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();

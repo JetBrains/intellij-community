@@ -3,7 +3,7 @@ public class X {
 
   void f() {
     <spot>while</spot>(flag) {
-       System.out.println("looping");
+      System.out.println("looping");
     }
   }
 }

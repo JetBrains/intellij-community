@@ -1,7 +1,7 @@
 public class X {
   private boolean flag;
 
-  void f(String[] as) {
+  void f() {
     if (flag) {
       do {
         System.out.println("looping");
