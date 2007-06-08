@@ -29,6 +29,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -65,7 +66,8 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
       }
     }
 
-    GroovyIntroduceVariableDialog dialog = new GroovyIntroduceVariableDialog(project, expr, exprType, occurrences.length, validator);
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expr, validator);
+    GroovyIntroduceVariableDialog dialog = new GroovyIntroduceVariableDialog(project, expr, exprType, occurrences.length, validator, possibleNames);
     dialog.show();
     if (!dialog.isOK()) {
       if (occurrences.length > 1) {

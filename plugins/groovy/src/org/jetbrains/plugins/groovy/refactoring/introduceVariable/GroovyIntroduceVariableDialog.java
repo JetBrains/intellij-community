@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -66,14 +67,15 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
                                        GrExpression expression,
                                        PsiType psiType,
                                        int occurrencesCount,
-                                       GroovyIntroduceVariableBase.Validator validator) {
+                                       GroovyIntroduceVariableBase.Validator validator,
+                                       String[] possibleNames) {
     super(project, true);
     myProject = project;
     myExpression = expression;
     myType = psiType;
     myOccurrencesCount = occurrencesCount;
     myValidator = validator;
-    setUpNameComboBox();
+    setUpNameComboBox(possibleNames);
 
     setModal(true);
     getRootPane().setDefaultButton(buttonOK);
@@ -127,7 +129,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myNameComboBox.setFocusTraversalPolicyProvider(true);
     myNameLabel.setLabelFor(myNameComboBox);
     myTypeLabel.setLabelFor(myTypeComboBox);
-    
 
     // Type specification
     if (myType == null) {
@@ -152,9 +153,16 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       myCbReplaceAllOccurences.setEnabled(false);
     }
 
+
+    contentPane.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myTypeComboBox.requestFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
   }
 
-  private void setUpNameComboBox() {
+  private void setUpNameComboBox(String[] possibleNames) {
 
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
 
@@ -190,11 +198,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    contentPane.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myTypeComboBox.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    for (String possibleName : possibleNames) {
+      myNameComboBox.addItem(possibleName);
+    }
   }
 
   public JComponent getPreferredFocusedComponent() {

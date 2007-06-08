@@ -1,4 +1,3 @@
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
@@ -24,7 +23,7 @@ public class GrRangeExprImpl extends GrBinaryExpressionImpl implements GrRangeEx
   public PsiType getType() {
     PsiElementFactory factory = getManager().getElementFactory();
     GrExpression lop = getLeftOperand();
-    if (lop != null && INTEGER_FQ_NAME.equals(lop.getType().getCanonicalText())) {
+    if (lop != null && lop.getType() != null && INTEGER_FQ_NAME.equals(lop.getType().getCanonicalText())) {
       return factory.createTypeByFQClassName(INT_RANGE_FQ_NAME, getResolveScope());
     }
     return factory.createTypeByFQClassName(OBJECT_RANGE_FQ_NAME, getResolveScope());

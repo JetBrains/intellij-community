@@ -464,6 +464,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   public interface Validator {
     boolean isOK(GroovyIntroduceVariableDialog dialog);
+
+    String validateName(String name, boolean increaseNumber);
   }
 
 
