@@ -55,7 +55,6 @@
     </unzip>
   </target>
 
-  <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
 
   <target name="clear.all" description="clears all files">
     <mkdir dir="${production.dest.groovy}"/>
@@ -83,11 +82,11 @@
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"/>
 
 
-    <javac2 srcdir="."
+    <javac srcdir="."
            destdir="${production.dest.groovy}">
       <classpath refid="base.path"/>
       <classpath refid="groovy.path"/>
-    </javac2>
+    </javac>
   </target>
 
   <target name="build.project" depends="clear.all, make.project" description="builds project"/>
