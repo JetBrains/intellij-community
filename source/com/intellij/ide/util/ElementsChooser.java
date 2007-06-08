@@ -23,6 +23,7 @@ public class ElementsChooser<T> extends JPanel {
   private boolean myColorUnmarkedElements = true;
   private List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
   private Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
+  private final Map<T, Boolean> myDisabledMap = new HashMap<T, Boolean>();
 
   public static interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
@@ -88,7 +89,7 @@ public class ElementsChooser<T> extends JPanel {
         Object[] elements = new Object[count];
         for (int idx = 0; idx < count; idx++) {
           elements[idx] = myTableModel.getElementAt(idx);
-        };
+        }
         return elements;
       }
 
@@ -158,7 +159,7 @@ public class ElementsChooser<T> extends JPanel {
   }
 
   public void addElement(T element, final boolean isMarked) {
-    addElement(element, isMarked, null);
+    addElement(element, isMarked, element instanceof ElementProperties ? (ElementProperties)element : null);
   }
 
   public void removeElement(T element) {
@@ -223,6 +224,7 @@ public class ElementsChooser<T> extends JPanel {
     myTableModel.addElements(elements, marked);
   }
 
+  @Nullable
   public T getSelectedElement() {
     final int selectedRow = getSelectedElementRow();
     return selectedRow < 0? null : myTableModel.getElementAt(selectedRow);
@@ -316,6 +318,10 @@ public class ElementsChooser<T> extends JPanel {
     return myTableModel.getElementAt(row);
   }
 
+  public void disableElement(T element) {
+    myDisabledMap.put(element, Boolean.TRUE);
+  }
+  
   private final class MyTableModel extends AbstractTableModel {
     private final List<T> myElements = new ArrayList<T>();
     private final Map<T, Boolean> myMarkedMap = new HashMap<T, Boolean>();
@@ -407,6 +413,7 @@ public class ElementsChooser<T> extends JPanel {
       return myElementsCanBeMarked? 2 : 1;
     }
 
+    @Nullable
     public Object getValueAt(int rowIndex, int columnIndex) {
       T element = myElements.get(rowIndex);
       if (columnIndex == ELEMENT_COLUMN_INDEX) {
@@ -461,10 +468,11 @@ public class ElementsChooser<T> extends JPanel {
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      if (ElementsChooser.this.isEnabled()) {
-        return columnIndex == CHECK_MARK_COLUM_INDEX;
+      if (!ElementsChooser.this.isEnabled() || columnIndex != CHECK_MARK_COLUM_INDEX) {
+        return false;
       }
-      return false;
+      final T o = (T)getValueAt(rowIndex, ELEMENT_COLUMN_INDEX);
+      return myDisabledMap.get(o) == null; 
     }
 
     public void clear() {
@@ -478,6 +486,7 @@ public class ElementsChooser<T> extends JPanel {
     return value != null ? value.toString() : "";
   }
 
+  @Nullable
   protected Icon getItemIcon(T value) {
     return null;
   }
@@ -502,7 +511,8 @@ public class ElementsChooser<T> extends JPanel {
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
       final ElementProperties properties = myElementToPropertiesMap.get(t);
       if (component instanceof JLabel) {
-        ((JLabel)component).setIcon(properties != null? properties.getIcon() : getItemIcon(t));
+        final Icon icon = properties != null ? properties.getIcon() : getItemIcon(t);
+        ((JLabel)component).setIcon(icon);
       }
       component.setForeground(properties != null && properties.getColor() != null ?
                               properties.getColor() :
