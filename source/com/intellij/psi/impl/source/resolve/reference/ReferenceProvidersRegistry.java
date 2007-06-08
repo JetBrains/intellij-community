@@ -252,22 +252,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     );
 
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"name"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new ClassFilter(XmlTag.class),
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.HIBERNATE_URIS),
-              new TextFilter("property","list","map","set", "array", "bag", "idbag", "primitive-array", "many-to-one", "one-to-one")
-            )
-          ), 2
-        )
-      ),
-      new HibernateReferencesProvider()
-    );
-
-    registerXmlAttributeValueReferenceProvider(
       new String[] {"content"},
       new ScopeFilter(
         new ParentElementFilter(
