@@ -35,7 +35,7 @@ public class PluginTable extends Table {
         String name = columnInfo.getName();
         final int width;
         final FontMetrics fontMetrics = getFontMetrics(getFont());
-        width = fontMetrics.stringWidth(" " + name + " ") + 4;
+        width = fontMetrics.stringWidth(" " + name + " ") + 10;
 
         column.setWidth(width);
         column.setPreferredWidth(width);
