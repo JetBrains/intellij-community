@@ -208,14 +208,17 @@ class RootModelImpl implements ModifiableRootModel {
     if (rootModel.myCompilerOutputPointer != null) {
       myCompilerOutputPointer = pointerFactory().duplicate(rootModel.myCompilerOutputPointer);
     }
+    myCompilerOutput = rootModel.myCompilerOutput;
 
     if (rootModel.myCompilerOutputPathForTestsPointer != null) {
       myCompilerOutputPathForTestsPointer = pointerFactory().duplicate(rootModel.myCompilerOutputPathForTestsPointer);
     }
+    myCompilerOutputForTests = rootModel.myCompilerOutputForTests;
 
     if (rootModel.myExplodedDirectoryPointer != null) {
       myExplodedDirectoryPointer = pointerFactory().duplicate(rootModel.myExplodedDirectoryPointer);
     }
+    myExplodedDirectory = rootModel.myExplodedDirectory;
 
     myExcludeOutput = rootModel.myExcludeOutput;
     myExcludeExploded = rootModel.myExcludeExploded;
