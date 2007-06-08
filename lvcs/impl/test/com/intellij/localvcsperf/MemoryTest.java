@@ -1,6 +1,7 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import org.junit.Test;
 
 import java.util.Calendar;
@@ -9,8 +10,8 @@ import java.util.Calendar;
 public class MemoryTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testMemoryAfterFirstBuild() {
-    assertMemoryUsage(52, new Task() {
-      public void execute() throws Exception {
+    assertMemoryUsage(52, new RunnableAdapter() {
+      public void doRun() throws Exception {
         buildVcsTree();
       }
     });
@@ -24,8 +25,8 @@ public class MemoryTest extends LocalVcsPerformanceTestCase {
     closeStorage();
     vcs = null;
 
-    assertMemoryUsage(41, new Task() {
-      public void execute() throws Exception {
+    assertMemoryUsage(41, new RunnableAdapter() {
+      public void doRun() throws Exception {
         initVcs();
       }
     });

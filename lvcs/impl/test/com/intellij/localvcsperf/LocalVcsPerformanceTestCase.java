@@ -33,8 +33,8 @@ public class LocalVcsPerformanceTestCase extends PerformanceTestCase {
     vcs.endChangeSet(null);
   }
 
-  private void createChildren(String parent, Integer countdown) {
-    if (countdown == 0) return;
+  protected void createChildren(String parent, int depth) {
+    if (depth == 0) return;
 
     for (int i = 0; i < 10; i++) {
       String filePath = parent + "/file" + i;
@@ -42,7 +42,7 @@ public class LocalVcsPerformanceTestCase extends PerformanceTestCase {
 
       String dirPath = parent + "/dir" + i;
       vcs.createDirectory(dirPath);
-      createChildren(dirPath, countdown - 1);
+      createChildren(dirPath, depth - 1);
     }
   }
 

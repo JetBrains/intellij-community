@@ -1,11 +1,13 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
+import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.CacheUpdaterHelper;
 import com.intellij.localvcs.integration.TestFileFilter;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.localvcs.integration.Updater;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
@@ -19,8 +21,8 @@ import java.util.List;
 public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testBuildingTree() {
-    assertExecutionTime(10000, new Task() {
-      public void execute() {
+    assertExecutionTime(10000, new RunnableAdapter() {
+      public void doRun() {
         buildVcsTree();
       }
     });
@@ -30,8 +32,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   public void testSaving() {
     buildVcsTree();
 
-    assertExecutionTime(600, new Task() {
-      public void execute() {
+    assertExecutionTime(600, new RunnableAdapter() {
+      public void doRun() {
         vcs.save();
       }
     });
@@ -42,8 +44,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     vcs.save();
 
-    assertExecutionTime(750, new Task() {
-      public void execute() {
+    assertExecutionTime(750, new RunnableAdapter() {
+      public void doRun() {
         initVcs();
       }
     });
@@ -53,8 +55,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   public void testCopying() {
     buildVcsTree();
 
-    assertExecutionTime(80, new Task() {
-      public void execute() {
+    assertExecutionTime(80, new RunnableAdapter() {
+      public void doRun() {
         vcs.getEntry("root").copy();
       }
     });
@@ -64,8 +66,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   public void testSearchingEntries() {
     buildVcsTree();
 
-    assertExecutionTime(200, new Task() {
-      public void execute() {
+    assertExecutionTime(200, new RunnableAdapter() {
+      public void doRun() {
         for (int i = 0; i < 10000; i++) {
           vcs.getEntry("root/dir" + rand(10) + "/dir" + rand(10) + "/dir" + rand(10) + "/file" + rand(10));
         }
@@ -95,8 +97,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     expect(fs.physicalContentsToByteArray((VirtualFile)anyObject())).andStubReturn(new byte[0]);
 
     final VirtualFile root = buildVFSTree(timestamp);
-    assertExecutionTime(expected, new Task() {
-      public void execute() {
+    assertExecutionTime(expected, new RunnableAdapter() {
+      public void doRun() {
         Updater u = new Updater(vcs, new TestFileFilter(), root);
         CacheUpdaterHelper.performUpdate(u);
       }
@@ -109,8 +111,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(500, new Task() {
-      public void execute() {
+    assertExecutionTime(500, new RunnableAdapter() {
+      public void doRun() {
         vcs.purgeObsolete(0);
       }
     });
@@ -121,8 +123,8 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(800, new Task() {
-      public void execute() {
+    assertExecutionTime(800, new RunnableAdapter() {
+      public void doRun() {
         vcs.getRevisionsFor("root");
       }
     });
@@ -133,9 +135,22 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     final List<Revision> revisions = vcs.getRevisionsFor("root");
 
-    assertExecutionTime(1200, new Task() {
-      public void execute() {
+    assertExecutionTime(1200, new RunnableAdapter() {
+      public void doRun() {
         revisions.get(0).getDifferenceWith(revisions.get(0));
+      }
+    });
+  }
+
+  @Test
+  public void testCalculatingChangeChains() {
+    vcs.createDirectory("root");
+    final Change c = vcs.getLastChange();
+    createChildren("root", 5);
+
+    assertExecutionTime(180, new RunnableAdapter() {
+      public void doRun() throws Exception {
+        vcs.getChain(c);
       }
     });
   }

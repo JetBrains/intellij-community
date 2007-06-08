@@ -18,6 +18,7 @@ public class ChangeReverter extends Reverter {
   private ILocalVcs myVcs;
   private final IdeaGateway myGateway;
   private Change myChange;
+  private List<Change> myChainCache;
 
   public ChangeReverter(ILocalVcs vcs, IdeaGateway gw, Change c) {
     super(gw);
@@ -122,6 +123,9 @@ public class ChangeReverter extends Reverter {
   }
 
   private boolean isInTheChain(Change c) {
-    return myVcs.isInTheChain(myChange, c);
+    if (myChainCache == null) {
+      myChainCache = myVcs.getChain(myChange);
+    }
+    return c.affectsSameAs(myChainCache);
   }
 }

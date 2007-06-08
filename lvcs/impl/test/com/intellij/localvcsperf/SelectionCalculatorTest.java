@@ -3,6 +3,7 @@ package com.intellij.localvcsperf;
 import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.ui.models.SelectionCalculator;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,8 +27,8 @@ public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
 
   @Test
   public void testCalculationFromTheScratch() {
-    assertExecutionTime(1, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(16000, new RunnableAdapter() {
+      public void doRun() throws Exception {
         c.getSelectionFor(rr.get(100));
       }
     });
@@ -37,8 +38,8 @@ public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
   public void testUsingCache() {
     c.getSelectionFor(rr.get(100));
 
-    assertExecutionTime(1, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(1, new RunnableAdapter() {
+      public void doRun() throws Exception {
         c.getSelectionFor(rr.get(1));
         c.getSelectionFor(rr.get(50));
         c.getSelectionFor(rr.get(100));

@@ -168,8 +168,8 @@ public class LocalVcs implements ILocalVcs {
     return myChangeList.isBefore(before, after, canBeEqual);
   }
 
-  public boolean isInTheChain(Change before, Change after) {
-    return myChangeList.isInTheChain(before, after);
+  public List<Change> getChain(Change initialChange) {
+    return myChangeList.getChain(initialChange);
   }
 
   public List<Revision> getRevisionsFor(String path) {

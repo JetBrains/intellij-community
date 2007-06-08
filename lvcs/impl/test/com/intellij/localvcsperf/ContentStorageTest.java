@@ -2,6 +2,7 @@ package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.storage.ContentStorage;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,8 +34,8 @@ public class ContentStorageTest extends PerformanceTestCase {
 
   @Test
   public void testStorageWriting() throws Exception {
-    assertExecutionTime(1000, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(1000, new RunnableAdapter() {
+      public void doRun() throws Exception {
         createContentsOfDifferentSize();
       }
     });
@@ -43,8 +44,8 @@ public class ContentStorageTest extends PerformanceTestCase {
   @Test
   public void testStorageReading() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(50, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(50, new RunnableAdapter() {
+      public void doRun() throws Exception {
         readContentsRandomly(cc);
       }
     });
@@ -53,8 +54,8 @@ public class ContentStorageTest extends PerformanceTestCase {
   @Test
   public void testStorageDeletion() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(15, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(15, new RunnableAdapter() {
+      public void doRun() throws Exception {
         deleteHalfOfContentsRandomly(cc);
       }
     });
@@ -65,8 +66,8 @@ public class ContentStorageTest extends PerformanceTestCase {
     List<Integer> cc = createContentsOfDifferentSize();
     deleteHalfOfContentsRandomly(cc);
 
-    assertExecutionTime(1500, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(1500, new RunnableAdapter() {
+      public void doRun() throws Exception {
         createContentsOfDifferentSize();
       }
     });
@@ -76,8 +77,8 @@ public class ContentStorageTest extends PerformanceTestCase {
   public void testStorageReadingAfterManyModifications() throws IOException {
     final List<Integer> cc = modifyStorageManyTimes();
 
-    assertExecutionTime(30, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(30, new RunnableAdapter() {
+      public void doRun() throws Exception {
         readContentsRandomly(cc);
       }
     });

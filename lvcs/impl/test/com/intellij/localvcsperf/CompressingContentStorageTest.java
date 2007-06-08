@@ -3,6 +3,7 @@ package com.intellij.localvcsperf;
 import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.storage.CompressingContentStorage;
 import com.intellij.localvcs.core.storage.IContentStorage;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,8 +21,8 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
 
   @Test
   public void testCompression() throws IOException {
-    assertExecutionTime(300, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(300, new RunnableAdapter() {
+      public void doRun() throws Exception {
         for (int i = 0; i < 10000; i++) {
           s.store("hello, world".getBytes());
         }
@@ -33,8 +34,8 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
   public void testDecompression() throws IOException {
     s.store("hello, world".getBytes());
 
-    assertExecutionTime(140, new Task() {
-      public void execute() throws Exception {
+    assertExecutionTime(140, new RunnableAdapter() {
+      public void doRun() throws Exception {
         for (int i = 0; i < 10000; i++) {
           s.load(0);
         }

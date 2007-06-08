@@ -77,16 +77,16 @@ public class ChangeList {
     return beforeIndex < afterIndex || (canBeEqual && beforeIndex == afterIndex);
   }
 
-  public boolean isInTheChain(Change before, Change after) {
-    List<Change> cc = new ArrayList<Change>();
+  public List<Change> getChain(Change initialChange) {
+    List<Change> result = new ArrayList<Change>();
     for (Change c : myChanges) {
-      if (c == before) {
-        cc.add(c);
+      if (c == initialChange) {
+        result.add(c);
         continue;
       }
-      if (c.affectsSameAs(cc)) cc.add(c);
+      if (c.affectsSameAs(result)) result.add(c);
     }
-    return after.affectsSameAs(cc);
+    return result;
   }
 
   public void accept(ChangeVisitor v) throws IOException {
