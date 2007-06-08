@@ -284,6 +284,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         if (!(element instanceof PsiMethod)) {
           return RefactoringListeners.getClassOrPackageListener(element, myClass);
         }
+        final PsiMethod method = (PsiMethod)element;
+        if (!method.getName().equals(data.getMethodName())) return null;
+        if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
         return new RefactoringElementListener() {
           public void elementMoved(final PsiElement newElement) {
             setMethod((PsiMethod)newElement);
