@@ -80,7 +80,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private ArrayList<CacheUpdater> myChangeUpdaters = new ArrayList<CacheUpdater>();
 
   private boolean myProjectOpened = false;
-  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_3;
+  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_5;
   private LanguageLevel myOriginalLanguageLevel = myLanguageLevel;
   private long myModificationCount = 0;
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
@@ -416,7 +416,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myLanguageLevel = LanguageLevel.JDK_1_4;
     }
     else {
-      myLanguageLevel = LanguageLevel.JDK_1_3;
+      // keep the default
     }
     myOriginalLanguageLevel = myLanguageLevel;
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
