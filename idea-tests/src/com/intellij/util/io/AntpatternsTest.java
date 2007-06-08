@@ -55,8 +55,8 @@ public class AntpatternsTest extends TestCase {
     assertFalse(apacheCvsPattern.matcher("org/apache/CVS/foo/bar/Entries").matches());
 
     final Pattern pattern = convertToPattern("/aaa.txt");
-    assertTrue(pattern.matcher("/aaa.txt").matches());
-    assertFalse(pattern.matcher("aaa.txt").matches());
+    assertFalse(pattern.matcher("/aaa.txt").matches());
+    assertTrue(pattern.matcher("aaa.txt").matches());
 
     final Pattern samplePattern = convertToPattern("dir/subdi*/sample.txt");
     assertTrue(samplePattern.matcher("dir/subdir/sample.txt").matches());
