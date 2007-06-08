@@ -150,6 +150,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   private static String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
+    text = escapeDocumentationTextText(text);
     return generateDoc(text, name,null);
   }
 
@@ -336,13 +337,16 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         result = result.trim();
 
         if (withCData) {
-          result = XmlUtil.escape(result).replaceAll("&apos;","'").replaceAll("\n","<br>");
+          result = escapeDocumentationTextText(result);
         }
         url = tag.getAttributeValue("source");
         return false;
       }
       return true;
     }
+  }
 
+  private static String escapeDocumentationTextText(final String result) {
+    return XmlUtil.escape(result).replaceAll("&apos;","'").replaceAll("\n","<br>\n");
   }
 }
