@@ -168,16 +168,8 @@ public class GroovyAnnotator implements Annotator {
       Annotation annotation = holder.createInformationAnnotation(elt,
           GroovyBundle.message("untyped.access", refExpr.getReferenceName()));
 
-      annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.MAGENTA, EffectType.LINE_UNDERSCORE, 0));
+      annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
     }
-
-/*
-    if (refExpr.getReference().resolve() instanceof GrField) {
-      Annotation annotation = holder.createInfoAnnotation(refExpr, null);
-      annotation.setEnforcedTextAttributes(new TextAttributes(Color.CYAN, null, Color.black, null, 2));
-    }
-*/
-
   }
 
   private boolean isAssignmentLHS(GrReferenceExpression refExpr) {
