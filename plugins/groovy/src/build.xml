@@ -26,17 +26,14 @@
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
 
+  <property name="output" value="${basedir}/dist"/>
+
   <path id="base.path">
     <fileset dir="${idea.lib}">
       <include name="**/*.jar"/>
       <exclude name="boot.jar"/>
     </fileset>
   </path>
-
-  <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
-
-  <property name="output" value="${basedir}/dist"/>
-
 
   <path id="tools.path">
     <fileset dir="${tools.jar.dir}">
@@ -85,11 +82,11 @@
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"/>
 
 
-    <javac2 srcdir="."
+    <javac srcdir="."
            destdir="${production.dest.groovy}">
       <classpath refid="base.path"/>
       <classpath refid="groovy.path"/>
-    </javac2>
+    </javac>
   </target>
 
   <target name="build.project" depends="clear.all, make.project" description="builds project"/>
