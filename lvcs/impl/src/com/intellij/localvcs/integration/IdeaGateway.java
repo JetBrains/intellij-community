@@ -114,10 +114,17 @@ public class IdeaGateway {
     vcs.beginChangeSet();
     for (Document d : getUnsavedDocuments()) {
       VirtualFile f = getDocumentFile(d);
-      if (!f.isValid() || !getFileFilter().isAllowedAndUnderContentRoot(f)) continue;
+      if (shouldNotRegister(f)) continue;
       vcs.changeFileContent(f.getPath(), contentFactoryFor(d), Clock.getCurrentTimestamp());
     }
     vcs.endChangeSet(null);
+  }
+
+  private boolean shouldNotRegister(VirtualFile f) {
+    if (f == null) return true;
+    if (!f.isValid()) return true;
+    if (!getFileFilter().isAllowedAndUnderContentRoot(f)) return true;
+    return false;
   }
 
   private ContentFactory contentFactoryFor(final Document d) {

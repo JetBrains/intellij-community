@@ -50,7 +50,18 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   public void addUnsavedDocument(String name, String content) {
-    MyDocument d = new MyDocument(name, content);
+    doAddDocument(new MyDocumentForFile(name, content, true));
+  }
+
+  public void addUnsavedDocumentForDeletedFile(String name, String content) {
+    doAddDocument(new MyDocumentForFile(name, content, false));
+  }
+
+  public void addUnsavedDocumentWithoutFile(String name, String content) {
+    doAddDocument(new MyDocument(name, content));
+  }
+
+  private void doAddDocument(MyDocument d) {
     myUnsavedDocuments.remove(d);
     myUnsavedDocuments.add(d);
   }
@@ -80,12 +91,10 @@ public class TestIdeaGateway extends IdeaGateway {
   private class MyDocument extends MockDocument {
     private String myName;
     private String myContent;
-    private VirtualFile myFile;
 
     public MyDocument(String name, String content) {
       myName = name;
       myContent = content;
-      myFile = new TestVirtualFile(myName, null, -1);
     }
 
     @Override
@@ -94,12 +103,31 @@ public class TestIdeaGateway extends IdeaGateway {
     }
 
     public VirtualFile getFile() {
-      return myFile;
+      return null;
     }
 
     @Override
     public boolean equals(Object o) {
       return myName.equals(((MyDocument)o).myName);
+    }
+  }
+
+  private class MyDocumentForFile extends MyDocument {
+    private VirtualFile myFile;
+
+    public MyDocumentForFile(String name, String content, final boolean isValid) {
+      super(name, content);
+      myFile = new TestVirtualFile(name, null, -1) {
+        @Override
+        public boolean isValid() {
+          return isValid;
+        }
+      };
+    }
+
+    @Override
+    public VirtualFile getFile() {
+      return myFile;
     }
   }
 }

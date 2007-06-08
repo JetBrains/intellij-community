@@ -43,6 +43,24 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testFilteringDocumentsWithoutFiles() {
+    vcs.createFile("f", cf("file"), -1);
+    gw.addUnsavedDocumentWithoutFile("f", "doc");
+    gw.registerUnsavedDocuments(vcs);
+
+    assertEquals(c("file"), vcs.getEntry("f").getContent());
+  }
+
+  @Test
+  public void testFilteringDocumentsForDeletedFiles() {
+    vcs.createFile("f", cf("file"), -1);
+    gw.addUnsavedDocumentForDeletedFile("f", "doc");
+
+    gw.registerUnsavedDocuments(vcs);
+    assertEquals(c("file"), vcs.getEntry("f").getContent());
+  }
+
+  @Test
   public void testFilteringNotAllowedDocuments() {
     vcs.createFile("f", null, -1);
     gw.addUnsavedDocument("f", "content");
