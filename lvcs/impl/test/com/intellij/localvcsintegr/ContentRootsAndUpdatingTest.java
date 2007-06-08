@@ -4,7 +4,6 @@ package com.intellij.localvcsintegr;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.junit.Test;
 
 public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   public void testUpdatingOnRootsChanges() {
@@ -22,7 +21,6 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     assertTrue(hasVcsEntry(root.getPath() + "/file2.java"));
   }
 
-  @Test
   public void testTreatingAllChangesDuringUpdateAsOne() {
     VirtualFile root = addContentRootWithFiles(myModule, "file1.java", "file2.java");
     assertEquals(1, getVcsRevisionsFor(root).size());

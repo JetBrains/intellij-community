@@ -23,7 +23,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-    f.delete(null);
+    f.delete(this);
 
     c.revertOn(myRootEntry);
   }
@@ -48,7 +48,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
     c.revertOn(myRootEntry);
 
-    f.rename(null, e.getName());
+    f.rename(this, e.getName());
   }
 
   @Override
@@ -60,7 +60,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry parentEntry = getAffectedEntry(c).getParent();
     VirtualFile parent = myGateway.findVirtualFile(parentEntry.getPath());
 
-    f.move(null, parent);
+    f.move(this, parent);
   }
 
   @Override

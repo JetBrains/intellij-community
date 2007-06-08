@@ -110,8 +110,8 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void refreshWithoutFileWatcher(final boolean asynchronous) {
-    throw new UnsupportedOperationException("refreshWithoutFileWatcher is not implemented");
+  public void refreshWithoutFileWatcher(boolean asynchronous) {
+    throw new UnsupportedOperationException();
   }
 
   @Nullable
@@ -119,11 +119,11 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void fireAfterRefreshFinish(final boolean asynchronous) {
-    throw new UnsupportedOperationException("fireAfterRefreshFinish is not implemented");
+  public void fireAfterRefreshFinish(boolean asynchronous) {
+    throw new UnsupportedOperationException();
   }
 
-  public void fireBeforeRefreshStart(final boolean asynchronous) {
-    throw new UnsupportedOperationException("fireBeforeRefreshStart is not implemented");
+  public void fireBeforeRefreshStart(boolean asynchronous) {
+    throw new UnsupportedOperationException();
   }
 }

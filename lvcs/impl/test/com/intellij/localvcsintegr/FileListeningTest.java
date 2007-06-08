@@ -4,12 +4,13 @@ package com.intellij.localvcsintegr;
 import com.intellij.localvcs.core.ContentFactory;
 import com.intellij.localvcs.core.Paths;
 import com.intellij.localvcs.core.tree.Entry;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.Callable;
 
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
@@ -49,10 +50,10 @@ public class FileListeningTest extends IntegrationTestCase {
       }
     };
 
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
+    addFileListenerDuring(l, new RunnableAdapter() {
+      @Override
+      public void doRun() throws IOException {
         f.setBinaryContent(new byte[]{1});
-        return null;
       }
     });
 
@@ -74,10 +75,10 @@ public class FileListeningTest extends IntegrationTestCase {
     f.setBinaryContent("before".getBytes());
 
     ContentChangesListener l = new ContentChangesListener(f);
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
+    addFileListenerDuring(l, new RunnableAdapter() {
+      @Override
+      public void doRun() throws IOException {
         f.setBinaryContent("after".getBytes());
-        return null;
       }
     });
 
@@ -111,10 +112,10 @@ public class FileListeningTest extends IntegrationTestCase {
       }
     };
 
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
+    addFileListenerDuring(l, new RunnableAdapter() {
+      @Override
+      public void doRun() throws IOException {
         f.rename(null, "new.java");
-        return null;
       }
     });
 

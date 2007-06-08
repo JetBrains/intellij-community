@@ -2,17 +2,14 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.core.Paths;
+import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Semaphore;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshingSynchronously() throws Exception {
@@ -60,10 +57,9 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     };
 
     // shouldn't throw
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
+    addFileListenerDuring(l, new Runnable() {
+      public void run() {
         refreshVFS();
-        return null;
       }
     });
   }
@@ -82,11 +78,11 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     performAllPendingJobs();
 
     ContentChangesListener l = new ContentChangesListener(f);
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
+    addFileListenerDuring(l, new RunnableAdapter() {
+      @Override
+      public void doRun() throws IOException {
         changeFileExternally(f.getPath(), "after");
         refreshVFS();
-        return null;
       }
     });
 
@@ -117,10 +113,9 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       }
     };
 
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
+    addFileListenerDuring(l, new Runnable() {
+      public void run() {
         refreshVFS();
-        return null;
       }
     });
     assertEquals("content", content[0]);
@@ -164,7 +159,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     refreshVFS(false, null);
   }
 
-  private void refreshVFS(final boolean async, Runnable after) {
+  private void refreshVFS(boolean async, Runnable after) {
     VirtualFileManager.getInstance().refresh(async, after);
   }
 }

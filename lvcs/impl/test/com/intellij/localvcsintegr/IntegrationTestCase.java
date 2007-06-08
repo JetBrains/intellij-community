@@ -21,7 +21,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Callable;
 
 public abstract class IntegrationTestCase extends IdeaTestCase {
   private Locale myDefaultLocale;
@@ -65,10 +64,10 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     ApplicationManager.getApplication().runWriteAction(r);
   }
 
-  protected void addFileListenerDuring(VirtualFileListener l, Callable task) throws Exception {
+  protected void addFileListenerDuring(VirtualFileListener l, Runnable r) throws Exception {
     VirtualFileManager.getInstance().addVirtualFileListener(l);
     try {
-      task.call();
+      r.run();
     }
     finally {
       VirtualFileManager.getInstance().removeVirtualFileListener(l);
