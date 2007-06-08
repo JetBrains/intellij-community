@@ -12,12 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
@@ -25,7 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -38,9 +35,9 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog");
 
 
-  private final JLabel myNameLabel;
-  private final JLabel myPromptTo;
-  private final ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
+  private JLabel myNameLabel;
+  private JLabel myPromptTo;
+  private ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurences;
   private JCheckBox myCbMoveToAnotherSourceFolder;
@@ -49,22 +46,19 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private boolean mySearchTextOccurencesEnabled;
   private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
+  private JPanel myMainPanel;
 
   public MoveClassesOrPackagesDialog(Project project,
                                      boolean searchTextOccurences,
                                      PsiElement[] elementsToMove,
                                      MoveCallback moveCallback) {
     super(project, true);
+    myProject = project;
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
-    setTitle(MoveHandler.REFACTORING_NAME);
-    myProject = project;
-    mySearchTextOccurencesEnabled = searchTextOccurences;
-
-    myNameLabel = new JLabel();
-    myPromptTo = new JLabel(RefactoringBundle.message("move.classes.to.package.label"));
     myManager = PsiManager.getInstance(myProject);
-    myWithBrowseButtonReference = new ReferenceEditorComboWithBrowseButton(null, "", myManager, false, RECENTS_KEY);
+    setTitle(MoveHandler.REFACTORING_NAME);
+    mySearchTextOccurencesEnabled = searchTextOccurences;
 
     init();
   }
@@ -77,24 +71,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return null;
   }
 
+  private void createUIComponents() {
+    myWithBrowseButtonReference = new ReferenceEditorComboWithBrowseButton(null, "", PsiManager.getInstance(myProject),
+                                                                           false, RECENTS_KEY);
+  }
+
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-
-    panel.setBorder(IdeBorderFactory.createBorder());
-
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.weighty = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    panel.add(myNameLabel, gbConstraints);
-
-    gbConstraints.gridx = 0;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weightx = 1;
-    gbConstraints.anchor = GridBagConstraints.CENTER;
     myWithBrowseButtonReference.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -109,27 +91,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         }
       }
     );
-    JPanel _panel = new JPanel(new BorderLayout(4, 0));
-    _panel.add(myPromptTo, BorderLayout.WEST);
-    _panel.add(myWithBrowseButtonReference, BorderLayout.CENTER);
-    panel.add(_panel, gbConstraints);
-
-    gbConstraints.gridx = 0;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchInComments = new NonFocusableCheckBox();
-    myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
-    panel.add(myCbSearchInComments, gbConstraints);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchTextOccurences = new NonFocusableCheckBox();
-    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
-    panel.add(myCbSearchTextOccurences, gbConstraints);
-
 
     if (!mySearchTextOccurencesEnabled) {
       myCbSearchTextOccurences.setEnabled(false);
@@ -137,20 +98,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       myCbSearchTextOccurences.setSelected(false);
     }
 
-    gbConstraints.gridx = 0;
-    //gbConstraints.gridy = 1;
-    gbConstraints.gridwidth = 2;
-    myCbMoveToAnotherSourceFolder = new NonFocusableCheckBox();
-    myCbMoveToAnotherSourceFolder.setText(RefactoringBundle.message("move.classes.move.to.another.source.folder"));
-    panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
-
     myWithBrowseButtonReference.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateOKButton();
       }
     });
 
-    return panel;
+    return myMainPanel;
   }
 
   protected String getDimensionServiceKey() {
@@ -326,5 +280,4 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private VirtualFile[] getSourceRoots() {
     return ProjectRootManager.getInstance(myProject).getContentSourceRoots();
   }
-
 }

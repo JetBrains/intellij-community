@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog">
+  <grid id="1a398" binding="myMainPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="10" y="10" width="371" height="120"/>
+    </constraints>
+    <properties/>
+    <border type="line">
+      <color color="-8355712"/>
+    </border>
+    <children>
+      <component id="ec4f" class="javax.swing.JLabel" binding="myNameLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="4" left="8" bottom="4" right="8" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties/>
+      </component>
+      <grid id="1f42" layout-manager="BorderLayout" hgap="4" vgap="0">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="4" left="8" bottom="4" right="8" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="ab645" class="javax.swing.JLabel" binding="myPromptTo">
+            <constraints border-constraint="West"/>
+            <properties>
+              <text value="To package:"/>
+            </properties>
+          </component>
+          <component id="9f925" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="myWithBrowseButtonReference" custom-create="true">
+            <constraints border-constraint="Center"/>
+            <properties>
+              <text value="org.trinkets.ui"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <component id="74471" class="com.intellij.ui.NonFocusableCheckBox" binding="myCbSearchInComments">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="4" left="8" bottom="4" right="8" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Search in comments and &amp;strings"/>
+        </properties>
+      </component>
+      <component id="a7936" class="com.intellij.ui.NonFocusableCheckBox" binding="myCbSearchTextOccurences">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="4" left="8" bottom="4" right="8" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Search for &amp;text occurrences"/>
+        </properties>
+      </component>
+      <component id="60aec" class="com.intellij.ui.NonFocusableCheckBox" binding="myCbMoveToAnotherSourceFolder">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="4" left="8" bottom="4" right="8" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Move to another source &amp;folder"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>
