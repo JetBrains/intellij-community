@@ -68,6 +68,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     super(node);
   }
 
+  public PsiElement getReferenceNameElement() {
+    PsiElement superNameElement = super.getReferenceNameElement();
+    return superNameElement == null ? findChildByType(GroovyTokenTypes.kCLASS) : superNameElement;
+  }
+
   public int getTextOffset() {
     PsiElement parent = getParent();
     TextRange range = getTextRange();
@@ -126,6 +131,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
               if (rType != null) result = rType;
             }
           }
+        }
+      } else if (resolved == null) {
+        if ("class".equals(refExpr.getReferenceName())) {
+          return refExpr.getManager().getElementFactory().createTypeByFQClassName("java.lang.Class",
+              refExpr.getResolveScope());
         }
       }
 
