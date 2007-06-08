@@ -45,7 +45,7 @@ public class MavenEnv {
     }
 
     final String m2home = System.getenv(ENV_M2_HOME);
-    if(!StringUtil.isEmptyOrSpaces(m2home)){
+    if (!StringUtil.isEmptyOrSpaces(m2home)) {
       final File homeFromEnv = new File(m2home);
       if (isValidMavenHome(homeFromEnv)) {
         return homeFromEnv;
@@ -53,7 +53,7 @@ public class MavenEnv {
     }
 
     final String userHome = System.getProperty(PROP_USER_HOME);
-    if(!StringUtil.isEmptyOrSpaces(userHome)){
+    if (!StringUtil.isEmptyOrSpaces(userHome)) {
       final File underUserHome = new File(userHome, M2_DIR);
       if (isValidMavenHome(underUserHome)) {
         return underUserHome;
@@ -82,11 +82,11 @@ public class MavenEnv {
 
   @Nullable
   public static File resolveUserSettingsFile(final String override) {
-    if ( !StringUtil.isEmptyOrSpaces(override)){
+    if (!StringUtil.isEmptyOrSpaces(override)) {
       return new File(override);
     }
     final String userHome = System.getProperty(PROP_USER_HOME);
-    if ( !StringUtil.isEmptyOrSpaces(userHome)){
+    if (!StringUtil.isEmptyOrSpaces(userHome)) {
       return new File(new File(userHome, DOT_M2_DIR), SETTINGS_FILE);
     }
     return null;
@@ -115,7 +115,7 @@ public class MavenEnv {
     }
 
     final String userHome = System.getProperty(PROP_USER_HOME);
-    if ( !StringUtil.isEmptyOrSpaces(userHome)){
+    if (!StringUtil.isEmptyOrSpaces(userHome)) {
       return new File(new File(userHome, DOT_M2_DIR), REPOSITORY_DIR);
     }
 
@@ -161,17 +161,24 @@ public class MavenEnv {
     ConfigurationValidationResult validationResult = MavenEmbedder.validateConfiguration(configuration);
 
     if (!validationResult.isValid()) {
-      throw new MavenEmbedderException(toString(validationResult));
+      throw new MavenEmbedderException(getErrorString(validationResult, globalSettingsFile, userSettingsFile));
     }
 
     return new MavenEmbedder(configuration);
   }
 
   @NonNls
-  private static String toString(final ConfigurationValidationResult validationResult) {
-    return (validationResult.isGlobalSettingsFilePresent() ? "" : "Global settings file missing. ") +
-           (validationResult.isGlobalSettingsFileParses() ? "" : "Global settings file malformed. ") +
-           (validationResult.isUserSettingsFilePresent() ? "" : "User settings file missing. ") +
-           (validationResult.isUserSettingsFileParses() ? "" : "User settings file malformed.");
+  private static String getErrorString(final ConfigurationValidationResult validationResult,
+                                       final File globalSettingsFile,
+                                       final File userSettingsFile) {
+    return getErrorString(validationResult.isGlobalSettingsFilePresent(), "Global settings file missing", globalSettingsFile) +
+           getErrorString(validationResult.isGlobalSettingsFileParses(), "Global settings file malformed", globalSettingsFile) +
+           getErrorString(validationResult.isUserSettingsFilePresent(), "User settings file missing", userSettingsFile) +
+           getErrorString(validationResult.isUserSettingsFileParses(), "User settings file malformed", userSettingsFile);
+  }
+
+  @NonNls
+  private static String getErrorString(final boolean flag, @NonNls final String message, final File file) {
+    return flag ? "" : (message + " (" + (file != null ? file.getPath() : "null") + ").");
   }
 }
