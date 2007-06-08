@@ -31,7 +31,7 @@ public class SurroundStatementsTest extends TestSuite {
       surroundersOfStmtToPathsMap.put(GroovyWithIfElseSurrounder.class, stmtsPrefix + "if_else");
       surroundersOfStmtToPathsMap.put(GroovyWithTryCatchSurrounder.class, stmtsPrefix + "try_catch");
       surroundersOfStmtToPathsMap.put(GroovyWithWhileSurrounder.class, stmtsPrefix + "while");
-      surroundersOfStmtToPathsMap.put(GroovySurrounderByParametrizedClosure.class, stmtsPrefix + "closure");
+      surroundersOfStmtToPathsMap.put(GroovySurrounderByParametrizedClosure.class, stmtsPrefix + "all");
     }
   }
 
