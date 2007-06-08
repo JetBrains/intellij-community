@@ -80,53 +80,6 @@ public final class MatchResultImpl extends MatchResult {
     return matches;
   }
 
-  public Iterator<MatchResult> getSons() {
-    return new Iterator<MatchResult>() {
-      private int index;
-      private MatchResultImpl next;
-
-      void advanceToNext() {
-        if (matches!=null) {
-          for(;index<matches.size();++index) {
-            MatchResultImpl result = (MatchResultImpl) matches.get(index);
-
-            if (result.isTarget()) {
-              next = result;
-              return;
-            }
-          }
-          if (index == matches.size()) {
-            next = null;
-          }
-        }
-      }
-
-      {
-        advanceToNext();
-      }
-
-      public boolean hasNext() {
-        return next!=null;
-      }
-
-      public MatchResult next() {
-        if (next!=null) {
-          MatchResultImpl result = next;
-          ++index;
-          advanceToNext();
-
-          return result;
-        } else {
-          return next;
-        }
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
   public List<MatchResult> getAllSons() {
     return getMatches();
   }

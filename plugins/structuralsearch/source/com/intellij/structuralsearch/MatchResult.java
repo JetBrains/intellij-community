@@ -1,12 +1,10 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.psi.PsiElement;
-
-import java.util.Iterator;
-import java.util.List;
-
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.List;
 
 /**
  * Class describing the match result
@@ -24,7 +22,6 @@ public abstract class MatchResult {
 
   public abstract String getName();
 
-  public abstract Iterator<MatchResult> getSons();
   public abstract List<MatchResult> getAllSons();
   public abstract boolean hasSons();
   public abstract boolean isScopeMatch();

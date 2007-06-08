@@ -1068,26 +1068,6 @@ public class MatchingVisitor extends PsiElementVisitor {
     return (lastMatchedElement!=null)?lastMatchedElement.getText():null;
   }
 
-  MatchResultImpl processOneMatch(MatchResultImpl realResult) {
-    MatchResultImpl result = realResult;
-    MatchResultImpl candidateResult;
-    Iterator candidateSons;
-
-    if (realResult.hasSons() &&
-        (candidateResult = (MatchResultImpl)(candidateSons = realResult.getSons()).next()) != null &&
-        realResult.isMultipleMatch()
-       ) {
-      // many results of one, show them nicely
-      result = candidateResult;
-      while(candidateSons.hasNext()) {
-        matchContext.getSink().newMatch(result);
-        result = (MatchResultImpl) candidateSons.next();
-      }
-    }
-
-    return result;
-  }
-
   /**
    * Descents the tree in depth finding matches
    * @param elements the element for which the sons are looked for match
@@ -1179,8 +1159,6 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   private void dispathMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    final Iterator<MatchResult> sons = result.getSons();
-
     if(!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result)) return;
 
     // There is no substitutions so show the context

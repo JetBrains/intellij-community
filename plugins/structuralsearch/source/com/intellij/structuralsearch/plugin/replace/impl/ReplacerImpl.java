@@ -812,7 +812,7 @@ public class ReplacerImpl {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
-      for(Iterator<MatchResult> i=result.getSons();i.hasNext();) {
+      for(Iterator<MatchResult> i=result.getAllSons().iterator();i.hasNext();) {
         final MatchResult r = i.next();
 
         if (MatchResult.LINE_MATCH.equals(r.getName())) {
