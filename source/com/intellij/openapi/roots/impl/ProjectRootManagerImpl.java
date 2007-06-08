@@ -708,7 +708,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
     public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-      if (!myInsideRefresh) {
+      if (myInsideRefresh == 0) {
         beforeRootsChange(false);
       }
       else if (!myPointerChangesDetected) {
@@ -719,7 +719,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void validityChanged(VirtualFilePointer[] pointers) {
-      if (myInsideRefresh) {
+      if (myInsideRefresh > 0) {
         clearScopesCaches();
       }
       else {
@@ -728,16 +728,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  private boolean myInsideRefresh = false;
+  private int myInsideRefresh = 0;
   private boolean myPointerChangesDetected = false;
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
     public void beforeRefreshStart(boolean asynchonous) {
-      myInsideRefresh = true;
+      myInsideRefresh++;
     }
 
     public void afterRefreshFinish(boolean asynchonous) {
-      myInsideRefresh = false;
+      myInsideRefresh--;
       if (myPointerChangesDetected) {
         myPointerChangesDetected = false;
         myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
