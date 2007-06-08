@@ -26,22 +26,17 @@
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
 
-  <path id="idea_path">
-    <fileset dir="${idea.lib}">
-      <include name="**/*.jar"/>
-    </fileset>
-  </path>
-
-  <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="idea_path"/>
-
-  <property name="output" value="${basedir}/dist"/>
-
   <path id="base.path">
     <fileset dir="${idea.lib}">
       <include name="**/*.jar"/>
       <exclude name="boot.jar"/>
     </fileset>
   </path>
+
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
+
+  <property name="output" value="${basedir}/dist"/>
+
 
   <path id="tools.path">
     <fileset dir="${tools.jar.dir}">
