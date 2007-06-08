@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -43,6 +44,6 @@ public class GroovyWithIfExprSurrounder extends GroovyExpressionSurrounder {
   }
 
   protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrExpression && PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(((GrExpression) element).getType().getPresentableText().toLowerCase());
+    return element instanceof GrConditionalExpression && PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(((GrExpression) element).getType().getPresentableText().toLowerCase());
   }
 }
