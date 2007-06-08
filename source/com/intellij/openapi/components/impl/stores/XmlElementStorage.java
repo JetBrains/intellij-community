@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.StringInterner;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -35,6 +36,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   private Set<String> myUsedMacros;
   private Object mySession;
   private StorageData myLoadedData;
+  private static StringInterner ourInterner = new StringInterner();
 
   protected XmlElementStorage(
     @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
@@ -91,6 +93,8 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       if (myPathMacroSubstitutor != null) {
         myPathMacroSubstitutor.expandPaths(rootElement);
       }
+
+      JDOMUtil.internElement(rootElement, ourInterner);
 
       try {
         result.load(rootElement);
@@ -360,8 +364,8 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       int result = 0;
 
       for (String name : myComponentStates.keySet()) {
-        result += 31*result + name.hashCode();
-        result += 31*result + JDOMUtil.getTreeHash(myComponentStates.get(name));
+        result = 31*result + name.hashCode();
+        result = 31*result + JDOMUtil.getTreeHash(myComponentStates.get(name));
       }
 
       return result;

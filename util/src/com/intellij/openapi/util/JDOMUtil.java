@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.text.CharArrayUtil;
@@ -153,6 +154,31 @@ public class JDOMUtil {
     }
     else {
       throw new IllegalArgumentException("Wrong node: " + node);
+    }
+  }
+
+  public static void internElement(final Element element, final StringInterner interner) {
+    element.setName(interner.intern(element.getName()));
+
+    final List attributes = element.getAttributes();
+    for (Object o : attributes) {
+      Attribute attr = (Attribute)o;
+      element.setAttribute(interner.intern(attr.getName()), interner.intern(attr.getValue()));
+    }
+
+    final List content = element.getContent();
+    for (Object o : content) {
+      if (o instanceof Element) {
+        Element e = (Element)o;
+        internElement(e, interner);
+      }
+      else if (o instanceof Text) {
+        Text text = (Text)o;
+        text.setText(interner.intern(text.getText()));
+      }
+      else {
+        throw new IllegalArgumentException("Wrong node: " + o);
+      }
     }
   }
 
