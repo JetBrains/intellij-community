@@ -25,6 +25,28 @@ import java.util.List;
 public class AntDocumentationProvider implements DocumentationProvider {
   
   public String generateDoc(PsiElement element, PsiElement originalElement) {
+    final String mainDoc = getMainDocumentation(originalElement);
+    final String additionalDoc = getAdditionalDocumentation(originalElement);
+    if (mainDoc == null && additionalDoc == null) {
+      return null;
+    }
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      if (additionalDoc != null) {
+        builder.append(additionalDoc);
+      }
+      if (mainDoc != null) {
+        builder.append(mainDoc);
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+  @Nullable
+  private static String getMainDocumentation(PsiElement originalElement) {
     if (!(originalElement instanceof AntElement)) {
       return null;
     }
@@ -34,7 +56,7 @@ public class AntDocumentationProvider implements DocumentationProvider {
       return null;
     }
     final VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
+      @Nullable public VirtualFile compute() {
         return LocalFileSystem.getInstance().findFileByIoFile(helpFile);
       }
     });
@@ -42,58 +64,47 @@ public class AntDocumentationProvider implements DocumentationProvider {
     if (fileByIoFile == null) {
       return null;
     }
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc(); 
     try {
-      final AntElement antElement = (AntElement)originalElement;
-      final String additionalDoc = generateDocForElement(antElement);
-      if (additionalDoc != null) {
-        builder.append(additionalDoc);
-      }
-
-      final String mainDoc = VfsUtil.loadText(fileByIoFile);
-      if (mainDoc != null) {
-        builder.append(mainDoc);
-      }
-      return builder.toString();
+      return VfsUtil.loadText(fileByIoFile);
     }
     catch (IOException ignored) {
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
     return null;
   }
-
+  
   @Nullable
-  private static String generateDocForElement(final AntElement antElement) {
+  private static String getAdditionalDocumentation(PsiElement originalElement) {
+    if (!(originalElement instanceof AntElement)) {
+      return null;
+    }
+    final AntElement antElement = (AntElement)originalElement;
     if (antElement instanceof AntFilesProvider) {
       final List<File> list = ((AntFilesProvider)antElement).getFiles();
-      if (list.size() == 0) {
-        return null;
-      }
-      final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        final XmlElement srcElement = antElement.getSourceElement();
-        if (srcElement instanceof XmlTag) {
-          builder.append("<b>");
-          builder.append(((XmlTag)srcElement).getName());
-          builder.append(":</b>");
-        }
-        for (File file : list) {
-          if (builder.length() > 0) {
-            builder.append("<br>");
+      if (list.size() > 0) {
+        final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          final XmlElement srcElement = antElement.getSourceElement();
+          if (srcElement instanceof XmlTag) {
+            builder.append("<b>");
+            builder.append(((XmlTag)srcElement).getName());
+            builder.append(":</b>");
           }
-          builder.append(file.getPath());
+          for (File file : list) {
+            if (builder.length() > 0) {
+              builder.append("<br>");
+            }
+            builder.append(file.getPath());
+          }
+          return builder.toString();
         }
-        return builder.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
       }
     }
     return null;
   }
-
+  
   @Nullable
   private static File getHelpFile(final PsiElement element) {
     if (!(element instanceof AntElement)) {
