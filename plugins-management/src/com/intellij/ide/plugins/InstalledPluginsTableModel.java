@@ -1,8 +1,16 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ui.BooleanTableCellEditor;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.util.*;
 
 /**
@@ -14,16 +22,27 @@ import java.util.*;
  */
 public class InstalledPluginsTableModel extends PluginTableModel {
   public static Map<PluginId, Integer> NewVersions2Plugins = new HashMap<PluginId, Integer>();
+  private Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
 
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
-    super(sortableProvider, new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider));
-
+    super.sortableProvider = sortableProvider;
+    super.columns = new ColumnInfo[]{new NameColumnInfo(), new EnabledPluginInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
+
+    myEnabled.clear();
+    for (IdeaPluginDescriptor ideaPluginDescriptor : view) {
+      myEnabled.put(ideaPluginDescriptor.getPluginId(), ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isEnabled());
+    }
+
     for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext();) {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
       if ("com.intellij".equals(s)) iterator.remove();
     }
     sortByColumn(0);
+  }
+
+  public static int getCheckboxColumn() {
+    return 1;
   }
 
   public void addData(ArrayList<IdeaPluginDescriptor> list) {
@@ -69,5 +88,80 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public static boolean hasNewerVersion(PluginId descr) {
     return NewVersions2Plugins.containsKey(descr);
+  }
+
+  private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptorImpl, Boolean> {
+
+    public EnabledPluginInfo() {
+      super(IdeBundle.message("plugin.manager.enable.column.title"));
+    }
+
+    public Boolean valueOf(IdeaPluginDescriptorImpl ideaPluginDescriptor) {
+      return myEnabled.get(ideaPluginDescriptor.getPluginId());
+    }
+
+    public boolean isCellEditable(final IdeaPluginDescriptorImpl ideaPluginDescriptor) {
+      return true;
+    }
+
+    public Class getColumnClass() {
+      return Boolean.class;
+    }
+
+    public TableCellEditor getEditor(final IdeaPluginDescriptorImpl o) {
+      return new BooleanTableCellEditor();
+    }
+
+    public TableCellRenderer getRenderer(final IdeaPluginDescriptorImpl ideaPluginDescriptor) {
+      return new BooleanTableCellRenderer();
+    }
+
+    public void setValue(final IdeaPluginDescriptorImpl ideaPluginDescriptor, final Boolean value) {
+      myEnabled.put(ideaPluginDescriptor.getPluginId(), value);
+    }
+
+    public Comparator<IdeaPluginDescriptorImpl> getComparator() {
+      return new Comparator<IdeaPluginDescriptorImpl>() {
+        public int compare(final IdeaPluginDescriptorImpl o1, final IdeaPluginDescriptorImpl o2) {
+          if (o1.isEnabled()) {
+            if (o2.isEnabled()) {
+              return 0;
+            }
+            return -1;
+          }
+          else {
+            if (!o2.isEnabled()) {
+              return 0;
+            }
+            return 1;
+          }
+        }
+      };
+    }
+  }
+
+  private class NameColumnInfo extends PluginManagerColumnInfo {
+    public NameColumnInfo() {
+      super(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider);
+    }
+
+    public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
+      final DefaultTableCellRenderer cellRenderer = (DefaultTableCellRenderer)super.getRenderer(ideaPluginDescriptor);
+      if (cellRenderer != null && ideaPluginDescriptor != null) {
+        if (myEnabled.get(ideaPluginDescriptor.getPluginId()).booleanValue()) {
+          for (PluginId pluginId : ideaPluginDescriptor.getDependentPluginIds()) {
+            if (!myEnabled.get(pluginId).booleanValue()) {
+              cellRenderer.setForeground(Color.red);
+              final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+              if (plugin != null) {
+                cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.tooltip.warning", plugin.getName()));
+                break;
+              }
+            }
+          }
+        }
+      }
+      return cellRenderer;
+    }
   }
 }

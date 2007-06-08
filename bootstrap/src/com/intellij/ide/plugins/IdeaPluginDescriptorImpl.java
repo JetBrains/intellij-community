@@ -56,6 +56,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myDownloadCounter;
   private long myDate;
   private boolean myUseIdeaClassLoader;
+  private boolean myEnabled;
 
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
@@ -442,5 +443,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     deps[0] = d.getPluginId();
     System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);
     myDependencies = deps;
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  public void setEnabled(final boolean enabled) {
+    myEnabled = enabled;
   }
 }

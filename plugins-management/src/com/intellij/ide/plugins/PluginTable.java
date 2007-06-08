@@ -5,13 +5,14 @@ import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,10 +29,22 @@ public class PluginTable extends Table {
 
     for (int i = 0; i < model.getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
-      column.setCellRenderer(model.getColumnInfos()[i].getRenderer(null));
+      final ColumnInfo columnInfo = model.getColumnInfos()[i];
+      column.setCellEditor(columnInfo.getEditor(null));
+      if (columnInfo.getColumnClass() == Boolean.class) {
+        String name = columnInfo.getName();
+        final int width;
+        final FontMetrics fontMetrics = getFontMetrics(getFont());
+        width = fontMetrics.stringWidth(" " + name + " ") + 4;
+
+        column.setWidth(width);
+        column.setPreferredWidth(width);
+        column.setMaxWidth(width);
+        column.setMinWidth(width);
+      }
     }
 
-    if (getColumnCount() > 1) {
+    if (getColumnCount() > 2) {
       //  Specify columns widths for particular columns:
       //  Icon/Status
       TableColumn column;/* = getColumnModel().getColumn(0);
@@ -50,6 +63,16 @@ public class PluginTable extends Table {
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
+  }
+
+  public void setValueAt(final Object aValue, final int row, final int column) {
+    super.setValueAt(aValue, row, column);
+    repaint(); //in order to update invalid plugins
+  }
+
+  public TableCellRenderer getCellRenderer(final int row, final int column) {
+    final ColumnInfo columnInfo = ((PluginTableModel)getModel()).getColumnInfos()[column];
+    return columnInfo.getRenderer(((PluginTableModel)getModel()).getObjectAt(row));
   }
 
   private void initializeHeader(final PluginTableModel model) {

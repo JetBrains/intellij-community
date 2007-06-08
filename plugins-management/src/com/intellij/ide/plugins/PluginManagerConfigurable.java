@@ -120,6 +120,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public void apply() throws ConfigurationException {
+    myPluginManagerMain.apply();
     if (myPluginManagerMain.isRequireShutdown()) {
       if (Messages.showYesNoDialog(IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName()),
                                    IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
@@ -132,7 +133,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public boolean isModified() {
-    return myPluginManagerMain != null && myPluginManagerMain.isRequireShutdown();
+    return myPluginManagerMain != null && myPluginManagerMain.isModified();
   }
 
   public Icon getIcon() {
@@ -184,8 +185,12 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
+  public Runnable enableSearch(final String option) {
+    return new Runnable(){
+      public void run() {
+        myPluginManagerMain.filter(option);
+      }
+    };
   }
 
   public void select(IdeaPluginDescriptor... descriptors) {

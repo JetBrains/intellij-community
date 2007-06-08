@@ -9,12 +9,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.*;
 import com.intellij.util.concurrency.SwingWorker;
@@ -28,16 +25,11 @@ import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
+import java.awt.event.*;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
-import java.util.zip.ZipException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -95,6 +87,23 @@ public class PluginManagerMain {
     installedPluginsModel = new InstalledPluginsTableModel(installedProvider);
     installedPluginTable = new PluginTable(installedPluginsModel);
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(installedPluginTable);
+    installedPluginTable.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final int column = InstalledPluginsTableModel.getCheckboxColumn();
+        final int[] selectedRows = installedPluginTable.getSelectedRows();
+        boolean currentlyMarked = true;
+        for (final int selectedRow : selectedRows) {
+          if (selectedRow < 0 || !installedPluginTable.isCellEditable(selectedRow, column)) {
+            return;
+          }
+          currentlyMarked &= ((Boolean)installedPluginTable.getValueAt(selectedRow, column)).booleanValue();
+        }
+        for (int selectedRow : selectedRows) {
+          installedPluginTable.setValueAt(currentlyMarked ? Boolean.FALSE : Boolean.TRUE, selectedRow, column);
+        }
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+
 
     availablePluginsModel = new AvailablePluginsTableModel(availableProvider);
     availablePluginsTable = new PluginTable(availablePluginsModel);
@@ -146,6 +155,10 @@ public class PluginManagerMain {
     myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
     myToolbarPanel.add(myFilter, BorderLayout.EAST);
     myActionToolbar.updateActionsImmediately();
+  }
+
+  public void filter(String filter) {
+    myFilter.setSelectedItem(filter);
   }
 
   public void reset() {
@@ -342,98 +355,12 @@ public class PluginManagerMain {
     return result[0];
   }
 
-  public static boolean downloadPlugin(final PluginNode pluginNode) throws IOException {
-    final boolean[] result = new boolean[1];
-    try {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-
-          pi.setText(pluginNode.getName());
-
-          try {
-            result[0] = PluginInstaller.prepareToInstall(pluginNode);
-          }
-          catch (ZipException e) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
-                                         IdeBundle.message("title.installing.plugin"));
-
-              }
-            });
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
-    }
-    catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof IOException) {
-        throw(IOException)e.getCause();
-      }
-      else {
-        throw e;
-      }
-    }
-
-    return result[0];
-  }
-
   public boolean isRequireShutdown() {
     return requireShutdown;
   }
 
   public void ignoreChanges() {
     requireShutdown = false;
-  }
-
-  private static class PluginsToUpdateChooser extends DialogWrapper {
-    private Set<PluginNode> myPluginsToUpdate;
-    private SortedSet<PluginNode> myModel;
-
-    protected PluginsToUpdateChooser(Set<PluginNode> pluginsToUpdate) {
-      super(false);
-      myPluginsToUpdate = pluginsToUpdate;
-      myModel = new TreeSet<PluginNode>(new Comparator<PluginNode>() {
-        public int compare(final PluginNode o1, final PluginNode o2) {
-          if (o1 == null) return 1;
-          if (o2 == null) return -1;
-          return o1.getName().compareToIgnoreCase(o2.getName());
-        }
-      });
-      myModel.addAll(myPluginsToUpdate);
-      init();
-      setTitle(IdeBundle.message("title.choose.plugins.to.update"));
-    }
-
-    protected JComponent createCenterPanel() {
-      OrderPanel<PluginNode> panel = new OrderPanel<PluginNode>(PluginNode.class) {
-        public boolean isCheckable(final PluginNode entry) {
-          return true;
-        }
-
-        public boolean isChecked(final PluginNode entry) {
-          return myPluginsToUpdate.contains(entry);
-        }
-
-        public void setChecked(final PluginNode entry, final boolean checked) {
-          if (checked) {
-            myPluginsToUpdate.add(entry);
-          }
-          else {
-            myPluginsToUpdate.remove(entry);
-          }
-        }
-      };
-      for (PluginNode pluginNode : myModel) {
-        panel.add(pluginNode);
-      }
-      panel.setCheckboxColumnName("");
-      panel.getEntryTable().setTableHeader(null);
-      return panel;
-    }
   }
 
   private static void setTextValue(String val, JEditorPane pane) {
@@ -496,6 +423,70 @@ public class PluginManagerMain {
         /* not a problem */
       }
     }
+  }
+
+  public void save() {
+    File plugins = new File(PathManager.getConfigPath(), PluginManager.ENABLED_PLUGINS_FILENAME);
+    if (!plugins.isFile()) {
+      try {
+        plugins.createNewFile();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    FileWriter fileWriter = null;
+    PrintWriter printWriter = null;
+    try {
+      fileWriter = new FileWriter(plugins);
+      printWriter = new PrintWriter(new BufferedWriter(fileWriter));
+      for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
+        final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
+        if (pluginDescriptor.isEnabled()) {
+          printWriter.println(pluginDescriptor.getPluginId().getIdString());
+        }
+      }
+      for (int i = 0; i < availablePluginsTable.getRowCount(); i++) {
+        final PluginNode pluginDescriptor = (PluginNode)availablePluginsModel.getObjectAt(i); //new installations
+        if (pluginDescriptor.getStatus() == PluginNode.STATUS_DOWNLOADED) {
+          printWriter.println(pluginDescriptor.getPluginId().getIdString());
+        }
+      }
+      printWriter.flush();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        if (fileWriter != null) {
+          fileWriter.close();
+        }
+        if (printWriter != null) {
+          printWriter.close();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  public boolean isModified() {
+    if (requireShutdown) return true;
+    for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
+      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
+      if (pluginDescriptor.isEnabled() != ((Boolean)installedPluginsModel.getValueAt(i, 1)).booleanValue()) return true;
+    }
+    return false;
+  }
+
+  public void apply() {
+    for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
+      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
+      pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, 1)).booleanValue());
+    }
+    save();
   }
 
   private static class MyHyperlinkListener implements HyperlinkListener {

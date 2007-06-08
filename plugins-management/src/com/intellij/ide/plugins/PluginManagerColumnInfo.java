@@ -241,7 +241,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Object descriptor = ((PluginTable)table).getObjectAt(row);
-      setForeground(Color.black);
       if (column == COLUMN_NAME) {
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;

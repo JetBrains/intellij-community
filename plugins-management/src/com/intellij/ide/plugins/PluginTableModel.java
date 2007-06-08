@@ -17,11 +17,14 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 abstract public class PluginTableModel extends AbstractTableModel implements SortableColumnModel {
-  protected PluginManagerColumnInfo[] columns;
+  protected ColumnInfo[] columns;
   protected SortableProvider sortableProvider;
   protected List<IdeaPluginDescriptor> view;
 
-  public PluginTableModel(SortableProvider sortableProvider, PluginManagerColumnInfo... columns) {
+  protected PluginTableModel() {
+  }
+
+  public PluginTableModel(SortableProvider sortableProvider, ColumnInfo... columns) {
     this.columns = columns;
     this.sortableProvider = sortableProvider;
   }
@@ -30,7 +33,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     return columns.length;
   }
 
-  public ColumnInfo<IdeaPluginDescriptor, String>[] getColumnInfos() {
+  public ColumnInfo[] getColumnInfos() {
     return columns;
   }
 
@@ -64,6 +67,14 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public Object getValueAt(int rowIndex, int columnIndex) {
     return columns[columnIndex].valueOf(getObjectAt(rowIndex));
+  }
+
+  public boolean isCellEditable(final int rowIndex, final int columnIndex) {
+    return columns[columnIndex].isCellEditable(getObjectAt(rowIndex));
+  }
+
+  public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
+    columns[columnIndex].setValue(getObjectAt(rowIndex), aValue);
   }
 
   public void sortByColumn(int columnIndex) {
