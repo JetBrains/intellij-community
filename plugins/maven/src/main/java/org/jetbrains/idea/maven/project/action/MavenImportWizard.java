@@ -134,6 +134,10 @@ public class MavenImportWizard extends ProjectImportWizard
     return myImportProcessor.getMavenProjectModel().getRootProjects();
   }
 
+  public boolean isMarked(final MavenProjectModel.Node element) {
+    return true;
+  }
+
   public void setList(List<MavenProjectModel.Node> nodes) {
     for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
       node.setIncluded(nodes.contains(node));
