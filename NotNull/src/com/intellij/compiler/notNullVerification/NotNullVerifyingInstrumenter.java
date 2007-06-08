@@ -87,7 +87,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       }
 
       public void visitCode() {
-        if (myNotNullParams.size() > 0) {
+        if (myIsNotNull || myNotNullParams.size() > 0) {
           myStartGeneratedCodeLabel = new Label();
           mv.visitLabel(myStartGeneratedCodeLabel);
         }
