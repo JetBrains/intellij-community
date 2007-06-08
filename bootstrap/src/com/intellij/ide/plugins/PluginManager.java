@@ -127,11 +127,18 @@ public class PluginManager {
     
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors();
 
+    final Class callerClass = Reflection.getCallerClass(1);
+    final ClassLoader parentLoader = callerClass.getClassLoader();
+
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       if (!shouldSkipPlugin(descriptor)) {
         descriptor.setEnabled(true);
         result.add(descriptor);
+      } else {
+        final List<File> classPath = descriptor.getClassPath();
+        descriptor
+          .setLoader(createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor));
       }
     }
 
@@ -151,8 +158,6 @@ public class PluginManager {
     // sort descriptors according to plugin dependencies
     Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));
 
-    final Class callerClass = Reflection.getCallerClass(1);
-    final ClassLoader parentLoader = callerClass.getClassLoader();
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
       final List<File> classPath = pluginDescriptor.getClassPath();
       final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();

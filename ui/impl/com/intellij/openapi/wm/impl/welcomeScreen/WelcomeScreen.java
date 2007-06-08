@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -93,6 +94,7 @@ public class WelcomeScreen {
   private static final Font GROUP_CAPTION_FONT = new Font(TAHOMA_FONT_NAME, Font.BOLD, 18);
 
   private static final Color CAPTION_COLOR = new Color(47, 67, 96);
+  private static final Color DISABLED_CAPTION_COLOR = UIUtil.getInactiveTextColor();
   private static final Color PLUGINS_PANEL_COLOR = new Color(229, 229, 229);
   private static final Color MAIN_PANEL_COLOR = new Color(210, 213, 226);
   private static final Color BUTTON_PUSHED_COLOR = new Color(130, 146, 185);
@@ -518,9 +520,9 @@ public class WelcomeScreen {
 
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
       addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
-        .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null);
+        .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null, true);
       addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
-        .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null);
+        .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null, true);
     }
     else {
       final Comparator<IdeaPluginDescriptor> pluginsComparator = new Comparator<IdeaPluginDescriptor>() {
@@ -539,24 +541,25 @@ public class WelcomeScreen {
           // this is not really a plugin, so it shouldn't be displayed
           continue;
         }
+        final boolean enabled = ((IdeaPluginDescriptorImpl)plugin).isEnabled();
         if (plugin.getPath().getAbsolutePath().startsWith(preinstalledPrefix)) {
           embeddedPlugins++;
           addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
-                               plugin.getPluginClassLoader(), plugin.getUrl());
+                               plugin.getPluginClassLoader(), plugin.getUrl(), enabled);
         }
         else {
           installedPlugins++;
           addListItemToPlugins(installedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
-                               plugin.getPluginClassLoader(), plugin.getUrl());
+                               plugin.getPluginClassLoader(), plugin.getUrl(), enabled);
         }
       }
       if (embeddedPlugins == 0) {
         addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
-          .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null);
+          .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null, true);
       }
       if (installedPlugins == 0) {
         addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
-          .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null);
+          .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null, true);
       }
     }
   }
@@ -566,7 +569,8 @@ public class WelcomeScreen {
     return "<i>" + message + "</i>";
   }
 
-  public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url) {
+  public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url,
+                                   final boolean enabled) {
 
     if (StringUtil.isEmptyOrSpaces(name)) {
       return;
@@ -591,10 +595,10 @@ public class WelcomeScreen {
                                                     new Insets(15, 20, 0, 0), 0, 0);
     panel.add(imageLabel, gBC);
 
-    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
+    String shortenedName = adjustStringBreaksByWidth(name + " " + (enabled ? "": UIBundle.message("welcome.screen.disabled.plugins.description")), LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
-    logoName.setForeground(CAPTION_COLOR);
+    logoName.setForeground(enabled ? CAPTION_COLOR : DISABLED_CAPTION_COLOR);
     if (shortenedName.endsWith(___HTML_SUFFIX)) {
       logoName.setToolTipText(adjustStringBreaksByWidth(name, UIUtil.getToolTipFont(), false, MAX_TOOLTIP_WIDTH, 0));
     }
