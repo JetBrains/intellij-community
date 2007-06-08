@@ -2423,4 +2423,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   //  String s2 = "try { '_StatementBefore*; '_Dcl:[ regex(conn = 1)]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.*) ]; }";
   //  assertEquals("FindTryWithoutProperFinally", 1, findMatchesCount(s1,s2));
   //}
+  public void testBug() {
+    String s1 = "public class DiallingNumber extends DataGroup\n" + "{\n" + "    protected static byte [] CLEAR = { };\n" + "\n" +
+                "    private static DataItemTemplate template;\n" + "\n" + "\tprotected DataTemplate createDefaultTemplate()\n" + "\t{\n" +
+                "        return null;\n" + "    }\n" + "}";
+    String s2 = "class '_Class {\n" + "    static '_FieldType '_FieldName:.*template.* = '_FieldInitial?;\n" +
+                "    '_RetType createDefaultTemplate() { '_Statements*; }\n" + "\t'_Content*\n" + "}";
+    assertEquals("Bug in class matching", 1, findMatchesCount(s1,s2));
+  }
 }

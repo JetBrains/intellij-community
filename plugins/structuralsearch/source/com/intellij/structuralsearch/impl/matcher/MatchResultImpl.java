@@ -160,6 +160,10 @@ public final class MatchResultImpl extends MatchResult {
     matchImage = null;
   }
 
+  public void clearMatches() {
+    matches = null;
+  }
+
   public void setScopeMatch(final boolean scopeMatch) {
     myScopeMatch = scopeMatch;
   }

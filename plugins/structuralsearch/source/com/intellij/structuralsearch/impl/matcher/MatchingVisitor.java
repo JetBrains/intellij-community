@@ -601,31 +601,39 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitVariable(final PsiVariable var) {
-    boolean isTypedVar = matchContext.getPattern().isTypedVar(var.getNameIdentifier());
+    matchContext.pushResult();
+    final PsiIdentifier nameIdentifier = var.getNameIdentifier();
+
+    boolean isTypedVar = matchContext.getPattern().isTypedVar(nameIdentifier);
     boolean isTypedInitializer = var.getInitializer() != null &&
                                  matchContext.getPattern().isTypedVar(var.getInitializer()) &&
                                  var.getInitializer() instanceof PsiReferenceExpression;
     final PsiVariable var2 = (PsiVariable) element;
 
-    result = (var.getName().equals(var2.getName()) || isTypedVar) &&
-             ( ( var.getParent() instanceof PsiClass && ((PsiClass)var.getParent()).isInterface()) ||
-               match(var.getModifierList(),var2.getModifierList())
-             ) &&
-             match(var.getTypeElement(),var2.getTypeElement());
+    try {
+      result = (var.getName().equals(var2.getName()) || isTypedVar) &&
+               ( ( var.getParent() instanceof PsiClass && ((PsiClass)var.getParent()).isInterface()) ||
+                 match(var.getModifierList(),var2.getModifierList())
+               ) &&
+               match(var.getTypeElement(),var2.getTypeElement());
 
-    if (result) {
-      // Check initializer
-      final PsiExpression var2Initializer = var2.getInitializer();
+      if (result) {
+        // Check initializer
+        final PsiExpression var2Initializer = var2.getInitializer();
 
-      result = match(var.getInitializer(), var2Initializer) ||
-               ( isTypedInitializer &&
-                 var2Initializer == null &&
-                 allowsAbsenceOfMatch(var.getInitializer())
-               );
+        result = match(var.getInitializer(), var2Initializer) ||
+                 ( isTypedInitializer &&
+                   var2Initializer == null &&
+                   allowsAbsenceOfMatch(var.getInitializer())
+                 );
+      }
+
+      if (result && isTypedVar) {
+        result = handleTypedElement(nameIdentifier,var2.getNameIdentifier());
+      }
     }
-
-    if (result && isTypedVar) {
-      result = handleTypedElement(var.getNameIdentifier(),var2.getNameIdentifier());
+    finally {
+      saveOrDropResult(nameIdentifier, isTypedVar, var2.getNameIdentifier());
     }
   }
 
@@ -1067,7 +1075,7 @@ public class MatchingVisitor extends PsiElementVisitor {
 
     if (realResult.hasSons() &&
         (candidateResult = (MatchResultImpl)(candidateSons = realResult.getSons()).next()) != null &&
-        candidateResult.getName().equals(realResult.getName())
+        realResult.isMultipleMatch()
        ) {
       // many results of one, show them nicely
       result = candidateResult;
@@ -1149,32 +1157,8 @@ public class MatchingVisitor extends PsiElementVisitor {
 
       if (!patternNodes.hasNext()) {
         // match found
-        MatchResultImpl result = matchContext.getResult();
 
-        final Iterator sons = result.getSons();
-
-        // There is no substitutions so show the context
-        if (!sons.hasNext() || matchContext.getOptions().isResultIsContextMatch()) {
-          processNoSubstitutionMatch(matchedNodes, result);
-        } else {
-          boolean seenSearchTarget = false;
-
-          while(sons.hasNext()) {
-            MatchResultImpl realResult = (MatchResultImpl) sons.next();
-
-            if (realResult.isTarget()) {
-              if (seenSearchTarget) matchContext.getSink().newMatch(result);
-              result = processOneMatch(realResult);
-              seenSearchTarget = true;
-            }
-          }
-
-          if (!seenSearchTarget) {
-            processNoSubstitutionMatch(matchedNodes, result);
-          }
-        }
-
-        matchContext.getSink().newMatch(result);
+        dispathMatched(matchedNodes, matchContext.getResult());
 
         patternNodes.reset();
         matchedNodes.clear();
@@ -1192,6 +1176,33 @@ public class MatchingVisitor extends PsiElementVisitor {
       }
     }
     matchContext.setResult(saveResult);
+  }
+
+  private void dispathMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
+    final Iterator<MatchResult> sons = result.getSons();
+
+    if(!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result)) return;
+
+    // There is no substitutions so show the context
+
+    processNoSubstitutionMatch(matchedNodes, result);
+    matchContext.getSink().newMatch(result);
+  }
+
+  private boolean doDispatch(final MatchResultImpl result) {
+    boolean ret = false;
+
+    for(MatchResult _r:result.getAllSons()) {
+      final MatchResultImpl r = (MatchResultImpl)_r;
+
+      if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
+        ret |= doDispatch(r);
+      } else if (r.isTarget()) {
+        matchContext.getSink().newMatch(r);
+        ret = true;
+      }
+    }
+    return ret;
   }
 
   private static void processNoSubstitutionMatch(List<PsiElement> matchedNodes, MatchResultImpl result) {
@@ -1598,7 +1609,8 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitMethod(PsiMethod method) {
-    final boolean isTypedVar = matchContext.getPattern().isTypedVar(method.getNameIdentifier());
+    final PsiIdentifier methodNameNode = method.getNameIdentifier();
+    final boolean isTypedVar = matchContext.getPattern().isTypedVar(methodNameNode);
     final PsiMethod method2 = (PsiMethod) element;
 
     matchContext.pushResult();
@@ -1625,37 +1637,39 @@ public class MatchingVisitor extends PsiElementVisitor {
                matchInAnyOrder(method.getThrowsList(),method2.getThrowsList()) &&
                matchSonsOptionally( method.getBody(), method2.getBody() );
     } finally {
-      MatchResultImpl ourResult = matchContext.hasResult() ? matchContext.getResult():null;
-      matchContext.popResult();
+      final PsiIdentifier methodNameNode2 = method2.getNameIdentifier();
 
-      if (result) {
-        if (isTypedVar) {
-          final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(method.getNameIdentifier());
-          if (ourResult != null) ourResult.setScopeMatch(true);
-          handler.setNestedResult( ourResult );
-          result = handler.handle(method2.getNameIdentifier(),matchContext);
+      saveOrDropResult(methodNameNode, isTypedVar, methodNameNode2);
+    }
+  }
 
-          if (handler.getNestedResult() != null) { // some constraint prevent from adding
-            handler.setNestedResult(null);
-            copyResults(ourResult);
-          }
-        } else if (ourResult != null) {
+  private void saveOrDropResult(final PsiIdentifier methodNameNode, final boolean typedVar, final PsiIdentifier methodNameNode2) {
+    MatchResultImpl ourResult = matchContext.hasResult() ? matchContext.getResult():null;
+    matchContext.popResult();
+
+    if (result) {
+      if (typedVar) {
+        final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(methodNameNode);
+        if (ourResult != null) ourResult.setScopeMatch(true);
+        handler.setNestedResult( ourResult );
+        result = handler.handle(methodNameNode2,matchContext);
+
+        if (handler.getNestedResult() != null) { // some constraint prevent from adding
+          handler.setNestedResult(null);
           copyResults(ourResult);
         }
+      } else if (ourResult != null) {
+        copyResults(ourResult);
       }
     }
   }
 
   private void copyResults(final MatchResultImpl ourResult) {
-    //if (ourResult.isMultipleMatch()) {
-      if (ourResult.hasSons()) {
-        for(MatchResult son:ourResult.getAllSons()) {
-          matchContext.getResult().addSon((MatchResultImpl)son);
-        }
+    if (ourResult.hasSons()) {
+      for(MatchResult son:ourResult.getAllSons()) {
+        matchContext.getResult().addSon((MatchResultImpl)son);
       }
-    //} else {
-   //   matchContext.getResult().addSon(ourResult);
-   // }
+    }
   }
 
   public static final String getText(final PsiElement match, int start,int end) {

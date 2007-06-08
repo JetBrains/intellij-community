@@ -1334,7 +1334,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private  void f(int i){//s\n" +
+                            "   private  void f(int i ){//s\n" +
                             "}\n" +
                             "}";
 
@@ -1350,7 +1350,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private  void f(int i){int a = 1;\n" +
+                            "   private  void f(int i ){int a = 1;\n" +
                             "       //s\n" +
                             "}\n" +
                             "}";

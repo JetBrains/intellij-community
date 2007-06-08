@@ -139,7 +139,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
       return replacement;
     }
 
-    final StringBuffer result = new StringBuffer(replacement);
+    final StringBuilder result = new StringBuilder(replacement);
     map = new HashMap<String,MatchResult>();
     fill(match,map);
 
@@ -175,70 +175,71 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     return result.toString();
   }
 
-  private int insertSubstitution(StringBuffer result, int offset, final ParameterInfo info, String image) {
+  private int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
     result.insert(offset+info.startIndex,image);
     offset += image.length();
     return offset;
   }
 
-  private int handleSubstitution(final ParameterInfo info, MatchResult match, StringBuffer result, int offset) {
+  private int handleSubstitution(final ParameterInfo info, MatchResult match, StringBuilder result, int offset) {
     if (info.name.equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean forceAddingNewLine = false;
 
+      if (info.methodParameterContext) {
+        StringBuilder buf = new StringBuilder();
+        handleMethodParameter(buf,info);
+        replacementString = buf.toString();
+      } else
       if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
         // compound matches
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         MatchResult previous;
         MatchResult r = null;
 
-        if (info.methodParameterContext) {
-          handleMethodParameter(buf,info);
-        } else {
-          for (final MatchResult matchResult : match.getAllSons()) {
-            previous = r;
-            r = matchResult;
+        for (final MatchResult matchResult : match.getAllSons()) {
+          previous = r;
+          r = matchResult;
 
-            if (buf.length() > 0) {
-              if (info.statementContext) {
-                if (!(previous.getMatchRef().getElement() instanceof PsiComment) &&
-                    buf.charAt(buf.length() - 1) != '}'
-                  ) {
-                  buf.append(';');
-                }
-
-                final PsiElement prevSibling = r.getMatch().getPrevSibling();
-
-                if (prevSibling instanceof PsiWhiteSpace &&
-                    prevSibling.getPrevSibling() == previous.getMatch()
-                  ) {
-                  // consequent statements matched so preserve whitespacing
-                  buf.append(prevSibling.getText());
-                }
-                else {
-                  buf.append('\n');
-                }
+          if (buf.length() > 0) {
+            if (info.statementContext) {
+              if (!(previous.getMatchRef().getElement() instanceof PsiComment) &&
+                  buf.charAt(buf.length() - 1) != '}'
+                ) {
+                buf.append(';');
               }
-              else if (info.parameterContext) {
-                buf.append(',');
-              }
-              else if (info.classContext) {
-                buf.append('\n');
+
+              final PsiElement prevSibling = r.getMatch().getPrevSibling();
+
+              if (prevSibling instanceof PsiWhiteSpace &&
+                  prevSibling.getPrevSibling() == previous.getMatch()
+                ) {
+                // consequent statements matched so preserve whitespacing
+                buf.append(prevSibling.getText());
               }
               else {
-                buf.append(' ');
+                buf.append('\n');
               }
             }
-
-            buf.append(r.getMatchImage());
-            removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, r, buf);
-            forceAddingNewLine = r.getMatch() instanceof PsiComment;
+            else if (info.parameterContext) {
+              buf.append(',');
+            }
+            else if (info.classContext) {
+              buf.append('\n');
+            }
+            else {
+              buf.append(' ');
+            }
           }
+
+          buf.append(r.getMatchImage());
+          removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, r, buf);
+          forceAddingNewLine = r.getMatch() instanceof PsiComment;
         }
 
         replacementString = buf.toString();
       } else {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (info.statementContext) {
           forceAddingNewLine = match.getMatch() instanceof PsiComment;
         }
@@ -257,7 +258,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     return offset;
   }
 
-  private int removeExtraSemicolon(ParameterInfo info, int offset, StringBuffer result, MatchResult match) {
+  private int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {
     if (info.statementContext) {
       int index = offset+info.startIndex;
       if (result.charAt(index)==';' &&
@@ -282,7 +283,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     return offset;
   }
 
-  private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuffer buf) {
+  private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuilder buf) {
     if (info.statementContext) {
       final PsiElement element = r.getMatchRef().getElement();
 
@@ -319,7 +320,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     return null;
   }
 
-  private void handleMethodParameter(StringBuffer buf, ParameterInfo info) {
+  private void handleMethodParameter(StringBuilder buf, ParameterInfo info) {
     if(info.myElement==null) {
       // no specific handling for name of method parameter since it is handled with type
       return;
@@ -331,12 +332,23 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     final MatchResult matchResult = map.get(name);
     if (matchResult == null) return;
 
-    for(Iterator<MatchResult> i = matchResult.getAllSons().iterator(), j = map.get(info.name).getAllSons().iterator();
-        i.hasNext() && j.hasNext();
-      ) {
-      if (buf.length()>0) {
-        buf.append(',');
+    if (matchResult.isMultipleMatch()) {
+      for(Iterator<MatchResult> i = matchResult.getAllSons().iterator();
+          i.hasNext();
+        ) {
+        if (buf.length()>0) {
+          buf.append(',');
+        }
+
+        appendParameter(buf, i.next());
       }
+    } else {
+      appendParameter(buf, matchResult);
+    }
+  }
+
+  private static void appendParameter(final StringBuilder buf, final MatchResult _matchResult) {
+    for(Iterator<MatchResult> j = _matchResult.getAllSons().iterator();j.hasNext();) {
       buf.append(
         j.next().getMatchImage()
       );
@@ -344,7 +356,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
       buf.append(' ');
 
       buf.append(
-        i.next().getMatchImage()
+        j.next().getMatchImage()
       );
     }
   }

@@ -148,26 +148,31 @@ public class SubstitutionHandler extends Handler {
   
         if (!substitution.isMultipleMatch()) {
           // adding intermediate node to contain all multiple matches
-          MatchResultImpl sonresult;
-  
-          substitution.addSon(
-            sonresult = new MatchResultImpl(
-              substitution.getName(),
-              substitution.getMatchImage(),
-              substitution.getMatchRef(),
-              substitution.getStart(),
-              substitution.getEnd(),
-              target
-            )
+          MatchResultImpl sonresult = new MatchResultImpl(
+            substitution.getName(),
+            substitution.getMatchImage(),
+            substitution.getMatchRef(),
+            substitution.getStart(),
+            substitution.getEnd(),
+            target
           );
-  
+
           sonresult.setParent(substitution);
           substitution.setMatchRef(
             new SmartPsiPointer(match == null ? null : match)
           );
-          
+
           substitution.setMultipleMatch(true);
-        }
+
+          if (substitution.isScopeMatch()) {
+            substitution.setScopeMatch(false);
+            sonresult.setScopeMatch(true);
+            for(MatchResult r:substitution.getAllSons()) sonresult.addSon((MatchResultImpl)r);
+            substitution.clearMatches();
+          }
+
+          substitution.addSon( sonresult);
+        } 
   
         result.setParent(substitution);
         substitution.addSon( result );

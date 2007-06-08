@@ -1,14 +1,16 @@
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResultSink;
+
+import java.util.LinkedList;
 
 /**
  * Global context of matching process
  */
 public class MatchContext {
   private MatchResultSink sink;
-  private MatchResultImpl previousResult;
+  private LinkedList<MatchResultImpl> previousResults = new LinkedList<MatchResultImpl>();
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
@@ -31,11 +33,12 @@ public class MatchContext {
   }
 
   public MatchResultImpl getPreviousResult() {
-    return previousResult;
+    return previousResults.size() == 0 ? null:previousResults.getLast();
   }
 
   public void setPreviousResult(final MatchResultImpl previousResult) {
-    this.previousResult = previousResult;
+    if (previousResults.size() > 0) previousResults.removeLast();
+    previousResults.addLast(previousResult);
   }
 
   public MatchResultImpl getResult() {
@@ -44,13 +47,12 @@ public class MatchContext {
   }
 
   public void pushResult() {
-    previousResult = result;
+    previousResults.addLast(result);
     result = null;
   }
   
   public void popResult() {
-    result = previousResult;
-    previousResult = null;
+    result = previousResults.removeLast();
   }
   
   public void setResult(MatchResultImpl result) {
