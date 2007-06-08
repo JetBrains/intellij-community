@@ -23,7 +23,9 @@ public class FakeVirtualFile extends StubVirtualFile {
   }
 
   public String getPath() {
-    return myParent.getPath() + '/' + myName;
+    final String basePath = myParent.getPath();
+    if (basePath.endsWith("/")) return basePath + myName;
+    return basePath + '/' + myName;
   }
 
   @NotNull
