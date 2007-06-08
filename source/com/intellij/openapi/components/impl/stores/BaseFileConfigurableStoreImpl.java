@@ -63,7 +63,14 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
       final String rel = rootElement.getAttributeValue(RELATIVE_PATHS_OPTION);
       if (rel != null) mySavePathsRelative = Boolean.parseBoolean(rel);
-      myVersion = Integer.parseInt(rootElement.getAttributeValue(VERSION_OPTION));
+      final String v = rootElement.getAttributeValue(VERSION_OPTION);
+
+      if (v != null) {
+        myVersion = Integer.parseInt(v);
+      }
+      else {
+        myVersion = ProjectManagerImpl.CURRENT_FORMAT_VERSION;
+      }
     }
 
     @NotNull
