@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import com.intellij.util.StringBuilderSpinAllocator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,9 +92,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   public String getUrl() {
-    StringBuilder builder = new StringBuilder();
-    appendPathOnFileSystem(builder, true);
-    return builder.toString();
+    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      appendPathOnFileSystem(builder, true);
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
