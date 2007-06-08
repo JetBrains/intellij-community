@@ -33,9 +33,6 @@ public abstract class BuildParticipant {
   public void buildFinished(CompileContext context) throws Exception {
   }
 
-  public void runValidators(File output, CompileContext context) throws Exception {
-  }
-
   public abstract BuildRecipe getBuildInstructions(final CompileContext context);
 
   public abstract BuildConfiguration getBuildConfiguration();

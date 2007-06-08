@@ -26,7 +26,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 
 public class DummyCompileContext implements CompileContext {
-  private DummyCompileContext() {
+  protected DummyCompileContext() {
   }
 
   private static final DummyCompileContext OUR_INSTANCE = new DummyCompileContext();

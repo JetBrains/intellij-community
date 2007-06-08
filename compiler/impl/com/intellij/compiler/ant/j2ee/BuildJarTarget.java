@@ -79,6 +79,7 @@ public class BuildJarTarget extends Target {
           public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws RuntimeException {
             if (!instruction.isExternalDependencyInstruction()) return true;
             final String relPath = PathUtil.getCanonicalPath("/tmp/"+instruction.getOutputRelativePath()).substring(1);
+            tempDirUsed[0] = true;
             final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(tempDirProperty) + "/" + relPath, relPath, false);
             zipFileSetTags.add(zipFileSet);
             return true;

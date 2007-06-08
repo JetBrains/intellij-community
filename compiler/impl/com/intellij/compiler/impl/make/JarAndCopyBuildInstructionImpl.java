@@ -34,12 +34,10 @@ import java.util.jar.JarFile;
 public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl implements JarAndCopyBuildInstruction {
   private File myJarFile;
   private List<File> myTempJars = new ArrayList<File>(1);
-  @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
+  @NonNls private static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public JarAndCopyBuildInstructionImpl(Module module,
-                                        File directoryToJar,
-                                        String outputRelativePath, final FileFilter fileFilter) {
-    super(directoryToJar, false, module, outputRelativePath, fileFilter);
+  public JarAndCopyBuildInstructionImpl(Module module, File directoryToJar, String outputRelativePath) {
+    super(directoryToJar, false, module, outputRelativePath);
   }
 
   public void addFilesToExploded(CompileContext context,

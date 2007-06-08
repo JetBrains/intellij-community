@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.descriptors.ConfigFile;
@@ -48,8 +49,7 @@ public abstract class DeploymentUtil {
                                                   @NotNull Module sourceModule,
                                                   Module targetModule,
                                                   @NonNls String outputRelativePath,
-                                                  @NonNls String possibleBaseOuputPath,
-                                                  @Nullable FileFilter fileFilter);
+                                                  @NonNls String possibleBaseOuputPath);
 
   public abstract void addLibraryLink(@NotNull CompileContext context,
                                       @NotNull BuildRecipe items,
@@ -67,7 +67,7 @@ public abstract class DeploymentUtil {
                                               @NotNull File root,
                                               @NotNull Module module,
                                               String outputRelativePath,
-                                              @Nullable FileFilter fileFilter,
+                                              @Nullable VirtualFileFilter fileFilter,
                                               String possibleBaseOutputPath);
 
   public static void reportRecursiveCopying(CompileContext context, final String sourceDirPath, String targetDirPath,

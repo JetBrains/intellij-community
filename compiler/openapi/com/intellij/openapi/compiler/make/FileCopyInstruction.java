@@ -18,13 +18,16 @@
  */
 package com.intellij.openapi.compiler.make;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public interface FileCopyInstruction extends BuildInstruction {
   File getFile();
-  void setFile(@NotNull File file, boolean isDirectory);
 
   boolean isDirectory();
+
+  @Nullable
+  VirtualFileFilter getFileFilter();
 }

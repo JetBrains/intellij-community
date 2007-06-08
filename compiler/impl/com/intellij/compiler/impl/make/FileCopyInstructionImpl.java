@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -28,16 +29,28 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   private boolean myIsDirectory;
   // for a directory keep the subset of changed files that need to be copied
   private List<FileCopyInstructionImpl> myChangedSet;
-  private @Nullable final FileFilter myFileFilter;
+  private @Nullable final VirtualFileFilter myFileFilter;
+
+  protected FileCopyInstructionImpl(File source,
+                                 boolean isDirectory,
+                                 Module module,
+                                 String outputRelativePath) {
+    this(source, isDirectory, module, outputRelativePath, null);
+  }
 
   public FileCopyInstructionImpl(File source,
                                  boolean isDirectory,
                                  Module module,
                                  String outputRelativePath,
-                                 @Nullable final FileFilter fileFilter) {
+                                 @Nullable final VirtualFileFilter fileFilter) {
     super(outputRelativePath, module);
     myFileFilter = fileFilter;
     setFile(source, isDirectory);
+  }
+
+  @Nullable
+  public VirtualFileFilter getFileFilter() {
+    return myFileFilter;
   }
 
   public void addFilesToExploded(@NotNull CompileContext context,
@@ -187,7 +200,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
                                        final boolean isExplodedEnabled,
                                        final boolean jarEnabled,
                                        final VirtualFile jarFile) {
-    if (myFileFilter != null && !myFileFilter.accept(new File(virtualFile.getPath()))) return;
+    if (myFileFilter != null && !myFileFilter.accept(virtualFile)) return;
     if (virtualFile.isDirectory()) {
       VirtualFile[] children = virtualFile.getChildren();
       VirtualFile[] explodedChildren = fileInExplodedPath == null ? null : fileInExplodedPath.getChildren();

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -31,9 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -49,15 +48,14 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                          @NotNull final Module sourceModule,
                                          Module targetModule,
                                          final String outputRelativePath,
-                                         String possibleBaseOuputPath,
-                                         @Nullable FileFilter fileFilter) {
+                                         String possibleBaseOuputPath) {
     final File outputPath = getModuleOutputPath(sourceModule);
 
     String[] sourceRoots = getSourceRootUrlsInReadAction(sourceModule);
     boolean ok = true;
     if (outputPath != null && sourceRoots.length != 0) {
       ok = checkModuleOutputExists(outputPath, sourceModule, context);
-      boolean added = addItemsRecursively(items, outputPath, targetModule, outputRelativePath, fileFilter, possibleBaseOuputPath);
+      boolean added = addItemsRecursively(items, outputPath, targetModule, outputRelativePath, null, possibleBaseOuputPath);
       if (!added) {
         String additionalMessage = CompilerBundle.message("message.text.change.module.output.directory.or.module.exploded.directory",
                                                       ModuleUtil.getModuleNameInReadAction(sourceModule),
@@ -138,7 +136,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                                       PackagingMethod.JAR_AND_COPY_FILE),
                                    null, -1, -1);
               }
-              BuildInstruction instruction = new JarAndCopyBuildInstructionImpl(module, file, fileDestination, null);
+              BuildInstruction instruction = new JarAndCopyBuildInstructionImpl(module, file, fileDestination);
               items.addInstruction(instruction);
               ok = true;
             }
@@ -219,7 +217,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                            @NotNull File root,
                                            @NotNull Module module,
                                            String outputRelativePath,
-                                           @Nullable FileFilter fileFilter,
+                                           @Nullable VirtualFileFilter fileFilter,
                                            String possibleBaseOutputPath) {
     if (outputRelativePath == null) outputRelativePath = "";
     outputRelativePath = trimForwardSlashes(outputRelativePath);
@@ -293,26 +291,55 @@ public class DeploymentUtilImpl extends DeploymentUtil {
       return null;
     }
 
-    final StringBuffer classPath = new StringBuffer();
+    final List<String> classpathElements = getExternalDependenciesClasspath(buildRecipe);
+    final Manifest manifest = new Manifest();
+    setManifestAttributes(manifest.getMainAttributes(), classpathElements);
+    return manifest;
+  }
+
+  public static void setManifestAttributes(final Attributes mainAttributes, final @Nullable List<String> classpathElements) {
+    if (classpathElements != null && classpathElements.size() > 0) {
+      StringBuilder builder;
+      Set<String> existingPaths = new HashSet<String>();
+      String oldClassPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
+      if (oldClassPath != null) {
+        StringTokenizer tokenizer = new StringTokenizer(oldClassPath);
+        while (tokenizer.hasMoreTokens()) {
+          existingPaths.add(tokenizer.nextToken());
+        }
+        builder = new StringBuilder(oldClassPath);
+      }
+      else {
+        builder = new StringBuilder();
+      }
+
+      for (String path : classpathElements) {
+        if (!existingPaths.contains(path)) {
+          if (builder.length() > 0) {
+            builder.append(' ');
+          }
+          builder.append(path);
+        }
+      }
+      mainAttributes.put(Attributes.Name.CLASS_PATH, builder.toString());
+    }
+    ManifestBuilder.setGlobalAttributes(mainAttributes);
+  }
+
+  public static List<String> getExternalDependenciesClasspath(final BuildRecipe buildRecipe) {
+    final List<String> classpath = new ArrayList<String>();
 
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
       public boolean visitInstruction(BuildInstruction instruction) throws RuntimeException {
         final String outputRelativePath = instruction.getOutputRelativePath();
         if (instruction.isExternalDependencyInstruction()) {
-          if (classPath.length() != 0) classPath.append(' ');
           final String jarReference = PathUtil.getCanonicalPath("/tmp/" + outputRelativePath).substring(1);
-          classPath.append(trimForwardSlashes(jarReference));
+          classpath.add(trimForwardSlashes(jarReference));
         }
         return true;
       }
     }, false);
-    final Manifest manifest = new Manifest();
-    Attributes mainAttributes = manifest.getMainAttributes();
-    if (classPath.length() > 0) {
-      mainAttributes.put(Attributes.Name.CLASS_PATH, classPath.toString());
-    }
-    ManifestBuilder.setGlobalAttributes(mainAttributes);
-    return manifest;
+    return classpath;
   }
 
   public void addJavaModuleOutputs(@NotNull final Module module,
@@ -335,8 +362,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
           addJarJavaModuleOutput(instructions, childModule, relativePath, context);
         }
         else if (PackagingMethod.COPY_FILES.equals(packagingMethod)) {
-          addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), explodedPath,
-                                  null);
+          addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), explodedPath);
         }
         else if (PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST.equals(packagingMethod)) {
           moduleLink.setPackagingMethod(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST);
@@ -364,7 +390,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
       final File outputPath = getModuleOutputPath(module);
       checkModuleOutputExists(outputPath, module, context);
       if (outputPath != null) {
-        instructions.addInstruction(new JarAndCopyBuildInstructionImpl(module, outputPath, relativePath, null));
+        instructions.addInstruction(new JarAndCopyBuildInstructionImpl(module, outputPath, relativePath));
       }
     }
   }

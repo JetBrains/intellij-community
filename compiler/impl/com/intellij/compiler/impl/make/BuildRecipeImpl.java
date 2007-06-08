@@ -9,11 +9,11 @@ import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,10 +66,8 @@ public class BuildRecipeImpl implements BuildRecipe {
                                      boolean isDirectory,
                                      @NotNull Module module,
                                      String outputRelativePath,
-                                     @Nullable FileFilter fileFilter) {
-    if (fileFilter == null || fileFilter.accept(file)) {
-      addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, DeploymentUtil.trimForwardSlashes(outputRelativePath),fileFilter));
-    }
+                                     @Nullable VirtualFileFilter fileFilter) {
+    addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, DeploymentUtil.trimForwardSlashes(outputRelativePath),fileFilter));
   }
 
   public String toString() {

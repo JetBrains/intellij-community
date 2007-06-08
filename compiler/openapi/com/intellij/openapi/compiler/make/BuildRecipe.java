@@ -16,11 +16,11 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 
 public interface BuildRecipe {
   void addInstruction(BuildInstruction instruction);
@@ -33,5 +33,5 @@ public interface BuildRecipe {
                               boolean isDirectory,
                               @NotNull Module module,
                               String outputRelativePath,
-                              @Nullable FileFilter fileFilter);
+                              @Nullable VirtualFileFilter fileFilter);
 }
