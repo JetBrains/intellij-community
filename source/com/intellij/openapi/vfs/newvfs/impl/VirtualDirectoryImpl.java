@@ -240,4 +240,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            ? new THashMap<String, VirtualFile>()
            : new THashMap<String, VirtualFile>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
+
+  public void cleanupCachedChildren() {
+    // For tests only!!!
+    if (myChildren instanceof Map) {
+      myChildren = null;
+    }
+  }
 }

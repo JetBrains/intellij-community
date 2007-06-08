@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FSRecords implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 1;
+  private final static int VERSION = 2;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -207,7 +207,7 @@ public class FSRecords implements Disposable {
     try {
       final int next = myConnection.getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
 
-      if (true /*next == 0*/) {
+      if (next == 0) {
         final int filelength = (int)myConnection.getRecords().length();
         LOG.assertTrue(filelength % RECORD_SIZE == 0);
         int result = filelength / RECORD_SIZE;
@@ -282,50 +282,101 @@ public class FSRecords implements Disposable {
   }
 
   public int findRootRecord(String rootUrl) throws IOException {
-    final int root = myConnection.getNames().enumerate(rootUrl);
+    w.lock();
+    try {
+      final int root = myConnection.getNames().enumerate(rootUrl);
 
-    final DataInputStream input = readAttribute(1, CHILDREN_ATT);
-    int[] names = ArrayUtil.EMPTY_INT_ARRAY;
-    int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
+      final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+      int[] names = ArrayUtil.EMPTY_INT_ARRAY;
+      int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
-    if (input != null) {
+      if (input != null) {
+        try {
+          final int count = input.readInt();
+          names = new int[count];
+          ids = new int[count];
+          for (int i = 0; i < count; i++) {
+            final int name = input.readInt();
+            final int id = input.readInt();
+            if (name == root) {
+              return id;
+            }
+
+            names[i] = name;
+            ids[i] = id;
+          }
+        }
+        finally{
+          input.close();
+        }
+      }
+
+      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT);
+      int id;
       try {
-        final int count = input.readInt();
+        id = createRecord();
+        output.writeInt(names.length + 1);
+        for (int i = 0; i < names.length; i++) {
+          output.writeInt(names[i]);
+          output.writeInt(ids[i]);
+        }
+        output.writeInt(root);
+        output.writeInt(id);
+      }
+      finally {
+        output.close();
+      }
+
+      return id;
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  public void deleteRootRecord(int id) throws IOException {
+    w.lock();
+    try {
+      final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+      assert input != null;
+      int count;
+      int[] names;
+      int[] ids;
+      try {
+        count = input.readInt();
+
         names = new int[count];
         ids = new int[count];
         for (int i = 0; i < count; i++) {
-          final int name = input.readInt();
-          final int id = input.readInt();
-          if (name == root) {
-            return id;
-          }
-
-          names[i] = name;
-          ids[i] = id;
+          names[i] = input.readInt();
+          ids[i] = input.readInt();
         }
       }
-      finally{
+      finally {
         input.close();
       }
-    }
 
-    final DataOutputStream output = writeAttribute(1, CHILDREN_ATT);
-    int id;
-    try {
-      id = createRecord();
-      output.writeInt(names.length + 1);
-      for (int i = 0; i < names.length; i++) {
-        output.writeInt(names[i]);
-        output.writeInt(ids[i]);
+      final int index = ArrayUtil.find(ids, id);
+      assert index >= 0;
+
+      names = ArrayUtil.remove(names, index);
+      ids = ArrayUtil.remove(ids, index);
+
+      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT);
+      try {
+        output.writeInt(count - 1);
+        for (int i = 0; i < names.length; i++) {
+          output.writeInt(names[i]);
+          output.writeInt(ids[i]);
+        }
       }
-      output.writeInt(root);
-      output.writeInt(id);
+      finally {
+        output.close();
+      }
     }
     finally {
-      output.close();
+      w.unlock();
     }
-
-    return id;
   }
 
   public int[] list(int id) {

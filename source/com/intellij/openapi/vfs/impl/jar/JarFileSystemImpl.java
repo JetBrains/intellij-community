@@ -64,7 +64,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     r.lock();
     final JarHandler handler;
     try {
-      handler = myHandlers.get(path);
+      handler = myHandlers.remove(path);
     }
     finally {
       r.unlock();

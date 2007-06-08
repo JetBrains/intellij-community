@@ -477,7 +477,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private void applyEvent(final VFileEvent event) {
     /*System.out.println("Apply: " + event);*/
-    
+
     if (event instanceof VFileCreateEvent) {
       final VFileCreateEvent createEvent = (VFileCreateEvent)event;
       executeCreateChild(createEvent.getParent(), createEvent.getChildName());
@@ -553,6 +553,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       else {
         synchronized (LOCK) {
           myRoots.remove(file.getUrl());
+          try {
+            myRecords.deleteRootRecord(id);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
         }
       }
 

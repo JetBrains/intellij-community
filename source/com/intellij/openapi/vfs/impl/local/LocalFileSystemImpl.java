@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Processor;
 import com.intellij.util.ArrayUtil;
@@ -123,6 +124,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         refresh(false);
       }
     });
+
+    final VirtualFile[] roots = ManagingFS.getInstance().getRoots(this);
+    for (VirtualFile root : roots) {
+      if (root instanceof VirtualDirectoryImpl) {
+        final VirtualDirectoryImpl directory = (VirtualDirectoryImpl)root;
+        directory.cleanupCachedChildren();
+      }
+    }
 
     myRootsToWatch.clear();
     myDirtyFiles.clear();
