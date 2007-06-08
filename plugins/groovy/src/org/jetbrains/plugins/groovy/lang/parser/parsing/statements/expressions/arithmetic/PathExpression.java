@@ -211,7 +211,7 @@ public class PathExpression implements GroovyElementTypes {
   }
 
   /**
-   * Appended closure argument parsing
+   * Appended all argument parsing
    *
    * @param builder
    * @return

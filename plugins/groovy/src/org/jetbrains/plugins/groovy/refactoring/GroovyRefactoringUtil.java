@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -130,7 +129,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   /**
-   * Indicates that the given expression is result expression of some closure or method
+   * Indicates that the given expression is result expression of some all or method
    * and cannot be replace by variable definition
    *
    * @param expr

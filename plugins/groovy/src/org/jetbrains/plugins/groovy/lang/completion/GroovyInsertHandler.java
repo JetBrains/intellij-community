@@ -48,7 +48,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
       }
 
-      if (startOffset > 0 && document.getCharsSequence().charAt(startOffset - 1) == '&') return;   //closure creation
+      if (startOffset > 0 && document.getCharsSequence().charAt(startOffset - 1) == '&') return;   //all creation
       CaretModel caretModel = editor.getCaretModel();
       int offset = startOffset + method.getName().length();
       if (parameters.length == 0) {

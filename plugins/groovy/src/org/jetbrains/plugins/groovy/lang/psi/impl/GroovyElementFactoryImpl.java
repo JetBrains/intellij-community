@@ -112,7 +112,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
     ASTNode node = psiFile.getFirstChild().getNode();
     if (node.getElementType() != GroovyElementTypes.CLOSABLE_BLOCK)
-      throw new IncorrectOperationException("Invalid closure text");
+      throw new IncorrectOperationException("Invalid all text");
     return (GrClosableBlock) node.getPsi();
   }
 
@@ -126,7 +126,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), fileText);
     ASTNode node = psiFile.getFirstChild().getNode();
     if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION)
-      throw new IncorrectOperationException("Invalid closure text");
+      throw new IncorrectOperationException("Invalid all text");
     return ((GrMethod) node.getPsi()).getParameters()[0];
   }
 
