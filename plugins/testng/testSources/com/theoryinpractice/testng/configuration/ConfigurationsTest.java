@@ -4,9 +4,9 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.PsiLocation;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.PathManager;
@@ -24,6 +24,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.theoryinpractice.testng.model.TestType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -62,15 +63,10 @@ public class ConfigurationsTest {
   }
 
   @Test
-  public void testRename() {
+  public void testClassRename() {
     final Project project = myProjectFixture.getProject();
-    final PsiClass psiClass = PsiManager.getInstance(project).findClass("Testt");
-    assert psiClass != null;
-    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-    final RunnerAndConfigurationSettings settings =
-      manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
-    manager.addConfiguration((RunnerAndConfigurationSettingsImpl)settings, false);
-    final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
+    final PsiClass psiClass = findTestClass(project);
+    final TestNGConfiguration configuration = createConfiguration(project);
     configuration.setClassConfiguration(psiClass);
     final String newName = "Testt1";
     final RenameRefactoring renameClass = RefactoringFactory.getInstance(project).createRename(psiClass, newName);
@@ -82,6 +78,30 @@ public class ConfigurationsTest {
       }
     }.execute();
     Assert.assertEquals(newName, configuration.getPersistantData().getMainClassName());
+
+    final PsiMethod notATestMethod = findNotATestMethod(psiClass);
+
+    final RenameRefactoring renameNotATestMethod = RefactoringFactory.getInstance(project).createRename(notATestMethod, "aaaa");
+    renameNotATestMethod.setSearchInComments(false);
+    renameNotATestMethod.setSearchInNonJavaFiles(false);
+    new WriteCommandAction(project, null) {
+      protected void run(final Result result) throws Throwable {
+        renameNotATestMethod.run();
+      }
+    }.execute();
+    Assert.assertEquals(configuration.getPersistantData().getMainClassName(), newName);
+    Assert.assertEquals(configuration.getPersistantData().getMethodName(), "");
+    Assert.assertEquals(configuration.getPersistantData().TEST_OBJECT, TestType.CLASS.getType());
+  }
+
+
+  @Test
+  public void testRenameMethod() {
+    final Project project = myProjectFixture.getProject();
+    final PsiClass psiClass = findTestClass(project);
+    final String className = psiClass.getName();
+    final TestNGConfiguration configuration = createConfiguration(project);
+
     final PsiMethod[] psiMethods = psiClass.findMethodsByName("test", false);
     assert psiMethods.length == 1;
     final PsiMethod method = psiMethods[0];
@@ -95,22 +115,40 @@ public class ConfigurationsTest {
         renameMethod.run();
       }
     }.execute();
-    Assert.assertEquals(newName, configuration.getPersistantData().getMainClassName());
+
+    Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
 
-    final PsiMethod[] notATestMethods = psiClass.findMethodsByName("notATest", false);
-    assert notATestMethods.length == 1;
-    final PsiMethod notATestMethod = notATestMethods[0];
-
-    final RenameRefactoring renameNotATestMethod = RefactoringFactory.getInstance(project).createRename(notATestMethod, "aaaa");
-    renameNotATestMethod.setSearchInComments(false);
-    renameNotATestMethod.setSearchInNonJavaFiles(false);
+    final PsiMethod notATestMethod = findNotATestMethod(psiClass);
+    final RenameRefactoring renameNotATestMethod1 = RefactoringFactory.getInstance(project).createRename(notATestMethod, "bbbbb");
+    renameNotATestMethod1.setSearchInComments(false);
+    renameNotATestMethod1.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project, null) {
       protected void run(final Result result) throws Throwable {
-        renameNotATestMethod.run();
+        renameNotATestMethod1.run();
       }
     }.execute();
-    Assert.assertEquals(newName, configuration.getPersistantData().getMainClassName());
+    Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
+  }
+
+  private PsiClass findTestClass(final Project project) {
+    final PsiClass psiClass = PsiManager.getInstance(project).findClass("Testt");
+    assert psiClass != null;
+    return psiClass;
+  }
+
+  private PsiMethod findNotATestMethod(final PsiClass psiClass) {
+    final PsiMethod[] notATestMethods = psiClass.findMethodsByName("notATest", false);
+    assert notATestMethods.length == 1;
+    return notATestMethods[0];
+  }
+
+  private TestNGConfiguration createConfiguration(final Project project) {
+    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+    final RunnerAndConfigurationSettings settings =
+      manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    manager.addConfiguration((RunnerAndConfigurationSettingsImpl)settings, false);
+    return (TestNGConfiguration)settings.getConfiguration();
   }
 }
