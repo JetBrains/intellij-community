@@ -213,6 +213,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.setPreferredSize(new Dimension(400, 400));
 
 
+    panel.add(new JLabel("<html><center><small><font color=gray>Drop files to the tree to quickly locate them there</font></small></center></html>", JLabel.CENTER), BorderLayout.SOUTH);
+
     return panel;
   }
 
@@ -289,6 +291,24 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         updatePathFromTree(selection, false);
       }
     }, myDisposable);
+
+    new FileDrop(tree, new FileDrop.Target() {
+      public FileChooserDescriptor getDescriptor() {
+        return myChooserDescriptor;
+      }
+
+      public boolean isHiddenShown() {
+        return myFileSystemTree.areHiddensShown();
+      }
+
+      public void dropFiles(final List<VirtualFile> files) {
+        if (!myChooserDescriptor.isChooseMultiple() && files.size() > 0) {
+          selectInTree(new VirtualFile[] {files.get(0)}, true);
+        } else {
+          selectInTree(files.toArray(new VirtualFile[files.size()]), true);
+        }
+      }
+    });
 
     return tree;
   }
@@ -524,22 +544,33 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private void selectInTree(final VirtualFile vFile, String fromText) {
     if (vFile != null && vFile.isValid()) {
-      if (fromText.equalsIgnoreCase(myPathTextField.getTextFieldText())) {
-        myTreeIsUpdating = true;
-        if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
-          myFileSystemTree.select(vFile, new Runnable() {
-            public void run() {
-              myTreeIsUpdating = false;
-              setErrorText(null);
-            }
-          });
-        } else {
-          myTreeIsUpdating = false;
-          setErrorText(null);
-        }
+      if (fromText == null || fromText.equalsIgnoreCase(myPathTextField.getTextFieldText())) {
+        selectInTree(new VirtualFile[] {vFile}, false);
       }
     } else {
       reportFileNotFound();
+    }
+  }
+
+  private void selectInTree(final VirtualFile[] vFile, final boolean requestFocus) {
+    myTreeIsUpdating = true;
+    if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
+      myFileSystemTree.select(vFile, new Runnable() {
+        public void run() {
+          myTreeIsUpdating = false;
+          setErrorText(null);
+          if (requestFocus) {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                myFileSystemTree.getTree().requestFocus();
+              }
+            });
+          }
+        }
+      });
+    } else {
+      myTreeIsUpdating = false;
+      setErrorText(null);
     }
   }
 

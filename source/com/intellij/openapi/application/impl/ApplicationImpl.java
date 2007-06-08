@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -164,6 +165,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (SystemInfo.isMac || myTestModeFlag) {
       registerShutdownHook();
+    }
+
+    if (!isUnitTestMode) {
+      Disposer.register(this, new Disposable() {
+        public void dispose() {
+        }
+      }, "ui");
     }
   }
 

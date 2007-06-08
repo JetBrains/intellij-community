@@ -389,7 +389,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   private void expand(final TreePath path) {
-    if (myTree.isExpanded(path)) {
+    if (path == null) return;
+    boolean isLeaf = myTree.getModel().isLeaf(path.getLastPathComponent());
+    final TreePath parent = path.getParentPath();
+    if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent))) {
       final Object last = path.getLastPathComponent();
       if (last instanceof DefaultMutableTreeNode) {
         processNodeActionsIfReady((DefaultMutableTreeNode)last);
@@ -843,13 +846,41 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return myRootNodeWasInitialized;
   }
 
+  public void select(final Object[] elements, @Nullable final Runnable onDone) {
+    final int[] originalRows = myTree.getSelectionRows();
+    myTree.clearSelection();
+    addNext(elements, 0, onDone, originalRows);
+  }
+
+  private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows) {
+    if (i >= elements.length) {
+      if (myTree.isSelectionEmpty()) {
+        myTree.setSelectionRows(originalRows);
+      }
+      if (onDone != null) {
+        onDone.run();
+        return;
+      }
+    } else {
+      _select(elements[i], new Runnable() {
+        public void run() {
+          addNext(elements, i + 1, onDone, originalRows);
+        }
+      }, true);
+    }
+  }
+
   public void select(final Object element, @Nullable final Runnable onDone) {
+    _select(element, onDone, false);
+  }
+
+  private void _select(final Object element, final Runnable onDone, final boolean addToSelection) {
     _expand(element, new Runnable() {
       public void run() {
         final DefaultMutableTreeNode toSelect = getNodeForElement(element);
         if (toSelect == null) return;
         final int row = myTree.getRowForPath(new TreePath(toSelect.getPath()));
-        TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1);
+        TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection);
         if (onDone != null) {
           onDone.run();
         }

@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.update.ComponentDisposable;
 
@@ -35,8 +36,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(JTextField field, ActionListener browseActionListener) {
     super(field, browseActionListener);
-    FileChooserDescriptor local = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), local, true, new ComponentDisposable(getChildComponent()));
+    installFileCompletion(null, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
@@ -45,7 +45,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void addBrowseFolderListener(String title, String description, Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent()));
+    installFileCompletion(project, fileChooserDescriptor);
+  }
+
+  private void installFileCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent(), project));
   }
 
   public JTextField getTextField() {

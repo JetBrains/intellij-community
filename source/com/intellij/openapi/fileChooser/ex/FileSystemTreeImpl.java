@@ -226,7 +226,17 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   public void select(VirtualFile file, @Nullable final Runnable onDone) {
-    myTreeBuilder.select(getFileElementFor(file), onDone);
+    select(new VirtualFile[] {file}, onDone);
+  }
+
+  public void select(VirtualFile[] file, @Nullable final Runnable onDone) {
+    Object[] elements = new Object[file.length];
+    for (int i = 0; i < file.length; i++) {
+      VirtualFile eachFile = file[i];
+      elements[i] = getFileElementFor(eachFile);
+    }
+
+    myTreeBuilder.select(elements, onDone);
   }
 
   public void expand(final VirtualFile file, @Nullable final Runnable onDone) {

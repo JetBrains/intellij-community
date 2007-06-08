@@ -406,6 +406,10 @@ public final class TreeUtil {
   }
 
   public static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
+    showAndSelect(tree, top, bottom, row, previous, false);
+  }
+
+  public static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
     final TreePath path = tree.getPathForRow(row);
     if (path == null) return;
 
@@ -453,7 +457,11 @@ public final class TreeUtil {
 
 
     if (!tree.isRowSelected(row)) {
-      tree.setSelectionRow(row);
+      if (addToSelection) {
+        tree.getSelectionModel().addSelectionPath(tree.getPathForRow(row));        
+      } else {
+        tree.setSelectionRow(row);
+      }
     }
 
     if (bounds != null) {

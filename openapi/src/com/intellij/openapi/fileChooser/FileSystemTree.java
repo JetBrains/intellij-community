@@ -37,6 +37,8 @@ public interface FileSystemTree extends Disposable {
 
   void select(VirtualFile file, @Nullable Runnable onDone);
 
+  void select(VirtualFile[] files, @Nullable Runnable onDone);
+
 
   /**
    * @deprecated
