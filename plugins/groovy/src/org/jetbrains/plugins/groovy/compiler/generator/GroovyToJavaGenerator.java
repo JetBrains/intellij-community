@@ -160,10 +160,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     for (VirtualFile groovyFile : files) {
       //generate java classes form groovy source files
-//      VirtualFile itemFile = VirtualFileManager.getInstance().findFileByUrl(groovyFile.getUrl());
-//      assert itemFile != null;
-
-//      List<String> generatedJavaFilesRelPaths = generateItems(itemFile, outputRootDirectory);
       List<String> generatedJavaFilesRelPaths = generateItems(groovyFile, outputRootDirectory);
       for (String relPath : generatedJavaFilesRelPaths) {
         GenerationItem generationItem = myPathsToItemsMap.get(relPath);
@@ -361,20 +357,19 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
 
     text.append("{");
-    text.append("\n");
 
     boolean wasRunMethodPresent = false;
 
     Map<String, String> gettersNames = new HashMap<String, String>();
     Map<String, String> settersNames = new HashMap<String, String>();
 
-    for (GrTopStatement statement : statements) {
+    for (GrStatement statement : statements) {
       if (statement instanceof GrMethod) {
         final GrMethod method = (GrMethod) statement;
         if (method.isConstructor()) {
           writeConstructor(text, method);
-          text.append("\n");
         }
+
         writeMethod(text, method, isInteraface);
 
         getDefinedGetters(gettersNames, method);
@@ -385,11 +380,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       if (statement instanceof GrVariableDeclaration) {
         writeVariableDeclarations(text, (GrVariableDeclaration) statement);
       }
-
-      text.append("\n");
     }
 
-    for (GrTopStatement statement : statements) {
+    for (GrStatement statement : statements) {
       if (statement instanceof GrVariableDeclaration) {
         writeGetterAndSetter(text, (GrVariableDeclaration) statement, gettersNames, settersNames);
       }
@@ -399,7 +392,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       writeRunMethod(text);
     }
 
-    text.append("\n}");
+    text.append("}");
   }
 
   private Map<String, String> getDefinedGetters(Map<String, String> gettersNames, GrMethod method) {
@@ -451,11 +444,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if ("run".equals(method.getName())) {
       PsiType returnType = method.getReturnType();
 
-      if (returnType != null && "java.lang.Object".equals(computeTypeText(returnType))) {
-        runMethodPresent = true;
-      } else {
-        runMethodPresent = false;
-      }
+      runMethodPresent = returnType != null && "java.lang.Object".equals(computeTypeText(returnType));
     }
     return runMethodPresent;
   }
@@ -465,6 +454,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("package ");
       text.append(packageDefinition.getPackageName());
       text.append(";");
+      text.append("\n");
       text.append("\n");
     }
   }
@@ -498,6 +488,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         continue;
       }
 
+      text.append("\n");
+      text.append("  ");
       writeMethodModifiers(text, list, JAVA_MODIFIERS);
       text.append(type);
       text.append(" ");
@@ -511,12 +503,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       if (returnValue == null) returnValue = "null";
 
-      text.append("return ");
+      text.append("    return ");
       text.append(returnValue);
       text.append(";");
-      text.append("\n}");
+      text.append("\n  }");
       text.append("\n");
     }
+
+//    if (wasGetter) text.append("\n");
   }
 
   private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> settersNames) {
@@ -543,6 +537,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         }
       }
 
+      text.append("\n");
+      text.append("  ");
       writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
       text.append("void ");
@@ -555,18 +551,18 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(")");
       text.append(" ");
       text.append("{\n");
-      text.append("return;");
-      text.append("\n}");
-
-      text.append(";");
+      text.append("    return;");
+      text.append("\n  }");
       text.append("\n");
     }
+
+//    if (wasSetter) text.append("\n");
   }
 
   private void writeRunMethod(StringBuffer text) {
-    text.append("  public java.lang.Object run() {\n" +
+    text.append("\n  public java.lang.Object run() {\n" +
         "    return null;\n" +
-        "  }");
+        "  }\n");
   }
 
   private void writeConstructor(StringBuffer text, GrMethod constructor) {
@@ -575,6 +571,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     writeMethodModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
 
     /************* name **********/
+    text.append("\n");
     //append constructor name
     text.append(constructor.getName());
 
@@ -636,6 +633,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(";");
     }
     text.append("\n}");
+    text.append("\n");
   }
 
   private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
@@ -656,6 +654,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     while (i < grVariables.length) {
       variable = grVariables[i];
 
+      text.append("\n");
+      text.append("  ");
       writeVariableDefinitionModifiers(text, modifierList, JAVA_MODIFIERS);
 
       //type
@@ -667,10 +667,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(" = ");
 
       text.append(initValueToText);
-      text.append(";\n");
+      text.append(";");
+      text.append("\n");
       i++;
     }
-
   }
 
   private void writeMethod(StringBuffer text, GrMethod method, boolean isIntefraceMethod) {
@@ -680,6 +680,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     PsiModifierList modifierList = method.getModifierList();
 
+    text.append("\n");
     text.append("  ");
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
@@ -731,6 +732,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     } else {
       text.append(";");
     }
+    text.append("\n");
   }
 
   private boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {

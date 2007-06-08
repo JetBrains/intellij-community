@@ -4,7 +4,6 @@ class D {
 }
 -----
 package a.b;
-public class D extends groovy.lang.GroovyObjectSupport {
 
-}
+public class D extends groovy.lang.GroovyObjectSupport {}
 ---

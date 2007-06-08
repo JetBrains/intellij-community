@@ -9,7 +9,5 @@ public class toGenerate1 extends groovy.lang.Script {
   }
 }
 ---
-public class s extends groovy.lang.GroovyObjectSupport {
-
-}
+public class s extends groovy.lang.GroovyObjectSupport {}
 ---

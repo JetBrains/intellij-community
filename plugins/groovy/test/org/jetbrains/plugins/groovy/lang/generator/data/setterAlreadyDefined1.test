@@ -4,14 +4,14 @@ class D {
 }
 -----
 public class D extends groovy.lang.GroovyObjectSupport {
-private java.lang.Object DDD = null;
+  private java.lang.Object DDD = null;
 
-public java.lang.Object getDDD() {
-return null;
-}
-public void setDDD(java.lang.Object newDDD) {
-return;
-};
+  public java.lang.Object getDDD() {
+    return null;
+  }
 
+  public void setDDD(java.lang.Object newDDD) {
+    return;
+  }
 }
 ---

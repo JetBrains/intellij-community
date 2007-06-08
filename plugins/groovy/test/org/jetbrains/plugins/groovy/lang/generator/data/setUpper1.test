@@ -2,7 +2,5 @@ class F {
   setUp () {}
 }
 -----
-public class F extends groovy.lang.GroovyObjectSupport {
-
-}
+public class F extends groovy.lang.GroovyObjectSupport {}
 ---

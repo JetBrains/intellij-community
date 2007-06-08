@@ -7,28 +7,32 @@ class Foo {
 }
 -----
 public class Foo extends groovy.lang.GroovyObjectSupport {
-private int[] integers = null;
+  private int[] integers = null;
 
-private String[] strings = null;
+  private String[] strings = null;
 
   public int[] foo() {
     return null;
   }
+
   public Object[] getObj() {
     return null;
   }
-public int[] getIntegers() {
-return null;
-}
-public void setIntegers(int[] newIntegers) {
-return;
-};
-public String[] getStrings() {
-return null;
-}
-public void setStrings(String[] newStrings) {
-return;
-};
 
+  public int[] getIntegers() {
+    return null;
+  }
+
+  public void setIntegers(int[] newIntegers) {
+    return;
+  }
+
+  public String[] getStrings() {
+    return null;
+  }
+
+  public void setStrings(String[] newStrings) {
+    return;
+  }
 }
 ---
