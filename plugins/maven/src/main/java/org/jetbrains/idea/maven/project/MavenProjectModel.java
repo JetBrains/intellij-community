@@ -174,8 +174,8 @@ public class MavenProjectModel {
 
   public class Node {
 
-    @NotNull final private VirtualFile pomFile;
-    @NotNull private MavenProject mavenProject;
+    /*@NotNull */final private VirtualFile pomFile;
+    /*@NotNull */private MavenProject mavenProject;
     private Module linkedModule;
 
     private boolean included = true;
