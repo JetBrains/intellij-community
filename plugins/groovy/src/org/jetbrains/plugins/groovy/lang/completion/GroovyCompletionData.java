@@ -16,11 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 
-import com.intellij.codeInsight.completion.CompletionData;
-import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.completion.WordCompletionData;
-import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.TailType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -41,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsF
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Set;
 
@@ -149,6 +148,16 @@ public class GroovyCompletionData extends CompletionData {
     };
     
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandler());
+
+    DefaultCharFilter.registerFilter(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new CharFilter() {
+      public int accept(char c, String prefix) {
+        if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
+        else if (c == '\n' || c == '\t') {
+          return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
+        }
+        return CharFilter.HIDE_LOOKUP;
+      }
+    });
   }
 
   public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position) {
