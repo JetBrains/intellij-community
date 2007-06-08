@@ -157,7 +157,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     }
   }
 
-  private Editor openTextEditor(boolean focus) {
+  public Editor openTextEditor(boolean focus) {
     return FileEditorManager.getInstance(getProject()).openTextEditor(getDescriptor(), focus);
   }
 

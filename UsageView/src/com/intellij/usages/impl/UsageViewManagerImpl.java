@@ -22,9 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -331,14 +328,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
     UsageInfo2UsageAdapter usageInfo = (UsageInfo2UsageAdapter)usage;
 
-    FileEditorLocation editorLocation = usage.getLocation();
-    FileEditor fileEditor = editorLocation.getEditor();
-    if (fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
-      rangeBlinker.resetMarkers(usageInfo.getRangeMarkers());
-      rangeBlinker.startBlinking();
-    }
+    Editor editor = usageInfo.openTextEditor(true);
+    if (editor == null) return;
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
+    rangeBlinker.resetMarkers(usageInfo.getRangeMarkers());
+    rangeBlinker.startBlinking();
   }
 }
