@@ -54,8 +54,8 @@ public class GroovyStmtsSurroundDescriptor extends GroovySurroundDescriptor {
   @NotNull
   public Surrounder[] getSurrounders() {
     List<Surrounder> surroundersList = new ArrayList<Surrounder>();
-    surroundersList.addAll(Arrays.asList(stmtsSurrounders));
     surroundersList.addAll(Arrays.asList(exprSurrounders));
+    surroundersList.addAll(Arrays.asList(stmtsSurrounders));
     return surroundersList.toArray(new Surrounder[0]);
   }
 }
