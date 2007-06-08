@@ -173,26 +173,11 @@ public abstract class GroovyRefactoringUtil {
     return operand;
   }
 
-  public static boolean declarationCanConflictWithExpr(GrVariable variable, GrExpression expr){
-    PsiElement varParent = variable;
-    PsiElement exprParent = expr;
-    while (!(varParent instanceof GrCodeBlock ||
-        isLoopOrForkStatement(varParent) ||
-        varParent instanceof GroovyFile)) {
-      varParent = varParent.getParent();
-    }
-    while (!(exprParent instanceof GrCodeBlock ||
-        isLoopOrForkStatement(exprParent) ||
-        exprParent instanceof GroovyFile)) {
-      exprParent = exprParent.getParent();
-    }
-    assert varParent != null && exprParent != null;
-
-    if (varParent instanceof GroovyFile &&
-        !(exprParent instanceof GroovyFile)) {
-      return exprParent.getTextOffset() >= varParent.getTextOffset();
-    }
-
-    return varParent.getTextRange().intersects(exprParent.getTextRange());
+  public static boolean isAppropriateContainerForIntroduceVariable(PsiElement tempContainer) {
+    return tempContainer instanceof GrOpenBlock ||
+        tempContainer instanceof GrClosableBlock ||
+        tempContainer instanceof GroovyFile ||
+        tempContainer instanceof GrCaseBlock ||
+        isLoopOrForkStatement(tempContainer);
   }
 }

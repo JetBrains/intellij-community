@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -105,7 +104,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       return tempContainerNotFound(project);
     }
     final GroovyPsiElement tempContainer = ((GroovyPsiElement) eclosingContainer);
-    if (!isAppropriateContainer(tempContainer)) {
+    if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(tempContainer)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
       showErrorMessage(message, project);
       return false;
@@ -115,7 +114,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Find occurences
     final PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     // Getting settings
-    Validator validator = new GroovyVariableValidator(this, project, selectedExpr, tempContainer);
+    Validator validator = new GroovyVariableValidator(this, project, selectedExpr, occurences, tempContainer);
     GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurences, false, validator);
 
     if (!settings.isOK()) {
@@ -321,7 +320,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       realContainer = tempContainer;
     }
 
-    assert isAppropriateContainer(realContainer);
+    assert GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer);
 
     if (!GroovyRefactoringUtil.isLoopOrForkStatement(realContainer)) {
       if (realContainer instanceof GrCodeBlock) {
@@ -347,8 +346,6 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
         replaceExpressionOccurencesInStatement(tempStatement, selectedExpr, refId, replaceAllOccurences);
         newBody = factory.createOpenBlockFromStatements(varDecl, tempStatement);
       }
-
-      assert newBody.getStatements().length > 1;
 
       GrCodeBlock tempBlock = newBody;
       if (realContainer instanceof GrLoopStatement) {
@@ -385,7 +382,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     }
   }
 
-  private void sortOccurences(PsiElement[] occurences) {
+  void sortOccurences(PsiElement[] occurences) {
     Arrays.sort(occurences, new Comparator<PsiElement>() {
       public int compare(PsiElement elem1, PsiElement elem2) {
         if (elem1.getTextOffset() < elem2.getTextOffset()) {
@@ -443,14 +440,6 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   protected abstract void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences);
 
   protected abstract boolean reportConflicts(final ArrayList<String> conflicts, final Project project);
-
-  private static boolean isAppropriateContainer(PsiElement tempContainer) {
-    return tempContainer instanceof GrOpenBlock ||
-        tempContainer instanceof GrClosableBlock ||
-        tempContainer instanceof GroovyFile ||
-        tempContainer instanceof GrCaseBlock ||
-        GroovyRefactoringUtil.isLoopOrForkStatement(tempContainer);
-  }
 
   private static void trimSpaces(Editor editor, PsiFile file) {
     int start = editor.getSelectionModel().getSelectionStart();
