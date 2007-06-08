@@ -81,12 +81,13 @@
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"/>
 
+   <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
 
-    <javac srcdir="."
+    <javac2 srcdir="."
            destdir="${production.dest.groovy}">
       <classpath refid="base.path"/>
       <classpath refid="groovy.path"/>
-    </javac>
+    </javac2>
   </target>
 
   <target name="build.project" depends="clear.all, make.project" description="builds project"/>
