@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshingSynchronously() throws Exception {
@@ -20,21 +21,39 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     doTestRefreshing(true);
   }
 
+  @Override
+  protected void runBareRunnable(Runnable r) throws Throwable {
+    if (getName().equals("testRefreshingAsynchronously")) {
+      // this methods waits for another thread to finish, that leds
+      // to deadlock in swing-thread. Therefore we have to run this test
+      // outside of swing-thread
+      r.run();
+    }
+    else {
+      super.runBareRunnable(r);
+    }
+  }
+
   private void doTestRefreshing(boolean async) throws Exception {
-    final String path1 = createFileExternally("f1.java");
-    final String path2 = createFileExternally("f2.java");
+    String path1 = createFileExternally("f1.java");
+    String path2 = createFileExternally("f2.java");
 
     assertFalse(hasVcsEntry(path1));
     assertFalse(hasVcsEntry(path2));
 
+    final Semaphore s = new Semaphore(1);
+    s.acquire();
     refreshVFS(async, new Runnable() {
       public void run() {
-        assertTrue(hasVcsEntry(path1));
-        assertTrue(hasVcsEntry(path2));
-
-        assertEquals(2, getVcsRevisionsFor(root).size());
+        s.release();
       }
     });
+    s.acquire();
+
+    assertTrue(hasVcsEntry(path1));
+    assertTrue(hasVcsEntry(path2));
+
+    assertEquals(2, getVcsRevisionsFor(root).size());
   }
 
   public void testRefreshDuringCommand() {
