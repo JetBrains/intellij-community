@@ -48,18 +48,18 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
 
   public void testCopyFileToParent() throws Exception {
     doTest(true, true, false, start()
-      .copy("a.jsp", "../a.jsp")
+      .copy("a.jar", "../a.jar")
       .copy("b.jsp", "b.jsp"));
   }
 
   public void testCopyFileToParentExternal() throws Exception {
     doTest(new MockBuildConfiguration(true, true, true, "/out/exploded", "/out2/my.jar"), start()
-      .copy("a.jsp", "../a.jsp"));
+      .copy("a.jar", "../a.jar"));
   }
 
   public void testJarFileToParent() throws Exception {
     doTest(true, true, false, start()
-      .jar("dir", "../a.jsp", "a.jsp")
+      .jar("dir", "../a.jar", "a.jsp")
       .copy("b.jsp", "b.jsp"));
   }
 
@@ -165,11 +165,18 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
 
     for (Pair<JarInfo, String> pair : jarContent) {
       builder.append("\n");
-      builder.append("jar#").append(jar2Num.get(pair.getFirst())).append("\n");
+      JarInfo jarInfo = pair.getFirst();
+      builder.append("jar#").append(jar2Num.get(jarInfo));
+      List<String> classpath = jarInfo.getClasspath();
+      if (classpath != null && !classpath.isEmpty()) {
+        builder.append(", classpath=").append(classpath);
+      }
+      builder.append("\n");
+
       builder.append(pair.getSecond()).append("->").append("\n");
 
       List<String> to = new ArrayList<String>();
-      for (DestinationInfo destinationInfo : pair.getFirst().getAllDestinations()) {
+      for (DestinationInfo destinationInfo : jarInfo.getAllDestinations()) {
         to.add(printDestination(jar2Num, destinationInfo, true));
       }
       Collections.sort(to);

@@ -8,7 +8,7 @@ import com.intellij.compiler.impl.make.newImpl.JarInfo;
 import com.intellij.compiler.impl.make.newImpl.JarsBuilder;
 import com.intellij.compiler.impl.make.newImpl.NewProcessingItem;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 
 import java.io.ByteArrayOutputStream;
@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
 /**
@@ -69,6 +70,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
     fillAllJars(processingItems, hashSet);
     final MyJarsBuilder builder = new MyJarsBuilder(hashSet);
     builder.buildJars(new HashSet<String>());
+    assertTrue(builder.myCreatedTempFiles.toString(), builder.myCreatedTempFiles.isEmpty());
     String expected = loadText(getExpectedFile(getTestName(true)));
     assertEquals(expected, builder.getOutput());
   }
@@ -81,25 +83,43 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
   private static class MyJarsBuilder extends JarsBuilder {
     private int myTempFileCount = 0;
     private List<String> myOutput = new ArrayList<String>();
+    private Map<String, String> mySources = new HashMap<String, String>();
+    private Set<String> myCreatedTempFiles = new HashSet<String>();
     private String myCurrentJar;
 
     public MyJarsBuilder(final Set<JarInfo> jarsToBuild) {
-      super(jarsToBuild, null, DummyCompileContext.getInstance());
+      super(jarsToBuild, null, new MyDummyCompileContext());
+    }
+
+    protected void renameFile(final File fromFile, final File toFile, final Set<String> writtenPaths) throws IOException {
+      copyFile(fromFile, toFile, writtenPaths);
+      mySources.put(toFile.getPath(), fromFile.getPath());
+      deleteFile(fromFile);
     }
 
     protected void copyFile(final File fromFile, final File toFile, final Set<String> writtenPaths) throws IOException {
-      myOutput.add(fromFile.getPath() + " -> " + toFile.getPath());
+      String fromPath = fromFile.getPath();
+      if (mySources.containsKey(fromPath)) {
+        fromPath = mySources.get(fromPath);
+      }
+      myOutput.add(fromPath + " -> " + toFile.getPath());
     }
 
-    protected JarOutputStream createJarOutputStream(final File jarFile) throws IOException {
+    protected JarOutputStream createJarOutputStream(final File jarFile, final Manifest manifest) throws IOException {
       myCurrentJar = jarFile.getPath();
       final JarOutputStream outputStream = new JarOutputStream(new ByteArrayOutputStream());
       outputStream.putNextEntry(new ZipEntry("dummy"));
       return outputStream;
     }
 
+    protected void deleteFile(final File file) {
+      myCreatedTempFiles.remove(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+
     protected File createTempFile() throws IOException {
-      return new File("/temp/file" + myTempFileCount++ + ".jar");
+      String path = "/temp/file" + myTempFileCount++ + ".jar";
+      myCreatedTempFiles.add(path);
+      return new File(path);
     }
 
     protected void addFileToJar(final JarOutputStream jarOutputStream, final File file, final String relativePath,

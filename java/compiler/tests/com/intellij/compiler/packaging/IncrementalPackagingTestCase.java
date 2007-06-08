@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.compiler.impl.make.BuildRecipeImpl;
 import com.intellij.compiler.impl.make.FileCopyInstructionImpl;
 import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
@@ -19,6 +20,7 @@ import com.intellij.compiler.impl.make.JavaeeModuleBuildInstructionImpl;
 import com.intellij.compiler.impl.make.newImpl.*;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.mock.MockProgressIndicator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,14 +47,14 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
 
   protected NewProcessingItem[] buildItems(final BuildRecipe buildRecipe, final MockBuildConfiguration mockBuildConfiguration) {
     final MockBuildParticipant participant = new MockBuildParticipant(mockBuildConfiguration, buildRecipe);
-    final ProcessingItemsBuilderContext context = new ProcessingItemsBuilderContext();
-    final DummyCompileContext compileContext = DummyCompileContext.getInstance();
-    new ProcessingItemsBuilder(participant, compileContext, context).build();
+    final DummyCompileContext compileContext = new MyDummyCompileContext();
+    final ProcessingItemsBuilderContext context = new ProcessingItemsBuilderContext(compileContext);
+    new ProcessingItemsBuilder(participant, context).build();
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
       public boolean visitJ2EEModuleBuildInstruction(final JavaeeModuleBuildInstruction instruction) throws Exception {
         final BuildParticipant buildParticipant = new MockBuildParticipant(instruction.getBuildProperties(),
                                                                            instruction.getChildInstructions(compileContext));
-        new ProcessingItemsBuilder(buildParticipant, compileContext, context).build();
+        new ProcessingItemsBuilder(buildParticipant, context).build();
         return true;
       }
     }, false);
@@ -185,7 +187,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
       for (String file : files) {
         LocalFileSystem.getInstance().findFileByPath(path + "/" + file);
       }
-      return add(new JarAndCopyBuildInstructionImpl(null, new File(path), outputRelativePath, null));
+      return add(new JarAndCopyBuildInstructionImpl(null, new File(path), outputRelativePath));
     }
 
     protected ProcessingItemsBuilderTest.BuildRecipeInfo add(final BuildInstruction instruction) {
@@ -209,6 +211,14 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
 
     protected ProcessingItemsBuilderTest.BuildRecipeInfo up() {
       return myParent;
+    }
+  }
+
+  protected static class MyDummyCompileContext extends DummyCompileContext {
+    private MockProgressIndicator myProgressIndicator = new MockProgressIndicator();
+
+    public ProgressIndicator getProgressIndicator() {
+      return myProgressIndicator;
     }
   }
 }
