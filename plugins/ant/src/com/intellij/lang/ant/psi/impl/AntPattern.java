@@ -112,7 +112,11 @@ public class AntPattern extends AntElementVisitor {
 
   public final void addIncludePattern(final String antPattern) {
     myIncludePatterns.add(convertToRegexPattern(antPattern, myCaseSensitive));
-    final String normalizedPattern = antPattern.endsWith("/") || antPattern.endsWith(File.separator)? antPattern.replace(File.separatorChar, '/') + "**" : antPattern.replace(File.separatorChar, '/');
+    String normalizedPattern = antPattern.endsWith("/") || antPattern.endsWith(File.separator)? antPattern.replace(File.separatorChar, '/') + "**" : antPattern.replace(File.separatorChar, '/');
+    if (normalizedPattern.startsWith("/") && normalizedPattern.length() > 1) {
+      // cut first leading slash if any
+      normalizedPattern = normalizedPattern.substring(1, normalizedPattern.length());
+    }
     if (!normalizedPattern.startsWith("/")) {
       final String[] patDirs = normalizedPattern.split(ourSeparatorPattern);
       final PrefixItem[] items = new PrefixItem[patDirs.length];

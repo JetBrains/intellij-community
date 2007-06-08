@@ -574,7 +574,7 @@ public class FileUtil {
   public static String convertAntToRegexp(String antPattern) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      for (int idx = 0; idx < antPattern.length(); idx++) {
+      for (int idx = (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0; idx < antPattern.length(); idx++) {
         final char ch = antPattern.charAt(idx);
         switch (ch) {
           case '[': case ']': case '^': case '$': case '.': case '{': case '}': case '+': case '|':
