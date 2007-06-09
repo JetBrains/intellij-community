@@ -34,7 +34,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
   PsiType[] myArgumentTypes;
 
-  private Set<GroovyResolveResult> myInapplicableCandidates = new HashSet<GroovyResolveResult>();
+  private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion);
@@ -91,10 +91,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
           PsiElement element = iterator.next().getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
-            if (dominated(method, currentMethod, manager, scope)) {
-              iterator.remove();
-            } else if (dominated(currentMethod, method, manager, scope)) {
+            if (dominated(currentMethod, method, manager, scope)) {
               continue Outer;
+            } else if (dominated(method, currentMethod, manager, scope)) {
+              iterator.remove();
             }
           }
         }
