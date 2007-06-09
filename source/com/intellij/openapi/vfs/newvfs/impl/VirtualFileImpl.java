@@ -29,7 +29,10 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public NewVirtualFileSystem getFileSystem() {
-    return getParent().getFileSystem();
+    final VirtualFileSystemEntry parent = getParent();
+    assert parent != null;
+
+    return parent.getFileSystem();
   }
 
   @Nullable

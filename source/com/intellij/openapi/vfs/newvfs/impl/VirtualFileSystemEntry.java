@@ -8,9 +8,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.util.StringBuilderSpinAllocator;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Map;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
