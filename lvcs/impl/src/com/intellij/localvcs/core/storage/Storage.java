@@ -151,7 +151,7 @@ public class Storage {
 
     try {
       int id = myContentStorage.store(bytes);
-      return new Content(this, id);
+      return new StoredContent(this, id);
     }
     catch (IOException e) {
       markAsBroken();
@@ -184,11 +184,11 @@ public class Storage {
     for (Content c : contents) c.purge();
   }
 
-  protected void purgeContent(Content c) {
+  protected void purgeContent(StoredContent c) {
     myContentStorage.remove(c.getId());
   }
 
-  public boolean isContentPurged(Content c) {
+  public boolean isContentPurged(StoredContent c) {
     return myContentStorage.isRemoved(c.getId());
   }
 

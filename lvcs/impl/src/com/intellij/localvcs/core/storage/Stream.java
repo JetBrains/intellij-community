@@ -38,9 +38,9 @@ public class Stream {
   public Content readContent() throws IOException {
     switch (myIs.readInt()) {
       case 0:
-        return new Content(this);
+        return new StoredContent(this);
       case 1:
-        return new UnavailableContent(this);
+        return new UnavailableContent();
     }
     throw new IOException();
   }
@@ -49,7 +49,7 @@ public class Stream {
     int id = -1;
 
     Class c = content.getClass();
-    if (c.equals(Content.class)) id = 0;
+    if (c.equals(StoredContent.class)) id = 0;
     if (c.equals(UnavailableContent.class)) id = 1;
 
     myOs.writeInt(id);

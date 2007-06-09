@@ -2,6 +2,7 @@ package com.intellij.localvcs.core;
 
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.storage.Content;
+import com.intellij.localvcs.core.storage.StoredContent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -74,7 +75,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   class PurgeLoggingStorage extends TestStorage {
     @Override
-    public void purgeContent(Content c) {
+    public void purgeContent(StoredContent c) {
       purgedContent.add(c);
     }
   }

@@ -6,7 +6,6 @@ public class ByteContent extends Content {
   private byte[] myData;
 
   public ByteContent(byte[] bytes) {
-    super(null, 0);
     myData = bytes;
   }
 
@@ -18,6 +17,10 @@ public class ByteContent extends Content {
   @Override
   public boolean isAvailable() {
     return true;
+  }
+
+  @Override
+  public void purge() {
   }
 
   @Override

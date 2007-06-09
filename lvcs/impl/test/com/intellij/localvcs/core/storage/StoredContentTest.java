@@ -7,16 +7,16 @@ import org.junit.Test;
 import java.io.IOException;
 
 
-public class ContentTest extends LocalVcsTestCase {
+public class StoredContentTest extends LocalVcsTestCase {
   @Test
   public void testEqualityAndHash() {
-    assertTrue(new Content(null, 1).equals(new Content(null, 1)));
+    assertTrue(new StoredContent(null, 1).equals(new StoredContent(null, 1)));
 
-    assertFalse(new Content(null, 1).equals(null));
-    assertFalse(new Content(null, 1).equals(new Content(null, 2)));
+    assertFalse(new StoredContent(null, 1).equals(null));
+    assertFalse(new StoredContent(null, 1).equals(new StoredContent(null, 2)));
 
-    assertTrue(new Content(null, 1).hashCode() == new Content(null, 1).hashCode());
-    assertTrue(new Content(null, 1).hashCode() != new Content(null, 2).hashCode());
+    assertTrue(new StoredContent(null, 1).hashCode() == new StoredContent(null, 1).hashCode());
+    assertTrue(new StoredContent(null, 1).hashCode() != new StoredContent(null, 2).hashCode());
   }
 
   @Test
@@ -35,7 +35,7 @@ public class ContentTest extends LocalVcsTestCase {
       }
     };
 
-    assertTrue(new Content(goodStorage, 0).isAvailable());
-    assertFalse(new Content(brokenStorage, 0).isAvailable());
+    assertTrue(new StoredContent(goodStorage, 0).isAvailable());
+    assertFalse(new StoredContent(brokenStorage, 0).isAvailable());
   }
 }

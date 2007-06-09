@@ -17,7 +17,7 @@ public class UnavailableContentTest extends LocalVcsTestCase {
     assertFalse(u.equals(b));
     assertFalse(b.equals(u));
 
-    assertFalse(u.equals(new Content(null, -1) {
+    assertFalse(u.equals(new StoredContent(null, -1) {
       @Override
       public byte[] getBytes() {
         return u.getBytes();

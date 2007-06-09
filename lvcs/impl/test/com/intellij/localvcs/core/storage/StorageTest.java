@@ -105,14 +105,14 @@ public class StorageTest extends TempDirTestCase {
     Content c3 = s.storeContent(b("3"));
     s.purgeContents(Arrays.asList(c1, c3));
 
-    assertTrue(s.isContentPurged(c1));
-    assertFalse(s.isContentPurged(c2));
-    assertTrue(s.isContentPurged(c3));
+    assertTrue(s.isContentPurged((StoredContent)c1));
+    assertFalse(s.isContentPurged((StoredContent)c2));
+    assertTrue(s.isContentPurged((StoredContent)c3));
   }
 
   @Test
   public void testRecreationOfStorageOnLoadingError() {
-    Content c = s.storeContent(b("abc"));
+    StoredContent oldContent = (StoredContent)s.storeContent(b("abc"));
     m.myEntryCounter = 10;
     s.store(m);
     s.close();
@@ -123,12 +123,13 @@ public class StorageTest extends TempDirTestCase {
     m = s.load();
     assertEquals(0, m.myEntryCounter);
 
-    assertEquals(c.getId(), s.storeContent(b("abc")).getId());
+    StoredContent newContent = (StoredContent)s.storeContent(b("abc"));
+    assertEquals(oldContent.getId(), newContent.getId());
   }
 
   @Test
   public void testRecreationOfStorageOnContentLoadingError() {
-    Content c = s.storeContent(b("abc"));
+    StoredContent c = (StoredContent)s.storeContent(b("abc"));
     m.myEntryCounter = 10;
     s.store(m);
     s.close();
@@ -150,7 +151,7 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testThrowingExceptionForGoodContentWhenContentStorageIsBroken() {
-    Content c = s.storeContent(b("abc"));
+    StoredContent c = (StoredContent)s.storeContent(b("abc"));
     try {
       s.loadContentData(123);
     }

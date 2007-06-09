@@ -2,6 +2,7 @@ package com.intellij.localvcs.core;
 
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.storage.Storage;
+import com.intellij.localvcs.core.storage.StoredContent;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ public class TestStorage extends Storage {
   public Content storeContent(byte[] bytes) {
     int id = myContents.size();
     myContents.put(id, bytes);
-    return new Content(this, id);
+    return new StoredContent(this, id);
   }
 
   @Override
