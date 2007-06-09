@@ -155,9 +155,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
         result.addAll(collectHighlights(elements, highlightVisitors));
         result.addAll(highlightTodos());
-        if (myUpdateAll) {
-          myInjectedPsiHighlights = highlightInjectedPsi(elements);
-        }
+        myInjectedPsiHighlights = highlightInjectedPsi(elements);
       }
     }
     finally {
@@ -176,11 +174,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private Map<TextRange,Collection<HighlightInfo>> highlightInjectedPsi(final List<PsiElement> elements) {
     Collection<PsiLanguageInjectionHost> hosts = new THashSet<PsiLanguageInjectionHost>();
     List<DocumentRange> injected = InjectedLanguageUtil.getCachedInjectedDocuments(getDocument());
+
     for (DocumentRange documentRange : injected) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(documentRange);
       if (file == null) continue;
       PsiElement context = file.getContext();
-      if (context instanceof PsiLanguageInjectionHost && context.isValid()) hosts.add((PsiLanguageInjectionHost)context);
+      if (context instanceof PsiLanguageInjectionHost
+          && context.isValid()
+          && (myUpdateAll || new TextRange(myStartOffset, myEndOffset).contains(context.getTextRange()))
+        ) hosts.add((PsiLanguageInjectionHost)context);
     }
     for (PsiElement element : elements) {
       if (element instanceof PsiLanguageInjectionHost) hosts.add((PsiLanguageInjectionHost)element);
@@ -189,7 +191,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
     Map<TextRange,Collection<HighlightInfo>> result = new THashMap<TextRange, Collection<HighlightInfo>>(hosts.size());
     for (PsiLanguageInjectionHost host : hosts) {
-      highlightInjectedPsi(host, annotationHolder);
+      highlightInjectedIn(host, annotationHolder);
       TextRange textRange = host.getTextRange();
       for (Annotation annotation : annotationHolder) {
         HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
@@ -205,7 +207,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return result;
   }
 
-  private static boolean highlightInjectedPsi(final PsiElement element, final AnnotationHolderImpl annotationHolder) {
+  private static boolean highlightInjectedIn(final PsiElement element, final AnnotationHolderImpl annotationHolder) {
     if (!(element instanceof PsiLanguageInjectionHost)) return false;
     PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
     List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
