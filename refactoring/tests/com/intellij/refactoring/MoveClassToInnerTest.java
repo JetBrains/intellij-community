@@ -12,8 +12,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.usageView.UsageInfo;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author yole
@@ -55,19 +57,42 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTest(new String[] { "pack1.Class1" }, "pack1.A");
   }
 
-  private void doTest(String[] classNames, String targetClassName) throws Exception{
-    String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClassToInner/" + getTestName(true);
+  public void testPackageLocalClass() throws Exception {
+    doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-local class <b><code>pack1.Class2</code></b>.");
+  }
 
-    String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
+  private void doTest(String[] classNames, String targetClassName) throws Exception{
+    VirtualFile rootDir = prepareTest();
 
     performAction(classNames, targetClassName);
 
-    String rootAfter = root + "/after";
+    String rootAfter = getRoot() + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, MultiFileTestCase.CVS_FILE_FILTER);
+  }
+
+  private VirtualFile prepareTest() throws Exception {
+    String rootBefore = getRoot() + "/before";
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
+  }
+
+  private String getRoot() {
+    return PathManagerEx.getTestDataPath()+ "/refactoring/moveClassToInner/" + getTestName(true);
+  }
+
+  private void doTestConflicts(String className, String targetClassName, String... expectedConflicts) throws Exception {
+    prepareTest();
+    PsiClass classToMove = myPsiManager.findClass(className, myProject.getAllScope());
+    PsiClass targetClass = myPsiManager.findClass(targetClassName, myProject.getAllScope());
+    MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true);
+    UsageInfo[] usages = processor.findUsages();
+    List<String> conflicts = processor.getConflicts(usages);
+    assertEquals(expectedConflicts.length, conflicts.size());
+    for(String conflict: expectedConflicts) {
+      assertTrue(conflicts.contains(conflict));
+    }
   }
 
   private void performAction(String[] classNames, String targetClassName) throws Exception{

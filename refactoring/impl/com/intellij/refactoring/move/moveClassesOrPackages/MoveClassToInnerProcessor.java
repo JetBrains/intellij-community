@@ -3,10 +3,12 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -166,5 +168,16 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("move.class.to.inner.command.name",
                                      myClassToMove.getQualifiedName(),
                                      myTargetClass.getQualifiedName());
+  }
+
+  public List<String> getConflicts(final UsageInfo[] usages) {
+    List<String> conflicts = new ArrayList<String>();
+    PsiPackage sourcePackage = myClassToMove.getContainingFile().getContainingDirectory().getPackage();
+    PsiPackage targetPackage = myTargetClass.getContainingFile().getContainingDirectory().getPackage();
+    if (!Comparing.equal(sourcePackage, targetPackage)) {
+      PsiElement[] elementsToMove = new PsiElement[] { myClassToMove };
+      myClassToMove.accept(new PackageLocalsUsageCollector(elementsToMove, new PackageWrapper(targetPackage), conflicts));
+    }
+    return conflicts;
   }
 }

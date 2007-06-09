@@ -157,59 +157,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private class PackageLocalsVisitor extends PsiRecursiveElementVisitor {
-    private HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
-    private final ArrayList<String> myConflicts;
-
-    public PackageLocalsVisitor(ArrayList<String> conflicts) {
-      myConflicts = conflicts;
-    }
-
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      super.visitReferenceExpression(expression);
-      visitReferenceElement(expression);
-    }
-
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
-      PsiElement resolved = reference.resolve();
-      visitResolvedReference(resolved, reference);
-    }
-
-
-    private void visitResolvedReference(PsiElement resolved, PsiJavaCodeReferenceElement reference) {
-      if (resolved instanceof PsiModifierListOwner) {
-        final PsiModifierList modifierList = ((PsiModifierListOwner)resolved).getModifierList();
-        if (PsiModifier.PACKAGE_LOCAL.equals(VisibilityUtil.getVisibilityModifier(modifierList))) {
-          PsiFile aFile = resolved.getContainingFile();
-          if (aFile != null && !isInsideMoved(resolved)) {
-            final PsiDirectory containingDirectory = aFile.getContainingDirectory();
-            if (containingDirectory != null) {
-              PsiPackage aPackage = containingDirectory.getPackage();
-              if (aPackage != null && !myTargetPackage.equalToPackage(aPackage)) {
-                HashSet<PsiElement> reportedRefs = myReported.get(resolved);
-                if (reportedRefs == null) {
-                  reportedRefs = new HashSet<PsiElement>();
-                  myReported.put(resolved, reportedRefs);
-                }
-                PsiElement container = ConflictsUtil.getContainer(reference);
-                if (!reportedRefs.contains(container)) {
-                  final String message = RefactoringBundle.message("0.uses.a.package.local.1",
-                                                                   ConflictsUtil.getDescription(container, true),
-                                                                   ConflictsUtil.getDescription(resolved, true));
-                  myConflicts.add(ConflictsUtil.capitalize(message));
-                  reportedRefs.add(container);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
   private void detectPackageLocalsUsed(final ArrayList<String> conflicts) {
-    PackageLocalsVisitor visitor = new PackageLocalsVisitor(conflicts);
+    PackageLocalsUsageCollector visitor = new PackageLocalsUsageCollector(myElementsToMove, myTargetPackage, conflicts);
 
     for (PsiElement element : myElementsToMove) {
       if (element instanceof PsiClass) {
