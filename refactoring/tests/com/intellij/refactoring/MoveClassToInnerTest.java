@@ -20,19 +20,27 @@ import java.io.File;
  */
 public class MoveClassToInnerTest extends CodeInsightTestCase {
   public void testContextChange1() throws Exception {
-    doTest("contextChange1", new String[] { "pack1.Class1" }, "pack2.A");
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
   public void testContextChange2() throws Exception {
-    doTest("contextChange2", new String[] { "pack1.Class1" }, "pack2.A");
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
-  public void testMoveMultiple() throws Exception {
-    doTest("moveMultiple1", new String[] { "pack1.Class1", "pack1.Class2" }, "pack2.A");
+  public void testMoveMultiple1() throws Exception {
+    doTest(new String[] { "pack1.Class1", "pack1.Class2" }, "pack2.A");
   }
 
-  private void doTest(String testName, String[] classNames, String targetClassName) throws Exception{
-    String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClassToInner/" + testName;
+  public void testRefToInner() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
+  }
+
+  public void testRefToConstructor() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
+  }
+
+  private void doTest(String[] classNames, String targetClassName) throws Exception{
+    String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClassToInner/" + getTestName(true);
 
     String rootBefore = root + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
