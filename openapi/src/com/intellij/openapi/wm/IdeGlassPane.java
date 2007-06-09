@@ -16,4 +16,6 @@ public interface IdeGlassPane {
   void removePainter(final Painter painter);
 
 
+  void removeMousePreprocessor(MouseListener listener);
+  void removeMouseMotionPreprocessor(MouseListener listener);
 }

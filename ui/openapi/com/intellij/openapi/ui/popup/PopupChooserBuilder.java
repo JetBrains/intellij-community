@@ -19,6 +19,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -50,6 +51,7 @@ public class PopupChooserBuilder {
   private boolean myForceMovable = false;
   private String myDimensionServiceKey = null;
   private Computable<Boolean> myCancelCallback;
+  private boolean myAutoselect = true;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = new MyListWrapper(list);
@@ -124,6 +126,13 @@ public class PopupChooserBuilder {
       label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       contentPane.add(label, BorderLayout.NORTH);
+    }
+
+    if (myChooserComponent instanceof JList) {
+      JList list = (JList)myChooserComponent;
+      if (list.getSelectedIndex() == -1 && myAutoselect) {
+        list.setSelectedIndex(0);
+      }
     }
 
     myChooserComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -266,7 +275,12 @@ public class PopupChooserBuilder {
     return scrollPane;
   }
 
-  private static class MyListWrapper extends JScrollPane implements DataProvider {
+  public PopupChooserBuilder setAutoSelectIfEmpty(final boolean autoselect) {
+    myAutoselect = autoselect;
+    return this;
+  }
+
+  private class MyListWrapper extends JScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private JList myList;
 
@@ -287,10 +301,6 @@ public class PopupChooserBuilder {
       });
 
       ListScrollingUtil.installActions(list);
-
-      if (list.getSelectedIndex() == -1) {
-        list.setSelectedIndex(0);
-      }
 
       int modelSize = list.getModel().getSize();
       setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));

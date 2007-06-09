@@ -41,6 +41,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
 
@@ -277,6 +279,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   protected JTree createTree() {
     myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor);
+
     myFileSystemTree.addOkAction(new Runnable() {
       public void run() {doOKAction(); }
     });

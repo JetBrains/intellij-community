@@ -1,15 +1,19 @@
 package com.intellij.util.ui;
 
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
-import java.awt.event.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
 public abstract class MouseDragHelper implements MouseListener, MouseMotionListener {
 
@@ -35,9 +39,15 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   public void start() {
     if (myGlassPane != null) return;
 
-    myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
-    myGlassPane.addMousePreprocessor(this, myParentDisposable);
-    myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
+    new UiNotifyConnector(myDragComponent, new Activatable() {
+      public void showNotify() {
+        attach();
+      }
+
+      public void hideNotify() {
+        detach();
+      }
+    });
 
     Disposer.register(myParentDisposable, new Disposable() {
       public void dispose() {
@@ -46,7 +56,19 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     });
   }
 
+  private void attach() {
+    myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
+    myGlassPane.addMousePreprocessor(this, myParentDisposable);
+    myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
+  }
+
   public void stop() {
+    detach();
+  }
+
+  private void detach() {
+    myGlassPane.removeMousePreprocessor(this);
+    myGlassPane.removeMouseMotionPreprocessor(this);
     myGlassPane = null;
   }
 
@@ -149,4 +171,5 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   public void mouseMoved(final MouseEvent e) {
   }
+
 }

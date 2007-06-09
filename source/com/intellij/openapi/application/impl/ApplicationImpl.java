@@ -167,7 +167,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       registerShutdownHook();
     }
 
-    if (!isUnitTestMode) {
+    if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, new Disposable() {
         public void dispose() {
         }

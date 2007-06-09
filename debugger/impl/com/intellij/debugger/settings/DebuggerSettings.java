@@ -177,6 +177,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     private double mySplitProportion;
     private boolean myDetached;
     private boolean myHorizontalToolbar;
+    private boolean myMaximized;
 
     public ContentState(final String type) {
       myType = type;
@@ -185,6 +186,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     public ContentState(Element element) {
       myType = element.getAttributeValue("type");
       myMinimized = "true".equalsIgnoreCase(element.getAttributeValue("minimized"));
+      myMaximized = "true".equalsIgnoreCase(element.getAttributeValue("maximized"));
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
@@ -197,6 +199,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     public boolean write(final Element element) {
       element.setAttribute("type", myType);
       element.setAttribute("minimized", Boolean.valueOf(myMinimized).toString());
+      element.setAttribute("maximized", Boolean.valueOf(myMaximized).toString());
       if (mySelectedTab != null) {
         element.setAttribute("selected", mySelectedTab);
       }
@@ -220,6 +223,14 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
     public void setMinimized(final boolean minimized) {
       myMinimized = minimized;
+    }
+
+    public void setMaximized(final boolean maximized) {
+      myMaximized = maximized;
+    }
+
+    public boolean isMaximized() {
+      return myMaximized;
     }
 
     public void setSelectedTab(final String selectedTab) {

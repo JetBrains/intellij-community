@@ -32,6 +32,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane, IdeEventQu
 
   public boolean dispatch(final AWTEvent e) {
     boolean dispatched = false;
+
+    if (e instanceof MouseEvent) {
+      final MouseEvent me = (MouseEvent)e;
+      Window eventWindow = me.getComponent() instanceof Window ? ((Window)me.getComponent()) : SwingUtilities.getWindowAncestor(me.getComponent());
+      final Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
+      if (eventWindow != thisGlassWindow) return false;
+    }
+
     if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
       dispatched = preprocess((MouseEvent)e, false);
     } else if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
@@ -147,12 +155,24 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
       public void dispose() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            myMouseListeners.remove(listener);
-            deactivateIfNeeded();
+            removeListener(listener);
           }
         });
       }
     });
+  }
+
+  public void removeMousePreprocessor(final MouseListener listener) {
+    removeListener(listener);
+  }
+
+  public void removeMouseMotionPreprocessor(final MouseListener listener) {
+    removeListener(listener);
+  }
+
+  private void removeListener(final EventListener listener) {
+    myMouseListeners.remove(listener);
+    deactivateIfNeeded();
   }
 
   private void deactivateIfNeeded() {

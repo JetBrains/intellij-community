@@ -1,10 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +25,7 @@ public class FocusTrackback {
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
 
   private String myRequestorName;
-  private Component myFocusedComponent;
+  private ComponentQuery myFocusedComponentQuery;
   private boolean myMustBeShown;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
@@ -68,8 +65,16 @@ public class FocusTrackback {
     return false;
   }
 
-  public void onShown(Component focusedComponent) {
-    myFocusedComponent = focusedComponent;
+  public void onShown(@NotNull final Component focusedComponent) {
+    onShown(new ComponentQuery() {
+      public Component getComponent() {
+        return focusedComponent;
+      }
+    });
+  }
+
+  public void onShown(@NotNull ComponentQuery query) {
+    myFocusedComponentQuery = query;
   }
 
   private void register(final Window parent) {
@@ -111,7 +116,8 @@ public class FocusTrackback {
     final int index = stack.indexOf(this);
     Component toFocus;
     if (index > 0) {
-      toFocus = stack.get(index - 1).myFocusedComponent;
+      final ComponentQuery query = stack.get(index - 1).myFocusedComponentQuery;
+      toFocus = query != null ? query.getComponent() : null;
     } else {
       toFocus = getFocusOwner();
     }
@@ -125,6 +131,13 @@ public class FocusTrackback {
 
 
     if (toFocus != null) {
+      final Component ownerBySwing = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      if (ownerBySwing != null) {
+        final Window ownerBySwingWindow = SwingUtilities.getWindowAncestor(ownerBySwing);
+        if (ownerBySwingWindow != null && ownerBySwingWindow == SwingUtilities.getWindowAncestor(toFocus)) {
+          toFocus = ownerBySwing;
+        }
+      }
       toFocus.requestFocus();
     }
 
@@ -177,7 +190,7 @@ public class FocusTrackback {
 
   private boolean isDead() {
     if (myMustBeShown) {
-      return myFocusedComponent != null && !myFocusedComponent.isShowing();
+      return myFocusedComponentQuery != null && myFocusedComponentQuery.getComponent() != null && !myFocusedComponentQuery.getComponent().isShowing();
     } else {
       return myParentWindow == null || !myParentWindow.isShowing();
     }
@@ -189,6 +202,10 @@ public class FocusTrackback {
 
   public static interface Provider {
     FocusTrackback getFocusTrackback();
+  }
+
+  public static interface ComponentQuery {
+    Component getComponent();
   }
 
 }

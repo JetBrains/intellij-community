@@ -52,7 +52,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent(), project));
   }
-
+        
   public JTextField getTextField() {
     return getChildComponent();
   }
