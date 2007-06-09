@@ -1250,7 +1250,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  public List<UsageInfo> getSelectedUsageInfos() {
+  private List<UsageInfo> getSelectedUsageInfos() {
     return (List<UsageInfo>)DataManager.getInstance().getDataContext(myRootPanel).getData(USAGE_INFO_LIST_KEY.getName());
   }
 }

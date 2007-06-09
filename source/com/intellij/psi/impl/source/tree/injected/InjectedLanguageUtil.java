@@ -42,7 +42,9 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author cdr
@@ -102,7 +104,7 @@ public class InjectedLanguageUtil {
 
     TextRange documentWindow = hostRange.cutOut(rangeInsideHost);
     DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow,prefix,suffix);
-    VirtualFileDelegate virtualFile = InjectedManager.getInstance().createVirtualFile(language, hostVirtualFile, documentRange, outChars, host.getProject());
+    VirtualFileDelegate virtualFile = InjectedManagerImpl.getInstance().createVirtualFile(language, hostVirtualFile, documentRange, outChars, host.getProject());
 
     DocumentImpl decodedDocument = new DocumentImpl(outChars);
     FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);

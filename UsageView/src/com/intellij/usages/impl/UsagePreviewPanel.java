@@ -12,12 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.lang.injection.InjectedManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +43,12 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     if (psiElement == null) return;
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return;
+
+    PsiLanguageInjectionHost host = InjectedManager.getInstance().getInjectionHost(psiFile);
+    if (host != null) {
+      psiFile = host.getContainingFile();
+      if (psiFile == null) return;
+    }
 
     Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) return;
@@ -92,13 +96,10 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
         if (nameElement != null) {
           textRange = nameElement.getTextRange();
         }
-
-        // highlight injected element in host document textrange
-        PsiElement hostElement = psiFile.getContext();
-        if (hostElement != null) {
-          textRange = textRange.shiftRight(hostElement.getTextRange().getStartOffset());
-        }
       }
+      // highlight injected element in host document textrange
+      textRange = InjectedManager.getInstance().injectedToHost(psiElement, textRange);
+      
       myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                     HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
       myEditor.getCaretModel().moveToOffset(textRange.getEndOffset());

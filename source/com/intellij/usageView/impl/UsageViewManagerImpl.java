@@ -13,13 +13,14 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
   private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");        //todo[myakovlev] dont use it
-  private final Key<com.intellij.usages.UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
+  private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
   private final Project myProject;
   private ContentManager myFindContentManager;
 
@@ -119,6 +120,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     content.release();
   }
 
+  @NotNull
   public String getComponentName() {
     return "UsageViewManager";
   }

@@ -1,19 +1,17 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.injection.InjectedManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
@@ -24,15 +22,15 @@ import java.util.Iterator;
 /**
  * @author cdr
  */
-public class InjectedManager implements ApplicationComponent {
+public class InjectedManagerImpl extends InjectedManager implements ApplicationComponent {
   private final WeakList<VirtualFileDelegate> cachedFiles = new WeakList<VirtualFileDelegate>();
   private final ProjectManagerAdapter myProjectListener;
 
-  public static InjectedManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(InjectedManager.class);
+  public static InjectedManagerImpl getInstance() {
+    return (InjectedManagerImpl)InjectedManager.getInstance();
   }
 
-  public InjectedManager() {
+  public InjectedManagerImpl() {
     myProjectListener = new ProjectManagerAdapter() {
       public void projectClosing(final Project project) {
         Iterator<VirtualFileDelegate> iterator = cachedFiles.iterator();
@@ -52,8 +50,7 @@ public class InjectedManager implements ApplicationComponent {
   <T extends PsiLanguageInjectionHost> VirtualFileDelegate createVirtualFile(final Language language, final VirtualFile hostVirtualFile,
                                                                              final DocumentRange documentRange, StringBuilder text,
                                                                              Project project) {
-    //clearInvalidFiles(documentRange, project);
-
+    clearInvalidFiles(documentRange, project);
     VirtualFileDelegate virtualFile = new VirtualFileDelegate(hostVirtualFile, documentRange, language, text.toString());
     cachedFiles.add(virtualFile);
 
@@ -75,12 +72,27 @@ public class InjectedManager implements ApplicationComponent {
         iterator.remove();
         continue;
       }
-      DocumentRange cachedDocumentRange = (DocumentRange)cachedDocument;
-      if (documentRange.equalsTo(cachedDocumentRange)) {
-        InjectedLanguageUtil.clearCaches(cached, cachedDocumentRange);
-        iterator.remove();
-      }
+      //DocumentRange cachedDocumentRange = (DocumentRange)cachedDocument;
+      //if (documentRange.equalsTo(cachedDocumentRange)) {
+      //  InjectedLanguageUtil.clearCaches(cached, cachedDocumentRange);
+      //  iterator.remove();
+      //}
     }
+  }
+
+  public PsiLanguageInjectionHost getInjectionHost(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    return (PsiLanguageInjectionHost)file.getContext();
+  }
+
+  public TextRange injectedToHost(PsiElement element, TextRange textRange) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return textRange;
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
+    if (!(document instanceof DocumentRange)) return textRange;
+    DocumentRange documentRange = (DocumentRange)document;
+    return new TextRange(documentRange.injectedToHost(textRange.getStartOffset()), documentRange.injectedToHost(textRange.getEndOffset()));
   }
 
   @NonNls
