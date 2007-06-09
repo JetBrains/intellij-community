@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ import java.util.List;
  * @author nik
  */
 public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
+  private static final Icon QUICK_FIX_ICON = IconLoader.getIcon("/actions/intentionBulb.png");
   private LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;
   private RequiredLibrariesInfo myRequiredLibraries;
@@ -258,7 +260,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       }
 
 
-      final BaseListPopupStep popupStep = new BaseListPopupStep<String>(null, popupItems) {
+      final BaseListPopupStep popupStep = new BaseListPopupStep<String>(null, Arrays.asList(popupItems), QUICK_FIX_ICON) {
         public boolean hasSubstep(final String selectedValue) {
           return useLibrary.equals(selectedValue);
         }

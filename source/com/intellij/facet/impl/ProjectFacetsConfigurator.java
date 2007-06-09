@@ -113,7 +113,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
       final ModuleConfigurationState state = myModuleStateProvider.fun(facet.getModule());
-      final ProjectConfigurableContext context = new MyProjectConfigurableContext(facet, parentContext, state);
+      final ProjectConfigurableContext context = new MyProjectConfigurableContext(myFacet2Info.get(facet), facet, parentContext, state);
       editor = new FacetEditor(context, facet.getConfiguration());
       editor.getComponent();
       editor.reset();
@@ -237,8 +237,8 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
-    public MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
-      super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
+    public MyProjectConfigurableContext(FacetInfo facetInfo, final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
+      super(facetInfo, facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
             ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()));
     }
 

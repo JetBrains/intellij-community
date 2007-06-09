@@ -6,6 +6,7 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.impl.DefaultFacetsProvider;
+import com.intellij.facet.FacetInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -28,10 +29,13 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private FacetsProvider myFacetsProvider;
   @Nullable private final FacetEditorContext myParentContext;
   private ModulesProvider myModulesProvider;
+  private final FacetInfo myFacetInfo;
   private UserDataHolder mySharedModuleData;
 
-  public FacetEditorContextBase(final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider,
+  public FacetEditorContextBase(@NotNull FacetInfo facetInfo, final @Nullable FacetEditorContext parentContext, 
+                                final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider,
                                 final UserDataHolder sharedModuleData) {
+    myFacetInfo = facetInfo;
     mySharedModuleData = sharedModuleData;
     myParentContext = parentContext;
     myModulesProvider = modulesProvider;
@@ -45,6 +49,11 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     }
 
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries();
+  }
+
+  @NotNull
+  public FacetInfo getFacetInfo() {
+    return myFacetInfo;
   }
 
   public VirtualFile[] getLibraryFiles(final Library library, final OrderRootType rootType) {

@@ -5,13 +5,11 @@
 package com.intellij.facet;
 
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author nik
 */
 public final class FacetInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetInfo");
   public static final FacetInfo[] EMPTY_ARRAY = new FacetInfo[0];
   private FacetType myFacetType;
   private FacetConfiguration myConfiguration;

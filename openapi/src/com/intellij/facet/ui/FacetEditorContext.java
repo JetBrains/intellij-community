@@ -18,6 +18,7 @@
 package com.intellij.facet.ui;
 
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetInfo;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
@@ -79,4 +80,7 @@ public interface FacetEditorContext extends UserDataHolder {
   Library createProjectLibrary(String name, final VirtualFile[] roots);
 
   VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType);
+
+  @NotNull
+  FacetInfo getFacetInfo();
 }
