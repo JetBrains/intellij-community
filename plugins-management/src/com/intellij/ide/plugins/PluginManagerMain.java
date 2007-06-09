@@ -484,7 +484,7 @@ public class PluginManagerMain {
   public void apply() {
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-      pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, 1)).booleanValue());
+      pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue());
     }
     save();
   }
