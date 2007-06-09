@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
 
 import java.util.ArrayList;
@@ -67,7 +68,12 @@ public class GroovyNameSuggestionUtil {
     if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getName() != null) {
       GrReferenceExpression refExpr = (GrReferenceExpression) expr;
       generateCamelNames(possibleNames, validator, refExpr.getName());
-      possibleNames.remove(refExpr.getName());
+      if (expr.getText().equals(refExpr.getName())){
+        possibleNames.remove(refExpr.getName());
+      }
+    }
+    if (expr instanceof GrMethodCall){
+      generateNameByExpr(((GrMethodCall) expr).getInvokedExpression(), possibleNames, validator);
     }
   }
 
@@ -85,7 +91,9 @@ public class GroovyNameSuggestionUtil {
     if (typeName.equals("Closure")) {
       possibleNames.add(validator.validateName("cl", true));
     }
-    if (!typeName.substring(0, 1).equals(typeName.substring(0, 1).toLowerCase())) {
+    if (typeName.toUpperCase().equals(typeName)) {
+      possibleNames.add(validator.validateName(typeName.toLowerCase(), true));
+    } else if (!typeName.substring(0, 1).equals(typeName.substring(0, 1).toLowerCase())) {
       generateCamelNames(possibleNames, validator, typeName);
     }
   }
