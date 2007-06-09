@@ -110,17 +110,18 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       if (!ResolveUtil.processElement(processor, definition)) return false;
     }
 
-    if (isScript()) {
-      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
-    }
-
     PsiManager manager = getManager();
-    GlobalSearchScope resolveScope = getResolveScope();
-    PsiClass scriptClass = manager.findClass(SCRIPT_BASE_CLASS_NAME, resolveScope);
-    if (scriptClass != null) {
-      if (!scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
-      PsiClassType scriptType = manager.getElementFactory().createTypeByFQClassName(SCRIPT_BASE_CLASS_NAME, resolveScope);
-      if (!ResolveUtil.processDefaultMethods(scriptType, processor, manager.getProject())) return false;
+
+    if (!(lastParent instanceof GrTypeDefinition)) {
+      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
+
+      GlobalSearchScope resolveScope = getResolveScope();
+      PsiClass scriptClass = manager.findClass(SCRIPT_BASE_CLASS_NAME, resolveScope);
+      if (scriptClass != null) {
+        if (!scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
+        PsiClassType scriptType = manager.getElementFactory().createTypeByFQClassName(SCRIPT_BASE_CLASS_NAME, resolveScope);
+        if (!ResolveUtil.processDefaultMethods(scriptType, processor, manager.getProject())) return false;
+      }
     }
 
     if (!ResolveUtil.processChildren(this, processor, substitutor, lastParent, place)) return false;

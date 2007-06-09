@@ -16,16 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -35,8 +34,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
   PsiType[] myArgumentTypes;
 
-  private List<GroovyResolveResult> myInapplicableCandidates = new ArrayList<GroovyResolveResult>();
-  private List<PsiMethod> myCandidateMethods = new ArrayList<PsiMethod>();
+  private Set<GroovyResolveResult> myInapplicableCandidates = new HashSet<GroovyResolveResult>();
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion);
@@ -50,10 +48,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       if (!isAccessible((PsiNamedElement) element)) return true;
 
-      if (!myForCompletion) {
-        if (ResolveUtil.isSuperMethodDominated(method, myCandidateMethods)) return true;
-      }
-
       if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method)) {
         myCandidates.add(new GroovyResolveResultImpl(method, true));
       }
@@ -61,7 +55,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true));
       }
 
-      myCandidateMethods.add(method);
       return true;
     } else {
       return super.execute(element, substitutor);
@@ -69,9 +62,65 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   public GroovyResolveResult[] getCandidates() {
-    return myCandidates.size() > 0 ? super.getCandidates() :
-        myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
+    if (myCandidates.size() > 0) {
+      if (myForCompletion) {
+        return myCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
+      }
+
+      return filterCandidates();
+    }
+    return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
   }
+
+  private GroovyResolveResult[] filterCandidates() {
+    GroovyResolveResult[] array = myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
+    if (array.length == 1) return array;
+
+    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+    result.add(array[0]);
+
+    PsiManager manager = myPlace.getManager();
+    GlobalSearchScope scope = myPlace.getResolveScope();
+    
+    Outer:
+    for (int i = 1; i < array.length; i++) {
+      PsiElement currentElement = array[i].getElement();
+      if (currentElement instanceof PsiMethod) {
+        PsiMethod currentMethod = (PsiMethod) currentElement;
+        for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
+          PsiElement element = iterator.next().getElement();
+          if (element instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod) element;
+            if (dominated(method, currentMethod, manager, scope)) {
+              iterator.remove();
+            } else if (dominated(currentMethod, method, manager, scope)) {
+              continue Outer;
+            }
+          }
+        }
+      }
+
+      result.add(array[i]);
+    }
+
+    return result.toArray(new GroovyResolveResult[result.size()]);
+  }
+
+  private boolean dominated(PsiMethod method1, PsiMethod method2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
+    PsiParameter[] params1 = method1.getParameterList().getParameters();
+    PsiParameter[] params2 = method2.getParameterList().getParameters();
+
+    if (params1.length != params2.length) return false;
+
+    for (int i = 0; i < params1.length; i++) {
+      PsiType type1 = params1[i].getType();
+      PsiType type2 = params2[i].getType();
+      if (!TypesUtil.isAssignable(type1, type2, manager, scope)) return false;
+    }
+
+    return true;
+  }
+
 
   public boolean hasCandidates() {
     return super.hasCandidates() || myInapplicableCandidates.size() > 0;
