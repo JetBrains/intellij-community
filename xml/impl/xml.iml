@@ -6,15 +6,12 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="resources" />
-    <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="module" module-name="ui-impl" />
-    <orderEntry type="module" module-name="CSS" />
+    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
