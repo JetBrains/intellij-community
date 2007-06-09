@@ -113,8 +113,12 @@ public class TestNGUtil implements TestFramework
     public static boolean hasTest(PsiModifierListOwner element) {
       return hasTest(element, true);
     }
-    
+
     public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {
+      return hasTest(element, checkDisabled, true);
+    }
+    
+    public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled, boolean checkJavadoc) {
         //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
         boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false);
@@ -129,13 +133,13 @@ public class TestNGUtil implements TestFramework
           }
           return true;
         }
-        if (hasTestJavaDoc(element)) return true;
+        if (element instanceof PsiDocCommentOwner && hasTestJavaDoc((PsiDocCommentOwner)element, checkJavadoc)) return true;
         //now we check all methods for the test annotation
         if (element instanceof PsiClass) {
             PsiClass psiClass = (PsiClass) element;
             for (PsiMethod method : psiClass.getAllMethods()) {
                 if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION_FQN, false)) return true;
-                if (hasTestJavaDoc(method)) return true;
+                if (hasTestJavaDoc(method, checkJavadoc)) return true;
             }
         } else if (element instanceof PsiMethod) {
             //if it's a method, we check if the class it's in has a global @Test annotation
@@ -145,27 +149,27 @@ public class TestNGUtil implements TestFramework
                 boolean isPrivate = element.getModifierList().hasModifierProperty(PsiModifier.PRIVATE);
                 return !isPrivate;
             }
-            if (hasTestJavaDoc(psiClass)) return true;
+            if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
         }
         return false;
     }
 
-    private static boolean hasTestJavaDoc(PsiElement element) {
+    private static boolean hasTestJavaDoc(PsiDocCommentOwner element, final boolean checkJavadoc) {
+      if (checkJavadoc) {
         return getTextJavaDoc(element) != null;
+      }
+      return false;
     }
 
-    private static PsiDocTag getTextJavaDoc(PsiElement element) {
-        for (PsiElement child : element.getChildren()) {
-            if (child instanceof PsiDocComment) {
-                PsiDocComment doc = (PsiDocComment) child;
-                PsiDocTag testTag = doc.findTagByName("testng.test");
-                if (testTag != null) return testTag;
-            }
-        }
-        return null;
+  private static PsiDocTag getTextJavaDoc(final PsiDocCommentOwner element) {
+    final PsiDocComment docComment = element.getDocComment();
+    if (docComment != null) {
+      return docComment.findTagByName("testng.test");
     }
+    return null;
+  }
 
-    /**
+  /**
      * Ignore these, they cause an NPE inside of AnnotationUtil
      */
     private static boolean isBrokenPsiClass(PsiClass psiClass) {
@@ -371,7 +375,7 @@ public class TestNGUtil implements TestFramework
     }
 
   public boolean isTestKlass(PsiClass psiClass) {
-    return hasTest(psiClass);
+    return hasTest(psiClass, true, false);
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {
