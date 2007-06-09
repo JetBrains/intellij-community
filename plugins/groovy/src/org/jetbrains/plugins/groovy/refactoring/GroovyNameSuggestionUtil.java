@@ -37,7 +37,7 @@ public class GroovyNameSuggestionUtil {
     PsiType type = expr.getType();
     if (type != null && !PsiType.VOID.equals(type)) {
       String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
-      if (!unboxed.equals(type.getCanonicalText())) {
+      if (unboxed != null && !unboxed.equals(type.getCanonicalText())) {
         String name = generateNameForBuiltInType(unboxed);
         name = validator.validateName(name, true);
         if (GroovyNamesUtil.isIdentifier(name)) {

@@ -156,7 +156,8 @@ public abstract class GroovyRefactoringUtil {
   // todo add type hierarchy
   public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
     HashMap<String, PsiType> map = new HashMap<String, PsiType>();
-    if (!PsiTypesUtil.unboxIfPossible(type.getCanonicalText()).contains(".")){
+    String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
+    if (unboxed != null && !unboxed.contains(".")){
     map.put(PsiTypesUtil.unboxIfPossible(type.getCanonicalText()), type);
     } else {
       map.put(type.getPresentableText(), type);
