@@ -229,8 +229,8 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
 
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
-    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
-    ArrayList<String> conflicts = processor.getConflicts(refUsages);
+    UsageInfo[] usages = processor.findUsages();
+    ArrayList<String> conflicts = processor.getConflicts(usages);
     assertEquals(1, conflicts.size());
     assertEquals("Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>",
                  conflicts.get(0));
@@ -282,8 +282,9 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     PsiClass classToInline = (PsiClass) element;
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly);
-    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
-    ArrayList<String> conflicts = processor.getConflicts(refUsages);
+    UsageInfo[] usages = processor.findUsages();
+    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(usages);
+    ArrayList<String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
   }

@@ -68,7 +68,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
       return false;
     }
-    ArrayList<String> conflicts = getConflicts(refUsages);
+    ArrayList<String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
       dialog.show();
@@ -79,8 +79,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return super.preprocessUsages(refUsages);
   }
 
-  public ArrayList<String> getConflicts(final Ref<UsageInfo[]> refUsages) {
-    UsageInfo[] usages = refUsages.get();
+  public ArrayList<String> getConflicts(final UsageInfo[] usages) {
     ArrayList<String> result = new ArrayList<String>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       protected void checkAddMember(final PsiMember member) {
