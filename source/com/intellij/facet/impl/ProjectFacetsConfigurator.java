@@ -72,7 +72,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     return facet;
   }
 
-  private void addFacetInfo(final Facet facet) {
+  public void addFacetInfo(final Facet facet) {
     LOG.assertTrue(!myFacet2Info.containsKey(facet));
     FacetInfo info = new FacetInfo(facet.getType(), facet.getName(), facet.getConfiguration(), myFacet2Info.get(facet.getUnderlyingFacet()));
     myFacet2Info.put(facet, info);
