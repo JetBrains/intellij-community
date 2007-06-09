@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
@@ -306,6 +305,11 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public boolean exists(final VirtualFile fileOrDirectory) {
+    if (fileOrDirectory.getParent() == null) {
+      // Optimization. Do not build entries if asked for jar root existence.
+      return getZip() != null;
+    }
+
     return getEntryInfo(fileOrDirectory) != null;
   }
 

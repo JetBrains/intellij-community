@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -218,16 +219,28 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void refreshIoFiles(Iterable<File> files) {
+    final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+    manager.fireBeforeRefreshStart(false);
+
     for (File file : files) {
       final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
       if (virtualFile != null) virtualFile.refresh(false, false);
     }
+    
+    manager.fireAfterRefreshFinish(false);
   }
 
   public void refreshFiles(Iterable<VirtualFile> files) {
+    refreshFiles(files, false);
+  }
+
+  private static void refreshFiles(final Iterable<VirtualFile> files, final boolean recursive) {
+    List<VirtualFile> list = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      file.refresh(false, false);
+      list.add(file);
     }
+
+    RefreshQueue.getInstance().refresh(false, recursive, null, list.toArray(new VirtualFile[list.size()]));
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
@@ -512,9 +525,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       myCachedNormalizedRequests = null;
       setUpFileWatcher();
       if (!filesToSynchronize.isEmpty()) {
-        for (VirtualFile file : filesToSynchronize) {
-          file.refresh(false, toWatchRecursively);
-        }
+        refreshFiles(filesToSynchronize, toWatchRecursively);
       }
     }
     finally {
@@ -524,7 +535,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return result;
   }
 
-  public void removeWatchedRoot(final WatchRequest watchRequest) {
+  public void removeWatchedRoot(@NotNull final WatchRequest watchRequest) {
     WRITE_LOCK.lock();
     try {
       if (myRootsToWatch.remove(watchRequest)) {
@@ -611,7 +622,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return false;
   }
 
-  public void removeWatchedRoots(final Collection<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
     WRITE_LOCK.lock();
     try {
       if (myRootsToWatch.removeAll(rootsToWatch)) {
