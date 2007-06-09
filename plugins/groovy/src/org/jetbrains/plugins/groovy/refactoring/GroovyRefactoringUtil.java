@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -179,5 +181,62 @@ public abstract class GroovyRefactoringUtil {
         tempContainer instanceof GroovyFile ||
         tempContainer instanceof GrCaseBlock ||
         isLoopOrForkStatement(tempContainer);
+  }
+
+  /**
+   * Calculates position to which new variable definition will be inserted.
+   *
+   * @param container
+   * @param occurences
+   * @param replaceAllOccurences
+   * @param expr                 expression to be introduced as a variable
+   * @return PsiElement, before what new definition will be inserted
+   */
+  @Nullable
+  public static PsiElement calculatePositionToInsertBefore(@NotNull PsiElement container,
+                                                     PsiElement expr,
+                                                     PsiElement[] occurences,
+                                                     boolean replaceAllOccurences) {
+    if (occurences.length == 0) return null;
+    PsiElement candidate;
+    if (occurences.length == 1 || !replaceAllOccurences) {
+      candidate = expr;
+    } else {
+      sortOccurences(occurences);
+      candidate = occurences[0];
+    }
+    while (candidate != null && !container.equals(candidate.getParent())) {
+      candidate = candidate.getParent();
+    }
+    if (candidate == null) {
+      return null;
+    }
+    if ((container instanceof GrWhileStatement) &&
+        candidate.equals(((GrWhileStatement) container).getCondition())) {
+      return container;
+    }
+    if ((container instanceof GrIfStatement) &&
+        candidate.equals(((GrIfStatement) container).getCondition())) {
+      return container;
+    }
+    if ((container instanceof GrForStatement) &&
+        candidate.equals(((GrForStatement) container).getClause())) {
+      return container;
+    }
+    return candidate;
+  }
+
+  public static void sortOccurences(PsiElement[] occurences) {
+    Arrays.sort(occurences, new Comparator<PsiElement>() {
+      public int compare(PsiElement elem1, PsiElement elem2) {
+        if (elem1.getTextOffset() < elem2.getTextOffset()) {
+          return -1;
+        } else if (elem1.getTextOffset() > elem2.getTextOffset()) {
+          return 1;
+        } else {
+          return 0;
+        }
+      }
+    });
   }
 }

@@ -43,8 +43,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.ArrayList;
 
 /**
@@ -153,7 +151,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       public void run() {
         try {
           /* insert new variable */
-          sortOccurences(occurences);
+          GroovyRefactoringUtil.sortOccurences(occurences);
           if (occurences.length == 0 || !(occurences[0] instanceof GrExpression)) {
             throw new IncorrectOperationException("Wrong expression occurence");
           }
@@ -263,55 +261,12 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
 
   /**
-   * Calculates position to which new variable definition will be inserted.
-   *
-   * @param container
-   * @param occurences
-   * @param replaceAllOccurences
-   * @param expr                 expression to be introduced as a variable
-   * @return PsiElement, before what new definition will be inserted
-   */
-  @Nullable
-  private PsiElement calculatePositionToInsertBefore(@NotNull PsiElement container,
-                                                     PsiElement expr,
-                                                     PsiElement[] occurences,
-                                                     boolean replaceAllOccurences) {
-    if (occurences.length == 0) return null;
-    PsiElement candidate;
-    if (occurences.length == 1 || !replaceAllOccurences) {
-      candidate = expr;
-    } else {
-      sortOccurences(occurences);
-      candidate = occurences[0];
-    }
-    while (candidate != null && !container.equals(candidate.getParent())) {
-      candidate = candidate.getParent();
-    }
-    if (candidate == null) {
-      return null;
-    }
-    if ((container instanceof GrWhileStatement) &&
-        candidate.equals(((GrWhileStatement) container).getCondition())) {
-      return container;
-    }
-    if ((container instanceof GrIfStatement) &&
-        candidate.equals(((GrIfStatement) container).getCondition())) {
-      return container;
-    }
-    if ((container instanceof GrForStatement) &&
-        candidate.equals(((GrForStatement) container).getClause())) {
-      return container;
-    }
-    return candidate;
-  }
-
-  /**
    * Inserts new variable definiton according the contex
    */
   private void insertVariableDefinition(GroovyPsiElement tempContainer, GrExpression selectedExpr,
                                         PsiElement[] occurences, boolean replaceAllOccurences,
                                         GrVariableDeclaration varDecl, GroovyElementFactory factory) throws IncorrectOperationException {
-    PsiElement anchorElement = calculatePositionToInsertBefore(tempContainer, selectedExpr, occurences, replaceAllOccurences);
+    PsiElement anchorElement = GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurences, replaceAllOccurences);
     assert anchorElement instanceof GrStatement;
     PsiElement realContainer;
     if (anchorElement.equals(tempContainer)) {
@@ -380,20 +335,6 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
         }
       }
     }
-  }
-
-  void sortOccurences(PsiElement[] occurences) {
-    Arrays.sort(occurences, new Comparator<PsiElement>() {
-      public int compare(PsiElement elem1, PsiElement elem2) {
-        if (elem1.getTextOffset() < elem2.getTextOffset()) {
-          return -1;
-        } else if (elem1.getTextOffset() > elem2.getTextOffset()) {
-          return 1;
-        } else {
-          return 0;
-        }
-      }
-    });
   }
 
   /**
