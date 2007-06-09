@@ -239,7 +239,7 @@ public class FileReferenceSet {
 
     final CachedValueProvider<PsiFileSystemItem> myDefaultContextProvider = new CachedValueProvider<PsiFileSystemItem>() {
       public Result<PsiFileSystemItem> compute() {
-        final PsiFileSystemItem context = getContextByFile();
+        final PsiFileSystemItem context = getContextByFile(file);
         return Result.createSingleDependency(context,
                                              PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
@@ -262,12 +262,8 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  private PsiFileSystemItem getContextByFile() {
+  private PsiFileSystemItem getContextByFile(final @NotNull PsiFile file) {
 
-    final PsiFile file = getContainingFile();
-    if (file == null) {
-      return null;
-    }
     final Project project = file.getProject();
     final JspContextManager manager = JspContextManager.getInstance(project);
     if (manager != null) {
