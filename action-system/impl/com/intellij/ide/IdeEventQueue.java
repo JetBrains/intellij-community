@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -10,22 +11,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 
 /**
@@ -37,6 +39,7 @@ public class IdeEventQueue extends EventQueue {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
 
+  private static final boolean DEBUG = LOG.isDebugEnabled();
 
   private static IdeEventQueue ourInstance;
 
@@ -340,8 +343,14 @@ public class IdeEventQueue extends EventQueue {
 
   */
 
-
   public void dispatchEvent(final AWTEvent e) {
+    long t = 0;
+
+    if (DEBUG) {
+      t = System.currentTimeMillis();
+      ProfilingUtil.startCPUProfiling();
+    }
+
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent =
       (e instanceof InputEvent) || (e instanceof InputMethodEvent) || (e instanceof WindowEvent) || (e instanceof ActionEvent);
@@ -356,7 +365,37 @@ public class IdeEventQueue extends EventQueue {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
       JobSchedulerImpl.resume();
+
+      if (DEBUG) {
+        final long processTime = System.currentTimeMillis() - t;
+        if (processTime > 100) {
+          final String path = ProfilingUtil.captureCPUSnapshot();
+
+          LOG.debug("Long event: " + processTime + "ms - " + toDebugString(e));
+          LOG.debug("Snapshot taken: " + path);
+        }
+        else {
+          ProfilingUtil.stopCPUProfiling();
+        }
+      }
     }
+  }
+
+  private static String toDebugString(final AWTEvent e) {
+    if (e instanceof InvocationEvent) {
+      try {
+        final Field f = InvocationEvent.class.getDeclaredField("runnable");
+        f.setAccessible(true);
+        Object runnable = f.get(e);
+
+        return "Invoke Later[" + runnable.toString() + "]";
+      }
+      catch (NoSuchFieldException e1) {
+      }
+      catch (IllegalAccessException e1) {
+      }
+    }
+    return e.toString();
   }
 
 
@@ -461,7 +500,6 @@ public class IdeEventQueue extends EventQueue {
       }
     }
   }
-
 
   public void pumpEventsForHierarchy(Component modalComponent, Condition<AWTEvent> exitCondition) {
     AWTEvent event;

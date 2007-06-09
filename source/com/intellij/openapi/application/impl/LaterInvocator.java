@@ -13,11 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Stack;
 import java.util.Collections;
+import java.util.Stack;
 
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
+  private static final boolean DEBUG = LOG.isDebugEnabled();
 
   public static final Object LOCK = new Object(); //public for tests
   private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();
@@ -110,9 +111,13 @@ public class LaterInvocator {
           semaphore.up();
         }
       }
+
+      public String toString() {
+        return "InvokeAndWait[" + runnable.toString() + "]";
+      }
     };
     invokeLater(runnable1, modalityState);
-    semaphore.waitFor();
+    semaphore.waitFor();                                          
   }
 
   public static void enterModal(Object modalEnity) {
@@ -212,17 +217,20 @@ public class LaterInvocator {
 
   private static final Object RUN_LOCK = new Object();
 
-  private static class FlushQueue implements Runnable {
+  static class FlushQueue implements Runnable {
+    private Runnable myLastRunnable;
+
     public void run() {
-      Runnable runnable = pollNext();
-      if (runnable != null) {
+      myLastRunnable = pollNext();
+
+      if (myLastRunnable != null) {
         synchronized (RUN_LOCK) { // necessary only because of switching to our own event queue
           AWTEvent event = ourEventQueue.getTrueCurrentEvent();
           ourEventStack.push(event);
           int stackSize = ourEventStack.size();
 
           try {
-            runnable.run();
+            myLastRunnable.run();
           }
           catch (Throwable t) {
             if (t instanceof StackOverflowError){
@@ -233,11 +241,17 @@ public class LaterInvocator {
           finally {
             LOG.assertTrue(ourEventStack.size() == stackSize);
             ourEventStack.pop();
+
+            if (!DEBUG) myLastRunnable = null;
           }
         }
 
         requestFlush();
       }
+    }
+
+    public String toString() {
+      return "LaterInvocator[lastRunnable=" + myLastRunnable + "]";
     }
   }
 

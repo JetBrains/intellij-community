@@ -264,7 +264,7 @@ public class TestAll implements Test {
         long total = runtime.totalMemory();
         long free = runtime.freeMemory();
         String errorMessage = "Too much memory used. Total: " + total + " free: " + free + " used: " + (total - free) + "\n";
-        String message = ProfilingUtil.forceCaptureMemorySnapshot("AllTestsOutOfMemory");
+        String message = ProfilingUtil.forceCaptureMemorySnapshot();
         if (message != null) errorMessage += message;
         addErrorMessage(testResult, errorMessage);
       }

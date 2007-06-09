@@ -528,7 +528,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
           if (takeMemorySnapshot) {
             String outputFileName = ProfilingUtil.createDumpFileName(ApplicationInfo.getInstance().getBuildNumber());
-            ProfilingUtil.forceCaptureMemorySnapshot(outputFileName);
+            ProfilingUtil.forceCaptureMemorySnapshot();
           }
 
           ProjectUtil.openProject(path, null, true);
