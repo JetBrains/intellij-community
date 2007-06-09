@@ -1,0 +1,6 @@
+if (true) {
+    <begin>new B().foo 0<end>
+}
+def preved = 0
+-----
+ok
