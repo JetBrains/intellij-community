@@ -151,6 +151,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (final JavaMethod method : methods) {
       if (DomImplUtil.isGetter(method) && method.getAnnotation(NameValue.class) != null) {
         myNameValueGetter = method;
+        break;
       }
     }
 
