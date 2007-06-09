@@ -4,7 +4,7 @@ import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.CacheUpdaterHelper;
-import com.intellij.localvcs.integration.TestFileFilter;
+import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.localvcs.integration.Updater;
 import com.intellij.localvcs.utils.RunnableAdapter;
@@ -99,8 +99,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     final VirtualFile root = buildVFSTree(timestamp);
     assertExecutionTime(expected, new RunnableAdapter() {
       public void doRun() {
-        Updater u = new Updater(vcs, new TestFileFilter(), root);
-        CacheUpdaterHelper.performUpdate(u);
+        updateFrom(root);
       }
     });
   }
@@ -157,7 +156,11 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
 
   private void updateFromTreeWithTimestamp(long timestamp) {
     TestVirtualFile root = buildVFSTree(timestamp);
-    Updater u = new Updater(vcs, new TestFileFilter(), root);
+    updateFrom(root);
+  }
+
+  private void updateFrom(VirtualFile root) {
+    Updater u = new Updater(vcs, new TestIdeaGateway(), root);
     CacheUpdaterHelper.performUpdate(u);
   }
 }

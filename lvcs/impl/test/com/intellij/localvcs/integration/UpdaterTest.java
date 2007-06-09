@@ -12,7 +12,8 @@ import java.util.List;
 
 public class UpdaterTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
-  TestFileFilter filter = new TestFileFilter();
+  TestIdeaGateway gw = new TestIdeaGateway();
+  TestFileFilter filter = (TestFileFilter)gw.getFileFilter();
 
   @Test
   public void testAddingRoots() {
@@ -483,7 +484,7 @@ public class UpdaterTest extends LocalVcsTestCase {
   private String myPhysicalContent;
 
   private void updateWith(VirtualFile... roots) {
-    Updater u = new Updater(vcs, filter, roots);
+    Updater u = new Updater(vcs, gw, roots);
     CacheUpdaterHelper.performUpdate(u, myPhysicalContent);
   }
 

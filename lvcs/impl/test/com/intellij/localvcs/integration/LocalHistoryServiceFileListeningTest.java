@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTestCase {
@@ -20,6 +21,7 @@ public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTes
   }
 
   @Test
+  @Ignore("is this test valuable?")
   public void testDoesNotListenBeforeStartup() {
     initWithoutStartup(createLocalVcs());
 

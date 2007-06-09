@@ -11,19 +11,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.util.*;
 
-// todo no need to be CacheUpdater
 public class Updater implements CacheUpdater {
   private ILocalVcs myVcs;
-  private FileFilter myFilter;
+  private IdeaGateway myGateway;
   private VirtualFile[] myVfsRoots;
+
   // usage of Set is for quick search
   // usage of LinkedHashSet is for preserving order of files
+  // due to performance problems on idea startup caused by hard-drive seeks
   private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
   private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
 
-  public Updater(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) {
+  public Updater(ILocalVcs vcs, IdeaGateway gw, VirtualFile... roots) {
     myVcs = vcs;
-    myFilter = filter;
+    myGateway = gw;
     myVfsRoots = selectSortParentlessRoots(roots);
   }
 
@@ -47,7 +48,7 @@ public class Updater implements CacheUpdater {
 
   private boolean parentIsNotUnderContentRoot(VirtualFile r) {
     VirtualFile p = r.getParent();
-    return p == null || !myFilter.isUnderContentRoot(p);
+    return p == null || !myGateway.getFileFilter().isUnderContentRoot(p);
   }
 
   public VirtualFile[] queryNeededFiles() {
@@ -185,6 +186,6 @@ public class Updater implements CacheUpdater {
   }
 
   private boolean notAllowed(VirtualFile f) {
-    return !myFilter.isAllowedAndUnderContentRoot(f);
+    return !myGateway.getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 }

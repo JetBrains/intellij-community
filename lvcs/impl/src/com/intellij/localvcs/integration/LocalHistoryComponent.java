@@ -1,5 +1,6 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.ThreadSafeLocalVcs;
@@ -24,7 +25,7 @@ import java.io.File;
 
 public class LocalHistoryComponent extends LocalHistory implements ProjectComponent {
   private Project myProject;
-  private StartupManager myStartupManager;
+  private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
   private CommandProcessor myCommandProcessor;
@@ -44,7 +45,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   public LocalHistoryComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, CommandProcessor cp) {
     myProject = p;
-    myStartupManager = sm;
+    myStartupManager = (StartupManagerEx)sm;
     myRootManager = rm;
     myFileManager = fm;
     myCommandProcessor = cp;
@@ -54,8 +55,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     if (isDefaultProject()) return;
     if (!isEnabled()) return;
 
-    initVcs();
-    initService();
+    myStartupManager.registerPreStartupActivity(new Runnable() {
+      public void run() {
+        initVcs();
+        initService();
+      }
+    });
   }
 
   protected void initVcs() {

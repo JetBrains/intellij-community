@@ -8,9 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
 
-public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
+public class UpdaterAsCacheUpdaterTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
-  TestFileFilter filter = new TestFileFilter();
   Updater updater;
 
   TestVirtualFile root;
@@ -22,7 +21,7 @@ public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
     file = new TestVirtualFile("file", "new content", 1L);
     root.addChild(file);
 
-    updater = new Updater(vcs, filter, root);
+    updater = new Updater(vcs, new TestIdeaGateway(), root);
   }
 
   @Test

@@ -75,7 +75,7 @@ public class LocalHistoryService {
     private Updater myUpdater;
 
     public VirtualFile[] queryNeededFiles() {
-      myUpdater = new Updater(myVcs, myGateway.getFileFilter(), myRootManager.getContentRoots());
+      myUpdater = new Updater(myVcs, myGateway, myRootManager.getContentRoots());
       return myUpdater.queryNeededFiles();
     }
 
