@@ -1234,13 +1234,20 @@ public final class PsiUtil {
     return false;
   }
 
+  @Nullable
   public static <T extends PsiElement,V extends T> T getOriginalElement(@NotNull V psiElement, final Class<T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == null) return psiElement;
     final TextRange range = psiElement.getTextRange();
     final PsiElement element = originalFile.findElementAt(range.getStartOffset());
-    return PsiTreeUtil.getParentOfType(element, elementClass, false);
+    final int maxLength = range.getLength();
+    T parent = PsiTreeUtil.getParentOfType(element, elementClass, false);
+    for (T next = parent ;
+         next != null && next.getTextLength() <= maxLength;
+         parent = next, next = PsiTreeUtil.getParentOfType(next, elementClass, true)) {
+    }
+    return parent;
   }
 
 }
