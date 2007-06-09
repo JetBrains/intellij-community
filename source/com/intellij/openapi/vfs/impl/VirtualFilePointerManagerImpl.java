@@ -309,7 +309,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     public void afterRefreshFinish(boolean asynchonous) {
       myInsideRefresh--;
-      if (/*myChangesDetected  &&*/ !myInsideCommand) {
+      if (myChangesDetected  && !myInsideCommand) {
         myChangesDetected = false;
         validate();
       }
