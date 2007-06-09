@@ -61,6 +61,10 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-local class <b><code>pack1.Class2</code></b>.");
   }
 
+  public void _testMoveIntoPackageLocalClass() throws Exception {
+    doTestConflicts("pack1.Class1", "pack2.A", "will no longer be accessible");
+  }
+
   private void doTest(String[] classNames, String targetClassName) throws Exception{
     VirtualFile rootDir = prepareTest();
 
@@ -89,10 +93,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true);
     UsageInfo[] usages = processor.findUsages();
     List<String> conflicts = processor.getConflicts(usages);
-    assertEquals(expectedConflicts.length, conflicts.size());
-    for(String conflict: expectedConflicts) {
-      assertTrue(conflicts.contains(conflict));
-    }
+    assertSameElements(conflicts, expectedConflicts);
   }
 
   private void performAction(String[] classNames, String targetClassName) throws Exception{

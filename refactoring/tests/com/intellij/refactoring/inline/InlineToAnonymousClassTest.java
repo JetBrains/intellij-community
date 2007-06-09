@@ -283,7 +283,6 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly);
     UsageInfo[] usages = processor.findUsages();
-    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(usages);
     ArrayList<String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
