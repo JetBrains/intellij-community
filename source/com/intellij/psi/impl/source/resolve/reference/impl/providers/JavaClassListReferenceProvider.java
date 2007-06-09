@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * To change this template use Options | File Templates.
  */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
-  private static final @NonNls Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*([\\.\\$]\\s*[A-Za-z]\\w*\\s*)+)");
+  @NonNls private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*([\\.\\$]\\s*[A-Za-z]\\w*\\s*)+)");
 
   @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){

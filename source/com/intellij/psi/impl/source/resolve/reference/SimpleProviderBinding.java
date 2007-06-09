@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class SimpleProviderBinding implements ProviderBinding {
   private final Class myScope;
-  private List<Pair<PsiReferenceProvider,ElementFilter>> myProviderPairs = new CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>();
+  private final List<Pair<PsiReferenceProvider,ElementFilter>> myProviderPairs = new CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>();
 
   public SimpleProviderBinding(Class scope){
     myScope = scope;
@@ -35,7 +35,7 @@ public class SimpleProviderBinding implements ProviderBinding {
   }
 
   public void registerProvider(PsiReferenceProvider provider,ElementFilter elementFilter){
-    myProviderPairs.add(new Pair<PsiReferenceProvider, ElementFilter>(provider, elementFilter));
+    myProviderPairs.add(Pair.create(provider, elementFilter));
   }
 
   public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list) {
@@ -44,5 +44,9 @@ public class SimpleProviderBinding implements ProviderBinding {
         list.add(pair.first);
       }
     }
+  }
+
+  public void unregisterProvider(PsiReferenceProvider provider, ElementFilter elementFilter) {
+    myProviderPairs.remove(Pair.create(provider, elementFilter));
   }
 }

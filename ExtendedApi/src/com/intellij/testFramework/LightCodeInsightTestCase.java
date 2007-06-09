@@ -93,7 +93,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @param fileText - data file text.
    * @throws IOException
    */
-  protected static void configureFromFileText(@NonNls final String fileName, String fileText) throws IOException {
+  protected static void configureFromFileText(@NonNls final String fileName, @NonNls String fileText) throws IOException {
     final Document fakeDocument = new DocumentImpl(fileText);
 
     int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -211,6 +211,8 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @throws Exception
    */
   protected void checkResultByFile(String message, final String filePath, final boolean ignoreTrailingSpaces) throws Exception {
+    bringRealEditorBack();
+
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       ((DocumentEx) myEditor.getDocument()).stripTrailingSpaces(false);
@@ -247,6 +249,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
   protected void checkResultByText(String message, String fileText, final boolean ignoreTrailingSpaces) {
+    bringRealEditorBack();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -387,9 +390,11 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
   protected static void bringRealEditorBack() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    DocumentEx document = ((DocumentRange)myEditor.getDocument()).getDelegate();
-    myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-    myEditor = ((EditorDelegate)myEditor).getDelegate();
-    myVFile = myFile.getVirtualFile();
+    if (myEditor instanceof EditorDelegate) {
+      DocumentEx document = ((DocumentRange)myEditor.getDocument()).getDelegate();
+      myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      myEditor = ((EditorDelegate)myEditor).getDelegate();
+      myVFile = myFile.getVirtualFile();
+    }
   }
 }
