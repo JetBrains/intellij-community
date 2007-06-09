@@ -125,8 +125,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     myCbReplaceAllOccurences.setMnemonic(KeyEvent.VK_A);
     myCbIsFinal.setMnemonic(KeyEvent.VK_F);
     myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
-    myNameComboBox.setFocusCycleRoot(true);
-    myNameComboBox.setFocusTraversalPolicyProvider(true);
     myNameLabel.setLabelFor(myNameComboBox);
     myTypeLabel.setLabelFor(myTypeComboBox);
 
@@ -142,6 +140,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
         myTypeComboBox.addItem(typeName);
       }
     }
+
+    myCbTypeSpec.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent event) {
+        myTypeComboBox.setEnabled(myCbTypeSpec.isSelected());
+      }
+    });
 
     // Replace occurences
     if (myOccurrencesCount > 1) {

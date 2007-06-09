@@ -26,6 +26,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduc
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * @author ilyas
@@ -67,12 +69,16 @@ public class GroovyNameSuggestionUtil {
     }
     if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getName() != null) {
       GrReferenceExpression refExpr = (GrReferenceExpression) expr;
-      generateCamelNames(possibleNames, validator, refExpr.getName());
-      if (expr.getText().equals(refExpr.getName())){
+      if (refExpr.getName().toUpperCase().equals(refExpr.getName())) {
+        possibleNames.add(validator.validateName(refExpr.getName().toLowerCase(), true));
+      } else {
+        generateCamelNames(possibleNames, validator, refExpr.getName());
+      }
+      if (expr.getText().equals(refExpr.getName())) {
         possibleNames.remove(refExpr.getName());
       }
     }
-    if (expr instanceof GrMethodCall){
+    if (expr instanceof GrMethodCall) {
       generateNameByExpr(((GrMethodCall) expr).getInvokedExpression(), possibleNames, validator);
     }
   }
@@ -92,9 +98,10 @@ public class GroovyNameSuggestionUtil {
       possibleNames.add(validator.validateName("cl", true));
     }
     if (typeName.toUpperCase().equals(typeName)) {
-      possibleNames.add(validator.validateName(typeName.toLowerCase(), true));
-    } else if (!typeName.substring(0, 1).equals(typeName.substring(0, 1).toLowerCase())) {
+      possibleNames.add(validator.validateName(deleteNonLetterFromString(typeName.toLowerCase()), true));
+    } else if (!typeName.equals(typeName.toLowerCase())) {
       generateCamelNames(possibleNames, validator, typeName);
+      possibleNames.remove(typeName);
     }
   }
 
@@ -122,12 +129,14 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static ArrayList<String> camelizeString(String str) {
+    String tempString = str;
+    tempString = deleteNonLetterFromString(tempString);
     ArrayList<String> camelizedTokens = new ArrayList<String>();
-    if (!GroovyNamesUtil.isIdentifier(str)) {
+    if (!GroovyNamesUtil.isIdentifier(tempString)) {
       return camelizedTokens;
     }
-    String result = fromLowerLetter(str);
-    while (result != "") {
+    String result = fromLowerLetter(tempString);
+    while (!result.equals("")) {
       result = fromLowerLetter(result);
       String temp = "";
       while (!(result.length() == 0) && !result.substring(0, 1).toUpperCase().equals(result.substring(0, 1))) {
@@ -135,9 +144,14 @@ public class GroovyNameSuggestionUtil {
         result = result.substring(1);
       }
       camelizedTokens.add(temp);
-      temp = "";
     }
     return camelizedTokens;
+  }
+
+  private static String deleteNonLetterFromString(String tempString) {
+    Pattern pattern = Pattern.compile("[^a-zA-Z]");
+    Matcher matcher = pattern.matcher(tempString);
+    return matcher.replaceAll("");
   }
 
   private static String fromLowerLetter(String str) {

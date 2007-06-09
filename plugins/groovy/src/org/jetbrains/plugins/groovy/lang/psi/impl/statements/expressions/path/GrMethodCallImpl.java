@@ -109,6 +109,7 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
       }
       allArgs.addAll(closureArgs);
       allArgs.add(newExpr);
+      int refIndex = allArgs.size()-1;
 
       // New argument list
       GrArgumentList newArgList = GroovyElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(GrExpression.EMPTY_ARRAY));
@@ -119,8 +120,8 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
       parentNode.removeChild(closure.getNode());
       getArgumentList().replaceWithArgumentList(newArgList);
       GrExpression[] arguments = getArgumentList().getExpressionArguments();
-      assert arguments.length > 0;
-      return arguments[arguments.length - 1];
+      assert arguments.length == refIndex + 1;
+      return arguments[refIndex];
     } else {
       return closure.replaceWithExpression(newExpr);
     }
