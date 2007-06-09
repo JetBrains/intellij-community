@@ -43,4 +43,8 @@ public class VFileCreateEvent extends VFileEvent {
   public VirtualFileSystem getFileSystem() {
     return myParent.getFileSystem();
   }
+
+  public boolean isValid() {
+    return myParent.findChild(myChildName) == null;
+  }
 }

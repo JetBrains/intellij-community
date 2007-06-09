@@ -43,4 +43,8 @@ public class VFileCopyEvent extends VFileEvent {
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
+
+  public boolean isValid() {
+    return myFile.isValid() && myNewParent.findChild(myNewChildName) == null;
+  }
 }

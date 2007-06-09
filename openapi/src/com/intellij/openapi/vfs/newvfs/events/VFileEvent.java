@@ -26,4 +26,6 @@ public abstract class VFileEvent {
   public abstract String getPath();
 
   public abstract VirtualFileSystem getFileSystem();
+
+  public abstract boolean isValid();
 }

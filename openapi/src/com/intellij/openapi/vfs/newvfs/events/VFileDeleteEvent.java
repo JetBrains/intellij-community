@@ -31,4 +31,8 @@ public class VFileDeleteEvent extends VFileEvent {
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
+
+  public boolean isValid() {
+    return myFile.isValid();
+  }
 }

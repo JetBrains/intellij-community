@@ -406,7 +406,20 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvents(Collections.singletonList(event));
   }
 
+  private static List<? extends VFileEvent> validateEvents(List<? extends VFileEvent> events) {
+    List<VFileEvent> filtered = new ArrayList<VFileEvent>(events.size());
+    for (VFileEvent event : events) {
+      if (event.isValid()) {
+        filtered.add(event);
+      }
+    }
+
+    return filtered;
+  }
+
   public void processEvents(List<? extends VFileEvent> events) {
+    events = validateEvents(events);
+
     myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events);
     for (VFileEvent event : events) {
       applyEvent(event);

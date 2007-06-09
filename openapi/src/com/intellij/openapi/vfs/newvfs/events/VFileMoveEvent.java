@@ -43,4 +43,8 @@ public class VFileMoveEvent extends VFileEvent {
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
+
+  public boolean isValid() {
+    return myFile.isValid() && myFile.getParent() == myOldParent && myOldParent.isValid();
+  }
 }
