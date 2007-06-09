@@ -39,6 +39,22 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
+  public void testSecondaryClass() throws Exception {
+    doTest(new String[] { "pack1.Class2" }, "pack1.User");
+  }
+
+  public void testStringsAndComments() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack1.A");
+  }
+
+  public void testStringsAndComments2() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack1.A");
+  }
+
+  public void testNonJava() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack1.A");
+  }
+
   private void doTest(String[] classNames, String targetClassName) throws Exception{
     String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClassToInner/" + getTestName(true);
 

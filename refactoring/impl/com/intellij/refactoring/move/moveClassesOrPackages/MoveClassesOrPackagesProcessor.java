@@ -440,8 +440,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      List<NonCodeUsageInfo> nonCodeUsages = retargetUsages(usages, oldToNewElementsMapping);
-      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+      myNonCodeUsages = retargetUsages(usages, oldToNewElementsMapping);
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];
@@ -449,7 +448,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public static List<NonCodeUsageInfo> retargetUsages(final UsageInfo[] usages, final Map<PsiElement, PsiElement> oldToNewElementsMapping)
+  public static NonCodeUsageInfo[] retargetUsages(final UsageInfo[] usages, final Map<PsiElement, PsiElement> oldToNewElementsMapping)
     throws IncorrectOperationException {
     List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
     for (UsageInfo usage : usages) {
@@ -464,7 +463,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         if (reference != null) reference.bindToElement(newElement);
       }
     }
-    return nonCodeUsages;
+    return nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
   }
 
   protected void performPsiSpoilingRefactoring() {

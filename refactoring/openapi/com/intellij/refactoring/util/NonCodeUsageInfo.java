@@ -19,12 +19,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NonCodeUsageInfo extends MoveRenameUsageInfo{
   public final String newText;
 
-  private NonCodeUsageInfo(PsiElement element, int startOffset, int endOffset, PsiElement referencedElement, String newText){
+  private NonCodeUsageInfo(@NotNull PsiElement element, int startOffset, int endOffset, PsiElement referencedElement, String newText){
     super(element, null, startOffset, endOffset, referencedElement, true);
     this.newText = newText;
   }
@@ -57,5 +58,9 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
   @Nullable
   public PsiReference getReference() {
     return null;
+  }
+
+  public NonCodeUsageInfo replaceElement(PsiElement newElement) {
+    return new NonCodeUsageInfo(newElement, startOffset, endOffset, getReferencedElement(), newText);
   }
 }

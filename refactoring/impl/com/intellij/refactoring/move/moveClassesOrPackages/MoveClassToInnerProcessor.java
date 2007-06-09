@@ -3,19 +3,19 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author yole
@@ -27,6 +27,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private PsiClass myTargetClass;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
+  private NonCodeUsageInfo[] myNonCodeUsages;
+  private static final Key<List<NonCodeUsageInfo>> ourNonCodeUsageKey = Key.create("MoveClassToInner.NonCodeUsage");
 
   public MoveClassToInnerProcessor(Project project,
                                    final PsiClass classToMove,
@@ -56,7 +58,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> usages = collector.collectUsages();
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
-      if (PsiTreeUtil.isAncestor(myClassToMove, usageInfo.getElement(), false)) {
+      if (!(usageInfo instanceof NonCodeUsageInfo) && PsiTreeUtil.isAncestor(myClassToMove, usageInfo.getElement(), false)) {
         iterator.remove();
       }
     }
@@ -69,6 +71,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     try {
+      saveNonCodeUsages(usages);
       ChangeContextUtil.encodeContextInfo(myClassToMove, true);
       PsiClass newClass = (PsiClass)myTargetClass.addBefore(myClassToMove, myTargetClass.getRBrace());
       newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
@@ -78,7 +81,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
       Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       oldToNewElementsMapping.put(myClassToMove, newClass);
-      MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
+      myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
+      retargetNonCodeUsages(newClass);
 
       PsiManager.getInstance(myProject).getCodeStyleManager().removeRedundantImports((PsiJavaFile)newClass.getContainingFile());
 
@@ -87,6 +91,47 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private void saveNonCodeUsages(final UsageInfo[] usages) {
+    for(UsageInfo usageInfo: usages) {
+      if (usageInfo instanceof NonCodeUsageInfo) {
+        final NonCodeUsageInfo nonCodeUsage = (NonCodeUsageInfo)usageInfo;
+        PsiElement element = nonCodeUsage.getElement();
+        if (PsiTreeUtil.isAncestor(myClassToMove, element, false)) {
+          List<NonCodeUsageInfo> list = element.getCopyableUserData(ourNonCodeUsageKey);
+          if (list == null) {
+            list = new ArrayList<NonCodeUsageInfo>();
+            element.putCopyableUserData(ourNonCodeUsageKey, list);
+          }
+          list.add(nonCodeUsage);
+        }
+      }
+    }
+  }
+
+  private void retargetNonCodeUsages(final PsiClass newClass) {
+    newClass.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(final PsiElement element) {
+        super.visitElement(element);
+        List<NonCodeUsageInfo> list = element.getCopyableUserData(ourNonCodeUsageKey);
+        if (list != null) {
+          for(NonCodeUsageInfo info: list) {
+            for(int i=0; i<myNonCodeUsages.length; i++) {
+              if (myNonCodeUsages [i] == info) {
+                myNonCodeUsages [i] = info.replaceElement(element);
+                break;
+              }
+            }
+          }
+          element.putCopyableUserData(ourNonCodeUsageKey, null);
+        }
+      }
+    });
+  }
+
+  protected void performPsiSpoilingRefactoring() {
+    RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
   }
 
   private static void retargetClassRefs(final PsiClass classToMove, final PsiClass newClass) {
