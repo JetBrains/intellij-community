@@ -88,7 +88,6 @@
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
 
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
-    <inspectionToolProvider implementation="com.intellij.uiDesigner.inspections.FormInspectionProvider"/>
   </extensions>
 
   <project-components>
