@@ -1,7 +1,6 @@
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,25 +10,23 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
-import java.awt.*;
-import java.awt.event.FocusListener;
-import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 
 /**
  * @author Anton Katilin
@@ -455,6 +452,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     JComponent toFocus = toSelect.getPreferredFocusableComponent();
     toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+
+    if (toFocus == null) toFocus = toSelect.getPreferredFocusableComponent();
 
     if (toFocus != null) {
       toFocus.requestFocus();

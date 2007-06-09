@@ -1,5 +1,6 @@
 package com.intellij.analysis;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -10,8 +11,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author mike
@@ -26,7 +25,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
   protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ProgressManager.getInstance().run(new Task.Modal(project, AnalysisScopeBundle.message("analyzing.project"), true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
       public void run(final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(AnalysisScopeBundle.message("checking.class.files"));
@@ -34,9 +33,9 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         final boolean upToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject));
 
-        if (!upToDate) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (!upToDate) {
               final int i = Messages.showYesNoCancelDialog(getProject(), AnalysisScopeBundle.message("recompile.confirmation.message"),
                                                            AnalysisScopeBundle.message("project.is.out.of.date"), Messages.getWarningIcon());
 
@@ -46,14 +45,26 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
                 compileAndAnalyze(project, scope);
               }
               else {
-                analyzeClasses(project, scope, indicator);
+                doAnalyze(project, scope);
               }
             }
-          });
-        }
-        else {
-          analyzeClasses(project, scope, indicator);
-        }
+            else {
+              doAnalyze(project, scope);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  private void doAnalyze(final Project project, final AnalysisScope scope) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
+      public void run(final ProgressIndicator indicator) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            analyzeClasses(project, scope, indicator);
+          }
+        });
       }
     });
   }
@@ -63,13 +74,9 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
     compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
       public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
         if (aborted || errors != 0) return;
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            ProgressManager.getInstance().run(new Task.Modal(project, AnalysisScopeBundle.message("analyzing.project"), true) {
-              public void run(final ProgressIndicator indicator) {
-                analyzeClasses(project, scope, indicator);
-              }
-            });
+            doAnalyze(project, scope);
           }
         });
     }});
