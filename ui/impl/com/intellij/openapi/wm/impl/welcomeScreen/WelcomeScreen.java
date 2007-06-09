@@ -527,6 +527,10 @@ public class WelcomeScreen {
     else {
       final Comparator<IdeaPluginDescriptor> pluginsComparator = new Comparator<IdeaPluginDescriptor>() {
         public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
+          final boolean e1 = ((IdeaPluginDescriptorImpl)o1).isEnabled();
+          final boolean e2 = ((IdeaPluginDescriptorImpl)o2).isEnabled();
+          if (e1 && !e2) return -1;
+          if (!e1 && e2) return 1;
           return o1.getName().compareTo(o2.getName());
         }
       };
