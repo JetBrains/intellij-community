@@ -37,7 +37,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   protected GroovyPsiElement myPlace;
   protected boolean myForCompletion;
 
-  protected Set<GroovyResolveResult> myCandidates = new HashSet<GroovyResolveResult>();
+  protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
 
   public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, GroovyPsiElement place, boolean forCompletion) {
     myName = name;
