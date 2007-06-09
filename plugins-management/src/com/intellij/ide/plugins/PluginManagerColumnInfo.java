@@ -242,21 +242,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Object descriptor = ((PluginTable)table).getObjectAt(row);
       if (column == COLUMN_NAME) {
-        if (descriptor instanceof IdeaPluginDescriptorImpl) {
-          final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-          if (ideaPluginDescriptor.isDeleted()) {
-            setIcon(IconLoader.getIcon("/actions/clean.png"));
-          }
-          else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
-            setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
-          }
-          else {
-            setIcon(IconLoader.getIcon("/nodes/plugin.png"));
-          }
-        }
-        else {
-          setIcon(IconLoader.getIcon("/nodes/pluginnotinstalled.png"));
-        }
+        setIcon(IconLoader.getIcon("/nodes/pluginnotinstalled.png"));
       }
 
       if (column == COLUMN_DATE) {

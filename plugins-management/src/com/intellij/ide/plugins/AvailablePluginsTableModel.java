@@ -34,7 +34,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
           new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, sortableProvider));
 
     view = new ArrayList<IdeaPluginDescriptor>();
-    sortByColumn(0);
+    sortByColumn(getNameColumn());
   }
 
   public void addData(ArrayList<IdeaPluginDescriptor> list) {
@@ -87,6 +87,10 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   public void clearData() {
     view.clear();
     UpdateVersions.clear();
+  }
+
+  public int getNameColumn() {
+    return 0;
   }
 
 }

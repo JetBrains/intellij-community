@@ -148,15 +148,19 @@ public class PluginTable extends Table {
   }
 
   private static class PluginTableHeaderRenderer extends TableHeaderRenderer {
+    private final PluginTableModel myTabelModel;
+
     public PluginTableHeaderRenderer(final PluginTableModel model) {
       super(model);
+      myTabelModel = model;
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-      JTableHeader header = table.getTableHeader();
-      myLabel.setForeground(column == 0 ? header.getBackground() : header.getForeground());
+      final JTableHeader header = table.getTableHeader();
+      //hide title for plugin name
+      myLabel.setForeground(column == myTabelModel.getNameColumn() ? header.getBackground() : header.getForeground());
       return this;
     }
   }

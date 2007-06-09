@@ -476,7 +476,7 @@ public class PluginManagerMain {
     if (requireShutdown) return true;
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-      if (pluginDescriptor.isEnabled() != ((Boolean)installedPluginsModel.getValueAt(i, 1)).booleanValue()) return true;
+      if (pluginDescriptor.isEnabled() != ((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue()) return true;
     }
     return false;
   }

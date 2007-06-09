@@ -113,4 +113,6 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     final int sortColumn = sortableProvider.getSortColumn();
     sortByColumn(-1 < sortColumn && sortColumn < getColumnCount() ? sortColumn : 0);
   }
+
+  public abstract int getNameColumn();
 }

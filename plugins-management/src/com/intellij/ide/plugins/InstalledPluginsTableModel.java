@@ -1,9 +1,11 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 
@@ -26,7 +28,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
     super.sortableProvider = sortableProvider;
-    super.columns = new ColumnInfo[]{new NameColumnInfo(), new EnabledPluginInfo()};
+    super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
 
     myEnabled.clear();
@@ -38,10 +40,14 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
       if ("com.intellij".equals(s)) iterator.remove();
     }
-    sortByColumn(0);
+    sortByColumn(getNameColumn());
   }
 
   public static int getCheckboxColumn() {
+    return 0;
+  }
+
+  public int getNameColumn() {
     return 1;
   }
 
@@ -121,19 +127,20 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     public Comparator<IdeaPluginDescriptorImpl> getComparator() {
+      final boolean sortDirection = (sortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING);
       return new Comparator<IdeaPluginDescriptorImpl>() {
         public int compare(final IdeaPluginDescriptorImpl o1, final IdeaPluginDescriptorImpl o2) {
           if (o1.isEnabled()) {
             if (o2.isEnabled()) {
               return 0;
             }
-            return -1;
+            return sortDirection ? -1 : 1;
           }
           else {
             if (!o2.isEnabled()) {
               return 0;
             }
-            return 1;
+            return sortDirection ? 1 : -1;
           }
         }
       };
@@ -148,6 +155,16 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
       final DefaultTableCellRenderer cellRenderer = (DefaultTableCellRenderer)super.getRenderer(ideaPluginDescriptor);
       if (cellRenderer != null && ideaPluginDescriptor != null) {
+        final IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)ideaPluginDescriptor;
+        if (descriptor.isDeleted()) {
+          cellRenderer.setIcon(IconLoader.getIcon("/actions/clean.png"));
+        }
+        else if (hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
+          cellRenderer.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
+        }
+        else {
+          cellRenderer.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+        }
         if (myEnabled.get(ideaPluginDescriptor.getPluginId()).booleanValue()) {
           for (PluginId pluginId : ideaPluginDescriptor.getDependentPluginIds()) {
             if (!myEnabled.get(pluginId).booleanValue()) {
