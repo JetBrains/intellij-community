@@ -4,23 +4,21 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myPsiElements;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-  private PackageWrapper myTargetPackage;
   private String myNewParentPackageName;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
@@ -28,13 +26,12 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
 
   public MoveClassesOrPackagesViewDescriptor(PsiElement[] psiElements,
                                              boolean isSearchInComments,
-                                             boolean searchInNonJavaFiles, PackageWrapper newParent
-  ) {
+                                             boolean searchInNonJavaFiles,
+                                             String targetName) {
     myPsiElements = psiElements;
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
-    myTargetPackage = newParent;
-    myNewParentPackageName = MoveClassesOrPackagesUtil.getPackageName(myTargetPackage);
+    myNewParentPackageName = targetName;
     if (psiElements.length == 1) {
       myProcessedElementsHeader = StringUtil.capitalize(
         RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(psiElements[0]), myNewParentPackageName));

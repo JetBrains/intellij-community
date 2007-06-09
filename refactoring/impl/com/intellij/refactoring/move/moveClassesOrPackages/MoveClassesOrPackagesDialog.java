@@ -1,6 +1,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -16,13 +17,16 @@ import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.ClassNameReferenceEditor;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -36,7 +40,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
 
   private JLabel myNameLabel;
-  private JLabel myPromptTo;
   private ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurences;
@@ -47,6 +50,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
   private JPanel myMainPanel;
+  private JLabel myPromptTo;
+  private JRadioButton myToPackageRadioButton;
+  private JRadioButton myMakeInnerClassOfRadioButton;
+  private ReferenceEditorComboWithBrowseButton myClassPackageChooser;
+  private JPanel myCardPanel;
+  private ReferenceEditorWithBrowseButton myInnerClassChooser;
+  private boolean myHavePackages;
 
   public MoveClassesOrPackagesDialog(Project project,
                                      boolean searchTextOccurences,
@@ -60,7 +70,45 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     setTitle(MoveHandler.REFACTORING_NAME);
     mySearchTextOccurencesEnabled = searchTextOccurences;
 
+    selectInitialCard();
+
     init();
+    updateControlsEnabled();
+    myToPackageRadioButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateControlsEnabled();
+        myClassPackageChooser.requestFocus();
+      }
+    });
+    myMakeInnerClassOfRadioButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateControlsEnabled();
+        myInnerClassChooser.requestFocus();
+      }
+    });
+  }
+
+  private void updateControlsEnabled() {
+    myClassPackageChooser.setEnabled(myToPackageRadioButton.isSelected());
+    myInnerClassChooser.setEnabled(myMakeInnerClassOfRadioButton.isSelected());
+    myCbMoveToAnotherSourceFolder.setEnabled(isMoveToPackage());
+  }
+
+  private void selectInitialCard() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      myHavePackages = false;
+      for (PsiElement psiElement : myElementsToMove) {
+        if (!(psiElement instanceof PsiClass)) {
+          myHavePackages = true;
+          break;
+        }
+      }
+    }
+    else {
+      myHavePackages = true;
+    }
+    CardLayout cardLayout = (CardLayout) myCardPanel.getLayout();
+    cardLayout.show(myCardPanel, myHavePackages ? "Package" : "Class");
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -72,37 +120,49 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private void createUIComponents() {
-    myWithBrowseButtonReference = new ReferenceEditorComboWithBrowseButton(null, "", PsiManager.getInstance(myProject),
-                                                                           false, RECENTS_KEY);
+    myWithBrowseButtonReference = createPackageChooser();
+    myClassPackageChooser = createPackageChooser();
+
+    myInnerClassChooser = new ClassNameReferenceEditor(PsiManager.getInstance(myProject), null);
+    myInnerClassChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
+        validateOKButton();
+      }
+    });
   }
 
-  protected JComponent createNorthPanel() {
-    myWithBrowseButtonReference.addActionListener(
+  private ReferenceEditorComboWithBrowseButton createPackageChooser() {
+    final ReferenceEditorComboWithBrowseButton packageChooser =
+      new ReferenceEditorComboWithBrowseButton(null, "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
+    packageChooser.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
-          chooser.selectPackage(myWithBrowseButtonReference.getText());
+          chooser.selectPackage(packageChooser.getText());
           chooser.show();
           PsiPackage aPackage = chooser.getSelectedPackage();
           if (aPackage != null) {
-            myWithBrowseButtonReference.setText(aPackage.getQualifiedName());
+            packageChooser.setText(aPackage.getQualifiedName());
             validateOKButton();
           }
         }
       }
     );
+    packageChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
+        validateOKButton();
+      }
+    });
 
+    return packageChooser;
+  }
+
+  protected JComponent createNorthPanel() {
     if (!mySearchTextOccurencesEnabled) {
       myCbSearchTextOccurences.setEnabled(false);
       myCbSearchTextOccurences.setVisible(false);
       myCbSearchTextOccurences.setSelected(false);
     }
-
-    myWithBrowseButtonReference.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      public void documentChanged(DocumentEvent e) {
-        validateOKButton();
-      }
-    });
 
     return myMainPanel;
   }
@@ -141,6 +201,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                           RefactoringBundle.message("move.specified.classes") :
                           RefactoringBundle.message("move.specified.packages"));
     }
+    selectInitialCard();
 
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
@@ -166,14 +227,31 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private void validateOKButton() {
-    String name = myWithBrowseButtonReference.getText().trim();
-    if (name.length() == 0) {
-      setOKActionEnabled(true);
+    if (isMoveToPackage()) {
+      String name = getTargetPackage().trim();
+      if (name.length() == 0) {
+        setOKActionEnabled(true);
+      }
+      else {
+        setOKActionEnabled(myManager.getNameHelper().isQualifiedName(name));
+      }
     }
     else {
-      PsiManager manager = myManager;
-      setOKActionEnabled(manager.getNameHelper().isQualifiedName(name));
+      setOKActionEnabled(findTargetClass() != null);
     }
+  }
+
+  private PsiClass findTargetClass() {
+    String name = myInnerClassChooser.getText().trim();
+    return myManager.findClass(name, myProject.getProjectScope());
+  }
+
+  private boolean isMoveToPackage() {
+    return myHavePackages || myToPackageRadioButton.isSelected();
+  }
+
+  private String getTargetPackage() {
+    return myHavePackages ? myWithBrowseButtonReference.getText() : myClassPackageChooser.getText();
   }
 
   private static String verifyDestinationForElement(final PsiElement element, final MoveDestination moveDestination) {
@@ -191,16 +269,19 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
+    if (isMoveToPackage()) {
+      invokeMoveToPackage();
+    }
+    else {
+      invokeMoveToInner();
+    }
+  }
+
+  private void invokeMoveToPackage() {
     final MoveDestination destination = selectDestination();
     if (destination == null) return;
 
-    RefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
-
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
-    final boolean searchInComments = isSearchInComments();
-    final boolean searchForTextOccurences = isSearchInNonJavaFiles();
-    refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
-    refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
+    saveRefactoringSettings();
     PsiManager manager = PsiManager.getInstance(getProject());
     for (final PsiElement element : myElementsToMove) {
       String message = verifyDestinationForElement(element, destination);
@@ -230,10 +311,11 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       }
 
       invokeRefactoring(new MoveClassesOrPackagesProcessor(
-        getProject(),
+        myProject,
         myElementsToMove,
-        destination, searchInComments,
-        searchForTextOccurences,
+        destination,
+        isSearchInComments(),
+        isSearchInNonJavaFiles(),
         myMoveCallback));
     }
     catch (IncorrectOperationException e) {
@@ -242,12 +324,30 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
   }
 
+  private void saveRefactoringSettings() {
+    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final boolean searchInComments = isSearchInComments();
+    final boolean searchForTextOccurences = isSearchInNonJavaFiles();
+    refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
+    refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
+    refactoringSettings.MOVE_PREVIEW_USAGES = isPreviewUsages();
+  }
+
+  private void invokeMoveToInner() {
+    saveRefactoringSettings();
+    PsiClass targetClass = findTargetClass();
+    for (PsiElement elementsToMove : myElementsToMove) {
+      invokeRefactoring(new MoveClassToInnerProcessor(myProject, (PsiClass)elementsToMove,
+                                                      targetClass, isSearchInComments(), isSearchInNonJavaFiles()));
+    }
+  }
+
   public boolean isSearchInNonJavaFiles() {
     return myCbSearchTextOccurences.isSelected();
   }
 
   private MoveDestination selectDestination() {
-    final String packageName = myWithBrowseButtonReference.getText().trim();
+    final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !myManager.getNameHelper().isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject,
                                RefactoringBundle.message("please.enter.a.valid.target.package.name"),

@@ -65,8 +65,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
     System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);
-    return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myTargetPackage
-    );
+    return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles,
+                                                   MoveClassesOrPackagesUtil.getPackageName(myTargetPackage));
   }
 
   public boolean isSearchInComments() {
@@ -88,14 +88,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
+    MoveClassUsageCollector collector = new MoveClassUsageCollector(myElementsToMove, mySearchInComments, mySearchInNonJavaFiles) {
+      protected String getNewName(final PsiElement element) {
+        return getNewQName(element);
+      }
+    };
+    List<UsageInfo> allUsages = collector.collectUsages();
     ArrayList<String> conflicts = new ArrayList<String>();
-    for (PsiElement element : myElementsToMove) {
-      String newName = getNewQName(element);
-      final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
-                                                                      mySearchInNonJavaFiles, newName);
-      allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
-    }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts,
                                              allUsages.toArray(new UsageInfo[allUsages.size()]));
     final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
@@ -441,25 +440,31 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
-      for (UsageInfo usage : usages) {
-        if (usage instanceof NonCodeUsageInfo) {
-          nonCodeUsages.add((NonCodeUsageInfo)usage);
-        } else if (usage instanceof MoveRenameUsageInfo) {
-          final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
-          final PsiElement oldElement = moveRenameUsage.getReferencedElement();
-          final PsiElement newElement = oldToNewElementsMapping.get(oldElement);
-          LOG.assertTrue(newElement != null);
-          final PsiReference reference = moveRenameUsage.getReference();
-          if (reference != null) reference.bindToElement(newElement);
-        }
-      }
+      List<NonCodeUsageInfo> nonCodeUsages = retargetUsages(usages, oldToNewElementsMapping);
       myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];
       RefactoringUtil.processIncorrectOperation(myProject, e);
     }
+  }
+
+  public static List<NonCodeUsageInfo> retargetUsages(final UsageInfo[] usages, final Map<PsiElement, PsiElement> oldToNewElementsMapping)
+    throws IncorrectOperationException {
+    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+    for (UsageInfo usage : usages) {
+      if (usage instanceof NonCodeUsageInfo) {
+        nonCodeUsages.add((NonCodeUsageInfo)usage);
+      } else if (usage instanceof MoveRenameUsageInfo) {
+        final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
+        final PsiElement oldElement = moveRenameUsage.getReferencedElement();
+        final PsiElement newElement = oldToNewElementsMapping.get(oldElement);
+        LOG.assertTrue(newElement != null);
+        final PsiReference reference = moveRenameUsage.getReference();
+        if (reference != null) reference.bindToElement(newElement);
+      }
+    }
+    return nonCodeUsages;
   }
 
   protected void performPsiSpoilingRefactoring() {
