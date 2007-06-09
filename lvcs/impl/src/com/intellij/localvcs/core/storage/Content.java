@@ -1,8 +1,6 @@
 package com.intellij.localvcs.core.storage;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class Content {
   private Storage myStorage;
@@ -33,16 +31,6 @@ public class Content {
 
   private byte[] getBytesUnsafe() throws IOException {
     return myStorage.loadContentData(myId);
-  }
-
-  public int getLength() {
-    // todo make it faster!!!
-    return getBytes().length;
-  }
-
-  public InputStream getInputStream() {
-    // todo make it faster!!!
-    return new ByteArrayInputStream(getBytes());
   }
 
   public boolean isAvailable() {

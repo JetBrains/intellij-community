@@ -4,17 +4,11 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.core.ILocalVcs;
-import com.intellij.localvcs.core.storage.Content;
-import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import org.jetbrains.annotations.Nullable;
 
 public class LocalHistoryService {
   private ILocalVcs myVcs;
@@ -25,9 +19,8 @@ public class LocalHistoryService {
   private VirtualFileManagerEx myFileManager;
   private CommandProcessor myCommandProcessor;
 
-  private EventDispatcher myEventDispatcher;
   private CacheUpdater myCacheUpdater;
-  private FileContentProvider myFileContentProvider;
+  private EventDispatcher myEventDispatcher;
 
   public LocalHistoryService(ILocalVcs vcs,
                              IdeaGateway gw,
@@ -42,62 +35,32 @@ public class LocalHistoryService {
     myFileManager = fm;
     myCommandProcessor = cp;
 
-    registerStartupActivity();
-    subscribeForRootChanges();
+    registerCacheUpdaters();
+    registerListeners();
   }
 
-  public void shutdown() {
-    myFileManager.unregisterFileContentProvider(myFileContentProvider);
-    myFileManager.removeVirtualFileManagerListener(myEventDispatcher);
-    myCommandProcessor.removeCommandListener(myEventDispatcher);
-    myRootManager.unregisterChangeUpdater(myCacheUpdater);
-  }
+  private void registerCacheUpdaters() {
+    myCacheUpdater = new CacheUpdaterAdaptor();
 
-  private void registerStartupActivity() {
     FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
-    fs.registerCacheUpdater(new CacheUpdaterAdaptor(new Runnable() {
-      public void run() {
-        registerListenersAndContentProvider();
-      }
-    }));
-  }
-
-  private void subscribeForRootChanges() {
-    myCacheUpdater = new CacheUpdaterAdaptor(null);
+    fs.registerCacheUpdater(myCacheUpdater);
     myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
-  private void registerListenersAndContentProvider() {
+  private void registerListeners() {
     myEventDispatcher = new EventDispatcher(myVcs, myGateway);
-    myFileContentProvider = new FileContentProvider() {
-      public VirtualFile[] getCoveredDirectories() {
-        return myRootManager.getContentRoots();
-      }
 
-      @Nullable
-      public ProvidedContent getProvidedContent(VirtualFile f) {
-        return getProvidedContentFor(f);
-      }
-
-      public VirtualFileListener getVirtualFileListener() {
-        return myEventDispatcher;
-      }
-    };
-
-    // todo check the order of vfm-listener
     myCommandProcessor.addCommandListener(myEventDispatcher);
+    myFileManager.addVirtualFileListener(myEventDispatcher);
     myFileManager.addVirtualFileManagerListener(myEventDispatcher);
-    myFileManager.registerFileContentProvider(myFileContentProvider);
   }
 
-  private ProvidedContent getProvidedContentFor(VirtualFile f) {
-    if (!getFileFilter().isAllowedAndUnderContentRoot(f)) return null;
+  public void shutdown() {
+    myFileManager.removeVirtualFileListener(myEventDispatcher);
+    myFileManager.removeVirtualFileManagerListener(myEventDispatcher);
+    myCommandProcessor.removeCommandListener(myEventDispatcher);
 
-    Entry e = myVcs.findEntry(f.getPath());
-    if (e == null) return null;
-
-    Content c = e.getContent();
-    return c.isAvailable() ? new EntryProvidedContent(c) : null;
+    myRootManager.unregisterChangeUpdater(myCacheUpdater);
   }
 
   public LocalHistoryAction startAction(String name) {
@@ -106,20 +69,13 @@ public class LocalHistoryService {
     return a;
   }
 
-  private FileFilter getFileFilter() {
-    return myGateway.getFileFilter();
-  }
-
+  // todo only needed because we should calculate content roots each time
+  // todo try to remove this class
   private class CacheUpdaterAdaptor implements CacheUpdater {
     private Updater myUpdater;
-    private Runnable myOnFinishTask;
-
-    protected CacheUpdaterAdaptor(Runnable onFinishTask) {
-      myOnFinishTask = onFinishTask;
-    }
 
     public VirtualFile[] queryNeededFiles() {
-      myUpdater = new Updater(myVcs, getFileFilter(), myRootManager.getContentRoots());
+      myUpdater = new Updater(myVcs, myGateway.getFileFilter(), myRootManager.getContentRoots());
       return myUpdater.queryNeededFiles();
     }
 
@@ -129,7 +85,6 @@ public class LocalHistoryService {
 
     public void updatingDone() {
       myUpdater.updatingDone();
-      if (myOnFinishTask != null) myOnFinishTask.run();
     }
 
     public void canceled() {

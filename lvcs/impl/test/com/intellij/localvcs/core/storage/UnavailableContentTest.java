@@ -9,11 +9,6 @@ public class UnavailableContentTest extends LocalVcsTestCase {
     new UnavailableContent().getBytes();
   }
 
-  @Test(expected = RuntimeException.class)
-  public void testLengthThrowsException() {
-    new UnavailableContent().getLength();
-  }
-
   @Test
   public void testDoesNotEqualToAnyOtherContent() {
     final UnavailableContent u = new UnavailableContent();

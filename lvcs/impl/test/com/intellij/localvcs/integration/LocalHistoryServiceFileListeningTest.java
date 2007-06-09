@@ -30,7 +30,7 @@ public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTes
   }
 
   @Test
-  public void testUnsubscribingFromFileRefreshEventsOnShutdown() {
+  public void testUnsubscribingFromFileManagerRefreshEventsOnShutdown() {
     assertTrue(fileManager.hasVirtualFileManagerListener());
     service.shutdown();
     assertFalse(fileManager.hasVirtualFileManagerListener());
@@ -38,7 +38,9 @@ public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTes
 
   @Test
   public void testUnsubscribingFromFileManagerOnShutdown() {
+    assertTrue(fileManager.hasVirtualFileListener());
     service.shutdown();
+    assertFalse(fileManager.hasVirtualFileListener());
 
     VirtualFile f = new TestVirtualFile("file", null, -1);
     fileManager.fireFileCreated(f);

@@ -12,7 +12,6 @@ import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -109,8 +108,8 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   }
 
   protected class MyVirtualFileManagerEx extends StubVirtualFileManagerEx {
+    private VirtualFileListener myFileListener;
     private VirtualFileManagerListener myFileManagerListener;
-    private FileContentProvider myProvider;
 
     public void fireBeforeRefreshStart(boolean async) {
       myFileManagerListener.beforeRefreshStart(async);
@@ -121,31 +120,41 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     }
 
     public void fireFileCreated(VirtualFile f) {
-      if (getListener() != null) {
-        getListener().fileCreated(new VirtualFileEvent(null, f, null, null));
+      if (hasVirtualFileListener()) {
+        myFileListener.fileCreated(new VirtualFileEvent(null, f, null, null));
       }
     }
 
     public void fireContentChanged(VirtualFile f) {
-      if (getListener() != null) {
-        getListener().contentsChanged(new VirtualFileEvent(null, f, null, null));
+      if (hasVirtualFileListener()) {
+        myFileListener.contentsChanged(new VirtualFileEvent(null, f, null, null));
       }
     }
 
     public void firePropertyChanged(VirtualFile f, String property, String oldValue) {
-      if (getListener() != null) {
-        getListener().propertyChanged(new VirtualFilePropertyEvent(null, f, property, oldValue, null));
+      if (hasVirtualFileListener()) {
+        myFileListener.propertyChanged(new VirtualFilePropertyEvent(null, f, property, oldValue, null));
       }
     }
 
     public void fireFileDeletion(VirtualFile f) {
-      if (getListener() != null) {
-        getListener().fileDeleted(new VirtualFileEvent(null, f, null, null));
+      if (hasVirtualFileListener()) {
+        myFileListener.fileDeleted(new VirtualFileEvent(null, f, null, null));
       }
     }
 
-    private VirtualFileListener getListener() {
-      return myProvider == null ? null : myProvider.getVirtualFileListener();
+    @Override
+    public void addVirtualFileListener(VirtualFileListener l) {
+      myFileListener = l;
+    }
+
+    @Override
+    public void removeVirtualFileListener(VirtualFileListener l) {
+      if (myFileListener == l) myFileListener = null;
+    }
+
+    public boolean hasVirtualFileListener() {
+      return myFileListener != null;
     }
 
     @Override
@@ -160,24 +169,6 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
 
     public boolean hasVirtualFileManagerListener() {
       return myFileManagerListener != null;
-    }
-
-    @Override
-    public void registerFileContentProvider(FileContentProvider p) {
-      myProvider = p;
-    }
-
-    @Override
-    public void unregisterFileContentProvider(FileContentProvider p) {
-      if (myProvider == p) myProvider = null;
-    }
-
-    public boolean hasFileContentProvider() {
-      return myProvider != null;
-    }
-
-    public FileContentProvider getFileContentProvider() {
-      return myProvider;
     }
   }
 

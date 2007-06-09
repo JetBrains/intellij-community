@@ -21,11 +21,6 @@ public class UnavailableContent extends Content {
   }
 
   @Override
-  public int getLength() {
-    throw new RuntimeException();
-  }
-
-  @Override
   public boolean isAvailable() {
     return false;
   }
