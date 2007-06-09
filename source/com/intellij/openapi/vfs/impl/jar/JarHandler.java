@@ -208,7 +208,7 @@ public class JarHandler implements FileSystemInterface {
     ZipFile zip = myZipFile.get();
     if (zip == null) {
       try {
-        zip = new ZipFile(getMirrorFile(new File(myBasePath)));
+        zip = new ZipFile(getMirrorFile(getOriginalFile()));
         myZipFile = new SoftReference<ZipFile>(zip);
       }
       catch (IOException e) {
@@ -217,6 +217,10 @@ public class JarHandler implements FileSystemInterface {
     }
 
     return zip;
+  }
+
+  private File getOriginalFile() {
+    return new File(myBasePath);
   }
 
   @Nullable
@@ -307,7 +311,7 @@ public class JarHandler implements FileSystemInterface {
   public boolean exists(final VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) {
       // Optimization. Do not build entries if asked for jar root existence.
-      return getZip() != null;
+      return myZipFile.get() != null || getOriginalFile().exists();
     }
 
     return getEntryInfo(fileOrDirectory) != null;
