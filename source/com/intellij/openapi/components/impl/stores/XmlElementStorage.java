@@ -88,23 +88,26 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     final Document document = loadDocument();
 
     if (document != null) {
-      final Element rootElement = document.getRootElement();
-
-      if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.expandPaths(rootElement);
-      }
-
-      JDOMUtil.internElement(rootElement, ourInterner);
-
-      try {
-        result.load(rootElement);
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
+      loadState(result, document.getRootElement());
     }
 
     return result;
+  }
+
+  private void loadState(final StorageData result, final Element element) throws StateStorageException {
+
+    if (myPathMacroSubstitutor != null) {
+      myPathMacroSubstitutor.expandPaths(element);
+    }
+
+    JDOMUtil.internElement(element, ourInterner);
+
+    try {
+      result.load(element);
+    }
+    catch (IOException e) {
+      throw new StateStorageException(e);
+    }
   }
 
   protected StorageData createStorageData() {
@@ -114,10 +117,10 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   public void setDefaultState(final Element element) {
     myLoadedData = createStorageData();
     try {
-      myLoadedData.load(element);
+      loadState(myLoadedData, element);
     }
-    catch (IOException e) {
-      throw new IllegalArgumentException(e);
+    catch (StateStorageException e) {
+      LOG.error(e);
     }
   }
 
