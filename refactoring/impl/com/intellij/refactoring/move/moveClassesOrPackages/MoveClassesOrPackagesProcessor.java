@@ -88,13 +88,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    MoveClassUsageCollector collector = new MoveClassUsageCollector(myElementsToMove, mySearchInComments, mySearchInNonJavaFiles) {
-      protected String getNewName(final PsiElement element) {
-        return getNewQName(element);
-      }
-    };
-    List<UsageInfo> allUsages = collector.collectUsages();
+    List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
     ArrayList<String> conflicts = new ArrayList<String>();
+    for (PsiElement element : myElementsToMove) {
+      String newName = getNewQName(element);
+      final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
+                                                                      mySearchInNonJavaFiles, newName);
+      allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
+    }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts,
                                              allUsages.toArray(new UsageInfo[allUsages.size()]));
     final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);

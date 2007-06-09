@@ -49,13 +49,11 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageInfo[] findUsages() {
-    MoveClassUsageCollector collector = new MoveClassUsageCollector(new PsiElement[] { myClassToMove }, mySearchInComments, mySearchInNonJavaFiles) {
-      protected String getNewName(final PsiElement element) {
-        return myTargetClass.getQualifiedName() + "." + ((PsiClass) element).getName();
-      }
-    };
-    List<UsageInfo> usages = collector.collectUsages();
+  public UsageInfo[] findUsages() {
+    List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    String newName = myTargetClass.getQualifiedName() + "." + myClassToMove.getName();
+    Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(myClassToMove, mySearchInComments,
+                                                                    mySearchInNonJavaFiles, newName));
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       if (!(usageInfo instanceof NonCodeUsageInfo) && PsiTreeUtil.isAncestor(myClassToMove, usageInfo.getElement(), false)) {
