@@ -299,9 +299,10 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
     vcs.createDirectory("dir");
     vcs.createFile("file", null, -1);
 
-    VirtualFile dir = new TestVirtualFile("dir", null, -1);
-    VirtualFile f = new TestVirtualFile("file", null, -1);
-    fireDeleted(f, dir);
+    TestVirtualFile dir = new TestVirtualFile("dir", null, -1);
+    TestVirtualFile f = new TestVirtualFile("file", null, -1);
+    dir.addChild(f);
+    fireDeletion(f);
 
     assertTrue(vcs.hasEntry("dir"));
     assertFalse(vcs.hasEntry("dir/file"));
@@ -311,8 +312,7 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   public void testDeletionWithoutParent() {
     vcs.createFile("file", null, -1);
 
-    VirtualFile f = new TestVirtualFile("file", null, -1);
-    fireDeleted(f, null);
+    fireDeletion(new TestVirtualFile("file", null, -1));
 
     assertFalse(vcs.hasEntry("file"));
   }
@@ -320,7 +320,7 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   @Test
   public void testDeletionOfFileThanIsNotUnderVcsDoesNotThrowException() {
     VirtualFile f = new TestVirtualFile("non-existent", null, -1);
-    fireDeleted(f, null); // should'n throw
+    fireDeletion(f); // should'n throw
   }
 
   @Test

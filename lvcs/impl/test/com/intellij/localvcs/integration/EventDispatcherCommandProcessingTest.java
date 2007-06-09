@@ -28,7 +28,7 @@ public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCas
     d.commandStarted(null);
     TestVirtualFile f = new TestVirtualFile("f", "a", -1);
     fireCreated(f);
-    fireDeleted(f, null);
+    fireDeletion(f);
     fireCreated(new TestVirtualFile("f", "b", -1));
     d.commandFinished(createCommandEvent(null));
 

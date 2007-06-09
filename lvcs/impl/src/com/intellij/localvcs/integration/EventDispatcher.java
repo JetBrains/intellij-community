@@ -113,15 +113,8 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   @Override
-  public void fileDeleted(VirtualFileEvent e) {
-    VirtualFile f;
-    if (e.getParent() == null) {
-      f = e.getFile();
-    }
-    else {
-      f = new ReparentedVirtualFile(e.getParent(), e.getFile());
-    }
-
+  public void beforeFileDeletion(VirtualFileEvent e) {
+    VirtualFile f = e.getFile();
     if (!myVcs.hasEntry(f.getPath())) return;
     myState.delete(f);
   }

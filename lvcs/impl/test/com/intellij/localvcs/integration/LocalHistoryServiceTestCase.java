@@ -140,7 +140,7 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
 
     public void fireFileDeletion(VirtualFile f) {
       if (hasVirtualFileListener()) {
-        myFileListener.fileDeleted(new VirtualFileEvent(null, f, null, null));
+        myFileListener.beforeFileDeletion(new VirtualFileEvent(null, f, null, null));
       }
     }
 
