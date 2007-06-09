@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class IdeaGateway {
@@ -31,7 +32,7 @@ public class IdeaGateway {
   }
 
   protected FileFilter createFileFilter() {
-    FileIndex fi = ProjectRootManager.getInstance(myProject).getFileIndex();
+    FileIndex fi = getRootManager().getFileIndex();
     FileTypeManager tm = FileTypeManager.getInstance();
     return new FileFilter(fi, tm);
   }
@@ -43,6 +44,14 @@ public class IdeaGateway {
   // todo get rid of file filter
   public FileFilter getFileFilter() {
     return myFileFilter;
+  }
+
+  public List<VirtualFile> getContentRoots() {
+    return Arrays.asList(getRootManager().getContentRoots());
+  }
+
+  private ProjectRootManager getRootManager() {
+    return ProjectRootManager.getInstance(myProject);
   }
 
   public boolean askForProceed(String s) {

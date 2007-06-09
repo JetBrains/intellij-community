@@ -160,7 +160,9 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   }
 
   private void updateFrom(VirtualFile root) {
-    Updater u = new Updater(vcs, new TestIdeaGateway(), root);
+    TestIdeaGateway gw = new TestIdeaGateway();
+    gw.setContentRoots(root);
+    Updater u = new Updater(vcs, gw);
     CacheUpdaterHelper.performUpdate(u);
   }
 }

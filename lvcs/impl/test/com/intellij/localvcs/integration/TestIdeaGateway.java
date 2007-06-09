@@ -6,15 +6,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestIdeaGateway extends IdeaGateway {
   private String myPhysicalContent;
   private List<MyDocument> myUnsavedDocuments = new ArrayList<MyDocument>();
   private Map<String, FileType> myFileTypes = new HashMap<String, FileType>();
+  private List<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
 
   public TestIdeaGateway() {
     super(null);
@@ -27,6 +25,15 @@ public class TestIdeaGateway extends IdeaGateway {
 
   public void setFileFilter(FileFilter f) {
     myFileFilter = f;
+  }
+
+  @Override
+  public List<VirtualFile> getContentRoots() {
+    return myContentRoots;
+  }
+
+  public void setContentRoots(VirtualFile... roots) {
+    myContentRoots = Arrays.asList(roots);
   }
 
   @Override

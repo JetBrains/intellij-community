@@ -64,6 +64,12 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     return new TestLocalVcs();
   }
 
+  private void doUpdateRoots(CacheUpdater u) {
+    gateway.setContentRoots(roots.toArray(new VirtualFile[0]));
+    CacheUpdaterHelper.performUpdate(u);
+  }
+
+
   protected class MyStartupManager extends StubStartupManagerEx {
     private CacheUpdater myUpdater;
 
@@ -78,17 +84,12 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     }
 
     public void synchronizeFileSystem() {
-      CacheUpdaterHelper.performUpdate(myUpdater);
+      doUpdateRoots(myUpdater);
     }
   }
 
   protected class MyProjectRootManagerEx extends StubProjectRootManagerEx {
     private CacheUpdater myUpdater;
-
-    @Override
-    public VirtualFile[] getContentRoots() {
-      return roots.toArray(new VirtualFile[0]);
-    }
 
     @Override
     public void registerChangeUpdater(CacheUpdater u) {
@@ -102,7 +103,7 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
 
     public void updateRoots() {
       if (myUpdater != null) {
-        CacheUpdaterHelper.performUpdate(myUpdater);
+        doUpdateRoots(myUpdater);
       }
     }
   }

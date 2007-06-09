@@ -22,13 +22,13 @@ public class Updater implements CacheUpdater {
   private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
   private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
 
-  public Updater(ILocalVcs vcs, IdeaGateway gw, VirtualFile... roots) {
+  public Updater(ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
-    myVfsRoots = selectSortParentlessRoots(roots);
+    myVfsRoots = selectSortParentlessRoots(gw.getContentRoots());
   }
 
-  private VirtualFile[] selectSortParentlessRoots(VirtualFile... roots) {
+  private VirtualFile[] selectSortParentlessRoots(List<VirtualFile> roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile r : roots) {
       if (parentIsNotUnderContentRoot(r)) result.add(r);

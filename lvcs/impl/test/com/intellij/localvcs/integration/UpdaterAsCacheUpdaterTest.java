@@ -21,7 +21,9 @@ public class UpdaterAsCacheUpdaterTest extends LocalVcsTestCase {
     file = new TestVirtualFile("file", "new content", 1L);
     root.addChild(file);
 
-    updater = new Updater(vcs, new TestIdeaGateway(), root);
+    TestIdeaGateway gw = new TestIdeaGateway();
+    gw.setContentRoots(root);
+    updater = new Updater(vcs, gw);
   }
 
   @Test

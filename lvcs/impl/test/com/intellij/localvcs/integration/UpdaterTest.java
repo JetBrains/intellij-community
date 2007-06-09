@@ -484,7 +484,12 @@ public class UpdaterTest extends LocalVcsTestCase {
   private String myPhysicalContent;
 
   private void updateWith(VirtualFile... roots) {
-    Updater u = new Updater(vcs, gw, roots);
+    gw.setContentRoots(roots);
+    doUpdate();
+  }
+
+  private void doUpdate() {
+    Updater u = new Updater(vcs, gw);
     CacheUpdaterHelper.performUpdate(u, myPhysicalContent);
   }
 
