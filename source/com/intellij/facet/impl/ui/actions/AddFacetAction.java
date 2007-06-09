@@ -20,8 +20,8 @@ import java.util.Collection;
 */
 public class AddFacetAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetAction");
-  private FacetEditorFacade myEditor;
-  private FacetType myType;
+  private final FacetEditorFacade myEditor;
+  private final FacetType myType;
 
   public AddFacetAction(final FacetEditorFacade editor, final FacetType type) {
     super(type.getPresentableName(), null, type.getIcon());
@@ -36,7 +36,7 @@ public class AddFacetAction extends AnAction {
 
     FacetInfo parent = myEditor.getSelectedFacetInfo();
     final Collection<FacetInfo> facetInfos = myEditor.getFacetsByType(myType);
-    String facetName = myType.getPresentableName();
+    String facetName = myType.getDefaultFacetName();
     int i = 2;
     while (facetExists(facetName, facetInfos)) {
       facetName = myType.getPresentableName() + i;

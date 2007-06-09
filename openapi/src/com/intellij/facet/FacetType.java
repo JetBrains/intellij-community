@@ -18,10 +18,10 @@ import javax.swing.*;
  * @see com.intellij.facet.FacetTypeRegistry#registerFacetType(FacetType) 
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
-  private @NotNull FacetTypeId<F> myId;
-  private String myStringId;
-  private String myPresentableName;
-  private @Nullable FacetTypeId myUnderlyingFacetType;
+  private final @NotNull FacetTypeId<F> myId;
+  private final @NotNull String myStringId;
+  private final @NotNull String myPresentableName;
+  private final @Nullable FacetTypeId myUnderlyingFacetType;
 
   public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName, final @Nullable FacetTypeId underlyingFacetType) {
     myId = id;
@@ -40,11 +40,18 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myId;
   }
 
+  @NotNull
   public final String getStringId() {
     return myStringId;
   }
 
+  @NotNull
   public final String getPresentableName() {
+    return myPresentableName;
+  }
+
+  @NotNull @NonNls
+  public String getDefaultFacetName() {
     return myPresentableName;
   }
 
@@ -53,10 +60,6 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myUnderlyingFacetType;
   }
 
-  @Nullable
-  public FacetDetectingProcessor createFacetDetectingProcessor() {
-    return null;
-  }
 
   public abstract C createDefaultConfiguration();
 
