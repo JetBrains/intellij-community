@@ -112,7 +112,8 @@
 <!ATTLIST keyboard-shortcut
     first-keystroke CDATA #REQUIRED
     second-keystroke CDATA #IMPLIED
-    keymap CDATA #REQUIRED>
+    keymap CDATA #REQUIRED
+    use-shortcut-of CDATA #IMPLIED>
 <!ELEMENT mouse-shortcut EMPTY>
 <!ATTLIST mouse-shortcut
     keystroke CDATA #REQUIRED

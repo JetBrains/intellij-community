@@ -26,8 +26,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,10 @@ public class OpenFileDescriptor implements Navigatable {
 
   public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int offset) {
     this(project, file, -1, -1, offset);
+  }
+
+  public OpenFileDescriptor(@NotNull PsiElement psiElement) {
+    this(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
   }
 
   public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col) {
