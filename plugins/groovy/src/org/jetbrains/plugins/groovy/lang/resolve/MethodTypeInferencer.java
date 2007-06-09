@@ -33,15 +33,20 @@ public class MethodTypeInferencer {
       }
     }
 
+    boolean isVoid = returns.size() == 0;
+
     GrStatement[] statements = body.getStatements();
     if (statements.length > 0) {
       GrStatement last = statements[statements.length - 1];
       if (last instanceof GrExpression) {
         result = upperBound(((GrExpression) last).getType(), result, manager);
+        isVoid = false;
       }
     }
 
     method.putCopyableUserData(ResolveUtil.IS_BEING_RESOLVED, null);
+    if (isVoid) return PsiType.VOID;
+    
     return result;
   }
 

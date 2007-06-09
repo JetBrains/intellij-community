@@ -41,21 +41,23 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
   public PsiType getType() {
     IElementType elemType = getFirstChild().getNode().getElementType();
     if (elemType == GroovyTokenTypes.mGSTRING_LITERAL || elemType == GroovyTokenTypes.mSTRING_LITERAL) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+      return getTypeByFQName("java.lang.String");
     } else if (elemType == GroovyTokenTypes.mNUM_INT) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
+      return getTypeByFQName("java.lang.Integer");
     } else if (elemType == GroovyTokenTypes.mNUM_LONG) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Long", getResolveScope());
+      return getTypeByFQName("java.lang.Long");
     } else if (elemType == GroovyTokenTypes.mNUM_FLOAT) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Float", getResolveScope());
+      return getTypeByFQName("java.lang.Float");
     } else if (elemType == GroovyTokenTypes.mNUM_DOUBLE) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Double", getResolveScope());
+      return getTypeByFQName("java.lang.Double");
     } else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.math.BigInteger", getResolveScope());
+      return getTypeByFQName("java.math.BigInteger");
     } else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.math.BigDecimal", getResolveScope());
+      return getTypeByFQName("java.math.BigDecimal");
     } else if (elemType == GroovyTokenTypes.kFALSE || elemType == GroovyTokenTypes.kTRUE) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
+      return getTypeByFQName("java.lang.Boolean");
+    }  else if (elemType == GroovyTokenTypes.kNULL) {
+      return getTypeByFQName("groovy.lang.GroovyObjectSupport");
     }
 
     return null;
