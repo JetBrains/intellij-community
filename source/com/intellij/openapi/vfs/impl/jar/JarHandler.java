@@ -231,6 +231,7 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public long getCRC(final VirtualFile file) {
+    if (file.getParent() == null) return -1L; // Optimization
     lock.lock();
     try {
       final ZipEntry entry = convertToEntry(file);
@@ -278,6 +279,7 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public long getTimeStamp(final VirtualFile file) {
+    if (file.getParent() == null) return -1L; // Optimization
     lock.lock();
     try {
       final ZipEntry entry = convertToEntry(file);
@@ -289,6 +291,8 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public boolean isDirectory(final VirtualFile file) {
+    if (file.getParent() == null) return true; // Optimization
+
     lock.lock();
     try {
       String path = getRelativePath(file);
