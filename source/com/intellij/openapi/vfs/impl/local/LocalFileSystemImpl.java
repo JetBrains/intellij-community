@@ -222,10 +222,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
     manager.fireBeforeRefreshStart(false);
 
+    List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
+
     for (File file : files) {
       final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
-      if (virtualFile != null) virtualFile.refresh(false, false);
+      if (virtualFile != null) {
+        filesToRefresh.add(virtualFile);
+      }
     }
+
+    RefreshQueue.getInstance().refresh(false, false, null, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
     
     manager.fireAfterRefreshFinish(false);
   }
