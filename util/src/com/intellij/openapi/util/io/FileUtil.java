@@ -570,7 +570,6 @@ public class FileUtil {
    * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
    * @see com.intellij.openapi.util.io.FileUtil#toSystemIndependentName
    */
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   public static String convertAntToRegexp(String antPattern) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
