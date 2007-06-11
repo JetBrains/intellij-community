@@ -574,53 +574,54 @@ public class FileUtil {
   public static String convertAntToRegexp(String antPattern) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
+      int asteriskCount = 0;
+      boolean recursive = true;
       for (int idx = (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0; idx < antPattern.length(); idx++) {
         final char ch = antPattern.charAt(idx);
-        switch (ch) {
-          case '[': case ']': case '^': case '$': case '.': case '{': case '}': case '+': case '|':
-            // quote regexp-specific symbols
-            builder.append('\\').append(ch);
-            break;
-
-          case '\\' :
-            builder.append("/");
-            break;
-
-          case '?' :
-            builder.append(".{1}");
-            break;
-
-          case '*' :
-            int asteriskCount = 1;
-            while (++idx < antPattern.length()) {
-              if (antPattern.charAt(idx) != '*') {
-                break;
-              }
-              asteriskCount++;
-            }
-            final boolean isEnd = idx >= antPattern.length();
-            final boolean isSlash = !isEnd && (antPattern.charAt(idx) == '/' || antPattern.charAt(idx) == '\\');
-            if (!isEnd && !isSlash) {
-              idx--; // retract unprocessed
-            }
-            if (asteriskCount == 2 && isSlash) {
-              builder.append("(?:[^/]+/)*?");
-            }
-            else if (asteriskCount == 2 && isEnd) {
-              builder.append(".*");
-            }
-            else {
-              builder.append("[^/]*?");
-              if (isSlash) {
-                builder.append("/"); // do not forget the slash, because it will not be processed on the next iteration
-              }
-            }
-            break;
-
-          default: builder.append(ch);
+        
+        if (ch == '*') {
+          asteriskCount++;
+          continue;
         }
+
+        final boolean foundRecursivePattern = recursive && (asteriskCount == 2) && (ch == '/' || ch == '\\');
+        final boolean asterisksFound = asteriskCount > 0;
+        
+        asteriskCount = 0;
+        recursive = (ch == '/' || ch == '\\');
+        
+        if (foundRecursivePattern) {
+          builder.append("(?:[^/]+/)*?");
+          continue;
+        }
+        
+        if (asterisksFound){
+          builder.append("[^/]*?");
+        }
+                
+        if (ch == '[' || ch == ']' || ch == '^' || ch == '$' || ch == '.' || ch == '{' || ch == '}' || ch == '+' || ch == '|') {
+          // quote regexp-specific symbols
+          builder.append('\\').append(ch);
+          continue;
+        }
+        if (ch == '?') {
+          builder.append(".{1}");
+          continue;
+        }
+        if (ch == '\\') {
+          builder.append('/');
+          continue;
+        }
+        builder.append(ch);
       }
-      if (builder.length() > 0 && builder.charAt(builder.length() - 1) == '/') {
+      
+      if (recursive && asteriskCount == 2) {
+        builder.append(".*");
+      }
+      else if (asteriskCount > 0) {
+        builder.append("[^/]*?");
+      }
+      else if (builder.length() > 0 && builder.charAt(builder.length() - 1) == '/') {
         // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
         builder.append(".*");
       }
