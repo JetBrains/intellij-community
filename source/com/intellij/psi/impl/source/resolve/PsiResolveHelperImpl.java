@@ -85,7 +85,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return ResolveVariableUtil.resolveVariable(psiRef, null, null);
   }
 
-  public boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
+  public boolean isAccessible(PsiMember member, PsiElement place, @Nullable PsiClass accessObjectClass) {
     return isAccessible(member, member.getModifierList(), place, accessObjectClass, null);
   }
 
@@ -93,7 +93,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   public boolean isAccessible(PsiMember member,
                               PsiModifierList modifierList,
                               PsiElement place,
-                              PsiClass accessObjectClass,
+                              @Nullable PsiClass accessObjectClass,
                               final PsiElement currentFileResolveScope) {
     return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
   }

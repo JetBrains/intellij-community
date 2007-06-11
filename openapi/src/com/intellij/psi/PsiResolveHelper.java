@@ -86,9 +86,9 @@ public interface PsiResolveHelper {
   PsiVariable resolveReferencedVariable(String referenceText, PsiElement context);
 
   boolean isAccessible(PsiMember member, PsiModifierList modifierList,
-                       PsiElement place, PsiClass accessObjectClass, final PsiElement currentFileResolveScope);
+                       PsiElement place, @Nullable PsiClass accessObjectClass, final PsiElement currentFileResolveScope);
 
-  boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass);
+  boolean isAccessible(PsiMember member, PsiElement place, @Nullable PsiClass accessObjectClass);
 
   /**
    * @return PsiType.NULL iff no type could be inferred

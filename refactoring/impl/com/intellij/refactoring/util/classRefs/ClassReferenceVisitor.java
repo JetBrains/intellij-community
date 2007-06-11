@@ -3,8 +3,7 @@ package com.intellij.refactoring.util.classRefs;
 import com.intellij.psi.*;
 
 public interface ClassReferenceVisitor {
-  static class TypeOccurence {
-
+  class TypeOccurence {
     public TypeOccurence(PsiElement element, PsiType outermostType) {
       this.element = element;
       this.outermostType = outermostType;

@@ -61,8 +61,20 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-local class <b><code>pack1.Class2</code></b>.");
   }
 
-  public void _testMoveIntoPackageLocalClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack2.A", "will no longer be accessible");
+  public void testMoveIntoPackageLocalClass() throws Exception {
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+  }
+
+  public void testMoveOfPackageLocalClass() throws Exception {
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+  }
+
+  public void testMoveIntoPrivateInnerClass() throws Exception {
+    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+  }
+
+  public void testMoveWithPackageLocalMember() throws Exception {
+    doTestConflicts("pack1.Class1", "pack2.A", "Method <b><code>Class1.doStuff()</code></b> will no longer be accessible from method <b><code>Class2.test()</code></b>");
   }
 
   private void doTest(String[] classNames, String targetClassName) throws Exception{

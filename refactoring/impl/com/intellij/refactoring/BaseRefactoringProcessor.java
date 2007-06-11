@@ -33,9 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public abstract class BaseRefactoringProcessor {
@@ -429,7 +429,7 @@ public abstract class BaseRefactoringProcessor {
     performPsiSpoilingRefactoring();
   }
 
-  protected boolean showConflicts(final ArrayList<String> conflicts) {
+  protected boolean showConflicts(final List<String> conflicts) {
     if (!conflicts.isEmpty() && myPrepareSuccessfulSwingThreadCallback != null) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
