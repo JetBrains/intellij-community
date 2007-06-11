@@ -1,7 +1,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.PackageChooserDialog;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -92,20 +91,16 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myClassPackageChooser.setEnabled(myToPackageRadioButton.isSelected());
     myInnerClassChooser.setEnabled(myMakeInnerClassOfRadioButton.isSelected());
     myCbMoveToAnotherSourceFolder.setEnabled(isMoveToPackage());
+    validateButtons();
   }
 
   private void selectInitialCard() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      myHavePackages = false;
-      for (PsiElement psiElement : myElementsToMove) {
-        if (!(psiElement instanceof PsiClass)) {
-          myHavePackages = true;
-          break;
-        }
+    myHavePackages = false;
+    for (PsiElement psiElement : myElementsToMove) {
+      if (!(psiElement instanceof PsiClass)) {
+        myHavePackages = true;
+        break;
       }
-    }
-    else {
-      myHavePackages = true;
     }
     CardLayout cardLayout = (CardLayout) myCardPanel.getLayout();
     cardLayout.show(myCardPanel, myHavePackages ? "Package" : "Class");
@@ -126,7 +121,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myInnerClassChooser = new ClassNameReferenceEditor(PsiManager.getInstance(myProject), null, myProject.getProjectScope());
     myInnerClassChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
-        validateOKButton();
+        validateButtons();
       }
     });
   }
@@ -143,14 +138,14 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
           PsiPackage aPackage = chooser.getSelectedPackage();
           if (aPackage != null) {
             packageChooser.setText(aPackage.getQualifiedName());
-            validateOKButton();
+            validateButtons();
           }
         }
       }
     );
     packageChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
-        validateOKButton();
+        validateButtons();
       }
     });
 
@@ -214,7 +209,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       myCbMoveToAnotherSourceFolder.setSelected(!isTargetDirectoryFixed);
     }
 
-    validateOKButton();
+    validateButtons();
     myHelpID = helpID;
   }
 
@@ -226,18 +221,18 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return myCbSearchInComments.isSelected();
   }
 
-  private void validateOKButton() {
+  protected boolean areButtonsValid() {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
       if (name.length() == 0) {
-        setOKActionEnabled(true);
+        return true;
       }
       else {
-        setOKActionEnabled(myManager.getNameHelper().isQualifiedName(name));
+        return myManager.getNameHelper().isQualifiedName(name);
       }
     }
     else {
-      setOKActionEnabled(findTargetClass() != null);
+      return findTargetClass() != null;
     }
   }
 
