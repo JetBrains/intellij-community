@@ -354,6 +354,17 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return Collections.EMPTY_LIST;
                 }
                 checkClass(weakestTypeClasses, aClass);
+            } else if (referenceParent instanceof PsiReferenceExpression) {
+                // field access, method call is handled above.
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)referenceParent;
+                final PsiElement target = referenceExpression.resolve();
+                if (!(target instanceof PsiField)) {
+                    return Collections.EMPTY_LIST;
+                }
+                final PsiField field = (PsiField)target;
+                final PsiClass containingClass = field.getContainingClass();
+                checkClass(weakestTypeClasses, containingClass);
             }
             if (weakestTypeClasses.contains(variableClass)) {
                 return Collections.EMPTY_LIST;
