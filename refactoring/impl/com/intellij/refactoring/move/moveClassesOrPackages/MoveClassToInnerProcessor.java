@@ -85,6 +85,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
+    if (!prepareWritable(usages)) return;
+
     try {
       saveNonCodeUsages(usages);
       ChangeContextUtil.encodeContextInfo(myClassToMove, true);
@@ -106,6 +108,22 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private boolean prepareWritable(final UsageInfo[] usages) {
+    Set<PsiElement> elementsToMakeWritable = new HashSet<PsiElement>();
+    elementsToMakeWritable.add(myClassToMove);
+    elementsToMakeWritable.add(myTargetClass);
+    for(UsageInfo usage: usages) {
+      PsiElement element = usage.getElement();
+      if (element != null) {
+        elementsToMakeWritable.add(element);
+      }
+    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, elementsToMakeWritable.toArray(new PsiElement[elementsToMakeWritable.size()]))) {
+      return false;
+    }
+    return true;
   }
 
   private void saveNonCodeUsages(final UsageInfo[] usages) {
@@ -183,6 +201,14 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("move.class.to.inner.command.name",
                                      myClassToMove.getQualifiedName(),
                                      myTargetClass.getQualifiedName());
+  }
+
+  @NotNull
+  protected Collection<? extends PsiElement> getElementsToWrite(final UsageViewDescriptor descriptor) {
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    result.addAll(super.getElementsToWrite(descriptor));
+    result.add(myTargetClass);
+    return result;
   }
 
   public List<String> getConflicts(final UsageInfo[] usages) {
