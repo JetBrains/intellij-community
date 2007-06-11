@@ -348,7 +348,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     Object[] propertyVariants = getVariantsImpl(getMethodOrPropertyResolveProcessor(this, null, true));
     PsiElement parent = getParent();
     if (parent instanceof GrArgumentList) {
-      GrExpression call = (GrExpression) parent.getParent();
+      GrExpression call = (GrExpression) parent.getParent(); //add named argument label variants
       PsiType type = call.getType();
       if (type instanceof PsiClassType) {
         PsiClass clazz = ((PsiClassType) type).resolve();
@@ -375,8 +375,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     if (getKind() == Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ResolveKind.CLASS_OR_PACKAGE), this, true);
+      getVariantsImpl(classVariantsCollector);
       GroovyResolveResult[] classVariants = classVariantsCollector.getCandidates();
-      return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
+      return ArrayUtil.mergeArrays(propertyVariants, ResolveUtil.mapToElements(classVariants), Object.class);
     }
 
 
