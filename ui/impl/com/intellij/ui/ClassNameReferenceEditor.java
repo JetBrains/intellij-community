@@ -3,11 +3,10 @@ package com.intellij.ui;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,23 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
   private String myChooserTitle;
 
   public ClassNameReferenceEditor(@NotNull final PsiManager manager, @Nullable final PsiClass selectedClass) {
-    super(null, selectedClass != null ? selectedClass.getQualifiedName() : "", manager, true);
+    this(manager, selectedClass, null);
+  }
+
+  public ClassNameReferenceEditor(@NotNull final PsiManager manager, @Nullable final PsiClass selectedClass,
+                                  @Nullable final GlobalSearchScope resolveScope) {
+    super(null, manager.getProject(), new Function<String,Document>() {
+      public Document fun(final String s) {
+        PsiPackage defaultPackage = manager.findPackage("");
+        final PsiCodeFragment fragment = manager.getElementFactory().createReferenceCodeFragment(s, defaultPackage, true, true);
+        fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+        if (resolveScope != null) {
+          fragment.forceResolveScope(resolveScope);
+        }
+        return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+      }
+    }, selectedClass != null ? selectedClass.getQualifiedName() : "");
+
     myProject = manager.getProject();
     myChooserTitle = "Choose Class";
     addActionListener(new ChooseClassAction());
