@@ -6,17 +6,16 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface {
   @NonNls protected static final String FILE_SEPARATORS = "/" + File.separator;
@@ -122,10 +121,9 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   public void removeVirtualFileListener(final VirtualFileListener listener) {
     synchronized (myListenerWrappers) {
-      final VirtualFileListener wrapper = myListenerWrappers.get(listener);
+      final VirtualFileListener wrapper = myListenerWrappers.remove(listener);
       if (wrapper != null) {
         VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
-        myListenerWrappers.remove(wrapper);
       }
     }
   }
