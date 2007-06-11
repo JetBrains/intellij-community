@@ -605,7 +605,7 @@ public class FileUtil {
           continue;
         }
         if (ch == '?') {
-          builder.append(".{1}");
+          builder.append("[^/]{1}");
           continue;
         }
         if (ch == '\\') {

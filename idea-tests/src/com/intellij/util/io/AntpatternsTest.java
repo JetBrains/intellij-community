@@ -48,6 +48,7 @@ public class AntpatternsTest extends TestCase {
     final Pattern jakartaPattern = convertToPattern("org/apache/jakarta/**");
     assertTrue(jakartaPattern.matcher("org/apache/jakarta/tools/ant/docs/index.html").matches());
     assertTrue(jakartaPattern.matcher("org/apache/jakarta/test.xml").matches());
+    assertFalse(jakartaPattern.matcher("org/apache/jakarta").matches());
     assertFalse(jakartaPattern.matcher("org/apache/xyz.java").matches());
     
     final Pattern apacheCvsPattern = convertToPattern("org/apache/**/CVS/*");
@@ -79,6 +80,13 @@ public class AntpatternsTest extends TestCase {
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());
     assertFalse(pattern.matcher("dir/subdir/aaa/ttt").matches());
     assertFalse(pattern.matcher("dir/subdir").matches());
+  }
+
+  public void testAsterisks() {
+    final Pattern pattern = convertToPattern("dir/*?*");
+    assertTrue(pattern.matcher("dir/subdir").matches());
+    assertFalse(pattern.matcher("dir/subdir/ttt").matches());
+    assertFalse(pattern.matcher("dir/subdir/aaa/ttt.txt").matches());
   }
   
   private Pattern convertToPattern(final String antPattern) {
