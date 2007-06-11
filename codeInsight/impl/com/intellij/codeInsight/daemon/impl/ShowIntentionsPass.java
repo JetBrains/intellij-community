@@ -308,9 +308,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<PsiClass> availableClasses = new ArrayList<PsiClass>();
     boolean isAnnotationReference = ref.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
-      if (aClass.getParent() instanceof PsiDeclarationStatement) continue;
-      PsiFile file = aClass.getContainingFile();
-      if (!(file instanceof PsiJavaFile) || ((PsiJavaFile)file).getPackageName().length() == 0) continue;
+      if (!isFromNonDefaultPackage(aClass)) continue;
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       if (CompletionUtil.isInExcludedPackage(aClass)) continue;
@@ -366,6 +364,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       HintManager hintManager = HintManager.getInstance();
       hintManager.showQuestionHint(editor, hintText, offset1, offset2, action);
     }
+    return true;
+  }
+
+  private static boolean isFromNonDefaultPackage(PsiClass aClass) {
+    //inner classes from default package _cannot_ be imported
+    PsiClass containingClass = aClass.getContainingClass();
+    while(containingClass != null) {
+      aClass = containingClass;
+      containingClass = containingClass.getContainingClass();
+    }
+    final String qName = aClass.getQualifiedName();
+    if (qName == null ||
+        //default package
+        qName.indexOf('.') <= 0) return false;
+
     return true;
   }
 
