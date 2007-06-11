@@ -15,23 +15,22 @@
 
 package org.jetbrains.plugins.groovy.caches.project;
 
-import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiField;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCache;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -55,7 +54,7 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   @NotNull
   public String[] getAllFileNames() {
     ArrayList<String> acc = new ArrayList<String>();
-    GroovyCachesManagerImpl manager = (GroovyCachesManagerImpl) GroovyCachesManagerImpl.getInstance(myProject);
+    GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       GroovyModuleCache caches = manager.getModuleFilesCache(module);
@@ -67,7 +66,7 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   @NotNull
   public PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     ArrayList<PsiClass> acc = new ArrayList<PsiClass>();
-    GroovyCachesManagerImpl manager = (GroovyCachesManagerImpl) GroovyCachesManagerImpl.getInstance(myProject);
+    GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       GroovyModuleCache caches = manager.getModuleFilesCache(module);
@@ -79,7 +78,7 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   @NotNull
   public String[] getAllClassNames(boolean searchInLibraries) {
     ArrayList<String> acc = new ArrayList<String>();
-    GroovyCachesManagerImpl manager = (GroovyCachesManagerImpl) GroovyCachesManagerImpl.getInstance(myProject);
+    GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       GroovyModuleCache caches = manager.getModuleFilesCache(module);
@@ -91,7 +90,7 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
 
   public void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest) {
     ArrayList<String> acc = new ArrayList<String>();
-    GroovyCachesManagerImpl manager = (GroovyCachesManagerImpl) GroovyCachesManagerImpl.getInstance(myProject);
+    GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       GroovyModuleCache caches = manager.getModuleFilesCache(module);
