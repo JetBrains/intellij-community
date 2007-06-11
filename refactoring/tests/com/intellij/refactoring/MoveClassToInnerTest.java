@@ -77,6 +77,10 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTestConflicts("pack1.Class1", "pack2.A", "Method <b><code>Class1.doStuff()</code></b> will no longer be accessible from method <b><code>Class2.test()</code></b>");
   }
 
+  public void testDuplicateInner() throws Exception {
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>pack2.A</code></b> already contains an inner class named <b><code>Class1</code></b>");
+  }
+
   private void doTest(String[] classNames, String targetClassName) throws Exception{
     VirtualFile rootDir = prepareTest();
 

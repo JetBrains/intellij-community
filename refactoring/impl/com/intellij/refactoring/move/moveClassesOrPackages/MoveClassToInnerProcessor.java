@@ -187,6 +187,13 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   public List<String> getConflicts(final UsageInfo[] usages) {
     List<String> conflicts = new ArrayList<String>();
+
+    if (myTargetClass.findInnerClassByName(myClassToMove.getName(), false) != null) {
+      conflicts.add(RefactoringBundle.message("move.to.inner.duplicate.inner.class",
+                                              CommonRefactoringUtil.htmlEmphasize(myTargetClass.getQualifiedName()),
+                                              CommonRefactoringUtil.htmlEmphasize(myClassToMove.getName())));
+    }
+
     String classToMoveVisibility =  VisibilityUtil.getVisibilityModifier(myClassToMove.getModifierList());
     String targetClassVisibility =  VisibilityUtil.getVisibilityModifier(myTargetClass.getModifierList());
 
