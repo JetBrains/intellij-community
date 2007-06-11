@@ -122,7 +122,7 @@ public class PsiUtil {
       }
       GrExpression[] expressions = methodCall.getExpressionArguments();
       for (GrExpression expression : expressions) {
-        PsiType type = expression.getType();
+        PsiType type = getArgumentType(expression);
         if (type == null) {
           result.add(PsiType.NULL);
         } else {
@@ -144,7 +144,7 @@ public class PsiUtil {
       GrExpression[] args = ((GrApplicationExpression) parent).getArguments();
       PsiType[] result = new PsiType[args.length];
       for (int i = 0; i < result.length; i++) {
-        PsiType argType = args[i].getType();
+        PsiType argType = getArgumentType(args[i]);
         if (argType == null) {
           result[i] = PsiType.NULL;
         } else {
@@ -156,6 +156,18 @@ public class PsiUtil {
     }
 
     return null;
+  }
+
+  private static PsiType getArgumentType(GrExpression expression) {
+    if (expression instanceof GrReferenceExpression) {
+      final PsiElement resolved = ((GrReferenceExpression) expression).resolve();
+      if (resolved instanceof PsiClass) {
+        //this argument is passed as java.lang.Class
+        return resolved.getManager().getElementFactory().createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
+      }
+    }
+    
+    return expression.getType();
   }
 
 }
