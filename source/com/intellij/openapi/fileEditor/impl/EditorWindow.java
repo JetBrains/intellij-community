@@ -38,6 +38,7 @@ public class EditorWindow {
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   private boolean myIsDisposed = false;
+  private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/tabPin.png");
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -519,7 +520,7 @@ public class EditorWindow {
     if (composite != null && composite.isPinned()) {
       icons = new ArrayList<Icon>(6);
       icons.add(icon);
-      icons.add(IconLoader.getIcon("/nodes/tabPin.png"));
+      icons.add(PIN_ICON);
     }
 
     // Modified

@@ -34,6 +34,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private String myPlace;
 
   private JComponent myPreferredFocusableComponent;
+  private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/tabPin.png");
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -62,7 +63,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon = LayeredIcon.create(myIcon, IconLoader.getIcon("/nodes/tabPin.png"));
+    myLayeredIcon = LayeredIcon.create(myIcon, PIN_ICON);
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 
