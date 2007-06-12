@@ -43,6 +43,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private PendingEventDispatcher<VirtualFileListener> myContentProvidersDispatcher =
     PendingEventDispatcher.create(VirtualFileListener.class);
   @NonNls private static final String USER_HOME = "user.home";
+  private int myRefreshCount = 0;
 
   public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus) {
     myFileSystems = new ArrayList<VirtualFileSystem>();
@@ -269,14 +270,18 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void fireBeforeRefreshStart(boolean asynchronous) {
-    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-      listener.beforeRefreshStart(asynchronous);
+    if (myRefreshCount++ == 0) {
+      for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+        listener.beforeRefreshStart(asynchronous);
+      }
     }
   }
 
   public void fireAfterRefreshFinish(boolean asynchronous) {
-    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-      listener.afterRefreshFinish(asynchronous);
+    if (--myRefreshCount == 0) {
+      for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+        listener.afterRefreshFinish(asynchronous);
+      }
     }
   }
 
