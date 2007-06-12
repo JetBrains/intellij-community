@@ -21,10 +21,11 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -46,4 +47,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, Naviga
 
   @NotNull
   PsiElement getNameIdentifierGroovy();
+
+  @NotNull
+  GrField[] getFields();
 }

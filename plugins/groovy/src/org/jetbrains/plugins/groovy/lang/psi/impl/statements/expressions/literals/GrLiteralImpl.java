@@ -57,7 +57,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
     } else if (elemType == GroovyTokenTypes.kFALSE || elemType == GroovyTokenTypes.kTRUE) {
       return getTypeByFQName("java.lang.Boolean");
     }  else if (elemType == GroovyTokenTypes.kNULL) {
-      return getTypeByFQName("groovy.lang.GroovyObjectSupport");
+      return PsiType.NULL;
     }
 
     return null;

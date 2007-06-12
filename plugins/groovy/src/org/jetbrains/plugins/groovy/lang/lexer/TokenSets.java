@@ -104,6 +104,13 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kFINALLY
   ), BUILT_IN_TYPE);
 
+
+  public static TokenSet VISIBILITY_MODIFIERS = TokenSet.create(
+      kPRIVATE,
+      kPROTECTED,
+      kPUBLIC
+  );
+
   public static TokenSet MODIFIERS = TokenSet.create(
       kABSTRACT,
       kPRIVATE,

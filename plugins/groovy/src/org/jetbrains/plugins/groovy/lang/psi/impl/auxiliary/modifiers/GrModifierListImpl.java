@@ -68,6 +68,10 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     return modifiers.toArray(new PsiElement[0]);
   }
 
+  public boolean hasExplicitVisibilityModifiers() {
+    return findChildByType(TokenSets.VISIBILITY_MODIFIERS) != null;
+  }
+
   public boolean hasModifierProperty(@NotNull @NonNls String name) {
     if (name.equals(PsiModifier.PUBLIC)) {
       //groovy class members are public by default

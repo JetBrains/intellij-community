@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -49,5 +50,10 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     }
 
     return null;
+  }
+
+  public boolean isProperty() {
+    final GrModifierList modifierList = getModifierList();
+    return modifierList != null && !modifierList.hasExplicitVisibilityModifiers();
   }
 }

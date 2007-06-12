@@ -27,4 +27,6 @@ import com.intellij.psi.PsiElement;
 public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   @NotNull
   PsiElement[] getModifiers();
+
+  boolean hasExplicitVisibilityModifiers();
 }
