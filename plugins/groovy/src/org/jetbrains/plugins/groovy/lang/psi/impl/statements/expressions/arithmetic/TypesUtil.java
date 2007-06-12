@@ -10,6 +10,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
@@ -22,8 +23,10 @@ public class TypesUtil {
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
 
   public static PsiType getNumericResultType(GrBinaryExpression binaryExpression) {
-    PsiType lType = binaryExpression.getLeftOperand().getType();
-    PsiType rType = binaryExpression.getRightOperand().getType();
+    final GrExpression lop = binaryExpression.getLeftOperand();
+    PsiType lType = lop == null ? null : lop.getType();
+    final GrExpression rop = binaryExpression.getRightOperand();
+    PsiType rType = rop == null ? null : rop.getType();
     if (lType == null || rType == null) return null;
     String lCanonical = lType.getCanonicalText();
     String rCanonical = rType.getCanonicalText();
