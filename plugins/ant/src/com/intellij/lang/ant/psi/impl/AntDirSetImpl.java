@@ -45,9 +45,6 @@ public class AntDirSetImpl extends AntFilesProviderImpl{
   }
   
   private static void collectFiles(List<File> container, File from, String relativePath, final AntPattern pattern) {
-    if (!pattern.couldBeIncluded(relativePath)) {
-      return;
-    }
     final File[] children = from.listFiles();
     if (children != null) {
       for (File child : children) {
@@ -56,7 +53,9 @@ public class AntDirSetImpl extends AntFilesProviderImpl{
           if (pattern.acceptPath(childPath)) {
             container.add(child);
           }
-          collectFiles(container, child, childPath, pattern);
+          if (pattern.couldBeIncluded(childPath)) {
+            collectFiles(container, child, childPath, pattern);
+          }
         }
       }
     }
