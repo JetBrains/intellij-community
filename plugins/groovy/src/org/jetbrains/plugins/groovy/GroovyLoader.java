@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
@@ -27,13 +28,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.util.Function;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.structureView.StructureViewFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -85,6 +85,8 @@ public class GroovyLoader implements ApplicationComponent {
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
         new GroovyCompletionData());
+
+    TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(Project project) {
