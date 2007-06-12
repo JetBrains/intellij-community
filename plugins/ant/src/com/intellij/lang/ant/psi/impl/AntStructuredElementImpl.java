@@ -40,6 +40,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private volatile AntElement myLastFoundElement;
   private volatile boolean myIsImported;
   private volatile Set<String> myComputingAttrValue;
+  private volatile boolean myShouldDisposeSet = true; 
   protected volatile boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
@@ -252,7 +253,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         if (myComputingAttrValue == null || !myComputingAttrValue.contains(value)) {
           try {
             if (myComputingAttrValue == null) {
-              myComputingAttrValue = StringSetSpinAllocator.alloc();
+              try {
+                myComputingAttrValue = StringSetSpinAllocator.alloc();
+                myShouldDisposeSet = true;
+              }
+              catch (SpinAllocator.AllocatorExhaustedException e) {
+                myComputingAttrValue = new HashSet<String>();
+                myShouldDisposeSet = false;
+              }
             }
             myComputingAttrValue.add(value);
             try {
@@ -273,7 +281,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             if (myComputingAttrValue.size() == 0) {
               final Set<String> _strSet = myComputingAttrValue;
               myComputingAttrValue = null;
-              StringSetSpinAllocator.dispose(_strSet);
+              if (myShouldDisposeSet) {
+                StringSetSpinAllocator.dispose(_strSet);
+              }
             }
           }
         }
