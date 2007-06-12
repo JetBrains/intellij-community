@@ -708,22 +708,26 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
     public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-      if (myInsideRefresh == 0) {
-        beforeRootsChange(false);
-      }
-      else if (!myPointerChangesDetected) {
-        //this is the first pointer changing validity
-        myPointerChangesDetected = true;
-        myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+      if (!myProject.isDisposed()) {
+        if (myInsideRefresh == 0) {
+          beforeRootsChange(false);
+        }
+        else if (!myPointerChangesDetected) {
+          //this is the first pointer changing validity
+          myPointerChangesDetected = true;
+          myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+        }
       }
     }
 
     public void validityChanged(VirtualFilePointer[] pointers) {
-      if (myInsideRefresh > 0) {
-        clearScopesCaches();
-      }
-      else {
-        rootsChanged(false);
+      if (!myProject.isDisposed()) {
+        if (myInsideRefresh > 0) {
+          clearScopesCaches();
+        }
+        else {
+          rootsChanged(false);
+        }
       }
     }
   }
