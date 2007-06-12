@@ -35,10 +35,6 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   public void refresh(boolean asynchronous) {
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
-
-  }
-
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
   }
 

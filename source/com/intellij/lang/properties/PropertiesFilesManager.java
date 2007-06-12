@@ -2,14 +2,11 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;

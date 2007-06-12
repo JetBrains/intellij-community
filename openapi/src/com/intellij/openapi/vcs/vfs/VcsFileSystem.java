@@ -80,9 +80,6 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
     super.fireBeforeContentsChange(requestor, file);
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
-  }
-
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }

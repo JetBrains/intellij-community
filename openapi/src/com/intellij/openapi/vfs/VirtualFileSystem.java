@@ -112,18 +112,13 @@ public abstract class VirtualFileSystem {
    */
   public abstract void removeVirtualFileListener(VirtualFileListener listener);
 
-  public void forceRefreshFile(final boolean asynchronous, @NotNull VirtualFile file) {
-    forceRefreshFiles(asynchronous, file);
-  }
-
+  @Deprecated
   /**
-   * Reloads files from disk regardless of their changed timestamp/contents
-   *
-   * @param asynchronous if true, the reload is done asynchronously.
-   * @param files        the list of files to refresh (must not contain directories).
-   * @since 5.0.2
+   * Deprecated. Current implementation blindly calls plain refresh against the file passed
    */
-  public abstract void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files);
+  public void forceRefreshFile(final boolean asynchronous, @NotNull VirtualFile file) {
+    file.refresh(asynchronous, false);
+  }
 
   /**
    * Implementation of deleting files in this file system

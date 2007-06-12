@@ -15,13 +15,13 @@ import com.intellij.util.containers.Stack;
 
 import java.util.*;
 
-public class RefreshRequest {
+public class RefreshWorker {
   private boolean myIsRecursive;
   private Stack<VirtualFile> myRefreshQueue = new Stack<VirtualFile>();
 
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
-  public RefreshRequest(final VirtualFile refreshRoot, final boolean isRecursive) {
+  public RefreshWorker(final VirtualFile refreshRoot, final boolean isRecursive) {
     myIsRecursive = isRecursive;
     myRefreshQueue.push(refreshRoot);
   }
@@ -121,8 +121,7 @@ public class RefreshRequest {
   }
 
   private void scheduleWritableAttributeChange(final VirtualFileSystemEntry file, final boolean currentWritable, final boolean uptodateWritable) {
-    myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, Boolean.valueOf(currentWritable),
-                                              Boolean.valueOf(uptodateWritable), true));
+    myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, currentWritable, uptodateWritable, true));
   }
 
   private void scheduleUpdateContent(final VirtualFileSystemEntry file) {

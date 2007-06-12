@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NonNls;
@@ -103,9 +102,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Nullable
   public VirtualFile refreshAndFindFileByPath(final String path) {
     return findFileByPath(path);
-  }
-
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull final VirtualFile... files) {
   }
 
   public void deleteFile(final Object requestor, final VirtualFile vFile) throws IOException {

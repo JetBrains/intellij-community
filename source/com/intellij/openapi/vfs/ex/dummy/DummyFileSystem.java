@@ -60,10 +60,6 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     return "DummyFileSystem";
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
-
-  }
-
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
     fireBeforeFileDeletion(requestor, vFile);
     final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();

@@ -47,10 +47,6 @@ public class HttpFileSystem extends DeprecatedVirtualFileSystem implements Appli
     return "HttpFileSystem";
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
-
-  }
-
   public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
     throw new UnsupportedOperationException();
   }

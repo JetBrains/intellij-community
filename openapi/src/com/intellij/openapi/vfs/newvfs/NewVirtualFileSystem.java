@@ -97,10 +97,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     refresh(asynchronous);
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull final VirtualFile... files) {
-    // TODO
-  }
-
   public void refresh(final boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
   }

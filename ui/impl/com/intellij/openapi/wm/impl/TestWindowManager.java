@@ -68,9 +68,13 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void add(ProgressIndicatorEx indicator, TaskInfo info) {
-
     }
 
+    public void startRefreshIndication(final String tooltipText) {
+    }
+
+    public void stopRefreshIndication() {
+    }
 
     public boolean isProcessWindowOpen() {
       return false;

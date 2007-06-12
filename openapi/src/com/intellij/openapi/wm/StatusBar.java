@@ -41,4 +41,8 @@ public interface StatusBar {
   void fireNotificationPopup(JComponent content, final Color backgroundColor);
 
   void removeCustomIndicationComponent(final JComponent c);
+
+  void startRefreshIndication(String tooltipText);
+
+  void stopRefreshIndication();
 }

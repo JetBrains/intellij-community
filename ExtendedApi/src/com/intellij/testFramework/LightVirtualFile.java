@@ -93,9 +93,6 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
       return null;
     }
 
-    public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
-    }
-
     public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
     }
 

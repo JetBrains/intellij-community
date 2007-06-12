@@ -324,7 +324,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  public void markSuspicousFilesDirty(VirtualFile... files) {
+  public void markSuspicousFilesDirty(List<VirtualFile> files) {
     storeRefreshStatusToFiles();
 
     if (FileWatcher.isAvailable()) {

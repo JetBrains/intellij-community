@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.AsyncProcessIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -36,6 +37,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected InfoAndProgressPanel myInfoAndProgressPanel;
 
   private UISettings myUISettings;
+  private AsyncProcessIcon myRefreshIcon;
 
   public StatusBarImpl(UISettings uiSettings) {
     super();
@@ -53,6 +55,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     final Border lineBorder = new SeparatorBorder.Left();
     final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
     final Border separatorLeft = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
+
+    myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem");
+    add(myRefreshIcon, BorderLayout.WEST);
+    myRefreshIcon.setVisible(false);
 
     myInfoPanel.setBorder(emptyBorder);
     myInfoPanel.setOpaque(false);
@@ -294,4 +300,12 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     }
   }
 
+  public void startRefreshIndication(String tooltipText) {
+    myRefreshIcon.setToolTipText(tooltipText);
+    myRefreshIcon.setVisible(true);
+  }
+
+  public void stopRefreshIndication() {
+    myRefreshIcon.setVisible(false);
+  }
 }
