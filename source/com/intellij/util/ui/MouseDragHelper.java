@@ -67,9 +67,11 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   }
 
   private void detach() {
-    myGlassPane.removeMousePreprocessor(this);
-    myGlassPane.removeMouseMotionPreprocessor(this);
-    myGlassPane = null;
+    if (myGlassPane != null) {
+      myGlassPane.removeMousePreprocessor(this);
+      myGlassPane.removeMouseMotionPreprocessor(this);
+      myGlassPane = null;
+    }
   }
 
   public void mousePressed(final MouseEvent e) {
