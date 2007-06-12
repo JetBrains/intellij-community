@@ -198,6 +198,10 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
         }
         finally {
           myInGettingChildren = false;
+          final AntFile antFile = getAntFile();
+          if (antFile != null) {
+            antFile.invalidateProperties();
+          }
         }
       }
       return AntElement.EMPTY_ARRAY;
