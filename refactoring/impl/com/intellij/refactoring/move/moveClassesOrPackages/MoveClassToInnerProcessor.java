@@ -1,6 +1,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -46,13 +47,17 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
                                    boolean searchInComments,
                                    boolean searchInNonJavaFiles) {
     super(project);
-    myClassToMove = classToMove;
+    setClassToMove(classToMove);
     myTargetClass = targetClass;
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
-    mySourcePackage = myClassToMove.getContainingFile().getContainingDirectory().getPackage();
     myTargetPackage = myTargetClass.getContainingFile().getContainingDirectory().getPackage();
+}
+
+  private void setClassToMove(final PsiClass classToMove) {
+    myClassToMove = classToMove;
     mySourceVisibility = VisibilityUtil.getVisibilityModifier(myClassToMove.getModifierList());
+    mySourcePackage = myClassToMove.getContainingFile().getContainingDirectory().getPackage();
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -80,8 +85,13 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return showConflicts(getConflicts(refUsages.get()));
   }
 
-  protected void refreshElements(PsiElement[] elements) {
-    //To change body of implemented methods use File | Settings | File Templates.
+  protected void refreshElements(final PsiElement[] elements) {
+    assert elements.length == 1;
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        setClassToMove((PsiClass)elements[0]);
+      }
+    });
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
@@ -290,8 +300,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private class ConflictsCollector {
-    private List<String> myConflicts;
-    private Set<PsiElement> myReportedContainers = new HashSet<PsiElement>();
+    private final List<String> myConflicts;
+    private final Set<PsiElement> myReportedContainers = new HashSet<PsiElement>();
 
     public ConflictsCollector(final List<String> conflicts) {
       myConflicts = conflicts;
