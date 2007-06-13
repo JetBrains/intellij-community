@@ -8,7 +8,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -26,7 +25,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   private PsiClass myClass;
   private final PsiCall myCallToInline;
-  private boolean myInlineThisOnly;
+  private final boolean myInlineThisOnly;
 
   protected InlineToAnonymousClassProcessor(Project project, PsiClass psiClass, final PsiCall callToInline, boolean inlineThisOnly) {
     super(project);
@@ -54,7 +53,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected void refreshElements(PsiElement[] elements) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    assert elements.length == 1;
+    myClass = (PsiClass) elements [0];
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
@@ -66,11 +66,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
     ArrayList<String> conflicts = getConflicts(usages);
     if (!conflicts.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return false;
-      }
+      return showConflicts(conflicts);
     }
     return super.preprocessUsages(refUsages);
   }
