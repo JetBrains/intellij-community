@@ -38,8 +38,8 @@ public class WeakList<T> extends AbstractList<T> {
   }
 
   public boolean add(T element) {
-    modCount++;
     synchronized (myArray) {
+      modCount++;
       tryReduceCapacity(-1);
       myArray.add(element);
     }
@@ -47,8 +47,8 @@ public class WeakList<T> extends AbstractList<T> {
   }
 
   public T remove(int index) {
-    modCount++;
     synchronized (myArray) {
+      modCount++;
       tryReduceCapacity(-1);
       return myArray.remove(index);
     }
@@ -65,8 +65,12 @@ public class WeakList<T> extends AbstractList<T> {
   private int tryReduceCapacity(int trackIndex) {
     synchronized (myArray) {
       modCount++;
-      if (canReduceCapacity()) return myArray.reduceCapacity(trackIndex);
-      else return propablyCompress(trackIndex);
+      if (canReduceCapacity()) {
+        return myArray.reduceCapacity(trackIndex);
+      }
+      else {
+        return propablyCompress(trackIndex);
+      }
     }
   }
 

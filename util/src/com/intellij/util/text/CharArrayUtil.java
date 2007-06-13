@@ -121,7 +121,7 @@ public class CharArrayUtil {
     while (true) {
       if (offset >= buffer.length()) break;
       char c = buffer.charAt(offset);
-      int i;
+      int i;      
       for (i = 0; i < chars.length(); i++) {
         if (c == chars.charAt(i)) break;
       }

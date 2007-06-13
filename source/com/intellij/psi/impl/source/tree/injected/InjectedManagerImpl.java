@@ -50,33 +50,31 @@ public class InjectedManagerImpl extends InjectedManager implements ApplicationC
   <T extends PsiLanguageInjectionHost> VirtualFileDelegate createVirtualFile(final Language language, final VirtualFile hostVirtualFile,
                                                                              final DocumentRange documentRange, StringBuilder text,
                                                                              Project project) {
-    clearInvalidFiles(documentRange, project);
+    clearInvalidFiles(project);
     VirtualFileDelegate virtualFile = new VirtualFileDelegate(hostVirtualFile, documentRange, language, text.toString());
-    cachedFiles.add(virtualFile);
+    synchronized (cachedFiles) {
+      cachedFiles.add(virtualFile);
+    }
 
     return virtualFile;
   }
 
-  private <T extends PsiLanguageInjectionHost> void clearInvalidFiles(DocumentRange documentRange, Project project) {
-    Iterator<VirtualFileDelegate> iterator = cachedFiles.iterator();
-    while (iterator.hasNext()) {
-      VirtualFileDelegate cachedFile = iterator.next();
-      PsiFile cached = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(cachedFile);
-      if (cached == null || cached.getContext() == null || !cached.getContext().isValid()) {
-        iterator.remove();
-        continue;
-      }
+  private <T extends PsiLanguageInjectionHost> void clearInvalidFiles(Project project) {
+    synchronized (cachedFiles) {
+      Iterator<VirtualFileDelegate> iterator = cachedFiles.iterator();
+      while (iterator.hasNext()) {
+        VirtualFileDelegate cachedFile = iterator.next();
+        PsiFile cached = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(cachedFile);
+        if (cached == null || cached.getContext() == null || !cached.getContext().isValid()) {
+          iterator.remove();
+          continue;
+        }
 
-      Document cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(cached);
-      if (!(cachedDocument instanceof DocumentRange)) {
-        iterator.remove();
-        continue;
+        Document cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(cached);
+        if (!(cachedDocument instanceof DocumentRange)) {
+          iterator.remove();
+        }
       }
-      //DocumentRange cachedDocumentRange = (DocumentRange)cachedDocument;
-      //if (documentRange.equalsTo(cachedDocumentRange)) {
-      //  InjectedLanguageUtil.clearCaches(cached, cachedDocumentRange);
-      //  iterator.remove();
-      //}
     }
   }
 

@@ -50,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 public class EnterHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EnterHandler");
 
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public EnterHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
@@ -68,12 +68,13 @@ public class EnterHandler extends EditorWriteActionHandler {
           executeWriteActionInner(editor, dataContext, project);
         }
       });
-    } else {
+    }
+    else {
       executeWriteActionInner(editor, dataContext, project);
     }
   }
 
-  public void executeWriteActionInner(Editor editor, DataContext dataContext, Project project) {
+  private void executeWriteActionInner(Editor editor, DataContext dataContext, Project project) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (project == null) {
       myOriginalHandler.execute(editor, dataContext);
@@ -391,9 +392,9 @@ public class EnterHandler extends EditorWriteActionHandler {
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) return false;
-    int retrieveCount = 1;
     iterator.retreat();
 
+    int retrieveCount = 1;
     while(!iterator.atEnd()) {
       final IElementType tokenType = iterator.getTokenType();
       if (tokenType == XmlTokenType.XML_END_TAG_START) return false;
@@ -407,23 +408,11 @@ public class EnterHandler extends EditorWriteActionHandler {
     return !iterator.atEnd() && iterator.getTokenType() == XmlTokenType.XML_END_TAG_START;
   }
 
-  private static boolean isBetweenTags(Editor editor, int offset, IElementType first, IElementType second) {
-    if (offset == 0) return false;
-    CharSequence chars = editor.getDocument().getCharsSequence();
-    if (chars.charAt(offset - 1) != '>') return false;
-
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    if (iterator.getTokenType() != first) return false;
-    iterator.advance();
-    return !iterator.atEnd() && iterator.getTokenType() == second;
-  }
-
   private static class DoEnterAction implements Runnable {
-    private PsiFile myFile;
+    private final PsiFile myFile;
     private int myOffset;
-    private Document myDocument;
-    private boolean myInsertSpace;
+    private final Document myDocument;
+    private final boolean myInsertSpace;
     private final Editor myEditor;
     private int myCaretAdvance;
 
@@ -633,7 +622,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
       comment = (PsiComment)codeStyleManager.reformat(comment);
       PsiElement next = comment.getNextSibling();
-      if (!(next instanceof PsiWhiteSpace) || -1 == next.getText().indexOf(LINE_SEPARATOR)) {
+      if (!(next instanceof PsiWhiteSpace) || !next.getText().contains(LINE_SEPARATOR)) {
         int lineBreakOffset = comment.getTextRange().getEndOffset();
         myDocument.insertString(lineBreakOffset, LINE_SEPARATOR);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

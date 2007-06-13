@@ -240,22 +240,12 @@ public class FormatterImpl extends FormatterEx
     final FormattingModel model,
     final WhiteSpace whiteSpace)
   {
-    boolean wsContainsCaret = whiteSpace.getStartOffset() <= offset && whiteSpace.getEndOffset() > offset;
+    boolean wsContainsCaret = whiteSpace.getStartOffset() <= offset && offset < whiteSpace.getEndOffset();
 
     final CharSequence text = getCharSequence(documentModel);
     int lineStartOffset = getLineStartOffset(offset, whiteSpace, text, documentModel);
 
-    processor.setAllWhiteSpacesAreReadOnly();
-    whiteSpace.setLineFeedsAreReadOnly(true);
-    final IndentInfo indent;
-    if (hasContentAfterLineBreak(documentModel, offset, whiteSpace) ) {
-      whiteSpace.setReadOnly(false);
-      processor.formatWithoutRealModifications();
-      indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-    }
-    else {
-      indent = processor.getIndentAt(offset);
-    }
+    final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
 
     final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent).toString();
     if (!whiteSpace.equalsToString(newWS)) {
@@ -285,32 +275,34 @@ public class FormatterImpl extends FormatterEx
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) {
-      final FormattingDocumentModel documentModel = model.getDocumentModel();
-      final Block block = model.getRootBlock();
-      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange,
-                                                            true, offset);
+    final FormattingDocumentModel documentModel = model.getDocumentModel();
+    final Block block = model.getRootBlock();
+    final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange, true, offset);
 
-      final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
+    final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
-      if (blockAfterOffset != null) {
-        final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
-        processor.setAllWhiteSpacesAreReadOnly();
-        whiteSpace.setLineFeedsAreReadOnly(true);
-        final IndentInfo indent;
-        if (hasContentAfterLineBreak(documentModel, offset, whiteSpace)) {
-          whiteSpace.setReadOnly(false);
-          processor.formatWithoutRealModifications();
-          indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-        }
-        else {
-          indent = processor.getIndentAt(offset);
-        }
+    if (blockAfterOffset != null) {
+      final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
+      final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
 
-        return indent.generateNewWhiteSpace(indentOptions).toString();
+      return indent.generateNewWhiteSpace(indentOptions).toString();
+    }
+    return null;
+  }
 
-      } else {
-        return null;
-      }
+  private static IndentInfo calcIndent(int offset, FormattingDocumentModel documentModel, FormatProcessor processor, WhiteSpace whiteSpace) {
+    processor.setAllWhiteSpacesAreReadOnly();
+    whiteSpace.setLineFeedsAreReadOnly(true);
+    final IndentInfo indent;
+    if (hasContentAfterLineBreak(documentModel, offset, whiteSpace)) {
+      whiteSpace.setReadOnly(false);
+      processor.formatWithoutRealModifications();
+      indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+    }
+    else {
+      indent = processor.getIndentAt(offset);
+    }
+    return indent;
   }
 
   public static String getText(final FormattingDocumentModel documentModel) {
@@ -483,8 +475,8 @@ public class FormatterImpl extends FormatterEx
     return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true);
   }
 
-  private Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
-  private SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false);
+  private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
+  private final SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false);
 
   private SpacingImpl getSpacingImpl(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean readOnly, final boolean safe,
                                      final boolean keepLineBreaksFlag,

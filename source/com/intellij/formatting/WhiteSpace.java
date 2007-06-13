@@ -12,7 +12,7 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import java.util.ArrayList;
 
 class WhiteSpace {
-  private int myStart;
+  private final int myStart;
   private int myEnd;
 
   private int mySpaces;
@@ -21,15 +21,15 @@ class WhiteSpace {
   private CharSequence myInitial;
   private int myFlags;
 
-  private final static byte FIRST = 1;
-  private final static byte SAFE = 0x2;
-  private final static byte KEEP_FIRST_COLUMN = 0x4;
-  private final static byte LINE_FEEDS_ARE_READ_ONLY = 0x8;
-  private final static byte READ_ONLY = 0x10;
-  private final static byte CONTAINS_LF_INITIALLY = 0x20;
-  private final static byte CONTAINS_SPACES_INITIALLY = 0x40;
-  private final static int LF_COUNT_SHIFT = 7;
-  private final static int MAX_LF_COUNT = 1 << 24;
+  private static final byte FIRST = 1;
+  private static final byte SAFE = 0x2;
+  private static final byte KEEP_FIRST_COLUMN = 0x4;
+  private static final byte LINE_FEEDS_ARE_READ_ONLY = 0x8;
+  private static final byte READ_ONLY = 0x10;
+  private static final byte CONTAINS_LF_INITIALLY = 0x20;
+  private static final byte CONTAINS_SPACES_INITIALLY = 0x40;
+  private static final int LF_COUNT_SHIFT = 7;
+  private static final int MAX_LF_COUNT = 1 << 24;
 
   public WhiteSpace(int startOffset, boolean isFirst) {
     myStart = startOffset;
@@ -92,7 +92,7 @@ class WhiteSpace {
     if (psiFile == null) return false;
     PsiElement start = psiFile.findElementAt(myStart);
     PsiElement end = psiFile.findElementAt(myEnd-1);
-    return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded elements
+    return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements
   }
 
   public String generateWhiteSpace(CodeStyleSettings.IndentOptions options) {
@@ -283,7 +283,7 @@ class WhiteSpace {
     return (myFlags & mask) != 0;
   }
 
-  public boolean isFirst() {
+  private boolean isFirst() {
     return isIsFirstWhiteSpace();
   }
 
@@ -376,15 +376,23 @@ class WhiteSpace {
     }
     final String newIndentSpaces = indent.generateNewWhiteSpace(indentOptions);
     result.append(newIndentSpaces);
+    appendNonWhitespaces(result, lines, currentLine);
     if (currentLine + 1 < lines.length) {
       result.append('\n');
       for (int i = currentLine + 1; i < lines.length - 1; i++) {
         result.append(lines[i]);
         result.append('\n');
       }
+      appendNonWhitespaces(result, lines, lines.length-1);
       repeatTrailingSymbols(indentOptions, result, myIndentSpaces, mySpaces);
     }
     return result;
+  }
+
+  private static void appendNonWhitespaces(StringBuilder result, CharSequence[] lines, int currentLine) {
+    if (currentLine != lines.length && !lines[currentLine].toString().matches("\\s*")) {
+      result.append(lines[currentLine]);
+    }
   }
 
   private CharSequence[] getInitialLines() {
