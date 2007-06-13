@@ -114,9 +114,15 @@
     </group>
 
     <action id="Maven.ShowSettings"
-            class="org.jetbrains.idea.maven.core.ShowSettingsAction" text="Edit Maven settings"
+            class="org.jetbrains.idea.maven.core.action.ShowSettingsAction" text="Edit Maven settings"
             description="Edit Maven integration settings"
             icon="/images/mavenSettings.png">
+      <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
+    </action>
+    <action id="Maven.ToggleOffline"
+            class="org.jetbrains.idea.maven.core.action.ToggleOfflineAction" text="Toggle Offline mode"
+            description="Toggles Offline more for Maven"
+            icon="/images/offlineMode.png">
       <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
     </action>
     <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeWithMavenAction"
