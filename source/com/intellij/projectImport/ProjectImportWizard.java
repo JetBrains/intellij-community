@@ -35,38 +35,43 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
 
     final boolean updateCurrent = ret != 0;
 
-    final AddModuleWizard dialog = new AddModuleWizard(title, getStepsFactory(currentProject, updateCurrent), !updateCurrent);
-    dialog.show();
-    if (!dialog.isOK()) {
-      return;
+    try {
+      final AddModuleWizard dialog = new AddModuleWizard(title, getStepsFactory(currentProject, updateCurrent), !updateCurrent);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return;
+      }
+
+      final Project projectToUpdate =
+        updateCurrent ? currentProject : ProjectManagerEx.getInstanceEx().newProject(dialog.getNewProjectFilePath(), true, false);
+
+      if (!initImport(currentProject, projectToUpdate)) {
+        return;
+      }
+
+      if (!updateCurrent) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            setProjectParameters(projectToUpdate, dialog.getNewProjectJdk(), dialog.getNewCompileOutput());
+          }
+        });
+        ProjectUtil.closePreviousProject(currentProject);
+        ProjectUtil.updateLastProjectLocation(dialog.getNewProjectFilePath());
+        ProjectManagerEx.getInstanceEx().openProject(projectToUpdate);
+      }
+
+      commitImport(projectToUpdate);
+
+      if (isOpenProjectSettingsAfter()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            ModulesConfigurator.showDialog(projectToUpdate, null, null, false);
+          }
+        });
+      }
     }
-
-    final Project projectToUpdate =
-      updateCurrent ? currentProject : ProjectManagerEx.getInstanceEx().newProject(dialog.getNewProjectFilePath(), true, false);
-
-    if (!initImport(currentProject, projectToUpdate)) {
-      return;
-    }
-
-    if (!updateCurrent) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          setProjectParameters(projectToUpdate, dialog.getNewProjectJdk(), dialog.getNewCompileOutput());
-        }
-      });
-      ProjectUtil.closePreviousProject(currentProject);
-      ProjectUtil.updateLastProjectLocation(dialog.getNewProjectFilePath());
-      ProjectManagerEx.getInstanceEx().openProject(projectToUpdate);
-    }
-
-    commitImport(projectToUpdate);
-
-    if ( isOpenProjectSettingsAfter()){
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ModulesConfigurator.showDialog(projectToUpdate, null, null, false);
-        }
-      });
+    finally {
+      cleanup();
     }
   }
 
@@ -89,6 +94,9 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
   }
 
   protected abstract AddModuleWizard.ModuleWizardStepFactory getStepsFactory(final Project currentProject, final boolean updateCurrent);
+
+  protected void cleanup() {
+  }
 
   protected boolean initImport(final Project currentProject, final Project dstProject) {
     return true;
