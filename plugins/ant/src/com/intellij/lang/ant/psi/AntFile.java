@@ -6,6 +6,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public interface AntFile extends PsiFile, AntElement, ModificationTracker {
   List<String> getEnvironmentPrefixes();
 
   @Nullable
-  AntProperty getProperty(final String name);
+  AntProperty getProperty(@NonNls final String name);
 
   void setProperty(final String name, final AntProperty element);
 

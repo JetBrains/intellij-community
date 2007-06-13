@@ -344,13 +344,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       return null;
     }
     synchronized (PsiLock.LOCK) {
-      if (myNeedPropertiesRebuild || (myDependentFilesWatcher != null && myDependentFilesWatcher.needRebuildProperties())) {
-        buildPropertiesMap();
-      }
-      if (myProperties == null) {
-        return null;
-      }
-      return myProperties.get(name);
+      return myProperties != null? myProperties.get(name) : null;
+    }
+  }
+
+  public void buildPropertiesIfNeeded() {
+    if (myNeedPropertiesRebuild || (myDependentFilesWatcher != null && myDependentFilesWatcher.needRebuildProperties())) {
+      buildPropertiesMap();
     }
   }
 

@@ -99,7 +99,15 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @NotNull
   public AntElement[] getChildren() {
     synchronized (PsiLock.LOCK) {
-      if (myChildren != null) return myChildren;
+      if (myChildren == null) {
+        final AntFileImpl antFile = (AntFileImpl)getAntFile();
+        if (antFile != null) {
+          antFile.buildPropertiesIfNeeded();
+        }
+      }
+      if (myChildren != null) {
+        return myChildren;
+      }
       return myChildren = getChildrenInner();
     }
   }

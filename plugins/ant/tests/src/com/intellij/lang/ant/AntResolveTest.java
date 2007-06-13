@@ -120,11 +120,9 @@ public class AntResolveTest extends ResolveTestCase {
     doPropertyTest();
   }
 
-  /*
   public void testEnvProperty1() throws Exception {
     doPropertyTest();
   }
-  */
 
   public void testNonExistingEnvProperty() throws Exception {
     boolean isNull = false;
