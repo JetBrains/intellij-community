@@ -122,6 +122,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       if (!dialog.isOK()) return false;
       method = dialog.getSelectedMethod();
     }
+    else if (validEnclosingMethods.size() == 1) {
+      method = validEnclosingMethods.get(0);
+    }
 
     final PsiMethod methodToSearchFor = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (methodToSearchFor == null) return false;
@@ -206,6 +209,26 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       if (method == null) break;
       enclosingMethods.add(method);
     }
+    if (enclosingMethods.size() > 1) {
+      List<PsiMethod> methodsNotImplementingLibraryInterfaces = new ArrayList<PsiMethod>();
+      for(PsiMethod enclosing: enclosingMethods) {
+        PsiMethod[] superMethods = enclosing.findDeepestSuperMethods();
+        boolean libraryInterfaceMethod = false;
+        for(PsiMethod superMethod: superMethods) {
+          libraryInterfaceMethod |= isLibraryInterfaceMethod(superMethod);
+        }
+        if (!libraryInterfaceMethod) {
+          methodsNotImplementingLibraryInterfaces.add(enclosing);
+        }
+      }
+      if (methodsNotImplementingLibraryInterfaces.size() > 0) {
+        return methodsNotImplementingLibraryInterfaces;
+      }
+    }
     return enclosingMethods;
+  }
+
+  private static boolean isLibraryInterfaceMethod(final PsiMethod method) {
+    return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
   }
 }
