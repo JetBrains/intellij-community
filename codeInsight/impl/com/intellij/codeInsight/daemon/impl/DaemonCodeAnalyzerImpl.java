@@ -54,7 +54,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
-  private EditorTracker myEditorTracker;
+  private final EditorTracker myEditorTracker;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
   private DaemonProgressIndicator myUpdateVisibleProgress = new DaemonProgressIndicator();
 
@@ -149,6 +149,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private List<Pair<NamedScope, NamedScopesHolder>> myScopes = Collections.emptyList();
   void reloadScopes() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
     final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
     for (NamedScopesHolder holder : holders) {

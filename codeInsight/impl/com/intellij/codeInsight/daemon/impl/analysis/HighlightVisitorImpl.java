@@ -33,6 +33,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -63,7 +64,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     this(manager.getResolveHelper());
   }
 
-  private HighlightVisitorImpl(PsiResolveHelper resolveHelper) {
+  private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
 
@@ -94,7 +95,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     myParameterIsReassigned.clear();
-    assert !myAnnotationHolder.hasAnnotations() : myAnnotationHolder;
+    myAnnotationHolder.clear();
   }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {

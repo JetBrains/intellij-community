@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.Parsing;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
+public class PsiResolveHelperImpl implements PsiResolveHelper {
   private final PsiManager myManager;
 
   public PsiResolveHelperImpl(PsiManager manager) {
@@ -110,7 +109,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return processor.getCandidates();
   }
 
-  private Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
+  private static Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
                                                  final PsiTypeParameter typeParameter,
                                                  final PsiParameter[] parameters,
                                                  PsiExpression[] arguments,
@@ -199,7 +198,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return null;
   }
 
-  private Pair<PsiType, ConstraintType> getFailedInferenceConstraint(final PsiTypeParameter typeParameter) {
+  private static Pair<PsiType, ConstraintType> getFailedInferenceConstraint(final PsiTypeParameter typeParameter) {
     return new Pair<PsiType, ConstraintType>(typeParameter.getManager().getElementFactory().createType(typeParameter), ConstraintType.EQUALS);
   }
 
@@ -343,7 +342,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return null;
   }
 
-  private Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
+  private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
                                                      PsiElement parent,
                                                      final boolean forCompletion) {
@@ -370,7 +369,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   }
 
   @Nullable
-  public static Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterConstraint(PsiTypeParameter typeParam,
+  private static Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterConstraint(PsiTypeParameter typeParam,
                                                                                         PsiType param,
                                                                                         PsiType arg,
                                                                                         boolean isContraVariantPosition,
@@ -479,10 +478,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                   final PsiTypeParameter typeParameter = iterator.next();
                   PsiType substituted = superSubstitutor.substitute(typeParameter);
                   if (substituted != null) {
-                    final Pair<PsiType, ConstraintType> res;
-                    res = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
-                                                               substituted,
-                                                               patternType, ConstraintType.EQUALS, depth + 1);
+                    Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(
+                      boundResult.getSubstitutor().substitute(typeParameter), substituted, patternType, ConstraintType.EQUALS, depth + 1);
                     if (res != null) return res;
                   }
                 }
@@ -496,10 +493,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                   final PsiTypeParameter typeParameter = iterator.next();
                   PsiType substituted = argResult.getSubstitutor().substitute(typeParameter);
                   if (substituted != null) {
-                    final Pair<PsiType, ConstraintType> res;
-                    res = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
-                                                               substituted,
-                                                               patternType, ConstraintType.EQUALS, depth + 1);
+                    Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(
+                      superSubstitutor.substitute(typeParameter), substituted, patternType, ConstraintType.EQUALS, depth + 1);
                     if (res != null) return res;
                   }
                 }
@@ -547,7 +542,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return null;
   }
 
-  private Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
+  private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
                                                      PsiMethodCallExpression methodCall,
                                                      final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
