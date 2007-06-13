@@ -80,8 +80,8 @@ public class LocalVcs implements ILocalVcs {
     doCreateFile(getNextId(), path, f, timestamp);
   }
 
-  protected Content createContentFrom(ContentFactory h) {
-    return h.createContent(myStorage);
+  protected Content createContentFrom(ContentFactory f) {
+    return f.createContent(myStorage);
   }
 
   public void createDirectory(String path) {
