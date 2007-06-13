@@ -207,11 +207,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return result;
   }
 
-  private static boolean highlightInjectedIn(final PsiElement element, final AnnotationHolderImpl annotationHolder) {
-    if (!(element instanceof PsiLanguageInjectionHost)) return false;
+  private static void highlightInjectedIn(final PsiElement element, final AnnotationHolderImpl annotationHolder) {
+    if (!(element instanceof PsiLanguageInjectionHost)) return;
     PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
     List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
-    if (injected == null) return false;
+    if (injected == null) return;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
@@ -263,8 +263,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
       highlightSyntax(injectedLanguage, virtualFile, injectedPsi, annotationHolder, injectionHost);
     }
-    return true;
   }
+
   private static void highlightSyntax(final Language injectedLanguage, final VirtualFile virtualFile, final PsiElement injectedPsi, final AnnotationHolderImpl annotationHolder,
                                       final PsiLanguageInjectionHost injectionHost) {
     List<Pair<IElementType, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens((PsiFile)injectedPsi);
@@ -337,10 +337,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  //for tests only
   @NotNull
   public Collection<HighlightInfo> getHighlights() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>(myHighlights);
     for (Collection<HighlightInfo> infos : myInjectedPsiHighlights.values()) {
       list.addAll(infos);
