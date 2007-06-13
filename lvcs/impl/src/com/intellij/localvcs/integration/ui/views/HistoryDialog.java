@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -29,6 +30,7 @@ import java.util.List;
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
   protected IdeaGateway myGateway;
   protected VirtualFile myFile;
+  private RevisionsTable myRevisionsTable;
   protected Splitter mySplitter;
   protected T myModel;
 
@@ -48,6 +50,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   private void initModel() {
     ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
     myModel = createModel(vcs);
+    restoreShowChangesOnlyOption();
   }
 
   protected abstract T createModel(ILocalVcs vcs);
@@ -70,6 +73,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   @Override
   protected void dispose() {
+    saveShowChangesOnlyOption();
     saveSplitterProportion();
     super.dispose();
   }
@@ -92,6 +96,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   private ActionGroup createRevisionsActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
+    result.add(new ShowChangesOnlyAction());
     return result;
   }
 
@@ -101,7 +106,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private JComponent createRevisionsTable(ActionGroup actions) {
-    JTable t = new RevisionsTable(myModel, new RevisionsTable.SelectionListener() {
+    myRevisionsTable = new RevisionsTable(myModel, new RevisionsTable.SelectionListener() {
       public void changesSelected(int first, int last) {
         myModel.selectChanges(first, last);
         updateDiffs();
@@ -112,9 +117,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
         updateDiffs();
       }
     });
-    addPopupMenuToComponent(t, actions);
+    addPopupMenuToComponent(myRevisionsTable, actions);
 
-    return ScrollPaneFactory.createScrollPane(t);
+    return ScrollPaneFactory.createScrollPane(myRevisionsTable);
   }
 
   protected void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
@@ -145,6 +150,24 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
 
     return r;
+  }
+
+  private void restoreShowChangesOnlyOption() {
+    int value = getDimensionService().getExtendedState(getShowChangesOnlyOptionKey());
+    myModel.showChangesOnly(value == 1 ? true : false);
+  }
+
+  private void saveShowChangesOnlyOption() {
+    boolean value = myModel.doesShowChangesOnly();
+    getDimensionService().setExtendedState(getShowChangesOnlyOptionKey(), value ? 1 : 0);
+  }
+
+  private String getShowChangesOnlyOptionKey() {
+    return getDimensionServiceKey() + ".showChangesOnly";
+  }
+
+  private DimensionService getDimensionService() {
+    return DimensionService.getInstance();
   }
 
   private void restoreSplitterProportion() {
@@ -221,7 +244,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private class RevertAction extends AnAction {
     public RevertAction() {
-      super("Revert");
+      super("Revert", null, IconLoader.getIcon("/actions/rollback.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -230,8 +253,22 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
       p.setEnabled(isRevertEnabled());
+    }
+  }
+
+  private class ShowChangesOnlyAction extends ToggleAction {
+    public ShowChangesOnlyAction() {
+      super("Show Changes Only", null, IconLoader.getIcon("/actions/showChangesOnly.png"));
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myModel.doesShowChangesOnly();
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      myModel.showChangesOnly(state);
+      myRevisionsTable.updateData();
     }
   }
 }

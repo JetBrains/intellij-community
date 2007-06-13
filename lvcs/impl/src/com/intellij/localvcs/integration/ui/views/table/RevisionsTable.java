@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TableUI;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -90,6 +91,10 @@ public class RevisionsTable extends Table {
     if (column == getColumnCount() - 1) delta = -getRowHeight() / 2;
     e.translatePoint(0, delta);
     return delta;
+  }
+
+  public void updateData() {
+    ((AbstractTableModel)getModel()).fireTableDataChanged();
   }
 
   public interface SelectionListener {

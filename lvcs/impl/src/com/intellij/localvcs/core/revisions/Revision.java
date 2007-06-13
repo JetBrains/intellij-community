@@ -28,6 +28,10 @@ public abstract class Revision {
     return leftEntry.getDifferenceWith(rightEntry);
   }
 
+  public boolean wasChanged() {
+    return true;
+  }
+
   public boolean isMarked() {
     return false;
   }

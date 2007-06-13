@@ -8,7 +8,7 @@ import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.core.tree.RootEntry;
 import org.junit.Test;
 
-public class RevisionAfterChangeTest extends LocalVcsTestCase {
+public class RevisionsAfterChangeTest extends LocalVcsTestCase {
   @Test
   public void testForRootEntry() {
     Entry root = new RootEntry();

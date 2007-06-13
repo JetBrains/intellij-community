@@ -20,6 +20,11 @@ public class LabeledRevision extends RevisionAfterChange {
   }
 
   @Override
+  public boolean wasChanged() {
+    return false;
+  }
+
+  @Override
   public boolean isMarked() {
     return myChange.isMark();
   }

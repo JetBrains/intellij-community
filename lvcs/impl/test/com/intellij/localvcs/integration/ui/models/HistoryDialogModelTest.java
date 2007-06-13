@@ -54,6 +54,23 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testDisplayingOnlyChanges() {
+    vcs.putLabel("label");
+
+    m.showChangesOnly(false);
+    List<Revision> rr = m.getRevisions();
+
+    assertEquals(4, rr.size());
+    assertEquals("label", rr.get(0).getName());
+
+    m.showChangesOnly(true);
+    rr = m.getRevisions();
+
+    assertEquals(3, rr.size());
+    assertEquals("3", rr.get(0).getCauseChangeName());
+  }
+
+  @Test
   public void testRegisteringUnsavedDocumentsBeforeBuildingRevisionsList() {
     gw.addUnsavedDocument("f", "unsaved");
     initModelFor("f");

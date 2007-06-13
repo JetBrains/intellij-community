@@ -9,16 +9,18 @@ import com.intellij.localvcs.integration.revertion.Reverter;
 import com.intellij.localvcs.integration.revertion.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
   protected ILocalVcs myVcs;
   protected VirtualFile myFile;
   protected IdeaGateway myGateway;
+  private List<Revision> myRevisionsCache;
+  private boolean myShowChangesOnly;
   private int myRightRevisionIndex;
   private int myLeftRevisionIndex;
   private boolean myIsChangesSelected = false;
-  private List<Revision> myRevisionsCache;
 
   public HistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
     myVcs = vcs;
@@ -37,7 +39,14 @@ public abstract class HistoryDialogModel {
   }
 
   protected List<Revision> getRevisionsCache() {
-    return myVcs.getRevisionsFor(myFile.getPath());
+    List<Revision> all = myVcs.getRevisionsFor(myFile.getPath());
+    if (!myShowChangesOnly) return all;
+
+    List<Revision> result = new ArrayList<Revision>();
+    for (Revision r : all) {
+      if (r.wasChanged()) result.add(r);
+    }
+    return result;
   }
 
   protected Revision getLeftRevision() {
@@ -75,6 +84,15 @@ public abstract class HistoryDialogModel {
       myRightRevisionIndex = first;
       myLeftRevisionIndex = second;
     }
+  }
+
+  public void showChangesOnly(boolean value) {
+    myShowChangesOnly = value;
+    initRevisionsCache();
+  }
+
+  public boolean doesShowChangesOnly() {
+    return myShowChangesOnly;
   }
 
   protected boolean isCurrentRevisionSelected() {

@@ -5,7 +5,7 @@ import com.intellij.localvcs.core.changes.ChangeSet;
 import com.intellij.localvcs.core.changes.CreateFileChange;
 import org.junit.Test;
 
-public class RevisionCauseChangesTest extends LocalVcsTestCase {
+public class RevisionsCauseChangesTest extends LocalVcsTestCase {
   ChangeSet cs = cs("Action", new CreateFileChange(1, "f", null, -1));
 
   @Test
