@@ -51,6 +51,10 @@ class ClassPath {
           }
         }
 
+        synchronized (myUrls) {
+          if (myUrls.isEmpty()) return null;
+        }
+
         i = myLoaders.size();
       }
       else {

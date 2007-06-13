@@ -72,9 +72,26 @@ class FileLoader extends Loader {
   }
 
   void buildCache(final ClasspathCache cache) throws IOException {
-    cache.addResourceEntry("foo.class", this);
-    cache.addResourceEntry("bar.properties", this);
-    buildPackageCache(myRootDir, cache);
+    File index = new File(myRootDir, "classpath.index");
+    if (index.exists()) {
+      BufferedReader reader = new BufferedReader(new FileReader(index));
+      try {
+        do {
+          String line = reader.readLine();
+          if (line == null) break;
+          cache.addResourceEntry(line, this);
+        }
+        while (true);
+      }
+      finally {
+        reader.close();
+      }
+    }
+    else {
+      cache.addResourceEntry("foo.class", this);
+      cache.addResourceEntry("bar.properties", this);
+      buildPackageCache(myRootDir, cache);
+    }
   }
 
   private class MyResource extends Resource {

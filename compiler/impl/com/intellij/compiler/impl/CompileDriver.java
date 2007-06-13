@@ -76,6 +76,9 @@ public class CompileDriver {
   private ProjectRootManager myProjectRootManager;
   private static final @NonNls String VERSION_FILE_NAME = "version.dat";
   private static final @NonNls String LOCK_FILE_NAME = "in_progress.dat";
+
+  private static final @NonNls boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
+
   private final FileProcessingCompilerAdapterFactory myProcessingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myPackagingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
@@ -506,6 +509,13 @@ public class CompileDriver {
       finally {
         // drop in case it has not been dropped yet.
         dropDependencyCache(context);
+
+        if (GENERATE_CLASSPATH_INDEX) {
+          context.getProgressIndicator().setText("Generating classpath index");
+          for (VirtualFile file : context.getAllOutputDirectories()) {
+            createClasspathIndex(file);
+          }
+        }
       }
 
       if (!onlyCheckStatus) {
@@ -530,6 +540,30 @@ public class CompileDriver {
     }
     catch (ProcessCanceledException e) {
       return ExitStatus.CANCELLED;
+    }
+  }
+
+  private static void createClasspathIndex(final VirtualFile file) {
+    try {
+      BufferedWriter writer = new BufferedWriter(new FileWriter(new File(VfsUtil.virtualToIoFile(file), "classpath.index")));
+      try {
+        writeIndex(writer, file, file);
+      }
+      finally {
+        writer.close();
+      }
+    }
+    catch (IOException e) {
+      // Ignore. Failed to create optional classpath index
+    }
+  }
+
+  private static void writeIndex(final BufferedWriter writer, final VirtualFile root, final VirtualFile file) throws IOException {
+    writer.write(VfsUtil.getRelativePath(file, root, '/'));
+    writer.write('\n');
+
+    for (VirtualFile child : file.getChildren()) {
+      writeIndex(writer, root, child);
     }
   }
 
