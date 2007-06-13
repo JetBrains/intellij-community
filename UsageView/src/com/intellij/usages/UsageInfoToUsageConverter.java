@@ -85,10 +85,16 @@ public class UsageInfoToUsageConverter {
     public List<? extends PsiElement> getAllElements() {
       List<PsiElement> result = new ArrayList<PsiElement>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
       for (SmartPsiElementPointer pointer : myPrimarySearchedElements) {
-        result.add(pointer.getElement());
+        PsiElement element = pointer.getElement();
+        if (element != null) {
+          result.add(element);
+        }
       }
       for (SmartPsiElementPointer pointer : myAdditionalSearchedElements) {
-        result.add(pointer.getElement());
+        PsiElement element = pointer.getElement();
+        if (element != null) {
+          result.add(element);
+        }
       }
       return result;
     }
