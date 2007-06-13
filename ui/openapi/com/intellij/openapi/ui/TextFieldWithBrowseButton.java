@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -49,7 +50,8 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   private void installFileCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    final Application application = ApplicationManager.getApplication();
+    if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
     FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent(), project));
   }
         
