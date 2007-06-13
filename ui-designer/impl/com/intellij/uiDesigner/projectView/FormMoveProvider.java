@@ -16,22 +16,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
-import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
@@ -85,20 +84,19 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
           LOG.error(e);
           continue;
         }
-        new MoveFormsProcessor(
-          file.getProject(),
-          new PsiElement[] { file },
-          psiDirectory,
-          false,
-          false,
-          null,
-          null
-        ).run();
+        moveFormFile(file, psiDirectory);
       }
     }
 
     public void classesMovedToInner(final PsiClass targetClass) {
-      //To change body of implemented methods use File | Settings | File Templates.
+      PsiDirectory target = targetClass.getContainingFile().getContainingDirectory();
+      for(PsiFile file: myFilesToMove) {
+        moveFormFile(file, target);
+      }
+    }
+
+    private static void moveFormFile(final PsiFile file, final PsiDirectory psiDirectory) {
+      new MoveFormsProcessor(file.getProject(), new PsiElement[] { file }, psiDirectory).run();
     }
 
     @Nullable
@@ -111,13 +109,9 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
   }
 
   private static class MoveFormsProcessor extends MoveFilesOrDirectoriesProcessor {
-    public MoveFormsProcessor(final Project project, final PsiElement[] elements, final PsiDirectory newParent,
-                              final boolean searchInComments,
-                              final boolean searchInNonJavaFiles,
-                              final MoveCallback moveCallback, final Runnable prepareSuccessfulCallback) {
-      super(project, elements, newParent, searchInComments, searchInNonJavaFiles, moveCallback, prepareSuccessfulCallback);
+    public MoveFormsProcessor(final Project project, final PsiElement[] elements, final PsiDirectory newParent) {
+      super(project, elements, newParent, false, false, null, null);
     }
-
 
     @Override protected boolean isPreviewUsages(UsageInfo[] usages) {
       return false;
