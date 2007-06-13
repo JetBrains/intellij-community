@@ -162,34 +162,25 @@ public class ShowImplementationsAction extends AnAction {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickdefinition.lookup");
     }
 
-    // These two invokeLaters necessary for the focus to get back to the editor after progress dialog in inheritance
-    // search. To be removed after progress indicator will no longer be a modal dialog.
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            final ImplementationViewComponent component = new ImplementationViewComponent(impls);
-            if (component.hasElementsToShow()) {
-              final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
-                .setRequestFocusIfNotLookupOrSearch(project)
-                .setLookupAndSearchUpdater(new Condition<PsiElement>() {
-                  public boolean value(final PsiElement element) {
-                    updateElementImplementations(element, editor, project);
-                    return false;
-                  }
-                }, project)
-                .setDimensionServiceKey(project, "ShowImplementationPopup", false)
-                .setResizable(true)
-                .setMovable(true)
-                .setTitle(CodeInsightBundle.message("implementation.view.title", text)).createPopup();
-              popup.showInBestPositionFor(DataManager.getInstance().getDataContext());
-              component.setHint(popup);
-            }
+    final ImplementationViewComponent component = new ImplementationViewComponent(impls);
+    if (component.hasElementsToShow()) {
+      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
+        .setRequestFocusIfNotLookupOrSearch(project)
+        .setLookupAndSearchUpdater(new Condition<PsiElement>() {
+          public boolean value(final PsiElement element) {
+            updateElementImplementations(element, editor, project);
+            return false;
           }
-        });
-      }
-    });
+        }, project)
+        .setDimensionServiceKey(project, "ShowImplementationPopup", false)
+        .setResizable(true)
+        .setMovable(true)
+        .setTitle(CodeInsightBundle.message("implementation.view.title", text))
+        .createPopup();
+      popup.showInBestPositionFor(DataManager.getInstance().getDataContext());
+      component.setHint(popup);
+    }
+
   }
 
   private static PsiElement[] getSelfAndImplementations(Editor editor, PsiFile file, PsiElement element) {
