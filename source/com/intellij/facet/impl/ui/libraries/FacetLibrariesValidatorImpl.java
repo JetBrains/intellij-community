@@ -181,6 +181,15 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     addRoots(roots);
   }
 
+  private static boolean canDownload(final LibraryInfo[] infos) {
+    for (LibraryInfo libraryInfo : infos) {
+      if (libraryInfo.getDownloadingUrl() != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     roots.addAll(myAddedRoots);
@@ -195,6 +204,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class CollectingLibrariesPolicy extends RootPolicy<List<VirtualFile>> {
+
     public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
       Library library = libraryOrderEntry.getLibrary();
       if (library != null) {
@@ -213,6 +223,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       }
       return value;
     }
+
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
@@ -239,7 +250,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       final String downloadJars = IdeBundle.message("facet.libraries.download.jars.popup.item");
       final String addJars = IdeBundle.message("facet.libraries.create.new.library.popup.item");
       final BaseListPopupStep librariesStep;
-      String[] popupItems;
+      List<String> popupItems = new ArrayList<String>();
       if (!suitableLibraries.isEmpty()) {
         librariesStep = new BaseListPopupStep<Library>(IdeBundle.message("add.library.popup.title"), suitableLibraries, Icons.LIBRARY_ICON) {
           @NotNull
@@ -252,15 +263,17 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
             return FINAL_CHOICE;
           }
         };
-        popupItems = new String[] {useLibrary, downloadJars, addJars};
+        popupItems.add(useLibrary);
       }
       else {
         librariesStep = null;
-        popupItems = new String[] {downloadJars, addJars};
       }
+      if (canDownload(myMissingLibraries)) {
+        popupItems.add(downloadJars);
+      }
+      popupItems.add(addJars);
 
-
-      final BaseListPopupStep popupStep = new BaseListPopupStep<String>(null, Arrays.asList(popupItems), QUICK_FIX_ICON) {
+      final BaseListPopupStep popupStep = new BaseListPopupStep<String>(null, popupItems, QUICK_FIX_ICON) {
         public boolean hasSubstep(final String selectedValue) {
           return useLibrary.equals(selectedValue);
         }
@@ -284,4 +297,5 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       popup.showUnderneathOf(place);
     }
   }
+
 }
