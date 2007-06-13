@@ -128,8 +128,8 @@ public class PopupChooserBuilder {
       contentPane.add(label, BorderLayout.NORTH);
     }
 
-    if (myChooserComponent instanceof JList) {
-      JList list = (JList)myChooserComponent;
+    if (myChooserComponent instanceof MyListWrapper) {
+      JList list = ((MyListWrapper)myChooserComponent).myList;
       if (list.getSelectedIndex() == -1 && myAutoselect) {
         list.setSelectedIndex(0);
       }
