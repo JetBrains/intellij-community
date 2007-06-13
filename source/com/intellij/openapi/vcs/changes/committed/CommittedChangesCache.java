@@ -567,22 +567,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     LOG.info("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.refresh.progress")) {
-      private boolean myAnyChanges = false;
-
       public void run(final ProgressIndicator indicator) {
-        myAnyChanges = refreshIncomingChanges();
+        refreshIncomingChanges();
       }
 
       public void onSuccess() {
         myRefreshingIncomingChanges = false;
-        if (myAnyChanges) {
-          myCachedIncomingChangeLists = null;
-          LOG.info("Incoming changes refresh complete, clearing cached incoming changes");
-          notifyIncomingChangesUpdated(null);
-        }
-        else {
-          LOG.info("Incoming changes refresh complete, no new or obsolete changes");
-        }
+        myCachedIncomingChangeLists = null;
+        LOG.info("Incoming changes refresh complete, clearing cached incoming changes");
+        notifyIncomingChangesUpdated(null);
       }
     };
     myTaskQueue.run(task);    
