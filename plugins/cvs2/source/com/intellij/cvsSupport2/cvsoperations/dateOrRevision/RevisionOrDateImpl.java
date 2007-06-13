@@ -4,7 +4,6 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
@@ -17,8 +16,8 @@ public class RevisionOrDateImpl implements RevisionOrDate {
   private String myStickyTag;
   private String myStickyDate;
 
-  public static RevisionOrDate createOn(VirtualFile file) {
-    VirtualFile parent = CvsVfsUtil.getParentFor(file);
+  public static RevisionOrDate createOn(@NotNull VirtualFile file) {
+    VirtualFile parent = file.getParent();
     return new RevisionOrDateImpl(parent, CvsEntriesManager.getInstance().getEntryFor(parent, file.getName()));
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.util.Collection;
@@ -32,9 +33,9 @@ public class CvsStatusProvider {
     TIME_STAMP_EPSILON = epsilon;
   }
 
-  public static FileStatus getStatus(VirtualFile file) {
+  public static FileStatus getStatus(@NotNull VirtualFile file) {
     if (!CvsEntriesManager.getInstance().isActive()) return FileStatus.NOT_CHANGED;
-    return getStatus(file, getEntriesManager().getEntryFor(CvsVfsUtil.getParentFor(file), file.getName()));
+    return getStatus(file, getEntriesManager().getEntryFor(file.getParent(), file.getName()));
   }
 
   public static FileStatus getStatus(VirtualFile file, Entry entry) {

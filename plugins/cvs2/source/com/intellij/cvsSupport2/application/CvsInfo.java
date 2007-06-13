@@ -9,7 +9,6 @@ import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.CvsBundle;
@@ -139,7 +138,7 @@ public class CvsInfo {
   }
 
   private File getParentFile() {
-    return CvsVfsUtil.getFileFor(myParent);
+    return new File(myParent.getPath());
   }
 
   private static Entries createEntriesFor(File parent) {

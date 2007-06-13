@@ -71,7 +71,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
 
 
   public boolean addFile(VirtualFile file) {
-    return addFile(CvsVfsUtil.getPathFor(file));
+    return addFile(file == null ? "" : file.getPath());
   }
 
   public boolean addFile(File file) {

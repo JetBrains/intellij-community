@@ -2,9 +2,9 @@ package com.intellij.cvsSupport2.cvsoperations.dateOrRevision;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 
@@ -15,8 +15,8 @@ import org.netbeans.lib.cvsclient.command.Command;
 public class SimpleRevision implements RevisionOrDate {
   private final String myRevision;
 
-  public static SimpleRevision createForTheSameVersionOf(VirtualFile file) {
-    Entry entry = CvsEntriesManager.getInstance().getEntryFor(CvsVfsUtil.getParentFor(file), file.getName());
+  public static SimpleRevision createForTheSameVersionOf(@NotNull VirtualFile file) {
+    Entry entry = CvsEntriesManager.getInstance().getEntryFor(file.getParent(), file.getName());
     return new SimpleRevision(entry.getRevision());
 
   }

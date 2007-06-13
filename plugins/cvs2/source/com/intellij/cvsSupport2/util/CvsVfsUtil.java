@@ -41,24 +41,13 @@ public class CvsVfsUtil {
     return result[0];
   }
 
-  public static VirtualFile getParentFor(final VirtualFile file) {
-    if (file == null) return null;
-    final VirtualFile[] result = new VirtualFile[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        result[0] = file.getParent();
-      }
-    });
-    return result[0];
-  }
-
   public static VirtualFile getParentFor(final File file) {
     return findFileByIoFile(file.getParentFile());
   }
 
   public static File getFileFor(final VirtualFile file) {
     if (file == null) return null;
-    return new File(getPathFor(file));
+    return new File(file.getPath());
   }
 
   public static File getFileFor(final VirtualFile parent, String name) {
@@ -66,20 +55,8 @@ public class CvsVfsUtil {
       return new File(name);
     }
     else {
-      return new File(getPathFor(parent), name);
+      return new File(parent.getPath(), name);
     }
-  }
-
-  public static String getPathFor(final VirtualFile file) {
-    if (file == null) return "";
-
-    final String[] result = new String[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        result[0] = file.getPath();
-      }
-    });
-    return result[0];
   }
 
   public static VirtualFile findFileByIoFile(final File file) {

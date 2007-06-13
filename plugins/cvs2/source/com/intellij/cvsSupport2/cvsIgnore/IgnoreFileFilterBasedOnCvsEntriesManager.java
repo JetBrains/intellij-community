@@ -2,7 +2,6 @@ package com.intellij.cvsSupport2.cvsIgnore;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
@@ -18,7 +17,7 @@ public class IgnoreFileFilterBasedOnCvsEntriesManager implements IIgnoreFileFilt
     File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
     if (virtualFile == null) return false;
-    IgnoredFilesInfo filter = CvsEntriesManager.getInstance().getFilter(CvsVfsUtil.getParentFor(virtualFile));
+    IgnoredFilesInfo filter = CvsEntriesManager.getInstance().getFilter(virtualFile.getParent());
     return filter.shouldBeIgnored(file.getName());
   }
 }

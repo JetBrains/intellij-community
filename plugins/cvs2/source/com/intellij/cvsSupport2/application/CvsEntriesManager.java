@@ -191,7 +191,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
   public Entry getEntryFor(@NotNull VirtualFile file) {
-    final CvsInfo cvsInfo = getCvsInfo(CvsVfsUtil.getParentFor(file));
+    final CvsInfo cvsInfo = getCvsInfo(file.getParent());
     assert(cvsInfo != null);
     return cvsInfo.getEntryNamed(file.getName());
   }
@@ -281,7 +281,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (myFilesToRefresh) {
-          myFilesToRefresh.add(CvsVfsUtil.getPathFor(parent) + "/" + CVS_ADMIN_DIRECTORY_NAME);
+          myFilesToRefresh.add(parent.getPath() + "/" + CVS_ADMIN_DIRECTORY_NAME);
         }
       }
     });

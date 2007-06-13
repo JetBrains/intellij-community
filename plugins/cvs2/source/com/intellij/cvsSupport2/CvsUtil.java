@@ -99,8 +99,8 @@ public class CvsUtil {
     return true;
   }
 
-  public static Entry getEntryFor(VirtualFile file) {
-    return CvsEntriesManager.getInstance().getEntryFor(CvsVfsUtil.getParentFor(file), file.getName());
+  public static Entry getEntryFor(@NotNull VirtualFile file) {
+    return CvsEntriesManager.getInstance().getEntryFor(file.getParent(), file.getName());
   }
 
   public static Entry getEntryFor(File ioFile) {
@@ -292,6 +292,7 @@ public class CvsUtil {
     return loadFrom(file, TAG, true);
   }
 
+  @Nullable
   public static String getStickyTagForDirectory(VirtualFile parentFile) {
     String tag = loadFrom(CvsVfsUtil.getFileFor(parentFile), TAG, true);
     if (tag == null) return null;
@@ -302,9 +303,9 @@ public class CvsUtil {
     return null;
   }
 
-  public static void ignoreFile(final VirtualFile file) throws IOException {
-    VirtualFile directory = CvsVfsUtil.getParentFor(file);
-    File cvsignoreFile = cvsignoreFileFor(CvsVfsUtil.getPathFor(directory));
+  public static void ignoreFile(@NotNull final VirtualFile file) throws IOException {
+    VirtualFile directory = file.getParent();
+    File cvsignoreFile = cvsignoreFileFor(directory == null ? "" : directory.getPath());
     CvsFileUtil.appendLineToFile(file.getName(), cvsignoreFile);
     CvsEntriesManager.getInstance().clearCachedFiltersFor(directory);
   }
@@ -513,7 +514,7 @@ public class CvsUtil {
 
   public static void restoreFile(final VirtualFile file) {
     CvsEntriesManager cvsEntriesManager = CvsEntriesManager.getInstance();
-    VirtualFile directory = CvsVfsUtil.getParentFor(file);
+    VirtualFile directory = file == null ? null : file.getParent();
     LOG.assertTrue(directory != null);
     CvsInfo cvsInfo = cvsEntriesManager.getCvsInfoFor(directory);
     Entry entry = cvsInfo.getEntryNamed(file.getName());

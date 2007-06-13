@@ -10,7 +10,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -115,7 +114,7 @@ class MergeInfo implements MergeDataProvider{
 
         if (storedFiles.length == 1) {
           VirtualFile storedCopy = storedFiles[0];
-          if (Messages.showYesNoDialog(CvsBundle.message("message.confirmation.use.stored.copy.for.merge", CvsVfsUtil.getPathFor(storedCopy)),
+          if (Messages.showYesNoDialog(CvsBundle.message("message.confirmation.use.stored.copy.for.merge", storedCopy.getPath()),
                                        CvsBundle.getMergeOperationName(), Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) {
             return null;
           }

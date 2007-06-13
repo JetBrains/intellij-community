@@ -251,7 +251,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Nullable
-  public byte[] getLastUpToDateContentFor(final VirtualFile f) {
+  public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
     final long upToDateTimestamp = getUpToDateTimeForFile(f);
     RevisionTimestampComparator c = new RevisionTimestampComparator() {
       public boolean isSuitable(long revisionTimestamp) {
@@ -261,8 +261,8 @@ public class CvsChangeProvider implements ChangeProvider {
     return LocalHistory.getByteContent(myVcs.getProject(), f, c);
   }
 
-  public long getUpToDateTimeForFile(VirtualFile vFile) {
-    Entry entry = myEntriesManager.getEntryFor(CvsVfsUtil.getParentFor(vFile), vFile.getName());
+  public long getUpToDateTimeForFile(@NotNull VirtualFile vFile) {
+    Entry entry = myEntriesManager.getEntryFor(vFile.getParent(), vFile.getName());
     if (entry == null) return -1;
     if (entry.isResultOfMerge()) {
       long resultForMerge = CvsUtil.getUpToDateDateForFile(vFile);
