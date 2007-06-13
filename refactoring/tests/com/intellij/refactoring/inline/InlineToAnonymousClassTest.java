@@ -227,6 +227,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because an interface implemented by it cannot be resolved");
   }
 
+  public void testNoInlineLibraryClass() throws Exception {
+    doTestNoInline("Library classes cannot be inlined");
+  }
+
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();

@@ -4,6 +4,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -53,6 +55,10 @@ public class InlineToAnonymousClassHandler {
     }
     if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return RefactoringBundle.message("inline.to.anonymous.no.abstract");
+    }
+    final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+    if (vFile != null && !ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex().isInSource(vFile)) {
+      return "Library classes cannot be inlined";
     }
 
     if (ClassInheritorsSearch.search(psiClass).findFirst() != null) {
