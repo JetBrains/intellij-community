@@ -3,7 +3,6 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
@@ -231,6 +230,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Library classes cannot be inlined");
   }
 
+  public void testNoInlineNoUsages() throws Exception {
+    doTestPreprocessUsages("Class is never used");
+  }
+
   public void testConflictInaccessibleOuterField() throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
@@ -262,8 +265,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
 
   private void doTestPreprocessUsages(final String expectedMessage) throws Exception {
     final InlineToAnonymousClassProcessor processor = prepareProcessor();
-    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(processor.findUsages());
-    String message = processor.getPreprocessUsagesMessage(refUsages);
+    String message = processor.getPreprocessUsagesMessage(processor.findUsages());
     assertEquals(expectedMessage, message);
   }
 

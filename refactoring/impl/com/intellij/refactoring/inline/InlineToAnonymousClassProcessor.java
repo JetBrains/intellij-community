@@ -2,12 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.patterns.impl.Pattern;
-import com.intellij.patterns.impl.StandardPatterns;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
-import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,12 +58,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    String s = getPreprocessUsagesMessage(refUsages);
+    UsageInfo[] usages = refUsages.get();
+    String s = getPreprocessUsagesMessage(usages);
     if (s != null) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
       return false;
     }
-    ArrayList<String> conflicts = getConflicts(refUsages.get());
+    ArrayList<String> conflicts = getConflicts(usages);
     if (!conflicts.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
       dialog.show();
@@ -192,14 +188,18 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Inline class " + myClass;
+    return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }
 
   @Nullable
-  public String getPreprocessUsagesMessage(final Ref<UsageInfo[]> refUsages) {
-    final UsageInfo[] usages = refUsages.get();
+  public String getPreprocessUsagesMessage(final UsageInfo[] usages) {
+    boolean hasUsages = false;
     for(UsageInfo usage: usages) {
       final PsiElement element = usage.getElement();
+      if (element == null) continue;
+      if (!PsiTreeUtil.isAncestor(myClass, element, false)) {
+        hasUsages = true;
+      }
       final PsiElement parentElement = element.getParent();
       if (parentElement != null && parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
         return "Class cannot be inlined because it has usages of its class literal";
@@ -220,6 +220,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+    }
+    if (!hasUsages) {
+      return RefactoringBundle.message("class.is.never.used");
     }
     return null;
   }
