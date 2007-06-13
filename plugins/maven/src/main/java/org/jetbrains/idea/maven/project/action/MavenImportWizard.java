@@ -71,6 +71,10 @@ public class MavenImportWizard extends ProjectImportWizard
     };
   }
 
+  protected void cleanup() {
+    myImportProcessor = null;
+  }
+
   public void commitImport(final Project project) {
 
     myImportProcessor.resolve(project);

@@ -25,10 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.logger.ConsoleOutput;
-import org.jetbrains.idea.maven.builder.logger.ConsoleOutputAdapter;
-import org.jetbrains.idea.maven.builder.logger.LogBroadcaster;
-import org.jetbrains.idea.maven.builder.logger.MavenBuildLogger;
+import org.jetbrains.idea.maven.builder.logger.*;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 
 import java.io.BufferedReader;
@@ -37,29 +34,26 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 
-public class MavenExternalExecutor extends MavenExecutor implements Runnable {
+public class MavenExternalExecutor extends MavenExecutor {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.builder.executor.MavenExternalExecutor");
 
   private Process mavenProcess;
-  private final MavenBuildLogger buildLogger;
-  private final ConsoleOutput consoleOutput;
 
   @NonNls private static final String INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
 
-  private class MavenExternalLogger extends LogBroadcaster implements MavenBuildLogger {
+  private static class MavenExternalLogger extends LogBroadcaster implements MavenBuildLogger {
   }
 
   public MavenExternalExecutor(Parameters parameters, MavenCoreState mavenCoreState, MavenBuilderState builderState) {
     super(parameters, mavenCoreState, builderState);
-    buildLogger = new MavenExternalLogger();
-    buildLogger.setThreshold(mavenCoreState.getOutputLevel());
-    consoleOutput = new ConsoleOutputAdapter(buildLogger);
   }
 
-  public void run() {
+  protected MavenBuildLogger createLogger (){
+    return new MavenExternalLogger();
+  }
 
-    displayProgress();
+  public void doRun() {
 
     List<String> executionCommand;
     try {

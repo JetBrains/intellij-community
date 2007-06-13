@@ -181,4 +181,14 @@ public class MavenEnv {
   private static String getErrorString(final boolean flag, @NonNls final String message, final File file) {
     return flag ? "" : (message + " (" + (file != null ? file.getPath() : "null") + ").");
   }
+
+  public static void releaseEmbedder(MavenEmbedder mavenEmbedder) {
+    if (mavenEmbedder != null) {
+      try {
+        mavenEmbedder.stop();
+      }
+      catch (MavenEmbedderException ignore) {
+      }
+    }
+  }
 }

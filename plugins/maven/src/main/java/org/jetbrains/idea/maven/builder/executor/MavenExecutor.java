@@ -21,13 +21,15 @@ package org.jetbrains.idea.maven.builder.executor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
+import org.jetbrains.idea.maven.builder.logger.ConsoleOutputAdapter;
 import org.jetbrains.idea.maven.builder.logger.LogListener;
 import org.jetbrains.idea.maven.builder.logger.MavenBuildLogger;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 
 import java.util.List;
 
-public abstract class MavenExecutor implements Runnable {
+public abstract class MavenExecutor {
+
   public interface Parameters {
 
     List<String> getGoals();
@@ -42,6 +44,9 @@ public abstract class MavenExecutor implements Runnable {
   final Parameters myParameters;
   final MavenCoreState myMavenCoreState;
   final MavenBuilderState myBuilderState;
+
+  protected ConsoleOutputAdapter consoleOutput;
+  protected MavenBuildLogger buildLogger;
 
   private boolean stopped = true;
   private boolean cancelled = false;
@@ -58,12 +63,12 @@ public abstract class MavenExecutor implements Runnable {
 
   void start() {
     stopped = false;
-    getLogger().setOutputType(LogListener.OUTPUT_TYPE_NORMAL);
+    buildLogger.setOutputType(LogListener.OUTPUT_TYPE_NORMAL);
   }
 
   int stop() {
     stopped = true;
-    getLogger().setOutputPaused(false);
+    buildLogger.setOutputPaused(false);
     return 0;
   }
 
@@ -76,6 +81,24 @@ public abstract class MavenExecutor implements Runnable {
     stop();
   }
 
+  public void run(LogListener listener) {
+
+    buildLogger = createLogger();
+    buildLogger.setThreshold(myMavenCoreState.getOutputLevel());
+    if (listener != null) {
+      buildLogger.addListener(listener);
+    }
+    consoleOutput = new ConsoleOutputAdapter(buildLogger);
+
+    displayProgress();
+
+    doRun();
+
+    dispose ();
+  }
+
+  protected abstract MavenBuildLogger createLogger();
+
   void displayProgress() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
@@ -84,7 +107,16 @@ public abstract class MavenExecutor implements Runnable {
     }
   }
 
+  protected abstract void doRun();
+
+  protected void dispose() {
+    buildLogger = null;
+    consoleOutput = null;
+  }
+
   public abstract String getCaption();
 
-  public abstract MavenBuildLogger getLogger();
+  public MavenBuildLogger getLogger() {
+    return buildLogger;
+  }
 }

@@ -22,12 +22,9 @@ public class MavenProjectModel {
 
   private final List<Node> rootProjects = new ArrayList<Node>();
 
-  private final MavenProjectReader myProjectReader;
-
   public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
                            final Collection<VirtualFile> importRoots,
                            final MavenProjectReader projectReader) {
-    this.myProjectReader = projectReader;
 
     Map<VirtualFile, Module> fileToModule = new HashMap<VirtualFile, Module>();
 
@@ -45,7 +42,7 @@ public class MavenProjectModel {
       if (indicator != null && indicator.isCanceled()) {
         break;
       }
-      final MavenProjectModel.Node node = createMavenTree(fileToModule.keySet().iterator().next(), fileToModule, false);
+      final MavenProjectModel.Node node = createMavenTree(projectReader, fileToModule.keySet().iterator().next(), fileToModule, false);
       if (node != null) {
         rootProjects.add(node);
       }
@@ -57,7 +54,10 @@ public class MavenProjectModel {
   }
 
   @Nullable
-  private Node createMavenTree(@NotNull VirtualFile pomFile, final Map<VirtualFile, Module> unprocessedFiles, boolean imported) {
+  private Node createMavenTree(final MavenProjectReader projectReader,
+                               @NotNull VirtualFile pomFile,
+                               final Map<VirtualFile, Module> unprocessedFiles,
+                               boolean imported) {
     final Module linkedModule = unprocessedFiles.get(pomFile);
     unprocessedFiles.remove(pomFile);
 
@@ -71,7 +71,7 @@ public class MavenProjectModel {
 
     MavenProject mavenProject;
     try {
-      mavenProject = myProjectReader.readBare(pomFile.getPath());
+      mavenProject = projectReader.readBare(pomFile.getPath());
     }
     catch (Exception e) {
       LOG.info(e);
@@ -99,7 +99,7 @@ public class MavenProjectModel {
           node.mavenModules.add(existingRoot);
         }
         else if (imported || unprocessedFiles.containsKey(childFile)) {
-          Node module = createMavenTree(childFile, unprocessedFiles, imported);
+          Node module = createMavenTree(projectReader, childFile, unprocessedFiles, imported);
           if (module != null) {
             node.mavenModules.add(module);
           }
@@ -112,7 +112,7 @@ public class MavenProjectModel {
     return node;
   }
 
-  public void resolve() {
+  public void resolve(final MavenProjectReader projectReader) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     visit(new MavenProjectVisitorPlain() {
       public void visit(final Node node) {
@@ -123,7 +123,7 @@ public class MavenProjectModel {
           }
           progressIndicator.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
         }
-        node.resolve();
+        node.resolve(projectReader);
       }
     });
   }
@@ -212,10 +212,10 @@ public class MavenProjectModel {
       return mavenProject.getArtifact();
     }
 
-    public MavenId getId () {
+    public MavenId getId() {
       return new MavenId(getArtifact());
     }
-    
+
     public boolean isIncluded() {
       return included;
     }
@@ -236,8 +236,8 @@ public class MavenProjectModel {
       linkedModule = null;
     }
 
-    public void resolve() {
-      final MavenProject resolved = myProjectReader.readResolved(getPath());
+    public void resolve(final MavenProjectReader projectReader) {
+      final MavenProject resolved = projectReader.readResolved(getPath());
       if (resolved != null) {
         mavenProject = resolved;
       }
@@ -245,12 +245,12 @@ public class MavenProjectModel {
 
     @NonNls
     public String createPath(@NonNls final String... elements) {
-        final StringBuilder stringBuilder = new StringBuilder(getDirectory());
-        for (String element : elements) {
-          stringBuilder.append("/");
-          stringBuilder.append(element);
-        }
-        return FileUtil.toSystemIndependentName(stringBuilder.toString());
+      final StringBuilder stringBuilder = new StringBuilder(getDirectory());
+      for (String element : elements) {
+        stringBuilder.append("/");
+        stringBuilder.append(element);
       }
+      return FileUtil.toSystemIndependentName(stringBuilder.toString());
+    }
   }
 }
