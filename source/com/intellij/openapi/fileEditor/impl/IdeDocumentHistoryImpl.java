@@ -461,6 +461,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   public final void initComponent() { }
 
   public final void disposeComponent() {
+    myLastGroupId = null;
   }
 
   protected void executeCommand(Runnable runnable, String name, Object groupId) {

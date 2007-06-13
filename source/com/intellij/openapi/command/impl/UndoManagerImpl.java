@@ -178,6 +178,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandLevel == 0) {
       myFileOperationUndoProvider.commandFinished(project);
       myCurrentActionProject = DummyProject.getInstance();
+      if (myProject == null) myLastMerger.clearDocumentRefs(); //do not leak document refs at app level
     }
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }

@@ -51,6 +51,11 @@ class CommandMerger {
   public void dispose() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.removeDocumentListener(myDocumentListener);
+    clearDocumentRefs();
+  }
+  
+  public void clearDocumentRefs() {
+    myLastGroupId = null;
   }
 
   public void add(UndoableAction action, boolean isUndoTransparent) {
