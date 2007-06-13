@@ -510,7 +510,7 @@ public class CompileDriver {
         // drop in case it has not been dropped yet.
         dropDependencyCache(context);
 
-        if (GENERATE_CLASSPATH_INDEX) {
+        if (didSomething && GENERATE_CLASSPATH_INDEX) {
           context.getProgressIndicator().setText("Generating classpath index");
           for (VirtualFile file : context.getAllOutputDirectories()) {
             createClasspathIndex(file);
