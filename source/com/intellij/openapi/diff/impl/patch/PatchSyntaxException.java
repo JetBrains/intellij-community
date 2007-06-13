@@ -18,4 +18,7 @@ public class PatchSyntaxException extends Exception {
     myLine = line;
   }
 
+  public int getLine() {
+    return myLine;
+  }
 }

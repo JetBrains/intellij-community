@@ -103,7 +103,7 @@ public class PatchReader {
   private PatchHunk readNextHunkUnified() throws PatchSyntaxException {
     while(myLineIndex < myLines.length) {
       String curLine = myLines [myLineIndex];
-      if (curLine.startsWith("--- ")) {
+      if (curLine.startsWith("--- ") && myLineIndex < myLines.length-1 && myLines [myLineIndex+1].startsWith("+++ ")) {
         return null;
       }
       if (curLine.startsWith("@@ ")) {

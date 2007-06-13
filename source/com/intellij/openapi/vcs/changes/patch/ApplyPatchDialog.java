@@ -119,7 +119,12 @@ public class ApplyPatchDialog extends DialogWrapper {
             patch = reader.readNextPatch();
           }
           catch (PatchSyntaxException e) {
-            queueUpdateStatus(VcsBundle.message("patch.apply.load.error", e.getMessage()));
+            if (e.getLine() >= 0) {
+              queueUpdateStatus(VcsBundle.message("patch.apply.load.error.line", e.getMessage(), e.getLine()));
+            }
+            else {
+              queueUpdateStatus(VcsBundle.message("patch.apply.load.error", e.getMessage()));
+            }
             return;
           }
           if (patch == null) {
