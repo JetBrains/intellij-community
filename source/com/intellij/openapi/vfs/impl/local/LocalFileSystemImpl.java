@@ -6,20 +6,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.util.Processor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.vfs.local.win32.FileWatcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
@@ -862,5 +862,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
 
     super.refreshWithoutFileWatcher(asynchronous);
+  }
+
+  public boolean markNewFilesAsDirty() {
+    return true;
   }
 }

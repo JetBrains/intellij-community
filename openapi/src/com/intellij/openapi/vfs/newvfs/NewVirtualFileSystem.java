@@ -132,4 +132,8 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract void deleteFile(final Object requestor, final VirtualFile file) throws IOException;
   public abstract void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException;
   public abstract void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException;
+
+  public boolean markNewFilesAsDirty() {
+    return false;
+  }
 }

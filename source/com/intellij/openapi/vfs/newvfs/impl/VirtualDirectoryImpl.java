@@ -3,20 +3,19 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import gnu.trove.THashSet;
-import gnu.trove.THashMap;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final NewVirtualFileSystem myFS;
@@ -71,12 +70,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public VirtualFileSystemEntry createChild(String name, int id) {
+    final VirtualFileSystemEntry child;
+    final NewVirtualFileSystem fs = getFileSystem();
     if (ourPersistence.isDirectory(id)) {
-      return new VirtualDirectoryImpl(name, this, getFileSystem(), id);
+      child = new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
-      return new VirtualFileImpl(name, this, id);
+      child = new VirtualFileImpl(name, this, id);
     }
+
+    if (fs.markNewFilesAsDirty()) {
+      child.markDirty();
+    }
+
+    return child;
   }
 
   @Nullable
