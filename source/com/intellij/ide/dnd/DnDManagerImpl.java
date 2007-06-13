@@ -133,6 +133,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   private void updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction) {
     LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
     if (myCurrentDragContext == null) return;
+    if (myCurrentEvent == null) return;
 
     myCurrentEvent.updateAction(getDnDActionForPlatformAction(nativeAction));
     myCurrentEvent.setPoint(aPoint);
