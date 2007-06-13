@@ -20,7 +20,7 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
   private final DomElement myElement;
 
   public RemoveDomElementQuickFix(@NotNull DomElement element) {
-    myElement = element;
+    myElement = element.createStableCopy();
   }
 
   @NotNull

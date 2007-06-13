@@ -20,7 +20,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
   protected final T myElement;
 
   public AddDomElementQuickFix(@NotNull T element) {
-    myElement = element;
+    myElement = (T)element.createStableCopy();
   }
 
   @NotNull
