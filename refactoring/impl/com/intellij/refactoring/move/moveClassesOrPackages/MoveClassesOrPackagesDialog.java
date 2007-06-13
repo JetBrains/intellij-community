@@ -331,9 +331,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private void invokeMoveToInner() {
     saveRefactoringSettings();
     PsiClass targetClass = findTargetClass();
-    for (PsiElement elementsToMove : myElementsToMove) {
-      invokeRefactoring(new MoveClassToInnerProcessor(myProject, (PsiClass)elementsToMove,
-                                                      targetClass, isSearchInComments(), isSearchInNonJavaFiles()));
+    for (int i = 0; i < myElementsToMove.length; i++) {
+      PsiClass psiClass = (PsiClass) myElementsToMove[i];
+      // fire callback after last element has been processed
+      invokeRefactoring(new MoveClassToInnerProcessor(myProject, psiClass, targetClass,
+                                                      isSearchInComments(), isSearchInNonJavaFiles(),
+                                                      i == myElementsToMove.length-1 ? myMoveCallback : null));
     }
   }
 

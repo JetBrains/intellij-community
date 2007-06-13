@@ -10,12 +10,15 @@
  */
 package com.intellij.refactoring.move;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.MoveDestination;
+import org.jetbrains.annotations.Nullable;
 
 public interface MoveClassesOrPackagesCallback extends MoveCallback {
 
   void classesOrPackagesMoved(MoveDestination destination);
+
+  void classesMovedToInner(PsiClass targetClass);
 
   /**
    * Allows to override the name of the elements to move which is displayed in the dialog.

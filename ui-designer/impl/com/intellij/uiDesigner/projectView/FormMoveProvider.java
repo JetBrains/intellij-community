@@ -64,8 +64,8 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
   }
 
   private static class FormMoveCallback implements MoveClassesOrPackagesCallback {
-    private PsiClass[] myClassesToMove;
-    private PsiFile[] myFilesToMove;
+    private final PsiClass[] myClassesToMove;
+    private final PsiFile[] myFilesToMove;
 
     public FormMoveCallback(final PsiFile[] filesToMove, final PsiClass[] classesToMove) {
       myClassesToMove = classesToMove;
@@ -95,6 +95,10 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
           null
         ).run();
       }
+    }
+
+    public void classesMovedToInner(final PsiClass targetClass) {
+      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Nullable

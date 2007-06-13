@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -40,17 +42,20 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInNonJavaFiles;
   private NonCodeUsageInfo[] myNonCodeUsages;
   private static final Key<List<NonCodeUsageInfo>> ourNonCodeUsageKey = Key.create("MoveClassToInner.NonCodeUsage");
+  private final MoveCallback myMoveCallback;
 
   public MoveClassToInnerProcessor(Project project,
                                    final PsiClass classToMove,
                                    @NotNull final PsiClass targetClass,
                                    boolean searchInComments,
-                                   boolean searchInNonJavaFiles) {
+                                   boolean searchInNonJavaFiles,
+                                   MoveCallback moveCallback) {
     super(project);
     setClassToMove(classToMove);
     myTargetClass = targetClass;
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
+    myMoveCallback = moveCallback;
     myTargetPackage = myTargetClass.getContainingFile().getContainingDirectory().getPackage();
 }
 
@@ -175,6 +180,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected void performPsiSpoilingRefactoring() {
     RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    if (myMoveCallback != null) {
+      if (myMoveCallback instanceof MoveClassesOrPackagesCallback) {
+        ((MoveClassesOrPackagesCallback) myMoveCallback).classesMovedToInner(myTargetClass);
+      }
+      myMoveCallback.refactoringCompleted();
+    }
   }
 
   private static void retargetClassRefs(final PsiClass classToMove, final PsiClass newClass) {

@@ -106,7 +106,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     prepareTest();
     PsiClass classToMove = myPsiManager.findClass(className, myProject.getAllScope());
     PsiClass targetClass = myPsiManager.findClass(targetClassName, myProject.getAllScope());
-    MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true);
+    MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true, null);
     UsageInfo[] usages = processor.findUsages();
     List<String> conflicts = processor.getConflicts(usages);
     assertSameElements(conflicts, expectedConflicts);
@@ -124,7 +124,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     assertNotNull(targetClass);
 
     for(PsiClass psiClass: classes) {
-      new MoveClassToInnerProcessor(myProject, psiClass, targetClass, true, true).run();
+      new MoveClassToInnerProcessor(myProject, psiClass, targetClass, true, true, null).run();
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
