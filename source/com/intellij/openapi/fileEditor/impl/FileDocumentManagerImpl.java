@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -102,10 +101,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         document.addDocumentListener(
         new DocumentAdapter() {
             public void documentChanged(DocumentEvent e) {
-              if (!file.isValid()) {
-                System.out.println("Oops!");
-              }
-              
               final Document document = e.getDocument();
               myUnsavedDocuments.add(document);
               final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
