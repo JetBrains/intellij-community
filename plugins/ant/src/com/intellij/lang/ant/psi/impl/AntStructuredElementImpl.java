@@ -385,10 +385,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         }
         finally {
           myInGettingChildren = false;
-          final AntFile antFile = getAntFile();
-          if (antFile != null) {
-            antFile.invalidateProperties();
-          }
         }
       }
     }
