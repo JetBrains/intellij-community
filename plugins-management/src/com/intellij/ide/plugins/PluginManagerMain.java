@@ -426,7 +426,7 @@ public class PluginManagerMain {
   }
 
   public void save() {
-    File plugins = new File(PathManager.getConfigPath(), PluginManager.ENABLED_PLUGINS_FILENAME);
+    File plugins = new File(PathManager.getConfigPath(), PluginManager.DISABLED_PLUGINS_FILENAME);
     if (!plugins.isFile()) {
       try {
         plugins.createNewFile();
@@ -442,13 +442,7 @@ public class PluginManagerMain {
       printWriter = new PrintWriter(new BufferedWriter(fileWriter));
       for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
         final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-        if (pluginDescriptor.isEnabled()) {
-          printWriter.println(pluginDescriptor.getPluginId().getIdString());
-        }
-      }
-      for (int i = 0; i < availablePluginsTable.getRowCount(); i++) {
-        final PluginNode pluginDescriptor = (PluginNode)availablePluginsModel.getObjectAt(i); //new installations
-        if (pluginDescriptor.getStatus() == PluginNode.STATUS_DOWNLOADED) {
+        if (!pluginDescriptor.isEnabled()) {
           printWriter.println(pluginDescriptor.getPluginId().getIdString());
         }
       }
@@ -482,6 +476,7 @@ public class PluginManagerMain {
   }
 
   public void apply() {
+    setRequireShutdown(true);
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
       pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue());

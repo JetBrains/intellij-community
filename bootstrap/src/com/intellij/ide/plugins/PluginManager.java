@@ -54,8 +54,9 @@ public class PluginManager {
   private static String myPluginError = null;
   private static final String CORE_PLUGIN_ID = "com.intellij";
 
-  @NonNls public static final String ENABLED_PLUGINS_FILENAME = "plugins.txt";
-  private static List<String> ourEnabledPlugins = null;
+  @NonNls public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
+
+  private static List<String> ourDisabledPlugins = null;
 
   static final Object lock = new Object();
 
@@ -211,10 +212,10 @@ public class PluginManager {
       final String pluginId = System.getProperty("idea.load.plugins.id");
       shouldLoad = pluginId == null || (descriptor.getPluginId() != null &&
                                   pluginId.equals(idString));
-      final File file = new File(PathManager.getConfigPath(), ENABLED_PLUGINS_FILENAME);
+      final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
       if (shouldLoad && file.isFile()) {
-        if (ourEnabledPlugins == null) {
-          ourEnabledPlugins = new ArrayList<String>();
+        if (ourDisabledPlugins == null) {
+          ourDisabledPlugins = new ArrayList<String>();
           FileReader fileReader = null;
           BufferedReader reader = null;
           try {
@@ -222,7 +223,7 @@ public class PluginManager {
             reader = new BufferedReader(fileReader);
             String id;
             while ((id = reader.readLine()) != null) {
-              ourEnabledPlugins.add(id.trim());
+              ourDisabledPlugins.add(id.trim());
             }
           }
           catch (IOException e) {
@@ -242,7 +243,7 @@ public class PluginManager {
             }
           }
         }
-        shouldLoad = ourEnabledPlugins.contains(idString);
+        shouldLoad = !ourDisabledPlugins.contains(idString);
       }
     }
 
