@@ -39,10 +39,10 @@ public class NewFileAction extends FileChooserDialogImpl.FileChooserAction {
   }
 
   protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
-    createNewFolder(fileSystemTree, myFileType, myInitialContent);
+    createNewFile(fileSystemTree, myFileType, myInitialContent);
   }
 
-  private static void createNewFolder(FileSystemTree fileSystemTree, final FileType fileType, final String initialContent) {
+  private static void createNewFile(FileSystemTree fileSystemTree, final FileType fileType, final String initialContent) {
     final VirtualFile file = fileSystemTree.getSelectedFile();
     if (file == null || !file.isDirectory()) return;
 
