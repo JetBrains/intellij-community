@@ -3,6 +3,7 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
+import java.io.IOException;
 import java.net.URL;
 
 abstract class Loader {
@@ -19,4 +20,6 @@ abstract class Loader {
 
   @Nullable
   abstract Resource getResource(final String name, boolean flag);
+
+  abstract void buildCache(ClasspathCache cache) throws IOException;
 }

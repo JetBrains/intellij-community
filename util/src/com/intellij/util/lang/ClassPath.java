@@ -1,22 +1,25 @@
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();
   private ArrayList<Loader> myLoaders = new ArrayList<Loader>();
   private HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
+  private final ClasspathCache myCache = new ClasspathCache();
+
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static boolean myDebugTime = false;
   private boolean myCanLockJars;
@@ -38,9 +41,24 @@ class ClassPath {
     final long started = myDebugTime ? System.nanoTime():0;
 
     try {
-      Loader loader;
+      int i;
+      if (myCanUseCache) {
+        final List<Loader> loaders = myCache.getLoaders(s);
+        for (Loader loader : loaders) {
+          final Resource resource = loader.getResource(s, flag);
+          if (resource != null) {
+            return resource;
+          }
+        }
 
-      for (int i = 0; (loader = getLoader(i)) != null; i++) {
+        i = myLoaders.size();
+      }
+      else {
+        i = 0;
+      }
+
+      Loader loader;
+      for (; (loader = getLoader(i)) != null; i++) {
         Resource resource = loader.getResource(s, flag);
         if (resource != null) {
           return resource;
@@ -92,15 +110,26 @@ class ClassPath {
   private Loader getLoader(final URL url) throws IOException {
     String s = url.getFile();
 
-    if (s != null && StringUtil.endsWithChar(s, '/')) {
-      if (FILE_PROTOCOL.equals(url.getProtocol())) return new FileLoader(url, myCanUseCache);
+    Loader loader = null;
+    if (s != null  && new File(s).isDirectory()) {
+      if (FILE_PROTOCOL.equals(url.getProtocol())) {
+        loader = new FileLoader(url);
+      }
     }
     else {
-      return new JarLoader(url, myCanLockJars, myCanUseCache);
+      loader = new JarLoader(url, myCanLockJars);
     }
 
-    //add custom loaders here
-    return null;
+    if (loader != null && myCanUseCache) {
+      try {
+        loader.buildCache(myCache);
+      }
+      catch (Throwable e) {
+        // TODO: log can't create loader
+      }
+    }
+
+    return loader;
   }
 
   private void push(URL[] urls) {

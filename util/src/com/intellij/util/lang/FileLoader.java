@@ -1,23 +1,20 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
-import java.util.HashMap;
 
 class FileLoader extends Loader {
-  private HashMap<String,Boolean> myDirectories = null; // True has class files inside, false otherwise
   private File myRootDir;
   private String myRootDirAbsolutePath;
-  private final boolean myUseCache;
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  FileLoader(URL url, boolean useCache) throws IOException {
+  FileLoader(URL url) throws IOException {
     super(url);
-    myUseCache = useCache;
     if (!"file".equals(url.getProtocol())) {
       throw new IllegalArgumentException("url");
     }
@@ -29,45 +26,39 @@ class FileLoader extends Loader {
   }
 
   // True -> class file
-  private boolean buildPackageCache(final File dir) {
-    if (dir.getName().endsWith(UrlClassLoader.CLASS_EXTENSION)) return true; // optimization to prevent disc access for class files
-    final File[] files = dir.listFiles();
-    if (files == null) return true;
+  private void buildPackageCache(final File dir, ClasspathCache cache) {
+    cache.addResourceEntry(getRelativeResourcePath(dir), this);
 
-    boolean containFiles = false;
-    for (File file : files) {
-      containFiles |= buildPackageCache(file);
+    final File[] files = dir.listFiles();
+    if (files == null) {
+      return;
     }
 
-    String relativePath = dir.getAbsolutePath().substring(myRootDirAbsolutePath.length());
+    boolean containsClasses = false;
+    for (File file : files) {
+      final boolean isClass = file.getPath().endsWith(UrlClassLoader.CLASS_EXTENSION);
+      if (isClass) {
+        if (!containsClasses) {
+          cache.addResourceEntry(getRelativeResourcePath(file), this);
+          containsClasses = true;
+        }
+      }
+      else {
+        buildPackageCache(file, cache);
+      }
+    }
+  }
+
+  private String getRelativeResourcePath(final File file) {
+    String relativePath = file.getAbsolutePath().substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
     if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
-
-    myDirectories.put(relativePath,Boolean.valueOf(containFiles));
-    return false;
+    return relativePath;
   }
 
   @Nullable
   Resource getResource(final String name, boolean flag) {
-    initPackageCache();
-
     try {
-      if (myUseCache) {
-        String packageName = getPackageName(name);
-        final Boolean hasFiles = myDirectories.get(packageName);
-
-        if (hasFiles == null) {
-          return null;
-        }
-
-        if ( name.endsWith(UrlClassLoader.CLASS_EXTENSION) &&
-              !hasFiles.booleanValue()
-            ) {
-          // package does not contain class files
-          return null;
-        }
-      }
-
       final URL url = new URL(getBaseURL(), name);
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
 
@@ -80,16 +71,10 @@ class FileLoader extends Loader {
     return null;
   }
 
-  private static String getPackageName(final String name) {
-    final int i = name.lastIndexOf("/");
-    if (i < 0) return "";
-    return name.substring(0, i);
-  }
-
-  private void initPackageCache() {
-    if (myDirectories != null || !myUseCache) return;
-    myDirectories = new HashMap<String,Boolean>();
-    buildPackageCache(myRootDir);
+  void buildCache(final ClasspathCache cache) throws IOException {
+    cache.addResourceEntry("foo.class", this);
+    cache.addResourceEntry("bar.properties", this);
+    buildPackageCache(myRootDir, cache);
   }
 
   private class MyResource extends Resource {
@@ -126,5 +111,10 @@ class FileLoader extends Loader {
     public String toString() {
       return myFile.getAbsolutePath();
     }
+  }
+
+  @NonNls
+  public String toString() {
+    return "FileLoader [" + myRootDir + "]";
   }
 }

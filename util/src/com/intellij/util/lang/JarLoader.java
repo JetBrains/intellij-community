@@ -10,15 +10,12 @@ import sun.misc.Resource;
 import java.io.*;
 import java.net.URL;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private URL myURL;
   private final boolean myCanLockJar;
-  private final boolean myUseCache;
   private static boolean myDebugTime = false;
 
   //private SoftReference<ZipFile> myZipFileRef;
@@ -36,16 +33,14 @@ class JarLoader extends Loader {
     }
   };
 
-  private Map<String,Boolean> myDirectories = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final long NS_THRESHOLD = 10000000;
 
-  JarLoader(URL url, boolean canLockJar, boolean useCache) throws IOException {
+  JarLoader(URL url, boolean canLockJar) throws IOException {
     super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
     myURL = url;
     myCanLockJar = canLockJar;
-    myUseCache = useCache;
   }
 
   @Nullable
@@ -73,28 +68,14 @@ class JarLoader extends Loader {
     return null;
   }
 
-  private void initPackageCache() throws IOException {
-    if (myDirectories != null || !myUseCache) return;
-    myDirectories = new HashMap<String,Boolean>();
-    myDirectories.put("",Boolean.FALSE);
-
+  void buildCache(final ClasspathCache cache) throws IOException {
     final ZipFile zipFile = getZipFile();
     if (zipFile == null) return;
     final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
     while (entries.hasMoreElements()) {
       ZipEntry zipEntry = entries.nextElement();
-      final String name = zipEntry.getName();
-
-      final int i = name.lastIndexOf("/");
-      String packageName = i > 0 ? name.substring(0, i) : "";
-
-      if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
-        myDirectories.put(packageName,Boolean.TRUE);
-      } else {
-        final Boolean status = myDirectories.get(packageName);
-        myDirectories.put(packageName,status != Boolean.TRUE ? Boolean.FALSE:Boolean.TRUE);
-      }
+      cache.addResourceEntry(zipEntry.getName(), this);
     }
 
     releaseZipFile(zipFile);
@@ -113,19 +94,6 @@ class JarLoader extends Loader {
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
     try {
-      initPackageCache();
-
-      if (myUseCache) {
-        String packageName = getPackageName(name);
-
-        final Boolean hasClassFiles = myDirectories.get(packageName);
-        if (hasClassFiles == null) return null;
-
-        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION) && !hasClassFiles.booleanValue()) {
-          return null;
-        }
-      }
-
       final ZipFile file = getZipFile();
       if (file == null) return null;
 
@@ -147,12 +115,6 @@ class JarLoader extends Loader {
     }
 
     return null;
-  }
-
-  private static String getPackageName(final String name) {
-    final int i = name.lastIndexOf("/");
-    if (i < 0) return "";
-    return name.substring(0, i);
   }
 
   private class MyResource extends Resource {
@@ -210,5 +172,10 @@ class JarLoader extends Loader {
     public int getContentLength() {
       return (int)myEntry.getSize();
     }
+  }
+
+  @NonNls
+  public String toString() {
+    return "JarLoader [" + myURL + "]";
   }
 }
