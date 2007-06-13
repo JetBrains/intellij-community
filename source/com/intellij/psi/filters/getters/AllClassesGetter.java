@@ -1,6 +1,7 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
@@ -8,13 +9,17 @@ import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -32,32 +37,95 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class AllClassesGetter implements ContextGetter{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.filters.getters.AllClassesGetter");
+
   @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
   @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
   private final ElementFilter myFilter;
   private static final SimpleInsertHandler INSERT_HANDLER = new SimpleInsertHandler() {
     public int handleInsert(final Editor editor, final int startOffset, final SimpleLookupItem item, final LookupItem[] allItems, final TailType tailType) {
       final PsiClass psiClass = (PsiClass)item.getObject();
-      final int endOffset = editor.getCaretModel().getOffset();
+      int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();
       if (qname == null) return endOffset;
 
       if (endOffset == 0) return endOffset;
 
       final Document document = editor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document);
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(editor.getProject());
+      final PsiFile file = psiDocumentManager.getPsiFile(document);
       final PsiElement element = file.findElementAt(endOffset - 1);
-      if (element == null || !(element instanceof XmlElement)) return endOffset;
+      if (element == null) return endOffset;
 
-      int i = endOffset - 1;
-      while (i >= 0) {
-        final char ch = document.getCharsSequence().charAt(i);
-        if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
-        i--;
+      boolean insertFqn = true;
+      PsiReference psiReference = file.findReferenceAt(endOffset - 1);
+      if (psiReference != null) {
+        final PsiElement refElement = psiReference.getElement();
+        final PsiManager psiManager = file.getManager();
+        final String refText = psiReference.getRangeInElement().substring(refElement.getText());
+        final PsiClass referencedClass = psiManager.getResolveHelper().resolveReferencedClass(refText, refElement);
+        if (psiManager.areElementsEquivalent(psiClass, referencedClass)) {
+          insertFqn = false;
+        } else {
+          try {
+            psiDocumentManager.commitAllDocuments();
+            final PsiElement psiElement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(psiReference.bindToElement(psiClass));
+            endOffset = psiElement.getTextRange().getEndOffset();
+            insertFqn = false;
+          } catch (IncorrectOperationException e) {
+            //if it's empty we just insert fqn below
+          }
+        }
       }
-      document.replaceString(i + 1, endOffset, qname);
+
+      if (insertFqn) {
+        int i = endOffset - 1;
+        while (i >= 0) {
+          final char ch = document.getCharsSequence().charAt(i);
+          if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+          i--;
+        }
+        document.replaceString(i + 1, endOffset, qname);
+        endOffset = i + 1 + qname.length();
+      }
+
+      //todo[peter] hack, to deal with later
+      if (psiClass.isAnnotationType()) {
+        // Check if someone inserts annotation class that require @
+        psiDocumentManager.commitDocument(document);
+        PsiElement elementAt = file.findElementAt(startOffset);
+        final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
+
+        if (elementAt instanceof PsiIdentifier &&
+            ( PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null || //we are inserting '@' only in annotation parameters
+              (parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof PsiJavaFile) // top level annotation without @
+            )
+            && isAtTokenNeeded(editor, startOffset)) {
+          PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+          if (parent == null && parentElement instanceof PsiErrorElement) {
+            PsiElement nextElement = parentElement.getNextSibling();
+            if (nextElement instanceof PsiWhiteSpace) nextElement = nextElement.getNextSibling();
+            if (nextElement instanceof PsiClass) parent = nextElement;
+          }
+
+          if (parent instanceof PsiModifierListOwner) {
+            document.insertString(elementAt.getTextRange().getStartOffset(), "@");
+            endOffset++;
+          }
+        }
+      }
+
       return endOffset;
     }
+
+    private boolean isAtTokenNeeded(Editor editor, int startOffset) {
+      HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
+      LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
+      iterator.retreat();
+      if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
+      return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
+    }
+
   };
 
   public AllClassesGetter(final ElementFilter filter) {
@@ -90,10 +158,10 @@ public class AllClassesGetter implements ContextGetter{
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
     final String[] names = cache.getAllClassNames(true);
-    
+
     boolean lookingForAnnotations = false;
     final PsiElement prevSibling = context.getParent().getPrevSibling();
-    if (prevSibling instanceof PsiJavaToken && 
+    if (prevSibling instanceof PsiJavaToken &&
         ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.AT) {
       lookingForAnnotations = true;
     }
@@ -140,12 +208,15 @@ public class AllClassesGetter implements ContextGetter{
     return ContainerUtil.map2Array(classesList, SimpleLookupItem.class, new NotNullFunction<PsiClass, SimpleLookupItem>() {
       @NotNull
       public SimpleLookupItem fun(final PsiClass psiClass) {
-        final SimpleLookupItem item = new SimpleLookupItem(psiClass);
-        if (context instanceof XmlElement) {
-          item.setInsertHandler(INSERT_HANDLER);
-        }
-        return item;
+        return createLookupItem(psiClass);
       }
     });
   }
+
+  protected SimpleLookupItem createLookupItem(final PsiClass psiClass) {
+    final SimpleLookupItem item = new SimpleLookupItem(psiClass);
+    //return item;
+    return item.setInsertHandler(INSERT_HANDLER);
+  }
+
 }

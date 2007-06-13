@@ -21,9 +21,6 @@ public class ExcludeDeclaredFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
-  public ExcludeDeclaredFilter(){
-  }
-
   public boolean isClassAcceptable(Class hintClass){
     return true;
     //return PsiVariable.class.isAssignableFrom(hintClass);
