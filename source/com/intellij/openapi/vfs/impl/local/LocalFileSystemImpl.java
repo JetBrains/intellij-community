@@ -483,6 +483,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
+    if (rootPath.length() == 0) return null;
+
     WRITE_LOCK.lock();
     try {
       final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
@@ -518,15 +520,17 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     try {
       for (String rootPath : rootPaths) {
         LOG.assertTrue(rootPath != null);
-        final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
-        final VirtualFile existingFile = findFileByPathIfCached(rootPath);
-        if (existingFile != null) {
-          if (!isAlreadyWatched(request)) {
-            filesToSynchronize.add(existingFile);
+        if (rootPath.length() > 0) {
+          final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
+          final VirtualFile existingFile = findFileByPathIfCached(rootPath);
+          if (existingFile != null) {
+            if (!isAlreadyWatched(request)) {
+              filesToSynchronize.add(existingFile);
+            }
           }
+          result.add(request);
+          myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
         }
-        result.add(request);
-        myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
       }
       myCachedNormalizedRequests = null;
       setUpFileWatcher();
