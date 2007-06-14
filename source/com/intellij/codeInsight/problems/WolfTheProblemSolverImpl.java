@@ -84,18 +84,33 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     private void onDeleted(final VirtualFile file) {
       if (file.isDirectory()) {
-        for (VirtualFile problemFile : myProblems.keySet()) {
+        VirtualFile[] files;
+        synchronized (myProblems) {
+          files = myProblems.keySet().toArray(new VirtualFile[myProblems.size()]);
+        }
+        for (VirtualFile problemFile : files) {
           if (!problemFile.isValid()) {
-            myProblems.remove(problemFile);
-            fireProblemListeners.problemsDisappeared(problemFile);
+            doRemove(problemFile);
           }
         }
       }
-      else if (myProblems.remove(file) != null) {
-        fireProblemListeners.problemsDisappeared(file);
+      else {
+        doRemove(file);
       }
     }
   };
+
+  private void doRemove(VirtualFile problemFile) {
+    ProblemFileInfo old;
+    synchronized (myProblems) {
+      old = myProblems.remove(problemFile);
+    }
+    if (old != null) {
+      myCheckingQueue.remove(problemFile);
+      // firing outside lock
+      fireProblemListeners.problemsDisappeared(problemFile);
+    }
+  }
 
   private final PsiTreeChangeListener myChangeListener;
 
@@ -199,10 +214,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         progress.checkCanceled();
         statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
         if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
-          synchronized (myProblems) {
-            myProblems.remove(virtualFile);
-            myCheckingQueue.remove(virtualFile);
-          }
+          doRemove(virtualFile);
         }
         progressablePass.advanceProgress(1);
       }
@@ -420,15 +432,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public void clearProblems(@NotNull VirtualFile virtualFile) {
-    ProblemFileInfo old;
-    synchronized (myProblems) {
-      old = myProblems.remove(virtualFile);
-      myCheckingQueue.remove(virtualFile);
-    }
-    // firing outside lock
-    if (old != null) {
-      fireProblemListeners.problemsDisappeared(virtualFile);
-    }
+    doRemove(virtualFile);
   }
 
   public Problem convertToProblem(final CompilerMessage message) {

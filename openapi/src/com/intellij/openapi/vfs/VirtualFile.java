@@ -261,7 +261,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the file if found any, <code>null</code> otherwise
    */
   @Nullable
-  public VirtualFile findFileByRelativePath(String relPath) {
+  public VirtualFile findFileByRelativePath(@NotNull @NonNls String relPath) {
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();
     String name = relPath.substring(0, index);
