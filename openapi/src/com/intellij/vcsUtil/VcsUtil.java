@@ -45,7 +45,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.WindowManager;
@@ -259,13 +258,6 @@ public class VcsUtil {
     for (File root : roots) {
       VirtualFile vFile = findFileFor(root);
       if (vFile != null) {
-        for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext();) {
-          VirtualFile existing = iterator.next();
-          if (VfsUtil.isAncestor(existing, vFile, false)) break;
-          if (VfsUtil.isAncestor(vFile, existing, false)) {
-            iterator.remove();
-          }
-        }
         result.add(vFile);
       }
     }
