@@ -167,6 +167,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       Change[] changesArray = changes.toArray(new Change[changes.size()]);
       ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, myDiffExtendUIFactory, isInFrame());
     }
+    else if ((leadSelection == null && changes.size() > 0)) {
+      Change[] changesArray = changes.toArray(new Change[changes.size()]);
+      ShowDiffAction.showDiffForChange(changesArray, 0, myProject, myDiffExtendUIFactory, isInFrame());
+    }
     else if (leadSelection != null) {
       ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, myDiffExtendUIFactory, isInFrame());
     }
