@@ -22,8 +22,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
@@ -32,7 +32,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.Icons;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -49,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceE
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -158,7 +161,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     throw new IncorrectOperationException("Invalid type definition");
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement psiElement, @NotNull PsiElement psiElement1) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
 /*
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
       if (!ResolveUtil.processElement(processor, typeParameter)) return false;
@@ -179,20 +182,20 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       }
     }
 
-
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
       Map<String, List<PsiMethod>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+      boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
       if (name == null) {
         for (List<PsiMethod> list : methodsMap.values()) {
           for (PsiMethod method : list) {
-            if (!processor.execute(method, PsiSubstitutor.EMPTY)) return false;
+            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY)) return false;
           }
         }
       } else {
         List<PsiMethod> byName = methodsMap.get(name);
         if (byName != null) {
           for (PsiMethod method : byName) {
-            if (!processor.execute(method, PsiSubstitutor.EMPTY)) return false;
+            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY)) return false;
           }
         }
       }
@@ -201,11 +204,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return true;
   }
 
-/*
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitClass(this);
+  private boolean isMethodVisible(boolean isPlaceGroovy, PsiMethod method) {
+    return isPlaceGroovy || !(method instanceof DefaultGroovyMethod);
   }
-*/
 
   @NotNull
   public String getName() {
