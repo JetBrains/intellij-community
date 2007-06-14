@@ -241,8 +241,9 @@ public class PackageUtil {
       data.setLocationString(directoryFile.getPresentableUrl());
     }
     else {
-      if (!isInTestSource(directoryFile, project)) {
-        data.setLocationString(CoverageDataManager.getInstance(project).getDirCoverageInformationString(psiDirectory));
+      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
+      if (coverageDataManager.getCurrentSuite() != null && !isInTestSource(directoryFile, project)) {
+        data.setLocationString(coverageDataManager.getDirCoverageInformationString(psiDirectory));
       }
     }
   }
