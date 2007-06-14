@@ -8,9 +8,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.containers.Stack;
 
 import java.util.*;
@@ -94,13 +94,13 @@ public class RefreshWorker {
           if (currentTimestamp != updtodateTimestamp) {
             scheduleUpdateContent(file);
           }
+        }
 
-          boolean currentWritable = persistence.isWritable(file);
-          boolean uptodateWritable = delegate.isWritable(file);
+        boolean currentWritable = persistence.isWritable(file);
+        boolean uptodateWritable = delegate.isWritable(file);
 
-          if (currentWritable != uptodateWritable) {
-            scheduleWritableAttributeChange(file, currentWritable, uptodateWritable);
-          }
+        if (currentWritable != uptodateWritable) {
+          scheduleWritableAttributeChange(file, currentWritable, uptodateWritable);
         }
 
         file.markClean();
