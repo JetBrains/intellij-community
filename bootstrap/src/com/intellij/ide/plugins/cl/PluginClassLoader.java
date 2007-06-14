@@ -34,29 +34,29 @@ public class PluginClassLoader extends UrlClassLoader {
     myLibDirectory = file.exists()? file : null;
   }
 
+
   // changed sequence in which classes are searched, this is essential if plugin uses library, a different version of which
   // is used in IDEA.
-  protected synchronized Class loadClass(String name, boolean resolve)  throws ClassNotFoundException {
+  public Class _loadClass(final String name, final boolean resolve) {
     Class c = findLoadedClass(name);
     if (c == null) {
-      try {
-        c = findClass(name);
-        PluginManager.addPluginClass(c.getName(), myPluginId);
-      }
-      catch (ClassNotFoundException e) {
+      c = _findClass(name);
+      if (c == null) {
         for (ClassLoader parent : myParents) {
           try {
-            c = parent.loadClass(name);
-            break;
+            c = parent instanceof UrlClassLoader ? ((UrlClassLoader)parent)._loadClass(name, false) : parent.loadClass(name);
+            if (c != null) break;
           }
           catch (ClassNotFoundException ignoreAndContinue) {
+            // Ignore and continue
           }
         }
-        if (c == null) {
-          throw new ClassNotFoundException(name);
-        }
+        if (c == null) return null;
       }
+
+      PluginManager.addPluginClass(c.getName(), myPluginId);
     }
+
     if (resolve) {
       resolveClass(c);
     }
@@ -187,5 +187,9 @@ public class PluginClassLoader extends UrlClassLoader {
 
   public PluginId getPluginId() {
     return myPluginId;
+  }
+
+  public String toString() {
+    return "PluginClassloader[" + myPluginId + "]";
   }
 }
