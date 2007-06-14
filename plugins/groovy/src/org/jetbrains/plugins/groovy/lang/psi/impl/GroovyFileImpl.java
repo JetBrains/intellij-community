@@ -207,7 +207,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
   public PsiClass getScriptClass() {
     if (!myScriptClassInitialized) {
-      if (getTopStatements().length > 0) {
+      if (isScript()) {
         myScriptClass = new GroovyScriptClass(this);
       }
 

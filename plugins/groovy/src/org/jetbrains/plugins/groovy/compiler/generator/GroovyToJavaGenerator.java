@@ -83,31 +83,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   public GenerationItem[] getGenerationItems(CompileContext context) {
     myContext = context;
 
-    /*ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-    try {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        public void run() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFileManager.getInstance().refresh(false);
-      }
-    });
-        }
-      });
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (
-      InvocationTargetException e) {
-      e.printStackTrace();
-    }
-    });*/
-
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
-      final GroovyFile myPsiFile = findPsiFile(file);
+      final GroovyFile psiFile = findPsiFile(file);
 
-      GrTopStatement[] statements = getTopStatementsInReadAction(myPsiFile);
+      GrTopStatement[] statements = getTopStatementsInReadAction(psiFile);
 
       boolean needCreateTopLevelClass = !needsCreateClassFromFileName(statements);
 
@@ -120,14 +101,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       VirtualFile virtualFile;
       if (needCreateTopLevelClass) {
 
-        virtualFile = myPsiFile.getVirtualFile();
+        virtualFile = psiFile.getVirtualFile();
         assert virtualFile != null;
         generationItems.add(new GenerationItemImpl(prefix + virtualFile.getNameWithoutExtension() + "." + "java", getModuleByFile(context, virtualFile), new TimestampValidityState(file.getTimeStamp())));
       }
 
       GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
         public GrTypeDefinition[] compute() {
-          return myPsiFile.getTypeDefinitions();
+          return psiFile.getTypeDefinitions();
         }
       });
 
