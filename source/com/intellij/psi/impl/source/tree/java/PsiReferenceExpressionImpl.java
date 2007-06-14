@@ -399,6 +399,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
 
     if (isReferenceTo(element)) return this;
 
+    if (getParent() instanceof PsiMethodCallExpression) {
+      throw new IncorrectOperationException();
+    }
+
     PsiManager manager = getManager();
     if (element instanceof PsiClass) {
       String qName = ((PsiClass)element).getQualifiedName();
