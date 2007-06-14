@@ -35,7 +35,7 @@ public class GrPowerExprImpl extends GrBinaryExpressionImpl {
 
   public PsiType getType() {
     //cannot know the type statically without the knowledge of actual value
-    return null;
+    return getTypeByFQName("java.lang.Number");
   }
 }
 
