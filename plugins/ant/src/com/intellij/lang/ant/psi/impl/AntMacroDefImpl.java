@@ -65,7 +65,9 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       if (myMacroDefinition != null) {
         for (AntTypeId id : myMacroDefinition.getNestedElements()) {
           final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
-          file.unregisterCustomType(nestedDef);
+          if (nestedDef != null) {
+            file.unregisterCustomType(nestedDef);
+          }
         }
         final AntStructuredElement parent = getAntProject();
         if (parent != null) {
