@@ -16,18 +16,20 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateConstructorFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.ImplementOrExtendFix;
@@ -223,6 +225,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   static class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
     private List<ProblemDescriptor> myList;
     private final InspectionManager myManager;
+    private final XmlFile myXmlFile;
     private final boolean myOnTheFly;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
@@ -230,6 +233,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
     public RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
       myManager = manager;
+      myXmlFile = xmlFile;
       myOnTheFly = onTheFly;
       myPsiManager = xmlFile.getManager();
       myScope = xmlFile.getResolveScope();
@@ -241,13 +245,21 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                 DevKitBundle.message("inspections.registration.problems.missing.implementation.class"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       } else {
-        final PsiClass implClass = myPsiManager.findClass(impl.getTrimmedText(), myScope);
+        String intfName = null;
+        PsiClass intfClass = null;
+        if (intf != null) {
+          intfName = intf.getTrimmedText();
+          intfClass = myPsiManager.findClass(intfName, myScope);
+        }
+        final String implClassName = impl.getTrimmedText();
+        final PsiClass implClass = myPsiManager.findClass(implClassName, myScope);
         if (implClass == null) {
-          // TODO: Add "Create Class" QuickFix (should be able to choose which module to create class in)
           addProblem(impl,
                   DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
                           DevKitBundle.message("class.implementation")),
-                  ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                  ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                  ((LocalQuickFix)QuickFixFactory.getInstance()
+              .createCreateClassOrInterfaceFix(myXmlFile, implClassName, true, intfClass != null ? intfName : type.myClassName)));
         } else {
           final PsiClass componentClass = myPsiManager.findClass(type.myClassName, myScope);
           if (componentClass != null && !implClass.isInheritor(componentClass, true) && type != ComponentType.APPLICATION) {
@@ -262,15 +274,16 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
-
-        if (intf != null) {
-          final PsiClass intfClass = myPsiManager.findClass(intf.getTrimmedText(), myScope);
+        if (intfName != null) {
           if (intfClass == null) {
-            // TODO: Add "Create Class/Interface" QuickFix (should be able to choose which module to create class in)
             addProblem(intf,
                     DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
                             DevKitBundle.message("class.interface")),
-                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                    ((LocalQuickFix)QuickFixFactory.getInstance()
+              .createCreateClassOrInterfaceFix(myXmlFile, intfName, false, type.myClassName)),
+                    ((LocalQuickFix)QuickFixFactory.getInstance()
+              .createCreateClassOrInterfaceFix(myXmlFile, intfName, true, type.myClassName)));
           } else if (implClass != null) {
             final String fqn = intfClass.getQualifiedName();
 
@@ -332,13 +345,14 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (attribute != null) {
         final PsiElement token = getAttValueToken(attribute);
         if (token != null) {
-          final PsiClass actionClass = myPsiManager.findClass(attribute.getValue().trim(), myScope);
+          final String actionName = attribute.getValue().trim();
+          final PsiClass actionClass = myPsiManager.findClass(actionName, myScope);
           if (actionClass == null) {
-            // TODO: Add "Create Class" QuickFix (should be able to choose which module to create class in)
             addProblem(token,
                     DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
                             DevKitBundle.message("class.action")),
-                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, ((LocalQuickFix)QuickFixFactory.getInstance()
+              .createCreateClassOrInterfaceFix(token, actionName, true, AnAction.class.getName())));
           } else {
             if (!type.isOfType(actionClass)) {
               final PsiClass psiClass = myPsiManager.findClass(type.myClassName, myScope);
