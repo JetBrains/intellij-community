@@ -38,6 +38,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
@@ -82,7 +83,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     final UpdatedFiles updatedFiles = UpdatedFiles.create();
     if (project != null) {
       try {
-
         if (ApplicationManager.getApplication().isDispatchThread()) {
           ApplicationManager.getApplication().saveAll();
         }
@@ -101,8 +101,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
         final ArrayList<VcsException> vcsExceptions = new ArrayList<VcsException>();
         final List<UpdateSession> updateSessions = new ArrayList<UpdateSession>();
-        final Runnable updateProcess = new Runnable() {
-          public void run() {
+
+        Task.Backgroundable task = new Task.Backgroundable(project, getTemplatePresentation().getText(), true,
+                                                           VcsConfiguration.getInstance(project).getUpdateOption()) {
+          public void run(final ProgressIndicator indicator) {
             ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
             ProjectLevelVcsManager.getInstance(project).startBackgroundVcsOperation();
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -141,10 +143,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             });
             semaphore.waitFor();
           }
-        };
 
-        Runnable finishRunnable = new Runnable() {
-          public void run() {
+          public void onSuccess() {
             if (!someSessionWasCanceled(updateSessions)) {
               for (final UpdateSession updateSession : updateSessions) {
                 updateSession.onRefreshFilesCompleted();
@@ -165,7 +165,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                       indicator.setText(VcsBundle.message("progress.text.updating.done"));
                     }
                   }
-                  
+
                   if (updatedFiles.isEmpty() && vcsExceptions.isEmpty()) {
                     Messages.showMessageDialog(getAllFilesAreUpToDateMessage(roots),
                                                getTemplatePresentation().getText(),
@@ -176,7 +176,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
                     restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
                     final ProjectLevelVcsManagerEx vcsManagerEx = ProjectLevelVcsManagerEx.getInstanceEx(project);
-                    final UpdateInfoTree updateInfoTree = vcsManagerEx.showUpdateProjectInfo(updatedFiles, 
+                    final UpdateInfoTree updateInfoTree = vcsManagerEx.showUpdateProjectInfo(updatedFiles,
                                                                                              getTemplatePresentation().getText(),
                                                                                              myActionInfo);
                     updateInfoTree.setCanGroupByChangeList(true);
@@ -202,11 +202,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             }
             ProjectLevelVcsManager.getInstance(project).stopBackgroundVcsOperation();
           }
+
+          public void onCancel() {
+            onSuccess();
+          }
         };
 
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, getTemplatePresentation().getText(), updateProcess,
-                                                                           finishRunnable, finishRunnable,
-                                                                           VcsConfiguration.getInstance(project).getUpdateOption());
+        ProgressManager.getInstance().run(task);
       }
       catch (ProcessCanceledException e1) {
         //ignore
