@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="TestNG Suite">
-  <test name="TestNG Intentoins Test">
+<suite name="DevKit Suite">
+  <test name="DevKit CodeInsight Tests">
     <classes>
       <class name="org.jetbrains.idea.devkit.codeInsight.CreateClassFixTest"/>
     </classes>
