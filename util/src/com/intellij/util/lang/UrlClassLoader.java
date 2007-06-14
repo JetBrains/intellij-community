@@ -59,6 +59,39 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
+
+  protected final synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+    Class c = _loadClass(name, resolve);
+
+    if (c == null) throw new ClassNotFoundException();
+    return c;
+  }
+
+  @Nullable
+  public Class _loadClass(final String name, final boolean resolve) {
+    try {
+      return super.loadClass(name, resolve);
+    }
+    catch (ClassNotFoundException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  protected Class _findClass(final String name) {
+    Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    if (res == null) {
+      return null;
+    }
+
+    try {
+      return defineClass(name, res);
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
   private Class defineClass(String name, Resource res) throws IOException {
     int i = name.lastIndexOf('.');
     if (i != -1) {
