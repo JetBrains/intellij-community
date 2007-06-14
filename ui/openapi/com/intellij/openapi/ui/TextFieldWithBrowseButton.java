@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -37,7 +37,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(JTextField field, ActionListener browseActionListener) {
     super(field, browseActionListener);
-    installFileCompletion(null, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    installPathCompletion(null, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
@@ -46,14 +46,14 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void addBrowseFolderListener(String title, String description, Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    installFileCompletion(project, fileChooserDescriptor);
+    installPathCompletion(project, fileChooserDescriptor);
   }
 
-  private void installFileCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
+  protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
     final Application application = ApplicationManager.getApplication();
-    if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent(), project));
-  }
+     if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
+     FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent(), project));
+   }
         
   public JTextField getTextField() {
     return getChildComponent();
@@ -76,5 +76,25 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void setEditable(boolean b) {
     getTextField().setEditable(b);
+  }
+
+  public static class NoPathCompletion extends TextFieldWithBrowseButton {
+    public NoPathCompletion() {
+    }
+
+    public NoPathCompletion(final JTextField field) {
+      super(field);
+    }
+
+    public NoPathCompletion(final JTextField field, final ActionListener browseActionListener) {
+      super(field, browseActionListener);
+    }
+
+    public NoPathCompletion(final ActionListener browseActionListener) {
+      super(browseActionListener);
+    }
+
+    protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
+    }
   }
 }
