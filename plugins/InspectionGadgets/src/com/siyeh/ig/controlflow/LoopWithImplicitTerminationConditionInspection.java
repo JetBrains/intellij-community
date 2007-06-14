@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +33,18 @@ public class LoopWithImplicitTerminationConditionInspection
 
     @Nls @NotNull
     public String getDisplayName() {
-        return "Loop with implicit termination condition";
+        return InspectionGadgetsBundle.message(
+                "loop.with.implicit.termination.condition.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "<code>#ref</code> statement with implicit condition";
+        if (Boolean.TRUE.equals(infos[0])) {
+            return InspectionGadgetsBundle.message(
+                    "loop.with.implicit.termination.condition.dowhile.problem.descriptor");
+        }
+        return InspectionGadgetsBundle.message(
+                "loop.with.implicit.termination.condition.problem.descriptor");
     }
 
     @Nullable
@@ -49,7 +56,8 @@ public class LoopWithImplicitTerminationConditionInspection
             extends InspectionGadgetsFix {
 
         @NotNull public String getName() {
-            return "Make while condition explicit";
+            return InspectionGadgetsBundle.message(
+                    "loop.with.implicit.termination.condition.quickfix");
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -58,20 +66,24 @@ public class LoopWithImplicitTerminationConditionInspection
             final PsiElement parent = element.getParent();
             final PsiExpression loopCondition;
             final PsiStatement body;
+            final boolean firstStatement;
             if (parent instanceof PsiWhileStatement) {
                 final PsiWhileStatement whileStatement =
                         (PsiWhileStatement) parent;
                 loopCondition = whileStatement.getCondition();
                 body = whileStatement.getBody();
+                firstStatement = true;
             } else if (parent instanceof PsiDoWhileStatement) {
                 final PsiDoWhileStatement doWhileStatement =
                         (PsiDoWhileStatement) parent;
                 loopCondition = doWhileStatement.getCondition();
                 body = doWhileStatement.getBody();
+                firstStatement = false;
             } else if (parent instanceof PsiForStatement) {
                 final PsiForStatement forStatement = (PsiForStatement) parent;
                 loopCondition = forStatement.getCondition();
                 body = forStatement.getBody();
+                firstStatement = true;
             } else {
                 return;
             }
@@ -86,7 +98,11 @@ public class LoopWithImplicitTerminationConditionInspection
                 if (statements.length == 0) {
                     return;
                 }
-                statement = statements[0];
+                if (firstStatement) {
+                    statement = statements[0];
+                } else {
+                    statement = statements[statements.length - 1];
+                }
             } else {
                 statement = body;
             }
@@ -104,18 +120,44 @@ public class LoopWithImplicitTerminationConditionInspection
                 final String negatedExpressionText =
                         BoolUtils.getNegatedExpressionText(ifCondition);
                 replaceExpression(loopCondition, negatedExpressionText);
-                if (elseBranch == null) {
-                    ifStatement.delete();
-                } else {
-                    ifStatement.replace(elseBranch);
-                }
+                replaceStatement(ifStatement, elseBranch);
             } else if (containsUnlabeledBreakStatement(elseBranch)) {
                 loopCondition.replace(ifCondition);
                 if (thenBranch ==  null) {
                     ifStatement.delete();
                 } else {
-                    ifStatement.replace(thenBranch);
+                    replaceStatement(ifStatement, thenBranch);
                 }
+            }
+        }
+
+        private static void replaceStatement(
+                @NotNull PsiStatement replacedStatement,
+                @Nullable PsiStatement replacingStatement)
+                throws IncorrectOperationException {
+            if (replacingStatement == null) {
+                replacedStatement.delete();
+                return;
+            }
+            if (!(replacingStatement instanceof PsiBlockStatement)) {
+                replacedStatement.replace(replacingStatement);
+                return;
+            }
+            final PsiBlockStatement blockStatement =
+                    (PsiBlockStatement)replacingStatement;
+            final PsiCodeBlock codeBlock =
+                    blockStatement.getCodeBlock();
+            final PsiElement[] children = codeBlock.getChildren();
+            if (children.length > 2) {
+                final PsiElement receiver = replacedStatement.getParent();
+                for (int i = children.length - 2; i > 0; i--) {
+                    final PsiElement child = children[i];
+                    if (child instanceof PsiWhiteSpace) {
+                        continue;
+                    }
+                    receiver.addAfter(child, replacedStatement);
+                }
+                replacedStatement.delete();
             }
         }
     }
@@ -129,35 +171,38 @@ public class LoopWithImplicitTerminationConditionInspection
 
         public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
-            if (statement.getCondition() == null) {
+            final PsiExpression condition = statement.getCondition();
+            if (!BoolUtils.isTrue(condition)) {
                 return;
             }
             if (isLoopWithImplicitTerminationCondition(statement, true)) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Boolean.FALSE);
         }
 
         public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
-            if (statement.getCondition() == null) {
+            final PsiExpression condition = statement.getCondition();
+            if (!BoolUtils.isTrue(condition)) {
                 return;
             }
             if (isLoopWithImplicitTerminationCondition(statement, false)) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Boolean.TRUE);
         }
 
         public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
-            if (statement.getCondition() == null) {
+            final PsiExpression condition = statement.getCondition();
+            if (!BoolUtils.isTrue(condition)) {
                 return;
             }
             if (isLoopWithImplicitTerminationCondition(statement, true)) {
                 return;
             }
-            registerStatementError(statement);
+            registerStatementError(statement, Boolean.FALSE);
         }
 
         private static boolean isLoopWithImplicitTerminationCondition(

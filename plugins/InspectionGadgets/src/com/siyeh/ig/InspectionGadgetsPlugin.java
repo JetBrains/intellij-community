@@ -90,7 +90,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 587;
+    private static final int NUM_INSPECTIONS = 589;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -451,6 +451,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(LabeledStatementInspection.class);
         m_inspectionClasses.add(LoopConditionNotUpdatedInsideLoopInspection.class);
         m_inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
+        m_inspectionClasses.add(LoopWithImplicitTerminationConditionInspection.class);
         m_inspectionClasses.add(NegatedConditionalInspection.class);
         m_inspectionClasses.add(NegatedIfElseInspection.class);
         m_inspectionClasses.add(NestedConditionalExpressionInspection.class);
