@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 
 class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
-  private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeleteWasUndoable");
+  private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
   private Project myProject;
   private UndoManagerImpl myUndoManager;
