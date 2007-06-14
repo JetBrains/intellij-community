@@ -4,6 +4,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.LimitedInputStream;
@@ -370,9 +370,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       public void close() throws IOException {
         super.close();
 
+        final OutputStream delegate = getDelegate(file).getOutputStream(file, requestor, modStamp, timeStamp);
+
         //noinspection IOResourceOpenedButNotSafelyClosed
-        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(FILE_CONTENT.writeAttribute(file)),
-                                                         getDelegate(file).getOutputStream(file, requestor, modStamp, timeStamp)) {
+        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(FILE_CONTENT.writeAttribute(file)), delegate) {
           public void close() throws IOException {
             super.close();
             executeTouch(file, false, event.getModificationStamp());
