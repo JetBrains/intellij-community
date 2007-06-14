@@ -6,7 +6,7 @@
  * User: anna
  * Date: 20-Dec-2006
  */
-package build;
+package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.ant.BuildTargetsFactory;
 import com.intellij.compiler.ant.ModuleChunk;
@@ -22,7 +22,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
 
 import java.io.DataOutputStream;
