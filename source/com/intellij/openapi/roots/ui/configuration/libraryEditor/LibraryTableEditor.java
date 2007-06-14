@@ -441,6 +441,7 @@ public class LibraryTableEditor implements Disposable {
           return true;
         }
       });
+      if (libraryName == null) return;
       final Library library = myTableModifiableModel.createLibrary(libraryName);
       selectLibrary(library, true);
       if (myProject != null){
