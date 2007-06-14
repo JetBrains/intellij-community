@@ -389,6 +389,7 @@ public class TestNGUtil implements TestFramework
         }
       }
       final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+      if (module == null) return false;
       final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
       final Library.ModifiableModel libraryModel = model.getModuleLibraryTable().createLibrary().getModifiableModel();
       String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
