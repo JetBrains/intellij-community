@@ -57,19 +57,22 @@ public class ColorPreviewComponent extends JPanel {
   @Nullable
   public static JComponent getPreviewComponent(@NotNull final PsiElement element) {
     if (element.getParent() instanceof XmlAttributeValue) {
-      XmlAttribute attribute = (XmlAttribute)element.getParent().getParent();
-      String attrName = attribute.getName();
-      if ("alink".equals(attrName) || "link".equals(attrName) | "text".equals(attrName) || "vlink".equals(attrName) ||
-          "bgcolor".equals(attrName) || "color".equals(attrName)) {
-        String s = element.getText();
-        if (s.length() > 0) {
-          final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s);
-          if (hexColor != null) {
-            try {
-              return new ColorPreviewComponent(null, Color.decode("0x" + hexColor.substring(1)));
-            }
-            catch (NumberFormatException e) {
-              return null;
+      final PsiElement parentParent = element.getParent().getParent();
+      if (parentParent instanceof XmlAttribute) {
+        XmlAttribute attribute = (XmlAttribute)parentParent;
+        String attrName = attribute.getName();
+        if ("alink".equals(attrName) || "link".equals(attrName) | "text".equals(attrName) || "vlink".equals(attrName) ||
+            "bgcolor".equals(attrName) || "color".equals(attrName)) {
+          String s = element.getText();
+          if (s.length() > 0) {
+            final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s);
+            if (hexColor != null) {
+              try {
+                return new ColorPreviewComponent(null, Color.decode("0x" + hexColor.substring(1)));
+              }
+              catch (NumberFormatException e) {
+                return null;
+              }
             }
           }
         }
