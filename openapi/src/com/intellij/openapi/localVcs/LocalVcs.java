@@ -16,6 +16,7 @@
 package com.intellij.openapi.localVcs;
 
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -92,5 +93,5 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract UpToDateLineNumberProvider getUpToDateLineNumberProvider(Document document, String upToDateContent);
 
-  public abstract LvcsConfiguration getConfiguration();
+  public abstract LocalHistoryConfiguration getConfiguration();
 }

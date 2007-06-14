@@ -1,9 +1,8 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.localVcs.LvcsConfiguration</interface-class>
-      <implementation-class>com.intellij.openapi.localVcs.LvcsConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
+      <interface-class>com.intellij.localvcs.integration.LocalHistoryConfiguration</interface-class>
+      <implementation-class>com.intellij.localvcs.integration.LocalHistoryConfiguration</implementation-class>
     </component>
   </application-components>
   <project-components>

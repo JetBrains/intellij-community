@@ -15,10 +15,10 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.localvcs.integration.LocalHistoryBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.localVcs.LocalVcsBundle;
 
 public class VcsSelection {
   private final Document myDocument;
@@ -27,9 +27,8 @@ public class VcsSelection {
   private final String myActionName;
 
   public VcsSelection(Document document, SelectionModel selectionModel) {
-    this(document,
-         new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
-         LocalVcsBundle.message("action.name.show.history.for.selection"));
+    this(document, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
+         LocalHistoryBundle.message("action.name.show.history.for.selection"));
   }
 
   public VcsSelection(Document document, TextRange textRange, String actionName) {

@@ -1,7 +1,7 @@
-package com.intellij.openapi.localVcs.impl;
+package com.intellij.localvcs.integration.ui.views;
 
-import com.intellij.openapi.localVcs.LocalVcsBundle;
-import com.intellij.openapi.localVcs.LvcsConfiguration;
+import com.intellij.localvcs.integration.LocalHistoryBundle;
+import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -17,10 +17,9 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 
-/**
- * author: lesya
- */
-public class LvcsConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class LocalHistoryConfigurable extends BaseConfigurable implements SearchableConfigurable {
+  private static final int MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
+
   private JCheckBox myCbEnabled;
   private JTextField myFieldHistoryLength;
   private JCheckBox myCbProjectOpen;
@@ -30,12 +29,10 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   private JCheckBox myCbRunning;
   private JCheckBox myCbUnitTestsPassed;
   private JCheckBox myCbUnitTestsFailed;
-  private JLabel myHistoryLengthLabel;
   private JPanel myPanel;
-  private static final int MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
 
   public String getDisplayName() {
-    return LocalVcsBundle.message("lvcs.configurable.display.name");
+    return LocalHistoryBundle.message("lvcs.configurable.display.name");
   }
 
   public Icon getIcon() {
@@ -52,7 +49,7 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
     myCbEnabled = createCheckBox();
-    myCbEnabled.setText(LocalVcsBundle.message("checkbox.lvcs.properties.enable.local.history"));
+    myCbEnabled.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.enable.local.history"));
     myCbEnabled.setAlignmentX(0);
     myCbEnabled.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -79,17 +76,17 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   private void createHistoryPanel(final GridBagConstraints wholePanelGC) {
-    JPanel historyPanel = createPanel(LocalVcsBundle.message("border.lvcs.properties.history"));
+    JPanel historyPanel = createPanel(LocalHistoryBundle.message("border.lvcs.properties.history"));
 
     myFieldHistoryLength = new JTextField();
 
-    myHistoryLengthLabel = new JLabel(LocalVcsBundle.message("label.lvcs.properties.keep.local.history.count"));
-    myHistoryLengthLabel.setLabelFor(myFieldHistoryLength);
+    JLabel l = new JLabel(LocalHistoryBundle.message("label.lvcs.properties.keep.local.history.count"));
+    l.setLabelFor(myFieldHistoryLength);
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0);
-    historyPanel.add(myHistoryLengthLabel, gc);
+    historyPanel.add(l, gc);
 
-    final Dimension size = new Dimension(30, myFieldHistoryLength.getPreferredSize().height);
+    Dimension size = new Dimension(30, myFieldHistoryLength.getPreferredSize().height);
     myFieldHistoryLength.setMinimumSize(size);
     myFieldHistoryLength.setPreferredSize(size);
     myFieldHistoryLength.setMaximumSize(size);
@@ -101,37 +98,37 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   private void createLabelsPanel(GridBagConstraints wholePanelGC) {
-    JPanel labelsPanel = createPanel(LocalVcsBundle.message("border.lvcs.properties.automatic.labeling.group"));
+    JPanel labelsPanel = createPanel(LocalHistoryBundle.message("border.lvcs.properties.automatic.labeling.group"));
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 
     myCbProjectOpen = createCheckBox();
-    myCbProjectOpen.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.opening"));
+    myCbProjectOpen.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.project.opening"));
     labelsPanel.add(myCbProjectOpen, gc);
 
     myCbProjectCompile = createCheckBox();
-    myCbProjectCompile.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.compilation"));
+    myCbProjectCompile.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.project.compilation"));
     labelsPanel.add(myCbProjectCompile, gc);
 
     myCbFileCompile = createCheckBox();
-    myCbFileCompile.setText(LocalVcsBundle.message("checkbox.lvcs.properties.file.package.compilation"));
+    myCbFileCompile.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.file.package.compilation"));
     labelsPanel.add(myCbFileCompile, gc);
 
     myCbProjectMake = createCheckBox();
-    myCbProjectMake.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.make"));
+    myCbProjectMake.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.project.make"));
     labelsPanel.add(myCbProjectMake, gc);
 
     myCbRunning = createCheckBox();
-    myCbRunning.setText(LocalVcsBundle.message("checkbox.lvcs.properties.running.debugging"));
+    myCbRunning.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.running.debugging"));
     labelsPanel.add(myCbRunning, gc);
 
     myCbUnitTestsPassed = createCheckBox();
-    myCbUnitTestsPassed.setText(LocalVcsBundle.message("checkbox.lvcs.properties.unit.tests.passed"));
+    myCbUnitTestsPassed.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.unit.tests.passed"));
     labelsPanel.add(myCbUnitTestsPassed, gc);
 
     myCbUnitTestsFailed = createCheckBox();
-    myCbUnitTestsFailed.setText(LocalVcsBundle.message("checkbox.lvcs.properties.unit.tests.failed"));
+    myCbUnitTestsFailed.setText(LocalHistoryBundle.message("checkbox.lvcs.properties.unit.tests.failed"));
     labelsPanel.add(myCbUnitTestsFailed, gc);
 
     labelsPanel.add(Box.createVerticalGlue(), gc);
@@ -147,7 +144,7 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   public void apply() throws ConfigurationException {
-    LvcsConfiguration c = LvcsConfiguration.getInstance();
+    LocalHistoryConfiguration c = LocalHistoryConfiguration.getInstance();
 
     c.LOCAL_VCS_ENABLED = myCbEnabled.isSelected();
 
@@ -159,7 +156,7 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
     c.ADD_LABEL_ON_UNIT_TEST_PASSED = myCbUnitTestsPassed.isSelected();
     c.ADD_LABEL_ON_UNIT_TEST_FAILED = myCbUnitTestsFailed.isSelected();
 
-    c.LOCAL_VCS_PURGING_PERIOD = Long.parseLong(myFieldHistoryLength.getText()) * MILLIS_IN_DAY;
+    c.PURGING_PERIOD = Long.parseLong(myFieldHistoryLength.getText()) * MILLIS_IN_DAY;
 
     setModified(false);
 
@@ -167,7 +164,7 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
 
   public void reset() {
 
-    LvcsConfiguration c = LvcsConfiguration.getInstance();
+    LocalHistoryConfiguration c = LocalHistoryConfiguration.getInstance();
     myCbEnabled.setSelected(c.LOCAL_VCS_ENABLED);
 
     myCbFileCompile.setSelected(c.ADD_LABEL_ON_FILE_PACKAGE_COMPILATION);
@@ -178,7 +175,7 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
     myCbUnitTestsPassed.setSelected(c.ADD_LABEL_ON_UNIT_TEST_PASSED);
     myCbUnitTestsFailed.setSelected(c.ADD_LABEL_ON_UNIT_TEST_FAILED);
 
-    myFieldHistoryLength.setText(String.valueOf(c.LOCAL_VCS_PURGING_PERIOD / MILLIS_IN_DAY));
+    myFieldHistoryLength.setText(String.valueOf(c.PURGING_PERIOD / MILLIS_IN_DAY));
 
     updateEnabled();
 
@@ -220,6 +217,19 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
     return box;
   }
 
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
   private class MyDocument extends PlainDocument {
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
       char[] source = str.toCharArray();
@@ -237,18 +247,5 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
       super.insertString(offs, new String(result, 0, j), a);
       setModified(true);
     }
-  }
-
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  public boolean clearSearch() {
-    return false;
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

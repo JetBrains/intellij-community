@@ -1,27 +1,26 @@
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
-
-import javax.swing.*;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerRunnerSettings> {
   private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
@@ -30,11 +29,8 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
   public static final Icon RERUN_ICON = ICON;
   private static final @NonNls String HELP_ID = "debugging.debugWindow";
   private static final RunnerInfo DEBUGGER_INFO = new RunnerInfo(ToolWindowId.DEBUG,
-                                                                 DebuggerBundle.message("string.debugger.runner.description"),
-                                                                 ICON,
-                                                                 TOOLWINDOW_ICON,
-                                                                 ToolWindowId.DEBUG,
-                                                                 HELP_ID) {
+                                                                 DebuggerBundle.message("string.debugger.runner.description"), ICON,
+                                                                 TOOLWINDOW_ICON, ToolWindowId.DEBUG, HELP_ID) {
     public String getRunContextActionId() {
       return "DebugClass";
     }
@@ -51,11 +47,13 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     return DEBUGGER_INFO;
   }
 
-  public @Nullable RunContentDescriptor doExecute(final RunProfileState state,
-                                                                            final RunProfile runProfile,
-                                                                            RunContentDescriptor reuseContent,
-                                                                            final Project project) throws ExecutionException {
-    final boolean addLvcsLabel = LvcsConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
+  public
+  @Nullable
+  RunContentDescriptor doExecute(final RunProfileState state,
+                                 final RunProfile runProfile,
+                                 RunContentDescriptor reuseContent,
+                                 final Project project) throws ExecutionException {
+    final boolean addLvcsLabel = LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
     final LocalVcs localVcs = LocalVcs.getInstance(project);
     RunContentDescriptor contentDescriptor = null;
 
@@ -66,7 +64,8 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
       if (addLvcsLabel) {
         localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
       }
-      RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
+      RemoteConnection connection = DebuggerManagerImpl
+        .createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
       contentDescriptor = manager.attachVirtualMachine(runProfile, this, javaCommandLine, reuseContent, connection, true);
     }
     else if (state instanceof PatchedRunnableState) {
@@ -115,7 +114,8 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     doPatch(javaParameters, settings);
   }
 
-  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
+  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
+    throws RuntimeConfigurationException {
   }
 
   public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {

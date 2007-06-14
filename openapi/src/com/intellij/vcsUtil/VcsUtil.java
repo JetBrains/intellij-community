@@ -15,6 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.localvcs.integration.LocalHistoryBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.Application;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -115,25 +115,25 @@ public class VcsUtil {
     final String actionName;
 
     if (psiElement instanceof PsiClass) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.class");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.class");
     }
     else if (psiElement instanceof PsiField) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.field");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.field");
     }
     else if (psiElement instanceof PsiMethod) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.method");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.method");
     }
     else if (psiElement instanceof XmlTag) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.tag");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.tag");
     }
     else if (psiElement instanceof XmlText) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.text");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.text");
     }
     else if (psiElement instanceof PsiCodeBlock) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.code.block");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.code.block");
     }
     else if (psiElement instanceof PsiStatement) {
-      actionName = LocalVcsBundle.message("action.name.show.history.for.statement");
+      actionName = LocalHistoryBundle.message("action.name.show.history.for.statement");
     }
     else {
       return null;
@@ -170,63 +170,65 @@ public class VcsUtil {
    * @param project Project component
    * @param file    File to check
    * @return true if the given file resides under the root associated with any
-   *
    */
-  public static boolean isFileUnderVcs( Project project, String file ) {
-    return getVcsFor( project, getFilePath( file ) ) != null;
+  public static boolean isFileUnderVcs(Project project, String file) {
+    return getVcsFor(project, getFilePath(file)) != null;
   }
 
-  public static boolean isFileUnderVcs( Project project, FilePath file ) {
-    return getVcsFor( project, file ) != null;
+  public static boolean isFileUnderVcs(Project project, FilePath file) {
+    return getVcsFor(project, file) != null;
   }
 
   /**
    * File is considered to be a valid vcs file if it resides under the content
    * root controlled by the given vcs.
    */
-  public static boolean isFileForVcs( VirtualFile file, Project project, AbstractVcs host ){
-    return getVcsFor( project, file ) == host;
+  public static boolean isFileForVcs(VirtualFile file, Project project, AbstractVcs host) {
+    return getVcsFor(project, file) == host;
   }
 
   //  NB: do not reduce this method to the method above since PLVcsMgr uses
   //      different methods for computing its predicate (since FilePath can
   //      refer to the deleted files).
-  public static boolean isFileForVcs( FilePath path, Project project, AbstractVcs host ) {
-    return getVcsFor( project, path ) == host;
+  public static boolean isFileForVcs(FilePath path, Project project, AbstractVcs host) {
+    return getVcsFor(project, path) == host;
   }
 
-  public static boolean isFileForVcs( String path, Project project, AbstractVcs host ) {
-    return getVcsFor( project, getFilePath( path ) ) == host;
-  }
-
-  @Nullable
-  public static AbstractVcs getVcsFor( final Project project, final FilePath file )
-  {
-    final AbstractVcs[] vcss = new AbstractVcs[ 1 ];
-    ApplicationManager.getApplication().runReadAction( new Runnable() {
-      public void run() {  vcss[ 0 ] = ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );  }
-    });
-    return vcss[ 0 ];
+  public static boolean isFileForVcs(String path, Project project, AbstractVcs host) {
+    return getVcsFor(project, getFilePath(path)) == host;
   }
 
   @Nullable
-  public static AbstractVcs getVcsFor( final Project project, final VirtualFile file )
-  {
-    final AbstractVcs[] vcss = new AbstractVcs[ 1 ];
-    ApplicationManager.getApplication().runReadAction( new Runnable() {
-      public void run() {  vcss[ 0 ] = ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );  }
+  public static AbstractVcs getVcsFor(final Project project, final FilePath file) {
+    final AbstractVcs[] vcss = new AbstractVcs[1];
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        vcss[0] = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+      }
     });
-    return vcss[ 0 ];
+    return vcss[0];
   }
 
   @Nullable
-  public static VirtualFile getVcsRootFor( final Project project, final FilePath file )
-  {
-    final VirtualFile[] roots = new VirtualFile[ 1 ];
-    ApplicationManager.getApplication().runReadAction( new Runnable() {
-      public void run() {  roots[ 0 ] = ProjectLevelVcsManager.getInstance( project ).getVcsRootFor( file );  }
+  public static AbstractVcs getVcsFor(final Project project, final VirtualFile file) {
+    final AbstractVcs[] vcss = new AbstractVcs[1];
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        vcss[0] = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+      }
     });
-    return roots[ 0 ];
+    return vcss[0];
+  }
+
+  @Nullable
+  public static VirtualFile getVcsRootFor(final Project project, final FilePath file) {
+    final VirtualFile[] roots = new VirtualFile[1];
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        roots[0] = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+      }
+    });
+    return roots[0];
   }
 
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
@@ -365,7 +367,10 @@ public class VcsUtil {
     return false;
   }
 
-  public static FilePath getFilePath(String path) {  return getFilePath(new File(path));  }
+  public static FilePath getFilePath(String path) {
+    return getFilePath(new File(path));
+  }
+
   public static FilePath getFilePath(File file) {
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
   }
@@ -425,15 +430,13 @@ public class VcsUtil {
    *         in this case name of files for "before" and "after" revisions must not
    *         coniside.
    */
-  public static boolean isRenameChange(Change change)
-  {
+  public static boolean isRenameChange(Change change) {
     boolean isRenamed = false;
     ContentRevision before = change.getBeforeRevision();
     ContentRevision after = change.getAfterRevision();
-    if (before != null && after != null)
-    {
-      String prevFile = getCanonicalLocalPath( before.getFile().getPath() );
-      String newFile = getCanonicalLocalPath( after.getFile().getPath() );
+    if (before != null && after != null) {
+      String prevFile = getCanonicalLocalPath(before.getFile().getPath());
+      String newFile = getCanonicalLocalPath(after.getFile().getPath());
       isRenamed = !prevFile.equals(newFile);
     }
     return isRenamed;
@@ -522,7 +525,7 @@ public class VcsUtil {
    */
   public static void collectFiles(VirtualFile dir, List files, boolean recursive, boolean addDirectories) {
     if (!dir.isDirectory()) {
-      throw new IllegalArgumentException(LocalVcsBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
+      throw new IllegalArgumentException(LocalHistoryBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
     }
 
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
@@ -545,8 +548,12 @@ public class VcsUtil {
     final Ref<VcsException> ex = new Ref<VcsException>();
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        try {  runnable.run();  }
-        catch (VcsException e) {  ex.set(e);  }
+        try {
+          runnable.run();
+        }
+        catch (VcsException e) {
+          ex.set(e);
+        }
       }
     }, progressTitle, canBeCanceled, project);
     if (!ex.isNull()) {
@@ -561,23 +568,26 @@ public class VcsUtil {
     Runnable action = new Runnable() {
       public void run() {
         app.runWriteAction(new Runnable() {
-          public void run() {  file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);   }
+          public void run() {
+            file[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          }
         });
       }
     };
 
-    if (app.isDispatchThread())
+    if (app.isDispatchThread()) {
       action.run();
-    else
-      app.invokeAndWait( action, ModalityState.defaultModalityState() );
+    }
+    else {
+      app.invokeAndWait(action, ModalityState.defaultModalityState());
+    }
 
     return file[0];
   }
 
-  public static String getCanonicalLocalPath( String localPath )
-  {
+  public static String getCanonicalLocalPath(String localPath) {
     localPath = chopTrailingChars(localPath.trim().replace('\\', '/'), ourCharsToBeChopped);
-    if (localPath.length() == 2 && localPath.charAt( 1 ) == ':') {
+    if (localPath.length() == 2 && localPath.charAt(1) == ':') {
       localPath += '/';
     }
     return localPath;
@@ -585,7 +595,7 @@ public class VcsUtil {
 
   /**
    * @param source Source string
-   * @param chars Symbols to be trimmed
+   * @param chars  Symbols to be trimmed
    * @return string without all specified chars at the end. For example,
    *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\'}) is <code>"c:\\my_directory\\//"</code>,
    *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\','/'}) is <code>"c:\my_directory"</code>.
@@ -608,11 +618,11 @@ public class VcsUtil {
     return sb.toString();
   }
 
-  public static VirtualFile[] paths2VFiles( String[] paths )
-  {
-    VirtualFile[] files = new VirtualFile[ paths.length ];
-    for( int i = 0; i < paths.length; i++ )
-      files[ i ] = getVirtualFile( paths[ i ] );
+  public static VirtualFile[] paths2VFiles(String[] paths) {
+    VirtualFile[] files = new VirtualFile[paths.length];
+    for (int i = 0; i < paths.length; i++) {
+      files[i] = getVirtualFile(paths[i]);
+    }
 
     return files;
   }

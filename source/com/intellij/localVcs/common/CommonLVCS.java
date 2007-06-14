@@ -6,6 +6,8 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localVcs.impl.OldLvcsImplemetation;
 import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistoryBundle;
+import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -31,7 +33,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -58,7 +59,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private FileTypeManager myFileTypeManager;
   private LvcsAction myAction = null;
   private final Project myProject;
-  private LvcsConfiguration myConfiguration;
+  private LocalHistoryConfiguration myConfiguration;
 
   private static final int DO_NOT_PERFORM_PURGING = -1;
 
@@ -71,7 +72,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private final LocalVcsPurgingProviderImpl myLocalVcsPurgingProvider = new LocalVcsPurgingProviderImpl();
 
   private File myVcsLocation;
-  public static final String EXTERNAL_CHANGES_ACTION = LocalVcsBundle.message("local.vcs.external.changes.action.name");
+  public static final String EXTERNAL_CHANGES_ACTION = LocalHistoryBundle.message("local.vcs.external.changes.action.name");
   private static final Logger LOG = Logger.getInstance("#com.intellij.localVcs.common.CommonLVCS");
 
   private boolean myIsLocked = false;
@@ -84,7 +85,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
                     final ProjectRootManagerEx projectRootManager,
                     final FileTypeManager fileTypeManager,
                     final StartupManager startupManager,
-                    final LvcsConfiguration configuration) {
+                    final LocalHistoryConfiguration configuration) {
     myProject = project;
     myVcsLocation = findProjectVcsLocation();
     if (!isOldLvcsEnabled()) return;
@@ -101,7 +102,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       }
     });
 
-    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots"));
+    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalHistoryBundle.message("operation.name.refreshing.roots"));
     startupManager.getFileSystemSynchronizer().registerCacheUpdater(myRefreshRootsOperation);
     projectRootManager.registerChangeUpdater(myRefreshRootsOperation);
 
@@ -109,7 +110,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     registerAll();
   }
 
-  public LvcsConfiguration getConfiguration() {
+  public LocalHistoryConfiguration getConfiguration() {
     checkOldLvcsEnabled();
     return myConfiguration;
   }
@@ -231,7 +232,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public long getPurgingPeriod() {
     if (!myConfiguration.LOCAL_VCS_ENABLED) return 0;
-    return myConfiguration.LOCAL_VCS_PURGING_PERIOD;
+    return myConfiguration.PURGING_PERIOD;
   }
 
   public synchronized LvcsLabel addLabel(final String name, final String path) {
@@ -333,9 +334,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized int purge() {
     if (!isOldLvcsEnabled()) return 0;
 
-    final LvcsConfiguration configuration = LvcsConfiguration.getInstance();
-    if (configuration.LOCAL_VCS_PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
-    long purgingPeriod = configuration.LOCAL_VCS_PURGING_PERIOD;
+    final LocalHistoryConfiguration configuration = LocalHistoryConfiguration.getInstance();
+    if (configuration.PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
+    long purgingPeriod = configuration.PURGING_PERIOD;
     if (!isEnabled()) purgingPeriod = 0;
     long timeToPurgeBefore = myUserActivitiesRegistry.getActivityPeriodStart(System.currentTimeMillis(), purgingPeriod);
     return myImplementation.purge(timeToPurgeBefore);
@@ -425,7 +426,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private void checkLocalVCSWasSavedCorrectly() throws CouldNotLoadLvcsException {
     final File transactionFile = getTransactionFile();
     if (transactionFile.exists()) {
-      throw new CouldNotLoadLvcsException(LocalVcsBundle.message("exception.text.local.history.was.incorrectly.saved"));
+      throw new CouldNotLoadLvcsException(LocalHistoryBundle.message("exception.text.local.history.was.incorrectly.saved"));
     }
   }
 
@@ -553,8 +554,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(
-              LocalVcsBundle.message("message.text.could.not.save.local.history.with.error", e.getLocalizedMessage()),
-              LocalVcsBundle.message("message.title.saving.local.history"), Messages.getErrorIcon());
+              LocalHistoryBundle.message("message.text.could.not.save.local.history.with.error", e.getLocalizedMessage()),
+              LocalHistoryBundle.message("message.title.saving.local.history"), Messages.getErrorIcon());
           }
         });
       }
@@ -588,7 +589,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     ProgressIndicator progress = progressManager == null ? null : progressManager.getProgressIndicator();
     if (progress != null) {
       progress.pushState();
-      progress.setText(LocalVcsBundle.message("progress.text.clearing.local.history"));
+      progress.setText(LocalHistoryBundle.message("progress.text.clearing.local.history"));
     }
     myImplementation.clearAndRecreate(myVcsLocation);
     if (progress != null) {
@@ -670,7 +671,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private synchronized void synchronizeRoots() {
     checkOldLvcsEnabled();
 
-    /*myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refresh.files.on.startup")) {
+    /*myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalHistoryBundle.message("operation.name.refresh.files.on.startup")) {
       public void updatingDone() {
         synchronized (CommonLVCS.this) {
           super.updatingDone();
@@ -708,8 +709,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (myIsLocked) return;
     _init();
     if (!myIsLocked) return;
-    if (!myVcsWasRebuilt && LvcsConfiguration.getInstance().ADD_LABEL_ON_PROJECT_OPEN) {
-      myImplementation.addLabel(LocalVcsBundle.message("local.vcs.label.name.project.opened"), "");
+    if (!myVcsWasRebuilt && LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_PROJECT_OPEN) {
+      myImplementation.addLabel(LocalHistoryBundle.message("local.vcs.label.name.project.opened"), "");
     }
 
     if (sync) {
@@ -732,7 +733,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     ProgressIndicator progress = getProgress();
     if (progress != null) {
       progress.pushState();
-      progress.setText(LocalVcsBundle.message("progress.text.initializing.local.history"));
+      progress.setText(LocalHistoryBundle.message("progress.text.initializing.local.history"));
     }
     try {
       myImplementation._init(myVcsLocation);
@@ -799,8 +800,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        Messages.showMessageDialog(LocalVcsBundle.message("message.text.local.history.corrupt.with.message", message),
-                                   LocalVcsBundle.message("message.title.local.history.corrupt"), Messages.getWarningIcon());
+        Messages.showMessageDialog(LocalHistoryBundle.message("message.text.local.history.corrupt.with.message", message),
+                                   LocalHistoryBundle.message("message.title.local.history.corrupt"), Messages.getWarningIcon());
       }
     }, ModalityState.NON_MODAL);
     Runnable rebuildAction = new Runnable() {
@@ -810,7 +811,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
             clearAndRecreateLocation();
             resynchronizeRoots();
           }
-        }, LocalVcsBundle.message("progress.title.rebuilding.local.history"), false, myProject);
+        }, LocalHistoryBundle.message("progress.title.rebuilding.local.history"), false, myProject);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
