@@ -16,7 +16,7 @@ public class TestFrameworkActions {
     final TestFrameworkPropertyListener<Boolean> hidePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
         public void onChanged(final Boolean value) {
           final boolean shouldFilter = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
-          model.setFilter(shouldFilter ? Filter.NOT_PASSED : Filter.NO_FILTER);
+          model.setFilter(shouldFilter ? Filter.NOT_PASSED.or(Filter.DEFECT) : Filter.NO_FILTER);
         }
       };
     addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, hidePropertyListener, model, true);
