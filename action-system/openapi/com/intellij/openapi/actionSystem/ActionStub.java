@@ -33,14 +33,17 @@ public class ActionStub extends AnAction{
   private final String myText;
   private final ClassLoader myLoader;
   private final PluginId myPluginId;
+  private final String myIconPath;
 
-  public ActionStub(@NotNull String actionClass, @NotNull String id, @NotNull String text, ClassLoader loader, PluginId pluginId) {
+  public ActionStub(@NotNull String actionClass, @NotNull String id, @NotNull String text, ClassLoader loader, PluginId pluginId,
+                    String iconPath) {
     myLoader = loader;
     myClassName=actionClass;
     LOG.assertTrue(id.length()>0);
     myId=id;
     myText=text;
     myPluginId = pluginId;
+    myIconPath = iconPath;
   }
 
   public String getClassName(){
@@ -61,6 +64,10 @@ public class ActionStub extends AnAction{
 
   public PluginId getPluginId() {
     return myPluginId;
+  }
+
+  public String getIconPath() {
+    return myIconPath;
   }
 
   public void actionPerformed(AnActionEvent e){

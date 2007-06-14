@@ -193,59 +193,64 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   private AnAction convert(ActionStub stub) {
-      LOG.assertTrue(myAction2Id.contains(stub));
-      myAction2Id.remove(stub);
+    LOG.assertTrue(myAction2Id.contains(stub));
+    myAction2Id.remove(stub);
 
-      LOG.assertTrue(myId2Action.contains(stub.getId()));
+    LOG.assertTrue(myId2Action.contains(stub.getId()));
 
-      AnAction action = (AnAction)myId2Action.remove(stub.getId());
-      LOG.assertTrue(action != null);
-      LOG.assertTrue(action.equals(stub));
+    AnAction action = (AnAction)myId2Action.remove(stub.getId());
+    LOG.assertTrue(action != null);
+    LOG.assertTrue(action.equals(stub));
 
-      Object obj;
-      String className = stub.getClassName();
-      try {
-        obj = Class.forName(className, true, stub.getLoader()).newInstance();
+    Object obj;
+    String className = stub.getClassName();
+    try {
+      obj = Class.forName(className, true, stub.getLoader()).newInstance();
+    }
+    catch (ClassNotFoundException e) {
+      PluginId pluginId = stub.getPluginId();
+      if (pluginId != null) {
+        throw new PluginException("class with name \"" + className + "\" not found", e, pluginId);
       }
-      catch (ClassNotFoundException e) {
-        PluginId pluginId = stub.getPluginId();
-        if (pluginId != null) {
-          throw new PluginException("class with name \"" + className + "\" not found", e, pluginId);
-        }
-        else {
-          throw new IllegalStateException("class with name \"" + className + "\" not found");
-        }
+      else {
+        throw new IllegalStateException("class with name \"" + className + "\" not found");
       }
-      catch(UnsupportedClassVersionError e) {
-        PluginId pluginId = stub.getPluginId();
-        if (pluginId != null) {
-          throw new PluginException(e, pluginId);
-        }
-        else {
-          throw new IllegalStateException(e);
-        }
+    }
+    catch(UnsupportedClassVersionError e) {
+      PluginId pluginId = stub.getPluginId();
+      if (pluginId != null) {
+        throw new PluginException(e, pluginId);
       }
-      catch (Exception e) {
-        PluginId pluginId = stub.getPluginId();
-        if (pluginId != null) {
-          throw new PluginException("cannot create class \"" + className + "\"", e, pluginId);
-        }
-        else {
-          throw new IllegalStateException("cannot create class \"" + className + "\"", e);
-        }
+      else {
+        throw new IllegalStateException(e);
       }
-
-      if (!(obj instanceof AnAction)) {
-        throw new IllegalStateException("class with name \"" + className + "\" should be instance of " + AnAction.class.getName());
+    }
+    catch (Exception e) {
+      PluginId pluginId = stub.getPluginId();
+      if (pluginId != null) {
+        throw new PluginException("cannot create class \"" + className + "\"", e, pluginId);
       }
+      else {
+        throw new IllegalStateException("cannot create class \"" + className + "\"", e);
+      }
+    }
 
-      stub.initAction((AnAction)obj);
-      ((AnAction)obj).getTemplatePresentation().setText(stub.getText());
+    if (!(obj instanceof AnAction)) {
+      throw new IllegalStateException("class with name \"" + className + "\" should be instance of " + AnAction.class.getName());
+    }
 
-      myId2Action.put(stub.getId(), obj);
-      myAction2Id.put(obj, stub.getId());
+    AnAction anAction = (AnAction)obj;
+    stub.initAction(anAction);
+    anAction.getTemplatePresentation().setText(stub.getText());
+    String iconPath = stub.getIconPath();
+    if (iconPath != null) {
+      setIconFromClass(anAction.getClass(), iconPath, stub.getClassName(), anAction.getTemplatePresentation(), stub.getPluginId());
+    }
 
-      return (AnAction)obj;
+    myId2Action.put(stub.getId(), obj);
+    myAction2Id.put(obj, stub.getId());
+
+    return anAction;
   }
 
   public String getId(@NotNull AnAction action) {
@@ -324,6 +329,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
     String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
 
+    String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
+
     if (text == null) {
       @NonNls String message = "'text' attribute is mandatory (action ID=" + id + ";" +
                                (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")";
@@ -331,16 +338,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       return null;
     }
 
-    ActionStub stub = new ActionStub(className, id, text, loader, pluginId);
+    ActionStub stub = new ActionStub(className, id, text, loader, pluginId, iconPath);
     Presentation presentation = stub.getTemplatePresentation();
     presentation.setText(text);
 
     // description
 
     presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
-
-    // icon
-    setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation, pluginId);
 
     // process all links and key bindings if any
     for (final Object o : element.getChildren()) {
