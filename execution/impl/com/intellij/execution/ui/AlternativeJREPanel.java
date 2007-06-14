@@ -24,6 +24,7 @@ import java.util.ArrayList;
 public class AlternativeJREPanel extends JPanel{
   private ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private JCheckBox myCbEnabled;
+  final TextFieldWithHistory myFieldWithHistory;
 
   public AlternativeJREPanel() {
     super(new GridBagLayout());
@@ -32,21 +33,21 @@ public class AlternativeJREPanel extends JPanel{
                                                          GridBagConstraints.HORIZONTAL, new Insets(2, -2, 2, 2), 0, 0);
     add(myCbEnabled, gc);
 
-    final TextFieldWithHistory fieldWithHistory = new TextFieldWithHistory();
-    fieldWithHistory.setBorder(BorderFactory.createEtchedBorder());
+    myFieldWithHistory = new TextFieldWithHistory();
+    myFieldWithHistory.setBorder(BorderFactory.createEtchedBorder());
     final ArrayList<String> foundJdks = new ArrayList<String>();
     final ProjectJdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
     for (ProjectJdk jdk : allJdks) {
       foundJdks.add(jdk.getHomePath());
     }
-    fieldWithHistory.setHistory(foundJdks);
-    myPathField = new ComponentWithBrowseButton<TextFieldWithHistory>(fieldWithHistory, null);
+    myFieldWithHistory.setHistory(foundJdks);
+    myPathField = new ComponentWithBrowseButton<TextFieldWithHistory>(myFieldWithHistory, null);
     myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
                                         ExecutionBundle.message("run.configuration.select.jre.dir.label"),
                                         null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR, TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     gc.insets.left = 20;
     add(myPathField, gc);
-    InsertPathAction.addTo(fieldWithHistory.getTextEditor());
+    InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
 
     gc.weighty = 1;
     add(Box.createVerticalBox(), gc);
@@ -62,6 +63,7 @@ public class AlternativeJREPanel extends JPanel{
   private void enabledChanged() {
     final boolean pathEnabled = isPathEnabled();
     GuiUtils.enableChildren(myPathField, pathEnabled);
+    myFieldWithHistory.invalidate(); //need to revalidate inner component
   }
 
   public String getPath() {
