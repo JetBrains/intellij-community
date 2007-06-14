@@ -110,7 +110,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         result = ((GrVariable) resolved).getTypeGroovy();
       } else if (resolved instanceof PsiVariable) {
         result = ((PsiVariable) resolved).getType();
-      } else if (resolved instanceof PsiMethod) {
+      } else if (resolved instanceof PsiMethod && resolved.getCopyableUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
         if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
           return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", refExpr.getResolveScope());
         }

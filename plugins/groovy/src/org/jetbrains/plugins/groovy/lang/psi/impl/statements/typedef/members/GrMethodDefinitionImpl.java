@@ -92,8 +92,6 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    if (!ResolveUtil.processElement(processor, this)) return false;
-
     for (final GrParameter parameter : getParameters()) {
       if (!ResolveUtil.processElement(processor, parameter)) return false;
     }

@@ -96,6 +96,19 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(resolved.equals(((GrAssignmentExpression) statement).getLValue()));
   }
 
+  public void testRecursive1() throws Exception {
+    PsiReference ref = configureByFile("recursive1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrField);
+  }
+
+  public void testRecursive2() throws Exception {
+    PsiReference ref = configureByFile("recursive2/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    assertNull(((GrMethod) resolved).getReturnType());
+  }
+
   public void testUndefinedVar2() throws Exception {
     doUndefinedVarTest("undefinedVar2/A.groovy");
   }
