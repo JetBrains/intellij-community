@@ -74,6 +74,7 @@ public class CommanderPanel extends JPanel {
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
   private boolean myActive = true;
   private List<CommanderHistoryListener> myHistoryListeners = new CopyOnWriteArrayList<CommanderHistoryListener>();
+  private boolean myMoveFocus = false;
 
   public CommanderPanel(final Project project, final boolean enablePopupMenu) {
     super(new BorderLayout());
@@ -188,6 +189,10 @@ public class CommanderPanel extends JPanel {
 
   public final DefaultListModel getModel() {
     return myModel;
+  }
+
+  public void setMoveFocus(final boolean moveFocus) {
+    myMoveFocus = moveFocus;
   }
 
   public void goUp() {
@@ -556,7 +561,7 @@ public class CommanderPanel extends JPanel {
           if (!isDirectory) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                if (Commander.getInstance(myProject).MOVE_FOCUS) {
+                if (myMoveFocus) {
                   ToolWindowManager.getInstance(myProject).activateEditorComponent();
                 }
               }

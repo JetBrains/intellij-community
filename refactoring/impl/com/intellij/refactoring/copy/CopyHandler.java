@@ -2,8 +2,7 @@ package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.commander.Commander;
-import com.intellij.ide.commander.CommanderPanel;
+import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.util.DeleteUtil;
@@ -16,6 +15,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
@@ -24,10 +24,12 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.content.Content;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashSet;
 
 public class CopyHandler {
@@ -295,12 +297,18 @@ public class CopyHandler {
 
   private static void updateSelectionInActiveProjectView(PsiElement newElement, Project project, boolean selectInActivePanel) {
     String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
-    if (ToolWindowId.COMMANDER.equals(id)) {
-      Commander commander = Commander.getInstance(project);
-      CommanderPanel panel = selectInActivePanel ? commander.getActivePanel() : commander.getInactivePanel();
-      panel.getBuilder().selectElement(newElement, PsiUtil.getVirtualFile(newElement));
+    if (id != null) {
+      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(id);
+      Content selectedContent = window.getContentManager().getSelectedContent();
+      if (selectedContent != null) {
+        JComponent component = selectedContent.getComponent();
+        if (component instanceof TwoPaneIdeView) {
+          ((TwoPaneIdeView) component).selectElement(newElement, selectInActivePanel);
+          return;
+        }
+      }
     }
-    else if (ToolWindowId.PROJECT_VIEW.equals(id)) {
+    if (ToolWindowId.PROJECT_VIEW.equals(id)) {
       ProjectView.getInstance(project).selectPsiElement(newElement, true);
     }
     else if (ToolWindowId.STRUCTURE_VIEW.equals(id)) {

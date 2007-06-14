@@ -1,5 +1,10 @@
 package com.intellij.ide.commander;
 
+import com.intellij.ide.TwoPaneIdeView;
+import com.intellij.ide.bookmarks.BookmarkContainer;
+import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.ide.bookmarks.CommanderBookmark;
+import com.intellij.ide.bookmarks.CommanderBookmarksDialog;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
@@ -25,7 +30,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.usageView.UsageViewUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,7 +47,7 @@ import java.util.ArrayList;
 /**
  * @author Eugene Belyaev
  */
-public class Commander extends JPanel implements JDOMExternalizable, DataProvider, ProjectComponent {
+public class Commander extends JPanel implements JDOMExternalizable, DataProvider, ProjectComponent, BookmarkContainer, TwoPaneIdeView {
   private Project myProject;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
@@ -170,6 +174,8 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
     myLeftPanel.setActive(false);
     myRightPanel.setActive(false);
+    myLeftPanel.setMoveFocus(MOVE_FOCUS);
+    myRightPanel.setMoveFocus(MOVE_FOCUS);
 
     myElement = null;
   }
@@ -374,7 +380,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     final ToolWindow toolWindow = myToolWindowManager.getToolWindow(ToolWindowId.COMMANDER);
     if (toolWindow != null) {
       final PsiElement element = activePanel.getSelectedElement();
-      toolWindow.setTitle(getTitle(element));
+      toolWindow.setTitle(CommanderUtil.getTitle(element));
     }
   }
 
@@ -451,17 +457,24 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   public Object getData(final String dataId) {
     if (DataConstantsEx.HELP_ID.equals(dataId)) {
       return HelpID.COMMANDER;
-    } else if (DataConstantsEx.PROJECT.equals(dataId)) {
+    }
+    else if (DataConstantsEx.PROJECT.equals(dataId)) {
       return myProject;
-    } else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
+    }
+    else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
       final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
       if (parentElement == null) return null;
       final Object element = parentElement.getValue();
       return (element instanceof PsiElement) && ((PsiElement)element).isValid()? element : null;
-    } else if (DataConstantsEx.SECONDARY_PSI_ELEMENT.equals(dataId)) {
+    }
+    else if (DataConstantsEx.SECONDARY_PSI_ELEMENT.equals(dataId)) {
       final PsiElement selectedElement = getInactivePanel().getSelectedElement();
       return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
-    } else {
+    }
+    else if (BookmarkContainer.KEY.getName().equals(dataId)) {
+      return this;
+    }
+    else {
       return getActivePanel().getDataImpl(dataId);
     }
   }
@@ -555,38 +568,37 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     return myLeftPanel;
   }
 
-  public static String getTitle(final PsiElement element) {
-    String title = null;
-    if (element == null || !element.isValid()) {
-      title = null;
-    }
-    else if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory) element;
-      title = UsageViewUtil.getPackageName(directory, true);
-    }
-    else if (element instanceof PsiFile) {
-      final PsiFile file = (PsiFile) element;
-      title = file.getVirtualFile().getPresentableUrl();
-    }
-    else if (element instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass) element;
-      title = psiClass.getQualifiedName();
-    }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) element;
-      final PsiClass aClass = method.getContainingClass();
-      title = aClass != null? aClass.getQualifiedName() : method.toString();
-    }
-    else if (element instanceof PsiField) {
-      final PsiField field = (PsiField) element;
-      final PsiClass aClass = field.getContainingClass();
-      title = aClass != null? aClass.getQualifiedName() : field.toString();
+  public void showBookmarks() {
+    BookmarkManager manager = BookmarkManager.getInstance(myProject);
+    AbstractTreeNode parentNode = getActivePanel().getBuilder().getParentNode();
+    final Object parentElement = parentNode != null? parentNode.getValue() : null;
+    CommanderBookmark currentBookmark;
+    if (parentElement instanceof PsiElement) {
+      currentBookmark = manager.findCommanderBookmark((PsiElement)parentElement);
     }
     else {
-      final PsiFile file = element.getContainingFile();
-      title = file != null? file.getVirtualFile().getPresentableUrl() : element.toString();
+      currentBookmark = null;
     }
-    return title;
+    CommanderBookmarksDialog.execute(manager, currentBookmark);
+  }
+
+  public void toggleBookmark() {
+    AbstractTreeNode parentNode = getActivePanel().getBuilder().getParentNode();
+    final Object element = parentNode != null? parentNode.getValue() : null;
+    if (element instanceof PsiElement) {
+      BookmarkManager.getInstance(myProject).addCommanderBookmark((PsiElement)element);
+    }
+  }
+
+  public boolean canToggleBookmark() {
+    final AbstractTreeNode parentNode = getActivePanel().getBuilder().getParentNode();
+    final Object parentElement = parentNode != null? parentNode.getValue() : null;
+    return parentElement instanceof PsiElement;
+  }
+
+  public void selectElement(PsiElement element, boolean selectInActivePanel) {
+    CommanderPanel panel = selectInActivePanel ? getActivePanel() : getInactivePanel();
+    panel.getBuilder().selectElement(element, PsiUtil.getVirtualFile(element));
   }
 }
 

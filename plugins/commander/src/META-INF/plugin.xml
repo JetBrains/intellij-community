@@ -1,0 +1,35 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin>
+  <id>com.intellij.commander</id>
+  <name>Commander</name>
+  <description>Provides a two-panel view for navigating and working with the project structure</description>
+  <version>1.0.0</version>
+  <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains</vendor>
+  <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.ide.commander.Commander</implementation-class>
+      <interface-class>com.intellij.ide.commander.Commander</interface-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <selectInTarget implementation="com.intellij.ide.commander.CommanderSelectInTarget"/>
+  </extensions>
+
+  <actions>
+    <group id="CommanderViewGroup" class="com.intellij.ide.actions.CommanderViewActionGroup">
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="CodeEditorViewGroup"/>
+      <separator/>
+      <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" icon="/actions/syncPanels.png"/>
+      <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" icon="/actions/swapPanels.png"/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
+  </actions>
+</idea-plugin>
+

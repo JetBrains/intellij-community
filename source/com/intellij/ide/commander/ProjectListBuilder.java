@@ -56,7 +56,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
       parentElement = ((StructureViewTreeElement)parentElement).getValue();
     }
     if (parentElement instanceof PsiElement) {
-      myParentTitle.setText(Commander.getTitle(((PsiElement)parentElement)));
+      myParentTitle.setText(CommanderUtil.getTitle(((PsiElement)parentElement)));
     }
     else {
       myParentTitle.setText(null);

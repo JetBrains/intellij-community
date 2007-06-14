@@ -315,13 +315,6 @@
           <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
         </group>
         <separator/>
-        <group id="CommanderViewGroup" class="com.intellij.ide.actions.CommanderViewActionGroup">
-          <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" icon="/actions/syncPanels.png"/>
-          <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" icon="/actions/swapPanels.png"/>
-          <reference ref="CompareTwoFiles"/>
-          <reference ref="CompareFileWithEditor"/>
-        </group>
-        <separator/>
         <group id="ProjectViewGroup" class="com.intellij.ide.projectView.actions.ProjectViewActionGroup">
           <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
         </group>

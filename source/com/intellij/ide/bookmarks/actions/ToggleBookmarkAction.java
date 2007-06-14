@@ -3,9 +3,8 @@ package com.intellij.ide.bookmarks.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.EditorBookmark;
-import com.intellij.ide.commander.Commander;
+import com.intellij.ide.bookmarks.BookmarkContainer;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -46,13 +45,10 @@ public class ToggleBookmarkAction extends AnAction {
       }
       return;
     }
-    if (id.equals(ToolWindowId.COMMANDER)) {
-      AbstractTreeNode parentNode = Commander.getInstance(project).getActivePanel().getBuilder().getParentNode();
-      final Object element = parentNode != null? parentNode.getValue() : null;
-      if (element instanceof PsiElement) {
-        bookmarkManager.addCommanderBookmark((PsiElement)element);
-      }
-      return;
+
+    BookmarkContainer container = e.getData(BookmarkContainer.KEY);
+    if (container != null) {
+      container.toggleBookmark();
     }
   }
 
@@ -77,13 +73,12 @@ public class ToggleBookmarkAction extends AnAction {
     ProjectView projectView = ProjectView.getInstance(project);
     presentation.setText(IdeBundle.message("action.set.bookmark"));
     String id=ToolWindowManager.getInstance(project).getActiveToolWindowId();
+    BookmarkContainer container = event.getData(BookmarkContainer.KEY);
     if (ToolWindowId.PROJECT_VIEW.equals(id)) {
       presentation.setEnabled(projectView.getParentOfCurrentSelection() != null);
     }
-    else if (ToolWindowId.COMMANDER.equals(id)) {
-      final AbstractTreeNode parentNode = Commander.getInstance(project).getActivePanel().getBuilder().getParentNode();
-      final Object parentElement = parentNode != null? parentNode.getValue() : null;
-      presentation.setEnabled(parentElement instanceof PsiElement);
+    else if (container != null) {
+      presentation.setEnabled(container.canToggleBookmark());
     }
     else {
       presentation.setEnabled(false);
