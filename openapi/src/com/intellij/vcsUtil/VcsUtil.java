@@ -47,6 +47,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -250,26 +251,7 @@ public class VcsUtil {
   }
 
   private static void refreshFiles(final List<VirtualFile> filesToRefresh, final Runnable runnable) {
-    if (filesToRefresh.size() == 0) {
-      runnable.run();
-      return;
-    }
-    final int[] refreshed = new int[]{0};
-    final Runnable afterRefresh = new Runnable() {
-      public void run() {
-        synchronized (refreshed) {
-          refreshed[0] += 1;
-          if (refreshed[0] == filesToRefresh.size()) {
-            runnable.run();
-          }
-        }
-      }
-    };
-
-
-    for (VirtualFile file : filesToRefresh) {
-      file.refresh(true, true, afterRefresh);
-    }
+    RefreshQueue.getInstance().refresh(true, true, runnable, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
   }
 
   private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {
