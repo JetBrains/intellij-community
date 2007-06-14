@@ -41,29 +41,35 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
   private final List<PsiDirectory> myWritableDirectoryList;
   private final PsiElement myContext;
   private final String myCanonicalText;
+  private final boolean myCreateInterface;
 
   public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final GenericReference reference, boolean createClass,
                                              @Nullable String superClass) {
-    this(writableDirectoryList, reference.getElement(), reference.getCanonicalText(), createClass, superClass);
+    this(writableDirectoryList, reference.getElement(), reference.getCanonicalText(), createClass, false, superClass);
   }
 
   public CreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
-    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, createClass, superClass);
+    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, createClass, false, superClass);
   }
 
-  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final PsiElement context, final String canonicalText, boolean createClass,
+  public CreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final boolean createInterface, final String superClass) {
+    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, createClass, createInterface, superClass);
+  }
+
+  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final PsiElement context, final String canonicalText, boolean createClass, boolean createInterface,
                                  @Nullable String superClass) {
     myDirectory = writableDirectoryList.isEmpty()? null : writableDirectoryList.get(0);
     myWritableDirectoryList = writableDirectoryList;
     myContext = context;
     myCreateClass = createClass;
+    myCreateInterface = createInterface;
     mySuperClass = superClass;
     myCanonicalText = canonicalText;
   }
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message(myCreateClass ? "create.class.text":"create.package.text",myCanonicalText);
+    return QuickFixBundle.message(myCreateClass ? myCreateInterface ? "create.interface.text" : "create.class.text":"create.package.text",myCanonicalText);
   }
 
   @NotNull
@@ -148,7 +154,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
       }
       else {
         CreateFromUsageUtils.createClass(
-          CreateClassKind.CLASS,
+          myCreateInterface? CreateClassKind.INTERFACE : CreateClassKind.CLASS,
           directory,
           lastName,
           manager,

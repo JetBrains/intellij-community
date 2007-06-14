@@ -93,6 +93,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new CreateClassOrPackageFix(context, qualifiedName, createClass, superClass);
   }
 
+  public IntentionAction createCreateClassOrInterfaceFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
+    return new CreateClassOrPackageFix(context, qualifiedName, true, !createClass, superClass);
+  }
+
   public IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }
