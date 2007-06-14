@@ -13,8 +13,9 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -125,9 +126,12 @@ public class TestNGUtil implements TestFramework
         if (hasAnnotation) {
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, TEST_ANNOTATION_FQN);
             if (checkDisabled) {
+              assert annotation != null;
               PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
               for (PsiNameValuePair attrib : attribs) {
-                  if(attrib.getName().equals("enabled") && attrib.getValue().textMatches("false"))
+                final String attribName = attrib.getName();
+                final PsiAnnotationMemberValue attribValue = attrib.getValue();
+                if(Comparing.strEqual(attribName, "enabled") && attribValue != null && attribValue.textMatches("false"))
                       return false;
             }
           }
