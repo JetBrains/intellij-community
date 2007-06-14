@@ -613,16 +613,17 @@ public class FileUtil {
         }
         builder.append(ch);
       }
-      
-      if (recursive && asteriskCount == 2) {
-        builder.append(".*");
+
+      // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
+      final boolean isTrailingSlash =  builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
+      if ((asteriskCount == 0 && isTrailingSlash) || (recursive && asteriskCount == 2)) {
+        if (isTrailingSlash) {
+          builder.setLength(builder.length() - 1);
+        }
+        builder.append("(?:$|/.+)");
       }
       else if (asteriskCount > 0) {
         builder.append("[^/]*?");
-      }
-      else if (builder.length() > 0 && builder.charAt(builder.length() - 1) == '/') {
-        // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
-        builder.append(".*");
       }
       return builder.toString();
     }
