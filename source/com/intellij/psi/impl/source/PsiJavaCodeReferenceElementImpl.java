@@ -719,7 +719,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (!smartCompletion) {
       /*filter.addFilter(new ClassFilter(PsiClass.class));
       filter.addFilter(new ClassFilter(PsiPackage.class));*/
-      filter.addFilter(new NotFilter(new ConstructorFilter()));
+      filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
       filter.addFilter(new ClassFilter(PsiVariable.class));
     }
     switch (getKind()) {
