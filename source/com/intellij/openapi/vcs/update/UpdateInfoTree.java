@@ -129,7 +129,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     if (myCanGroupByChangeList) {
       myLoadingChangeListsLabel = new JLabel(VcsBundle.message("update.info.loading.changelists"));
       add(myLoadingChangeListsLabel, BorderLayout.SOUTH);
-      if (VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_CHANGELIST) {
+      myGroupByChangeList = VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_CHANGELIST;
+      if (myGroupByChangeList) {
         final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
         cardLayout.show(myCenterPanel, CARD_CHANGES);
       }
