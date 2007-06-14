@@ -136,12 +136,14 @@ public class LineTooltipRenderer implements TooltipRenderer {
       ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName);
     if (tool == null) return;
     final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
-    String description;
-    try {
-      description = ResourceUtil.loadText(descriptionUrl);
-    }
-    catch (IOException e) {
-      description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
+    String description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
+    if (descriptionUrl != null) {
+      try {
+        description = ResourceUtil.loadText(descriptionUrl);
+      }
+      catch (IOException e) {
+        //show under construction
+      }
     }
     final JEditorPane pane = initPane(description);
     pane.select(0, 0);
