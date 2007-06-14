@@ -1235,7 +1235,7 @@ public final class PsiUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement,V extends T> T getOriginalElement(@NotNull V psiElement, final Class<T> elementClass) {
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == null) return psiElement;
