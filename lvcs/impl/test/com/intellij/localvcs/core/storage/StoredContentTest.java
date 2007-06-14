@@ -1,7 +1,7 @@
 package com.intellij.localvcs.core.storage;
 
+import com.intellij.localvcs.core.InMemoryStorage;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestStorage;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -21,14 +21,14 @@ public class StoredContentTest extends LocalVcsTestCase {
 
   @Test
   public void testUnavailableIfExceptionOccurs() {
-    Storage goodStorage = new TestStorage() {
+    Storage goodStorage = new InMemoryStorage() {
       @Override
       protected byte[] loadContentData(final int id) throws IOException {
         return new byte[0];
       }
     };
 
-    Storage brokenStorage = new TestStorage() {
+    Storage brokenStorage = new InMemoryStorage() {
       @Override
       protected byte[] loadContentData(int id) throws IOException {
         throw new IOException();

@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testRecentChanges() {

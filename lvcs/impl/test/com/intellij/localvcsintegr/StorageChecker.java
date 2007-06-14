@@ -1,6 +1,7 @@
 package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.changes.Change;
 import com.intellij.localvcs.core.storage.IContentStorage;
 import com.intellij.localvcs.core.storage.Storage;
@@ -23,7 +24,7 @@ public class StorageChecker {
       }
     };
 
-    LocalVcs vcs = new LocalVcs(s);
+    LocalVcs vcs = new TestLocalVcs(s);
     LocalVcs.Memento m = s.load();
     Entry e = m.myRoot.getEntry(43077);
     //List<Change> cc = m.myChangeList.getChangesFor(m.myRoot.copy(), e.getPath());

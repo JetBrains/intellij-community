@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalVcsPurgingTest extends LocalVcsTestCase {
-  TestLocalVcs vcs = new TestLocalVcs(new PurgeLoggingStorage());
+  InMemoryLocalVcs vcs = new InMemoryLocalVcs(new PurgeLoggingStorage());
   List<Content> purgedContent = new ArrayList<Content>();
 
   @Before
@@ -50,7 +50,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotPurgeLongContentFromContentStorage() {
-    vcs = new TestLocalVcs(new PurgeLoggingStorage());
+    vcs = new InMemoryLocalVcs(new PurgeLoggingStorage());
     setCurrentTimestamp(10);
     vcs.createFile("file", bigContentFactory(), -1);
 
@@ -73,7 +73,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     assertEquals(2, vcs.getRevisionsFor("file").size());
   }
 
-  class PurgeLoggingStorage extends TestStorage {
+  class PurgeLoggingStorage extends InMemoryStorage {
     @Override
     public void purgeContent(StoredContent c) {
       purgedContent.add(c);

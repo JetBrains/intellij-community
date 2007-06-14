@@ -5,14 +5,12 @@ import com.intellij.localvcs.core.storage.Storage;
 
 import java.io.IOException;
 
-public class TestLocalVcs extends LocalVcs {
-  private long myPurgingInterval;
-
-  public TestLocalVcs() {
-    this(new TestStorage());
+public class InMemoryLocalVcs extends TestLocalVcs {
+  public InMemoryLocalVcs() {
+    this(new InMemoryStorage());
   }
 
-  public TestLocalVcs(Storage s) {
+  public InMemoryLocalVcs(Storage s) {
     super(s);
   }
 
@@ -32,14 +30,5 @@ public class TestLocalVcs extends LocalVcs {
     if (f == null) return false;
     if (getEntry(path).getContent() == null) return false;
     return super.contentWasNotChanged(path, f);
-  }
-
-  @Override
-  public long getPurgingPeriod() {
-    return myPurgingInterval;
-  }
-
-  public void setPurgingPeriod(long i) {
-    myPurgingInterval = i;
   }
 }

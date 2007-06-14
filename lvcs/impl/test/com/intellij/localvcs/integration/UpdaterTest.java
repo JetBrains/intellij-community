@@ -1,9 +1,9 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.Paths;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
@@ -11,7 +11,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class UpdaterTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
   TestIdeaGateway gw = new TestIdeaGateway();
   TestFileFilter filter = (TestFileFilter)gw.getFileFilter();
 

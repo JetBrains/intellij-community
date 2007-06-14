@@ -2,9 +2,9 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.integration.stubs.StubCommandProcessor;
 import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
@@ -61,7 +61,7 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   }
 
   protected LocalVcs createLocalVcs() {
-    return new TestLocalVcs();
+    return new InMemoryLocalVcs();
   }
 
   private void doUpdateRoots(CacheUpdater u) {

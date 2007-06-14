@@ -1,7 +1,7 @@
 package com.intellij.localvcs.integration.ui.models;
 
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class FileHistoryDialogModelTest extends LocalVcsTestCase {
-  private TestLocalVcs vcs = new TestLocalVcs();
+  private InMemoryLocalVcs vcs = new InMemoryLocalVcs();
   private FileHistoryDialogModel m;
 
   @Test

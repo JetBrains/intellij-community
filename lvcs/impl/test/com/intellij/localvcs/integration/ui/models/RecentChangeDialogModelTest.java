@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.RecentChange;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.IdeaGateway;
@@ -13,7 +13,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class RecentChangeDialogModelTest extends LocalVcsTestCase {
-  ILocalVcs vcs = new TestLocalVcs();
+  ILocalVcs vcs = new InMemoryLocalVcs();
   IdeaGateway gw = new TestIdeaGateway();
   RecentChange c;
   RecentChangeDialogModel m;

@@ -8,10 +8,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestStorage extends Storage {
+public class InMemoryStorage extends Storage {
   private Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
 
-  public TestStorage() {
+  public InMemoryStorage() {
     super(null);
   }
 

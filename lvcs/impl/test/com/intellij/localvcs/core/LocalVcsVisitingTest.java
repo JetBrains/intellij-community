@@ -4,7 +4,7 @@ import com.intellij.localvcs.core.changes.*;
 import org.junit.Test;
 
 public class LocalVcsVisitingTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testSimpleVisit() throws Exception {

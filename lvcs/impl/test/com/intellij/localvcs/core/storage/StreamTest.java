@@ -1,8 +1,8 @@
 package com.intellij.localvcs.core.storage;
 
 import com.intellij.localvcs.core.IdPath;
+import com.intellij.localvcs.core.InMemoryStorage;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestStorage;
 import com.intellij.localvcs.core.changes.*;
 import com.intellij.localvcs.core.tree.DirectoryEntry;
 import com.intellij.localvcs.core.tree.Entry;
@@ -26,7 +26,7 @@ public class StreamTest extends LocalVcsTestCase {
     PipedOutputStream pos = new PipedOutputStream();
     PipedInputStream pis = new PipedInputStream(pos);
 
-    s = new TestStorage();
+    s = new InMemoryStorage();
     os = new Stream(pos);
     is = new Stream(pis, s);
   }

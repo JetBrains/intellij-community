@@ -2,6 +2,7 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.TestTimestampComparator;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.core.storage.Storage;
@@ -28,7 +29,7 @@ public class BasicsTest extends IntegrationTestCase {
     myProject.save();
 
     Storage s = new Storage(getVcsComponent().getStorageDir());
-    LocalVcs vcs = new LocalVcs(s);
+    LocalVcs vcs = new TestLocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(f.getPath()));
   }

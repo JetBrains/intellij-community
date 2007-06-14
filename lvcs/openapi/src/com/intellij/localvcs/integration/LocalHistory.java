@@ -47,6 +47,10 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return p.getComponent(LocalHistory.class);
   }
 
+  public static LocalHistoryConfiguration getConfiguration() {
+    return LocalHistoryConfiguration.getInstance();
+  }
+
   protected abstract LocalHistoryAction startAction(String name);
 
   protected abstract void putLabel(String name);

@@ -8,7 +8,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 public class ContentFactoryTest extends LocalVcsTestCase {
-  TestStorage s = new TestStorage();
+  InMemoryStorage s = new InMemoryStorage();
 
   @Test
   public void testContentCreation() {

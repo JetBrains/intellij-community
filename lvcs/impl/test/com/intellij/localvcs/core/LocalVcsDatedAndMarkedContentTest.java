@@ -4,7 +4,7 @@ import com.intellij.localvcs.integration.RevisionTimestampComparator;
 import org.junit.Test;
 
 public class LocalVcsDatedAndMarkedContentTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testGettingContent() {

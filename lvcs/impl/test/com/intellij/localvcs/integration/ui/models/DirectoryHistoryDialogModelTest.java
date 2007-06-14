@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui.models;
 
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.CREATED;
 import static com.intellij.localvcs.core.revisions.Difference.Kind.NOT_MODIFIED;
 import com.intellij.localvcs.integration.TestIdeaGateway;
@@ -10,7 +10,7 @@ import com.intellij.localvcs.integration.TestVirtualFile;
 import org.junit.Test;
 
 public class DirectoryHistoryDialogModelTest extends LocalVcsTestCase {
-  private LocalVcs vcs = new TestLocalVcs();
+  private LocalVcs vcs = new InMemoryLocalVcs();
   private DirectoryHistoryDialogModel m;
 
   @Test

@@ -9,9 +9,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
 public class LocalHistoryConfiguration implements JDOMExternalizable, ApplicationComponent {
-  public static final long DEFAULT_PURGING_PERIOD = 1000 * 60 * 60 * 24 * 3;
+  public static final long DEFAULT_PURGING_PERIOD = 1000 * 60 * 60 * 24 * 3; // 3 days
 
-  public boolean LOCAL_VCS_ENABLED = true;
+  public boolean LOCAL_HISTORY_ENABLED = true;
   public long PURGING_PERIOD = DEFAULT_PURGING_PERIOD;
 
   public boolean ADD_LABEL_ON_PROJECT_OPEN = true;

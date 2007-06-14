@@ -231,7 +231,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public long getPurgingPeriod() {
-    if (!myConfiguration.LOCAL_VCS_ENABLED) return 0;
+    if (!myConfiguration.LOCAL_HISTORY_ENABLED) return 0;
     return myConfiguration.PURGING_PERIOD;
   }
 
@@ -272,7 +272,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public boolean isEnabled() {
-    return myConfiguration.LOCAL_VCS_ENABLED;
+    return myConfiguration.LOCAL_HISTORY_ENABLED;
   }
 
   private synchronized VirtualFile[] calculateRoots() {

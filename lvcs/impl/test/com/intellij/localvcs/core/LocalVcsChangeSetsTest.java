@@ -8,7 +8,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testApplyingChangesRightAfterChange() {

@@ -14,7 +14,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   public void initVcs() {
     closeStorage();
     s = new Storage(tempDir);
-    vcs = new LocalVcs(s);
+    vcs = new TestLocalVcs(s);
   }
 
   @After

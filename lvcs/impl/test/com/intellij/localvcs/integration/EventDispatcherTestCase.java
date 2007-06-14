@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -14,7 +14,7 @@ import static org.easymock.classextension.EasyMock.replay;
 import org.junit.Before;
 
 public class EventDispatcherTestCase extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
   TestIdeaGateway gateway;
   EventDispatcher d;
 

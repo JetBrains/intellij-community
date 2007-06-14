@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui.models;
 
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
@@ -14,7 +14,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class HistoryDialogModelTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
   TestIdeaGateway gw = new TestIdeaGateway();
   HistoryDialogModel m;
 

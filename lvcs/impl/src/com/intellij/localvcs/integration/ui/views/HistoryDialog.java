@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
 import com.intellij.localvcs.integration.revertion.Reverter;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
@@ -15,7 +16,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -156,21 +156,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void restoreShowChangesOnlyOption() {
-    int value = getDimensionService().getExtendedState(getShowChangesOnlyOptionKey());
-    myModel.showChangesOnly(value == 1 ? true : false);
+    myModel.showChangesOnly(LocalHistory.getConfiguration().SHOW_CHANGES_ONLY);
   }
 
   private void saveShowChangesOnlyOption() {
     boolean value = myModel.doesShowChangesOnly();
-    getDimensionService().setExtendedState(getShowChangesOnlyOptionKey(), value ? 1 : 0);
-  }
-
-  private String getShowChangesOnlyOptionKey() {
-    return getDimensionServiceKey() + ".showChangesOnly";
-  }
-
-  private DimensionService getDimensionService() {
-    return DimensionService.getInstance();
+    LocalHistory.getConfiguration().SHOW_CHANGES_ONLY = value;
   }
 
   private void restoreSplitterProportion() {

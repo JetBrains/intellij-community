@@ -8,7 +8,7 @@ import com.intellij.localvcs.core.tree.Entry;
 import org.junit.Test;
 
 public class LocalVcsBasicsTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testIncrementingIdOnEntryCreation() {

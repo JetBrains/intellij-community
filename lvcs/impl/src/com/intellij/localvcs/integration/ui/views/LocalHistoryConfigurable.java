@@ -146,7 +146,7 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
   public void apply() throws ConfigurationException {
     LocalHistoryConfiguration c = LocalHistoryConfiguration.getInstance();
 
-    c.LOCAL_VCS_ENABLED = myCbEnabled.isSelected();
+    c.LOCAL_HISTORY_ENABLED = myCbEnabled.isSelected();
 
     c.ADD_LABEL_ON_FILE_PACKAGE_COMPILATION = myCbFileCompile.isSelected();
     c.ADD_LABEL_ON_PROJECT_COMPILATION = myCbProjectCompile.isSelected();
@@ -165,7 +165,7 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
   public void reset() {
 
     LocalHistoryConfiguration c = LocalHistoryConfiguration.getInstance();
-    myCbEnabled.setSelected(c.LOCAL_VCS_ENABLED);
+    myCbEnabled.setSelected(c.LOCAL_HISTORY_ENABLED);
 
     myCbFileCompile.setSelected(c.ADD_LABEL_ON_FILE_PACKAGE_COMPILATION);
     myCbProjectCompile.setSelected(c.ADD_LABEL_ON_PROJECT_COMPILATION);

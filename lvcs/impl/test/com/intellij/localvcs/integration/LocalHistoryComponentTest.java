@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.TempDirTestCase;
+import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     initComponent();
 
     Storage s = new Storage(c.getStorageDir());
-    LocalVcs vcs = new LocalVcs(s);
+    LocalVcs vcs = new TestLocalVcs(s);
     vcs.createFile("file", cf(""), -1);
     vcs.save();
     s.close();
@@ -61,7 +62,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     c.save();
 
     Storage s = new Storage(c.getStorageDir());
-    LocalVcs vcs = new LocalVcs(s);
+    LocalVcs vcs = new TestLocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry("file"));
   }
@@ -185,6 +186,11 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     protected void initVcs() {
       super.initVcs();
       isVcsInitialized = true;
+    }
+
+    @Override
+    protected long getPurgingPeriod() {
+      return 1000;
     }
 
     @Override

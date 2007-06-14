@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LocalVcs implements ILocalVcs {
+public abstract class LocalVcs implements ILocalVcs {
   protected Storage myStorage;
 
   private ChangeList myChangeList;
@@ -230,9 +230,7 @@ public class LocalVcs implements ILocalVcs {
     myStorage.purgeContents(contentsToPurge);
   }
 
-  protected long getPurgingPeriod() {
-    return 3 * 24 * 60 * 60 * 1000;
-  }
+  protected abstract long getPurgingPeriod();
 
   public byte[] getByteContent(String path, RevisionTimestampComparator c) {
     for (Revision r : getRevisionsFor(path)) {

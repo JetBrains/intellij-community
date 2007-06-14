@@ -65,7 +65,16 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
-    myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage));
+    myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage) {
+      @Override
+      protected long getPurgingPeriod() {
+        return LocalHistoryComponent.this.getPurgingPeriod();
+      }
+    });
+  }
+
+  protected long getPurgingPeriod() {
+    return getConfiguration().PURGING_PERIOD;
   }
 
   protected void initService() {

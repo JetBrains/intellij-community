@@ -6,7 +6,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class LocalVcsLabelsTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testLabels() {

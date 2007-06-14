@@ -1,15 +1,15 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
-import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import org.junit.Test;
 
 import java.util.List;
 
 public class IdeaGatewayTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
   TestIdeaGateway gw = new TestIdeaGateway();
 
   @Test

@@ -1,6 +1,7 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.localvcs.core.LocalVcs;
+import com.intellij.localvcs.core.TestLocalVcs;
 import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import org.junit.After;
@@ -15,7 +16,7 @@ public class LocalVcsPerformanceTestCase extends PerformanceTestCase {
   public void initVcs() {
     closeStorage();
     storage = new Storage(tempDir);
-    vcs = new LocalVcs(storage);
+    vcs = new TestLocalVcs(storage);
   }
 
   @After

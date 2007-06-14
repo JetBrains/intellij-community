@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class LocalVcsRevisionsTest extends LocalVcsTestCase {
-  LocalVcs vcs = new TestLocalVcs();
+  LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testRevisions() {
