@@ -390,7 +390,8 @@ public class PluginManagerMain {
       IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
 
       myVendorLabel.setText(pluginDescriptor.getVendor());
-      setTextValue(SearchUtil.markup(pluginDescriptor.getDescription(), myFilter.getFilter()), myDescriptionTextArea);
+      final String description = pluginDescriptor.getDescription();
+      setTextValue(description != null ? SearchUtil.markup(description, myFilter.getFilter()) : null, myDescriptionTextArea);
       setTextValue(pluginDescriptor.getChangeNotes(), myChangeNotesTextArea);
       setHtmlValue(pluginDescriptor.getVendorEmail(), myVendorEmailLabel);
       setHtmlValue(pluginDescriptor.getVendorUrl(), myVendorUrlLabel);
@@ -552,7 +553,7 @@ public class PluginManagerMain {
     }
 
     private void filter(PluginTableModel model, final List<IdeaPluginDescriptor> filtered) {
-      final String filter = getFilter();
+      final String filter = getFilter().toLowerCase();
       final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
       final Set<String> search = optionsRegistrar.getProcessedWords(filter);
       final ArrayList<IdeaPluginDescriptor> current = new ArrayList<IdeaPluginDescriptor>();
@@ -561,6 +562,10 @@ public class PluginManagerMain {
       toBeProcessed.addAll(filtered);
       filtered.clear();
       for (IdeaPluginDescriptor descriptor : toBeProcessed) {
+        if (descriptor.getName().toLowerCase().indexOf(filter) != -1) {
+          current.add(descriptor);
+          continue;
+        }
         if (isAccepted(search, current, descriptor, descriptor.getName())) {
           continue;
         }

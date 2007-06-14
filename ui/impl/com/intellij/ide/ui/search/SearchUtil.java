@@ -17,6 +17,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -253,7 +254,7 @@ public class SearchUtil {
     };
   }
 
-  public static String markup(@NonNls String textToMarkup, String filter) {
+  public static String markup(@NonNls @NotNull String textToMarkup, String filter) {
     if (filter == null || filter.length() == 0) {
       return textToMarkup;
     }
