@@ -153,7 +153,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
     final VirtualFile vFile = position.getFile().getVirtualFile();
     final Document doc = vFile != null? FileDocumentManager.getInstance().getDocument(vFile) : null;
-    if (doc == null || doc.getLineCount() == 0) {
+    if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
     }
 
