@@ -45,7 +45,8 @@ public class ChangeListDetailsAction extends AnAction {
   }
 
   public static void showDetailsPopup(final Project project, final CommittedChangeList changeList) {
-    StringBuilder detailsBuilder = new StringBuilder("<html><body>");
+    StringBuilder detailsBuilder = new StringBuilder("<html><head>");
+    detailsBuilder.append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
     DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
     final AbstractVcs vcs = changeList.getVcs();
     CachingCommittedChangesProvider provider = null;

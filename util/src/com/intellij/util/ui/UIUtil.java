@@ -732,5 +732,9 @@ public class UIUtil {
     return eachParent;
   }
 
+  @NonNls
+  public static String getCssFontDeclaration(final Font font) {
+    return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style>";
+  }
 }
 

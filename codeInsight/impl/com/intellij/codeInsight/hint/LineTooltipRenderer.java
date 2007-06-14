@@ -115,8 +115,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   private static JEditorPane initPane(@NonNls String text) {
-    final Font font = UIUtil.getLabelFont();
-    text = "<html><head><style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style></head><body>" + getHtmlBody(text) + "</body></html>";
+    text = "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
     final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
     pane.setEditable(false);
     pane.setBorder(
