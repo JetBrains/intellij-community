@@ -5,6 +5,7 @@ import com.intellij.localvcs.core.storage.Storage;
 import com.intellij.localvcs.core.storage.UnavailableContent;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 
 public abstract class ContentFactory {
@@ -22,6 +23,19 @@ public abstract class ContentFactory {
 
   private boolean isTooLong() throws IOException {
     return getLength() > MAX_CONTENT_LENGTH;
+  }
+
+  public boolean equalsTo(Content c) {
+    try {
+      if (!c.isAvailable()) return false;
+      if (isTooLong()) return false;
+
+      if (getLength() != c.getBytes().length) return false;
+      return Arrays.equals(getBytes(), c.getBytes());
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 
   protected abstract byte[] getBytes() throws IOException;

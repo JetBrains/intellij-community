@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -93,16 +94,18 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return result;
   }
 
+  private ActionToolbar createRevisionsToolbar(ActionGroup actions) {
+    ActionManager am = ActionManager.getInstance();
+    return am.createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+  }
+
   private ActionGroup createRevisionsActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
     result.add(new ShowChangesOnlyAction());
+    result.add(Separator.getInstance());
+    result.add(new HelpAction());
     return result;
-  }
-
-  private ActionToolbar createRevisionsToolbar(ActionGroup actions) {
-    ActionManager am = ActionManager.getInstance();
-    return am.createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
   }
 
   private JComponent createRevisionsTable(ActionGroup actions) {
@@ -199,6 +202,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return new Action[0];
   }
 
+  protected String getHelpId() {
+    return "bla-bla-bla";
+  }
+
   protected void revert() {
     revert(myModel.createReverter());
   }
@@ -269,6 +276,16 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     public void setSelected(AnActionEvent e, boolean state) {
       myModel.showChangesOnly(state);
       myRevisionsTable.updateData();
+    }
+  }
+
+  private class HelpAction extends AnAction {
+    public HelpAction() {
+      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      HelpManager.getInstance().invokeHelp(getHelpId());
     }
   }
 }

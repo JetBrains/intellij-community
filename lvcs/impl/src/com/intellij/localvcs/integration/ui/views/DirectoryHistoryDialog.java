@@ -127,11 +127,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private abstract class ActionOnSelection extends AnAction {
-    private Icon myIcon;
-
     public ActionOnSelection(String name, String iconName) {
-      super(name);
-      myIcon = IconLoader.getIcon(iconName);
+      super(name, null, IconLoader.getIcon(iconName));
     }
 
     @Override
@@ -144,7 +141,6 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      p.setIcon(myIcon);
       DirectoryDifferenceNode n = getSelectedNode();
       p.setEnabled(n != null && isEnabledFor(n));
     }

@@ -33,7 +33,7 @@ public class ContentStorageTest extends TempDirTestCase {
   @Test
   public void testStoring() throws Exception {
     byte[] c1 = new byte[]{1};
-    byte[] c2 = new byte[]{2};
+    byte[] c2 = new byte[]{22};
 
     int id1 = s.store(c1);
     int id2 = s.store(c2);

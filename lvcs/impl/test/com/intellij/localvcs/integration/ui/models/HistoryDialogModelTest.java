@@ -21,15 +21,15 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", cf(""), -1);
+    vcs.createFile("f", null, -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", cf(""), -1);
+    vcs.changeFileContent("f", null, -1);
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", cf(""), -1);
+    vcs.changeFileContent("f", null, -1);
     vcs.endChangeSet("3");
 
     initModelFor("f");
@@ -150,11 +150,11 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testSelectingSeveralChanges() {
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", cf(""), -1);
+    vcs.changeFileContent("f", null, -1);
     vcs.endChangeSet("4");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", cf(""), -1);
+    vcs.changeFileContent("f", null, -1);
     vcs.endChangeSet("5");
 
     initModelFor("f");

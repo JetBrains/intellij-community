@@ -16,7 +16,7 @@ public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
 
   public void testAskingForRevertSubsequentalChanges() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");
-    f.setBinaryContent(new byte[0]);
+    f.setBinaryContent(new byte[1]);
 
     Reverter r = createReverter(f, 1);
     String question = r.askUserForProceed();

@@ -28,6 +28,13 @@ public class TestLocalVcs extends LocalVcs {
   }
 
   @Override
+  protected boolean contentWasNotChanged(String path, ContentFactory f) {
+    if (f == null) return false;
+    if (getEntry(path).getContent() == null) return false;
+    return super.contentWasNotChanged(path, f);
+  }
+
+  @Override
   public long getPurgingPeriod() {
     return myPurgingInterval;
   }

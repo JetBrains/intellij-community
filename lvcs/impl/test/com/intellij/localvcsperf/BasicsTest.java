@@ -89,7 +89,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testUpdatingWithAllFilesOutdated() throws Exception {
     buildVcsTree();
-    measureUpdateTime(9500, VCS_ENTRIES_TIMESTAMP + 1);
+    measureUpdateTime(16000, VCS_ENTRIES_TIMESTAMP + 1);
   }
 
   private void measureUpdateTime(int expected, long timestamp) throws IOException {
@@ -110,7 +110,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(500, new RunnableAdapter() {
+    assertExecutionTime(1000, new RunnableAdapter() {
       public void doRun() {
         vcs.purgeObsolete(0);
       }
@@ -122,7 +122,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(800, new RunnableAdapter() {
+    assertExecutionTime(2000, new RunnableAdapter() {
       public void doRun() {
         vcs.getRevisionsFor("root");
       }
@@ -147,7 +147,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     final Change c = vcs.getLastChange();
     createChildren("root", 5);
 
-    assertExecutionTime(180, new RunnableAdapter() {
+    assertExecutionTime(100, new RunnableAdapter() {
       public void doRun() throws Exception {
         vcs.getChain(c);
       }

@@ -110,8 +110,13 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void changeFileContent(String path, ContentFactory f, long timestamp) {
+    if (contentWasNotChanged(path, f)) return;
     Content c = createContentFrom(f);
     applyChange(new ChangeFileContentChange(path, c, timestamp));
+  }
+
+  protected boolean contentWasNotChanged(String path, ContentFactory f) {
+    return f.equalsTo(getEntry(path).getContent());
   }
 
   public void rename(String path, String newName) {

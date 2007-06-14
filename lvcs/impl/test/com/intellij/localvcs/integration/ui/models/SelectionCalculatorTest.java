@@ -15,13 +15,13 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
 
   @Test
   public void testSelectionWasNotChanged() {
-    List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\ndef\nghi");
+    List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
     SelectionCalculator c = new SelectionCalculator(rr, 0, 2);
 
     Block b0 = c.getSelectionFor(rr.get(0));
     Block b1 = c.getSelectionFor(rr.get(1));
 
-    assertBlock(0, 2, "abc\ndef\nghi", b0);
+    assertBlock(0, 2, "abc1\ndef1\nghi1", b0);
     assertBlock(0, 2, "abc\ndef\nghi", b1);
   }
 

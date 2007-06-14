@@ -70,6 +70,15 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testChangingFileContentToEqualOneDoesNothing() {
+    vcs.createFile("f", cf("content"), -1);
+    assertEquals(1, vcs.getRevisionsFor("f").size());
+
+    vcs.changeFileContent("f", cf("content"), -1);
+    assertEquals(1, vcs.getRevisionsFor("f").size());
+  }
+
+  @Test
   public void testRenamingFile() {
     vcs.createFile("file", null, -1);
     assertTrue(vcs.hasEntry("file"));

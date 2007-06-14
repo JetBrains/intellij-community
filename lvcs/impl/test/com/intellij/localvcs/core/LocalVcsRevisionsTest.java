@@ -119,13 +119,13 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testTimestampForLastRevisionAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", cf(""), -1);
+    vcs.createFile("file", null, -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", cf(""), -1);
+    vcs.changeFileContent("file", null, -1);
 
     setCurrentTimestamp(30);
-    vcs.changeFileContent("file", cf(""), -1);
+    vcs.changeFileContent("file", null, -1);
 
     vcs.purgeObsolete(15);
 
