@@ -1,6 +1,5 @@
 package com.intellij.ide.commander;
 
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
@@ -221,7 +220,17 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     myFocusWatcher = new FocusWatcher();
 
     myLeftPanel = createPanel();
+    myLeftPanel.addHistoryListener(new CommanderHistoryListener() {
+      public void historyChanged(final PsiElement selectedElement, final boolean elementExpanded) {
+        getCommandHistory().saveState(selectedElement, elementExpanded, true);
+      }
+    });
     myRightPanel = createPanel();
+    myRightPanel.addHistoryListener(new CommanderHistoryListener() {
+      public void historyChanged(final PsiElement selectedElement, final boolean elementExpanded) {
+        getCommandHistory().saveState(selectedElement, elementExpanded, false);
+      }
+    });
 
     mySplitter = new Splitter();
     mySplitter.setFirstComponent(myLeftPanel);
@@ -300,7 +309,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
 
   private CommanderPanel createPanel() {
-    final CommanderPanel panel = new CommanderPanel(myProject, this);
+    final CommanderPanel panel = new CommanderPanel(myProject, true);
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
     panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));
     panel.setProjectTreeStructure(treeStructure);

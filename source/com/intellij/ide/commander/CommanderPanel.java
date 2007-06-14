@@ -44,6 +44,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Eugene Belyaev
@@ -62,7 +63,6 @@ public class CommanderPanel extends JPanel {
   protected final JList myList;
   private final DefaultListModel myModel;
 
-  private final Commander myCommander;
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
   protected final ListSpeedSearch myListSpeedSearch;
   private final IdeView myIdeView = new MyIdeView();
@@ -72,16 +72,17 @@ public class CommanderPanel extends JPanel {
   @NonNls
   private static final String ACTION_GO_UP = "GoUp";
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
+  private boolean myActive = true;
+  private List<CommanderHistoryListener> myHistoryListeners = new CopyOnWriteArrayList<CommanderHistoryListener>();
 
-  public CommanderPanel(final Project project, final Commander commander) {
+  public CommanderPanel(final Project project, final boolean enablePopupMenu) {
     super(new BorderLayout());
     myProject = project;
     myModel = new DefaultListModel();
     myList = new JList(myModel);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    myCommander = commander;
 
-    if (commander != null) {
+    if (enablePopupMenu) {
       myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myList) {
         @NotNull
         protected PsiElement[] getSelectedElements() {
@@ -132,11 +133,13 @@ public class CommanderPanel extends JPanel {
     });
 
 
-    myList.addMouseListener(new PopupHandler() {
-      public void invokePopup(final Component comp, final int x, final int y) {
-        CommanderPanel.this.invokePopup(comp, x, y);
-      }
-    });
+    if (enablePopupMenu) {
+      myList.addMouseListener(new PopupHandler() {
+        public void invokePopup(final Component comp, final int x, final int y) {
+          CommanderPanel.this.invokePopup(comp, x, y);
+        }
+      });
+    }
 
     myList.addKeyListener(new KeyAdapter() {
       public void keyPressed(final KeyEvent e) {
@@ -165,9 +168,17 @@ public class CommanderPanel extends JPanel {
     ListToolTipHandler.install(myList);
   }
 
+  public void addHistoryListener(CommanderHistoryListener listener) {
+    myHistoryListeners.add(listener);
+  }
+
+  public void removeHistoryListener(CommanderHistoryListener listener) {
+    myHistoryListeners.remove(listener);
+  }
+
   private void updateHistory(boolean elementExpanded) {
-    if (myCommander != null) {
-      myCommander.getCommandHistory().saveState(getSelectedElement(), elementExpanded, myCommander.isLeftPanelActive());
+    for(CommanderHistoryListener listener: myHistoryListeners) {
+      listener.historyChanged(getSelectedElement(), elementExpanded);
     }
   }
 
@@ -347,6 +358,7 @@ public class CommanderPanel extends JPanel {
   }
 
   final void setActive(final boolean active) {
+    myActive = active;
     if (active) {
       myTitlePanel.setBackground(DARK_BLUE);
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED, DARK_BLUE_BRIGHTER, DARK_BLUE_DARKER));
@@ -372,12 +384,11 @@ public class CommanderPanel extends JPanel {
     }
   }
 
-  public final Commander getCommander() {
-    return myCommander;
+  public boolean isActive() {
+    return myActive;
   }
 
   private void invokePopup(final Component c, final int x, final int y) {
-    if (myCommander == null) return;
     if (myBuilder == null) return;
 
     if (myList.getSelectedIndices().length <= 1) {

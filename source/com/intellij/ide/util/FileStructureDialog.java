@@ -218,7 +218,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     public MyCommanderPanel(Project _project) {
-      super(_project, null);
+      super(_project, false);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myListSpeedSearch.addChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt){

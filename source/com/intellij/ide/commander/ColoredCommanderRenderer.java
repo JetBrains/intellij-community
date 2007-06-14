@@ -20,8 +20,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   public Component getListCellRendererComponent(final JList list, final Object value, final int index, boolean selected, boolean hasFocus){
     hasFocus = selected; // border around inactive items 
 
-    final Commander commander = myCommanderPanel.getCommander();
-    if (commander != null && !commander.isPanelActive(myCommanderPanel)) {
+    if (!myCommanderPanel.isActive()) {
       selected = false;
     }
 
