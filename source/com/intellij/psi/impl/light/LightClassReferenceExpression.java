@@ -17,7 +17,7 @@ public class LightClassReferenceExpression extends LightClassReference implement
     return null;
   }
 
-  public PsiElement bindToElementViaStaticImport(PsiClass aClass) throws IncorrectOperationException {
+  public PsiElement bindToElementViaStaticImport(@NotNull PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 

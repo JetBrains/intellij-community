@@ -43,7 +43,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return myQualifier;
   }
 
-  public PsiElement bindToElementViaStaticImport(PsiClass aClass) throws IncorrectOperationException {
+  public PsiElement bindToElementViaStaticImport(@NotNull PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 

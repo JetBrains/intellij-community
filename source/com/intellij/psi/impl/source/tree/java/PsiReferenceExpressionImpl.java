@@ -53,35 +53,31 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
-  public PsiElement bindToElementViaStaticImport(PsiClass qualifierClass) throws IncorrectOperationException {
-    if (qualifierClass == null || qualifierClass.getQualifiedName() == null) throw new IncorrectOperationException();
+  public PsiElement bindToElementViaStaticImport(@NotNull PsiClass qualifierClass) throws IncorrectOperationException {
+    String qualifiedName = qualifierClass.getQualifiedName();
+    if (qualifiedName == null) throw new IncorrectOperationException();
 
-    String staticName = getReferenceName();
-    if (getQualifierExpression() == null) {
-      PsiImportList importList = ((PsiJavaFile)getContainingFile()).getImportList();
-      PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
-      if (singleImportStatement != null) {
-        if (singleImportStatement instanceof PsiImportStaticStatement) {
-          String qName = qualifierClass.getQualifiedName() + "." + staticName;
-          if (singleImportStatement.getImportReference().getQualifiedName().equals(qName)) return this;
-        }
-        String qualifiedName = qualifierClass.getQualifiedName();
-        if (qualifiedName != null) {
-          PsiReferenceExpression classRef = getManager().getElementFactory().createReferenceExpression(qualifierClass);
-          final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-          LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, getManager());
-          addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
-          addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
-          return this;
-        }
-      }
-      else {
-        importList.add(getManager().getElementFactory().createImportStaticStatement(qualifierClass, staticName));
-        return this;
-      }
+    if (getQualifierExpression() != null) {
+      throw new IncorrectOperationException("Reference is qualified: "+getText());
     }
-
-    throw new IncorrectOperationException();
+    String staticName = getReferenceName();
+    PsiImportList importList = ((PsiJavaFile)getContainingFile()).getImportList();
+    PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
+    if (singleImportStatement == null) {
+      importList.add(getManager().getElementFactory().createImportStaticStatement(qualifierClass, staticName));
+    }
+    else {
+      if (singleImportStatement instanceof PsiImportStaticStatement) {
+        String qName = qualifierClass.getQualifiedName() + "." + staticName;
+        if (qName.equals(singleImportStatement.getImportReference().getQualifiedName())) return this;
+      }
+      PsiReferenceExpression classRef = getManager().getElementFactory().createReferenceExpression(qualifierClass);
+      final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, getManager());
+      addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
+      addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
+    }
+    return this;
   }
 
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
@@ -240,9 +236,9 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return element.getText();
   }
 
-  private static final @NonNls String LENGTH = "length";
+  @NonNls private static final String LENGTH = "length";
 
-  private TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
+  private final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
   private static class TypeEvaluator implements Function<PsiExpression, PsiType> {
     public PsiType fun(final PsiExpression expr) {
@@ -290,7 +286,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public PsiType getType() {
-    return ((PsiManagerImpl)getManager()).getResolveCache().getType(this, ourTypeEvaluator);
+    return getManager().getResolveCache().getType(this, ourTypeEvaluator);
   }
 
   public boolean isReferenceTo(PsiElement element) {

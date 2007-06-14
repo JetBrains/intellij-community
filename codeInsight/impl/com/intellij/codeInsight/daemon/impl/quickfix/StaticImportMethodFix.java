@@ -57,6 +57,7 @@ public class StaticImportMethodFix implements IntentionAction {
     return LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) <= 0
            && myMethodCall != null 
            && myMethodCall.isValid()
+           && myMethodCall.getMethodExpression().getQualifierExpression() == null
            && file.getManager().isInProject(file)
            && !(candidates == null ? candidates = getMethodsToImport() : candidates).isEmpty()
       ;

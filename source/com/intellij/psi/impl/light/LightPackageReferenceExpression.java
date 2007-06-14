@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class LightPackageReferenceExpression extends LightPackageReference implements PsiReferenceExpression {
   public LightPackageReferenceExpression(PsiManager manager, PsiPackage refPackage) {
@@ -14,7 +15,7 @@ public class LightPackageReferenceExpression extends LightPackageReference imple
     return null;
   }
 
-  public PsiElement bindToElementViaStaticImport(PsiClass aClass) throws IncorrectOperationException {
+  public PsiElement bindToElementViaStaticImport(@NotNull PsiClass aClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
