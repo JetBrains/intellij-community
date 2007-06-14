@@ -58,7 +58,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private State myState = new State();
   private ScheduledFuture myFuture;
   private Map<CommittedChangeList, Change[]> myCachedIncomingChangeLists;
-  private List<CommittedChangeList> myNewIncomingChanges = new ArrayList<CommittedChangeList>();
+  private Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<CommittedChangeList>();
   private ProjectLevelVcsManager myVcsManager;
 
   public static final Change[] ALL_CHANGES = new Change[0];
@@ -535,7 +535,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
   }
 
-  private void notifyIncomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
+  private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
     final ArrayList<CommittedChangeList> listCopy = receivedChanges == null ? null : new ArrayList<CommittedChangeList>(receivedChanges);
     myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(listCopy);
   }

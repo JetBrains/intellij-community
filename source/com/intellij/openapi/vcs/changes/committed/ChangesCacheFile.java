@@ -370,7 +370,7 @@ public class ChangesCacheFile {
     return myChangesProvider.readChangeList(myLocation, myStream);
   }
 
-  public boolean processUpdatedFiles(UpdatedFiles updatedFiles, List<CommittedChangeList> receivedChanges) throws IOException {
+  public boolean processUpdatedFiles(UpdatedFiles updatedFiles, Collection<CommittedChangeList> receivedChanges) throws IOException {
     boolean haveUnaccountedUpdatedFiles = false;
     openStreams();
     loadHeader();
