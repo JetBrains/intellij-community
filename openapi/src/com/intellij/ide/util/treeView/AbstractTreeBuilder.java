@@ -583,7 +583,11 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  private boolean isLoadingChildrenFor(final DefaultMutableTreeNode node) {
+  private boolean isLoadingChildrenFor(final Object nodeObject) {
+    if (!(nodeObject instanceof DefaultMutableTreeNode)) return false;
+
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
+
     boolean areChuldrenLoading = false;
     for (int i = 0; i < node.getChildCount(); i++) {
       TreeNode child = node.getChildAt(i);
@@ -946,6 +950,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
 
     return null;
+  }
+
+  public final boolean isNodeBeingBuilt(final TreePath path) {
+    return isLoadingChildrenFor(path.getLastPathComponent());
   }
 
   private class MyExpansionListener implements TreeExpansionListener {

@@ -176,6 +176,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private void addTreeExpansionListener() {
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
       public void treeExpanded(final TreeExpansionEvent event) {
+        if (myTreeBuilder.isNodeBeingBuilt(event.getPath())) return;
+
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             TreePath path = event.getPath();
