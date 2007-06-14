@@ -6,7 +6,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.*;
@@ -668,9 +667,21 @@ public class FSRecords implements Disposable {
         final int next = page.readInt();
         if (attIdOnPage == encodedAttId) {
           return new DataInputStream(page) {
+            boolean closed = false;
             public void close() throws IOException {
-              super.close();
-              r.unlock();
+              if (!closed) {
+                closed = true;
+                super.close();
+                r.unlock();
+              }
+            }
+
+            protected void finalize() throws Throwable {
+              if (!closed) {
+                w.unlock();
+              }
+
+              super.finalize();
             }
           };
         }
@@ -728,9 +739,21 @@ public class FSRecords implements Disposable {
       final int headPage = myConnection.getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
       result = findPageToWrite(id, encodedAttId, headPage);
       return new DataOutputStream(result) {
+        boolean closed = false;
         public void close() throws IOException {
-          super.close();
-          w.unlock();
+          if (!closed) {
+            closed = true;
+            super.close();
+            w.unlock();
+          }
+        }
+
+        protected void finalize() throws Throwable {
+          if (!closed) {
+            w.unlock();
+          }
+
+          super.finalize();
         }
       };
     }
