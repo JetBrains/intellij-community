@@ -511,10 +511,15 @@ public class CompileDriver {
         dropDependencyCache(context);
 
         if (didSomething && GENERATE_CLASSPATH_INDEX) {
-          context.getProgressIndicator().setText("Generating classpath index");
-          for (VirtualFile file : context.getAllOutputDirectories()) {
-            createClasspathIndex(file);
+          context.getProgressIndicator().pushState();
+          context.getProgressIndicator().setText("Generating classpath index...");
+          final VirtualFile[] allOutputDirs = context.getAllOutputDirectories();
+          int count = 0;
+          for (VirtualFile file : allOutputDirs) {
+            context.getProgressIndicator().setFraction(((double)++count) / allOutputDirs.length);
+            createClasspathIndex(file); 
           }
+          context.getProgressIndicator().popState();
         }
       }
 
