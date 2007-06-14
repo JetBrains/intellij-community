@@ -183,7 +183,7 @@ public class CommanderPanel extends JPanel {
     }
   }
 
-  final JList getList() {
+  public final JList getList() {
     return myList;
   }
 
