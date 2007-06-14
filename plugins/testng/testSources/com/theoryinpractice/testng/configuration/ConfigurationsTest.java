@@ -102,9 +102,7 @@ public class ConfigurationsTest {
     final String className = psiClass.getName();
     final TestNGConfiguration configuration = createConfiguration(project);
 
-    final PsiMethod[] psiMethods = psiClass.findMethodsByName("test", false);
-    assert psiMethods.length == 1;
-    final PsiMethod method = psiMethods[0];
+    final PsiMethod method = findTestMethod(psiClass);
     configuration.setMethodConfiguration(new PsiLocation<PsiMethod>(project, method));
     final String newMethodName = "renamedTest";
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
@@ -131,6 +129,32 @@ public class ConfigurationsTest {
     Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
   }
+
+  private PsiMethod findTestMethod(final PsiClass psiClass) {
+    final PsiMethod[] psiMethods = psiClass.findMethodsByName("test", false);
+    assert psiMethods.length == 1;
+    return psiMethods[0];
+  }
+
+  @Test
+  public void testReuseOrCreateNewConfiguration() {
+    final Project project = myProjectFixture.getProject();
+    final PsiClass psiClass = findTestClass(project);
+    final TestNGConfiguration configuration = createConfiguration(project);
+    final TestNGConfigurationType type = (TestNGConfigurationType)configuration.getFactory().getType();
+
+    //class config
+    configuration.setClassConfiguration(psiClass);
+    Assert.assertTrue(type.isConfigurationByElement(configuration, project, psiClass));
+    final PsiMethod testMethod = findTestMethod(psiClass);
+    Assert.assertFalse(type.isConfigurationByElement(configuration, project, testMethod));
+
+    //method config
+    configuration.setMethodConfiguration(new PsiLocation<PsiMethod>(project, testMethod));
+    Assert.assertTrue(type.isConfigurationByElement(configuration, project, testMethod));
+    Assert.assertFalse(type.isConfigurationByElement(configuration, project, psiClass));
+  }
+
 
   private PsiClass findTestClass(final Project project) {
     final PsiClass psiClass = PsiManager.getInstance(project).findClass("Testt");
