@@ -39,4 +39,11 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
     assertTrue(resolveResult.isValidResult());
   }
 
+  public void testScriptMethod() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMethod/A.java");
+    JavaResolveResult resolveResult = ref.advancedResolve(false);
+    assertTrue(resolveResult.getElement() instanceof GrMethod);
+    assertTrue(resolveResult.isValidResult());
+  }
+
 }

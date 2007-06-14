@@ -13,7 +13,11 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
@@ -287,6 +291,13 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     for (PsiMethod method : getMethods()) {
       if (!ResolveUtil.processElement(processor, method)) return false;
+    }
+
+    final GrTopStatement[] topStatements = myFile.getTopStatements();
+    for (GrTopStatement topStatement : topStatements) {
+      if (topStatement instanceof GrMethod || topStatement instanceof GrField) {
+        if (!ResolveUtil.processElement(processor, (GrNamedElement)topStatement)) return false;
+      }
     }
     return true;
   }
