@@ -163,7 +163,8 @@ public class JDOMUtil {
     final List attributes = element.getAttributes();
     for (Object o : attributes) {
       Attribute attr = (Attribute)o;
-      element.setAttribute(interner.intern(attr.getName()), interner.intern(attr.getValue()));
+      attr.setName(interner.intern(attr.getName()));
+      attr.setValue(interner.intern(attr.getValue()));
     }
 
     final List content = element.getContent();
