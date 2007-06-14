@@ -36,14 +36,17 @@ public class AntFileSetImpl extends AntFilesProviderImpl{
   @NotNull
   protected List<File> getFiles(final AntPattern pattern) {
     final File singleFile = getCanonicalFile(computeAttributeValue(getSourceElement().getAttributeValue("file")));
-    final File root = getCanonicalFile(computeAttributeValue(getSourceElement().getAttributeValue("dir")));
-    if (root != null) {
-      final ArrayList<File> files = new ArrayList<File>();
-      if (singleFile != null) {
-        files.add(singleFile);
+    if (singleFile == null || pattern.hasIncludePatterns()) {
+      // if singleFile is specified, there are no implicit includes
+      final File root = getCanonicalFile(computeAttributeValue(getSourceElement().getAttributeValue("dir")));
+      if (root != null) {
+        final ArrayList<File> files = new ArrayList<File>();
+        if (singleFile != null) {
+          files.add(singleFile);
+        }
+        collectFiles(files, root, "", pattern);
+        return files;
       }
-      collectFiles(files, root, "", pattern);
-      return files;
     }
     if (singleFile != null) {
       return Collections.singletonList(singleFile);

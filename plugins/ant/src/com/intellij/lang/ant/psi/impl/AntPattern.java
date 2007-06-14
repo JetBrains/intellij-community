@@ -59,7 +59,11 @@ public class AntPattern extends AntElementVisitor {
   AntPattern(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
   }
-
+  
+  public boolean hasIncludePatterns() {
+    return myIncludePatterns.size() > 0;
+  }
+  
   public void visitAntStructuredElement(final AntStructuredElement element) {
     final AntTypeDefinition typeDef = element.getTypeDefinition();
     if (typeDef != null) {
