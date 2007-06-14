@@ -47,6 +47,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 element.getText());
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiElement parent = location.getParent().getParent();
@@ -180,7 +184,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
             } else if (!ExpressionUtils.isZeroLengthArrayConstruction(
                     argument)) {
                 return;
-            } 
+            }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
                 return;

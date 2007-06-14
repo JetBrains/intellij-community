@@ -41,10 +41,10 @@ public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new EqualsCalledOnUrlVisitor();
+        return new EqualsHashCodeCalledOnUrlVisitor();
     }
 
-    private static class EqualsCalledOnUrlVisitor
+    private static class EqualsHashCodeCalledOnUrlVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(
