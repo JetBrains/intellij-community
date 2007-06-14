@@ -300,52 +300,32 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
       //files
       for (VirtualFile item : virtualFiles) {
         if (!moduleRootManager.getFileIndex().isInTestSourceContent(item)) {
-          printer.print(GroovycRunner.SRC_FILE);
+          printer.println(GroovycRunner.SRC_FILE);
         } else {
-          printer.print(GroovycRunner.TEST_FILE);
+          printer.println(GroovycRunner.TEST_FILE);
         }
-        printer.println();
-        printer.print(item.getPath());
-        printer.println();
+        printer.println(item.getPath());
       }
 
       //classpath
-      printer.print(GroovycRunner.CLASSPATH);
-      printer.println();
-      printer.print(getCompilationClasspath(module).getPathsString());
-      printer.println();
+      printer.println(GroovycRunner.CLASSPATH);
+      printer.println(getCompilationClasspath(module).getPathsString());
 
-//output
-      boolean forTestSourceFolders;
-      String outputPath;
-
-//ordinary classes
-      forTestSourceFolders = false;
-      outputPath = CompilerPaths.getModuleOutputPath(module, forTestSourceFolders);
-      printer.print(GroovycRunner.OUTPUTPATH);
-      printer.println();
-      printer.print(outputPath);
-      printer.println();
+//production output
+      printer.println(GroovycRunner.OUTPUTPATH);
+      printer.println(CompilerPaths.getModuleOutputPath(module, false));
 
 //test output
-      forTestSourceFolders = true;
-      outputPath = CompilerPaths.getModuleOutputPath(module, forTestSourceFolders);
-      printer.print(GroovycRunner.TEST_OUTPUTPATH);
-      printer.println();
-      printer.print(outputPath);
-      printer.println();
+      printer.println(GroovycRunner.TEST_OUTPUTPATH);
+      printer.println(CompilerPaths.getModuleOutputPath(module, true));
 
 //module name
-      printer.print(GroovycRunner.MODULE_NAME);
-      printer.println();
-      printer.print(module.getName());
-      printer.println();
+      printer.println(GroovycRunner.MODULE_NAME);
+      printer.println(module.getName());
 
 //source
-      printer.print(GroovycRunner.SRC_FOLDERS);
-      printer.println();
-      printer.print(getNonExcludedModuleSourceFolders(module).getPathsString());
-      printer.println();
+      printer.println(GroovycRunner.SRC_FOLDERS);
+      printer.println(getNonExcludedModuleSourceFolders(module).getPathsString());
 
     } catch (IOException e) {
       e.printStackTrace();
