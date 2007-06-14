@@ -1,4 +1,4 @@
-// "5" "true"
+// "f 5" "true"
 public class Test {
   void foo(<caret>){
     Syste.out.print(d(new int[]{5}));

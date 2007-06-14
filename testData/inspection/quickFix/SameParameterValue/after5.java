@@ -1,4 +1,4 @@
-// "5" "true"
+// "f 5" "true"
 public class Test {
   void foo(<caret>){
     if (5 == 5) {

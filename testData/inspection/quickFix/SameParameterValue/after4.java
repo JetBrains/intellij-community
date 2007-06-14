@@ -1,4 +1,4 @@
-// "false" "true"
+// "f false" "true"
 public class Test {
   void foo(<caret>boolean b){
     if (false) {

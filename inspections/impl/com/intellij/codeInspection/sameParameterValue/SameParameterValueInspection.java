@@ -47,9 +47,10 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
         String value = refParameter.getActualValueIfSame();
         if (value != null) {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+          final String paramName = refParameter.getName();
           problems.add(manager.createProblemDescriptor(refParameter.getElement(), InspectionsBundle.message(
-            "inspection.same.parameter.problem.descriptor", "<code>" + refParameter.getName() + "</code>", "<code>" + value + "</code>"),
-                                                       new InlineParameterValueFix(value),
+            "inspection.same.parameter.problem.descriptor", "<code>" + paramName + "</code>", "<code>" + value + "</code>"),
+                                                       new InlineParameterValueFix(paramName, value),
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
@@ -99,24 +100,31 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
   @Nullable
   public QuickFix getQuickFix(final String hint) {
-    return new InlineParameterValueFix(hint);
+    final int spaceIdx = hint.indexOf(" ");
+    if (spaceIdx == -1 || spaceIdx >= hint.length() - 1) return null; //invalid hint
+    final String paramName = hint.substring(0, spaceIdx);
+    final String value = hint.substring(spaceIdx + 1);
+    return new InlineParameterValueFix(paramName, value);
   }
 
   @Nullable
   public String getHint(final QuickFix fix) {
-    return ((InlineParameterValueFix)fix).getValue();
+    final InlineParameterValueFix valueFix = (InlineParameterValueFix)fix;
+    return valueFix.getParamName() + " " + valueFix.getValue();
   }
 
   private class InlineParameterValueFix implements LocalQuickFix {
     private String myValue;
+    private String myParameterName;
 
-    public InlineParameterValueFix(final String value) {
+    public InlineParameterValueFix(final String parameterName, final String value) {
       myValue = value;
+      myParameterName = parameterName;
     }
 
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.same.parameter.fix.name", myValue);
+      return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, myValue);
     }
 
     @NotNull
@@ -180,6 +188,10 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
     public String getValue() {
       return myValue;
+    }
+
+    public String getParamName() {
+      return myParameterName;
     }
   }
 }
