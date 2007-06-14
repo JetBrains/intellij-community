@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -92,6 +93,7 @@ public class FileNode extends PackageDependenciesNode {
     return myFile.hashCode();
   }
 
+  @Nullable
   public String getFQName(final boolean fileSeparator) {
     StringBuffer buf = new StringBuffer(20);
     if (myFile instanceof PsiJavaFile && !fileSeparator) {
@@ -109,6 +111,7 @@ public class FileNode extends PackageDependenciesNode {
       LOG.assertTrue(virtualFile != null);
       final VirtualFile contentRoot =
       ProjectRootManager.getInstance(myFile.getProject()).getFileIndex().getContentRootForFile(virtualFile);
+      if (contentRoot == null) return null;
       return VfsUtil.getRelativePath(virtualFile, contentRoot, '/');
     }
   }
