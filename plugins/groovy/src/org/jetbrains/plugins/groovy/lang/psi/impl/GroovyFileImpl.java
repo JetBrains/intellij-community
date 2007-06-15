@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import javax.swing.*;
 
@@ -171,7 +172,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     return GroovyFileType.GROOVY_LOGO;
   }
 
-  public void addImportForClass(PsiClass aClass)  {
+  public GrImportStatement addImportForClass(PsiClass aClass)  {
     try {
       // Calculating position
       Project project = aClass.getProject();
@@ -186,12 +187,22 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       }
       if (psiElementAfter != null &&
               psiElementAfter.getNode() != null) {
-        addAfter(ourImportStatement, psiElementAfter);
+        return (GrImportStatement) addAfter(ourImportStatement, psiElementAfter);
       } else {
-        addBefore(ourImportStatement, getFirstChild());
+        return (GrImportStatement) addBefore(ourImportStatement, getFirstChild());
       }
     } catch (IncorrectOperationException e) {
-      e.printStackTrace();
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
+    PsiElement next = importStatement.getNextSibling();
+    if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) {
+      deleteChildRange(importStatement, next);
+    } else {
+      deleteChildRange(importStatement, importStatement);
     }
   }
 

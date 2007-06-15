@@ -44,6 +44,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -105,12 +107,16 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GroovyPsiElement) dummyFile.getFirstChild();
   }
 
-  public GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException {
-    PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
+  public GrClosableBlock createClosureFromText(String closureText) throws IncorrectOperationException {
+    PsiFile psiFile = createDummyFile(closureText);
     ASTNode node = psiFile.getFirstChild().getNode();
     if (node.getElementType() != GroovyElementTypes.CLOSABLE_BLOCK)
       throw new IncorrectOperationException("Invalid all text");
     return (GrClosableBlock) node.getPsi();
+  }
+
+  private GroovyFile createDummyFile(String s) {
+    return (GroovyFile) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
   }
 
   public GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException {
@@ -120,15 +126,23 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     } else {
       fileText = "def foo(" + name + ") {}";
     }
-    PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), fileText);
+    PsiFile psiFile = createDummyFile(fileText);
     ASTNode node = psiFile.getFirstChild().getNode();
     if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION)
       throw new IncorrectOperationException("Invalid all text");
     return ((GrMethod) node.getPsi()).getParameters()[0];
   }
 
+  public GrTypeOrPackageReferenceElement createTypeOrPackageReference(String qName) {
+    final GroovyFile file = createDummyFile(qName + " i");
+    GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
+    final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
+    assert typeElement != null;
+    return typeElement.getReferenceElement();
+  }
+
   private PsiFile createGroovyFile(String idText) {
-    return PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), idText);
+    return createDummyFile(idText);
   }
 
   public void projectOpened() {

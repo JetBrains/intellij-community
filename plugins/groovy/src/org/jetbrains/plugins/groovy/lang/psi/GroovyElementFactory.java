@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 
 /**
  * @author ven
@@ -76,4 +77,6 @@ public abstract class GroovyElementFactory {
   public abstract GroovyPsiElement createClosureFromText(String s) throws IncorrectOperationException;
 
   public abstract GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException;
+
+  public abstract GrTypeOrPackageReferenceElement createTypeOrPackageReference(String qName);
 }

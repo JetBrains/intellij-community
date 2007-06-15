@@ -18,9 +18,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiPackage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 
@@ -71,5 +76,33 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     }
 
     return this;
+  }
+
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (isReferenceTo(element)) return this;
+
+    if (element instanceof PsiClass) {
+      final GroovyFile file = (GroovyFile) getContainingFile();
+      final PsiClass clazz = (PsiClass) element;
+      final String qName = clazz.getQualifiedName();
+      if (qName != null) {
+        final GrImportStatement added = file.addImportForClass(clazz);
+        if (!isReferenceTo(element)) {
+          file.removeImport(added);
+          final GrTypeOrPackageReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+          getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+          return qualifiedRef;
+        }
+
+        return this;
+      }
+    } else if (element instanceof PsiPackage) {
+      final String qName = ((PsiPackage) element).getQualifiedName();
+      final GrTypeOrPackageReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+      getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+      return qualifiedRef;
+    }
+
+    throw new IncorrectOperationException("Cannot bind");
   }
 }

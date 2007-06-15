@@ -332,10 +332,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return ""; //todo
   }
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("NIY"); //todo
-  }
-
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return element.equals(resolve());

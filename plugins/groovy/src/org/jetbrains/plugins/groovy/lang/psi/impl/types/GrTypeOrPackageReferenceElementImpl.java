@@ -34,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeOrPackageReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -94,10 +96,6 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
       return ((PsiPackage) resolved).getQualifiedName();
     }
     return null;
-  }
-
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("NIY");
   }
 
   public boolean isReferenceTo(PsiElement element) {
