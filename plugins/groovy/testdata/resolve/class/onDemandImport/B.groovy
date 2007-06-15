@@ -1,5 +1,3 @@
-package onDemandImport
-
-import onDemandImport.p.*
+import p.*
 
 class B extends <ref>A {}

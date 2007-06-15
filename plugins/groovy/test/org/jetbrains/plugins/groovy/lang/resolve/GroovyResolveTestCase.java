@@ -31,7 +31,9 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
     assertNotNull(root);
     ContentEntry contentEntry = rootModel.addContentEntry(root);
     rootModel.setJdk(JavaSdk.getInstance().createJdk("java sdk", JDK_HOME, false));
-    contentEntry.addSourceFolder(root, false);
+    final VirtualFile sourceRoot = root.findChild(getTestName(true));
+    assertNotNull(sourceRoot);
+    contentEntry.addSourceFolder(sourceRoot, false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();

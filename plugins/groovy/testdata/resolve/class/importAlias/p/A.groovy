@@ -1,3 +1,3 @@
-package importAlias.p
+package p
 
 class A {}

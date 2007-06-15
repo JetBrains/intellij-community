@@ -1,5 +1,3 @@
-package importAlias
-
-import importAlias.p.A as AA
+import p.A as AA
 
 class B extends <ref>AA {}

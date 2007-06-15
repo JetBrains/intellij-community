@@ -1,3 +1,1 @@
-package qualifiedName
-
-class B extends qualifiedName.p.<ref>A {}
+class B extends p.<ref>A {}

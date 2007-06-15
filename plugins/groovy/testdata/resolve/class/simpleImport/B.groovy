@@ -1,5 +1,3 @@
-package simpleImport
-
-import simpleImport.p.A
+import p.A
 
 class B extends <ref>A {}

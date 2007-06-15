@@ -1,3 +1,3 @@
-package simpleImport.p
+package p
 
 class A {}

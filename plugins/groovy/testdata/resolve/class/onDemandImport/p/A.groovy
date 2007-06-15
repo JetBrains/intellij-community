@@ -1,3 +1,3 @@
-package onDemandImport.p
+package p
 
 class A {}

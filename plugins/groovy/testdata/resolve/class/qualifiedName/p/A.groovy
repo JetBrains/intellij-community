@@ -1,3 +1,3 @@
-package qualifiedName.p
+package p
 
 class A {}
