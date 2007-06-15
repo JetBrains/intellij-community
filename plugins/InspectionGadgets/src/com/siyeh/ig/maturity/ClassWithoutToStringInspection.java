@@ -46,6 +46,9 @@ public class ClassWithoutToStringInspection extends BaseInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
+            if (aClass.getNameIdentifier() == null) {
+                return;
+            }
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                     aClass.isEnum()) {
                 return;
