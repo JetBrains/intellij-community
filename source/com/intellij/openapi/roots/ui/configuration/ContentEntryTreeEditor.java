@@ -112,6 +112,9 @@ public class ContentEntryTreeEditor {
     if (contentEntryEditor == null) {
       ((DefaultTreeModel)myTree.getModel()).setRoot(EMPTY_TREE_ROOT);
       myTreePanel.setVisible(false);
+      if (myFileSystemTree != null) {
+        Disposer.dispose(myFileSystemTree);
+      }
       return;
     }
     myTreePanel.setVisible(true);
@@ -145,6 +148,11 @@ public class ContentEntryTreeEditor {
         return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
       }
     };
+
+
+    Disposer.register(myProject, myFileSystemTree);
+
+
     final NewFolderAction newFolderAction = new MyNewFolderAction(myFileSystemTree);
     DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
     mousePopupGroup.add(myEditingActionsGroup);

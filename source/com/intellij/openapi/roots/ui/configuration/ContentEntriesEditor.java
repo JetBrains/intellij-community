@@ -112,6 +112,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     if (myRootTreeEditor != null) {
       myRootTreeEditor.setContentEntryEditor(null);
     }
+
     myEntryToEditorMap.clear();
     myLanguageLevelConfigurable.disposeUIResources();
     super.disposeUIResources();

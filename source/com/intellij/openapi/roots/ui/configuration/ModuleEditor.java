@@ -12,7 +12,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.HistoryAware;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +51,17 @@ public class ModuleEditor {
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
   private final FacetsProvider myFacetsProvider;
+  private HistoryAware.Facade myHistoryFacade;
+  private ModuleConfigurable myConfigurable;
 
   @Nullable
   public ModuleBuilder getModuleBuilder() {
     return myModuleBuilder;
+  }
+
+  public void setHistoryFacade(final HistoryAware.Facade facade, ModuleConfigurable configurable) {
+    myHistoryFacade = facade;
+    myConfigurable = configurable;
   }
 
   public static interface ChangeListener extends EventListener {
@@ -143,6 +153,7 @@ public class ModuleEditor {
     myPanel.add(northPanel, BorderLayout.NORTH);
 
     myTabbedPane = new TabbedPaneWrapper();
+
     for (ModuleConfigurationEditor editor : myEditors) {
       myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
       editor.reset();
@@ -153,10 +164,28 @@ public class ModuleEditor {
     myTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         ourSelectedTabName = getSelectedTabName();
+        pushHistory();
       }
     });
 
     return myPanel;
+  }
+
+  private void pushHistory() {
+    if (myHistoryFacade == null) return;
+    if (myHistoryFacade.isHistoryNavigatedNow()) return;
+
+    final String tabName = ourSelectedTabName;
+
+    myHistoryFacade.getHistory().pushPlace(new Place(new Object[] {myConfigurable, tabName}) {
+      public void goThere() {
+        myHistoryFacade.selectInTree(myConfigurable).doWhenDone(new Runnable() {
+          public void run() {
+            setSelectedTabName(tabName);
+          }
+        });
+      }
+    });
   }
 
   public static String getSelectedTab(){

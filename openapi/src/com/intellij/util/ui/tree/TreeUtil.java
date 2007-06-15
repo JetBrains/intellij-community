@@ -17,8 +17,10 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,13 +247,13 @@ public final class TreeUtil {
     return result;
   }
 
-  public static void selectFirstNode(final JTree tree) {
+  public static ActionCallback selectFirstNode(final JTree tree) {
     final TreeModel model = tree.getModel();
     final Object root = model.getRoot();
     TreePath selectionPath = new TreePath(root);
     if (!tree.isRootVisible() && model.getChildCount(root) > 0)
       selectionPath = selectionPath.pathByAddingChild(model.getChild(root, 0));
-    selectPath(tree, selectionPath);
+    return selectPath(tree, selectionPath);
   }
 
   private static void addEach(final TreeNode aRootNode, final TreeNode aNode, final List<TreeNode> aPathStack) {
@@ -337,86 +339,98 @@ public final class TreeUtil {
     return true;
   }
 
-  public static void selectPath(final JTree tree, final TreePath path) {
-    tree.makeVisible(path);
-    showRowCentred(tree, tree.getRowForPath(path));
+  public static ActionCallback selectPath(final JTree tree, final TreePath path) {
+    return selectPath(tree, path, true);
   }
 
-  private static void moveDown(final JTree tree) {
+  public static ActionCallback selectPath(final JTree tree, final TreePath path, boolean center) {
+    tree.makeVisible(path);
+    if (center) {
+      return showRowCentred(tree, tree.getRowForPath(path));
+    } else {
+      final int row = tree.getRowForPath(path);
+      return showAndSelect(tree, row - ListScrollingUtil.ROW_PADDING, row + ListScrollingUtil.ROW_PADDING, row, -1);
+    }
+  }
+
+  private static ActionCallback moveDown(final JTree tree) {
     final int size = tree.getRowCount();
     int row = getSelectedRow(tree);
     if (row < size - 1) {
       row++;
-      showAndSelect(tree, row, row + 2, row, getSelectedRow(tree));
+      return showAndSelect(tree, row, row + 2, row, getSelectedRow(tree));
+    } else {
+      return new ActionCallback.Done();
     }
   }
 
-  private static void moveUp(final JTree tree) {
+  private static ActionCallback moveUp(final JTree tree) {
     int row = getSelectedRow(tree);
     if (row > 0) {
       row--;
-      showAndSelect(tree, row - 2, row, row, getSelectedRow(tree));
+      return showAndSelect(tree, row - 2, row, row, getSelectedRow(tree));
+    } else {
+      return new ActionCallback.Done();
     }
   }
 
-  private static void movePageUp(final JTree tree) {
+  private static ActionCallback movePageUp(final JTree tree) {
     final int visible = getVisibleRowCount(tree);
     if (visible <= 0){
-      moveHome(tree);
-      return;
+      return moveHome(tree);
     }
     final int decrement = visible - 1;
     final int row = Math.max(getSelectedRow(tree) - decrement, 0);
     final int top = getFirstVisibleRow(tree) - decrement;
     final int bottom = top + visible - 1;
-    showAndSelect(tree, top, bottom, row, getSelectedRow(tree));
+    return showAndSelect(tree, top, bottom, row, getSelectedRow(tree));
   }
 
-  private static void movePageDown(final JTree tree) {
+  private static ActionCallback movePageDown(final JTree tree) {
     final int visible = getVisibleRowCount(tree);
     if (visible <= 0){
-      moveEnd(tree);
-      return;
+      return moveEnd(tree);
     }
     final int size = tree.getRowCount();
     final int increment = visible - 1;
     final int index = Math.min(getSelectedRow(tree) + increment, size - 1);
     final int top = getFirstVisibleRow(tree) + increment;
     final int bottom = top + visible - 1;
-    showAndSelect(tree, top, bottom, index, getSelectedRow(tree));
+    return showAndSelect(tree, top, bottom, index, getSelectedRow(tree));
   }
 
-  private static void moveHome(final JTree tree) {
-    showRowCentred(tree, 0);
+  private static ActionCallback moveHome(final JTree tree) {
+    return showRowCentred(tree, 0);
   }
 
-  private static void moveEnd(final JTree tree) {
-    showRowCentred(tree, tree.getRowCount() - 1);
+  private static ActionCallback moveEnd(final JTree tree) {
+    return showRowCentred(tree, tree.getRowCount() - 1);
   }
 
-  private static void showRowCentred(final JTree tree, final int row) {
-    showRowCentered(tree, row, true);
+  private static ActionCallback showRowCentred(final JTree tree, final int row) {
+    return showRowCentered(tree, row, true);
   }
 
-  public static void showRowCentered(final JTree tree, final int row, final boolean centerHorizontally) {
+  public static ActionCallback showRowCentered(final JTree tree, final int row, final boolean centerHorizontally) {
     final int visible = getVisibleRowCount(tree);
     final int top = visible > 0 ? row - (visible - 1)/ 2 : row;
     final int bottom = visible > 0 ? top + visible - 1 : row;
-    showAndSelect(tree, top, bottom, row, -1);
+    return showAndSelect(tree, top, bottom, row, -1);
   }
 
-  public static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
-    showAndSelect(tree, top, bottom, row, previous, false);
+  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
+    return showAndSelect(tree, top, bottom, row, previous, false);
   }
 
-  public static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
+  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
     final TreePath path = tree.getPathForRow(row);
-    if (path == null) return;
+
+    if (path == null) return new ActionCallback.Done();
 
     final int size = tree.getRowCount();
     if (size == 0) {
       tree.clearSelection();
-      return;
+      return new ActionCallback.Done();
     }
     if (top < 0){
       top = 0;
@@ -425,7 +439,7 @@ public final class TreeUtil {
       bottom = size - 1;
     }
     final Rectangle rowBounds = tree.getRowBounds(row);
-    if (rowBounds == null) return;
+    if (rowBounds == null) return new ActionCallback.Done();
 
     Rectangle topBounds = tree.getRowBounds(top);
     if (topBounds == null) {
@@ -455,6 +469,8 @@ public final class TreeUtil {
       }
     }
 
+    final ActionCallback callback = new ActionCallback();
+
 
     if (!tree.isRowSelected(row)) {
       if (addToSelection) {
@@ -480,6 +496,7 @@ public final class TreeUtil {
       final Runnable runnable = new Runnable() {
         public void run() {
           tree.scrollRectToVisible(b1);
+          callback.setDone();
         }
       };
 
@@ -488,7 +505,11 @@ public final class TreeUtil {
       } else {
         SwingUtilities.invokeLater(runnable);
       }
+    } else {
+      callback.setDone();
     }
+
+    return callback;
   }
 
 
@@ -649,15 +670,19 @@ public final class TreeUtil {
     }
   }
 
-  public static void selectInTree(DefaultMutableTreeNode node, boolean requestFocus, JTree tree) {
-    if (node == null) return;
+  public static ActionCallback selectInTree(DefaultMutableTreeNode node, boolean requestFocus, JTree tree) {
+    return selectInTree(node, requestFocus, tree, true);
+  }
+
+  public static ActionCallback selectInTree(DefaultMutableTreeNode node, boolean requestFocus, JTree tree, boolean center) {
+    if (node == null) return new ActionCallback.Done();
 
     final TreePath treePath = new TreePath(node.getPath());
     tree.expandPath(treePath);
     if (requestFocus) {
       tree.requestFocus();
     }
-    selectPath(tree, treePath);
+    return selectPath(tree, treePath, center);
   }
 
   public static List<TreePath> collectSelectedPaths(final JTree tree, final TreePath treePath) {
@@ -742,4 +767,5 @@ public final class TreeUtil {
   public interface Traverse{
     boolean accept(Object node);
   }
+
 }

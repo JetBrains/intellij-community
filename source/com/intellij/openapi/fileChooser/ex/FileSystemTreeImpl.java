@@ -79,6 +79,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
       }
     });
 
+    if (project != null) {
+      Disposer.register(project, myTreeBuilder);
+    }
+
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         processSelectionChange(e);

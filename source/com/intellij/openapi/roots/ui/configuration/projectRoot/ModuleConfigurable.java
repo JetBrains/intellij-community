@@ -23,7 +23,7 @@ import javax.swing.*;
  * User: anna
  * Date: 04-Jun-2006
  */
-public class ModuleConfigurable extends NamedConfigurable<Module> {
+public class ModuleConfigurable extends NamedConfigurable<Module> implements HistoryAware.Configurable {
   private Module myModule;
   private ModulesConfigurator myConfigurator;
   private String myModuleName;
@@ -99,5 +99,9 @@ public class ModuleConfigurable extends NamedConfigurable<Module> {
 
   ModuleEditor getModuleEditor() {
     return myConfigurator.getModuleEditor(myModule);
+  }
+
+  public void setHistoryFacade(final HistoryAware.Facade facade) {
+    getModuleEditor().setHistoryFacade(facade, this);
   }
 }

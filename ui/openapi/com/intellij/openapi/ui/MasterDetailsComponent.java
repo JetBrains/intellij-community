@@ -14,6 +14,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -35,10 +36,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.Set;
+import java.util.*;
 import java.util.List;
 
 
@@ -49,6 +47,7 @@ import java.util.List;
 public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState> {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
+  protected NamedConfigurable myCurrentConfigurable;
 
   public static class UIState {
     public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
@@ -90,7 +89,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myOptionsPanel.setLayout(new BorderLayout());
     myAutoScrollHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
-        return true;
+        return isAutoScrollEnabled();
       }
 
       protected void setAutoScrollMode(boolean state) {
@@ -115,6 +114,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     };
     myAutoScrollHandler.install(myTree);
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
+  }
+
+  protected boolean isAutoScrollEnabled() {
+    return true;
   }
 
   private void initToolbar() {
@@ -363,17 +366,17 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
   }
 
-  public void selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
+  public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
+    return selectNodeInTree(nodeToSelect, true);
+  }
+
+  public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect, boolean center) {
     myTree.requestFocus();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (nodeToSelect != null) {
-          TreeUtil.selectInTree(nodeToSelect, true, myTree);
-        } else {
-          TreeUtil.selectFirstNode(myTree);
-        }
-      }
-    });
+    if (nodeToSelect != null) {
+      return TreeUtil.selectInTree(nodeToSelect, true, myTree, center);
+    } else {
+      return TreeUtil.selectFirstNode(myTree);
+    }
   }
 
   @Nullable
@@ -436,6 +439,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myBanner.setText(configurable.getBannerSlogan());
     myBanner.repaint();
     myOptionsPanel.removeAll();
+    myCurrentConfigurable = configurable;
     myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
     if (!isInitialized(configurable)) {
       configurable.reset();

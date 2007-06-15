@@ -41,6 +41,8 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectConfigurable;
+import com.intellij.openapi.roots.ui.configuration.actions.BackAction;
+import com.intellij.openapi.roots.ui.configuration.actions.ForwardAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
@@ -48,15 +50,14 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -88,10 +89,12 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class ProjectRootConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
+public class ProjectRootConfigurable extends MasterDetailsComponent implements SearchableConfigurable, HistoryAware.Facade {
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+
+  public static final DataKey<ProjectRootConfigurable> KEY = DataKey.create("ProjectRootConfigurable"); 
 
   private boolean myPlainMode;
 
@@ -111,6 +114,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
   private ModulesConfigurator myModulesConfigurator;
   private ProjectConfigurable myProjectConfigurable;
   private final ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
+
+  private History myHistory = new History(); 
 
   SdkModel.Listener myListener = new SdkModel.Listener() {
     public void sdkAdded(Sdk sdk) {
@@ -137,6 +142,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
       }
     }
   };
+
+  private boolean myHistoryNavigatedNow;
 
   private boolean myDisposed = true;
 
@@ -389,9 +396,62 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
     myDisposed = false;
   }
 
-  protected void updateSelection(@NotNull NamedConfigurable configurable) {
+  protected void updateSelection(@NotNull final NamedConfigurable configurable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    
     final String selectedTab = ModuleEditor.getSelectedTab();
+
+    if (!myHistoryNavigatedNow) {
+      getHistory().pushPlace(new Place(new Object[] {configurable, selectedTab}) {
+        public void goThere() {
+          selectInTree(configurable).doWhenDone(new Runnable() {
+            public void run() {
+              updateTabSelection(configurable, selectedTab);
+            }
+          });
+        }
+      });
+    }
+
+    updateSelection(configurable, selectedTab);
+  }
+
+  protected boolean isAutoScrollEnabled() {
+    return !myHistoryNavigatedNow;
+  }
+
+  private void updateSelection(final NamedConfigurable configurable, final String selectedTab) {
+    if (configurable instanceof HistoryAware.Configurable) {
+      ((HistoryAware.Configurable)configurable).setHistoryFacade(this);
+    }
+
     super.updateSelection(configurable);
+
+    updateTabSelection(configurable, selectedTab);
+  }
+
+  public ActionCallback selectInTree(final NamedConfigurable configurable) {
+    myHistoryNavigatedNow = true;
+
+    final ActionCallback callback = new ActionCallback() {
+      protected void onConsumed() {
+        myHistoryNavigatedNow = false;
+      }
+    };
+
+    final MyNode toSelect = findNodeByObject(myRoot, configurable.getEditableObject());
+
+    selectNodeInTree(toSelect, false).doWhenDone(new Runnable() {
+      public void run() {
+        updateSelection(configurable);
+        callback.setDone();
+      }
+    });
+
+    return callback;
+  }
+
+  private void updateTabSelection(final NamedConfigurable configurable, final String selectedTab) {
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       moduleConfigurable.getModuleEditor().setSelectedTabName(selectedTab);
@@ -575,6 +635,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
     for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
       myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table));
     }
+
+    myHistory.clear();
+
     reloadTree();
     super.reset();
   }
@@ -654,6 +717,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
   }
 
   private void dispose() {
+    myHistory.clear();
     myJdksTreeModel.removeListener(myListener);
     myJdksTreeModel.disposeUIResources();
     myModulesConfigurator.disposeUIResources();
@@ -707,6 +771,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new AddAction(this, fromPopup));
     result.add(new MyRemoveAction());
+
+    result.add(Separator.getInstance());
+
+    result.add(new BackAction(myWholePanel));
+    result.add(new ForwardAction(myWholePanel));
+
+    result.add(Separator.getInstance());
+
     result.add(new MyFindUsagesAction());
     result.add(new MyGroupAction());
     final TreeExpander expander = new TreeExpander() {
@@ -726,6 +798,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
         return true;
       }
     };
+
+    result.add(Separator.getInstance());
+
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     result.add(actionsManager.createExpandAllAction(expander, myTree));
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
@@ -1124,6 +1199,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
       if (DataConstantsEx.MODIFIABLE_MODULE_MODEL.equals(dataId)){
         return myModulesConfigurator.getModuleModel();
       }
+
+      if (KEY.getName().equals(dataId)) return ProjectRootConfigurable.this;
       return null;
     }
   }
@@ -1303,5 +1380,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
 
       }).show(new RelativePoint(myTree, location));
     }
+  }
+
+  public History getHistory() {
+    return myHistory;
+  }
+
+  public boolean isHistoryNavigatedNow() {
+    return myHistoryNavigatedNow;
   }
 }

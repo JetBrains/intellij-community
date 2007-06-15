@@ -42,6 +42,8 @@ public class ListScrollingUtil {
   @NonNls
   protected static final String SELECT_FIRST_ROW_ACTION_ID = "selectFirstRow";
 
+  public static final int ROW_PADDING = 2;
+
   public static void selectItem(JList list, int index) {
     LOG.assertTrue(index >= 0);
     LOG.assertTrue(index < list.getModel().getSize());
@@ -143,16 +145,16 @@ public class ListScrollingUtil {
     int size = list.getModel().getSize();
     int top, bottom;
     if (moveDirection == 0) {
-      top = index - (visible - 1) / 2;
+      top = index - (visible - 1) / ROW_PADDING;
       bottom = top + visible - 1;
     }
     else if (moveDirection < 0) {
-      top = index - 2;
+      top = index - ROW_PADDING;
       bottom = index;
     }
     else {
       top = index;
-      bottom = index + 2;
+      bottom = index + ROW_PADDING;
     }
     if (top < 0) {
       top = 0;
