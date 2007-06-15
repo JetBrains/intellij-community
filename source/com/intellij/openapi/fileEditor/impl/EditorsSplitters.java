@@ -210,7 +210,7 @@ public final class EditorsSplitters extends JPanel {
           if (currentFile != null) {
             final EditorComposite editor = window.findFileComposite(currentFile);
             if (editor != null) {
-              window.setSelectedEditor(editor);
+              window.setSelectedEditor(editor, true);
             }
           }
         }

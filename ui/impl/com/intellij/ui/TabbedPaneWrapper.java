@@ -129,11 +129,15 @@ public class TabbedPaneWrapper {
   }
 
   public final void setSelectedIndex(final int index) {
+    setSelectedIndex(index, true);
+  }
+
+  public final void setSelectedIndex(final int index, boolean requestFocus) {
     assertIsDispatchThread();
 
     final boolean hadFocus = IJSwingUtilities.hasFocus2(myTabbedPaneHolder);
     myTabbedPane.setSelectedIndex(index);
-    if (hadFocus) {
+    if (hadFocus && requestFocus) {
       myTabbedPaneHolder.requestFocus();
     }
   }

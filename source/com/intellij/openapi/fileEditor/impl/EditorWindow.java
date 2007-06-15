@@ -234,7 +234,7 @@ public class EditorWindow {
           final EditorWithProviderComposite editor = getSelectedEditor();
           myPanel.removeAll();
           createTabs(tabPlacement);
-          setEditor (editor);
+          setEditor (editor, true);
         }
         else {
           myTabbedPane.setTabPlacement(tabPlacement);
@@ -343,7 +343,7 @@ public class EditorWindow {
     return res;
   }
 
-  public void setSelectedEditor(final EditorComposite editor) {
+  public void setSelectedEditor(final EditorComposite editor, final boolean focusEditor) {
     if (myTabbedPane == null) {
       return;
     }
@@ -352,7 +352,7 @@ public class EditorWindow {
       if (editor != null) {
         final int index = findFileIndex(editor.getFile());
         if (index != -1) {
-          myTabbedPane.setSelectedIndex(index);
+          myTabbedPane.setSelectedIndex(index, focusEditor);
         }
       }
     }
@@ -361,7 +361,7 @@ public class EditorWindow {
     }
   }
 
-  public void setEditor(final EditorWithProviderComposite editor) {
+  public void setEditor(final EditorWithProviderComposite editor, final boolean focusEditor) {
     if (editor != null) {
       if (myTabbedPane == null) {
         myPanel.removeAll ();
@@ -374,14 +374,14 @@ public class EditorWindow {
       try {
         ++myInsideTabChange;
         if (index != -1) {
-          setSelectedEditor(editor);
+          setSelectedEditor(editor, focusEditor);
         }
         else {
           final int indexToInsert = myTabbedPane.getSelectedIndex() + 1;
           final VirtualFile file = editor.getFile();
           myTabbedPane.insertTab(file.getPresentableName(), null, new TComp(editor), null, indexToInsert);
           trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file);
-          setSelectedEditor(editor);
+          setSelectedEditor(editor, focusEditor);
           myOwner.updateFileIcon(file);
           myOwner.updateFileColor(file);
         }
@@ -429,7 +429,7 @@ public class EditorWindow {
           fileEditorManager.openFileImpl3(res, file, false, null);
           res.setFilePinned (file, isFilePinned (file));
 
-          res.setSelectedEditor(selectedEditor);
+          res.setSelectedEditor(selectedEditor, true);
           selectedEditor.getComponent().requestFocus();
 
           panel.revalidate();
@@ -586,7 +586,7 @@ public class EditorWindow {
       parent2.revalidate();
       myPanel = parent2;
       if (editorToSelect != null) {
-        setSelectedEditor(editorToSelect);
+        setSelectedEditor(editorToSelect, true);
       }
       myOwner.setCurrentWindow(this, false);
     }
@@ -594,10 +594,10 @@ public class EditorWindow {
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
     if (myTabbedPane != null && getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT && findFileComposite(siblingEditor.getFile()) == null) {
-      setEditor(siblingEditor);
+      setEditor(siblingEditor, true);
     }
     else if (myTabbedPane == null && getTabCount() == 0) { // tabless mode and no file opened
-      setEditor(siblingEditor);
+      setEditor(siblingEditor, true);
     }
     else {
       getManager().disposeComposite(siblingEditor);
@@ -832,7 +832,7 @@ public class EditorWindow {
       }
     }
     finally {
-      setSelectedEditor(selectedComposite);
+      setSelectedEditor(selectedComposite, true);
       --myInsideTabChange;
     }
   }

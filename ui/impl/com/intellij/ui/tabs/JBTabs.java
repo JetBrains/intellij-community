@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
@@ -88,6 +89,39 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }
     };
 
+  }
+
+  public void requestFocus() {
+    final TabInfo info = getSelectedInfo();
+    if (info == null || info.getPreferredFocusableComponent() == null) {
+      super.requestFocus();
+      return;
+    }
+
+
+    JComponent toFocus = info.getPreferredFocusableComponent();
+    final JComponent policyToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+    if (policyToFocus != null) {
+      toFocus = policyToFocus;
+    }
+
+    toFocus.requestFocus();
+  }
+
+  public boolean requestFocusInWindow() {
+    final TabInfo info = getSelectedInfo();
+    if (info == null || info.getPreferredFocusableComponent() == null) {
+      return super.requestFocusInWindow();
+    }
+
+
+    JComponent toFocus = info.getPreferredFocusableComponent();
+    final JComponent policyToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+    if (policyToFocus != null) {
+      toFocus = policyToFocus;
+    }
+
+    return toFocus.requestFocusInWindow();
   }
 
   private JBTabs findTabs(Component c) {

@@ -368,7 +368,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
           window.closeFile(file, false);
           if (window.getTabCount() == 0 && nextFile != null) {
             EditorWithProviderComposite newComposite = newEditorComposite(nextFile, null);
-            window.setEditor(newComposite); // newComposite can be null
+            window.setEditor(newComposite, true); // newComposite can be null
           }
         }
         // cleanup windows with no tabs
@@ -481,7 +481,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         newSelectedComposite = new EditorWithProviderComposite(file, editors, providers, this);
       }
 
-      window.setEditor(newSelectedComposite);
+      window.setEditor(newSelectedComposite, focusEditor);
 
       final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
       for (int i = 0; i < editors.length; i++) {
