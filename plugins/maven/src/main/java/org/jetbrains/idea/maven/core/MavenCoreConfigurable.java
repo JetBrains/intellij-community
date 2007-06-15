@@ -37,7 +37,7 @@ import java.io.File;
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public class MavenCoreConfigurable implements Configurable {
+public abstract class MavenCoreConfigurable implements Configurable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox comboboxOutputLevel;
@@ -61,11 +61,7 @@ public class MavenCoreConfigurable implements Configurable {
   private final DefaultComboBoxModel comboboxModelMultiprojectBuildFailPolicy = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelPluginUpdatePolicy = new DefaultComboBoxModel();
 
-  private final MavenCore myMavenCore;
-
-  public MavenCoreConfigurable(MavenCore mavenCore) {
-    myMavenCore = mavenCore;
-  }
+  protected abstract MavenCoreState getState();
 
   private void initPathEditors() {
     mavenHomeComponent.getComponent().addBrowseFolderListener(CoreBundle.message("maven.select.maven.home.directory"), "", null,
@@ -134,15 +130,15 @@ public class MavenCoreConfigurable implements Configurable {
   public boolean isModified() {
     MavenCoreState formData = new MavenCoreState();
     setData(formData);
-    return !formData.equals(myMavenCore.getState());
+    return !formData.equals(getState());
   }
 
   public void apply() {
-    setData(myMavenCore.getState());
+    setData(getState());
   }
 
   public void reset() {
-    getData(myMavenCore.getState());
+    getData(getState());
   }
 
   private void setData(MavenCoreState data) {

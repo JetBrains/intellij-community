@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.core.action;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,12 +10,18 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class CompositeConfigurable implements Configurable {
+public class CompositeConfigurable implements Configurable {
   private final List<Configurable> configurables = new ArrayList<Configurable>();
   private JTabbedPane tabbedPane;
   private int selectedTabIndex = 0;
 
-  void registerConfigurable(Configurable configurable) {
+  public CompositeConfigurable (Configurable ... configurables){
+    for (Configurable configurable : configurables) {
+      registerConfigurable(configurable);
+    }
+  }
+
+  public void registerConfigurable(Configurable configurable) {
     configurables.add(configurable);
   }
 
@@ -51,11 +58,22 @@ public abstract class CompositeConfigurable implements Configurable {
     for (Configurable configurable : configurables) {
       configurable.disposeUIResources();
     }
+    tabbedPane = null;
   }
 
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return selectedTabIndex < configurables.size() ? configurables.get(selectedTabIndex).getHelpTopic() : null;
+  }
+
+  @Nls
+  public String getDisplayName() {
+    return null;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
   }
 }

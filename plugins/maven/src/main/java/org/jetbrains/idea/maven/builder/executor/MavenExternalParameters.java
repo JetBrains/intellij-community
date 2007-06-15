@@ -18,9 +18,11 @@
 
 package org.jetbrains.idea.maven.builder.executor;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
@@ -41,74 +43,97 @@ import java.util.StringTokenizer;
 /**
  * @author Ralf Quebbemann
  */
-class MavenExternalParameters {
+public class MavenExternalParameters {
+  public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
+  private static final String JAVA_HOME = System.getenv("JAVA_HOME");
 
-  public static class MavenConfigErrorException extends Exception {
+  public static JavaParameters createJavaParameters(final MavenBuildParameters parameters,
+                                                    final MavenCoreState coreState,
+                                                    final MavenBuilderState builderState) throws ExecutionException {
+    final JavaParameters params = new JavaParameters();
 
-    public MavenConfigErrorException(String string) {
-      super(string);
+    params.setWorkingDirectory(parameters.getWorkingDir());
+
+    params.setJdk(getJdk(builderState.getJreName()));
+
+    final String mavenHome = resolveMavenHome(coreState);
+
+    for (String parameter : createVMParameters(new ArrayList<String>(), mavenHome, builderState)) {
+      params.getVMParametersList().add(parameter);
     }
 
-    public MavenConfigErrorException(Throwable throwable) {
-      super(throwable);
+    for (String path : getMavenClasspathEntries(mavenHome)) {
+      params.getClassPath().add(path);
     }
+
+    params.setMainClass(MAVEN_LAUNCHER_CLASS);
+
+    for (String parameter : createMavenParameters(new ArrayList<String>(), coreState, builderState, parameters)) {
+      params.getProgramParametersList().add(parameter);
+    }
+
+    return params;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static List<String> createCommand(MavenExecutor.Parameters buildParameters,
-                                           MavenBuilderState builderState,
-                                           MavenCoreState mavenCoreState) throws MavenConfigErrorException {
-    @NonNls List<String> cmdList = new ArrayList<String>();
-
-    cmdList.add(getJavaExecutable(builderState.getJdkPath()));
-
-    addParameters(cmdList, builderState.getVmOptions());
-
-    addParameters(cmdList, StringUtil.notNullize(System.getenv("MAVEN_OPTS")));
-
-    final String mavenHome = resolveMavenHome(mavenCoreState.getMavenHome());
-
-    addOption(cmdList, "classpath", getMavenClasspathEntries(mavenHome));
-
-    addProperty(cmdList, "classworlds.conf", MavenEnv.getMavenConfFile(new File(mavenHome)).getPath());
-    addProperty(cmdList, "maven.home", mavenHome);
-
-    cmdList.add("org.codehaus.classworlds.Launcher");
-
-    encodeCoreSettings(mavenCoreState, cmdList);
-
-    if (builderState.isSkipTests()) {
-      addProperty(cmdList, "test", "skip");
+  @NotNull
+  private static ProjectJdk getJdk(final String name) throws ExecutionException {
+    if (name.equals(MavenBuilderState.USE_INTERNAL_JAVA)) {
+      return ProjectJdkTable.getInstance().getInternalJdk();
     }
 
-    for (Map.Entry<String, String> entry : builderState.getMavenProperties().entrySet()) {
-      addProperty(cmdList, entry.getKey(), entry.getValue());
+    if (name.equals(MavenBuilderState.USE_JAVA_HOME)) {
+      if (StringUtil.isEmptyOrSpaces(JAVA_HOME)) {
+        throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.undefined"), name));
+      }
+      final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", JAVA_HOME);
+      if (jdk==null){
+        throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.invalid"), name));
+      }
+      return jdk;
     }
 
-    addOption(cmdList, "f", buildParameters.getPomFile());
-
-    for (String goal : buildParameters.getGoals()) {
-      cmdList.add(goal);
-    }
-
-    return cmdList;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getJavaExecutable(String jdkName) {
     for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (projectJdk.getName().equals(jdkName)) {
-        return projectJdk.getVMExecutablePath();
+      if (projectJdk.getName().equals(name)) {
+        return projectJdk;
       }
     }
 
-    String javaHome = System.getenv("JAVA_HOME");
-    if (!StringUtil.isEmptyOrSpaces(javaHome)) {
-      return new File(new File(javaHome, "bin"), SystemInfo.isWindows ? "java.exe" : "java").getPath();
+    throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.not.found"), name));
+  }
+
+  public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenBuilderState builderState) {
+    addParameters(list, builderState.getVmOptions());
+
+    addParameters(list, StringUtil.notNullize(System.getenv("MAVEN_OPTS")));
+
+    addProperty(list, "classworlds.conf", MavenEnv.getMavenConfFile(new File(mavenHome)).getPath());
+
+    addProperty(list, "maven.home", mavenHome);
+
+    return list;
+  }
+
+  private static List<String> createMavenParameters(final List<String> list,
+                                                    final MavenCoreState coreState,
+                                                    final MavenBuilderState builderState,
+                                                    final MavenBuildParameters parameters) {
+    encodeCoreSettings(coreState, list);
+
+    if (builderState.isSkipTests()) {
+      addProperty(list, "test", "skip");
     }
-    else {
-      return ProjectJdkTable.getInstance().getInternalJdk().getVMExecutablePath();
+
+    for (Map.Entry<String, String> entry : builderState.getMavenProperties().entrySet()) {
+      addProperty(list, entry.getKey(), entry.getValue());
     }
+
+    addOption(list, "f", parameters.getPomPath());
+
+    for (String goal : parameters.getGoals()) {
+      list.add(goal);
+    }
+
+    return list;
   }
 
   private static void addOption(List<String> cmdList, @NonNls String key, @NonNls String value) {
@@ -132,51 +157,48 @@ class MavenExternalParameters {
     cmdList.add(MessageFormat.format("-D{0}={1}", key, value));
   }
 
-  private static String resolveMavenHome(@NotNull String mavenHome) throws MavenConfigErrorException {
-    final File file = MavenEnv.resolveMavenHomeDirectory(mavenHome);
+  private static String resolveMavenHome(@NotNull MavenCoreState coreState) throws ExecutionException {
+    final File file = MavenEnv.resolveMavenHomeDirectory(coreState.getMavenHome());
 
     if (file == null) {
-      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.no.default"));
+      throw new ExecutionException(BuilderBundle.message("external.maven.home.no.default"));
     }
 
     if (!file.exists()) {
-      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.does.not.exist", mavenHome));
+      throw new ExecutionException(BuilderBundle.message("external.maven.home.does.not.exist", coreState));
     }
 
     if (!MavenEnv.isValidMavenHome(file)) {
-      throw new MavenConfigErrorException(BuilderBundle.message("external.maven.home.invalid", file.getPath()));
+      throw new ExecutionException(BuilderBundle.message("external.maven.home.invalid", file.getPath()));
     }
 
     try {
       return file.getCanonicalPath();
     }
     catch (IOException e) {
-      throw new MavenConfigErrorException(e);
+      throw new ExecutionException(e.getMessage(), e);
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getMavenClasspathEntries(String mavenHome) {
+  private static List<String> getMavenClasspathEntries(final String mavenHome) {
     File mavenHomeBootAsFile = new File(new File(mavenHome, "core"), "boot");
     // if the dir "core/boot" does not exist we are using a Maven version > 2.0.5
     // in this case the classpath must be constructed from the dir "boot"
     if (!mavenHomeBootAsFile.exists()) {
       mavenHomeBootAsFile = new File(mavenHome, "boot");
     }
-    StringBuffer classpathEntries = new StringBuffer();
+    List<String> classpathEntries = new ArrayList<String>();
     if (mavenHomeBootAsFile.exists()) {
       if (mavenHomeBootAsFile.isDirectory()) {
         for (File file : mavenHomeBootAsFile.listFiles()) {
           if (file.getName().startsWith("classworlds-")) {
-            if (classpathEntries.length() != 0) {
-              classpathEntries.append(File.pathSeparatorChar);
-            }
-            classpathEntries.append(file.getAbsolutePath());
+            classpathEntries.add(file.getAbsolutePath());
           }
         }
       }
     }
-    return classpathEntries.toString();
+    return classpathEntries;
   }
 
   private static void encodeCoreSettings(MavenCoreState mavenCoreState, @NonNls List<String> cmdList) {

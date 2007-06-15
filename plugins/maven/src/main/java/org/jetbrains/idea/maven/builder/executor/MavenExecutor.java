@@ -20,41 +20,38 @@ package org.jetbrains.idea.maven.builder.executor;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.logger.ConsoleOutputAdapter;
-import org.jetbrains.idea.maven.builder.logger.LogListener;
-import org.jetbrains.idea.maven.builder.logger.MavenBuildLogger;
+import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 
-import java.util.List;
+import java.text.MessageFormat;
 
-public abstract class MavenExecutor {
+public abstract class MavenExecutor extends ConsoleAdapter {
 
-  public interface Parameters {
-
-    List<String> getGoals();
-
-    String getPomFile();
-
-    String getWorkingDir();
-
-    String getCaption();
-  }
-
-  final Parameters myParameters;
-  final MavenCoreState myMavenCoreState;
+  final MavenBuildParameters myParameters;
+  final MavenCoreState myCoreState;
   final MavenBuilderState myBuilderState;
-
-  protected ConsoleOutputAdapter consoleOutput;
-  protected MavenBuildLogger buildLogger;
+  private final String myCaption;
+  private String myAction;
 
   private boolean stopped = true;
   private boolean cancelled = false;
 
-  public MavenExecutor(Parameters parameters, MavenCoreState mavenCoreState, MavenBuilderState builderState) {
+  public MavenExecutor(MavenBuildParameters parameters, MavenCoreState coreState, MavenBuilderState builderState, String caption) {
+    super(coreState.getOutputLevel());
     myParameters = parameters;
-    myMavenCoreState = mavenCoreState;
+    myCoreState = coreState;
     myBuilderState = builderState;
+    myCaption = caption;
+  }
+
+  public String getCaption() {
+    return myCaption;
+  }
+
+  public void setAction(final String action) {
+    myAction = action;
   }
 
   public boolean isStopped() {
@@ -63,12 +60,11 @@ public abstract class MavenExecutor {
 
   void start() {
     stopped = false;
-    buildLogger.setOutputType(LogListener.OUTPUT_TYPE_NORMAL);
   }
 
   int stop() {
     stopped = true;
-    buildLogger.setOutputPaused(false);
+    setOutputPaused(false);
     return 0;
   }
 
@@ -81,42 +77,14 @@ public abstract class MavenExecutor {
     stop();
   }
 
-  public void run(LogListener listener) {
-
-    buildLogger = createLogger();
-    buildLogger.setThreshold(myMavenCoreState.getOutputLevel());
-    if (listener != null) {
-      buildLogger.addListener(listener);
-    }
-    consoleOutput = new ConsoleOutputAdapter(buildLogger);
-
-    displayProgress();
-
-    doRun();
-
-    dispose ();
-  }
-
-  protected abstract MavenBuildLogger createLogger();
-
   void displayProgress() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(myParameters.getCaption());
+      indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : BuilderBundle.message("maven.building"),
+                                             FileUtil.toSystemDependentName(myParameters.getPomPath())));
       indicator.setText2(myParameters.getGoals().toString());
     }
   }
 
-  protected abstract void doRun();
-
-  protected void dispose() {
-    buildLogger = null;
-    consoleOutput = null;
-  }
-
-  public abstract String getCaption();
-
-  public MavenBuildLogger getLogger() {
-    return buildLogger;
-  }
+  public abstract void run();
 }

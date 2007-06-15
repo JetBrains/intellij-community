@@ -18,61 +18,66 @@
 
 package org.jetbrains.idea.maven.builder.executor;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.DefaultJavaProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.logger.*;
+import org.jetbrains.idea.maven.builder.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.MavenCoreState;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
 
 public class MavenExternalExecutor extends MavenExecutor {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.builder.executor.MavenExternalExecutor");
 
-  private Process mavenProcess;
+  private OSProcessHandler myProcessHandler;
 
-  @NonNls private static final String INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
+  @NonNls private static final String PHASE_INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
 
-  private static class MavenExternalLogger extends LogBroadcaster implements MavenBuildLogger {
+  public MavenExternalExecutor(MavenBuildParameters parameters, MavenCoreState mavenCoreState, MavenBuilderState builderState) {
+    super(parameters, mavenCoreState, builderState, BuilderBundle.message("external.executor.caption"));
   }
 
-  public MavenExternalExecutor(Parameters parameters, MavenCoreState mavenCoreState, MavenBuilderState builderState) {
-    super(parameters, mavenCoreState, builderState);
-  }
+  public void run() {
+    displayProgress();
 
-  protected MavenBuildLogger createLogger (){
-    return new MavenExternalLogger();
-  }
-
-  public void doRun() {
-
-    List<String> executionCommand;
-    try {
-      executionCommand = MavenExternalParameters.createCommand(myParameters, myBuilderState, myMavenCoreState);
-      logCommand(executionCommand);
-    }
-    catch (MavenExternalParameters.MavenConfigErrorException e) {
-      LOG.error(e.getMessage(), e);
-      consoleOutput.message(MavenBuildLogger.LEVEL_FATAL, BuilderBundle.message("external.config.error") + e.getMessage(), e);
-      return;
-    }
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     try {
-      mavenProcess = Runtime.getRuntime()
-        .exec(executionCommand.toArray(new String[executionCommand.size()]), null, new File(myParameters.getWorkingDir()));
+      myProcessHandler = new DefaultJavaProcessHandler(
+        MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myBuilderState)) {
+        public void notifyTextAvailable(final String text, final Key outputType) {
+          if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
+            super.notifyTextAvailable(text, outputType);
+          }
+          if (indicator != null) {
+            if (indicator.isCanceled()) {
+              if(!isCancelled()){
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    cancel();
+                  }
+                });
+              }
+            }
+            if (text.matches(PHASE_INFO_REGEXP)) {
+              indicator.setText2(text.substring(INFO_PREFIX_SIZE));
+            }
+          }
+        }
+      };
+
+      consoleView.attachToProcess(myProcessHandler);
     }
-    catch (IOException e) {
-      LOG.error(e.getMessage(), e);
-      consoleOutput.message(MavenBuildLogger.LEVEL_ERROR, BuilderBundle.message("external.statup.failed"), e);
+    catch (ExecutionException e) {
+      LOG.warn(e.getMessage(), e);
+      systemMessage(MavenLogUtil.LEVEL_FATAL, BuilderBundle.message("external.statup.failed"), e);
       return;
     }
 
@@ -81,79 +86,28 @@ public class MavenExternalExecutor extends MavenExecutor {
     int exitValue = stop();
 
     if (isCancelled()) {
-      consoleOutput.message(MavenBuildLogger.LEVEL_INFO, BuilderBundle.message("external.process.aborted", exitValue), null);
+      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("external.process.aborted", exitValue), null);
     }
     else if (exitValue == 0) {
-      consoleOutput.message(MavenBuildLogger.LEVEL_INFO, BuilderBundle.message("external.process.finished", exitValue), null);
+      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("external.process.finished", exitValue), null);
     }
     else {
-      consoleOutput.message(MavenBuildLogger.LEVEL_ERROR, BuilderBundle.message("external.process.terminated.abnormally", exitValue), null);
+      systemMessage(MavenLogUtil.LEVEL_ERROR, BuilderBundle.message("external.process.terminated.abnormally", exitValue), null);
     }
-  }
-
-  private void logCommand(List<String> executionCommand) {
-    StringBuffer command = new StringBuffer();
-    for (String anExecutionCommand : executionCommand) {
-      command.append(anExecutionCommand).append(" ");
-    }
-    command.append(LogBroadcaster.LINE_SEPARATOR);
-    consoleOutput.print(command.toString());
   }
 
   int stop() {
     super.stop();
-    return mavenProcess == null ? 0 : destroyProcess(mavenProcess);
-  }
-
-  public String getCaption() {
-    return BuilderBundle.message("external.executor.caption");
+    if (myProcessHandler == null) {
+      return 0;
+    }
+    myProcessHandler.destroyProcess();
+    myProcessHandler.waitFor();
+    return myProcessHandler.getProcess().exitValue();
   }
 
   private void readProcessOutput() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    BufferedReader procout = new BufferedReader(new InputStreamReader(mavenProcess.getInputStream()));
-    try {
-      String line;
-      while ((line = procout.readLine()) != null) {
-        if (indicator != null) {
-          if (indicator.isCanceled()) {
-            cancel();
-          }
-          if (line.matches(INFO_REGEXP)) {
-            indicator.setText2(line.substring(INFO_PREFIX_SIZE));
-          }
-        }
-        consoleOutput.print(line);
-      }
-    }
-    catch (IOException e) {
-      consoleOutput.message(MavenBuildLogger.LEVEL_ERROR, BuilderBundle.message("external.io.error"), e);
-      try {
-        procout.close();
-      }
-      catch (IOException ignore) {
-      }
-    }
-  }
-
-  private static int destroyProcess(@NotNull Process process) {
-    try {
-      return process.exitValue();
-    }
-    catch (IllegalThreadStateException e) {
-      process.destroy();
-
-      try {
-        process.waitFor();
-      }
-      catch (InterruptedException e1) {
-        LOG.error(e1);
-      }
-      return process.exitValue();
-    }
-  }
-
-  public MavenBuildLogger getLogger() {
-    return buildLogger;
+    myProcessHandler.startNotify();
+    myProcessHandler.waitFor();
   }
 }

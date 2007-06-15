@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="treeStructure" />
+    <orderEntry type="module" module-name="execution-impl" />
     <orderEntryProperties />
   </component>
 </module>

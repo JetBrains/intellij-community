@@ -17,6 +17,11 @@
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.builder.execution.MavenRunConfigurationType</implementation-class>
+    </component>
+  </application-components>
   <project-components>
     <component>
       <interface-class>org.jetbrains.idea.maven.core.MavenCore</interface-class>
@@ -46,9 +51,9 @@
   </project-components>
   <actions>
     <action id="Maven.Run"
-            class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="Run"
-            description="Run"
-            icon="/actions/execute.png"/>
+            class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="_Build"
+            description="Execute Maven Build"
+            icon="/actions/compile.png"/>
 
     <group id="Maven.OutputToolbar" description="Output toolbar">
       <action id="Maven.Rerun"
@@ -101,12 +106,14 @@
 
     <group id="Maven.PomMenu" popup="true">
       <reference id="Maven.Run"/>
+      <reference ref="RunContextGroup"/>
       <reference id="EditSource"/>
       <reference id="Maven.AttachPlugin"/>
     </group>
 
     <group id="Maven.GoalMenu" popup="true">
       <reference id="Maven.Run"/>
+      <reference ref="RunContextGroup"/>
     </group>
 
     <group id="Maven.PluginMenu" popup="true">
