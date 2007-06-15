@@ -231,8 +231,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public long getPurgingPeriod() {
-    if (!myConfiguration.LOCAL_HISTORY_ENABLED) return 0;
-    return myConfiguration.PURGING_PERIOD;
+    //if (!myConfiguration.LOCAL_HISTORY_ENABLED) return 0;
+    return myConfiguration.PURGE_PERIOD;
   }
 
   public synchronized LvcsLabel addLabel(final String name, final String path) {
@@ -272,7 +272,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public boolean isEnabled() {
-    return myConfiguration.LOCAL_HISTORY_ENABLED;
+    return true;
   }
 
   private synchronized VirtualFile[] calculateRoots() {
@@ -335,8 +335,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (!isOldLvcsEnabled()) return 0;
 
     final LocalHistoryConfiguration configuration = LocalHistoryConfiguration.getInstance();
-    if (configuration.PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
-    long purgingPeriod = configuration.PURGING_PERIOD;
+    if (configuration.PURGE_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
+    long purgingPeriod = configuration.PURGE_PERIOD;
     if (!isEnabled()) purgingPeriod = 0;
     long timeToPurgeBefore = myUserActivitiesRegistry.getActivityPeriodStart(System.currentTimeMillis(), purgingPeriod);
     return myImplementation.purge(timeToPurgeBefore);

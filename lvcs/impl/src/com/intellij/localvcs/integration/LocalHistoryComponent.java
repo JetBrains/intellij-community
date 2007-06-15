@@ -74,7 +74,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   protected long getPurgingPeriod() {
-    return getConfiguration().PURGING_PERIOD;
+    return getConfiguration().PURGE_PERIOD;
   }
 
   protected void initService() {
