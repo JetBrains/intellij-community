@@ -2,8 +2,8 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryComponent;
+import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.localvcs.integration.revertion.Reverter;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
@@ -156,12 +156,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void restoreShowChangesOnlyOption() {
-    myModel.showChangesOnly(LocalHistory.getConfiguration().SHOW_CHANGES_ONLY);
+    myModel.showChangesOnly(LocalHistoryConfiguration.getInstance().SHOW_CHANGES_ONLY);
   }
 
   private void saveShowChangesOnlyOption() {
     boolean value = myModel.doesShowChangesOnly();
-    LocalHistory.getConfiguration().SHOW_CHANGES_ONLY = value;
+    LocalHistoryConfiguration.getInstance().SHOW_CHANGES_ONLY = value;
   }
 
   private void restoreSplitterProportion() {

@@ -1,8 +1,11 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.revisions.Revision;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.List;
 
 public class LocalHistoryServiceRootsOnStartupTest extends LocalHistoryServiceTestCase {
   // todo what about roots in jars (non-local file system)?
@@ -18,6 +21,29 @@ public class LocalHistoryServiceRootsOnStartupTest extends LocalHistoryServiceTe
     startupService();
 
     assertTrue(vcs.hasEntry("c:/root"));
+  }
+
+  @Test
+  public void testPuttingLabelAfterUpdate() {
+    roots.add(new TestVirtualFile("c:/root"));
+
+    configuration.ADD_LABEL_ON_PROJECT_OPEN = true;
+    startupService();
+
+    List<Revision> rr = vcs.getRevisionsFor("c:/root");
+    assertEquals(2, rr.size());
+    assertEquals("Project open", rr.get(0).getName());
+  }
+
+  @Test
+  public void testDoesNotPutLabelIfLabelingIsDisabled() {
+    roots.add(new TestVirtualFile("c:/root"));
+
+    configuration.ADD_LABEL_ON_PROJECT_OPEN = false;
+    startupService();
+
+    List<Revision> rr = vcs.getRevisionsFor("c:/root");
+    assertEquals(1, rr.size());
   }
 
   @Test

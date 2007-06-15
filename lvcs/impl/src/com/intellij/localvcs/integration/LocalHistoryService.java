@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 public class LocalHistoryService {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
+  private LocalHistoryConfiguration myConfiguration;
   // todo get rid of all this managers...
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
@@ -24,12 +25,14 @@ public class LocalHistoryService {
 
   public LocalHistoryService(ILocalVcs vcs,
                              IdeaGateway gw,
+                             LocalHistoryConfiguration c,
                              StartupManager sm,
                              ProjectRootManagerEx rm,
                              VirtualFileManagerEx fm,
                              CommandProcessor cp) {
     myVcs = vcs;
     myGateway = gw;
+    myConfiguration = c;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
@@ -40,10 +43,10 @@ public class LocalHistoryService {
   }
 
   private void registerCacheUpdaters() {
-    myCacheUpdater = new CacheUpdaterAdaptor();
-
     FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
-    fs.registerCacheUpdater(myCacheUpdater);
+    fs.registerCacheUpdater(new StartupChangeUpdater());
+
+    myCacheUpdater = new CacheUpdaterAdaptor();
     myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
@@ -67,6 +70,16 @@ public class LocalHistoryService {
     LocalHistoryActionImpl a = new LocalHistoryActionImpl(myEventDispatcher, name);
     a.start();
     return a;
+  }
+
+  public class StartupChangeUpdater extends CacheUpdaterAdaptor {
+    @Override
+    public void updatingDone() {
+      super.updatingDone();
+      if (myConfiguration.ADD_LABEL_ON_PROJECT_OPEN) {
+        myVcs.putLabel("Project open");
+      }
+    }
   }
 
   // todo only needed because we should calculate content roots each time

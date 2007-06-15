@@ -31,6 +31,7 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   protected MyVirtualFileManagerEx fileManager;
   protected TestFileFilter fileFilter;
   protected MyCommandProcessor commandProcessor;
+  protected LocalHistoryConfiguration configuration;
 
   @Before
   public void initAndStartup() {
@@ -56,8 +57,9 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     rootManager = new MyProjectRootManagerEx();
     fileManager = new MyVirtualFileManagerEx();
     commandProcessor = new MyCommandProcessor();
+    configuration = new LocalHistoryConfiguration();
 
-    service = new LocalHistoryService(vcs, gateway, startupManager, rootManager, fileManager, commandProcessor);
+    service = new LocalHistoryService(vcs, gateway, configuration, startupManager, rootManager, fileManager, commandProcessor);
   }
 
   protected LocalVcs createLocalVcs() {

@@ -1,5 +1,6 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.core.revisions.Revision;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -26,6 +27,18 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireCreated(new TestVirtualFile("root/two", null, -1));
 
     assertEquals(3, vcs.getRevisionsFor("root").size());
+  }
+
+  @Test
+  public void testNamingChangeSet() {
+    vcs.createDirectory("root");
+
+    d.beforeRefreshStart(false);
+    fireCreated(new TestVirtualFile("root/f", null, -1));
+    d.afterRefreshFinish(false);
+
+    Revision r = vcs.getRevisionsFor("root").get(0);
+    assertEquals("External Change", r.getCauseChangeName());
   }
 
   @Test

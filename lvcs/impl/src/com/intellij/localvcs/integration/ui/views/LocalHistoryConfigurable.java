@@ -1,6 +1,5 @@
 package com.intellij.localvcs.integration.ui.views;
 
-import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryBundle;
 import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -156,7 +155,7 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
   }
 
   private LocalHistoryConfiguration getConfiguration() {
-    return LocalHistory.getConfiguration();
+    return LocalHistoryConfiguration.getInstance();
   }
 
   private class MyDocument extends PlainDocument {

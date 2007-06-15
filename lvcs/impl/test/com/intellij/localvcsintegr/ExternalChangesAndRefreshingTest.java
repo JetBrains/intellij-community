@@ -2,6 +2,7 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.core.Paths;
+import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -54,6 +55,13 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertTrue(hasVcsEntry(path2));
 
     assertEquals(2, getVcsRevisionsFor(root).size());
+  }
+
+  public void testChangeSetName() throws Exception {
+    String path = createFileExternally("f.java");
+    refreshVFS();
+    Revision r = getVcsRevisionsFor(root).get(0);
+    assertEquals("External Change", r.getCauseChangeName());
   }
 
   public void testRefreshDuringCommand() {

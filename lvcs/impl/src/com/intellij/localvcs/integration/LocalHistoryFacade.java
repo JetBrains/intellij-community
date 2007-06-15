@@ -23,7 +23,7 @@ public class LocalHistoryFacade {
   }
 
   public void finishRefreshing() {
-    endChangeSet(null);
+    endChangeSet("External Change");
   }
 
   public void startCommand() {

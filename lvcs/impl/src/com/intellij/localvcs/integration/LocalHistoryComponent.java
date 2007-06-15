@@ -32,6 +32,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private Storage myStorage;
   private ILocalVcs myVcs;
   private LocalHistoryService myService;
+  private LocalHistoryConfiguration myConfiguration;
 
   // todo test-support
   public static LocalHistoryComponent getComponentInstance(Project p) {
@@ -43,12 +44,18 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return getComponentInstance(p).getLocalVcs();
   }
 
-  public LocalHistoryComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, CommandProcessor cp) {
+  public LocalHistoryComponent(Project p,
+                               StartupManager sm,
+                               ProjectRootManagerEx rm,
+                               VirtualFileManagerEx fm,
+                               CommandProcessor cp,
+                               LocalHistoryConfiguration c) {
     myProject = p;
     myStartupManager = (StartupManagerEx)sm;
     myRootManager = rm;
     myFileManager = fm;
     myCommandProcessor = cp;
+    myConfiguration = c;
   }
 
   public void initComponent() {
@@ -68,17 +75,14 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage) {
       @Override
       protected long getPurgingPeriod() {
-        return LocalHistoryComponent.this.getPurgingPeriod();
+        return myConfiguration.PURGE_PERIOD;
       }
     });
   }
 
-  protected long getPurgingPeriod() {
-    return getConfiguration().PURGE_PERIOD;
-  }
-
   protected void initService() {
-    myService = new LocalHistoryService(myVcs, createIdeaGateway(), myStartupManager, myRootManager, myFileManager, myCommandProcessor);
+    myService = new LocalHistoryService(myVcs, createIdeaGateway(), myConfiguration, myStartupManager, myRootManager, myFileManager,
+                                        myCommandProcessor);
   }
 
   public File getStorageDir() {

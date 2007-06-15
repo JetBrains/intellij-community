@@ -90,7 +90,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     expect(p.isDefault()).andStubReturn(true);
     replay(p);
 
-    LocalHistoryComponent c = new LocalHistoryComponent(p, sm, null, null, null) {
+    LocalHistoryComponent c = new LocalHistoryComponent(p, sm, null, null, null, null) {
       @Override
       public boolean isEnabled() {
         return true;
@@ -107,7 +107,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
   @Test
   public void testCleaningOnDisposeInUnitTestMode() {
     final boolean[] isUnitTestMode = new boolean[]{true};
-    LocalHistoryComponent c = new LocalHistoryComponent(null, null, null, null, null) {
+    LocalHistoryComponent c = new LocalHistoryComponent(null, null, null, null, null, null) {
       @Override
       public File getStorageDir() {
         return new File(tempDir, "vcs");
@@ -173,7 +173,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     private boolean isVcsInitialized;
 
     public MyLocalHistoryComponent(String systemPath, Project p, MyStartupManager sm) {
-      super(p, sm, null, null, null);
+      super(p, sm, null, null, null, new LocalHistoryConfiguration());
       mySystemPath = systemPath;
     }
 
@@ -186,11 +186,6 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     protected void initVcs() {
       super.initVcs();
       isVcsInitialized = true;
-    }
-
-    @Override
-    protected long getPurgingPeriod() {
-      return 1000;
     }
 
     @Override
