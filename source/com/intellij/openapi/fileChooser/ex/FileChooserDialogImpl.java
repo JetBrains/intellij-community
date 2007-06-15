@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileElement;
@@ -23,7 +24,6 @@ import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -41,8 +41,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
 
@@ -65,7 +63,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private JComponent myPathTextFieldWrapper;
 
   private MergingUpdateQueue myUiUpdater;
-  private WorkerThread myFileLocator = new WorkerThread("fileChooserFileLocator", 200);
 
   private boolean myTreeIsUpdating;
 
@@ -170,13 +167,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     Disposer.register(myDisposable, myUiUpdater);
     new UiNotifyConnector(panel, myUiUpdater);
 
-    myFileLocator.start();
-    Disposer.register(myDisposable, new Disposable() {
-      public void dispose() {
-        myFileLocator.dispose(true);
-      }
-    });
-
     panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
     createTree();
@@ -192,7 +182,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater, myFileLocator) {
+    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater) {
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }
@@ -529,7 +519,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myUiUpdater.queue(new Update("treeFromPath.1") {
       public void run() {
-        myFileLocator.addTaskFirst(new Runnable() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
             if (toFind == null || !toFind.exists()) return;

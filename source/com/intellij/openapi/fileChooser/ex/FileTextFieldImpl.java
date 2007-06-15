@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -43,7 +42,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   private JList myList;
 
   private MergingUpdateQueue myUiUpdater;
-  private WorkerThread myWorker;
 
   private boolean myPathIsUpdating;
   private Finder myFinder;
@@ -55,9 +53,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   public static final String KEY = "fileTextField";
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter) {
-    this(new JTextField(), finder, filter, null, null);
+    this(new JTextField(), finder, filter, null);
   }
-  public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater, WorkerThread worker) {
+  public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater) {
     myPathTextField = field;
 
     FileTextFieldImpl assigned = (FileTextFieldImpl)myPathTextField.getClientProperty(KEY);
@@ -78,16 +76,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       }
     } else {
       myUiUpdater = uiUpdater;
-    }
-
-    if (worker == null) {
-      myWorker = new WorkerThread("FileTextField.FileLocator", 200);
-      if (!headless) {
-        myWorker.start();
-        Disposer.register(this, myWorker);
-      }
-    } else {
-      myWorker = worker;
     }
 
     myFinder = finder;
@@ -141,7 +129,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         final CompletionResult result = new CompletionResult();
         result.myCompletionBase = getCompletionBase();
         if (result.myCompletionBase == null) return;
-        myWorker.addTaskFirst(new Runnable() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             processCompletion(result);
             SwingUtilities.invokeLater(new Runnable() {
@@ -456,15 +444,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field) {
-      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), null, null);
+      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), null);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, final MergingUpdateQueue uiUpdater, final WorkerThread worker) {
-      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), uiUpdater, worker);
+    public Vfs(FileChooserDescriptor filter, boolean showHidden, final MergingUpdateQueue uiUpdater) {
+      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), uiUpdater);
     }
 
-    public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater, final WorkerThread worker) {
-      super(new JTextField(), new LocalFsFinder(), filter, uiUpdater, worker);
+    public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater) {
+      super(new JTextField(), new LocalFsFinder(), filter, uiUpdater);
     }
 
     public VirtualFile getSelectedFile() {
