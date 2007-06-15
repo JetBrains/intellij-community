@@ -120,7 +120,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   private void refreshChangesFromCache(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    if (!cache.hasCachesForAllRoots()) {
+    if (!cache.hasCachesForAnyRoot()) {
       if (cacheOnly) return;
       if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
     }

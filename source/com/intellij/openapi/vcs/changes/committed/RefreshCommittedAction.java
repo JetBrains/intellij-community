@@ -14,7 +14,12 @@ public class RefreshCommittedAction extends AnAction {
     Project project = e.getData(DataKeys.PROJECT);
     CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
     assert panel != null;
-    panel.refreshChanges(false);
+    if (panel.getRepositoryLocation() != null) {
+      panel.refreshChanges(false);
+    }
+    else {
+      RefreshIncomingChangesAction.doRefresh(project);
+    }
   }
 
   public void update(final AnActionEvent e) {

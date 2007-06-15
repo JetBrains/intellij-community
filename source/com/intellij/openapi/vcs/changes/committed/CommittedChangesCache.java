@@ -260,19 +260,19 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return true;
   }
 
-  public boolean hasCachesForAllRoots() {
+  public boolean hasCachesForAnyRoot() {
     Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cacheFile: caches) {
       try {
-        if (cacheFile.isEmpty()) {
-          return false;
+        if (!cacheFile.isEmpty()) {
+          return true;
         }
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
-    return true;
+    return false;
   }
 
   private Collection<ChangesCacheFile> getAllCaches() {
