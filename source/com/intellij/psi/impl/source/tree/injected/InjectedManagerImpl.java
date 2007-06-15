@@ -33,21 +33,20 @@ public class InjectedManagerImpl extends InjectedManager implements ApplicationC
   public InjectedManagerImpl() {
     myProjectListener = new ProjectManagerAdapter() {
       public void projectClosing(final Project project) {
-        Iterator<VirtualFileDelegate> iterator = cachedFiles.iterator();
-        while (iterator.hasNext()) {
-          VirtualFileDelegate file = iterator.next();
+        VirtualFileDelegate[] delegates = cachedFiles.toArray(new VirtualFileDelegate[cachedFiles.size()]);
+        for (VirtualFileDelegate file : delegates) {
+          if (file == null) continue;
           DocumentRange documentRange = file.getDocumentRange();
           PsiFile injected = PsiDocumentManager.getInstance(project).getCachedPsiFile(documentRange);
           if (injected != null) {
             InjectedLanguageUtil.clearCaches(injected, documentRange);
-            iterator.remove();
           }
         }
       }
     };
   }
 
-  <T extends PsiLanguageInjectionHost> VirtualFileDelegate createVirtualFile(final Language language, final VirtualFile hostVirtualFile,
+  VirtualFileDelegate createVirtualFile(final Language language, final VirtualFile hostVirtualFile,
                                                                              final DocumentRange documentRange, StringBuilder text,
                                                                              Project project) {
     clearInvalidFiles(project);
@@ -59,7 +58,7 @@ public class InjectedManagerImpl extends InjectedManager implements ApplicationC
     return virtualFile;
   }
 
-  private <T extends PsiLanguageInjectionHost> void clearInvalidFiles(Project project) {
+  private void clearInvalidFiles(Project project) {
     synchronized (cachedFiles) {
       Iterator<VirtualFileDelegate> iterator = cachedFiles.iterator();
       while (iterator.hasNext()) {
@@ -105,5 +104,11 @@ public class InjectedManagerImpl extends InjectedManager implements ApplicationC
 
   public void disposeComponent() {
     ProjectManager.getInstance().removeProjectManagerListener(myProjectListener);
+  }
+
+  public void clearCaches(VirtualFileDelegate virtualFile) {
+    synchronized (cachedFiles) {
+      cachedFiles.remove(virtualFile);
+    }
   }
 }

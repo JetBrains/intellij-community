@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -114,7 +115,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * editors, unregisters listeners. The behaviour of the splitter after disposing is
    * unpredictable.
    */
-  protected void dispose(){
+  void dispose(){
     myDocument.removeDocumentListener(myDocumentListener);
 
     disposeEditor(myEditor);
@@ -346,7 +347,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     return PsiUtil.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
-  private Object getPsiElementIn(final Editor editor) {
+  private PsiElement getPsiElementIn(final Editor editor) {
     final PsiFile psiFile = getPsiFile();
     if (psiFile == null) return null;
     return TargetElementUtil.findTargetElement(editor,

@@ -104,7 +104,7 @@ public class InjectedLanguageUtil {
 
     TextRange documentWindow = hostRange.cutOut(rangeInsideHost);
     DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow,prefix,suffix);
-    VirtualFileDelegate virtualFile = InjectedManagerImpl.getInstance().createVirtualFile(language, hostVirtualFile, documentRange, outChars, host.getProject());
+    VirtualFileDelegate virtualFile = InjectedManagerImpl.getInstance().createVirtualFile(language, hostVirtualFile, documentRange, outChars, project);
 
     DocumentImpl decodedDocument = new DocumentImpl(outChars);
     FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
@@ -320,7 +320,11 @@ public class InjectedLanguageUtil {
     for (Pair<PsiElement, TextRange> pair : injectedPsi) {
       TextRange range = pair.getSecond();
       if (hostRange.cutOut(range).grown(1).contains(offset)) {
-        return pair.getFirst().getContainingFile();
+        PsiFile file = pair.getFirst().getContainingFile();
+        if (file.getContext() == null) {
+          int i = 0;
+        }
+        return file;
       }
     }
     return null;
@@ -369,7 +373,7 @@ public class InjectedLanguageUtil {
       final List<Pair<PsiElement, TextRange>> result = queryInjectionHostForPsi(host);
       if (result == null || result.isEmpty()) return null;
       fastenMyBelts(host); // create smart pointer only if necessary
-      return new Result<List<Pair<PsiElement, TextRange>>>(result, host, PsiModificationTracker.MODIFICATION_COUNT);
+      return new Result<List<Pair<PsiElement, TextRange>>>(result, PsiModificationTracker.MODIFICATION_COUNT);
     }
 
     private List<Pair<PsiElement, TextRange>> queryInjectionHostForPsi(final T host) {
@@ -460,9 +464,15 @@ public class InjectedLanguageUtil {
   }
 
   public static void clearCaches(PsiFile injected, DocumentRange documentRange) {
+    PsiElement host = injected.getContext();
+    if (host != null) {
+      host.putUserData(INJECTED_PSI, null);
+    }
+    VirtualFileDelegate virtualFile = (VirtualFileDelegate)injected.getVirtualFile();
     injected.putUserData(ResolveUtil.INJECTED_IN_ELEMENT,null);
-    ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(injected.getVirtualFile(), null);
+    ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(virtualFile, null);
     documentRange.getDelegate().putUserData(INJECTED_DOCS_KEY, null);
+    InjectedManagerImpl.getInstance().clearCaches(virtualFile);
   }
 
   private static PsiFile registerDocumentRange(final DocumentRange documentRange, final PsiFile injectedPsi) {
