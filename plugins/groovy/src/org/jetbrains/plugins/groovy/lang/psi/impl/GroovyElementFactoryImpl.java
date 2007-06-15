@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
@@ -139,6 +140,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
     assert typeElement != null;
     return typeElement.getReferenceElement();
+  }
+
+  public GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException {
+    final GroovyFile file = createDummyFile(text);
+    final GrTypeDefinition[] classes = file.getTypeDefinitions();
+    if (classes.length != 1) throw new IncorrectOperationException("Incorrect type definition text");
+    return classes[0];
   }
 
   private PsiFile createGroovyFile(String idText) {

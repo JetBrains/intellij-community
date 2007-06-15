@@ -55,6 +55,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("forVariable1/ForVariable.groovy");
   }
 
+  public void testArrayLength() throws Exception {
+    doTest("arrayLength/A.groovy");
+  }
+
+
   public void testForVariable2() throws Exception {
     doTest("forVariable2/ForVariable.groovy");
   }

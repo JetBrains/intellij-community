@@ -262,13 +262,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           if (!qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
         }
       } else if (qualifierType instanceof PsiArrayType) {
-        PsiManager manager = PsiManager.getInstance(project);
-        PsiClass baseClass = manager.findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
-        if (baseClass != null) {
-          if (!baseClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
-          PsiClassType baseType = manager.getElementFactory().createType(baseClass);
-          if (!ResolveUtil.processDefaultMethods(baseType, processor, project)) return;
-        }
+        final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
+        if (!arrayClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
       }
 
       ResolveUtil.processDefaultMethods(qualifierType, processor, project);
@@ -481,13 +476,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
       }
     } else if (qualifierType instanceof PsiArrayType) {
-      PsiManager manager = PsiManager.getInstance(project);
-      PsiClass baseClass = manager.findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, getResolveScope());
-      if (baseClass != null) {
-        if (!baseClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this)) return;
-        PsiClassType baseType = manager.getElementFactory().createType(baseClass);
-        if (!ResolveUtil.processDefaultMethods(baseType, processor, project)) return;
-      }
+      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
+      if (!arrayClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this)) return;
     }
 
     ResolveUtil.processDefaultMethods(qualifierType, processor, project);

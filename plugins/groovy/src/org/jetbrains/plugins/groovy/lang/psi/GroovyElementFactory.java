@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -79,4 +80,6 @@ public abstract class GroovyElementFactory {
   public abstract GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException;
 
   public abstract GrTypeOrPackageReferenceElement createTypeOrPackageReference(String qName);
+
+  public abstract GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException;
 }

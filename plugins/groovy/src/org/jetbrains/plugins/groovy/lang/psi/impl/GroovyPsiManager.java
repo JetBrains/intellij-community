@@ -35,8 +35,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +55,10 @@ public class GroovyPsiManager implements ProjectComponent {
   private static final String DEFAULT_STATIC_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods";
   private static final String SWING_BUILDER_QNAME = "groovy.swing.SwingBuilder";
 
+  private GrTypeDefinition myArrayClass;
+
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+  private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { int length }";
 
   public GroovyPsiManager(Project project) {
     myProject = project;
@@ -267,4 +272,17 @@ public class GroovyPsiManager implements ProjectComponent {
     }
     return type == PsiType.NULL ? null : type;
   }
+
+  public GrTypeDefinition getArrayClass() {
+    if (myArrayClass == null) {
+      try {
+        myArrayClass = GroovyElementFactory.getInstance(myProject).createTypeDefinition(SYNTHETIC_CLASS_TEXT);
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+
+    return myArrayClass;
+  }
+
 }
