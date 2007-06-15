@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -96,7 +97,12 @@ public class ActionMenuItem extends JMenuItem {
   }
 
   public void updateUI() {
-    setUI(BegMenuItemUI.createUI(this));
+    if (UIUtil.useStandardMenuLaf()) {
+      super.updateUI();
+    }
+    else {
+      setUI(BegMenuItemUI.createUI(this));
+    }
   }
 
   /**

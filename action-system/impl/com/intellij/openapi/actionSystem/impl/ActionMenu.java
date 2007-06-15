@@ -13,6 +13,7 @@ import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.plaf.MenuItemUI;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
@@ -79,8 +80,13 @@ public final class ActionMenu extends JMenu {
     if (popupMenu != null) {
       popupMenu.updateUI();
     }
-    setUI(IdeaMenuUI.createUI(this));
-    setFont(UIUtil.getMenuFont());
+    if (UIUtil.useStandardMenuLaf()) {
+      setUI((MenuItemUI)UIManager.getUI(this));
+    }
+    else {
+      setUI(IdeaMenuUI.createUI(this));
+      setFont(UIUtil.getMenuFont());
+    }
   }
 
   private void init() {

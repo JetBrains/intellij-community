@@ -736,5 +736,9 @@ public class UIUtil {
   public static String getCssFontDeclaration(final Font font) {
     return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style>";
   }
+
+  public static boolean useStandardMenuLaf() {
+    return SystemInfo.isWindowsVista && "Windows".equals(UIManager.getLookAndFeel().getName());
+  }
 }
 
