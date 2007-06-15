@@ -32,7 +32,7 @@ public class MakeDataStructuresTest extends TestCase{
   public void testUrlNamePair() {
     final String url = "file://C:/work/classes/com/intellij/somePackage/SomeClass.java";
     final String className = "com.intellij.somePackage.SomeClass";
-    SourceUrlClassNamePair pair = new SourceUrlClassNamePair(new StringInterner(), url, className);
+    SourceUrlClassNamePair pair = new SourceUrlClassNamePair(url, className);
 
     assertEquals(url, pair.getSourceUrl());
     assertEquals(className, pair.getClassName());
@@ -41,7 +41,7 @@ public class MakeDataStructuresTest extends TestCase{
   public void testUrlNamePair2() {
     final String url = "file://C:/work/classes/com/intellij/somePackage/SomeClass/";
     final String className = "com.intellij.somePackage.SomeClass";
-    SourceUrlClassNamePair pair = new SourceUrlClassNamePair(new StringInterner(), url, className);
+    SourceUrlClassNamePair pair = new SourceUrlClassNamePair(url, className);
 
     assertEquals(url, pair.getSourceUrl());
     assertEquals(className, pair.getClassName());
