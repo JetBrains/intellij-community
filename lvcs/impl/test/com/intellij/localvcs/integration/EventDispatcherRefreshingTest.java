@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.openapi.command.CommandEvent;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -70,10 +71,11 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
     d.beforeRefreshStart(false);
     fireCreated(new TestVirtualFile("root/one", null, -1));
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent();
+    d.commandStarted(e);
     fireCreated(new TestVirtualFile("root/two", null, -1));
     fireCreated(new TestVirtualFile("root/three", null, -1));
-    d.commandFinished(createCommandEvent(null));
+    d.commandFinished(e);
     fireCreated(new TestVirtualFile("root/four", null, -1));
     d.afterRefreshFinish(false);
 

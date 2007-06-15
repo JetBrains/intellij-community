@@ -35,11 +35,17 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   public void commandStarted(CommandEvent e) {
+    if (notForMe(e)) return;
     myFacade.startCommand();
   }
 
   public void commandFinished(CommandEvent e) {
+    if (notForMe(e)) return;
     myFacade.finishCommand(e.getCommandName());
+  }
+
+  private boolean notForMe(CommandEvent e) {
+    return e.getProject() != myGateway.getProject();
   }
 
   public void startAction() {
