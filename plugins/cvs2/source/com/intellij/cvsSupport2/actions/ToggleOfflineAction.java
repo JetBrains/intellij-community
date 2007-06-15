@@ -22,7 +22,9 @@ public class ToggleOfflineAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     if (!cvsContext.cvsIsActive()) return false;
-    CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(cvsContext.getSelectedFile());
+    VirtualFile root = cvsContext.getSelectedFile();
+    if (root == null) return false;
+    CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(root);
     if (settings == null) return false;
     return settings.isOffline();
   }
