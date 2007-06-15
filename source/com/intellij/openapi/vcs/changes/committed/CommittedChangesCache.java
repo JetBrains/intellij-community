@@ -49,17 +49,18 @@ import java.util.concurrent.TimeUnit;
 public class CommittedChangesCache implements PersistentStateComponent<CommittedChangesCache.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesCache");
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
-  private Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
-  private MessageBus myBus;
-  private BackgroundTaskQueue myTaskQueue;
+
+  private final Project myProject;
+  private final Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
+  private final MessageBus myBus;
+  private final BackgroundTaskQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
-  private int myProjectChangesRefreshCount = 0;
   private int myPendingUpdateCount = 0;
   private State myState = new State();
   private ScheduledFuture myFuture;
   private Map<CommittedChangeList, Change[]> myCachedIncomingChangeLists;
-  private Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<CommittedChangeList>();
-  private ProjectLevelVcsManager myVcsManager;
+  private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<CommittedChangeList>();
+  private final ProjectLevelVcsManager myVcsManager;
 
   public static final Change[] ALL_CHANGES = new Change[0];
 
@@ -108,8 +109,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public static CommittedChangesCache getInstance(Project project) {
     return project.getComponent(CommittedChangesCache.class);
   }
-
-  private Project myProject;
 
   public CommittedChangesCache(final Project project, final MessageBus bus, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -167,7 +166,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
                                      final boolean cacheOnly,
                                      final Consumer<List<CommittedChangeList>> consumer,
                                      final Consumer<List<VcsException>> errorConsumer) {
-    myProjectChangesRefreshCount++;
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
       private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
       private final List<VcsException> myExceptions = new ArrayList<VcsException>();
@@ -185,7 +183,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
 
       public void onSuccess() {
-        myProjectChangesRefreshCount--;
         if (myExceptions.size() > 0) {
           errorConsumer.consume(myExceptions);
         }
@@ -195,10 +192,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     };
     myTaskQueue.run(task);
-  }
-
-  public boolean isRefreshingProjectChanges() {
-    return myProjectChangesRefreshCount > 0;
   }
 
   public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final int maxCount,
@@ -399,8 +392,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return savedChanges;
   }
 
-  private List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile, final List<CommittedChangeList> newChanges)
-    throws IOException {
+  private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
+                                                                    final List<CommittedChangeList> newChanges) throws IOException {
     final Ref<IOException> ref = new Ref<IOException>();
     final List<CommittedChangeList> savedChanges = ApplicationManager.getApplication().runReadAction(new Computable<List<CommittedChangeList>>() {
       public List<CommittedChangeList> compute() {
