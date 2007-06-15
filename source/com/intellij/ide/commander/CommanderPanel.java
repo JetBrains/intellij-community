@@ -362,7 +362,7 @@ public class CommanderPanel extends JPanel {
     return value;
   }
 
-  final void setActive(final boolean active) {
+  public final void setActive(final boolean active) {
     myActive = active;
     if (active) {
       myTitlePanel.setBackground(DARK_BLUE);
