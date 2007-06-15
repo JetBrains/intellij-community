@@ -75,12 +75,17 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
 
   public void beforeFileDeletion(VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
+    if (nonUndoableDeletion(e)) return;
     if (isUndoable(e)) {
       e.getFile().putUserData(DELETE_WAS_UNDOABLE, true);
     }
     else {
-      createNonUndoableAction(e);
+      createNonUndoableDeletionAction(e);
     }
+  }
+
+  private boolean nonUndoableDeletion(VirtualFileEvent e) {
+    return LocalHistory.hasUnavailableContent(myProject, e.getFile());
   }
 
   public void fileDeleted(VirtualFileEvent e) {
@@ -104,6 +109,19 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
     VirtualFile f = e.getFile();
 
     DocumentReference newRef = new DocumentReferenceByVirtualFile(f);
+    registerNonUndoableAction(newRef);
+
+    DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());
+    if (oldRef != null && !oldRef.equals(newRef)) {
+      registerNonUndoableAction(oldRef);
+    }
+  }
+
+  private void createNonUndoableDeletionAction(VirtualFileEvent e) {
+    VirtualFile f = e.getFile();
+
+    DocumentReference newRef = new DocumentReferenceByVirtualFile(f);
+    newRef.beforeFileDeletion(f);
     registerNonUndoableAction(newRef);
 
     DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());

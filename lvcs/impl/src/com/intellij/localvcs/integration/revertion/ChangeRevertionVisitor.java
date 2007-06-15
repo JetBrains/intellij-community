@@ -34,11 +34,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
-
-    Content content = e.getContent();
-    if (content.isAvailable()) {
-      f.setBinaryContent(content.getBytes(), -1, e.getTimestamp());
-    }
+    restoreContent(f, e);
   }
 
   @Override
@@ -79,8 +75,14 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     }
     else {
       VirtualFile f = parent.createChildData(e, e.getName());
-      f.setBinaryContent(e.getContent().getBytes(), -1, e.getTimestamp());
+      restoreContent(f, e);
     }
+  }
+
+  private void restoreContent(VirtualFile f, Entry e) throws IOException {
+    Content content = e.getContent();
+    if (!content.isAvailable()) return;
+    f.setBinaryContent(content.getBytes(), -1, e.getTimestamp());
   }
 
   protected Entry getAffectedEntry(StructuralChange c) {

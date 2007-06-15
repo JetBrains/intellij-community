@@ -56,6 +56,10 @@ public class EventDispatcherTestCase extends LocalVcsTestCase {
   }
 
   protected void fireDeletion(VirtualFile f) {
-    d.beforeFileDeletion(new VirtualFileEvent(null, f, null, null));
+    fireDeletion(f, null);
+  }
+
+  protected void fireDeletion(VirtualFile f, VirtualFile parent) {
+    d.fileDeleted(new VirtualFileEvent(null, f, null, parent));
   }
 }

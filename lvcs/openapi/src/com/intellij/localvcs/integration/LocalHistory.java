@@ -33,9 +33,12 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).getLastMarkedByteContent(f);
   }
 
-
   public static boolean isUnderControl(Project p, VirtualFile f) {
     return getInstance(p).isUnderControl(f);
+  }
+
+  public static boolean hasUnavailableContent(Project p, VirtualFile f) {
+    return getInstance(p).hasUnavailableContent(f);
   }
 
   public static boolean isEnabled(Project p) {
@@ -66,4 +69,6 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   protected abstract byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c);
 
   protected abstract boolean isUnderControl(VirtualFile f);
+
+  protected abstract boolean hasUnavailableContent(VirtualFile f);
 }

@@ -301,8 +301,7 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
     TestVirtualFile dir = new TestVirtualFile("dir", null, -1);
     TestVirtualFile f = new TestVirtualFile("file", null, -1);
-    dir.addChild(f);
-    fireDeletion(f);
+    fireDeletion(f, dir);
 
     assertTrue(vcs.hasEntry("dir"));
     assertFalse(vcs.hasEntry("dir/file"));

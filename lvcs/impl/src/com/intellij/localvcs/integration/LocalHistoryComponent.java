@@ -207,6 +207,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return createIdeaGateway().getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 
+  @Override
+  protected boolean hasUnavailableContent(VirtualFile f) {
+    return myVcs.getEntry(f.getPath()).hasUnavailableContent();
+  }
+
   @NonNls
   @NotNull
   public String getComponentName() {

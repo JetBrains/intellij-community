@@ -18,53 +18,53 @@ import java.io.OutputStream;
 public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
-  private LocalHistoryFacade myState;
+  private LocalHistoryFacade myFacade;
 
   public EventDispatcher(ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
-    myState = new LocalHistoryFacade(vcs, gw);
+    myFacade = new LocalHistoryFacade(vcs, gw);
   }
 
   public void beforeRefreshStart(boolean asynchonous) {
-    myState.startRefreshing();
+    myFacade.startRefreshing();
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
-    myState.finishRefreshing();
+    myFacade.finishRefreshing();
   }
 
   public void commandStarted(CommandEvent e) {
-    myState.startCommand();
+    myFacade.startCommand();
   }
 
   public void commandFinished(CommandEvent e) {
-    myState.finishCommand(e.getCommandName());
+    myFacade.finishCommand(e.getCommandName());
   }
 
   public void startAction() {
-    myState.startAction();
+    myFacade.startAction();
   }
 
   public void finishAction(String name) {
-    myState.finishAction(name);
+    myFacade.finishAction(name);
   }
 
   @Override
   public void fileCreated(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
     if (e.getRequestor() instanceof Entry) {
-      myState.restore(e.getFile(), (Entry)e.getRequestor());
+      myFacade.restore(e.getFile(), (Entry)e.getRequestor());
     }
     else {
-      myState.create(e.getFile());
+      myFacade.create(e.getFile());
     }
   }
 
   @Override
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    myState.changeFileContent(e.getFile());
+    myFacade.changeFileContent(e.getFile());
   }
 
   @Override
@@ -77,16 +77,16 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
     // todo try make it more clear... and refactor
     if (notAllowedOrNotUnderContentRoot(newFile)) {
-      if (wasInContent) myState.delete(oldFile);
+      if (wasInContent) myFacade.delete(oldFile);
       return;
     }
 
     if (!wasInContent) {
-      myState.create(newFile);
+      myFacade.create(newFile);
       return;
     }
 
-    myState.rename(oldFile, e.getFile().getName());
+    myFacade.rename(oldFile, e.getFile().getName());
   }
 
   @Override
@@ -96,7 +96,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
     if (isMovedFromOutside(e)) {
       if (notAllowedOrNotUnderContentRoot(e)) return;
-      myState.create(e.getFile());
+      myFacade.create(e.getFile());
       return;
     }
 
@@ -104,19 +104,26 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
     if (isMovedToOutside(e)) {
       boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
-      if (wasInContent) myState.delete(oldFile);
+      if (wasInContent) myFacade.delete(oldFile);
       return;
     }
 
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    myState.move(oldFile, e.getNewParent());
+    myFacade.move(oldFile, e.getNewParent());
   }
 
   @Override
-  public void beforeFileDeletion(VirtualFileEvent e) {
-    VirtualFile f = e.getFile();
+  public void fileDeleted(VirtualFileEvent e) {
+    VirtualFile f;
+    if (e.getParent() == null) {
+      f = e.getFile();
+    }
+    else {
+      f = new ReparentedVirtualFile(e.getParent(), e.getFile());
+    }
+
     if (!myVcs.hasEntry(f.getPath())) return;
-    myState.delete(f);
+    myFacade.delete(f);
   }
 
   private boolean notAllowedOrNotUnderContentRoot(VirtualFile f) {
