@@ -4,29 +4,26 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jun 21, 2006
  */
 public class SourceUrlClassNamePair {
-  private final List<String> mySourceUrl;
-  private final @Nullable List<String> myClassName;
+  private final String mySourceUrl;
+  private final @Nullable String myClassName;
 
-  public SourceUrlClassNamePair(StringInterner interner, String url, @Nullable String className) {
-    mySourceUrl = InternedPath.convert(interner, url, '/');
-    myClassName = (className != null) ? InternedPath.convert(interner, className, '.') : null;
+  public SourceUrlClassNamePair(String url, @Nullable String className) {
+    mySourceUrl = url;
+    myClassName = className;
   }
 
   public String getSourceUrl() {
-    return InternedPath.join(mySourceUrl, '/');
+    return mySourceUrl;
   }
 
   public @Nullable String getClassName() {
-    return (myClassName != null) ? InternedPath.join(myClassName, '.') : null;
+    return myClassName;
   }
 }

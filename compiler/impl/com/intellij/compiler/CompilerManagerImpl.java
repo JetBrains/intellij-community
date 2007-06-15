@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.StringInterner;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -206,11 +205,10 @@ public class CompilerManagerImpl extends CompilerManager {
 
   public OutputToSourceMapping getJavaCompilerOutputMapping() {
     final String cachesDir = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
-    final StringInterner interner = new StringInterner();
     final JavaCompiler[] javaCompilers = getCompilers(JavaCompiler.class);
     final TranslatingCompilerStateCache[] caches = new TranslatingCompilerStateCache[javaCompilers.length];
     for (int idx = 0; idx < javaCompilers.length; idx++) {
-      caches[idx] = new TranslatingCompilerStateCache(cachesDir, CompileDriver.getCompilerIdString(javaCompilers[idx]), interner);
+      caches[idx] = new TranslatingCompilerStateCache(cachesDir, CompileDriver.getCompilerIdString(javaCompilers[idx]));
     }
     return new OutputToSourceMappingImpl(caches);
   }

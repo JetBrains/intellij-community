@@ -6,7 +6,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.StringInterner;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -15,8 +14,8 @@ import java.io.IOException;
 
 public class TimestampCache extends StateCache <Long> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TimestampCache");
-  public TimestampCache(String storeDirectory, String idPrefix, final StringInterner interner) {
-    super(storeDirectory + File.separator + idPrefix + "_timestamp.dat", interner);
+  public TimestampCache(String storeDirectory, String idPrefix) {
+    super(storeDirectory + File.separator + idPrefix + "_timestamp.dat");
   }
 
   public void update(String url, Long state) {
