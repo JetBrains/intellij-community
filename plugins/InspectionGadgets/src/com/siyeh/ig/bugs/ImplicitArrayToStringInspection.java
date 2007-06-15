@@ -39,8 +39,13 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "implicit.array.to.string.problem.descriptor");
+        if (infos[0] instanceof PsiMethodCallExpression) {
+            return InspectionGadgetsBundle.message(
+                    "implicit.array.to.string.method.call.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "implicit.array.to.string.problem.descriptor");
+        }
     }
 
     public boolean isEnabledByDefault() {
@@ -108,9 +113,34 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
+            if (!isImplicitArrayToStringCall(expression)) {
+                return;
+            }
+            registerError(expression, expression);
+        }
+
+        public void visitNewExpression(PsiNewExpression expression) {
+            super.visitNewExpression(expression);
+            if (!isImplicitArrayToStringCall(expression)) {
+                return;
+            }
+            registerError(expression, expression);
+        }
+
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (!isImplicitArrayToStringCall(expression)) {
+                return;
+            }
+            registerMethodCallError(expression, expression);
+        }
+
+        private static boolean isImplicitArrayToStringCall(
+                PsiExpression expression) {
             final PsiType type = expression.getType();
             if (!(type instanceof PsiArrayType)) {
-                return;
+                return false;
             }
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiBinaryExpression) {
@@ -119,32 +149,26 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 final IElementType tokenType =
                         binaryExpression.getOperationTokenType();
                 if (!JavaTokenType.PLUS.equals(tokenType)) {
-                    return;
+                    return false;
                 }
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 if (lhs != expression) {
                     final PsiType lhsType = lhs.getType();
-                    if (lhsType == null ||
-                            !lhsType.equalsToText("java.lang.String")) {
-                        return;
-                    }
-                    registerError(expression);
+                    return !(lhsType == null ||
+                            !lhsType.equalsToText("java.lang.String"));
                 }
                 final PsiExpression rhs = binaryExpression.getROperand();
                 if (rhs != null && rhs != expression) {
                     final PsiType rhsType = rhs.getType();
-                    if (rhsType == null ||
-                            !rhsType.equalsToText("java.lang.String")) {
-                        return;
-                    }
-                    registerError(expression);
+                    return !(rhsType == null ||
+                            !rhsType.equalsToText("java.lang.String"));
                 }
             } else if (parent instanceof PsiExpressionList) {
                 final PsiExpressionList expressionList =
                         (PsiExpressionList) parent;
                 final PsiElement grandParent = expressionList.getParent();
                 if (!(grandParent instanceof PsiMethodCallExpression)) {
-                    return;
+                    return false;
                 }
                 final PsiMethodCallExpression methodCallExpression =
                         (PsiMethodCallExpression) grandParent;
@@ -154,16 +178,14 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                         methodExpression.getReferenceName();
                 if (!"print".equals(methodName) &&
                         !"println".equals(methodName)) {
-                    return;
+                    return false;
                 }
                 final PsiExpression qualifier =
                         methodExpression.getQualifierExpression();
-                if (!TypeUtils.expressionHasTypeOrSubtype("java.io.PrintStream",
-                        qualifier)) {
-                    return;
-                }
-                registerError(expression);
+                return TypeUtils.expressionHasTypeOrSubtype(
+                        "java.io.PrintStream", qualifier);
             }
+            return false;
         }
     }
 }
