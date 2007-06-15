@@ -46,7 +46,8 @@ public class ClassWithoutToStringInspection extends BaseInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
-            if (aClass.getNameIdentifier() == null) {
+            if (aClass.getNameIdentifier() == null &&
+                    !(aClass instanceof PsiAnonymousClass)) {
                 return;
             }
             if (aClass.isInterface() || aClass.isAnnotationType() ||
@@ -62,12 +63,12 @@ public class ClassWithoutToStringInspection extends BaseInspection {
             if (UtilityClassUtil.isUtilityClass(aClass)) {
                 return;
             }
-            final PsiMethod[] methods = aClass.getMethods();
-            for(final PsiMethod method : methods){
-                final String methodName = method.getName();
-                final PsiParameterList parameterList = method.getParameterList();
-                if(HardcodedMethodConstants.TO_STRING.equals(methodName) &&
-                        parameterList.getParametersCount() == 0){
+            final PsiMethod[] methods = aClass.findMethodsByName(
+                    HardcodedMethodConstants.TO_STRING, false);
+            for (PsiMethod method : methods) {
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                if (parameterList.getParametersCount() == 0) {
                     return;
                 }
             }
