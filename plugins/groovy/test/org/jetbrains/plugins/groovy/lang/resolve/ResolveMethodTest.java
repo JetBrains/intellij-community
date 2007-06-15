@@ -68,7 +68,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals(1, ref.multiResolve(false).length);
   }
 
-  public void testTwoCandiidates() throws Exception {
+  public void testTwoCandidates() throws Exception {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("twoCandidates/A.groovy");
     assertNull(ref.resolve());
     assertEquals(2, ref.multiResolve(false).length);
@@ -136,7 +136,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
 
   public void testSwingBuilderMethod() throws Exception {
-    PsiReference ref = configureByFile("swingBuilder/A.groovy");
+    PsiReference ref = configureByFile("swingBuilderMethod/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
     assertFalse(resolved.isPhysical());
@@ -157,13 +157,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals("java.lang.Class", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
   }
 
-  public void testComplexOveroad() throws Exception {
+  public void testComplexOverload() throws Exception {
     PsiReference ref = configureByFile("complexOverload/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
   }
 
-  public void testOveroad1() throws Exception {
+  public void testOverload1() throws Exception {
     PsiReference ref = configureByFile("overload1/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
