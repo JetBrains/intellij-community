@@ -33,7 +33,10 @@ public class InjectedManagerImpl extends InjectedManager implements ApplicationC
   public InjectedManagerImpl() {
     myProjectListener = new ProjectManagerAdapter() {
       public void projectClosing(final Project project) {
-        VirtualFileDelegate[] delegates = cachedFiles.toArray(new VirtualFileDelegate[cachedFiles.size()]);
+        VirtualFileDelegate[] delegates;
+        synchronized (cachedFiles) {
+          delegates = cachedFiles.toArray(new VirtualFileDelegate[cachedFiles.size()]);
+        }
         for (VirtualFileDelegate file : delegates) {
           if (file == null) continue;
           DocumentRange documentRange = file.getDocumentRange();
