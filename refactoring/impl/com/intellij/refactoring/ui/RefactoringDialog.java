@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -47,15 +48,15 @@ public abstract class RefactoringDialog extends DialogWrapper {
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;
-  private Project myProject;
+  protected final Project myProject;
 
-  protected RefactoringDialog(Project project, boolean canBeParent) {
+  protected RefactoringDialog(@NotNull Project project, boolean canBeParent) {
     super (project, canBeParent);
     myCbPreviewResults = true;
     myProject = project;
   }
 
-  final public boolean isPreviewUsages() {
+  public final boolean isPreviewUsages() {
     return myCbPreviewResults;
   }
 
@@ -68,14 +69,14 @@ public abstract class RefactoringDialog extends DialogWrapper {
   /**
    * @return default implementation of "Refactor" action.
    */
-  final protected Action getRefactorAction() {
+  protected final Action getRefactorAction() {
     return myRefactorAction;
   }
 
   /**
    * @return default implementation of "Preview" action.
    */
-  final protected Action getPreviewAction() {
+  protected final Action getPreviewAction() {
     return myPreviewAction;
   }
 
@@ -91,9 +92,9 @@ public abstract class RefactoringDialog extends DialogWrapper {
     doAction();
   }
 
-  final protected void closeOKAction() { super.doOKAction(); }
+  protected final void closeOKAction() { super.doOKAction(); }
 
-  final protected void doOKAction() {
+  protected final void doOKAction() {
     doAction();
   }
 
@@ -109,14 +110,14 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
-  final protected Action[] createActions() {
+  protected final Action[] createActions() {
     if (hasHelpAction ())
       return new Action[]{getRefactorAction(), getPreviewAction(), getCancelAction(), getHelpAction()};
     else
       return new Action[]{getRefactorAction(), getPreviewAction(), getCancelAction()};
   }
 
-  public Project getProject() {
+  protected Project getProject() {
     return myProject;
   }
 

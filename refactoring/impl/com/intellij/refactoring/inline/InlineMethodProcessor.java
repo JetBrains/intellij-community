@@ -46,12 +46,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private PsiMethod myMethod;
   private PsiJavaCodeReferenceElement myReference;
-  private Editor myEditor;
+  private final Editor myEditor;
   private final boolean myInlineThisOnly;
 
-  private PsiManager myManager;
-  private PsiElementFactory myFactory;
-  private CodeStyleManager myCodeStyleManager;
+  private final PsiManager myManager;
+  private final PsiElementFactory myFactory;
+  private final CodeStyleManager myCodeStyleManager;
 
   private PsiBlockStatement[] myAddedBraces;
   private final String myDescriptiveName;

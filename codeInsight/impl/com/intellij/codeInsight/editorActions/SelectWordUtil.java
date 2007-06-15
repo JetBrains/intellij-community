@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -256,7 +257,7 @@ public class SelectWordUtil {
     }
   }
 
-  public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, List<TextRange> ranges) {
+  public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
     TextRange camelRange = camel ? getCamelSelectionRange(editorText, cursorOffset) : null;
     if (camelRange != null) {
       ranges.add(camelRange);
@@ -1129,9 +1130,7 @@ public class SelectWordUtil {
     @Override
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
       List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-      if (true) {
-        ranges.add(e.getTextRange());
-      }
+      ranges.add(e.getTextRange());
       return ranges;
     }
   }

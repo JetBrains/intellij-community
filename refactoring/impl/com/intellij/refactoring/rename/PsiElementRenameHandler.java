@@ -3,7 +3,6 @@ package com.intellij.refactoring.rename;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.ant.PsiAntElement;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,14 +20,13 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * created at Nov 13, 2001
@@ -46,10 +44,10 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    PsiElement element = elements != null && elements.length == 1 ? elements[0] : null;
+    PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);
     LOG.assertTrue(element != null);
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     invoke(element, project, element, editor);
   }
 
@@ -156,9 +154,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
     }
 
-    String helpID = HelpID.getRenameHelpID(elementToRename);
-    final RenameDialog dialog = new RenameDialog(project, elementToRename, nameSuggestionContext, helpID);
-
+    final RenameDialog dialog = new RenameDialog(project, elementToRename, nameSuggestionContext, editor);
     dialog.show();
   }
 
@@ -174,15 +170,8 @@ public class PsiElementRenameHandler implements RenameHandler {
   @Nullable
   protected static PsiElement getElement(final DataContext dataContext) {
     PsiElement[] elementArray = BaseRefactoringAction.getPsiElementArray(dataContext);
-    if (elementArray == null) {
-      final VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
-      final Project project = DataKeys.PROJECT.getData(dataContext);
-      if (vFile != null && project != null) {
-        return PsiManager.getInstance(project).findFile(vFile);
-      }
-    }
 
-    if (elementArray == null || elementArray.length != 1) {
+    if (elementArray.length != 1) {
       return null;
     }
     return elementArray[0];

@@ -31,7 +31,7 @@ import java.util.HashMap;
 public class DataKey<T> {
   private static final Map<String, DataKey> ourDataKeyIndex = new HashMap<String, DataKey>();
 
-  private String myName;
+  private final String myName;
 
   private DataKey(final String name) {
     myName = name;

@@ -24,7 +24,7 @@ import java.util.List;
 public class SelectWordHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.SelectWordHandler");
 
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public SelectWordHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
@@ -116,7 +116,7 @@ public class SelectWordHandler extends EditorActionHandler {
         break;
       }
 
-      element = getUpperElement(element, selectionRange);
+      element = getUpperElement(element);
     }
 
     if (newRange == null) {
@@ -132,13 +132,13 @@ public class SelectWordHandler extends EditorActionHandler {
 
   @Nullable
   private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
-    return (CodeInsightUtil.isAntFile(file))
+    return CodeInsightUtil.isAntFile(file)
            ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
            : file.findElementAt(caretOffset);
   }
 
   @NotNull
-  private static PsiElement getUpperElement(final PsiElement e, final TextRange selectionRange) {
+  private static PsiElement getUpperElement(final PsiElement e) {
     final PsiElement parent = e.getParent();
 
     if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage()instanceof JavaLanguage && !(e instanceof PsiErrorElement)) {

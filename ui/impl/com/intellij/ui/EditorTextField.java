@@ -36,12 +36,12 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
   private Document myDocument;
-  private Project myProject;
-  private FileType myFileType;
+  private final Project myProject;
+  private final FileType myFileType;
   private EditorEx myEditor = null;
   private Component myNextFocusable = null;
   private boolean myWholeTextSelected = false;
-  private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
   private boolean myIsSupplementary;

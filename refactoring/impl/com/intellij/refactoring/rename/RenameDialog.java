@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -26,11 +27,14 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,24 +52,19 @@ public class RenameDialog extends RefactoringDialog {
   private JCheckBox myCbRenameVariables;
   private JCheckBox myCbRenameInheritors;
   private JCheckBox myCbRenameBoundForms;
-  private JLabel myNewNamePrefix = new JLabel("");
-
-
-  private String myHelpID;
-  private Project myProject;
-  private PsiElement myPsiElement;
+  private final JLabel myNewNamePrefix = new JLabel("");
+  private final String myHelpID;
+  private final PsiElement myPsiElement;
   private final PsiElement myNameSuggestionContext;
+  private final Editor myEditor;
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-  private boolean myToRenameVariables;
 
-  public RenameDialog(Project project,
-                      PsiElement psiElement,
-                      PsiElement nameSuggestionContext,
-                      String helpID) {
+  public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
+                      Editor editor) {
     super(project, true);
-    myProject = project;
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
+    myEditor = editor;
     setTitle(REFACTORING_NAME);
 
     createNewNameComponent();
@@ -81,7 +80,7 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     validateButtons();
-    myHelpID = helpID;
+    myHelpID = HelpID.getRenameHelpID(psiElement);
   }
 
   protected boolean isToSearchForTextOccurencesForRename() {
@@ -99,7 +98,7 @@ public class RenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, StdFileTypes.PLAIN_TEXT);
+    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, StdFileTypes.PLAIN_TEXT, myEditor);
     myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
@@ -111,7 +110,7 @@ public class RenameDialog extends RefactoringDialog {
         public void actionPerformed(ActionEvent e) {
           completeVariable(myNameSuggestionsField.getEditor());
         }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, KeyEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
   }
 
@@ -201,7 +200,7 @@ public class RenameDialog extends RefactoringDialog {
         name = name.substring(prefix.length());
       }
       final String[] words = PsiNameHelper.splitNameIntoWords(name);
-      if (VariableKind.STATIC_FINAL_FIELD.equals(kind)) {
+      if (kind == VariableKind.STATIC_FINAL_FIELD) {
         StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
           String word = words[i];
@@ -255,11 +254,11 @@ public class RenameDialog extends RefactoringDialog {
   public boolean isSearchInComments() {
     return myCbSearchInComments.isSelected();
   }
-  public boolean isToRenameInheritors() {
+  private boolean isToRenameInheritors() {
     return RefactoringSettings.getInstance().isToRenameInheritors(myPsiElement);
   }
 
-  public boolean isToRenameVariables() {
+  private boolean isToRenameVariables() {
     return RefactoringSettings.getInstance().isToRenameVariables(myPsiElement);
   }
 
@@ -275,15 +274,15 @@ public class RenameDialog extends RefactoringDialog {
     return null;
   }
 
-  public boolean shouldRenameVariables() {
+  private boolean shouldRenameVariables() {
     return myCbRenameVariables != null && myCbRenameVariables.isSelected();
   }
 
-  public boolean shouldRenameInheritors() {
+  private boolean shouldRenameInheritors() {
     return myCbRenameInheritors != null && myCbRenameInheritors.isSelected();
   }
 
-  public boolean shouldRenameForms() {
+  private boolean shouldRenameForms() {
     return myCbRenameBoundForms != null && myCbRenameBoundForms.isSelected();
   }
 
@@ -302,7 +301,7 @@ public class RenameDialog extends RefactoringDialog {
     myNameLabel = new JLabel();
     panel.add(myNameLabel, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 8, 4, ("".equals(myNewNamePrefix.getText()) ? 0 : 1));
+    gbConstraints.insets = new Insets(4, 8, 4, "".equals(myNewNamePrefix.getText()) ? 0 : 1);
     gbConstraints.gridwidth = 1;
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.weightx = 0;

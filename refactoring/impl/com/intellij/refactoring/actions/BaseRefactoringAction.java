@@ -86,7 +86,8 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
       presentation.setEnabled(element != null && !isSyntheticJsp(element) && isAvailableForLanguage(element.getLanguage()));
 
-    } else {
+    }
+    else {
       if (isAvailableInEditorOnly()) {
         presentation.setEnabled(false);
         return;
@@ -95,11 +96,8 @@ public abstract class BaseRefactoringAction extends AnAction {
       if (isEnabledOnDataContext(dataContext)) {
         presentation.setEnabled(true);
       }
-      else if (elements.length != 0) {
-        presentation.setEnabled(isEnabledOnElements(elements));
-      }
       else {
-        presentation.setEnabled(false);
+        presentation.setEnabled(elements.length != 0 && isEnabledOnElements(elements));
       }
     }
   }
@@ -118,9 +116,9 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   @NotNull
   public static PsiElement[] getPsiElementArray(DataContext dataContext) {
-    PsiElement[] psiElements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
+    PsiElement[] psiElements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
         psiElements = new PsiElement[]{element};
       }

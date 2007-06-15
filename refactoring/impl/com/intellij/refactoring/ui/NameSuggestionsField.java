@@ -1,25 +1,31 @@
 package com.intellij.refactoring.ui;
 
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 
 public class NameSuggestionsField implements Focusable {
   private final JComponent myComponent;
-  private EventListenerList myListenerList = new EventListenerList();
+  private final EventListenerList myListenerList = new EventListenerList();
   private final MyComboBoxModel myComboBoxModel;
   private final Project myProject;
 
@@ -49,6 +55,41 @@ public class NameSuggestionsField implements Focusable {
     myComboBoxModel = null;
   }
 
+  public NameSuggestionsField(final String[] suggestedNames, final Project project, final FileType fileType, @Nullable final Editor editor) {
+    this(suggestedNames, project, fileType);
+    if (editor != null) {
+      // later here because EditorTextField creates Editor during addNotify()
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          final int offset = editor.getCaretModel().getOffset();
+          List<TextRange> ranges = new ArrayList<TextRange>();
+          SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
+          Editor myEditor = getEditor();
+          if (myEditor == null) return;
+          for (TextRange wordRange : ranges) {
+            String word = editor.getDocument().getText().substring(wordRange.getStartOffset(), wordRange.getEndOffset());
+            if (word.equals(getName())) {
+              final SelectionModel selectionModel = editor.getSelectionModel();
+              final TextRange selected = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).shiftRight(-wordRange.getStartOffset());
+              myEditor.getSelectionModel().removeSelection();
+              int myOffset = offset - wordRange.getStartOffset();
+              myEditor.getCaretModel().moveToOffset(myOffset);
+              if (selectionModel.hasSelection()) {
+                myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
+              }
+              else {
+                if (myOffset == 0 || myOffset == myEditor.getDocument().getTextLength()) {
+                  myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
+                }
+              }
+              break;
+            }
+          }
+        }
+      });
+    }
+  }
+
   public void setSuggestions(final String[] suggestions) {
     if(myComboBoxModel == null) return;
     JComboBox comboBox = (JComboBox) myComponent;
@@ -63,10 +104,6 @@ public class NameSuggestionsField implements Focusable {
     else {
       comboBox.getEditor().setItem(oldItemFromTextField);
     }
-  }
-
-  public boolean isNameSuggestionsChangeable() {
-    return myComboBoxModel != null;
   }
 
   public JComponent getComponent(){
@@ -167,11 +204,12 @@ public class NameSuggestionsField implements Focusable {
     );
   }
 
-  public Editor getEditor () {
+  public Editor getEditor() {
     if (myComponent instanceof EditorTextField) {
       return ((EditorTextField)myComponent).getEditor();
-    } else {
-      return ((EditorTextField)(((JComboBox)myComponent).getEditor().getEditorComponent())).getEditor();
+    }
+    else {
+      return ((EditorTextField)((JComboBox)myComponent).getEditor().getEditorComponent()).getEditor();
     }
   }
 
@@ -186,9 +224,9 @@ public class NameSuggestionsField implements Focusable {
   private void fireDataChanged() {
     Object[] list = myListenerList.getListenerList();
 
-    for (int i = 0; i < list.length; i++) {
-      if (list[i] instanceof DataChanged) {
-        ((DataChanged) list[i]).dataChanged();
+    for (Object aList : list) {
+      if (aList instanceof DataChanged) {
+        ((DataChanged)aList).dataChanged();
       }
     }
   }
