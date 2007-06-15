@@ -97,6 +97,9 @@ public class InlineToAnonymousClassHandler {
           return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
         }
       }
+      if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+        return "Class cannot be inlined because it has static methods";
+      }
     }
 
     final PsiClass[] innerClasses = psiClass.getInnerClasses();
@@ -111,6 +114,9 @@ public class InlineToAnonymousClassHandler {
     for(PsiField field: fields) {
       final PsiModifierList fieldModifiers = field.getModifierList();
       if (fieldModifiers != null && fieldModifiers.hasModifierProperty(PsiModifier.STATIC)) {
+        if (!fieldModifiers.hasModifierProperty(PsiModifier.FINAL)) {
+          return "Class cannot be inlined because it has static non-final fields";
+        }
         Object initValue = null;
         final PsiExpression initializer = field.getInitializer();
         if (initializer != null) {

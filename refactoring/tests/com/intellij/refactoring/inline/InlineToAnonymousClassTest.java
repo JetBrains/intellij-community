@@ -194,6 +194,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because it has static fields with non-constant initializers");
   }
 
+  public void testNoInlineStaticNonFinalField() throws Exception {
+    doTestNoInline("Class cannot be inlined because it has static non-final fields");
+  }
+
+  public void testNoInlineStaticMethod() throws Exception {
+    doTestNoInline("Class cannot be inlined because it has static methods");
+  }
+
   public void testNoInlineStaticInitializer() throws Exception {
     doTestNoInline("Class cannot be inlined because it has static initializers");
   }
