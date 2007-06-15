@@ -253,8 +253,8 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
         myAutoScrollMode = state;
       }
     };
-    handler.install(myLeftPanel.myList);
-    handler.install(myRightPanel.myList);
+    handler.install(myLeftPanel.getList());
+    handler.install(myRightPanel.getList());
 
     final boolean shouldAddToolbar = !ApplicationManager.getApplication().isUnitTestMode();
     if (shouldAddToolbar) {
