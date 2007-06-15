@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.Annotation;
@@ -220,6 +221,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       assert documentRange.getText().equals(injectedPsi.getText());
 
       Language injectedLanguage = injectedPsi.getLanguage();
+      if (injectedPsi instanceof PsiFile) {
+        LanguageDialect languageDialect = ((PsiFile)injectedPsi).getLanguageDialect();
+        if (languageDialect != null) {
+          injectedLanguage = languageDialect;
+        }
+      }
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
       final List<Annotator> annotators = injectedLanguage.getAnnotators();
 
