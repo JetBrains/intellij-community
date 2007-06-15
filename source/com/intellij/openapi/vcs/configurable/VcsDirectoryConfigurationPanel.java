@@ -8,6 +8,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -30,11 +31,11 @@ import java.io.File;
  * @author yole
  */
 public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
-  private Project myProject;
-  private ProjectLevelVcsManager myVcsManager;
-  private TableView<VcsDirectoryMapping> myDirectoryMappingTable;
-  private ComboboxWithBrowseButton myVcsComboBox = new ComboboxWithBrowseButton();
-  final List<ModuleVcsListener> myListeners = new ArrayList<ModuleVcsListener>();
+  private final Project myProject;
+  private final ProjectLevelVcsManager myVcsManager;
+  private final TableView<VcsDirectoryMapping> myDirectoryMappingTable;
+  private final ComboboxWithBrowseButton myVcsComboBox = new ComboboxWithBrowseButton();
+  private final List<ModuleVcsListener> myListeners = new ArrayList<ModuleVcsListener>();
 
   private final ColumnInfo<VcsDirectoryMapping, String> DIRECTORY = new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("column.info.configure.vcses.directory")) {
     public String valueOf(final VcsDirectoryMapping mapping) {
@@ -42,7 +43,11 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       if (directory.length() == 0) {
         return "<Project Root>";
       }
-      return FileUtil.getRelativePath(new File(myProject.getBaseDir().getPath()), new File(directory));
+      VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir != null) {
+        return FileUtil.getRelativePath(new File(baseDir.getPath()), new File(directory));
+      }
+      return directory;
     }
   };
 
