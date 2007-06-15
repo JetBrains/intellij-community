@@ -49,4 +49,25 @@ public class VFileContentChangeEvent extends VFileEvent {
   public boolean isValid() {
     return myFile.isValid();
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VFileContentChangeEvent event = (VFileContentChangeEvent)o;
+
+    if (myNewModificationStamp != event.myNewModificationStamp) return false;
+    if (myOldModificationStamp != event.myOldModificationStamp) return false;
+    if (!myFile.equals(event.myFile)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myFile.hashCode();
+    result = 31 * result + (int)(myOldModificationStamp ^ (myOldModificationStamp >>> 32));
+    result = 31 * result + (int)(myNewModificationStamp ^ (myNewModificationStamp >>> 32));
+    return result;
+  }
 }

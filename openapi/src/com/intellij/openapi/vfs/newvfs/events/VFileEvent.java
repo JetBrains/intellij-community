@@ -3,7 +3,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 
 public abstract class VFileEvent {
@@ -28,4 +27,7 @@ public abstract class VFileEvent {
   public abstract VirtualFileSystem getFileSystem();
 
   public abstract boolean isValid();
+
+  public abstract int hashCode();
+  public abstract boolean equals(Object o);
 }

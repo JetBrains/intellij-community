@@ -3,22 +3,23 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
@@ -90,9 +91,7 @@ public class RefreshSessionImpl extends RefreshSession {
     manager.fireBeforeRefreshStart(myIsAsync);
 
     while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-      final List<VFileEvent> events = myEvents;
-      myEvents = new ArrayList<VFileEvent>();
-      ManagingFS.getInstance().processEvents(events);
+      ManagingFS.getInstance().processEvents(mergeEventsAndReset());
 
       scan();
     }
@@ -104,6 +103,16 @@ public class RefreshSessionImpl extends RefreshSession {
     }
 
     notifyCacheUpdaters();
+  }
+
+  private List<VFileEvent> mergeEventsAndReset() {
+    LinkedHashSet<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
+    final List<VFileEvent> events = new ArrayList<VFileEvent>();
+    for (VFileEvent event : mergedEvents) {
+      events.add(event);
+    }
+    myEvents = new ArrayList<VFileEvent>();
+    return events;
   }
 
   private void notifyCacheUpdaters() {

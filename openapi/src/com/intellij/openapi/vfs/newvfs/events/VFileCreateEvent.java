@@ -47,4 +47,25 @@ public class VFileCreateEvent extends VFileEvent {
   public boolean isValid() {
     return myParent.findChild(myChildName) == null;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VFileCreateEvent event = (VFileCreateEvent)o;
+
+    if (myDirectory != event.myDirectory) return false;
+    if (!myChildName.equals(event.myChildName)) return false;
+    if (!myParent.equals(event.myParent)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myParent.hashCode();
+    result = 31 * result + (myDirectory ? 1 : 0);
+    result = 31 * result + myChildName.hashCode();
+    return result;
+  }
 }

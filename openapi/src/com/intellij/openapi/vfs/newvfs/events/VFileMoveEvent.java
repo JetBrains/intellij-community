@@ -47,4 +47,25 @@ public class VFileMoveEvent extends VFileEvent {
   public boolean isValid() {
     return myFile.isValid() && myFile.getParent() == myOldParent && myOldParent.isValid();
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VFileMoveEvent event = (VFileMoveEvent)o;
+
+    if (!myFile.equals(event.myFile)) return false;
+    if (!myNewParent.equals(event.myNewParent)) return false;
+    if (!myOldParent.equals(event.myOldParent)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myFile.hashCode();
+    result = 31 * result + myOldParent.hashCode();
+    result = 31 * result + myNewParent.hashCode();
+    return result;
+  }
 }

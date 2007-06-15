@@ -53,4 +53,27 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   public boolean isValid() {
     return myFile.isValid();
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VFilePropertyChangeEvent event = (VFilePropertyChangeEvent)o;
+
+    if (!myFile.equals(event.myFile)) return false;
+    if (!myNewValue.equals(event.myNewValue)) return false;
+    if (!myOldValue.equals(event.myOldValue)) return false;
+    if (!myPropertyName.equals(event.myPropertyName)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myFile.hashCode();
+    result = 31 * result + myPropertyName.hashCode();
+    result = 31 * result + myOldValue.hashCode();
+    result = 31 * result + myNewValue.hashCode();
+    return result;
+  }
 }
