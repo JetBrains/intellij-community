@@ -312,7 +312,7 @@ public class GuiUtils {
     else if (component instanceof JLabel) {
       Color color = UIUtil.getTextInactiveTextColor();
       if (color == null) color = component.getForeground();
-      String changeColorString = "<font color=#"+Integer.toHexString(color.getRed())+Integer.toHexString(color.getGreen())+Integer.toHexString(color.getBlue())+">";
+      String changeColorString = "<font color=#" + colorToHex(color) +">";
       final JLabel label = (JLabel)component;
       String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
@@ -334,6 +334,18 @@ public class GuiUtils {
         }
       }
     }
+  }
+
+  public static String colorToHex(final Color color) {
+    return to2DigitsHex(color.getRed())
+           +to2DigitsHex(color.getGreen())
+           +to2DigitsHex(color.getBlue());
+  }
+
+  private static String to2DigitsHex(int i) {
+    String s = Integer.toHexString(i);
+    if (s.length() < 2) s = "0" + s;
+    return s;
   }
 
 }

@@ -33,4 +33,9 @@ public interface Property extends PsiNamedElement {
   void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;
 
   PropertiesFile getContainingFile() throws PsiInvalidElementAccessException;
+
+  /**
+   * @return text of comment preceding this property. Comment-start characters ('#' and '!') are stripped from the text.
+   */
+  @Nullable String getDocCommentText();
 }

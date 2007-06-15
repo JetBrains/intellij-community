@@ -6,7 +6,10 @@ import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -186,5 +189,25 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
 
   public PropertiesFile getContainingFile() {
     return (PropertiesFile)super.getContainingFile();
+  }
+
+  public String getDocCommentText() {
+    StringBuilder text = new StringBuilder();
+    for (PsiElement doc = getPrevSibling(); doc != null; doc = doc.getPrevSibling()) {
+      if (doc instanceof PsiWhiteSpace) {
+        doc = doc.getPrevSibling();
+      }
+      if (doc instanceof PsiComment) {
+        if (text.length() != 0) text.append("\n");
+        String comment = doc.getText();
+        String trimmed = StringUtil.trimStart(StringUtil.trimStart(comment, "#"), "!");
+        text.append(trimmed.trim());
+      }
+      else {
+        break;
+      }
+    }
+    if (text.length() == 0) return null;
+    return text.toString();
   }
 }

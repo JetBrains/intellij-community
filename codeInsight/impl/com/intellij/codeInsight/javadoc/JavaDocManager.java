@@ -58,17 +58,17 @@ public class JavaDocManager implements ProjectComponent {
   private final Project myProject;
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
-  private Alarm myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
-  public static final @NonNls String HTML_EXTENSION = ".html";
-  public static final @NonNls String PACKAGE_SUMMARY_FILE = "package-summary.html";
-  public static final @NonNls String PSI_ELEMENT_PROTOCOL = "psi_element://";
-  public static final @NonNls String DOC_ELEMENT_PROTOCOL = "doc_element://";
+  @NonNls private static final String HTML_EXTENSION = ".html";
+  @NonNls private static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
+  @NonNls public static final String PSI_ELEMENT_PROTOCOL = "psi_element://";
+  @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
-  private ActionManagerEx myActionManagerEx;
-  private AnActionListener myActionListener = new AnActionListener() {
+  private final ActionManagerEx myActionManagerEx;
+  private final AnActionListener myActionListener = new AnActionListener() {
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
       final JBPopup hint = getDocInfoHint();
       if (hint != null) {
@@ -93,7 +93,7 @@ public class JavaDocManager implements ProjectComponent {
     public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
     }
   };
-  private static int ourFlagsForTargetElements = TargetElementUtil.ELEMENT_NAME_ACCEPTED
+  private static final int ourFlagsForTargetElements = TargetElementUtil.ELEMENT_NAME_ACCEPTED
                                                              | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
   | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
   | TargetElementUtil.NEW_AS_CONSTRUCTOR
@@ -130,7 +130,6 @@ public class JavaDocManager implements ProjectComponent {
 
   public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
-
 
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
@@ -199,7 +198,7 @@ public class JavaDocManager implements ProjectComponent {
       myParameterInfoController = ParameterInfoController.getControllerAtOffset(editor, list.getTextRange().getStartOffset());
     }
 
-    PsiElement originalElement = (file != null)?file.findElementAt(editor.getCaretModel().getOffset()): null;
+    PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
     PsiElement element = findTargetElement(editor, file, originalElement);
 
     if (element instanceof PsiAnonymousClass) {
@@ -362,7 +361,7 @@ public class JavaDocManager implements ProjectComponent {
 
   public JavaDocProvider getDefaultProvider(final PsiElement _element) {
     return new JavaDocProvider() {
-      private SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
+      private final SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
 
       public String getJavaDoc() throws Exception {
         return getDocInfo(element.getElement());
@@ -441,7 +440,7 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public JBPopup getDocInfoHint() {
+  private JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible()) {
@@ -568,9 +567,8 @@ public class JavaDocManager implements ProjectComponent {
     });
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
-        final String text;
         final Exception[] ex = new Exception[1];
-        text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
           @Nullable
           public String compute() {
             try {
@@ -630,12 +628,11 @@ public class JavaDocManager implements ProjectComponent {
   @Nullable
   private String getDocInfo(PsiElement element) throws Exception {
     if (element instanceof PsiMethodCallExpression) {
-      return getMethodCandidateInfo(((PsiMethodCallExpression)element));
+      return getMethodCandidateInfo((PsiMethodCallExpression)element);
     }
     else {
       final DocumentationProvider provider = getProviderFromElement(element);
-      final JavaDocInfoGenerator javaDocInfoGenerator =
-        new JavaDocInfoGenerator(getProject(element), element, provider);
+      final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(getProject(element), element, provider);
 
       if (myParameterInfoController != null) {
         final Object[] objects = myParameterInfoController.getSelectedElements();
@@ -680,12 +677,17 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public static @Nullable DocumentationProvider getProviderFromElement(final PsiElement element) {
+  @Nullable
+  public static DocumentationProvider getProviderFromElement(final PsiElement element) {
     SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
     PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
-    PsiFile containingFile = (originalElement!=null)?originalElement.getContainingFile() : (element!=null)?element.getContainingFile():null;
+    PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
 
-    return containingFile != null ? containingFile.getLanguage().getDocumentationProvider():null;
+    DocumentationProvider originalProvider = containingFile != null ? containingFile.getLanguage().getDocumentationProvider() : null;
+    DocumentationProvider elementProvider = element == null ? null : element.getLanguage().getDocumentationProvider();
+    if (elementProvider == null) return originalProvider;
+
+    return elementProvider; //give priority to the real element
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
@@ -694,7 +696,7 @@ public class JavaDocManager implements ProjectComponent {
 
     final String text = expr.getText();
     if (candidates.length > 0) {
-      final @NonNls StringBuffer sb = new StringBuffer();
+      @NonNls final StringBuffer sb = new StringBuffer();
 
       for (final CandidateInfo candidate : candidates) {
         final PsiElement element = candidate.getElement();
@@ -703,10 +705,10 @@ public class JavaDocManager implements ProjectComponent {
           continue;
         }
 
-        final String str = PsiFormatUtil.formatMethod(((PsiMethod)element), candidate.getSubstitutor(),
+        final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
                                                       PsiFormatUtil.SHOW_TYPE);
-        createElementLink(sb, element, str, null);
+        createElementLink(sb, element, str);
       }
 
       return CodeInsightBundle.message("javadoc.candiates", text, sb);
@@ -715,13 +717,12 @@ public class JavaDocManager implements ProjectComponent {
     return CodeInsightBundle.message("javadoc.candidates.not.found", text);
   }
 
-  private void createElementLink(final @NonNls StringBuffer sb, final PsiElement element, final String str,final String str2) {
+  private void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
     sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
     sb.append(JavaDocUtil.getReferenceText(getProject(element), element));
     sb.append("\">");
     sb.append(str);
     sb.append("</a>");
-    if (str2 != null) sb.append(str2);
     sb.append("<br>");
   }
 
@@ -815,7 +816,7 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public Project getProject(final @Nullable PsiElement element) {
+  public Project getProject(@Nullable final PsiElement element) {
     assert element == null || myProject == element.getProject();
     return myProject;
   }
