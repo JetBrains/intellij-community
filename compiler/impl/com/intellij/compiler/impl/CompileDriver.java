@@ -37,7 +37,10 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -51,9 +54,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -65,9 +66,7 @@ public class CompileDriver {
   private final Project myProject;
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
   private Map<Pair<Compiler, Module>, VirtualFile> myGenerationCompilerModuleToOutputDirMap;
-  private final StringInterner myStringInterner = new StringInterner();
   private String myCachesDirectoryPath;
-  private TreeBasedPathsSet myOutputFilesOnDisk = null;
   private boolean myShouldClearOutputDirectory;
 
   private Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
@@ -463,19 +462,6 @@ public class CompileDriver {
         return ExitStatus.ERRORS;
       }
 
-      if (!isRebuild) {
-        // compile tasks may change the contents of the output dirs so it is more safe to gather output files here
-        context.getProgressIndicator().setText(CompilerBundle.message("progress.scanning.output"));
-        myOutputFilesOnDisk = new TreeBasedPathsSet(myStringInterner, '/');
-        CompilerPathsEx.visitFiles(context.getAllOutputDirectories(), new CompilerPathsEx.FileVisitor() {
-          protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
-            if (!(file.getFileSystem() instanceof JarFileSystem)) {
-              myOutputFilesOnDisk.add(filePath);
-            }
-          }
-        });
-      }
-
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
@@ -510,16 +496,21 @@ public class CompileDriver {
         // drop in case it has not been dropped yet.
         dropDependencyCache(context);
 
+        final VirtualFile[] allOutputDirs = context.getAllOutputDirectories();
+        
         if (didSomething && GENERATE_CLASSPATH_INDEX) {
           context.getProgressIndicator().pushState();
           context.getProgressIndicator().setText("Generating classpath index...");
-          final VirtualFile[] allOutputDirs = context.getAllOutputDirectories();
           int count = 0;
           for (VirtualFile file : allOutputDirs) {
             context.getProgressIndicator().setFraction(((double)++count) / allOutputDirs.length);
             createClasspathIndex(file); 
           }
           context.getProgressIndicator().popState();
+        }
+        
+        if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+          CompilerDirectoryTimestamp.updateTimestamp(Arrays.asList(allOutputDirs));
         }
       }
 
@@ -620,7 +611,7 @@ public class CompileDriver {
     final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class);
     final VfsSnapshot snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VfsSnapshot>() {
       public VfsSnapshot compute() {
-        return new VfsSnapshot(myStringInterner, context.getCompileScope().getFiles(null, true));
+        return new VfsSnapshot(context.getCompileScope().getFiles(null, true));
       }
     });
 
@@ -1024,7 +1015,7 @@ public class CompileDriver {
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          findOutOfDateFiles(compiler, snapshot, forceCompile, cache, toCompile, context);
+          findOutOfDateFiles(compiler, forceCompile, cache, toCompile, context);
 
           if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
@@ -1035,7 +1026,7 @@ public class CompileDriver {
               if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
                 final PsiFile psiFile = psiManager.findFile(file);
                 if (psiFile != null) {
-                  addDependentFiles(psiFile, toCompile, cache, snapshot, sourcesWithOutputRemoved, compiler, context);
+                  addDependentFiles(psiFile, toCompile, cache, sourcesWithOutputRemoved, compiler, context);
                 }
               }
             }
@@ -1099,12 +1090,12 @@ public class CompileDriver {
   }
 
   private Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) {
-    //final String[] outputUrls = cache.getOutputUrls();
     final Set<String> set = new HashSet<String>();
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
-      String outputUrl = it.next();
-      if (!myOutputFilesOnDisk.contains(outputUrl)) {
-        set.add(cache.getSourceUrl(outputUrl));
+      String outputPath = it.next();
+      if (lfs.findFileByPath(outputPath) == null/*!myOutputFilesOnDisk.contains(outputPath)*/) {
+        set.add(cache.getSourceUrl(outputPath));
       }
     }
     return set;
@@ -1118,16 +1109,22 @@ public class CompileDriver {
                                  final Set<String> toDelete,
                                  final CompilerConfiguration compilerConfiguration) {
     final CompileScope scope = context.getCompileScope();
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final boolean outputDirsUpToDate = CompilerDirectoryTimestamp.isUpToDate(Arrays.asList(context.getAllOutputDirectories()));
+
     for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
       final String outputPath = it.next();
       final String sourceUrl = cache.getSourceUrl(outputPath);
+      if (!scope.belongs(sourceUrl)) {
+        continue;
+      }
       final VirtualFile sourceFile = snapshot.getFileByUrl(sourceUrl);
 
       boolean needRecompile = false;
       boolean shouldDelete;
-      if (myOutputFilesOnDisk.contains(outputPath)) {
+      if (outputDirsUpToDate || lfs.findFileByPath(outputPath) != null/*myOutputFilesOnDisk.contains(outputPath)*/) {
         if (sourceFile == null) {
-          shouldDelete = scope.belongs(sourceUrl);
+          shouldDelete = true/*scope.belongs(sourceUrl)*/;
         }
         else {
           if (toCompile.contains(sourceFile)) {
@@ -1166,7 +1163,7 @@ public class CompileDriver {
       }
 
       if (needRecompile) {
-        if (sourceFile != null && scope.belongs(sourceUrl)) {
+        if (sourceFile != null /*&& scope.belongs(sourceUrl)*/) {
           if (!compilerConfiguration.isExcludedFromCompilation(sourceFile)) {
             toCompile.add(sourceFile);
           }
@@ -1275,40 +1272,31 @@ public class CompileDriver {
     }
   }
 
-  private void findOutOfDateFiles(final TranslatingCompiler compiler,
-                                  final VfsSnapshot snapshot,
-                                  final boolean forceCompile,
+  private void findOutOfDateFiles(final TranslatingCompiler compiler, final boolean forceCompile,
                                   final TranslatingCompilerStateCache cache,
                                   final Set<VirtualFile> toCompile,
                                   final CompileContext context) {
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
-
-    snapshot.forEachUrl(new TObjectProcedure<String>() {
-      public boolean execute(final String url) {
-        final VirtualFile file = snapshot.getFileByUrl(url);
-        if (compiler.isCompilableFile(file, context)) {
-          if (!forceCompile && compilerConfiguration.isExcludedFromCompilation(file)) {
-            return true;
-          }
-          if (forceCompile || file.getTimeStamp() != cache.getSourceTimestamp(url)) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("File is out-of-date: " + url + "; current timestamp = " + file.getTimeStamp() + "; stored timestamp = " +
-                        cache.getSourceTimestamp(url));
-            }
-            toCompile.add(file);
-          }
+    for (VirtualFile file : context.getCompileScope().getFiles(null, true)) {
+      if (compiler.isCompilableFile(file, context)) {
+        if (!forceCompile && compilerConfiguration.isExcludedFromCompilation(file)) {
+          continue;
         }
-        return true;
+        final String url = file.getUrl();
+        if (forceCompile || file.getTimeStamp() != cache.getSourceTimestamp(url)) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("File is out-of-date: " + url + "; current timestamp = " + file.getTimeStamp() + "; stored timestamp = " + cache.getSourceTimestamp(url));
+          }
+          toCompile.add(file);
+        }
       }
-    });
+    }
   }
 
 
   private void addDependentFiles(final PsiFile psiFile,
                                  Set<VirtualFile> toCompile,
-                                 final TranslatingCompilerStateCache cache,
-                                 VfsSnapshot snapshot,
-                                 Set<String> sourcesWithOutputRemoved,
+                                 final TranslatingCompilerStateCache cache, Set<String> sourcesWithOutputRemoved,
                                  TranslatingCompiler compiler,
                                  CompileContextImpl context) {
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile));
@@ -1324,10 +1312,7 @@ public class CompileDriver {
         if (vFile == null || toCompile.contains(vFile)) {
           continue;
         }
-        String url = snapshot.getUrlByFile(vFile);
-        if (url == null) { // the file does not belong to this snapshot
-          url = vFile.getUrl();
-        }
+        final String url = vFile.getUrl();
         if (!sourcesWithOutputRemoved.contains(url)) {
           if (vFile.getTimeStamp() == cache.getSourceTimestamp(url)) {
             continue;
@@ -1337,7 +1322,7 @@ public class CompileDriver {
           continue;
         }
         toCompile.add(vFile);
-        addDependentFiles(dependentFile, toCompile, cache, snapshot, sourcesWithOutputRemoved, compiler, context);
+        addDependentFiles(dependentFile, toCompile, cache, sourcesWithOutputRemoved, compiler, context);
       }
     }
   }
@@ -1358,11 +1343,6 @@ public class CompileDriver {
     String path = map.get(module);
     if (path == null) {
       path = CompilerPaths.getModuleOutputPath(module, inTestSourceContent);
-      /*
-      if (!path.endsWith("/")) {
-        path = path + "/";
-      }
-      */
       map.put(module, path);
     }
 
@@ -1472,7 +1452,7 @@ public class CompileDriver {
   public TranslatingCompilerStateCache getTranslatingCompilerCache(TranslatingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new TranslatingCompilerStateCache(myCachesDirectoryPath, getCompilerIdString(compiler), myStringInterner);
+      cache = new TranslatingCompilerStateCache(myCachesDirectoryPath, getCompilerIdString(compiler));
       myCompilerToCacheMap.put(compiler, cache);
     }
     else {
@@ -1484,7 +1464,7 @@ public class CompileDriver {
   private FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new FileProcessingCompilerStateCache(myCachesDirectoryPath, getCompilerIdString(compiler), compiler, myStringInterner);
+      cache = new FileProcessingCompilerStateCache(myCachesDirectoryPath, getCompilerIdString(compiler), compiler);
       myCompilerToCacheMap.put(compiler, cache);
     }
     else {
@@ -1496,8 +1476,7 @@ public class CompileDriver {
   private StateCache<ValidityState> getGeneratingCompilerCache(final GeneratingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new StateCache<ValidityState>(myCachesDirectoryPath + File.separator + getCompilerIdString(compiler) + "_timestamp.dat",
-                                            myStringInterner) {
+      cache = new StateCache<ValidityState>(myCachesDirectoryPath + File.separator + getCompilerIdString(compiler) + "_timestamp.dat") {
         public ValidityState read(DataInputStream stream) throws IOException {
           return compiler.createValidityState(stream);
         }
