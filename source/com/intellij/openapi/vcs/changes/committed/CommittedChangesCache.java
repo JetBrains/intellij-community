@@ -275,8 +275,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return false;
   }
 
-  private Collection<ChangesCacheFile> getAllCaches() {
-    Collection<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
+  private List<ChangesCacheFile> getAllCaches() {
+    List<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
     final VirtualFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
         return myVcsManager.getAllVersionedRoots();
@@ -566,19 +566,30 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
       public void onSuccess() {
         myRefreshingIncomingChanges = false;
-        myCachedIncomingChangeLists = null;
         LOG.info("Incoming changes refresh complete, clearing cached incoming changes");
-        notifyIncomingChangesUpdated(null);
+        notifyReloadIncomingChanges();
       }
     };
     myTaskQueue.run(task);    
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty) {
-    final Collection<ChangesCacheFile> files = getAllCaches();
+    final Consumer<List<CommittedChangeList>> notifyConsumer = new Consumer<List<CommittedChangeList>>() {
+      public void consume(final List<CommittedChangeList> committedChangeLists) {
+        if (committedChangeLists.size() > 0) {
+          notifyReloadIncomingChanges();
+        }
+      }
+    };
+    final List<ChangesCacheFile> files = getAllCaches();
     for(ChangesCacheFile file: files) {
-      refreshCacheAsync(file, initIfEmpty, null);
+      refreshCacheAsync(file, initIfEmpty, notifyConsumer);
     }
+  }
+
+  private void notifyReloadIncomingChanges() {
+    myCachedIncomingChangeLists = null;
+    notifyIncomingChangesUpdated(null);
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
