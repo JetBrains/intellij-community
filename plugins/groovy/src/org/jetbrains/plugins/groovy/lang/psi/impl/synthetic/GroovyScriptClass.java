@@ -52,7 +52,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   }
 
   public String toString() {
-    return "MigrationClass:" + myQualifiedName;
+    return "Script Class:" + myQualifiedName;
   }
 
   public String getText() {
