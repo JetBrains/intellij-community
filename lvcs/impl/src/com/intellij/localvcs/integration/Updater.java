@@ -140,13 +140,13 @@ public class Updater implements CacheUpdater {
         createRecursively(f);
       }
       else {
+        if (!e.getName().equals(f.getName())) {
+          myVcs.rename(e.getPath(), f.getName());
+        }
         if (f.isDirectory()) {
           updateRecursively(e, f);
         }
         else {
-          if (!e.getName().equals(f.getName())) {
-            myVcs.rename(e.getPath(), f.getName());
-          }
           if (e.isOutdated(f.getTimeStamp())) {
             myFilesToUpdate.add(f);
           }

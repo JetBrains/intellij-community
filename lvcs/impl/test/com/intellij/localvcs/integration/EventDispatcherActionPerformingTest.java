@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.openapi.command.CommandEvent;
 import org.junit.Test;
 
 import java.util.List;
@@ -95,7 +96,8 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
   public void testActionInsideCommand() {
     vcs.createFile("f", cf("1"), -1);
 
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent("command");
+    d.commandStarted(e);
     vcs.changeFileContent("f", cf("2"), -1);
     gateway.addUnsavedDocument("f", "3");
 
@@ -105,7 +107,7 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
     d.finishAction("action");
 
     vcs.changeFileContent("f", cf("6"), -1);
-    d.commandFinished(createCommandEvent("command"));
+    d.commandFinished(e);
 
     List<Revision> rr = vcs.getRevisionsFor("f");
     assertEquals(3, rr.size());

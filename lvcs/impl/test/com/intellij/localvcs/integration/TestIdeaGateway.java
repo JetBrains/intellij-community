@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.mock.MockDocument;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -16,6 +17,10 @@ public class TestIdeaGateway extends IdeaGateway {
 
   public TestIdeaGateway() {
     super(null);
+  }
+
+  public TestIdeaGateway(Project p) {
+    super(p);
   }
 
   @Override

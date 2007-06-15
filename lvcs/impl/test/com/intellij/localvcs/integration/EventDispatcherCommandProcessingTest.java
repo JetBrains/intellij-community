@@ -1,36 +1,57 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.project.Project;
+import static org.easymock.classextension.EasyMock.createMock;
 import org.junit.Ignore;
 import org.junit.Test;
 
 public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCase {
   @Test
   public void testTreatingAllEventsAsOne() {
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent();
+
+    d.commandStarted(e);
     fireCreated(new TestVirtualFile("file", null, -1));
     fireContentChanged(new TestVirtualFile("file", null, -1));
-    d.commandFinished(createCommandEvent(null));
+    d.commandFinished(e);
 
     assertEquals(1, vcs.getRevisionsFor("file").size());
   }
 
   @Test
   public void testNamedCommands() {
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent("name");
+
+    d.commandStarted(e);
     fireCreated(new TestVirtualFile("file", null, -1));
-    d.commandFinished(createCommandEvent("name"));
+    d.commandFinished(e);
 
     assertEquals("name", vcs.getRevisionsFor("file").get(0).getCauseChangeName());
   }
 
   @Test
+  public void testIgnoringCommandsForAnotherProject() {
+    Project anotherProject = createMock(Project.class);
+
+    CommandEvent e = createCommandEvent("command", anotherProject);
+    d.commandStarted(e);
+    fireCreated(new TestVirtualFile("file", null, -1));
+    d.commandFinished(e);
+
+    assertNull(vcs.getRevisionsFor("file").get(0).getCauseChangeName());
+  }
+
+  @Test
   public void testDeletionAndRecreationOfFile() {
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent();
+
+    d.commandStarted(e);
     TestVirtualFile f = new TestVirtualFile("f", "a", -1);
     fireCreated(f);
     fireDeletion(f);
     fireCreated(new TestVirtualFile("f", "b", -1));
-    d.commandFinished(createCommandEvent(null));
+    d.commandFinished(e);
 
     assertTrue(vcs.hasEntry("f"));
     assertEquals(c("b"), vcs.getEntry("f").getContent());
@@ -40,8 +61,10 @@ public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCas
   public void testTreatingAllEventsAfterCommandAsSeparate() {
     vcs.createDirectory("root");
 
-    d.commandStarted(null);
-    d.commandFinished(createCommandEvent(null));
+    CommandEvent e = createCommandEvent();
+    d.commandStarted(e);
+    d.commandFinished(e);
+
     fireCreated(new TestVirtualFile("root/one", null, -1));
     fireCreated(new TestVirtualFile("root/two", null, -1));
 
@@ -52,14 +75,16 @@ public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCas
   public void testIgnoringRefreshesDuringCommandProcessing() {
     vcs.createDirectory("root");
 
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent();
+
+    d.commandStarted(e);
     fireCreated(new TestVirtualFile("root/one", null, -1));
     d.beforeRefreshStart(false);
     fireCreated(new TestVirtualFile("root/two", null, -1));
     fireCreated(new TestVirtualFile("root/three", null, -1));
     d.afterRefreshFinish(false);
     fireCreated(new TestVirtualFile("root/four", null, -1));
-    d.commandFinished(createCommandEvent(null));
+    d.commandFinished(e);
 
     assertEquals(2, vcs.getRevisionsFor("root").size());
   }
@@ -67,12 +92,14 @@ public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCas
   @Test
   @Ignore("its good idea to make it work")
   public void testTryingToStartCommandProcessingTwiceThrowsException() {
-    d.commandStarted(null);
+    CommandEvent e = createCommandEvent();
+
+    d.commandStarted(e);
     try {
-      d.commandStarted(null);
+      d.commandStarted(e);
       fail();
     }
-    catch (IllegalStateException e) {
+    catch (IllegalStateException ex) {
     }
   }
 
@@ -80,7 +107,7 @@ public class EventDispatcherCommandProcessingTest extends EventDispatcherTestCas
   @Ignore("its good idea to make it work")
   public void testFinishingCommandProcessingBeforeStartingItThrowsException() {
     try {
-      d.commandFinished(createCommandEvent(null));
+      d.commandFinished(createCommandEvent());
       fail();
     }
     catch (IllegalStateException e) {

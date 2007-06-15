@@ -4,6 +4,7 @@ import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
@@ -15,18 +16,29 @@ import org.junit.Before;
 
 public class EventDispatcherTestCase extends LocalVcsTestCase {
   LocalVcs vcs = new InMemoryLocalVcs();
+  Project project;
   TestIdeaGateway gateway;
   EventDispatcher d;
 
   @Before
   public void setUp() {
-    gateway = new TestIdeaGateway();
+    project = createMock(Project.class);
+    gateway = new TestIdeaGateway(project);
     d = new EventDispatcher(vcs, gateway);
   }
 
+  protected CommandEvent createCommandEvent() {
+    return createCommandEvent(null, project);
+  }
+
   protected CommandEvent createCommandEvent(String name) {
+    return createCommandEvent(name, project);
+  }
+
+  protected CommandEvent createCommandEvent(String name, Project p) {
     CommandEvent e = createMock(CommandEvent.class);
-    expect(e.getCommandName()).andReturn(name);
+    expect(e.getProject()).andStubReturn(p);
+    expect(e.getCommandName()).andStubReturn(name);
     replay(e);
     return e;
   }

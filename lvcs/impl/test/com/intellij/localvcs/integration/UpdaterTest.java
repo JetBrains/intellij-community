@@ -434,18 +434,22 @@ public class UpdaterTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testUpdatingFileNameWhenCaseInsensitiveAndUpToDate() {
+  public void testUpdatingNameWhenCaseInsensitiveAndUpToDate() {
     Paths.setCaseSensitive(false);
 
-    TestVirtualFile root = new TestVirtualFile("root");
-    root.addChild(new TestVirtualFile("FILE", null, 1L));
+    TestVirtualFile root = new TestVirtualFile("ROOT");
+    TestVirtualFile dir = new TestVirtualFile("DIR");
+    dir.addChild(new TestVirtualFile("FILE", null, 1L));
+    root.addChild(dir);
 
     vcs.createDirectory("root");
-    vcs.createFile("root/file", null, 1L);
+    vcs.createDirectory("root/dir");
+    vcs.createFile("root/dir/file", null, 1L);
 
     updateWith(root);
 
-    assertEquals("FILE", vcs.getEntry("root/file").getName());
+    assertEquals("DIR", vcs.getEntry("root/dir").getName());
+    assertEquals("FILE", vcs.getEntry("root/dir/file").getName());
   }
 
   @Test
