@@ -31,18 +31,19 @@
  */
 package com.intellij.cvsSupport2.updateinfo;
 
-import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
-import com.intellij.cvsSupport2.cvsoperations.cvsMessages.FileMessage;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsUpdatePolicy;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.FileMessage;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.update.FileGroup;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
@@ -72,28 +73,14 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
     }
   }
 
-  private FileGroup getCollectionFor(int messageType, VirtualFile vFile) {
+  private FileGroup getCollectionFor(int messageType, @Nullable VirtualFile vFile) {
     switch (messageType) {
       case FileMessage.MODIFIED:
         return myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID);
       case FileMessage.MERGED:
-        {
-          Entry entry = CvsEntriesManager.getInstance().getEntryFor(vFile);
-          if (entry == null) return myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
-          if (entry.isBinary()) {
-            return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
-          }
-          return myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
-        }
+        return getMergedFileGroup(vFile);
       case FileMessage.MERGED_WITH_CONFLICTS:
-        {
-          Entry entry = CvsEntriesManager.getInstance().getEntryFor(vFile);
-          if (entry == null) return myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
-          if (entry.isBinary()) {
-            return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
-          }
-          return myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
-        }
+        return getMergedFileGroup(vFile);
       case FileMessage.CREATED_BY_SECOND_PARTY:
         return myUpdatedFiles.getGroupById(CvsUpdatePolicy.CREATED_BY_SECOND_PARTY_ID);
       case FileMessage.NOT_IN_REPOSITORY:
@@ -126,6 +113,16 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
 
     }
     return myUpdatedFiles.getGroupById(FileGroup.UNKNOWN_ID);
+  }
+
+  private FileGroup getMergedFileGroup(final VirtualFile vFile) {
+    if (vFile != null) {
+      Entry entry = CvsEntriesManager.getInstance().getEntryFor(vFile);
+      if (entry != null && entry.isBinary()) {
+        return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
+      }
+    }
+    return myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
   }
 
 
