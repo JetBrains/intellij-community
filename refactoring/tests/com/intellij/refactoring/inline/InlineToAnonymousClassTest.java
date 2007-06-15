@@ -126,6 +126,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testGenericsFieldDeclaration() throws Exception {
+    doTest(false);
+  }
+
   public void testQualifyInner() throws Exception {
     doTest(false);
   }

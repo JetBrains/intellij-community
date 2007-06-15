@@ -28,19 +28,19 @@ import java.util.Map;
 class InlineToAnonymousConstructorProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineToAnonymousConstructorProcessor");
 
-  private static Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
-  private static Key<PsiCallExpression> ourCallKey = Key.create("call");
-  private static Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
-  private static Pattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
-  private static Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
-  private static Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
+  private static final Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
+  private static final Key<PsiCallExpression> ourCallKey = Key.create("call");
+  private static final Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
+  private static final Pattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
+  private static final Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
+  private static final Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
 
   private final PsiClass myClass;
   private final PsiNewExpression myNewExpression;
-  private PsiType mySuperType;
+  private final PsiType mySuperType;
   private final Map<String, PsiExpression> myFieldInitializers = new HashMap<String, PsiExpression>();
   private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<PsiParameter, PsiVariable>();
-  private PsiStatement myNewStatement;
+  private final PsiStatement myNewStatement;
   private final PsiElementFactory myElementFactory;
   private PsiMethod myConstructor;
   private PsiExpressionList myConstructorArguments;
@@ -117,6 +117,7 @@ class InlineToAnonymousConstructorProcessor {
       }
       else if (child instanceof PsiField) {
         PsiField field = (PsiField) child;
+        replaceReferences(field, substitutedParameters, outerClassLocal);
         PsiExpression initializer = myFieldInitializers.get(field.getName());
         boolean noInitializer = (field.getInitializer() == null);
         field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
