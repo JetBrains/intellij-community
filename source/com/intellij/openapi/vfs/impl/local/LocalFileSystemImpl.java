@@ -534,12 +534,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       myCachedNormalizedRequests = null;
       setUpFileWatcher();
-      if (!filesToSynchronize.isEmpty()) {
-        refreshFiles(filesToSynchronize, toWatchRecursively);
-      }
     }
     finally {
       WRITE_LOCK.unlock();
+    }
+    if (!filesToSynchronize.isEmpty()) {
+      refreshFiles(filesToSynchronize, toWatchRecursively);
     }
 
     return result;
