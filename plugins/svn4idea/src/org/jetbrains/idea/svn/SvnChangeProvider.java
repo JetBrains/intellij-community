@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -35,14 +36,16 @@ import java.util.*;
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
 
-  private SvnVcs myVcs;
-  private VcsContextFactory myFactory;
-  private SvnBranchConfigurationManager myBranchConfigurationManager;
+  private final SvnVcs myVcs;
+  private final VcsContextFactory myFactory;
+  private final SvnBranchConfigurationManager myBranchConfigurationManager;
+  private final ProjectRootManager myProjectRootManager;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
     myFactory = PeerFactory.getInstance().getVcsContextFactory();
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
+    myProjectRootManager = ProjectRootManager.getInstance(myVcs.getProject());
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
@@ -198,6 +201,7 @@ public class SvnChangeProvider implements ChangeProvider {
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         final VirtualFile virtualFile = path.getVirtualFile();
+        if (myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
         context.getBuilder().processUnversionedFile(virtualFile);
         // process children recursively!
         if (recursively && path.isDirectory() && virtualFile != null) {
