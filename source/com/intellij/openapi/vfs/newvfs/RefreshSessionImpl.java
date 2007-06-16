@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
+import com.intellij.util.concurrency.Semaphore;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,11 +25,12 @@ import java.util.List;
 public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
-  private final Runnable myFinishRunnable;
+  private Runnable myFinishRunnable;
   private final List<CacheUpdater> myRefreshParticipants;
   
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private final Semaphore mySemaphore = new Semaphore();
 
   public RefreshSessionImpl(final boolean isAsync, boolean reqursively,
                             final Runnable finishRunnable,
@@ -60,6 +62,7 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   public void launch() {
+    mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
@@ -85,24 +88,33 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   public void fireEvents() {
-    if (myEvents.isEmpty() && myFinishRunnable == null) return;
+    try {
+      if (myEvents.isEmpty() && myFinishRunnable == null) return;
 
-    final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
-    manager.fireBeforeRefreshStart(myIsAsync);
+      final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+      manager.fireBeforeRefreshStart(myIsAsync);
 
-    while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-      ManagingFS.getInstance().processEvents(mergeEventsAndReset());
+      while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
+        ManagingFS.getInstance().processEvents(mergeEventsAndReset());
 
-      scan();
+        scan();
+      }
+
+      manager.fireAfterRefreshFinish(myIsAsync);
+
+      if (myFinishRunnable != null) {
+        myFinishRunnable.run();
+      }
+
+      notifyCacheUpdaters();
     }
-
-    manager.fireAfterRefreshFinish(myIsAsync);
-
-    if (myFinishRunnable != null) {
-      myFinishRunnable.run();
+    finally {
+      mySemaphore.up();
     }
+  }
 
-    notifyCacheUpdaters();
+  public void waitFor() {
+    mySemaphore.waitFor();
   }
 
   private List<VFileEvent> mergeEventsAndReset() {
@@ -139,5 +151,13 @@ public class RefreshSessionImpl extends RefreshSession {
         synchronizer.execute();
       }
     }
+  }
+
+  public Runnable getFinishRunnable() {
+    return myFinishRunnable;
+  }
+
+  public void setFinishRunnable(final Runnable finishRunnable) {
+    myFinishRunnable = finishRunnable;
   }
 }

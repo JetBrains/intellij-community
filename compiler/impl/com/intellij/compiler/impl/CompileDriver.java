@@ -763,14 +763,9 @@ public class CompileDriver {
       else { // refresh is still required
         pruneEmptyDirectories(outputDirectories); // to avoid too much files deleted events
 
-        CompilerUtil.doRefresh(new Runnable() {
-          public void run() {
-            final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(myProject).getModules());
-            for (final VirtualFile outputDirectory : outputDirectories) {
-              outputDirectory.refresh(false, true);
-            }
-          }
-        });
+        for (final VirtualFile outputDirectory : CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(myProject).getModules())) {
+          outputDirectory.refresh(false, true);
+        }
       }
       dropScopesCaches();
 

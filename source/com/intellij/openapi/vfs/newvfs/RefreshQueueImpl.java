@@ -4,6 +4,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,36 +29,53 @@ public class RefreshQueueImpl extends RefreshQueue {
 
   public void execute(final RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      myQueue.submit(new Runnable() {
-        public void run() {
-          try {
-            myRefreshIndicator.start();
-
-            try {
-              session.scan();
-            }
-            finally {
-              myRefreshIndicator.stop();
-            }
-          }
-          finally {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    session.fireEvents();
-                  }
-                });
-              }
-            }, ModalityState.NON_MODAL);
-          }
-        }
-      });
+      queueSession(session, ModalityState.NON_MODAL);
     }
     else {
-      session.scan();
-      session.fireEvents();
+      final Application app = ApplicationManager.getApplication();
+      boolean isEDT = app.isDispatchThread();
+      if (isEDT) {
+        session.scan();
+        session.fireEvents();
+      }
+      else {
+        if (app.isReadAccessAllowed()) {
+          LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. This will eventually cause deadlock if there are events to fire");
+          return;
+        }
+
+        queueSession(session, ModalityState.defaultModalityState());
+        session.waitFor();
+      }
     }
+  }
+
+  private void queueSession(final RefreshSessionImpl session, final ModalityState modality) {
+    myQueue.submit(new Runnable() {
+      public void run() {
+        try {
+          myRefreshIndicator.start();
+
+          try {
+            session.scan();
+          }
+          finally {
+            myRefreshIndicator.stop();
+          }
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  session.fireEvents();
+                }
+              });
+            }
+          }, modality);
+        }
+      }
+    });
   }
 
   public RefreshSession createSession(final boolean async, boolean recursively, @Nullable final Runnable finishRunnable) {
@@ -66,7 +84,7 @@ public class RefreshQueueImpl extends RefreshQueue {
 
   public void processSingleEvent(VFileEvent event) {
     RefreshSessionImpl session = new RefreshSessionImpl(Collections.singletonList(event), myRefreshParticipants);
-    session.fireEvents();
+    execute(session);
   }
 
   public void registerRefreshUpdater(final CacheUpdater updater) {

@@ -4,14 +4,7 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.compiler.progress.CompilerTask;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,15 +13,12 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
 import java.util.List;
 
 public class CompilerUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
-
   public static String quotePath(String path) {
     if(path != null && path.indexOf(' ') != -1) {
       path = path.replaceAll("\\\\", "\\\\\\\\");
@@ -72,22 +62,19 @@ public class CompilerUtil {
     if (paths.length == 0) {
       return;
     }
-    doRefresh(new Runnable() {
-      public void run() {
-        final LocalFileSystem fs = LocalFileSystem.getInstance();
-        fs.refresh(false);        
-        for (String path : paths) {
-          fs.findFileByPath(path);
 
-          /*
-          final VirtualFile file = fs.refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
-          if (file != null) {
-            file.refresh(false, false);
-          }
-          */
-        }
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    fs.refresh(false);        
+    for (String path : paths) {
+      fs.findFileByPath(path);
+
+      /*
+      final VirtualFile file = fs.refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
+      if (file != null) {
+        file.refresh(false, false);
       }
-    });
+      */
+    }
   }
 
 
@@ -99,73 +86,34 @@ public class CompilerUtil {
     if (files.size() == 0) {
       return;
     }
-    doRefresh(new Runnable() {
-      public void run() {
-        /*for (File file1 : files) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-          if (file != null) {
-            file.refresh(false, false);
-          }
-        }*/
-        final LocalFileSystem fs = LocalFileSystem.getInstance();
-        fs.refresh(false);
-        for (File file : files) {
-          fs.findFileByIoFile(file);
-        }
+
+    /*for (File file1 : files) {
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
+      if (file != null) {
+        file.refresh(false, false);
       }
-    });
+    }*/
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    fs.refresh(false);
+    for (File file : files) {
+      fs.findFileByIoFile(file);
+    }
   }
 
   public static void refreshIOFile(final File file) {
-    doRefresh(new Runnable() {
-      public void run() {
-        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-        if (vFile != null) {
-          vFile.refresh(false, false);
-        }
-      }
-    });
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    if (vFile != null) {
+      vFile.refresh(false, false);
+    }
   }
 
   public static void refreshVirtualFiles(final Collection<VirtualFile> files) {
-    doRefresh(new Runnable() {
-      public void run() {
-        final LocalFileSystem fs = LocalFileSystem.getInstance();
-        if (files.size() < 10) {
-          fs.refreshFiles(files);
-        }
-        else {
-          fs.refresh(false);
-        }
-      }
-    });
-  }
-
-  public static void doRefresh(final Runnable refreshRunnable) {
-    final Application applicationEx = ApplicationManager.getApplication();
-    if (applicationEx.isDispatchThread()) {
-      applicationEx.runWriteAction(refreshRunnable);
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    if (files.size() < 10) {
+      fs.refreshFiles(files);
     }
     else {
-      try {
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        ModalityState modalityState;
-        if (progress instanceof CompilerTask){
-          Window window = ((CompilerTask)progress).getWindow();
-          modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
-        }
-        else{
-          modalityState = ModalityState.NON_MODAL;
-        }
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(refreshRunnable);
-          }
-        }, modalityState);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      fs.refresh(false);
     }
   }
 
