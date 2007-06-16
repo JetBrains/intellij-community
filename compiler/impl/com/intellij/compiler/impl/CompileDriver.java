@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -461,7 +462,13 @@ public class CompileDriver {
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return ExitStatus.ERRORS;
       }
-
+      
+      // need this to make sure the VFS is built
+      for (VirtualFile output : context.getAllOutputDirectories()) {
+        walkChildren(output);
+      }
+      CompilerUtil.refreshVirtualFiles(Arrays.asList(context.getAllOutputDirectories()));
+      
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
@@ -510,7 +517,11 @@ public class CompileDriver {
         }
         
         if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-          CompilerDirectoryTimestamp.updateTimestamp(Arrays.asList(allOutputDirs));
+          RefreshQueue.getInstance().refresh(true, true, new Runnable() {
+            public void run() {
+              CompilerDirectoryTimestamp.updateTimestamp(Arrays.asList(allOutputDirs));
+            }
+          }, allOutputDirs);
         }
       }
 
@@ -536,6 +547,15 @@ public class CompileDriver {
     }
     catch (ProcessCanceledException e) {
       return ExitStatus.CANCELLED;
+    }
+  }
+
+  private void walkChildren(VirtualFile from) {
+    final VirtualFile[] files = from.getChildren();
+    if (files != null) {
+      for (VirtualFile file : files) {
+        walkChildren(file);
+      }
     }
   }
 

@@ -74,11 +74,17 @@ public class CompilerUtil {
     }
     doRefresh(new Runnable() {
       public void run() {
+        final LocalFileSystem fs = LocalFileSystem.getInstance();
+        fs.refresh(false);        
         for (String path : paths) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
+          fs.findFileByPath(path);
+
+          /*
+          final VirtualFile file = fs.refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
           if (file != null) {
             file.refresh(false, false);
           }
+          */
         }
       }
     });
@@ -101,7 +107,11 @@ public class CompilerUtil {
             file.refresh(false, false);
           }
         }*/
-        LocalFileSystem.getInstance().refreshIoFiles(files);
+        final LocalFileSystem fs = LocalFileSystem.getInstance();
+        fs.refresh(false);
+        for (File file : files) {
+          fs.findFileByIoFile(file);
+        }
       }
     });
   }
@@ -117,10 +127,16 @@ public class CompilerUtil {
     });
   }
 
-  public static void refreshVirtualFiles(final Iterable<VirtualFile> files) {
+  public static void refreshVirtualFiles(final Collection<VirtualFile> files) {
     doRefresh(new Runnable() {
       public void run() {
-        LocalFileSystem.getInstance().refreshFiles(files);
+        final LocalFileSystem fs = LocalFileSystem.getInstance();
+        if (files.size() < 10) {
+          fs.refreshFiles(files);
+        }
+        else {
+          fs.refresh(false);
+        }
       }
     });
   }
