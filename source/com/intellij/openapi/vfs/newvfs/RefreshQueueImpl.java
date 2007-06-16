@@ -34,9 +34,19 @@ public class RefreshQueueImpl extends RefreshQueue {
     else {
       final Application app = ApplicationManager.getApplication();
       boolean isEDT = app.isDispatchThread();
-      if (isEDT || app.isWriteAccessAllowed()) {
+      final boolean hasWriteAction = app.isWriteAccessAllowed();
+      if (isEDT || hasWriteAction) {
         session.scan();
-        session.fireEvents();
+        if (hasWriteAction) {
+          session.fireEvents();
+        }
+        else {
+          app.runWriteAction(new Runnable() {
+            public void run() {
+              session.fireEvents();
+            }
+          });
+        }
       }
       else {
         if (app.isReadAccessAllowed()) {
