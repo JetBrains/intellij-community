@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.plugins.groovy.GroovyLoader;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -39,5 +40,7 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
         rootModel.commit();
       }
     });
+
+    GroovyPsiManager.getInstance(getProject()).buildGDK();
   }
 }

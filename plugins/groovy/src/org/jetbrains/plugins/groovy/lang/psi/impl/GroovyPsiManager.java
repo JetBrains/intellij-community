@@ -17,11 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -39,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,12 +63,14 @@ public class GroovyPsiManager implements ProjectComponent {
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { int length }";
+  public Runnable myUpdateRunnable;
 
   public GroovyPsiManager(Project project) {
     myProject = project;
   }
 
-  public void projectOpened() {}
+  public void projectOpened() {
+  }
 
   public void projectClosed() {}
 
@@ -75,15 +81,17 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void initComponent() {
+    myUpdateRunnable = new Runnable() {
+      public void run() {
+        buildGDK();
+      }
+    };
+
+    StartupManager.getInstance(myProject).registerStartupActivity(myUpdateRunnable);
+
     ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         myCalculatedTypes.clear();
-      }
-    });
-
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        fillDefaultGroovyMethods();
       }
     });
 
@@ -93,12 +101,11 @@ public class GroovyPsiManager implements ProjectComponent {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
-        if (!ApplicationManager.getApplication().isUnitTestMode() && myProject.isInitialized()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              fillDefaultGroovyMethods();
-            }
-          });
+        final Application application = ApplicationManager.getApplication();
+        if (!application.isUnitTestMode()) {
+          if (myProject.isInitialized()) {
+            application.invokeLater(myUpdateRunnable);
+          }
         }
       }
     };
@@ -106,7 +113,20 @@ public class GroovyPsiManager implements ProjectComponent {
     myRootConnection.subscribe(ProjectTopics.PROJECT_ROOTS, moduleRootListener);
   }
 
-  private void fillDefaultGroovyMethods() {
+  public void buildGDK() {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.pushState();
+      indicator.setIndeterminate(true);
+      indicator.setText(GroovyBundle.message("reading.gdk.classes"));
+    }
+
+    buildGDKImpl();
+
+    if (indicator != null) indicator.popState();
+  }
+
+  private void buildGDKImpl() {
     myDefaultMethods = new HashMap<String, List<PsiMethod>>();
 
     PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
@@ -246,7 +266,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public List<PsiMethod> getDefaultMethods(String qName) {
     if (myDefaultMethods == null) {
-      fillDefaultGroovyMethods();
+      return Collections.emptyList();
     }
 
     List<PsiMethod> methods = myDefaultMethods.get(qName);
