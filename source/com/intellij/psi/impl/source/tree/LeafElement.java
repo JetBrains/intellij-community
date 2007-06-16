@@ -118,6 +118,10 @@ public abstract class LeafElement extends TreeElement {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
 
+  public void addLeafElement(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
+    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+  }
+
   public void addChild(ASTNode child) {
     throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
   }
