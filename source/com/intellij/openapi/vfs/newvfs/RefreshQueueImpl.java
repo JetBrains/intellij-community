@@ -39,7 +39,7 @@ public class RefreshQueueImpl extends RefreshQueue {
         session.fireEvents();
       }
       else {
-        if (app.isReadAccessAllowed()) {
+        if (app.isReadAccessAllowed() && !app.isWriteAccessAllowed()) {
           LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. This will eventually cause deadlock if there are events to fire");
           return;
         }
