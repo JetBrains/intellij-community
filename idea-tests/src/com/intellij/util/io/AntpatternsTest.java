@@ -18,7 +18,7 @@ public class AntpatternsTest extends TestCase {
   public void testPatternConversion() {
     final Pattern testPattern = convertToPattern("**/test/?*.java");
     
-    //assertTrue(testPattern.matcher("C:/test/AAA.java").matches());
+    assertTrue(testPattern.matcher("C:/test/AAA.java").matches());
     assertTrue(testPattern.matcher("p1/p2/p3/test/B.java").matches());
     assertTrue(testPattern.matcher("test/AAA.java").matches());
     assertFalse(testPattern.matcher("test/.java").matches());
@@ -49,6 +49,7 @@ public class AntpatternsTest extends TestCase {
     assertTrue(jakartaPattern.matcher("org/apache/jakarta/tools/ant/docs/index.html").matches());
     assertTrue(jakartaPattern.matcher("org/apache/jakarta/test.xml").matches());
     assertTrue(jakartaPattern.matcher("org/apache/jakarta").matches());
+    assertFalse(jakartaPattern.matcher("org/apache/jakartaaaa").matches());
     assertFalse(jakartaPattern.matcher("org/apache/xyz.java").matches());
     
     final Pattern apacheCvsPattern = convertToPattern("org/apache/**/CVS/*");
@@ -80,6 +81,20 @@ public class AntpatternsTest extends TestCase {
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());
     assertFalse(pattern.matcher("dir/subdir/aaa/ttt").matches());
     assertFalse(pattern.matcher("dir/subdir").matches());
+  }
+
+  public void testDoubleAsteriskOnly() {
+    final Pattern pattern = convertToPattern("**");
+    assertTrue(pattern.matcher("dir/subdir/ttt").matches());
+    assertTrue(pattern.matcher("dir/subdir/aaa/ttt").matches());
+    assertTrue(pattern.matcher("dir/subdir").matches());
+  }
+
+  public void testDoubleAsteriskOnly2() {
+    final Pattern pattern = convertToPattern("/**");
+    assertTrue(pattern.matcher("dir/subdir/ttt").matches());
+    assertTrue(pattern.matcher("dir/subdir/aaa/ttt").matches());
+    assertTrue(pattern.matcher("dir/subdir").matches());
   }
 
   public void testAsterisks() {

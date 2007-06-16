@@ -620,7 +620,12 @@ public class FileUtil {
         if (isTrailingSlash) {
           builder.setLength(builder.length() - 1);
         }
-        builder.append("(?:$|/.+)");
+        if (builder.length() == 0) {
+          builder.append(".*");
+        }
+        else {
+          builder.append("(?:$|/.+)");
+        }
       }
       else if (asteriskCount > 0) {
         builder.append("[^/]*?");
