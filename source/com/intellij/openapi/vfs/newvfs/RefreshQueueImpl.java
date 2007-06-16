@@ -34,12 +34,12 @@ public class RefreshQueueImpl extends RefreshQueue {
     else {
       final Application app = ApplicationManager.getApplication();
       boolean isEDT = app.isDispatchThread();
-      if (isEDT) {
+      if (isEDT || app.isWriteAccessAllowed()) {
         session.scan();
         session.fireEvents();
       }
       else {
-        if (app.isReadAccessAllowed() && !app.isWriteAccessAllowed()) {
+        if (app.isReadAccessAllowed()) {
           LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. This will eventually cause deadlock if there are events to fire");
           return;
         }
