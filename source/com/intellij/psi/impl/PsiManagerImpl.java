@@ -8,6 +8,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -58,21 +59,20 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.lang.LanguageDialect;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
@@ -427,6 +427,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
+    // Find something to ensure there's no changed files waiting to be processed in repository indicies.
+    myRepositoryManager.updateAll();
+
     myAssertOnFileLoadingFilter = filter;
   }
 
