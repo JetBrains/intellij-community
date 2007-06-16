@@ -54,7 +54,7 @@ public class IdeaApplication {
     myStarter.premain(args);
   }
 
-  private ApplicationStarter getStarter() {
+  protected ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
       final Application app = ApplicationManager.getApplication();
       app.getPlugins(); //TODO[max] make it clearer plugins should initialize before querying for extpoints.
