@@ -53,8 +53,9 @@ public class PluginClassLoader extends UrlClassLoader {
         }
         if (c == null) return null;
       }
-
-      PluginManager.addPluginClass(c.getName(), myPluginId);
+      else {
+        PluginManager.addPluginClass(c.getName(), myPluginId);
+      }
     }
 
     if (resolve) {
