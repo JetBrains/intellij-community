@@ -94,7 +94,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     return result;
   }
 
-  private void loadState(final StorageData result, final Element element) throws StateStorageException {
+  protected void loadState(final StorageData result, final Element element) throws StateStorageException {
 
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);

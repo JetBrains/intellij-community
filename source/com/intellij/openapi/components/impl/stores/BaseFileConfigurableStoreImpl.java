@@ -42,7 +42,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myComponentManager;
   }
 
-  protected static class BaseStorageData extends XmlElementStorage.StorageData {
+  protected static class BaseStorageData extends FileBasedStorage.FileStorageData {
     private boolean mySavePathsRelative;
     protected int myVersion;
 

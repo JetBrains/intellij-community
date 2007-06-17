@@ -371,6 +371,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     try {
       doSave();
     }
+    catch (IComponentStore.SaveCancelledException e) {
+      LOG.info(e);
+    }
     catch (IOException e) {
       LOG.info(e);
       MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();

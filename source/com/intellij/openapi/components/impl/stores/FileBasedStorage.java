@@ -113,6 +113,36 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
 
+  protected void loadState(final StorageData result, final Element element) throws StateStorageException {
+    ((FileStorageData)result).myFileName = myFile.getAbsolutePath();
+    super.loadState(result, element);
+  }
+
+  protected StorageData createStorageData() {
+    return new FileStorageData(myRootElementName);
+  }
+
+  public static class FileStorageData extends StorageData {
+    String myFileName;
+
+    public FileStorageData(final String rootElementName) {
+      super(rootElementName);
+    }
+
+    protected FileStorageData(FileStorageData storageData) {
+      super(storageData);
+      myFileName = storageData.myFileName;
+    }
+
+    public StorageData clone() {
+      return new FileStorageData(this);
+    }
+
+    public String toString() {
+      return "FileStorageData[" + myFileName + "]";
+    }
+  }
+
   @Nullable
   public VirtualFile getVirtualFile() {
     return StorageUtil.getVirtualFile(myFile);
