@@ -15,6 +15,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
@@ -253,5 +256,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (myChildren instanceof Map) {
       myChildren = null;
     }
+  }
+
+  public InputStream getInputStream() throws IOException {
+    throw new IOException("getInputStream() must not be called against a directory: " + getUrl());
+  }
+
+  public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
+    throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());
   }
 }

@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
@@ -177,15 +175,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.exists(this);
   }
 
-  @NotNull
-  public InputStream getInputStream() throws IOException {
-    return ourPersistence.getInputStream(this);
-  }
-
-  @NotNull
-  public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
-    return ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp);
-  }
 
   public boolean isValid() {
     return exists();
