@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import gnu.trove.Equality;
@@ -243,6 +244,28 @@ public class ArrayUtil {
     return true;
   }
 
+  public static <E> boolean startsWith(E[] array, E[] subArray) {
+    if (array == subArray) {
+      return true;
+    }
+    if (array == null || subArray == null) {
+      return false;
+    }
+
+    int length = subArray.length;
+    if (array.length < length) {
+      return false;
+    }
+
+    for (int i = 0; i < length; i++) {
+      if (!Comparing.equal(array[i], subArray[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public static boolean startsWith(@NotNull byte[] array, int start, @NotNull byte[] subArray) {
     int length = subArray.length;
     if (array.length - start < length) {
@@ -310,6 +333,12 @@ public class ArrayUtil {
 
   public static <T>void swap(T[] array, int i1, int i2) {
     final T t = array[i1];
+    array[i1] = array[i2];
+    array[i2] = t;
+  }
+
+  public static void swap(int[] array, int i1, int i2) {
+    final int t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }

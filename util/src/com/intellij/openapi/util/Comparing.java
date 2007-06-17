@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
 public class Comparing {
   private Comparing() { }
@@ -43,6 +43,9 @@ public class Comparing {
   }
 
   public static <T> boolean equal(T[] arr1, T[] arr2){
+    if (arr1 == null || arr2 == null){
+      return arr1 == arr2;
+    }
     return Arrays.equals(arr1, arr2);
   }
 
