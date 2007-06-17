@@ -312,7 +312,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     InputStream contentStream = FILE_CONTENT.readAttribute(file);
-    if (contentStream == null || checkFlag(file, MUST_RELOAD_CONTENT)) {
+    if (contentStream == null || mustReloadContent(file)) {
       if (contentStream != null) contentStream.close();
       setFlag(file, MUST_RELOAD_CONTENT, false);
 
@@ -356,6 +356,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
       return stream;
     }
+  }
+
+  private boolean mustReloadContent(final VirtualFile file) {
+    return checkFlag(file, MUST_RELOAD_CONTENT) || myRecords.getLength(getFileId(file)) == -1L;
   }
 
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
