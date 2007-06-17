@@ -351,18 +351,14 @@ public class I18nInspection extends BaseLocalInspectionTool {
       }
 
       public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            List<PsiExpression> exprList = new ArrayList<PsiExpression>();
-            for(SmartPsiElementPointer<PsiExpression> ptr: pointers) {
-              PsiExpression expr = ptr.getElement();
-              if (expr != null && expr.isValid()) {
-                exprList.add(expr);
-              }
-            }
-            new IntroduceConstantHandler().invoke(project, exprList.toArray(new PsiExpression[exprList.size()]));
+        List<PsiExpression> exprList = new ArrayList<PsiExpression>();
+        for (SmartPsiElementPointer<PsiExpression> ptr : pointers) {
+          PsiExpression expr = ptr.getElement();
+          if (expr != null && expr.isValid()) {
+            exprList.add(expr);
           }
-        });
+        }
+        new IntroduceConstantHandler().invoke(project, exprList.toArray(new PsiExpression[exprList.size()]));
       }
 
       @NotNull

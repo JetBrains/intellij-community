@@ -1022,7 +1022,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     myView = null;
   }
 
-  private void cleanup(final InspectionManagerEx managerEx) {
+  public void cleanup(final InspectionManagerEx managerEx) {
     managerEx.closeRunningContext(this);
     for (Set<Pair<InspectionTool, InspectionProfile>> tools : myTools.values()) {
       for (Pair<InspectionTool, InspectionProfile> tool : tools) {
