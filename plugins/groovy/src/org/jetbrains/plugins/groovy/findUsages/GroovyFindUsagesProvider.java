@@ -16,15 +16,13 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author ven
@@ -54,7 +52,8 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement)
   {
     return psiElement instanceof PsiClass ||
-        psiElement instanceof PsiMethod; //todo other cases
+        psiElement instanceof PsiMethod ||
+        psiElement instanceof GrVariable;
   }
 
   @Nullable
@@ -68,6 +67,9 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
   {
     if (element instanceof PsiClass) return "class";
     if (element instanceof PsiMethod) return "method";
+    if (element instanceof PsiField) return "field";
+    if (element instanceof PsiParameter) return "parameter";
+    if (element instanceof PsiVariable) return "variable";
     return "";
   }
 
@@ -90,6 +92,11 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
       }
 
       return result;
+    } else if (element instanceof PsiVariable) {
+      final String name = ((PsiVariable) element).getName();
+      if (name != null) {
+        return name;
+      }
     }
 
     return "";
@@ -113,6 +120,12 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
                                         PsiFormatUtil.SHOW_TYPE);
 
+    }
+    else if (element instanceof PsiVariable) {
+      final String name = ((PsiVariable) element).getName();
+      if (name != null) {
+        return name;
+      }
     }
 
     return "";
