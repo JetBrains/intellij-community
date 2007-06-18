@@ -23,11 +23,18 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
   private final XmlAttributeValue myValue;
 
   public AntFileReferenceSet(final AntStructuredElement element, final XmlAttributeValue value, final GenericReferenceProvider provider) {
-    super(FileUtil.toSystemIndependentName(StringUtil.stripQuotesAroundValue(value.getText())), element,
+    super(cutTrailingSlash(FileUtil.toSystemIndependentName(StringUtil.stripQuotesAroundValue(value.getText()))), element,
           value.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1, provider, true);
     myValue = value;
   }
 
+  private static String cutTrailingSlash(String path) {
+    if (path.endsWith("/")) {
+      return path.substring(0, path.length() - 1);
+    }
+    return path;
+  }
+  
   protected boolean isSoft() {
     final AntStructuredElement element = getElement();
     if (!(element instanceof AntImport   || 

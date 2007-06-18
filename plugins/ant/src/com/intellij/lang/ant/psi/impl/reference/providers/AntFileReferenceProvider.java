@@ -34,13 +34,17 @@ public class AntFileReferenceProvider extends GenericReferenceProvider {
         continue;
       }
       final String attrValue = attr.getValue();
-      if (attrValue == null || attrValue.indexOf("@{") >= 0) {
+      if (attrValue == null || attrValue.length() == 0 || isSingleSlash(attrValue) || attrValue.indexOf("@{") >= 0) {
         continue;
       }
       final AntFileReferenceSet refSet = new AntFileReferenceSet(antElement, xmlAttributeValue, this);
       refList.addAll(Arrays.asList(refSet.getAllReferences()));
     }
     return refList.toArray(new PsiReference[refList.size()]);
+  }
+
+  private static boolean isSingleSlash(final String attrValue) {
+    return "/".equals(attrValue) || "\\".equals(attrValue);
   }
 
   @NotNull
