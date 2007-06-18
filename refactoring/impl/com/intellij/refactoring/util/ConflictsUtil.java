@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -22,7 +23,7 @@ public class ConflictsUtil {
     }
   }
 
-  public static String getDescription(PsiElement element, boolean includeParent) {
+  public static String getDescription(@NotNull PsiElement element, boolean includeParent) {
     if (element instanceof PsiField) {
       int options = PsiFormatUtil.SHOW_NAME;
       if (includeParent) {

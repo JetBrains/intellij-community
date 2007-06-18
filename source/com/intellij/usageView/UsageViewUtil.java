@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.ElementPresentationManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -175,7 +176,7 @@ public class UsageViewUtil {
     return ret;
   }
 
-  public static String getType(PsiElement psiElement) {
+  public static String getType(@NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiMetaBaseOwner) {
       final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)psiElement).getMetaData();
       if (metaData instanceof PsiPresentableMetaData) {

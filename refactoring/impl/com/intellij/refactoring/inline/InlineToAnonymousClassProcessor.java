@@ -79,7 +79,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   public ArrayList<String> getConflicts(final UsageInfo[] usages) {
     ArrayList<String> result = new ArrayList<String>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
-      protected void checkAddMember(final PsiMember member) {
+      protected void checkAddMember(@NotNull final PsiMember member) {
         if (!PsiTreeUtil.isAncestor(myClass, member, false)) {
           super.checkAddMember(member);
         }

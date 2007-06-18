@@ -1,6 +1,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
@@ -8,7 +9,7 @@ import java.util.HashSet;
  * @author ven
  */
 class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
-  HashSet<PsiMember> myReferencedMembers = new HashSet<PsiMember>();
+  final HashSet<PsiMember> myReferencedMembers = new HashSet<PsiMember>();
 
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitReferenceElement(expression);
@@ -21,7 +22,7 @@ class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
     }
   }
 
-  protected void checkAddMember(final PsiMember member) {
+  protected void checkAddMember(@NotNull final PsiMember member) {
     myReferencedMembers.add(member);
   }
 }
