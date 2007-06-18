@@ -87,10 +87,6 @@ public abstract class BaseRefactoringProcessor {
    * Is called inside atomic action.
    */
   protected boolean isPreviewUsages(UsageInfo[] usages) {
-    if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
-      return true;
-    }
     return myIsPreviewUsages;
   }
 
@@ -152,7 +148,14 @@ public abstract class BaseRefactoringProcessor {
     final UsageInfo[] usages = refUsages.get();
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
 
-    if (isPreviewUsages(usages)) {
+    boolean isPreview = isPreviewUsages(usages);
+    if (!isPreview) {
+      isPreview = !ensureElementsWritable(usages, descriptor) || UsageViewUtil.hasReadOnlyUsages(usages);
+      if (isPreview) {
+        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
+      }
+    }
+    if (isPreview) {
       final PsiElement[] elements = descriptor.getElements();
       final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
       Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
@@ -178,9 +181,7 @@ public abstract class BaseRefactoringProcessor {
       showUsageView(descriptor, factory, usages);
     }
     else {
-      if (ensureElementsWritable(usages, descriptor)) {
-        execute(usages);
-      }
+      execute(usages);
     }
   }
 

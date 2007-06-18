@@ -436,10 +436,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
       return true;
     }
-    else if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
-      return true;
-    }
     return false;
   }
 
