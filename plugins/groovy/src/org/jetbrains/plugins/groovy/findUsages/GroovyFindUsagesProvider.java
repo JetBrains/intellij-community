@@ -18,6 +18,9 @@ import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -50,7 +53,8 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
 
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement)
   {
-    return psiElement instanceof PsiClass; //todo other cases
+    return psiElement instanceof PsiClass ||
+        psiElement instanceof PsiMethod; //todo other cases
   }
 
   @Nullable
@@ -63,6 +67,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
   public String getType(@NotNull PsiElement element)
   {
     if (element instanceof PsiClass) return "class";
+    if (element instanceof PsiMethod) return "method";
     return "";
   }
 
@@ -74,6 +79,17 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
       final PsiClass aClass = (PsiClass) element;
       String qName = aClass.getQualifiedName();
       return qName == null ? "" : qName;
+    } else if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) element;
+      String result = PsiFormatUtil.formatMethod(method,
+                                                    PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                                    PsiFormatUtil.SHOW_TYPE);
+      final PsiClass clazz = method.getContainingClass();
+      if (clazz != null) {
+        result += "of" + getDescriptiveName(clazz);
+      }
+
+      return result;
     }
 
     return "";
@@ -90,6 +106,13 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
         name = ((PsiClass) element).getName();
       }
       if (name != null) return name;
+    }
+    else if (element instanceof PsiMethod) {
+      return PsiFormatUtil.formatMethod((PsiMethod) element,
+                                        PsiSubstitutor.EMPTY,
+                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                        PsiFormatUtil.SHOW_TYPE);
+
     }
 
     return "";
