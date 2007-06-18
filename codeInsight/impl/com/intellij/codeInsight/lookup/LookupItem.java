@@ -1,10 +1,19 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.completion.simple.OverwriteHandler;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -12,12 +21,13 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Map;
 
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem implements Comparable{
+public class LookupItem<T> implements Comparable, LookupElement<T>{
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
   public static final Object TYPE_ATTR = Key.create("type");
   public static final Object ICON_ATTR = Key.create("icon");
@@ -50,13 +60,25 @@ public class LookupItem implements Comparable{
   private String myLookupString;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
+  private static final OverwriteHandler DEFAULT_OVERWRITE_HANDLER = new OverwriteHandler() {
+    public void handleOverwrite(final Editor editor) {
+      final int offset = editor.getCaretModel().getOffset();
+      final Document document = editor.getDocument();
+      final CharSequence sequence = document.getCharsSequence();
+      int i = offset;
+      while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
+      document.deleteString(offset, i);
+      PsiDocumentManager.getInstance(editor.getProject()).commitDocument(document);
+    }
+  };
+  @NotNull private OverwriteHandler myOverwriteHandler = DEFAULT_OVERWRITE_HANDLER;
 
-  public LookupItem(Object o, @NotNull @NonNls String lookupString){
+  public LookupItem(T o, @NotNull @NonNls String lookupString){
     setObject(o);
     myLookupString = lookupString;
   }
 
-  public void setObject(Object o) {
+  public void setObject(@NotNull T o) {
     if (o instanceof PsiElement){
       PsiElement element = (PsiElement)o;
       Project project = element.getProject();
@@ -89,12 +111,13 @@ public class LookupItem implements Comparable{
   /**
    * Returns a data object.  This object is used e.g. for rendering the node.
    */
-  public Object getObject() {
+  @NotNull
+  public T getObject() {
     if (myObject instanceof SmartPsiElementPointer){
-      return ((SmartPsiElementPointer)myObject).getElement();
+      return (T)((SmartPsiElementPointer)myObject).getElement();
     }
     else{
-      return myObject;
+      return (T)myObject;
     }
   }
 
@@ -102,6 +125,7 @@ public class LookupItem implements Comparable{
    * Returns a string which will be inserted to the editor when this item is
    * choosen.
    */
+  @NotNull
   public String getLookupString() {
     return myLookupString;
   }
@@ -147,12 +171,14 @@ public class LookupItem implements Comparable{
     return (InsertHandler)getAttribute(INSERT_HANDLER_ATTR);
   }
 
+  @NotNull
   public TailType getTailType(){
     final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
     return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
-  public LookupItem setTailType(TailType type){
+  @NotNull
+  public LookupItem<T> setTailType(@NotNull TailType type) {
     setAttribute(TAIL_TYPE_ATTR, type);
     return this;
   }
@@ -165,5 +191,75 @@ public class LookupItem implements Comparable{
       throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
     }
     return getLookupString().compareTo(((LookupItem)o).getLookupString());
+  }
+
+  public LookupItem<T> setInsertHandler(@NotNull final SimpleInsertHandler handler) {
+    setAttribute(LookupItem.INSERT_HANDLER_ATTR, new MyInsertHandler(handler));
+    return this;
+  }
+
+  public LookupItem<T> setOverwriteHandler(@NotNull final OverwriteHandler overwriteHandler) {
+    myOverwriteHandler = overwriteHandler;
+    return this;
+  }
+
+  public LookupItem setBold() {
+    setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
+    return this;
+  }
+
+  @NotNull
+  public LookupItem<T> setIcon(Icon icon) {
+    setAttribute(LookupItem.ICON_ATTR, icon);
+    return this;
+  }
+
+  @NotNull
+  public LookupItem setTypeText(final String text) {
+    setAttribute(LookupItem.TYPE_TEXT_ATTR, text);
+    return this;
+  }
+
+  @NotNull
+  public LookupItem<T> setCaseSensitive(final boolean caseSensitive) {
+    setAttribute(LookupItem.CASE_INSENSITIVE, !caseSensitive);
+    return this;
+  }
+
+  private class MyInsertHandler implements InsertHandler {
+    private final SimpleInsertHandler myHandler;
+
+    public MyInsertHandler(final SimpleInsertHandler handler) {
+      myHandler = handler;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final LookupItem.MyInsertHandler that = (LookupItem.MyInsertHandler)o;
+
+      if (!myHandler.equals(that.myHandler)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return myHandler.hashCode();
+    }
+
+    public void handleInsert(final CompletionContext context,
+                             final int startOffset, final LookupData data, final LookupItem item,
+                             final boolean signatureSelected, final char completionChar) {
+      final Editor editor = context.editor;
+      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+        myOverwriteHandler.handleOverwrite(editor);
+      }
+      final TailType tailType = DefaultInsertHandler.getTailType(completionChar, item);
+      final int tailOffset = myHandler.handleInsert(editor, startOffset, LookupItem.this, data.items, tailType);
+      tailType.processTail(editor, tailOffset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().removeSelection();
+    }
   }
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -1933,6 +1934,8 @@ public class HighlightUtil {
   }
 
   public static boolean shouldInspect(final PsiElement psiRoot) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
+
     if (!shouldHighlight(psiRoot)) return false;                                                                
     final Project project = psiRoot.getProject();
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -50,7 +51,7 @@ public class PatternPackageSet implements PackageSet {
   private String myModulePatternText;
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.PatternPackageSet");
 
-  public PatternPackageSet(String aspectPattern,
+  public PatternPackageSet(@Nullable String aspectPattern,
                            String scope,
                            String modulePattern,
                            @NonNls String filePattern) {

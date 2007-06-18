@@ -13,45 +13,48 @@ import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import gnu.trove.THashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.awt.*;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
@@ -216,7 +219,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
-      final DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
+      final DocumentRange documentRange = ((VirtualFileDelegate)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentRange();
+      //final DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
       assert documentRange != null;
       assert documentRange.getText().equals(injectedPsi.getText());
 
@@ -305,6 +309,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           Color fore = attributes.getForegroundColor() == null ? globalScheme.getDefaultForeground() : attributes.getForegroundColor();
           TextAttributes forced = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
           annotation.setEnforcedTextAttributes(forced);
+          //StringBufferConvertefoo()
         }
       }
     }

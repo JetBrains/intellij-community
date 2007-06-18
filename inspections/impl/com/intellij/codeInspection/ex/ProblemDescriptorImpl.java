@@ -33,9 +33,8 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
     super(fixes, descriptionTemplate);
     LOG.assertTrue(startElement.isValid(), "Invalid PsiElement");
-    LOG.assertTrue(startElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
     LOG.assertTrue(endElement.isValid(), "Invalid PsiElement");
-    LOG.assertTrue(endElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
+    assertPhysical(startElement, endElement);
 
     if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
@@ -50,6 +49,11 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
+  }
+
+  protected void assertPhysical(final PsiElement startElement, final PsiElement endElement) {
+    LOG.assertTrue(startElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
+    LOG.assertTrue(endElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
   }
 
   public PsiElement getPsiElement() {

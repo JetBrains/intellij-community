@@ -75,6 +75,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
       if (manager != null) { // Can be null in test mode
         myDefaultAttributes = manager.getGlobalScheme().getAttributes(this);
       }
+      if (myDefaultAttributes == null) {
+        myDefaultAttributes = NULL_ATTRIBUTES;
+      }
     }
 
     return myDefaultAttributes;

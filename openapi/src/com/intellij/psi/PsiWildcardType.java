@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a wildcard type, with bounds.
@@ -152,6 +153,7 @@ public class PsiWildcardType extends PsiType {
    *
    * @return <code>null</code> if unbounded, a bound otherwise.
    */
+  @Nullable
   public PsiType getBound() {
     return myBound;
   }

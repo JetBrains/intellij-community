@@ -62,7 +62,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (!(item instanceof SimpleLookupItem)) {
       if (item.getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)item.getObject();
-        SimpleLookupItem simpleItem = new SimpleLookupItem(method, item.getLookupString()).setInsertHandler(SimpleInsertHandlerFactory.createMethodInsertHandler(method));
+        LookupItem simpleItem = new SimpleLookupItem(method, item.getLookupString()).setInsertHandler(SimpleInsertHandlerFactory.createMethodInsertHandler(method));
         simpleItem.setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR));
         simpleItem.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR));
         ((InsertHandler) simpleItem.getAttribute(LookupItem.INSERT_HANDLER_ATTR)).handleInsert(context, startOffset, data, simpleItem, signatureSelected, completionChar);

@@ -1,23 +1,24 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
@@ -43,7 +44,7 @@ public class AllClassesGetter implements ContextGetter{
   @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
   private final ElementFilter myFilter;
   private static final SimpleInsertHandler INSERT_HANDLER = new SimpleInsertHandler() {
-    public int handleInsert(final Editor editor, final int startOffset, final SimpleLookupItem item, final LookupItem[] allItems, final TailType tailType) {
+    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType) {
       final PsiClass psiClass = (PsiClass)item.getObject();
       int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();
@@ -205,18 +206,16 @@ public class AllClassesGetter implements ContextGetter{
       }
     });
 
-    return ContainerUtil.map2Array(classesList, SimpleLookupItem.class, new NotNullFunction<PsiClass, SimpleLookupItem>() {
+    return ContainerUtil.map2Array(classesList, (Class<LookupItem<PsiClass>>)(Class)LookupItem.class, new NotNullFunction<PsiClass, LookupItem<PsiClass>>() {
       @NotNull
-      public SimpleLookupItem fun(final PsiClass psiClass) {
+      public LookupItem<PsiClass> fun(final PsiClass psiClass) {
         return createLookupItem(psiClass);
       }
     });
   }
 
-  protected SimpleLookupItem createLookupItem(final PsiClass psiClass) {
-    final SimpleLookupItem item = new SimpleLookupItem(psiClass);
-    //return item;
-    return item.setInsertHandler(INSERT_HANDLER);
+  protected LookupItem<PsiClass> createLookupItem(final PsiClass psiClass) {
+    return LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
   }
 
 }

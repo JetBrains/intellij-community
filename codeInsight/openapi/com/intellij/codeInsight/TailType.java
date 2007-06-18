@@ -3,7 +3,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.simple.CharTailType;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,11 +36,20 @@ public abstract class TailType {
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
+
+    public String toString() {
+      return "UNKNOWN";
+    }
+
   };
 
   public static final TailType NONE = new TailType(){
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
+    }
+
+    public String toString() {
+      return "NONE";
     }
   };
 

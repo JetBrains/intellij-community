@@ -384,10 +384,12 @@ public class InjectedLanguageUtil {
         PsiFile originalFile = hostPsiFile.getOriginalFile();
         if (originalFile != null) virtualFile = originalFile.getVirtualFile();
       }
-      if (virtualFile == null) return null;
+      if (virtualFile == null) virtualFile = hostPsiFile.getViewProvider().getVirtualFile();
       final VirtualFile hostVirtualFile = virtualFile;
       final DocumentEx hostDocument = (DocumentEx)hostPsiFile.getViewProvider().getDocument();
-      final PsiManagerImpl psiManager = (PsiManagerImpl)host.getManager();
+      if (hostDocument == null) return null;
+
+      final PsiManagerEx psiManager = (PsiManagerEx)host.getManager();
       final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @Nullable String prefix, @Nullable String suffix) {

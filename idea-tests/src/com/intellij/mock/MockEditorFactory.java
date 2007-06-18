@@ -57,6 +57,7 @@ public class MockEditorFactory extends EditorFactory {
   public void removeEditorFactoryListener(EditorFactoryListener listener) {
   }
 
+  @NotNull
   public EditorEventMulticaster getEventMulticaster() {
     return new MockEditorEventMulticaster();
   }
