@@ -375,7 +375,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     ChangeUtil.addChild(this, (TreeElement)child, (TreeElement)anchorBefore);
   }
 
-  public void addLeafElement(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
+  public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
     FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
     final LeafElement leaf = Factory.createLeafElement(leafType, leafText, 0, leafText.length(), holder.getCharTable());
     CodeEditUtil.setNodeGenerated(leaf, true);
