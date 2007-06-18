@@ -385,23 +385,39 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
 
+      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+        super.visitTypeParameter(classParameter);
+        PsiReferenceList list = classParameter.getExtendsList();
+        PsiJavaCodeReferenceElement[] referenceElements = list.getReferenceElements();
+        for(PsiJavaCodeReferenceElement reference: referenceElements) {
+          PsiElement psiElement = reference.resolve();
+          if (psiElement instanceof PsiTypeParameter) {
+            checkReplaceTypeParameter(reference, (PsiTypeParameter) psiElement);
+          }
+        }
+      }
+
       public void visitTypeElement(final PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         if (typeElement.getType() instanceof PsiClassType) {
           PsiClassType classType = (PsiClassType) typeElement.getType();
           PsiClass psiClass = classType.resolve();
           if (psiClass instanceof PsiTypeParameter) {
-            PsiClass containingClass = method.getContainingClass();
-            PsiTypeParameter[] psiTypeParameters = containingClass.getTypeParameters();
-            for(int i=0; i<psiTypeParameters.length; i++) {
-              if (psiTypeParameters [i] == psiClass) {
-                PsiType substType = substitutedParameters[i];
-                if (substType == null) {
-                  substType = PsiType.getJavaLangObject(typeElement.getManager(), typeElement.getProject().getAllScope());
-                }
-                elementsToReplace.put(typeElement, myElementFactory.createTypeElement(substType));
-              }
+            checkReplaceTypeParameter(typeElement, (PsiTypeParameter) psiClass);
+          }
+        }
+      }
+
+      private void checkReplaceTypeParameter(PsiElement element, PsiTypeParameter target) {
+        PsiClass containingClass = method.getContainingClass();
+        PsiTypeParameter[] psiTypeParameters = containingClass.getTypeParameters();
+        for(int i=0; i<psiTypeParameters.length; i++) {
+          if (psiTypeParameters [i] == target) {
+            PsiType substType = substitutedParameters[i];
+            if (substType == null) {
+              substType = PsiType.getJavaLangObject(element.getManager(), element.getProject().getAllScope());
             }
+            elementsToReplace.put(element, myElementFactory.createTypeElement(substType));
           }
         }
       }
