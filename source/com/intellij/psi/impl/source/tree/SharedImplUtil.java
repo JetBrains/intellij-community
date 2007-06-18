@@ -215,10 +215,10 @@ public class SharedImplUtil {
 
   public static void setInitializer(PsiVariable variable, final PsiExpression initializer) throws IncorrectOperationException {
     PsiExpression oldInitializer = variable.getInitializer();
+    if (oldInitializer != null) {
+      oldInitializer.delete();
+    }
     if (initializer == null) {
-      if (oldInitializer != null) {
-        oldInitializer.delete();
-      }
       return;
     }
     CompositeElement variableElement = (CompositeElement)variable.getNode();

@@ -119,9 +119,8 @@ class InlineToAnonymousConstructorProcessor {
         PsiField field = (PsiField) child;
         replaceReferences(field, substitutedParameters, outerClassLocal);
         PsiExpression initializer = myFieldInitializers.get(field.getName());
-        boolean noInitializer = (field.getInitializer() == null);
         field = (PsiField) anonymousClass.addBefore(field, anonymousClass.getRBrace());
-        if (initializer != null && noInitializer) {
+        if (initializer != null) {
           field.setInitializer(initializer);
         }
         processedFields++;
