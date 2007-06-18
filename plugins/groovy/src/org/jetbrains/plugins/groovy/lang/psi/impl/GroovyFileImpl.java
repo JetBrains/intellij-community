@@ -16,27 +16,30 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import javax.swing.*;
 
@@ -206,6 +209,12 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     }
   }
 
+  public GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException {
+    final PsiElement result = addBefore(statement, anchor);
+    getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+    return (GrStatement) result;
+  }
+
   public boolean isScript()
   {
     GrTopStatement[] top = findChildrenByClass(GrTopStatement.class);
@@ -225,6 +234,24 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       myScriptClassInitialized = true;
     }
     return myScriptClass;
+  }
+
+  public void setPackageDefinition(String packageName) {
+    final GrPackageDefinition currentPackage = getPackageDefinition();
+    final GrTopStatement newPackage = GroovyElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
+    final ASTNode fileNode = getNode();
+    assert fileNode != null;
+    final ASTNode newNode = newPackage.getNode();
+    assert newNode != null;
+    if (currentPackage != null) {
+      final ASTNode currNode = currentPackage.getNode();
+      assert currNode != null;
+      fileNode.replaceChild(currNode, newNode);
+    } else {
+      final ASTNode anchor = fileNode.getFirstChildNode();
+      fileNode.addChild(newNode, anchor);
+      fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+    }
   }
 
   public void clearCaches() {

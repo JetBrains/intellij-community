@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -58,13 +59,13 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
         !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
     }
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(getProject());
+
     ASTNode elemNode = element.getNode();
     getNode().addChild(elemNode, anchor.getNode());
     if (mayUseNewLinesAsSeparators()) {
-      getNode().addChild(factory.createNewLine().getNode() ,anchor.getNode());
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
     } else {
-      getNode().addChild(factory.createSemicolon().getNode() ,anchor.getNode());
+      getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchor.getNode());
     }
     return (GrStatement) elemNode.getPsi();
   }

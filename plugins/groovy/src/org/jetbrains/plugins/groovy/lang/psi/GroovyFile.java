@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -46,9 +47,12 @@ public interface GroovyFile extends PsiFile, GroovyPsiElement {
 
   GrImportStatement addImportForClass(PsiClass aClass);
   void removeImport(GrImportStatement importStatement) throws IncorrectOperationException;
+  GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
 
   boolean isScript();
 
   @Nullable
   PsiClass getScriptClass();
+
+  void setPackageDefinition(String packageName);
 }

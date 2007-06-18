@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
+import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -107,6 +109,8 @@ public class GroovyLoader implements ApplicationComponent {
             return new GroovyPositionManager(debugProcess);
           }
         });
+
+        RefactoringListenerManager.getInstance(project).addListenerProvider(new GroovyClassMoveCallback());
       }
     });
   }

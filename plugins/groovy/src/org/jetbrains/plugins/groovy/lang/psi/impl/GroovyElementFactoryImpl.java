@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
@@ -102,10 +103,10 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   @Nullable
-  public GroovyPsiElement createTopElementFromText(String text) {
+  public GrTopStatement createTopElementFromText(String text) {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
-    return (GroovyPsiElement) dummyFile.getFirstChild();
+    return (GrTopStatement) dummyFile.getFirstChild();
   }
 
   public GrClosableBlock createClosureFromText(String closureText) throws IncorrectOperationException {
@@ -174,18 +175,6 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   public PsiElement createWhiteSpace() {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         " ");
-    return dummyFile.getFirstChild();
-  }
-
-  public PsiElement createNewLine() {
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        "\n");
-    return dummyFile.getFirstChild();
-  }
-
-  public PsiElement createSemicolon() {
-    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        ";");
     return dummyFile.getFirstChild();
   }
 

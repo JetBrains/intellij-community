@@ -279,14 +279,10 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     if (!GroovyRefactoringUtil.isLoopOrForkStatement(realContainer)) {
       if (realContainer instanceof GrCodeBlock) {
-        GrCodeBlock grCodeBlock = (GrCodeBlock) realContainer;
-        grCodeBlock.addStatementBefore(varDecl, (GrStatement) anchorElement);
-        return;
-      }
-      if (realContainer instanceof GroovyFile) {
-        realContainer.addBefore(varDecl, anchorElement);
-        realContainer.addBefore(factory.createNewLine(), anchorElement);
-        return;
+        GrCodeBlock block = (GrCodeBlock) realContainer;
+        block.addStatementBefore(varDecl, (GrStatement) anchorElement);
+      } else if (realContainer instanceof GroovyFile) {
+        ((GroovyFile) realContainer).addStatement(varDecl, (GrStatement) anchorElement);
       }
     } else {
       GrStatement tempStatement = ((GrStatement) anchorElement);

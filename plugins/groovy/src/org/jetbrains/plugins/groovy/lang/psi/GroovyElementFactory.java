@@ -26,19 +26,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 
 /**
  * @author ven
  */
 public abstract class GroovyElementFactory {
-
-  private static String DUMMY = "dummy.";
 
   public static GroovyElementFactory getInstance(Project project) {
     return project.getComponent(GroovyElementFactory.class);
@@ -50,14 +50,7 @@ public abstract class GroovyElementFactory {
    */
   public abstract GrImportStatement createImportStatementFromText(String qName);
 
-  /**
-   * @return new line psi element
-   */
   public abstract PsiElement createWhiteSpace();
-
-  public abstract PsiElement createNewLine();
-
-  public abstract PsiElement createSemicolon();
 
   public abstract GrArgumentList createExpressionArgumentList(GrExpression ... expressions);
 
@@ -65,17 +58,17 @@ public abstract class GroovyElementFactory {
 
   public abstract GrMethodCall createMethodCallByAppCall(GrApplicationExpression callExpr);
 
-  public abstract GrReferenceExpression createReferenceExpressionFromText(String idText);
+  public abstract GrReferenceExpression createReferenceExpressionFromText(String exprText);
 
-  public abstract GrExpression createExpressionFromText(String idText);
+  public abstract GrExpression createExpressionFromText(String exprText);
 
   public abstract GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal);
 
   public abstract PsiElement createIdentifierFromText(String idText);
 
-  public abstract GroovyPsiElement createTopElementFromText(String text);
+  public abstract GrTopStatement createTopElementFromText(String text);
 
-  public abstract GroovyPsiElement createClosureFromText(String s) throws IncorrectOperationException;
+  public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
 
   public abstract GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException;
 
