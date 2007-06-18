@@ -74,6 +74,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       return;
     }
     AntElement element = file.lightFindElementAt(textRange.getStartOffset());
+    final boolean shouldInvalidateProperties = element instanceof AntProperty;
     if (element != null) {
       do{
         element = element.getAntParent();
@@ -86,6 +87,9 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     }
     synchronized (PsiLock.LOCK) {
       element.clearCaches();
+      if (shouldInvalidateProperties) {
+        file.invalidateProperties();
+      }
       final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class);
       if (macrodef != null) {
         macrodef.clearCaches();
