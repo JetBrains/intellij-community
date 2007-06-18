@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -28,7 +29,6 @@ import java.util.List;
 public class CommitHelper {
   private final Project myProject;
 
-
   private final ChangeList myChangeList;
   private final List<Change> myIncludedChanges;
 
@@ -38,7 +38,7 @@ public class CommitHelper {
   private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
-  private List<Document> myCommittingDocuments = new ArrayList<Document>();
+  private final List<Document> myCommittingDocuments = new ArrayList<Document>();
 
 
   public CommitHelper(final Project project,
@@ -69,8 +69,9 @@ public class CommitHelper {
       return doesntContainErrors(vcsExceptions);
     }
     else {
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName, new Runnable() {
-        public void run() {
+      Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true,
+                                                         VcsConfiguration.getInstance(myProject).getCommitOption()) {
+        public void run(final ProgressIndicator indicator) {
           final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
           vcsManager.startBackgroundVcsOperation();
           try {
@@ -80,12 +81,13 @@ public class CommitHelper {
             vcsManager.stopBackgroundVcsOperation();
           }
         }
-      }, null, null, VcsConfiguration.getInstance(myProject).getCommitOption());
+      };
+      ProgressManager.getInstance().run(task);
       return false;
     }
   }
 
-  private boolean doesntContainErrors(final List<VcsException> vcsExceptions) {
+  private static boolean doesntContainErrors(final List<VcsException> vcsExceptions) {
     for (VcsException vcsException : vcsExceptions) {
       if (!vcsException.isWarning()) return false;
     }
@@ -191,7 +193,7 @@ public class CommitHelper {
       final List<Change> includedChanges = myIncludedChanges;
       if (list instanceof LocalChangeList) {
         final LocalChangeList localList = (LocalChangeList)list;
-        if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault()) {
+        if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault() && !localList.isReadOnly()) {
           changeListManager.removeChangeList(localList);
         }
         else if (config.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) &&
