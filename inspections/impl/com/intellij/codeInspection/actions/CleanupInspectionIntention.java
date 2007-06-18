@@ -61,6 +61,7 @@ public class CleanupInspectionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    if (myQuickfixClass == null) return false;
     final int[] count = new int[]{0};
     runInspection(project, file, new Processor() {
       public void process(final Project project, final CommonProblemDescriptor descriptor, final QuickFix fix) {
