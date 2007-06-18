@@ -116,7 +116,6 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   private static void fileStatusesChanged() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      FileStatusManager.getInstance(project).fileStatusesChanged();
       VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
     }
   }

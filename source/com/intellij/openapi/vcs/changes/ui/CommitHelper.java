@@ -143,7 +143,6 @@ public class CommitHelper {
       VirtualFileManager.getInstance().refresh(true, new Runnable() {
         public void run() {
           lvcsAction.finish();
-          FileStatusManager.getInstance(myProject).fileStatusesChanged();
           for (FilePath path : pathsToRefresh) {
             VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
           }
