@@ -218,6 +218,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestPreprocessUsages("Class cannot be inlined because it has usages of its class literal");
   }
 
+  public void testNoInlineCatchClause() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because it is used in a 'catch' clause");
+  }
+
+  public void testNoInlineThrowsClause() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because it is used in a 'throws' clause");
+  }
+
   public void testNoInlineUnresolvedConstructor() throws Exception {
     doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
   }

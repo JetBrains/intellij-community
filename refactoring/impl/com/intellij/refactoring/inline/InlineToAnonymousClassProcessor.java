@@ -3,6 +3,8 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.patterns.impl.Pattern;
+import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +28,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private PsiClass myClass;
   private final PsiCall myCallToInline;
   private final boolean myInlineThisOnly;
+
+  private Pattern ourCatchClausePattern = psiElement().type(PsiTypeElement.class).withParent(psiElement().type(PsiParameter.class).withParent(psiElement().type(PsiCatchSection.class)));
+  private Pattern ourThrowsClausePattern = psiElement().withParent(psiElement().type(PsiReferenceList.class).withFirstChild(psiElement().withText(PsiKeyword.THROWS)));
 
   protected InlineToAnonymousClassProcessor(Project project, PsiClass psiClass, final PsiCall callToInline, boolean inlineThisOnly) {
     super(project);
@@ -197,8 +202,16 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         hasUsages = true;
       }
       final PsiElement parentElement = element.getParent();
-      if (parentElement != null && parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
-        return "Class cannot be inlined because it has usages of its class literal";
+      if (parentElement != null) {
+        if (parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
+          return "Class cannot be inlined because it has usages of its class literal";
+        }
+        if (ourCatchClausePattern.accepts(parentElement)) {
+          return "Class cannot be inlined because it is used in a 'catch' clause";
+        }
+      }
+      if (ourThrowsClausePattern.accepts(element)) {
+        return "Class cannot be inlined because it is used in a 'throws' clause";
       }
       if (parentElement instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
