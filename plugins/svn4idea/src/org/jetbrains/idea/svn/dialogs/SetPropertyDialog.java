@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -33,13 +33,11 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.TreeSet;
 
 /**
@@ -50,18 +48,19 @@ import java.util.TreeSet;
  * To change this template use File | Settings | File Templates.
  */
 public class SetPropertyDialog extends DialogWrapper {
-  private String myPropertyName;
-  private File[] myFiles;
+  private final String myPropertyName;
+  private final File[] myFiles;
 
   private JComboBox myPropertyNameBox;
   private JRadioButton mySetPropertyButton;
   private JTextArea myValueText;
   private JRadioButton myDeletePropertyButton;
   private JCheckBox myRecursiveButton;
-  private boolean myIsRecursionAllowed;
-  private SvnVcs myVCS;
+  private final boolean myIsRecursionAllowed;
+  private final SvnVcs myVCS;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.property";
+  private JPanel myMainPanel;
 
   public SetPropertyDialog(Project project, File[] files, String name, boolean allowRecursion) {
     super(project, true);
@@ -131,20 +130,8 @@ public class SetPropertyDialog extends DialogWrapper {
     Component editor = myPropertyNameBox.getEditor().getEditorComponent();
     if (editor instanceof JTextField) {
       JTextField jTextField = (JTextField)editor;
-      jTextField.getDocument().addDocumentListener(new DocumentListener() {
-        public void insertUpdate(DocumentEvent e) {
-          String name = getPropertyName();
-          updatePropertyValue(name);
-          getOKAction().setEnabled(name != null && !"".equals(name.trim()));
-        }
-
-        public void removeUpdate(DocumentEvent e) {
-          String name = getPropertyName();
-          updatePropertyValue(name);
-          getOKAction().setEnabled(name != null && !"".equals(name.trim()));
-        }
-
-        public void changedUpdate(DocumentEvent e) {
+      jTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(DocumentEvent e) {
           String name = getPropertyName();
           updatePropertyValue(name);
           getOKAction().setEnabled(name != null && !"".equals(name.trim()));
@@ -178,44 +165,11 @@ public class SetPropertyDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-
-    GridBagConstraints gc = new GridBagConstraints();
-    gc.insets = new Insets(2, 2, 2, 2);
-    gc.gridwidth = 1;
-    gc.gridheight = 1;
-    gc.gridx = 0;
-    gc.gridy = 0;
-    gc.anchor = GridBagConstraints.WEST;
-    gc.fill = GridBagConstraints.NONE;
-    gc.weightx = 0;
-    gc.weighty = 0;
-
-    JLabel nameLabel = new JLabel(SvnBundle.message("label.set.property.property.name"));
-    panel.add(nameLabel, gc);
-
-    gc.gridx += 1;
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-
-    myPropertyNameBox = new JComboBox();
-    myPropertyNameBox.setEditable(true);
-    panel.add(myPropertyNameBox, gc);
-
     fillPropertyNames(myFiles);
-
     if (myPropertyName != null) {
       myPropertyNameBox.getEditor().setItem(myPropertyName);
       myPropertyNameBox.getEditor().selectAll();
     }
-    nameLabel.setLabelFor(myPropertyNameBox);
-
-    gc.gridx = 0;
-    gc.gridwidth = 2;
-    gc.gridy += 1;
-    mySetPropertyButton = new JRadioButton(SvnBundle.message("radio.set.property.set.property.value"));
-    panel.add(mySetPropertyButton, gc);
     mySetPropertyButton.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         if (mySetPropertyButton.isSelected()) {
@@ -227,40 +181,12 @@ public class SetPropertyDialog extends DialogWrapper {
         }
       }
     });
-
-    gc.gridy += 1;
-    gc.weighty = 1;
-    gc.fill = GridBagConstraints.BOTH;
-    myValueText = new JTextArea(7, 25);
-
-    panel.add(new JScrollPane(myValueText), gc);
-
-    gc.gridy += 1;
-    gc.weighty = 0;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-
-    myDeletePropertyButton = new JRadioButton(SvnBundle.message("radio.set.property.delete.property"));
-    panel.add(myDeletePropertyButton, gc);
-
-    gc.gridy += 1;
-    panel.add(new JSeparator(), gc);
-    gc.gridy += 1;
-    myRecursiveButton = new JCheckBox(SvnBundle.message("checkbox.set.property.update.properties.recursively"));
-    panel.add(myRecursiveButton, gc);
-
     myRecursiveButton.setEnabled(myIsRecursionAllowed);
-
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(mySetPropertyButton);
-    bg.add(myDeletePropertyButton);
-
-    mySetPropertyButton.setSelected(true);
-
-    return panel;
+    return myMainPanel;
   }
 
   private void fillPropertyNames(File[] files) {
-    final Collection names = new TreeSet();
+    final Collection<String> names = new TreeSet<String>();
     if (files.length == 1) {
       File file = files[0];
       try {
@@ -286,14 +212,13 @@ public class SetPropertyDialog extends DialogWrapper {
 
     fillProperties(names);
 
-    for (Iterator iterator = names.iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
+    for (final String name : names) {
       myPropertyNameBox.addItem(name);
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void fillProperties(final Collection names) {
+  private static void fillProperties(final Collection<String> names) {
     names.add("svn:eol-style");
     names.add("svn:keywords");
     names.add("svn:needs-lock");
