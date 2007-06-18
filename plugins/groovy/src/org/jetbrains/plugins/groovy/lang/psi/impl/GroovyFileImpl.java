@@ -44,7 +44,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import javax.swing.*;
 
 /**
- * Implements all abstractionos related to Groovy file
+ * Implements all abstractions related to Groovy file
  *
  * @author ilyas
  */
