@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -12,12 +13,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
-import org.apache.oro.io.GlobFilenameFilter;
 
 import java.io.File;
-import java.io.FilenameFilter;
-
 
 public class CheckoutAction extends AnAction {
   private final CheckoutProvider myProvider;
@@ -31,7 +28,7 @@ public class CheckoutAction extends AnAction {
     myProvider.doCheckout(new MyListener(project));
   }
 
-  private static boolean processProject(final Project project, final File directory) {
+  private static void refreshVFS(final File directory) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -44,18 +41,6 @@ public class CheckoutAction extends AnAction {
         lfs.removeWatchedRoot(watchRequest);
       }
     });
-
-    //noinspection HardCodedStringLiteral
-    File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*.ipr"));
-    if (files != null && files.length > 0) {
-      int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", files[0].getAbsolutePath()),
-                                        VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
-      if (rc == 0) {
-        ProjectUtil.openProject(files [0].getAbsolutePath(), project, false);
-      }
-      return true;
-    }
-    return false;
   }
 
   private static void processNoProject(final Project project, final File directory) {
@@ -85,7 +70,12 @@ public class CheckoutAction extends AnAction {
         myFirstDirectory = directory;
       }
       if (!myFoundProject) {
-        myFoundProject = processProject(myProject, directory);
+        refreshVFS(directory);
+        CheckoutListener[] listeners = Extensions.getExtensions(CheckoutListener.EP_NAME);
+        for(CheckoutListener listener: listeners) {
+          myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+          if (myFoundProject) break;
+        }
       }
     }
 
