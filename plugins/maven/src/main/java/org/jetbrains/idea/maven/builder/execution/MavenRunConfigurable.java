@@ -11,6 +11,8 @@ import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -64,24 +66,31 @@ public abstract class MavenRunConfigurable implements Configurable {
 
   private void setData(final MavenBuildParameters data) {
     data.setPomPath(pomComponent.getComponent().getText());
-
-    data.getGoals().clear();
-    StringTokenizer tokenizer = new StringTokenizer(goalsComponent.getComponent().getText());
-    while (tokenizer.hasMoreTokens()) {
-      data.getGoals().add(tokenizer.nextToken());
-    }
+    data.setGoals(tokenize(goalsComponent.getComponent().getText()));
   }
 
   private void getData(final MavenBuildParameters data) {
     pomComponent.getComponent().setText(data.getPomPath());
+    goalsComponent.getComponent().setText(detokenize(data.getGoals()));
+  }
 
-    StringBuffer stringBuffer = new StringBuffer();
-    for ( String goal : data.getGoals() ) {
-      stringBuffer.append(goal);
-      stringBuffer.append(" ");
+  private static List<String> tokenize(final String string) {
+    final List<String> tokens = new ArrayList<String>();
+    for ( StringTokenizer tokenizer = new StringTokenizer(string); tokenizer.hasMoreTokens();) {
+      tokens.add(tokenizer.nextToken());
     }
+    return tokens;
+  }
 
-    goalsComponent.getComponent().setText(stringBuffer.toString());
+  private static String detokenize(final List<String> list) {
+    final StringBuffer stringBuffer = new StringBuffer();
+    for ( String goal : list) {
+      if(stringBuffer.length()!=0){
+        stringBuffer.append(" ");
+      }
+      stringBuffer.append(goal);
+    }
+    return stringBuffer.toString();
   }
 
   protected abstract MavenBuildParameters getParameters();

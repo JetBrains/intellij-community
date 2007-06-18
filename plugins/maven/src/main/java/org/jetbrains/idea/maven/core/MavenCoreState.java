@@ -181,7 +181,8 @@ public class MavenCoreState implements Cloneable {
     return result;
   }
 
-  public MavenCoreState cloneSafe() {
+  @Override
+  public MavenCoreState clone() {
     try {
       return (MavenCoreState)super.clone();
     }

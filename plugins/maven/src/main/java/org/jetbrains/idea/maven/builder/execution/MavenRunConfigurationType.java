@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,10 +25,6 @@ import java.util.List;
  * @author Vladislav.Kaznacheev
  */
 public class MavenRunConfigurationType implements LocatableConfigurationType {
-
-  public static MavenRunConfigurationType getInstance() {
-    return ApplicationManager.getApplication().getComponent(MavenRunConfigurationType.class);
-  }
 
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/images/phase.png");
@@ -73,52 +68,42 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   public void disposeComponent() {
   }
 
-  public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-    String path = "";
-    List<String> goals = null;
-
-    final PsiFile psiFile = location.getPsiElement().getContainingFile();
+  private static MavenBuildParameters createBuildParameters (PsiElement element) {
+    final PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile != null) {
-        if(!MavenEnv.POM_FILE.equals(virtualFile.getName())){
-          return null;
-        }
-        path = virtualFile.getPath();
+      if (virtualFile != null && MavenEnv.POM_FILE.equals(virtualFile.getName())) {
         final DataContext dataContext = DataManager.getInstance().getDataContext();
-        if (dataContext!=null){
-          goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(dataContext);
+        if (dataContext != null) {
+          final List<String> goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(dataContext);
+          if (goals != null) {
+            return new MavenBuildParameters(virtualFile.getPath(), goals);
+          }
         }
       }
     }
+    return null;
+  }
 
-    if (goals == null) {
+  public static String generateName(final MavenBuildParameters buildParameters) {
+    return ExecutionUtil.shortenName(buildParameters.getGoals().toString(),0);
+  }
+
+  public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
+    final MavenBuildParameters buildParameters = createBuildParameters(location.getPsiElement());
+    if (buildParameters == null){
       return null;
     }
 
-    final String name = ExecutionUtil.shortenName(goals.toString(),0);
     final RunnerAndConfigurationSettingsImpl settings =
-      RunManagerEx.getInstanceEx(location.getProject()).createConfiguration(name, myFactory);
-    final RunConfiguration configuration = settings.getConfiguration();
-    if (configuration instanceof MavenRunConfiguration) {
-      final MavenBuildParameters mavenBuildParameters = ((MavenRunConfiguration)configuration).getBuildParameters();
-      mavenBuildParameters.setPomPath(path);
-      mavenBuildParameters.getGoals().clear();
-      mavenBuildParameters.getGoals().addAll(goals);
-    }
+      RunManagerEx.getInstanceEx(location.getProject()).createConfiguration(generateName(buildParameters), myFactory);
+    MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
+    runConfiguration.setBuildParameters(buildParameters);
     return settings;
   }
 
   public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
-    if (configuration instanceof MavenRunConfiguration) {
-      MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)configuration;
-      if (element instanceof PsiFile) {
-        final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-        if (virtualFile != null) {
-          return mavenRunConfiguration.getBuildParameters().getPomPath().equalsIgnoreCase(virtualFile.getPath());
-        }
-      }
-    }
-    return false;
+    return configuration instanceof MavenRunConfiguration &&
+           ((MavenRunConfiguration)configuration).getBuildParameters().equals(createBuildParameters(element));
   }
 }

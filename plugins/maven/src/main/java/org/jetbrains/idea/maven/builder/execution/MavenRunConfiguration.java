@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.builder.execution;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
@@ -28,7 +27,7 @@ import org.jetbrains.idea.maven.core.MavenCoreState;
  * @author Vladislav.Kaznacheev
  */
 public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration{
-  public static class MavenSettings {
+  public static class MavenSettings implements Cloneable {
     @NonNls private static final String TAG = "MavenSettings";
 
     public MavenBuildParameters buildParameters;
@@ -44,9 +43,19 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
 
     public MavenSettings(final Project project) {
       buildParameters = new MavenBuildParameters();
-      coreState = project.getComponent(MavenCore.class).getState().cloneSafe();
-      builderState = project.getComponent(MavenBuilder.class).getState().cloneSafe();
+      coreState = project.getComponent(MavenCore.class).getState().clone();
+      builderState = project.getComponent(MavenBuilder.class).getState().clone();
       builderState.setUseMavenEmbedder(false);
+    }
+
+    public MavenSettings(final MavenSettings that) {
+      buildParameters = that.buildParameters.clone();
+      coreState = that.coreState.clone();
+      builderState = that.builderState.clone();
+    }
+
+    protected MavenSettings clone() {
+      return new MavenSettings(this);
     }
   }
 
@@ -55,6 +64,12 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   protected MavenRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
     myMavenSettings = new MavenSettings(project);
+  }
+
+  public RunConfiguration clone() {
+    MavenRunConfiguration clone = (MavenRunConfiguration)super.clone();
+    clone.myMavenSettings = myMavenSettings.clone();
+    return clone;
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -95,6 +110,10 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return myMavenSettings.buildParameters;
   }
 
+  public void setBuildParameters (MavenBuildParameters parameters){
+    myMavenSettings.buildParameters = parameters;    
+  }
+
   public MavenCoreState getCoreState() {
     return myMavenSettings.coreState;
   }
@@ -125,6 +144,6 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   private String getGeneratedName() {
-    return ExecutionUtil.shortenName(myMavenSettings.buildParameters.getGoals().toString(),0);
+    return MavenRunConfigurationType.generateName(myMavenSettings.buildParameters);
   }
 }

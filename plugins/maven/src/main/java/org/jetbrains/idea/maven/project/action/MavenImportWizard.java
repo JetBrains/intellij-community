@@ -44,7 +44,7 @@ public class MavenImportWizard extends ProjectImportWizard
 
     if ((updateCurrent)) {
       projectToUpdate = currentProject;
-      preferences = MavenImporterPreferencesComponent.getInstance(currentProject).getState().safeClone();
+      preferences = MavenImporterPreferencesComponent.getInstance(currentProject).getState().clone();
     }
     else {
       projectToUpdate = null;

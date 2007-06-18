@@ -124,7 +124,8 @@ public class MavenImporterPreferences implements Cloneable {
     return result;
   }
 
-  public MavenImporterPreferences safeClone() {
+  @Override
+  public MavenImporterPreferences clone() {
     try {
       return (MavenImporterPreferences)super.clone();
     }
