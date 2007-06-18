@@ -26,6 +26,7 @@ public class PropertiesBuilder extends AntElementVisitor {
   @NotNull private final AntFile myPropertyHolder;
   private Set<AntTarget> myVisitedTargets = new HashSet<AntTarget>();
   private Set<AntFile> myVisitedFiles = new HashSet<AntFile>();
+  private Map<AntProject, List<Runnable>> myPostponedProcessing = new HashMap<AntProject, List<Runnable>>();
   private List<PsiFile> myDependentFiles = new ArrayList<PsiFile>();
   
   private PropertiesBuilder(@NotNull AntFile propertyHolder) {
@@ -81,8 +82,17 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
 
     projectTargets.removeAll(myVisitedTargets);
+    // process unvisited targets
     for (AntTarget antTarget : projectTargets) {
       antTarget.acceptAntElementVisitor(this);
+    }
+    // process postponed targets
+    final List<Runnable> list = myPostponedProcessing.get(antProject);
+    if (list != null) {
+      for (Runnable runnable : list) {
+        runnable.run();
+      }
+      myPostponedProcessing.remove(antProject);
     }
   }
 
@@ -118,14 +128,34 @@ public class PropertiesBuilder extends AntElementVisitor {
 
     final String ifProperty = target.getConditionalPropertyName(AntTarget.ConditionalAttribute.IF);
     if (ifProperty != null && myPropertyHolder.getProperty(ifProperty) == null) {
+      postponeTargetVisiting(target);
       return; // skip target because 'if' property not defined
     }
 
     final String unlessProperty = target.getConditionalPropertyName(AntTarget.ConditionalAttribute.UNLESS);
     if (unlessProperty != null && myPropertyHolder.getProperty(unlessProperty) != null) {
+      postponeTargetVisiting(target);
       return; // skip target because 'unless' property is defined 
     }
-    
+
+    visitTargetChildren(target);
+  }
+
+  private void postponeTargetVisiting(final AntTarget target) {
+    final AntProject antProject = target.getAntProject();
+    List<Runnable> list = myPostponedProcessing.get(antProject);
+    if (list == null) {
+      list = new ArrayList<Runnable>();
+      myPostponedProcessing.put(antProject, list);
+    }
+    list.add(new Runnable() {
+      public void run() {
+        visitTargetChildren(target);
+      }
+    });
+  }
+
+  private void visitTargetChildren(final AntTarget target) {
     for (PsiElement child : target.getChildren()) {
       if (child instanceof AntElement) {
         ((AntElement)child).acceptAntElementVisitor(this);
