@@ -21,9 +21,9 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.projectImport.eclipse.config.EclipseClasspathStorage;
 import com.intellij.ui.OrderPanelListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,8 +108,9 @@ public class ClasspathEditor extends ModuleElementsEditor {
                     new GridBagConstraints(0,0,1,1,0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 6, 6, 0), 0, 0));
 
     formatIdToDescr.put ( ClasspathStorage.DEFAULT_STORAGE, ClasspathStorage.DEFAULT_STORAGE_DESCR);
-    formatIdToDescr.put ( EclipseClasspathStorage.ID, EclipseClasspathStorage.DESCR);
-//    formatIdToDescr.put ( MavenClasspathStorage.ID, MavenClasspathStorage.DESCR);
+    for (ClasspathStorageProvider provider : ClasspathStorage.getProviders()){
+      formatIdToDescr.put ( provider.getID(), provider.getDescription());
+    }
 
     final Object[] items = formatIdToDescr.values().toArray();
     cbClasspathFormat = new JComboBox(items);
@@ -144,7 +145,9 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
   private void setModuleClasspathFormat() throws ConfigurationException {
     final String storageID = getSelectedClasspathFormat();
-    ClasspathStorage.assertCompatible(myModel, storageID);
+    if (!storageID.equals(ClasspathStorage.DEFAULT_STORAGE)) {
+      ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
+    }
     if (isClasspathFormatModified()) {
       ClasspathStorage.setStorageType(myModel.getModule(), storageID);
     }

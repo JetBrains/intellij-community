@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.projectImport.eclipse.config.EclipseClasspathStorage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -48,8 +47,8 @@ import java.util.*;
     ),
 
     @Storage(
-          id = EclipseClasspathStorage.ID,
-          storageClass = EclipseClasspathStorage.class
+          id = ClasspathStorage.SPECIAL_STORAGE,
+          storageClass = ClasspathStorage.class
     )
   },
   storageChooser = ModuleRootManagerImpl.StorageChooser.class
@@ -662,12 +661,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
     public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
-      final String id = ClasspathStorage.getStorageType(moduleRootManager.getModule());
+      final String id = ClasspathStorage.getStorageCategory(moduleRootManager.getModule());
       for (Storage storage : storages) {
         if (storage.id().equals(id)) return new Storage[]{storage};
       }
       throw new IllegalArgumentException();
     }
   }
-
 }
