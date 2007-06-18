@@ -4,10 +4,13 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -173,58 +176,70 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   public void loadModules() {
     if (myModulePaths != null && myModulePaths.length > 0) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      final Application app = ApplicationManager.getApplication();
+      Runnable swingRunnable = new Runnable() {
         public void run() {
-          myFailedModulePaths.clear();
-          myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
-          final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-          for (final ModulePath modulePath : myModulePaths) {
-            try {
-              final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
-              if (module.getModuleType() instanceof UnknownModuleType) {
-                modulesWithUnknownTypes.add(module);
+          app.runWriteAction(new Runnable() {
+            public void run() {
+              myFailedModulePaths.clear();
+              myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
+              final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
+              for (final ModulePath modulePath : myModulePaths) {
+                try {
+                  final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
+                  if (module.getModuleType() instanceof UnknownModuleType) {
+                    modulesWithUnknownTypes.add(module);
+                  }
+                  final String groupPathString = modulePath.getModuleGroup();
+                  if (groupPathString != null) {
+                    final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
+                    myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
+                  }
+                  myFailedModulePaths.remove(modulePath);
+                }
+                catch (final IOException e) {
+                  fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+                }
+                catch (JDOMException e) {
+                  fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
+                }
+                catch (InvalidDataException e) {
+                  fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
+                }
+                catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+                  fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
+                }
+                catch (StateStorage.StateStorageException e) {
+                  fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+                }
               }
-              final String groupPathString = modulePath.getModuleGroup();
-              if (groupPathString != null) {
-                final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-                myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
+              if (!app.isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
+                String message;
+                if (modulesWithUnknownTypes.size() == 1) {
+                  message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
+                }
+                else {
+                  StringBuilder modulesBuilder = new StringBuilder();
+                  for (final Module module : modulesWithUnknownTypes) {
+                    modulesBuilder.append("\n\"");
+                    modulesBuilder.append(module.getName());
+                    modulesBuilder.append("\"");
+                  }
+                  message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
+                }
+                Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
               }
-              myFailedModulePaths.remove(modulePath);
             }
-            catch (final IOException e) {
-              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
-            }
-            catch (JDOMException e) {
-              fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
-            }
-            catch (InvalidDataException e) {
-              fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
-            }
-            catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-              fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
-            }
-            catch (StateStorage.StateStorageException e) {
-              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
-            }
-          }
-          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
-            String message;
-            if (modulesWithUnknownTypes.size() == 1) {
-              message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
-            }
-            else {
-              StringBuilder modulesBuilder = new StringBuilder();
-              for (final Module module : modulesWithUnknownTypes) {
-                modulesBuilder.append("\n\"");
-                modulesBuilder.append(module.getName());
-                modulesBuilder.append("\"");
-              }
-              message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
-            }
-            Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
-          }
+          });
         }
-      });
+      };
+
+      if (app.isDispatchThread()) {
+        swingRunnable.run();
+      }
+      else {
+        app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
+      }
     }
   }
 
@@ -501,14 +516,32 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   public void projectOpened() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    Runnable runnableWithProgress = new Runnable() {
       public void run() {
-        for (Module module : myModuleModel.myPathToModule.values()) {
-          ((ModuleImpl)module).moduleAdded();
-          fireModuleAdded(module);
+        for (final Module module : myModuleModel.myPathToModule.values()) {
+          final Application app = ApplicationManager.getApplication();
+          final Runnable swingRunnable = new Runnable() {
+            public void run() {
+              app.runWriteAction(new Runnable() {
+                public void run() {
+                  ((ModuleImpl)module).moduleAdded();
+                  fireModuleAdded(module);
+                }
+              });
+            }
+          };
+          if (app.isDispatchThread()) {
+            swingRunnable.run();
+          }
+          else {
+            app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
+          }
         }
       }
-    });
+    };
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+
     myModuleModel.projectOpened();
   }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
@@ -58,7 +60,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
 
   private final ArrayList<Project> myOpenProjects = new ArrayList<Project>();
-  private final ArrayList<ProjectManagerListener> myListeners = new ArrayList<ProjectManagerListener>();
+  private final List<ProjectManagerListener> myListeners = new CopyOnWriteArrayList<ProjectManagerListener>();
 
   private Project myCurrentTestProject = null;
 
@@ -321,13 +323,54 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  public Project loadAndOpenProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException {
+  public Project loadAndOpenProject(final String filePath, final boolean convert) throws IOException, JDOMException, InvalidDataException {
     try {
-      Project project = loadProject(filePath, convert);
-      if (project == null || !openProject(project)) {
+      final IOException[] io = new IOException[]{null};
+      final JDOMException[] jdom = new JDOMException[]{null};
+      final InvalidDataException[] invalidData = new InvalidDataException[]{null};
+      final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
+
+      final Project[] project = new Project[1];
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          try {
+            indicator.setText("Loading components");
+            indicator.setIndeterminate(true);
+
+            project[0] = loadProject(filePath, convert);
+          }
+          catch (IOException e) {
+            io[0] = e;
+            return;
+          }
+          catch (JDOMException e) {
+            jdom[0] = e;
+            return;
+          }
+          catch (InvalidDataException e) {
+            invalidData[0] = e;
+            return;
+          }
+          catch (StateStorage.StateStorageException e) {
+            stateStorage[0] = e;
+            return;
+          }
+
+          indicator.setText("Initializing components");
+        }
+      }, "Loading Project", false, null);
+
+      if (project[0] == null || !openProject(project[0])) {
         return null;
       }
-      return project;
+
+      if (io[0] != null) throw io[0];
+      if (jdom[0] != null) throw jdom[0];
+      if (invalidData[0] != null) throw invalidData[0];
+      if (stateStorage[0] != null) throw stateStorage[0];
+
+      return project[0];
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
@@ -572,27 +615,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: fireProjectClosing()");
     }
-    synchronized (myListeners) {
-      if (!myListeners.isEmpty()) {
-        ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (ProjectManagerListener listener : listeners) {
-          listener.projectClosing(project);
-        }
-      }
+
+    for (ProjectManagerListener listener : myListeners) {
+      listener.projectClosing(project);
     }
   }
 
   public void addProjectManagerListener(ProjectManagerListener listener) {
-    synchronized (myListeners) {
-      myListeners.add(listener);
-    }
+    myListeners.add(listener);
   }
 
   public void removeProjectManagerListener(ProjectManagerListener listener) {
-    synchronized (myListeners) {
-      boolean removed = myListeners.remove(listener);
-      LOG.assertTrue(removed);
-    }
+    boolean removed = myListeners.remove(listener);
+    LOG.assertTrue(removed);
   }
 
   public void addProjectManagerListener(Project project, ProjectManagerListener listener) {
@@ -619,13 +654,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
-    synchronized (myListeners) {
-      if (!myListeners.isEmpty()) {
-        ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (ProjectManagerListener listener : listeners) {
-          listener.projectOpened(project);
-        }
-      }
+
+    for (ProjectManagerListener listener : myListeners) {
+      listener.projectOpened(project);
     }
   }
 
@@ -633,13 +664,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectClosed");
     }
-    synchronized (myListeners) {
-      if (!myListeners.isEmpty()) {
-        ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (ProjectManagerListener listener : listeners) {
-          listener.projectClosed(project);
-        }
-      }
+
+    for (ProjectManagerListener listener : myListeners) {
+      listener.projectClosed(project);
     }
   }
 
@@ -647,13 +674,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: canClose()");
     }
-    synchronized (myListeners) {
-      if (!myListeners.isEmpty()) {
-        ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (ProjectManagerListener listener : listeners) {
-          if (!listener.canCloseProject(project)) return false;
-        }
-      }
+
+    for (ProjectManagerListener listener : myListeners) {
+      if (!listener.canCloseProject(project)) return false;
     }
 
     return true;

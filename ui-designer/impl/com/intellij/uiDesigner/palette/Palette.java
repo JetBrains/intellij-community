@@ -159,7 +159,9 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   }
 
   public void readExternal(@NotNull final Element element) {
+    /*
     ApplicationManager.getApplication().assertIsDispatchThread();
+    */
 
     // It seems that IDEA inokes readExternal twice: first time for node in defaults XML
     // the second time for node in project file. Stupidity... :(

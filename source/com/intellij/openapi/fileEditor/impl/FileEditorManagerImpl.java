@@ -101,7 +101,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
 
   FileEditorManagerImpl(final Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+/*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
     myPanels = new JPanel(new BorderLayout());
     mySplitters = new EditorsSplitters(this);
@@ -906,14 +906,14 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   private final Map<FileEditorManagerListener, MessageBusConnection> myListenerToConnectionMap = new HashMap<FileEditorManagerListener, MessageBusConnection>();
 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
-    assertThread();
+/*    assertThread();*/
     final MessageBusConnection connection = getProject().getMessageBus().connect();
     connection.subscribe(ProjectTopics.FILE_EDITOR_MANAGER, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, final Disposable parentDisposable) {
-    assertThread();
+    /*assertThread();*/
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myListenerToConnectionMap.remove(listener);
