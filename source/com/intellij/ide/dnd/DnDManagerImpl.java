@@ -200,7 +200,8 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       hideCurrentHighlighter();
     }
 
-    boolean sameTarget = getLastProcessedTarget() != null && getLastProcessedTarget().equals(target);
+    final DnDTarget processedTarget = getLastProcessedTarget();
+    boolean sameTarget = processedTarget != null && processedTarget.equals(target);
     if (sameTarget) {
       if (myCurrentEvent.isDropPossible()) {
         if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
@@ -221,7 +222,9 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     }
     else {
       hideCurrentHighlighter();
-      getLastProcessedTarget().cleanUpOnLeave();
+      if (processedTarget != null) {
+        processedTarget.cleanUpOnLeave();
+      }
       myCurrentEvent.clearDropHandler();
       restartTimer();
 
