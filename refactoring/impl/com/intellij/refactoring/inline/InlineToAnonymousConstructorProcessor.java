@@ -395,7 +395,11 @@ class InlineToAnonymousConstructorProcessor {
             PsiTypeParameter[] psiTypeParameters = containingClass.getTypeParameters();
             for(int i=0; i<psiTypeParameters.length; i++) {
               if (psiTypeParameters [i] == psiClass) {
-                elementsToReplace.put(typeElement, myElementFactory.createTypeElement(substitutedParameters [i]));
+                PsiType substType = substitutedParameters[i];
+                if (substType == null) {
+                  substType = PsiType.getJavaLangObject(typeElement.getManager(), typeElement.getProject().getAllScope());
+                }
+                elementsToReplace.put(typeElement, myElementFactory.createTypeElement(substType));
               }
             }
           }
