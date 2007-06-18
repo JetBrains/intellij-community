@@ -74,6 +74,14 @@ public class ChangeSetTest extends LocalVcsTestCase {
     assertTrue(cs.isCreationalFor(r.getEntry("dir")));
   }
 
+  @Test
+  public void testIsLocal() {
+    assertFalse(cs(new CreateFileChange(1, "f", null, -1)).isLocal());
+    assertTrue(cs(new ChangeFileContentChange("f", null, -1)).isLocal());
+    assertTrue(cs(new ChangeFileContentChange("f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isLocal());
+    assertFalse(cs(new CreateFileChange(1, "f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isLocal());
+  }
+
   private class LoggingChange extends CreateFileChange {
     private int myId;
 

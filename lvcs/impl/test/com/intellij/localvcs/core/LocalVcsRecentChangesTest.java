@@ -37,7 +37,7 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testDoesNotIncludeNotInterestingChanges() {
+  public void testDoesNotIncludeUnnamedChanges() {
     vcs.beginChangeSet();
     vcs.createFile("f1", null, -1);
     vcs.endChangeSet("a");
@@ -70,6 +70,27 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testDoesNotIncludeLocalFileChanges() {
+    vcs.beginChangeSet();
+    vcs.createFile("f1", null, -1);
+    vcs.endChangeSet("a");
+
+    vcs.beginChangeSet();
+    vcs.createFile("f2", null, -1);
+    vcs.changeFileContent("f1", null, -1);
+    vcs.endChangeSet("b");
+
+    vcs.beginChangeSet();
+    vcs.changeFileContent("f2", null, -1);
+    vcs.endChangeSet("c");
+
+    List<RecentChange> cc = vcs.getRecentChanges();
+    assertEquals(2, cc.size());
+    assertEquals("b", cc.get(0).getChangeName());
+    assertEquals("a", cc.get(1).getChangeName());
+  }
+
+  @Test
   public void testDoesNotIncludeLabels() {
     vcs.beginChangeSet();
     vcs.createFile("f", null, -1);
@@ -83,19 +104,21 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testRecentChangesForSeveralRoots() {
+    vcs.beginChangeSet();
     vcs.createDirectory("root/dir");
     vcs.createDirectory("anotherRoot/anotherDir");
-
-    vcs.beginChangeSet();
-    vcs.createFile("root/dir/f1", null, -1);
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    vcs.createFile("anotherRoot/anotherDir/f2", null, -1);
+    vcs.createFile("root/dir/f1", null, -1);
     vcs.endChangeSet("b");
 
+    vcs.beginChangeSet();
+    vcs.createFile("anotherRoot/anotherDir/f2", null, -1);
+    vcs.endChangeSet("c");
+
     List<RecentChange> cc = vcs.getRecentChanges();
-    assertRecentChanges(cc, "b", "a");
+    assertRecentChanges(cc, "c", "b", "a");
 
     RecentChange c0 = cc.get(0);
     RecentChange c1 = cc.get(1);
@@ -119,8 +142,8 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
       vcs.endChangeSet(String.valueOf(i));
 
       vcs.beginChangeSet();
-      vcs.createFile("ff" + String.valueOf(i), null, -1);
-      vcs.endChangeSet(null);
+      vcs.changeFileContent("f" + String.valueOf(i), null, -1);
+      vcs.endChangeSet(String.valueOf(i) + "_");
     }
 
     List<RecentChange> cc = vcs.getRecentChanges();

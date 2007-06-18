@@ -65,6 +65,11 @@ public class ChangeFileContentChange extends StructuralChange {
   }
 
   @Override
+  public boolean isLocal() {
+    return true;
+  }
+
+  @Override
   public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
     v.visit(this);
   }

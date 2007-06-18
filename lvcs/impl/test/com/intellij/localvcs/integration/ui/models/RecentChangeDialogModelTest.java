@@ -41,6 +41,14 @@ public class RecentChangeDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRevisionsAfterChangingShowChangesOnlyOption() {
+    m.showChangesOnly(true);
+
+    assertEquals(c.getRevisionBefore(), m.getLeftRevision());
+    assertEquals(c.getRevisionAfter(), m.getRightRevision());
+  }
+
+  @Test
   public void testTitle() {
     assertEquals("change", m.getTitle());
   }

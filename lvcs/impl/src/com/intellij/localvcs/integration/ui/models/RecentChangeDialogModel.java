@@ -14,7 +14,7 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   public RecentChangeDialogModel(IdeaGateway gw, ILocalVcs vcs, RecentChange c) {
     super(gw, vcs, null);
     myChange = c;
-    selectChanges(0, 0);
+    resetSelection();
   }
 
   @Override
@@ -28,5 +28,10 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   @Override
   public String getTitle() {
     return myChange.getChangeName();
+  }
+
+  @Override
+  protected void resetSelection() {
+    selectChanges(0, 0);
   }
 }

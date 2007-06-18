@@ -89,6 +89,10 @@ public abstract class HistoryDialogModel {
   public void showChangesOnly(boolean value) {
     myShowChangesOnly = value;
     initRevisionsCache();
+    resetSelection();
+  }
+
+  protected void resetSelection() {
     selectRevisions(0, 0);
   }
 

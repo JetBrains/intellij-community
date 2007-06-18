@@ -122,6 +122,14 @@ public class ChangeSet extends Change {
   }
 
   @Override
+  public boolean isLocal() {
+    for (Change c : myChanges) {
+      if (!c.isLocal()) return false;
+    }
+    return true;
+  }
+
+  @Override
   public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
     v.begin(this);
     for (Change c : Reversed.list(myChanges)) {

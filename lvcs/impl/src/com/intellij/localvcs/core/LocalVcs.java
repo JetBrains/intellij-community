@@ -210,8 +210,9 @@ public abstract class LocalVcs implements ILocalVcs {
 
     for (int i = 0; i < cc.size() && result.size() < 20; i++) {
       Change c = cc.get(i);
-      if (c.getName() == null) continue;
+      if (c.isLocal()) continue;
       if (c.isLabel()) continue;
+      if (c.getName() == null) continue;
 
       Revision before = new RevisionBeforeChange(myRoot, myRoot, myChangeList, c);
       Revision after = new RevisionAfterChange(myRoot, myRoot, myChangeList, c);
