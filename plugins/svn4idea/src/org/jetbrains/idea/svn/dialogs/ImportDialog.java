@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -18,16 +19,25 @@ public class ImportDialog extends RepositoryBrowserDialog {
     getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         if (getOKAction() != null) {
-          getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
+          updateOKAction();
         }
       }
     });
+    updateOKAction();
+  }
+
+  private void updateOKAction() {
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
 
   protected void doOKAction() {
     doImport();
     super.doOKAction();
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("vcs.subversion.import");
   }
 
   @Override
