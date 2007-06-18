@@ -27,11 +27,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
+import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 
@@ -85,6 +87,8 @@ public class GroovyLoader implements ApplicationComponent {
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
         new GroovyCompletionData());
+
+    MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
 
     TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());
 

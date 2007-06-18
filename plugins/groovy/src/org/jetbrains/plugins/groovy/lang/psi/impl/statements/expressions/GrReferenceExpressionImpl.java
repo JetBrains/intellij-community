@@ -328,8 +328,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
-      return element.equals(resolve());
+    if (element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod) element)) {
+      return getManager().areElementsEquivalent(element, resolve());
+    } else if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
+      return getManager().areElementsEquivalent(element, resolve());
     }
     return false;
   }

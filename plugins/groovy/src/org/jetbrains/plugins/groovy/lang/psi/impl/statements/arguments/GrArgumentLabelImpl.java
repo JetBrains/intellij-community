@@ -100,7 +100,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiMethod) && !(element instanceof PsiField)) return false;
-    return element.equals(resolve());
+
+    return getManager().areElementsEquivalent(element, resolve());
   }
 
   public Object[] getVariants() {
