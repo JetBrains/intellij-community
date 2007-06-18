@@ -568,7 +568,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public AntTypeDefinition[] getBaseTypeDefinitions() {
     synchronized (PsiLock.LOCK) {
       if (myTypeDefinitionArray == null || myTypeDefinitions == null || myTypeDefinitionArray.length != myTypeDefinitions.size()) {
-        getBaseTypeDefinition(null);
+        buildTypeDefinitions();
         myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[myTypeDefinitions.size()]);
       }
       return myTypeDefinitionArray;
@@ -578,33 +578,37 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @Nullable
   public AntTypeDefinition getBaseTypeDefinition(final String className) {
     synchronized (PsiLock.LOCK) {
-      if (myTypeDefinitions == null) {
-        myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
-        myProjectElements = new HashMap<AntTypeId, String>();
-        final ReflectedProject reflectedProject = ReflectedProject.getProject(getClassLoader());
-        if (reflectedProject.myProject != null) {
-          final AntInstrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
-          try {
-            // first, create task definitons
-            updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
-            // second, create definitions of data types
-            updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
-            myProjectProperties = reflectedProject.myProperties;
-          }
-          finally {
-            if (projectHelper != null) {
-              projectHelper.clearCache();
-            }
+      buildTypeDefinitions();
+      return myTypeDefinitions.get(className);
+    }
+  }
+
+  private void buildTypeDefinitions() {
+    if (myTypeDefinitions == null) {
+      myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
+      myProjectElements = new HashMap<AntTypeId, String>();
+      final ReflectedProject reflectedProject = ReflectedProject.getProject(getClassLoader());
+      if (reflectedProject.myProject != null) {
+        final AntInstrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
+        try {
+          // first, create task definitons
+          updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
+          // second, create definitions of data types
+          updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
+          myProjectProperties = reflectedProject.myProperties;
+        }
+        finally {
+          if (projectHelper != null) {
+            projectHelper.clearCache();
           }
         }
       }
-      return myTypeDefinitions.get(className);
     }
   }
 
   @Nullable /*will return null in case ant installation is not properly configured*/
   public AntTypeDefinition getTargetDefinition() {
-    getBaseTypeDefinition(null);
+    buildTypeDefinitions();
     synchronized (PsiLock.LOCK) {
       if (myTargetDefinition == null) {
         final Class targetClass = ReflectedProject.getProject(getClassLoader()).myTargetClass;
@@ -656,6 +660,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void registerCustomType(final AntTypeDefinition def) {
     synchronized (PsiLock.LOCK) {
+      buildTypeDefinitions();
       myTypeDefinitionArray = null;
       final String classname = def.getClassName();
       myTypeDefinitions.put(classname, def);
@@ -741,7 +746,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   private AntTypeDefinition createProjectDefinition() {
-    getBaseTypeDefinition(null);
+    buildTypeDefinitions();
     @NonNls final HashMap<String, AntAttributeType> projectAttrs = new HashMap<String, AntAttributeType>();
     projectAttrs.put(NAME_ATTR, AntAttributeType.STRING);
     projectAttrs.put(DEFAULT_ATTR, AntAttributeType.STRING);
