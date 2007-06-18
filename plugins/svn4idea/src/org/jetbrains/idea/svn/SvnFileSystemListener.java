@@ -35,19 +35,17 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -320,9 +318,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       if (addedFile != null) {
         final SVNStatus fileStatus = getFileStatus(new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName));
         if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
-          boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
-          if (!isIgnored) {
-            addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+          if (!addedFileInfo.myProject.isDisposed()) {
+            boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
+            if (!isIgnored) {
+              addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+            }
           }
         }
       }
