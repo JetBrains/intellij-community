@@ -335,8 +335,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           try {
-            indicator.setText("Loading components");
-            indicator.setIndeterminate(true);
+            if (indicator != null) {
+              indicator.setText("Loading components");
+              indicator.setIndeterminate(true);
+            }
 
             project[0] = loadProject(filePath, convert);
           }
@@ -357,7 +359,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             return;
           }
 
-          indicator.setText("Initializing components");
+          if (indicator != null) {
+            indicator.setText("Initializing components");
+          }
         }
       }, "Loading Project", false, null);
 
