@@ -37,7 +37,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   public void testSimple() throws Exception {
     doTest(false);
   }
-  
+
   public void testChangeToSuperType() throws Exception {
     doTest(false);
   }
@@ -170,6 +170,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testMultipleInnerClasses() throws Exception {
+    doTest(false);
+  }
+  
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }

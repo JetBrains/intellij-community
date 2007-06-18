@@ -5,6 +5,7 @@ class A {
         Object i = new Object() {
             public class A {
             }
+            
             private A myA = new A();
             
             public String toString() {

@@ -57,6 +57,9 @@ public abstract class AnonymousClassElementBase extends ClassElement {
     else if (i == JavaElementType.CLASS_INITIALIZER) {
       return ChildRole.CLASS_INITIALIZER;
     }
+    else if (i == JavaElementType.CLASS) {
+      return ChildRole.CLASS;
+    }
     else if (i == JavaTokenType.LBRACE) {
       return getChildRole(child, ChildRole.LBRACE);
     }
