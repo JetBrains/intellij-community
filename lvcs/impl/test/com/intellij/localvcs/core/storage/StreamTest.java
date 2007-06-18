@@ -317,7 +317,7 @@ public class StreamTest extends LocalVcsTestCase {
     Entry r = new RootEntry();
     createDirectory(r, 1, "dir");
 
-    Change c = new PutLabelChange("name", 123, true);
+    Change c = new PutLabelChange("name", 123);
     c.applyTo(r);
 
     os.writeChange(c);
@@ -326,7 +326,6 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(PutLabelChange.class, read.getClass());
     assertEquals(123, read.getTimestamp());
     assertEquals("name", read.getName());
-    assertTrue(((PutLabelChange)read).isMark());
     assertTrue(read.affects(r.getEntry("dir")));
   }
 
@@ -335,7 +334,7 @@ public class StreamTest extends LocalVcsTestCase {
     Entry r = new RootEntry();
     createDirectory(r, 1, "dir");
 
-    Change c = new PutEntryLabelChange("dir", "name", 123, false);
+    Change c = new PutEntryLabelChange("dir", "name", 123);
     c.applyTo(r);
 
     os.writeChange(c);
@@ -344,7 +343,6 @@ public class StreamTest extends LocalVcsTestCase {
     assertEquals(PutEntryLabelChange.class, read.getClass());
     assertEquals(123, read.getTimestamp());
     assertEquals("name", read.getName());
-    assertFalse(((PutLabelChange)read).isMark());
     assertTrue(read.affects(r.getEntry("dir")));
   }
 
@@ -397,6 +395,6 @@ public class StreamTest extends LocalVcsTestCase {
     ChangeList result = is.readChangeList();
 
     assertEquals(1, result.getChanges().size());
-    assertEquals(1, ((ChangeSet)result.getChanges().get(0)).getChanges().size());
+    assertEquals(1, result.getChanges().get(0).getChanges().size());
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -286,10 +285,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         }
       }
     }
-  }
-
-  public void markFileAsUpToDate(VirtualFile f) {
-    LocalHistory.mark(myProject, f);
   }
 
   public LocalHistoryAction startVcsAction(String actionName) {

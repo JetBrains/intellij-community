@@ -113,7 +113,7 @@ public class ChangeListPurgingTest extends ChangeListTestCase {
   }
 
   private void createChangesWithTimestamps(long... tt) {
-    for (long t : tt) cl.addChange(new PutLabelChange(null, t, false));
+    for (long t : tt) cl.addChange(new PutLabelChange(null, t));
   }
 
   private void assertRemainedChangesTimestamps(long... tt) {

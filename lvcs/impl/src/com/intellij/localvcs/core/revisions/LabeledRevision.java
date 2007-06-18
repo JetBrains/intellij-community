@@ -23,9 +23,4 @@ public class LabeledRevision extends RevisionAfterChange {
   public boolean wasChanged() {
     return false;
   }
-
-  @Override
-  public boolean isMarked() {
-    return myChange.isMark();
-  }
 }

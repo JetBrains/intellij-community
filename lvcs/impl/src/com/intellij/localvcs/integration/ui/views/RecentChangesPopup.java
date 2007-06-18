@@ -24,7 +24,7 @@ public class RecentChangesPopup {
   public void show() {
     List<RecentChange> cc = myVcs.getRecentChanges();
     if (cc.isEmpty()) {
-      myGateway.showMessage("There is no changes");
+      myGateway.showMessage("There are no changes");
       return;
     }
 

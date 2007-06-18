@@ -127,7 +127,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testDoesNotIncludePreviousLabels() {
-    applyAndAdd(cs(new PutLabelChange(null, -1, false)));
+    applyAndAdd(cs(new PutLabelChange(null, -1)));
     applyAndAdd(cs(new CreateFileChange(1, "file", null, -1)));
     assertEquals(1, getChangesFor("file").size());
   }
@@ -243,8 +243,8 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   public void testIncludingLabelsChanges() {
     Change cs1 = cs(new CreateFileChange(1, "f1", null, -1));
     Change cs2 = cs(new CreateFileChange(2, "f2", null, -1));
-    Change cs3 = new PutEntryLabelChange("f1", "label", -1, false);
-    Change cs4 = new PutLabelChange("label", -1, false);
+    Change cs3 = new PutEntryLabelChange("f1", "label", -1);
+    Change cs4 = new PutLabelChange("label", -1);
 
     applyAndAdd(cs1, cs2, cs3, cs4);
 
@@ -255,7 +255,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   @Test
   public void testIncludingChangeSetsWithLabelsInside() {
     Change cs1 = cs(new CreateFileChange(1, "f", null, -1));
-    Change cs2 = cs(new PutLabelChange("label", -1, false));
+    Change cs2 = cs(new PutLabelChange("label", -1));
 
     applyAndAdd(cs1, cs2);
     assertEquals(list(cs2, cs1), getChangesFor("f"));
@@ -265,7 +265,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   public void testDoesNotSplitChangeSetsWithLabelsInside() {
     Change cs1 = cs(new CreateFileChange(1, "f", null, -1));
     Change cs2 =
-      cs(new ChangeFileContentChange("f", null, -1), new PutLabelChange("label", -1, false), new ChangeFileContentChange("f", null, -1));
+      cs(new ChangeFileContentChange("f", null, -1), new PutLabelChange("label", -1), new ChangeFileContentChange("f", null, -1));
 
     applyAndAdd(cs1, cs2);
     assertEquals(list(cs2, cs1), getChangesFor("f"));
@@ -275,7 +275,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   public void testDoesNotIncludeChangesMadeBetweenDeletionAndRestore() {
     Change cs1 = cs(new CreateFileChange(1, "file", null, -1));
     Change cs2 = cs(new DeleteChange("file"));
-    Change cs3 = cs(new PutLabelChange(null, -1, false));
+    Change cs3 = cs(new PutLabelChange(null, -1));
     Change cs4 = cs(new CreateFileChange(1, "file", null, -1));
 
     applyAndAdd(cs1, cs2, cs3, cs4);

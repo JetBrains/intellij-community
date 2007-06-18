@@ -19,7 +19,7 @@ public class PutLabelChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testLabelOnFile() {
-    Change c = new PutEntryLabelChange("dir/subDir/file", null, -1, false);
+    Change c = new PutEntryLabelChange("dir/subDir/file", null, -1);
     c.applyTo(r);
 
     assertFalse(c.affects(r.getEntry("dir")));
@@ -29,7 +29,7 @@ public class PutLabelChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testLabelOnDirectory() {
-    Change c = new PutEntryLabelChange("dir/subDir", null, -1, false);
+    Change c = new PutEntryLabelChange("dir/subDir", null, -1);
     c.applyTo(r);
 
     assertFalse(c.affects(r.getEntry("dir")));
@@ -39,7 +39,7 @@ public class PutLabelChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testGlobalLabel() {
-    Change c = new PutLabelChange(null, -1, false);
+    Change c = new PutLabelChange(null, -1);
     c.applyTo(r);
 
     assertTrue(c.affects(r.getEntry("dir")));

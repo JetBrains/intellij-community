@@ -32,10 +32,6 @@ public abstract class Revision {
     return true;
   }
 
-  public boolean isMarked() {
-    return false;
-  }
-
   public boolean isBefore(ChangeSet c) {
     return false;
   }

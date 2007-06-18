@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.List;
 
 public class Storage {
-  private static final int VERSION = 15;
+  private static final int VERSION = 16;
   private static final String BROKEN_MARK_FILE = ".broken";
   private static final String VERSION_FILE = "version";
   private static final String STORAGE_FILE = "storage";

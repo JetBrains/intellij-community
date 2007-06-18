@@ -132,15 +132,11 @@ public abstract class LocalVcs implements ILocalVcs {
   }
 
   public void putLabel(String name) {
-    applyLabel(new PutLabelChange(name, getCurrentTimestamp(), false));
+    applyLabel(new PutLabelChange(name, getCurrentTimestamp()));
   }
 
   public void putLabel(String path, String name) {
-    applyLabel(new PutEntryLabelChange(path, name, getCurrentTimestamp(), false));
-  }
-
-  public void mark(String path) {
-    applyLabel(new PutEntryLabelChange(path, "Marked", getCurrentTimestamp(), true));
+    applyLabel(new PutEntryLabelChange(path, name, getCurrentTimestamp()));
   }
 
   private void applyLabel(PutLabelChange c) {
@@ -235,13 +231,6 @@ public abstract class LocalVcs implements ILocalVcs {
   public byte[] getByteContent(String path, RevisionTimestampComparator c) {
     for (Revision r : getRevisionsFor(path)) {
       if (c.isSuitable(r.getTimestamp())) return getByteContentOf(r);
-    }
-    return null;
-  }
-
-  public byte[] getLastMarkedByteContent(String path) {
-    for (Revision r : getRevisionsFor(path)) {
-      if (r.isMarked()) return getByteContentOf(r);
     }
     return null;
   }

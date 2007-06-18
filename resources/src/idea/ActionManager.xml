@@ -195,10 +195,6 @@
       </group>
 
       <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
-      <separator/>
-
-      <separator/>
-      <action id="Vcs.MarkSourcesAsCurrent" class="com.intellij.openapi.vcs.actions.MarkSourcesAsCurrent"/>
     </group>
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control"/>
 

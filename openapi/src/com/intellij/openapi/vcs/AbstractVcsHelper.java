@@ -49,8 +49,6 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, String tabDisplayName);
 
-  public abstract void markFileAsUpToDate(VirtualFile file);
-
   public abstract LocalHistoryAction startVcsAction(String actionName);
 
   public abstract void finishVcsAction(LocalHistoryAction action);

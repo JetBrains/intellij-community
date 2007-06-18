@@ -52,10 +52,6 @@ public abstract class Change {
     return false;
   }
 
-  public boolean isMark() {
-    return false;
-  }
-
   public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
   }
 }

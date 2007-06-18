@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ProjectLevelVcsManager
  */
 public abstract class AbstractVcs {
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
   protected final Project myProject;
@@ -82,20 +82,19 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public boolean supportsMarkSourcesAsCurrent() {
-    return false;
-  }
-
   @Nullable
   public LocalVcsItemsLocker getItemsLocker() {
     return null;
   }
 
-  public void activate() {}
+  public void activate() {
+  }
 
-  public void deactivate() {}
+  public void deactivate() {
+  }
 
-  public void directoryMappingChanged() {}
+  public void directoryMappingChanged() {
+  }
 
   public boolean markExternalChangesAsUpToDate() {
     return false;
@@ -115,15 +114,18 @@ public abstract class AbstractVcs {
    *
    * @return the checkin interface, or null if checkins are not supported by the VCS.
    */
-  @Nullable public CheckinEnvironment getCheckinEnvironment() {
+  @Nullable
+  public CheckinEnvironment getCheckinEnvironment() {
     return null;
   }
 
-  @Nullable public VcsHistoryProvider getVcsHistoryProvider() {
+  @Nullable
+  public VcsHistoryProvider getVcsHistoryProvider() {
     return null;
   }
 
-  @Nullable public VcsHistoryProvider getVcsBlockHistoryProvider() {
+  @Nullable
+  public VcsHistoryProvider getVcsBlockHistoryProvider() {
     return null;
   }
 
@@ -131,7 +133,8 @@ public abstract class AbstractVcs {
     return getDisplayName();
   }
 
-  @Nullable public UpdateEnvironment getUpdateEnvironment() {
+  @Nullable
+  public UpdateEnvironment getUpdateEnvironment() {
     return null;
   }
 
@@ -148,11 +151,13 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  @Nullable public AnnotationProvider getAnnotationProvider() {
+  @Nullable
+  public AnnotationProvider getAnnotationProvider() {
     return null;
   }
 
-  @Nullable public DiffProvider getDiffProvider() {
+  @Nullable
+  public DiffProvider getDiffProvider() {
     return null;
   }
 
@@ -192,7 +197,8 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  @Nullable public UpdateEnvironment getIntegrateEnvironment() {
+  @Nullable
+  public UpdateEnvironment getIntegrateEnvironment() {
     return null;
   }
 
@@ -205,7 +211,7 @@ public abstract class AbstractVcs {
   public final CachingCommittedChangesProvider getCachingCommittedChangesProvider() {
     CommittedChangesProvider provider = getCommittedChangesProvider();
     if (provider instanceof CachingCommittedChangesProvider) {
-      return (CachingCommittedChangesProvider) provider;
+      return (CachingCommittedChangesProvider)provider;
     }
     return null;
   }

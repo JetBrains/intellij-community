@@ -137,22 +137,4 @@ public class BasicsTest extends IntegrationTestCase {
   private RevisionTimestampComparator comparator(long timestamp) {
     return new TestTimestampComparator(timestamp);
   }
-
-  public void testMarkedContent() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
-    f.setBinaryContent(new byte[]{1});
-    LocalHistory.mark(myProject, f);
-    f.setBinaryContent(new byte[]{2});
-
-    assertEquals(1, LocalHistory.getLastMarkedByteContent(myProject, f)[0]);
-  }
-
-  public void testMarkedContentForFilteredFilesIsNull() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.xxx");
-    f.setBinaryContent(new byte[]{1});
-    LocalHistory.mark(myProject, f);
-    f.setBinaryContent(new byte[]{2});
-
-    assertNull(LocalHistory.getLastMarkedByteContent(myProject, f));
-  }
 }
