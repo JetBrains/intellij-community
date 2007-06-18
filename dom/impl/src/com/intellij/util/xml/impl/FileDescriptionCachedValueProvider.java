@@ -236,7 +236,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName, myDomManager);
     computeCachedValue(dependencyItems);
 
-    myDomManager.getFileDescriptions().get(myFileDescription).add(new WeakReference<DomFileElementImpl>(myLastResult));
+    final Set<WeakReference<DomFileElementImpl>> references = myDomManager.getFileDescriptions().get(myFileDescription);
+    references.add(new WeakReference<DomFileElementImpl>(myLastResult));
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
     }
