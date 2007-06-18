@@ -201,7 +201,7 @@ public class SvnChangeProvider implements ChangeProvider {
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         final VirtualFile virtualFile = path.getVirtualFile();
-        if (myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
+        if (virtualFile != null && myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
         context.getBuilder().processUnversionedFile(virtualFile);
         // process children recursively!
         if (recursively && path.isDirectory() && virtualFile != null) {
