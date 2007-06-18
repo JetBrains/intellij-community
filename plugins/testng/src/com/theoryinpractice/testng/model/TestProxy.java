@@ -122,7 +122,7 @@ public class TestProxy implements AbstractTestProxy {
   }
 
   public int getMagnitude() {
-    return results.size();
+    return -1;
   }
 
   public boolean isLeaf() {
