@@ -25,8 +25,8 @@ public class PutLabelChange extends Change {
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writeLong(myTimestamp);
     s.writeString(myName);
+    s.writeLong(myTimestamp);
   }
 
   @Override

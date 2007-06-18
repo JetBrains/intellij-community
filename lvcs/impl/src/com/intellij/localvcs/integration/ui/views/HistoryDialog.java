@@ -240,6 +240,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     myGateway.showError("Can not revert because " + formatted);
   }
 
+  protected void showHelp() {
+    HelpManager.getInstance().invokeHelp(getHelpId());
+  }
+
   private class RevertAction extends AnAction {
     public RevertAction() {
       super("Revert", null, IconLoader.getIcon("/actions/rollback.png"));
@@ -276,7 +280,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
 
     public void actionPerformed(AnActionEvent e) {
-      HelpManager.getInstance().invokeHelp(getHelpId());
+      showHelp();
     }
   }
 }

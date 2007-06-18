@@ -42,11 +42,17 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
         revert();
       }
     };
-    Action cancelAction = getCancelAction();
+    Action help = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        showHelp();
+      }
+    };
+    Action cancel = getCancelAction();
 
     UIUtil.setActionNameAndMnemonic("Revert", revert);
-    UIUtil.setActionNameAndMnemonic(CommonBundle.getCloseButtonText(), cancelAction);
+    UIUtil.setActionNameAndMnemonic(CommonBundle.getCloseButtonText(), cancel);
+    UIUtil.setActionNameAndMnemonic("Help", help);
 
-    return new Action[]{revert, cancelAction};
+    return new Action[]{revert, cancel, help};
   }
 }
