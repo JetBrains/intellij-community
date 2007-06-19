@@ -340,9 +340,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
   public T getLeadSelection() {
     if (myShowFlatten) {
       final int index = myList.getLeadSelectionIndex();
-      if (index < 0) return null;
+      ListModel listModel = myList.getModel();
+      if (index < 0 || index >= listModel.getSize()) return null;
       //noinspection unchecked
-      return (T)myList.getModel().getElementAt(index);
+      return (T)listModel.getElementAt(index);
     }
     else {
       final TreePath path = myTree.getSelectionPath();
