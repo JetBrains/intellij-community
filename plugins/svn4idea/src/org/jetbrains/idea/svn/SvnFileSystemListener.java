@@ -351,6 +351,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
             File ioFile = new File(file.getPath());
             try {
               wcClient.doAdd(ioFile, false, false, false, false);
+              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
             }
             catch (SVNException e) {
               exceptions.add(new VcsException(e));
