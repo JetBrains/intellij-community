@@ -13,10 +13,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,6 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
       int i = offset;
       while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
       document.deleteString(offset, i);
-      PsiDocumentManager.getInstance(editor.getProject()).commitDocument(document);
     }
   };
   @NotNull private OverwriteHandler myOverwriteHandler = DEFAULT_OVERWRITE_HANDLER;
@@ -254,6 +253,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
       final Editor editor = context.editor;
       if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
         myOverwriteHandler.handleOverwrite(editor);
+        PsiDocumentManager.getInstance(editor.getProject()).commitDocument(editor.getDocument());
       }
       final TailType tailType = DefaultInsertHandler.getTailType(completionChar, item);
       final int tailOffset = myHandler.handleInsert(editor, startOffset, LookupItem.this, data.items, tailType);

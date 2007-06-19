@@ -58,7 +58,13 @@ public class AllClassesGetter implements ContextGetter{
       final PsiElement element = file.findElementAt(endOffset - 1);
       if (element == null) return endOffset;
 
+
       boolean insertFqn = true;
+      boolean insertSpace = endOffset < document.getTextLength() && Character.isJavaIdentifierPart(document.getCharsSequence().charAt(endOffset));
+      if (insertSpace){
+        document.insertString(endOffset, " ");
+      }
+      psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
       if (psiReference != null) {
         final PsiElement refElement = psiReference.getElement();
@@ -69,14 +75,18 @@ public class AllClassesGetter implements ContextGetter{
           insertFqn = false;
         } else {
           try {
-            psiDocumentManager.commitAllDocuments();
             final PsiElement psiElement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(psiReference.bindToElement(psiClass));
-            endOffset = psiElement.getTextRange().getEndOffset();
+            if (psiElement != null) {
+              endOffset = psiElement.getTextRange().getEndOffset();
+            }
             insertFqn = false;
           } catch (IncorrectOperationException e) {
             //if it's empty we just insert fqn below
           }
         }
+      }
+      if (insertSpace){
+        document.deleteString(endOffset, endOffset + 1);
       }
 
       if (insertFqn) {
