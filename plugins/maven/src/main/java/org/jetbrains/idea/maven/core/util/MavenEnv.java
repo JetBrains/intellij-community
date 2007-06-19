@@ -75,7 +75,10 @@ public class MavenEnv {
   public static File resolveGlobalSettingsFile(final String override) {
     final File directory = resolveMavenHomeDirectory(override);
     if (directory != null) {
-      return new File(new File(directory, CONF_DIR), SETTINGS_FILE);
+      final File file = new File(new File(directory, CONF_DIR), SETTINGS_FILE);
+      if (file.exists()) {
+        return file;
+      }
     }
     return null;
   }
@@ -87,7 +90,10 @@ public class MavenEnv {
     }
     final String userHome = System.getProperty(PROP_USER_HOME);
     if (!StringUtil.isEmptyOrSpaces(userHome)) {
-      return new File(new File(userHome, DOT_M2_DIR), SETTINGS_FILE);
+      final File file = new File(new File(userHome, DOT_M2_DIR), SETTINGS_FILE);
+      if (file.exists()) {
+        return file;
+      }
     }
     return null;
   }
