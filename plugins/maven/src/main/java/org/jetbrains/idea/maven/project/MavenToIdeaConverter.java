@@ -41,9 +41,7 @@ public class MavenToIdeaConverter {
       mavenToIdeaConverter.convert(project);
     }
 
-    if (preferences.isCreateModuleGroups()) {
-      createModuleGroups(modifiableModel, projectModel, mapping);
-    }
+    createModuleGroups(modifiableModel, projectModel, mapping, preferences.isCreateModuleGroups());
 
     for (Module module : mapping.getExistingModules()) {
       new RootModelAdapter(module).resolveModuleDependencies(mapping.getLibraryNameToModuleName());
@@ -78,24 +76,29 @@ public class MavenToIdeaConverter {
 
   private static void createModuleGroups(final ModifiableModuleModel modifiableModel,
                                          final MavenProjectModel projectModel,
-                                         final MavenToIdeaMapping mapping) {
+                                         final MavenToIdeaMapping mapping,
+                                         final boolean createModuleGroups) {
     final Stack<String> groups = new Stack<String>();
     projectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(final MavenProjectModel.Node node) {
         final String name = mapping.getModuleName(node.getId());
-        LOG.assertTrue (name != null);
+        LOG.assertTrue(name != null);
 
-        if (!node.mavenModules.isEmpty()) {
+        if (createModuleGroups && !node.mavenModules.isEmpty()) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
 
         final Module module = modifiableModel.findModuleByName(name);
-        LOG.assertTrue (module != null);
-        modifiableModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
+        if (module != null) {
+          modifiableModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
+        }
+        else {
+          LOG.warn("Cannot find module " + name);
+        }
       }
 
       public void leave(MavenProjectModel.Node node) {
-        if (!node.mavenModules.isEmpty()) {
+        if (createModuleGroups && !node.mavenModules.isEmpty()) {
           groups.pop();
         }
       }
