@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,13 +21,19 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
     boolean isMarked(final T element);
 
-    void setList(List<T> list);
+    void setList(List<T> list) throws ValidationException;
 
     boolean isOpenProjectSettingsAfter();
 
     void setOpenProjectSettingsAfter(boolean on);
 
     String getName();
+
+    class ValidationException extends Exception {
+      public ValidationException (String message){
+        super(message);
+      }
+    }
   }
 
   private final Context<T> myContext;
@@ -80,11 +87,17 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   }
 
   public boolean validate() {
+    try {
+      myContext.setList(fileChooser.getMarkedElements());
+    }
+    catch (Context.ValidationException e) {
+      Messages.showErrorDialog(panel, e.getMessage(), IdeBundle.message("project.import.wizard.title", myContext.getName()));
+      return false;
+    }
     return fileChooser.getMarkedElements().size() != 0;
   }
 
   public void updateDataModel() {
-    myContext.setList(fileChooser.getMarkedElements());
     myContext.setOpenProjectSettingsAfter(openModuleSettingsCheckBox.isSelected());
   }
 }
