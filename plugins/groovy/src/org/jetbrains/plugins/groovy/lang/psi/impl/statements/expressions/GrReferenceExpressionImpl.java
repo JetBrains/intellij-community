@@ -73,6 +73,25 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return superNameElement == null ? findChildByType(GroovyTokenTypes.kCLASS) : superNameElement;
   }
 
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final PsiElement resolved = resolve();
+    if (resolved instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) resolved;
+      final String oldName = getReferenceName();
+      if (!method.getName().equals(oldName)) { //was property reference to accessor
+        if (PropertyUtil.isSimplePropertyAccessor(method)) {
+          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+          if (newPropertyName != null) {
+            return super.handleElementRename(newPropertyName);
+          } else {
+            //todo encapsulate fields:)
+          }
+        }
+      }
+    }
+    return super.handleElementRename(newElementName);
+  }
+
   public int getTextOffset() {
     PsiElement parent = getParent();
     TextRange range = getTextRange();
