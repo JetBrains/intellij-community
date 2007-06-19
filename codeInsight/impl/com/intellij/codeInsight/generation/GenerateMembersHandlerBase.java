@@ -82,6 +82,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       LOG.error(e);
       return;
     }
+    if (newMembers == null) return;
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
