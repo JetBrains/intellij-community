@@ -50,30 +50,30 @@ public class MavenExternalExecutor extends MavenExecutor {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     try {
-      myProcessHandler = new DefaultJavaProcessHandler(
-        MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myBuilderState)) {
-        public void notifyTextAvailable(final String text, final Key outputType) {
-          if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
-            super.notifyTextAvailable(text, outputType);
-          }
-          if (indicator != null) {
-            if (indicator.isCanceled()) {
-              if(!isCancelled()){
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    cancel();
-                  }
-                });
+      myProcessHandler =
+        new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myBuilderState)) {
+          public void notifyTextAvailable(final String text, final Key outputType) {
+            if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
+              super.notifyTextAvailable(text, outputType);
+            }
+            if (indicator != null) {
+              if (indicator.isCanceled()) {
+                if (!isCancelled()) {
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    public void run() {
+                      cancel();
+                    }
+                  });
+                }
+              }
+              if (text.matches(PHASE_INFO_REGEXP)) {
+                indicator.setText2(text.substring(INFO_PREFIX_SIZE));
               }
             }
-            if (text.matches(PHASE_INFO_REGEXP)) {
-              indicator.setText2(text.substring(INFO_PREFIX_SIZE));
-            }
           }
-        }
-      };
+        };
 
-      consoleView.attachToProcess(myProcessHandler);
+      attachToProcess(myProcessHandler);
     }
     catch (ExecutionException e) {
       LOG.warn(e.getMessage(), e);

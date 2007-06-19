@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.builder.executor;
 
 import com.intellij.execution.filters.*;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
@@ -14,7 +15,7 @@ public class ConsoleAdapter {
   private static final String COMPILE_REGEXP_SOURCE =
     RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
 
-  protected ConsoleView consoleView;
+  private ConsoleView consoleView;
 
   private final int outputLevel;
 
@@ -32,7 +33,7 @@ public class ConsoleAdapter {
     }
 
     consoleView = builder.getConsole();
-    return consoleView; 
+    return consoleView;
   }
 
 
@@ -45,14 +46,11 @@ public class ConsoleAdapter {
   }
 
   protected void systemMessage(int level, String string, Throwable throwable) {
-    if (level == MavenLogUtil.LEVEL_FATAL) {
-      consoleView.setOutputPaused(false);
-    }
     if (isNotSuppressed(level)) {
       StringBuilder builder = new StringBuilder(string);
-      if(throwable!=null){
+      if (throwable != null) {
         final String message = throwable.getMessage();
-        if(message!=null) {
+        if (message != null) {
           builder.append(": ");
           builder.append(message);
         }
@@ -63,18 +61,47 @@ public class ConsoleAdapter {
     }
   }
 
-  protected void printMessage(final int level, final String string, final Throwable throwable, final ConsoleViewContentType output) {
-    consoleView.print(MavenLogUtil.composeLine(level, string), output);
+  protected void printMessage(int level, final String string, final Throwable throwable, final ConsoleViewContentType output) {
+    if (consoleView == null) {
+      return;
+    }
+
+    if (level == MavenLogUtil.LEVEL_AUTO) {
+      level = MavenLogUtil.getLevel(string);
+      if (isNotSuppressed(level)) {
+        consoleView.print(string, output);
+      }
+    }
+    else {
+      consoleView.print(MavenLogUtil.composeLine(level, string), output);
+    }
+
+    if (level == MavenLogUtil.LEVEL_FATAL) {
+      consoleView.setOutputPaused(false);
+    }
+
     if (throwable != null) {
       consoleView.print(ErrorHandler.getFullStackTrace(ErrorHandler.getRootCause(throwable)), ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 
+  public boolean canPause() {
+    return consoleView != null && consoleView.canPause();
+  }
+
   public boolean isOutputPaused() {
-    return consoleView.isOutputPaused();
+    return consoleView != null && consoleView.isOutputPaused();
   }
 
   public void setOutputPaused(boolean outputPaused) {
-    consoleView.setOutputPaused(outputPaused);
+    if (consoleView != null) {
+      consoleView.setOutputPaused(outputPaused);
+    }
+  }
+
+  protected void attachToProcess(final ProcessHandler processHandler) {
+    if (consoleView != null) {
+      consoleView.attachToProcess(processHandler);
+    }
   }
 }
