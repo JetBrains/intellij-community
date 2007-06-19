@@ -5,6 +5,8 @@ import com.intellij.localvcs.integration.Clock;
 import com.intellij.localvcs.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 
 import java.io.IOException;
 import java.util.Date;
@@ -260,5 +262,4 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     Revision r = getVcsRevisionsFor(root).get(0);
     assertEquals("Revert change made 01.01.03 12:30", r.getCauseChangeName());
   }
-
 }

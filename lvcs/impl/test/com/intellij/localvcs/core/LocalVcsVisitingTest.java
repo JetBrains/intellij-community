@@ -3,6 +3,8 @@ package com.intellij.localvcs.core;
 import com.intellij.localvcs.core.changes.*;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class LocalVcsVisitingTest extends LocalVcsTestCase {
   LocalVcs vcs = new InMemoryLocalVcs();
 
@@ -11,7 +13,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("beginChangeSet createEntry endChangeSet beginChangeSet createEntry endChangeSet ");
+    assertVisitorLog("beginChangeSet createEntry endChangeSet beginChangeSet createEntry endChangeSet finished ");
   }
 
   @Test
@@ -21,7 +23,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
 
-    assertVisitorLog("beginChangeSet createEntry createEntry endChangeSet ");
+    assertVisitorLog("beginChangeSet createEntry createEntry endChangeSet finished ");
   }
 
   @Test
@@ -30,7 +32,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.createFile("f", null, -1);
     vcs.createDirectory("dir");
 
-    assertVisitorLog("beginChangeSet createEntry createEntry endChangeSet ");
+    assertVisitorLog("beginChangeSet createEntry createEntry endChangeSet finished ");
   }
 
   @Test
@@ -42,7 +44,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.rename("dir", "newDir");
 
-    assertVisitorLog("beginChangeSet rename endChangeSet beginChangeSet createEntry endChangeSet beginChangeSet createEntry endChangeSet ");
+    assertVisitorLog("beginChangeSet rename endChangeSet beginChangeSet createEntry endChangeSet beginChangeSet createEntry endChangeSet finished ");
   }
 
   @Test
@@ -61,7 +63,7 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     };
 
     vcs.accept(visitor);
-    assertEquals("beginChangeSet createEntry endChangeSet ", visitor.getLog());
+    assertEquals("beginChangeSet createEntry endChangeSet finished ", visitor.getLog());
   }
 
   private void assertVisitorLog(final String expected) throws Exception {
@@ -89,20 +91,13 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
     }
 
     @Override
-    public void visit(ChangeFileContentChange c) {
-    }
-
-    @Override
     public void visit(RenameChange c) {
       log += "rename ";
     }
 
     @Override
-    public void visit(MoveChange c) {
-    }
-
-    @Override
-    public void visit(DeleteChange c) {
+    public void finished() {
+      log += "finished ";
     }
 
     public String getLog() {

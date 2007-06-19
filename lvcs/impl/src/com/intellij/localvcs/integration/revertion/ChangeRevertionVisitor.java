@@ -8,10 +8,13 @@ import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
   private Entry myRootEntry;
   private IdeaGateway myGateway;
+  private Map<VirtualFile, ContentToApply> myContentsToApply = new HashMap<VirtualFile, ContentToApply>();
 
   public ChangeRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {
     myRootEntry = vcs.getRootEntry().copy();
@@ -23,18 +26,19 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
+    unregisterContentToApply(f);
     f.delete(this);
 
     c.revertOn(myRootEntry);
   }
 
   @Override
-  public void visit(ChangeFileContentChange c) throws IOException {
+  public void visit(ChangeFileContentChange c) {
     c.revertOn(myRootEntry);
 
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
-    restoreContent(f, e);
+    registerContentToApply(f, e);
   }
 
   @Override
@@ -75,14 +79,25 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     }
     else {
       VirtualFile f = parent.createChildData(e, e.getName());
-      restoreContent(f, e);
+      registerContentToApply(f, e);
     }
   }
 
-  private void restoreContent(VirtualFile f, Entry e) throws IOException {
-    Content content = e.getContent();
-    if (!content.isAvailable()) return;
-    f.setBinaryContent(content.getBytes(), -1, e.getTimestamp());
+  private void registerContentToApply(VirtualFile f, Entry e) {
+    myContentsToApply.put(f, new ContentToApply(e));
+  }
+
+  private void unregisterContentToApply(VirtualFile f) {
+    myContentsToApply.remove(f);
+  }
+
+  @Override
+  public void finished() throws IOException {
+    for (Map.Entry<VirtualFile, ContentToApply> e : myContentsToApply.entrySet()) {
+      VirtualFile f = e.getKey();
+      ContentToApply c = e.getValue();
+      c.applyTo(f);
+    }
   }
 
   protected Entry getAffectedEntry(StructuralChange c) {
@@ -91,5 +106,19 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
   private Entry getAffectedEntry(StructuralChange c, int i) {
     return myRootEntry.getEntry(c.getAffectedIdPaths()[i]);
+  }
+
+  private static class ContentToApply {
+    private Content myContent;
+    private long myTimestamp;
+
+    public ContentToApply(Entry e) {
+      myContent = e.getContent();
+      myTimestamp = e.getTimestamp();
+    }
+
+    public void applyTo(VirtualFile f) throws IOException {
+      f.setBinaryContent(myContent.getBytes(), -1, myTimestamp);
+    }
   }
 }

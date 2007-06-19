@@ -60,5 +60,10 @@ public class CheckpointImpl implements Checkpoint {
       if (c instanceof ChangeFileContentChange) return;
       c.accept(myVisitor);
     }
+
+    @Override
+    public void finished() throws IOException {
+      myVisitor.finished();
+    }
   }
 }

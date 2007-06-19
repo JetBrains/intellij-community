@@ -97,6 +97,7 @@ public class ChangeList {
     }
     catch (ChangeVisitor.StopVisitingException e) {
     }
+    v.finished();
   }
 
   public List<Change> getChangesFor(Entry r, String path) {

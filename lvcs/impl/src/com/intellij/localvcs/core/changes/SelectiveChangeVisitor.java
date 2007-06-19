@@ -23,4 +23,9 @@ public abstract class SelectiveChangeVisitor extends ChangeVisitor {
   }
 
   protected abstract boolean shouldProcess(StructuralChange c);
+
+  @Override
+  public void finished() throws IOException {
+    myVisitor.finished();
+  }
 }

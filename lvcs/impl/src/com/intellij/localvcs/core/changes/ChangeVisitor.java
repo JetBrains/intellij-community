@@ -36,6 +36,9 @@ public abstract class ChangeVisitor {
     visit((StructuralChange)c);
   }
 
+  public void finished() throws IOException {
+  }
+
   protected void stop() throws StopVisitingException {
     throw new StopVisitingException();
   }
