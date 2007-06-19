@@ -6,15 +6,18 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VFileDeleteEvent extends VFileEvent {
-  private VirtualFile myFile;
+  private @NotNull VirtualFile myFile;
 
-  public VFileDeleteEvent(Object requestor, final VirtualFile file, boolean isFromRefresh) {
+  public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
     super(requestor, isFromRefresh);
     myFile = file;
   }
 
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
