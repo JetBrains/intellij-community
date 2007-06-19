@@ -100,6 +100,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
   @Nullable
   public QuickFix getQuickFix(final String hint) {
+    if (hint == null) return null;
     final int spaceIdx = hint.indexOf(" ");
     if (spaceIdx == -1 || spaceIdx >= hint.length() - 1) return null; //invalid hint
     final String paramName = hint.substring(0, spaceIdx);
