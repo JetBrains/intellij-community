@@ -234,7 +234,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         }
       };
 
-      if (app.isDispatchThread()) {
+      if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
         swingRunnable.run();
       }
       else {
@@ -530,7 +530,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               });
             }
           };
-          if (app.isDispatchThread()) {
+          if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
             swingRunnable.run();
           }
           else {
