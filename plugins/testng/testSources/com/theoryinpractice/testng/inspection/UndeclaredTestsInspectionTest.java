@@ -38,4 +38,9 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
   public void doTest(String name) throws Exception {
     doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
   }
+
+  /**
+   * @see junit.framework.TestSuite warning
+   */
+  public void test() {}
 }
