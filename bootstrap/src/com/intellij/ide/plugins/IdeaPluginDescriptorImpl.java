@@ -56,7 +56,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myDownloadCounter;
   private long myDate;
   private boolean myUseIdeaClassLoader;
-  private boolean myEnabled;
+  private boolean myEnabled = true;
 
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;

@@ -426,47 +426,6 @@ public class PluginManagerMain {
     }
   }
 
-  public void save() {
-    File plugins = new File(PathManager.getConfigPath(), PluginManager.DISABLED_PLUGINS_FILENAME);
-    if (!plugins.isFile()) {
-      try {
-        plugins.createNewFile();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    FileWriter fileWriter = null;
-    PrintWriter printWriter = null;
-    try {
-      fileWriter = new FileWriter(plugins);
-      printWriter = new PrintWriter(new BufferedWriter(fileWriter));
-      for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
-        final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-        if (!pluginDescriptor.isEnabled()) {
-          printWriter.println(pluginDescriptor.getPluginId().getIdString());
-        }
-      }
-      printWriter.flush();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        if (fileWriter != null) {
-          fileWriter.close();
-        }
-        if (printWriter != null) {
-          printWriter.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
   public boolean isModified() {
     if (requireShutdown) return true;
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
@@ -482,7 +441,19 @@ public class PluginManagerMain {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
       pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue());
     }
-    save();
+    try {
+      final ArrayList<String> ids = new ArrayList<String>();
+      for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
+        final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
+        if (!pluginDescriptor.isEnabled()) {
+          ids.add(pluginDescriptor.getPluginId().getIdString());
+        }
+      }
+      PluginManager.saveDisabledPlugins(ids, false);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   private static class MyHyperlinkListener implements HyperlinkListener {
