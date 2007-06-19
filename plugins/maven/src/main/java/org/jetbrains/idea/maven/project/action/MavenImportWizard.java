@@ -142,11 +142,20 @@ public class MavenImportWizard extends ProjectImportWizard
     return true;
   }
 
-  public void setList(List<MavenProjectModel.Node> nodes) {
+  public void setList(List<MavenProjectModel.Node> nodes) throws ValidationException {
     for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
     myImportProcessor.createMavenToIdeaMapping(false);
+
+    final Collection<String> duplicates = myImportProcessor.getMavenToIdeaMapping().getDuplicateNames();
+    if (!duplicates.isEmpty()) {
+      StringBuilder builder = new StringBuilder(ProjectBundle.message("maven.import.duplicate.modules"));
+      for (String duplicate : duplicates) {
+        builder.append("\n").append(duplicate);
+      }
+      throw new ValidationException(builder.toString());
+    }
   }
 
   public boolean isOpenProjectSettingsAfter() {
