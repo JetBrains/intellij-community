@@ -93,13 +93,14 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     PsiClassType superType = getSuperType();
 
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
+    List<PsiNewExpression> newExpressions = new ArrayList<PsiNewExpression>();
     for(UsageInfo info: usages) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiNewExpression) {
-        replaceNewOrType((PsiNewExpression)element, superType);
+        newExpressions.add((PsiNewExpression)element);
       }
       else if (element.getParent() instanceof PsiNewExpression) {
-        replaceNewOrType((PsiNewExpression) element.getParent(), superType);
+        newExpressions.add((PsiNewExpression) element.getParent());
       }
       else {
         PsiImportStatement statement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
@@ -113,6 +114,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+    }
+
+    for(PsiNewExpression newExpression: newExpressions) {
+      replaceNewOrType(newExpression, superType);
     }
 
     for(PsiElement element: elementsToDelete) {
