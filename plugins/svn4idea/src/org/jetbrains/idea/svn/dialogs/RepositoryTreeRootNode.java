@@ -1,33 +1,27 @@
 package org.jetbrains.idea.svn.dialogs;
 
-import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.List;
-
-import javax.swing.tree.TreeNode;
-
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-public class RepositoryTreeRootNode implements TreeNode {
+import javax.swing.tree.TreeNode;
+import java.text.Collator;
+import java.util.*;
 
-  private List myChildren;
+public class RepositoryTreeRootNode implements TreeNode {
+  private List<TreeNode> myChildren;
   private RepositoryTreeModel myModel;
 
   public RepositoryTreeRootNode(RepositoryTreeModel model, SVNURL[] urls) {
-    myChildren = new ArrayList();
+    myChildren = new ArrayList<TreeNode>();
     myModel = model;
 
-    for (int i = 0; i < urls.length; i++) {
-      SVNRepository repos = model.createRepository(urls[i]);
-      RepositoryTreeNode rootNode = new RepositoryTreeNode(model, this, repos, urls[i], urls[i]);
+    for (SVNURL url : urls) {
+      SVNRepository repos = model.createRepository(url);
+      RepositoryTreeNode rootNode = new RepositoryTreeNode(model, this, repos, url, url);
       myChildren.add(rootNode);
     }
-    Collections.sort(myChildren, new Comparator() {
-      public int compare(Object o1, Object o2) {
+    Collections.sort(myChildren, new Comparator<TreeNode>() {
+      public int compare(TreeNode o1, TreeNode o2) {
         return Collator.getInstance().compare(o1.toString(), o2.toString());
       }
     });
@@ -37,8 +31,8 @@ public class RepositoryTreeRootNode implements TreeNode {
     SVNRepository repos = myModel.createRepository(url);
     RepositoryTreeNode rootNode = new RepositoryTreeNode(myModel, this, repos, url, url);
     myChildren.add(rootNode);
-    Collections.sort(myChildren, new Comparator() {
-      public int compare(Object o1, Object o2) {
+    Collections.sort(myChildren, new Comparator<TreeNode>() {
+      public int compare(TreeNode o1, TreeNode o2) {
         return Collator.getInstance().compare(o1.toString(), o2.toString());
       }
     });
@@ -60,7 +54,7 @@ public class RepositoryTreeRootNode implements TreeNode {
   }
 
   public TreeNode getChildAt(int childIndex) {
-    return (TreeNode) myChildren.get(childIndex);
+    return myChildren.get(childIndex);
   }
 
   public int getChildCount() {
