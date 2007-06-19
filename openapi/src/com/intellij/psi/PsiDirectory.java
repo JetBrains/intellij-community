@@ -197,7 +197,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created file instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiFile createFile(String name) throws IncorrectOperationException;
+  @NotNull PsiFile createFile(@NonNls String name) throws IncorrectOperationException;
 
   @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException;
 
