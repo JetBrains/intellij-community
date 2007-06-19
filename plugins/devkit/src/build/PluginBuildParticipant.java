@@ -122,7 +122,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     }
 
     // output may be excluded, copy it nevertheless
-    makeUtil.addModuleOutputContents(context, instructions, getModule(), getModule(), CLASSES, explodedPath);
+    makeUtil.addModuleOutputContents(context, instructions, getModule(), getModule(), CLASSES, explodedPath, null);
 
     // child Java utility modules
     makeUtil.addJavaModuleOutputs(getModule(), containingModules, instructions, context, explodedPath);
