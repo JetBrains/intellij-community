@@ -76,6 +76,15 @@ public class VcsUtil {
     });
   }
 
+  public static void markFileAsDirty(final Project project, final String path) {
+    final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
+      }
+    });
+  }
+
   public static void refreshFiles(Project project, HashSet<FilePath> paths) {
     for (FilePath path : paths) {
       VirtualFile vFile = path.getVirtualFile();
