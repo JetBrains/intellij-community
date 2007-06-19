@@ -39,7 +39,7 @@ import java.util.Arrays;
 /**
  * @author ilyas
  */
-public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
+public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
@@ -66,24 +66,6 @@ public class GrMethodCallImpl extends GrExpressionImpl implements GrMethodCall {
     }
 
     return null;
-  }
-
-  public GrArgumentList getArgumentList() {
-    return findChildByClass(GrArgumentList.class);
-  }
-
-  public GrNamedArgument[] getNamedArguments() {
-    GrArgumentList argList = getArgumentList();
-    return argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
-  }
-
-  public GrExpression[] getExpressionArguments() {
-    GrArgumentList argList = getArgumentList();
-    return argList != null ? argList.getExpressionArguments() : GrExpression.EMPTY_ARRAY;
-  }
-
-  public GrClosableBlock[] getClosureArguments() {
-    return findChildrenByClass(GrClosableBlock.class);
   }
 
   public GrExpression getInvokedExpression() {

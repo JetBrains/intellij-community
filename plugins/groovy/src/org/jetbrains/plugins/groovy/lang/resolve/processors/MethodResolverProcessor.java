@@ -35,16 +35,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
   PsiType[] myArgumentTypes;
 
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
+  private boolean myIsConstructor;
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion) {
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion);
+    myIsConstructor = isConstructor;
     myArgumentTypes = PsiUtil.getArgumentTypes(place);
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      if (method.isConstructor()) return true; //not interested in constructors <now>
+      if (method.isConstructor() != myIsConstructor) return true; //not interested in constructors <now>
 
       if (!isAccessible((PsiNamedElement) element)) return true;
 

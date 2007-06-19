@@ -15,21 +15,20 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.util.IncorrectOperationException;
 
 /**
- * @author ilyas
+ * @author ven
  */
-public interface GrMethodCall extends GrExpression, GrCallExpression {
+public interface GrCallExpression {
+  GrArgumentList getArgumentList();
 
-  GrExpression getInvokedExpression();
+  GrNamedArgument[] getNamedArguments();
 
-  GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException;
+  GrExpression[] getExpressionArguments();
 
+  GrClosableBlock[] getClosureArguments();
 }

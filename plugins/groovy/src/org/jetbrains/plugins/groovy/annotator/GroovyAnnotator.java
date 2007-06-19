@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -178,7 +179,10 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkReferenceElement(AnnotationHolder holder, final GrTypeOrPackageReferenceElement refElement) {
-    if (refElement.getReferenceName() != null) {
+    if (refElement.getParent() instanceof GrNewExpression) {
+      //checkApplicability
+    }
+    else if (refElement.getReferenceName() != null) {
       GroovyResolveResult resolveResult = refElement.advancedResolve();
       final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {

@@ -19,16 +19,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrNewExpressionImpl extends GrExpressionImpl implements GrNewExpression {
+public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }

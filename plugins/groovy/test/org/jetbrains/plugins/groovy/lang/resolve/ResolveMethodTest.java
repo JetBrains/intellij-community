@@ -169,4 +169,12 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
     assertEquals("java.io.Serializable", ((PsiMethod) resolved).getParameterList().getParameters()[0].getType().getCanonicalText());
   }
+
+  public void testConstructor() throws Exception {
+    PsiReference ref = configureByFile("constructor/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(((PsiMethod) resolved).isConstructor());
+  }
+
 }

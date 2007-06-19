@@ -317,7 +317,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
-      processor = new MethodResolverProcessor(name, refExpr, forCompletion);
+      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false);
     } else {
       processor = new PropertyResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr, forCompletion);
     }

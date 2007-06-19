@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
@@ -113,14 +114,14 @@ public class PsiUtil {
   public static PsiType[] getArgumentTypes(GroovyPsiElement place) {
     PsiElementFactory factory = place.getManager().getElementFactory();
     PsiElement parent = place.getParent();
-    if (parent instanceof GrMethodCall) {
+    if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
-      GrMethodCall methodCall = (GrMethodCall) parent;
-      GrNamedArgument[] namedArgs = methodCall.getNamedArguments();
+      GrCallExpression call = (GrCallExpression) parent;
+      GrNamedArgument[] namedArgs = call.getNamedArguments();
       if (namedArgs.length > 0) {
         result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
       }
-      GrExpression[] expressions = methodCall.getExpressionArguments();
+      GrExpression[] expressions = call.getExpressionArguments();
       for (GrExpression expression : expressions) {
         PsiType type = getArgumentType(expression);
         if (type == null) {
@@ -130,7 +131,7 @@ public class PsiUtil {
         }
       }
 
-      GrClosableBlock[] closures = methodCall.getClosureArguments();
+      GrClosableBlock[] closures = call.getClosureArguments();
       for (GrClosableBlock closure : closures) {
         PsiType closureType = closure.getType();
         if (closureType != null) {
