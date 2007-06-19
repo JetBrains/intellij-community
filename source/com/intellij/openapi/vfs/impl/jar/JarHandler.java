@@ -69,7 +69,7 @@ public class JarHandler implements FileSystemInterface {
       NewVirtualFile root = (NewVirtualFile)
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
       if (root != null) {
-        root.markDirtyReqursively();
+        root.markDirtyRecursively();
         /*RefreshQueue.getInstance().refresh(true, true, null, root);*/
       }
     }

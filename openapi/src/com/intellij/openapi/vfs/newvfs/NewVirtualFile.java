@@ -68,7 +68,7 @@ public abstract class NewVirtualFile extends VirtualFile {
 
   public abstract void markDirty();
 
-  public abstract void markDirtyReqursively();
+  public abstract void markDirtyRecursively();
 
   public abstract boolean isDirty();
 

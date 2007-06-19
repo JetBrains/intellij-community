@@ -78,10 +78,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  public void markDirtyReqursively() {
+  public void markDirtyRecursively() {
     markDirty();
     for (VirtualFile file : getCachedChildren()) {
-      ((VirtualFileSystemEntry)file).markDirtyReqursively();
+      ((VirtualFileSystemEntry)file).markDirtyRecursively();
     }
   }
 

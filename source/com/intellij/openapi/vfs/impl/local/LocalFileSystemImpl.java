@@ -331,14 +331,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       for (String root : myManualWatchRoots) {
         final VirtualFile suspicousRoot = findFileByPathIfCached(root);
         if (suspicousRoot != null) {
-          ((NewVirtualFile)suspicousRoot).markDirtyReqursively();
+          ((NewVirtualFile)suspicousRoot).markDirtyRecursively();
         }
       }
     }
     else {
       for (VirtualFile file : files) {
         if (file.getFileSystem() == this) {
-          ((NewVirtualFile)file).markDirtyReqursively();
+          ((NewVirtualFile)file).markDirtyRecursively();
         }
       }
     }
@@ -862,7 +862,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
-      ((NewVirtualFile)root).markDirtyReqursively();
+      ((NewVirtualFile)root).markDirtyRecursively();
     }
 
     super.refreshWithoutFileWatcher(asynchronous);

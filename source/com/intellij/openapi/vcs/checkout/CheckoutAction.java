@@ -36,7 +36,7 @@ public class CheckoutAction extends AnAction {
         assert vDir != null;
         final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
         assert watchRequest != null;
-        ((NewVirtualFile)vDir).markDirtyReqursively();
+        ((NewVirtualFile)vDir).markDirtyRecursively();
         vDir.refresh(false, true);
         lfs.removeWatchedRoot(watchRequest);
       }
