@@ -37,7 +37,9 @@ public class GrClassReferenceType extends PsiClassType {
   @Nullable
   public PsiClass resolve() {
     PsiElement resolved = myReferenceElement.resolve();
-    return resolved instanceof PsiClass ? (PsiClass) resolved : null;
+    return resolved instanceof PsiClass ? (PsiClass) resolved :
+        resolved instanceof PsiMethod ? //constructor
+            ((PsiMethod) resolved).getContainingClass() : null;
   }
 
   public String getClassName() {

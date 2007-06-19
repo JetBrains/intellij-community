@@ -46,7 +46,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      if (method.isConstructor() != myIsConstructor) return true; //not interested in constructors <now>
+      if (method.isConstructor() != myIsConstructor) return true;
 
       if (!isAccessible((PsiNamedElement) element)) return true;
 

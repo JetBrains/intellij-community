@@ -228,7 +228,8 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
             }
           }
 
-          return processor.getCandidates();
+          final GroovyResolveResult[] constructorResults = processor.getCandidates();
+          return constructorResults.length > 0 ? constructorResults : classResults;
       }
 
       return null;
