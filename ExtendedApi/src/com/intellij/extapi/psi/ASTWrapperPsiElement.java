@@ -159,4 +159,7 @@ public class ASTWrapperPsiElement extends PsiElementBase {
     });
   }
 
+  public PsiElement copy() {
+    return getNode().copyElement().getPsi();
+  }
 }

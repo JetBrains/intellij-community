@@ -154,55 +154,53 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void addExistingNameConflicts(final Collection<String> conflicts) {
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    try {
-      PsiElementFactory factory = manager.getElementFactory();
-      if (myPrimaryElement instanceof PsiMethod) {
-        PsiMethod refactoredMethod = (PsiMethod)myPrimaryElement;
-        if (myNewName.equals(refactoredMethod.getName())) return;
-        PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
-        final PsiIdentifier nameIdentifier = prototype.getNameIdentifier();
-        assert nameIdentifier != null;
-        nameIdentifier.replace(factory.createIdentifier(myNewName));
-        ConflictsUtil.checkMethodConflicts(
-          refactoredMethod.getContainingClass(),
-          refactoredMethod,
-          prototype,
-          conflicts);
+    if (myPrimaryElement instanceof PsiMethod) {
+      PsiMethod refactoredMethod = (PsiMethod)myPrimaryElement;
+      if (myNewName.equals(refactoredMethod.getName())) return;
+      final PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
+      try {
+        prototype.setName(myNewName);
       }
-      else if (myPrimaryElement instanceof PsiField) {
-        PsiField refactoredField = (PsiField)myPrimaryElement;
-        if (myNewName.equals(refactoredField.getName())) return;
-        ConflictsUtil.checkFieldConflicts(
-          refactoredField.getContainingClass(),
-          myNewName,
-          conflicts
-        );
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return;
       }
-      else if (myPrimaryElement instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)myPrimaryElement;
-        if (myNewName.equals(aClass.getName())) return;
-        final PsiClass containingClass = aClass.getContainingClass();
-        if (containingClass != null) { // innerClass
-          PsiClass[] innerClasses = containingClass.getInnerClasses();
-          for (PsiClass innerClass : innerClasses) {
-            if (myNewName.equals(innerClass.getName())) {
-              conflicts.add(RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", myNewName, containingClass.getQualifiedName()));
-              break;
-            }
-          }
-        }
-        else {
-          final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass, myNewName);
-          final PsiClass conflictingClass = PsiManager.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
-          if (conflictingClass != null) {
-            conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
-          }
-        }
-      }
+
+      ConflictsUtil.checkMethodConflicts(
+        refactoredMethod.getContainingClass(),
+        refactoredMethod,
+        prototype,
+        conflicts);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    else if (myPrimaryElement instanceof PsiField) {
+      PsiField refactoredField = (PsiField)myPrimaryElement;
+      if (myNewName.equals(refactoredField.getName())) return;
+      ConflictsUtil.checkFieldConflicts(
+        refactoredField.getContainingClass(),
+        myNewName,
+        conflicts
+      );
+    }
+    else if (myPrimaryElement instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)myPrimaryElement;
+      if (myNewName.equals(aClass.getName())) return;
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass != null) { // innerClass
+        PsiClass[] innerClasses = containingClass.getInnerClasses();
+        for (PsiClass innerClass : innerClasses) {
+          if (myNewName.equals(innerClass.getName())) {
+            conflicts.add(RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", myNewName, containingClass.getQualifiedName()));
+            break;
+          }
+        }
+      }
+      else {
+        final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass, myNewName);
+        final PsiClass conflictingClass = PsiManager.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
+        if (conflictingClass != null) {
+          conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
+        }
+      }
     }
   }
 
