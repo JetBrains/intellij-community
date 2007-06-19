@@ -22,7 +22,7 @@ import java.util.*;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final NewVirtualFileSystem myFS;
-  private volatile Object myChildren; // Either HashMap<String, VFile> or VFile[]
+  private Object myChildren; // Either HashMap<String, VFile> or VFile[]
 
   public VirtualDirectoryImpl(final String name, final VirtualDirectoryImpl parent, final NewVirtualFileSystem fs, final int id) {
     super(name, parent, id);
@@ -35,7 +35,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
+  private synchronized NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
     final NewVirtualFile result = doFindChild(name, createIfNotFound);
     if (result == null && myChildren instanceof Map) {
       ensureAsMap().put(name, NullVirtualFile.INSTANCE);
@@ -129,7 +129,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFile[] getChildren() {
+  public synchronized VirtualFile[] getChildren() {
     if (myChildren instanceof VirtualFile[]) {
       return (VirtualFile[])myChildren;
     }
@@ -158,21 +158,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  public VirtualFile[] asArray() {
+  public synchronized VirtualFile[] asArray() {
     if (myChildren instanceof VirtualFile[]) return (VirtualFile[])myChildren;
     return null;
   }
 
   @Nullable
   @SuppressWarnings({"unchecked"})
-  public Map<String, VirtualFile> asMap() {
+  public synchronized Map<String, VirtualFile> asMap() {
     if (myChildren instanceof Map) return (Map<String, VirtualFile>)myChildren;
     return null;
   }
 
   @SuppressWarnings({"unchecked"})
   @NotNull
-  public Map<String, VirtualFile> ensureAsMap() {
+  public synchronized Map<String, VirtualFile> ensureAsMap() {
     assert !(myChildren instanceof VirtualFile[]);
 
     if (myChildren == null) {
@@ -182,7 +182,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return (Map<String, VirtualFile>)myChildren;
   }
 
-  public void addChild(VirtualFile file) {
+  public synchronized void addChild(VirtualFile file) {
     final VirtualFile[] a = asArray();
     if (a != null) {
       myChildren = ArrayUtil.append(a, file);
@@ -193,7 +193,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  public void removeChild(VirtualFile file) {
+  public synchronized void removeChild(VirtualFile file) {
     final VirtualFile[] a = asArray();
     if (a != null) {
       myChildren = ArrayUtil.remove(a, file);
@@ -204,11 +204,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  public boolean allChildrenLoaded() {
+  public synchronized boolean allChildrenLoaded() {
     return myChildren instanceof VirtualFile[];
   }
 
-  public List<String> getSuspicousNames() {
+  public synchronized List<String> getSuspicousNames() {
     final Map<String, VirtualFile> map = asMap();
     if (map == null) return Collections.emptyList();
 
@@ -227,7 +227,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public Collection<VirtualFile> getCachedChildren() {
+  public synchronized Collection<VirtualFile> getCachedChildren() {
     final Map<String, VirtualFile> map = asMap();
     if (map != null) {
       Set<VirtualFile> files = new THashSet<VirtualFile>(map.values());
@@ -251,7 +251,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            : new THashMap<String, VirtualFile>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
-  public void cleanupCachedChildren() {
+  public synchronized void cleanupCachedChildren() {
     // For tests only!!!
     if (myChildren instanceof Map) {
       myChildren = null;
