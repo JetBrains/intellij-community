@@ -162,6 +162,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testArrayInitializer() throws Exception {
+    doTest(false);
+  }
+
   public void testVarargs() throws Exception {
     doTest(false);
   }
