@@ -2,14 +2,12 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
+import com.intellij.localvcs.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -79,5 +77,10 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
     String card = cachedCanShowDiff[0] ? DIFF_CARD : MESSAGE_CARD;
     ((CardLayout)myPanel.getLayout()).show(myPanel, card);
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.localHistory.show.file";
   }
 }

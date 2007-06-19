@@ -203,8 +203,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return new Action[0];
   }
 
-  protected String getHelpId() {
-    return "bla-bla-bla";
+  protected abstract String getHelpId();
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(getHelpId());
   }
 
   protected void revert() {
@@ -298,7 +301,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
 
     public void actionPerformed(AnActionEvent e) {
-      showHelp();
+      doHelpAction();
     }
   }
 

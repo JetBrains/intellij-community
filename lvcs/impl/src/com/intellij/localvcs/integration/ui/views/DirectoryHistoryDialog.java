@@ -87,6 +87,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     mySplitter.revalidate();
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.localHistory.show.folder";
+  }
+
   private DirectoryDifferenceNode getSelectedNode() {
     if (myDiffTree.getTree().getSelectionCount() != 1) return null;
     TreePath path = myDiffTree.getTree().getSelectionPath();
