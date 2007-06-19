@@ -33,7 +33,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   public GenericDomValueReference(GenericDomValue<T> domValue) {
     super(DomUtil.getValueElement(domValue));
     myGenericValue = domValue.createStableCopy();
-    assert domValue.getXmlTag() != null;
+    assert domValue.getXmlElement() != null;
     setRangeInElement(createTextRange());
   }
 

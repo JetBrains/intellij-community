@@ -6,7 +6,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.DomUIFactory;
@@ -31,21 +30,14 @@ public class InvocationCache {
     try {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-          final XmlTag tag = handler.getXmlTag();
-          return tag != null ? tag.getAttribute(handler.getXmlElementName(), handler.getXmlElementNamespace()) : null;
+          return handler.getXmlElement();
         }
       });
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttributeValue")), new Invocation() {
         @Nullable
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-          final XmlTag tag = handler.getXmlTag();
-          if (tag != null) {
-            final XmlAttribute attribute = tag.getAttribute(handler.getXmlElementName(), handler.getXmlElementNamespace());
-            if (attribute != null) {
-              return attribute.getValueElement();
-            }
-          }
-          return null;
+          final XmlAttribute attribute = (XmlAttribute)handler.getXmlElement();
+          return attribute != null ? attribute.getValueElement() : null;
         }
       });
       final JavaMethod javaMethod =
