@@ -63,7 +63,7 @@ public class ModelMergerImpl implements ModelMerger {
       public Object invokeMethod(final JavaMethod javaMethod, final Object proxy, final Object[] args, final List<Object> implementations)
         throws IllegalAccessException, InvocationTargetException {
         final Method method = javaMethod.getMethod();
-        List<Object> results = getMergedImplementations(method, args, method.getReturnType(), implementations);
+        List<Object> results = getMergedImplementations(method, args, method.getReturnType(), implementations, isIntersectionMethod(javaMethod));
         return results.isEmpty() ? null : results.get(0);
       }
     });
@@ -78,7 +78,7 @@ public class ModelMergerImpl implements ModelMerger {
 
         final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
         assert type != null : "No generic return type in method " + method;
-        return getMergedImplementations(method.getMethod(), args, ReflectionUtil.getRawType(type), implementations);
+        return getMergedImplementations(method.getMethod(), args, ReflectionUtil.getRawType(type), implementations, isIntersectionMethod(method));
       }
     });
 
@@ -182,6 +182,10 @@ public class ModelMergerImpl implements ModelMerger {
       }
     });
 
+  }
+
+  private boolean isIntersectionMethod(final JavaMethod javaMethod) {
+    return javaMethod.getMethod().getAnnotation(Intersect.class) != null;
   }
 
   public final <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
@@ -317,7 +321,8 @@ public class ModelMergerImpl implements ModelMerger {
   private List<Object> getMergedImplementations(final Method method,
                                                 final Object[] args,
                                                 final Class returnType,
-                                                final List<Object> implementations) throws IllegalAccessException, InvocationTargetException {
+                                                final List<Object> implementations,
+                                                final boolean intersect) throws IllegalAccessException, InvocationTargetException {
 
     final List<Object> results = new ArrayList<Object>();
 
@@ -341,11 +346,11 @@ public class ModelMergerImpl implements ModelMerger {
         final Object o = method.invoke(t, args);
         if (o instanceof Collection) {
           for (final Object o1 : (Collection)o) {
-            addToMaps(o1, counts, map, i, results, false);
+            addToMaps(o1, counts, map, i, results, false, intersect);
           }
         }
         else if (o != null) {
-          addToMaps(o, counts, map, i, results, true);
+          addToMaps(o, counts, map, i, results, true, intersect);
         }
 
       }
@@ -393,11 +398,13 @@ public class ModelMergerImpl implements ModelMerger {
                             final FactoryMap<Object, List<Set<Object>>> map,
                             final int index,
                             final List<Object> results,
-                            final boolean singleValuedInvocation) throws IllegalAccessException, InvocationTargetException {
+                            final boolean singleValuedInvocation,
+                            final boolean intersect) throws IllegalAccessException, InvocationTargetException {
     final Object primaryKey = getPrimaryKey(o, singleValuedInvocation);
     if (primaryKey != null || singleValuedInvocation) {
       final List<Set<Object>> list = map.get(primaryKey);
-      int objIndex = counts.get(primaryKey)[index]++;
+      final int[] indices = counts.get(primaryKey);
+      int objIndex = intersect? indices[index] : indices[index]++;
       if (list.size() <= objIndex) {
         list.add(new LinkedHashSet<Object>());
       }
