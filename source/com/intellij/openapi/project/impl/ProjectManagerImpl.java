@@ -185,7 +185,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Nullable
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
     try {
-      return loadProject(filePath, false);
+      return loadProject(filePath, null);
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
@@ -193,18 +193,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  private Project loadProject(String filePath, boolean convert) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
+  private Project loadProject(String filePath, ProjectConversionHelper conversionHelper) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
-
-    ProjectConversionHelper conversionHelper = null;
-    if (convert) {
-      final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(filePath);
-      if (result.isOpeningCancelled()) {
-        return null;
-      }
-      conversionHelper = result.getConversionHelper();
-    }
-
     ProjectImpl project = createProject(filePath, false, false, false, conversionHelper);
     project.getStateStore().loadProject();
     return project;
@@ -330,7 +320,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final InvalidDataException[] invalidData = new InvalidDataException[]{null};
       final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
 
+      final ProjectConversionHelper conversionHelper;
+      if (convert) {
+        final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(canonicalize(filePath));
+        if (result.isOpeningCancelled()) {
+          return null;
+        }
+        conversionHelper = result.getConversionHelper();
+      }
+      else {
+        conversionHelper = null;
+      }
+
       final Project[] project = new Project[1];
+
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -340,7 +343,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               indicator.setIndeterminate(true);
             }
 
-            project[0] = loadProject(filePath, convert);
+            project[0] = loadProject(filePath, conversionHelper);
           }
           catch (IOException e) {
             io[0] = e;
