@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -215,5 +216,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
     }
     return super.getCharset();
+  }
+
+  public String getPresentableName() {
+    if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
+      final String nameWithoutExtension = getNameWithoutExtension();
+      return nameWithoutExtension.length() == 0 ? getName() : nameWithoutExtension;
+    }
+    return getName();
   }
 }
