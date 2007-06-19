@@ -101,6 +101,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         if (range != null) {
           range.mapper.removeMapping(range);
         }
+
+        myRanges[i] = null;
       }
 
       myRanges = remove(myRanges, startIndex, endIndex);
