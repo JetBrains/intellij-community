@@ -38,6 +38,7 @@ public class TipUIUtil {
     }
     */
     try {
+      if (tipPath == null) return;
       if (providerClass == null) providerClass = TipUIUtil.class;
       URL url = ResourceUtil.getResource(providerClass, "/tips/", tipPath);
 
