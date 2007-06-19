@@ -23,6 +23,7 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
   }
 
   public ShelvedBinaryFile(final String beforePath, final String afterPath, final String shelvedPath) {
+    assert beforePath != null || afterPath != null;
     BEFORE_PATH = beforePath;
     AFTER_PATH = afterPath;
     SHELVED_PATH = shelvedPath;
