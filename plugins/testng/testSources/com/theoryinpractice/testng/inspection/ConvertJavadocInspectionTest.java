@@ -2,19 +2,19 @@
  * User: anna
  * Date: 04-Jun-2007
  */
-package com.theoryinpractice.testng.inspections;
+package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspection;
+import com.theoryinpractice.testng.inspection.ConvertJavadocInspection;
 import org.testng.annotations.Test;
 
-public class ConvertOldAnnotationInspectionTest extends BaseTestNGInspectionsTest{
+public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest{
   protected String getSourceRoot() {
-    return "configuration";
+    return "javadoc2Annotation";
   }
 
   protected LocalInspectionTool getEnabledTool() {
-    return new ConvertOldAnnotationInspection();
+    return new ConvertJavadocInspection();
   }
 
   @Test

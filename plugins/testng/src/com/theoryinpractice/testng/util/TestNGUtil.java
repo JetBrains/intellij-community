@@ -2,6 +2,7 @@ package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFramework;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -9,9 +10,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -28,12 +27,15 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.testng.Assert;
 import org.testng.TestNG;
 import org.testng.annotations.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,8 +78,10 @@ public class TestNGUtil implements TestFramework
     };
   static final List junitAnnotions =
       Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
+  private static final Logger LOG = Logger.getInstance("#" + TestNGUtil.class.getName());
+  @NonNls private static final String SUITE_TAG_NAME = "suite";
 
-    public static boolean hasConfig(PsiModifierListOwner element) {
+  public static boolean hasConfig(PsiModifierListOwner element) {
         PsiMethod[] methods;
         if (element instanceof PsiClass) {
             methods = ((PsiClass) element).getMethods();
@@ -437,6 +441,23 @@ public class TestNGUtil implements TestFramework
       }
       else {
         current = null;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isTestngXML(final VirtualFile virtualFile) {
+    if (virtualFile.getName().endsWith(XmlFileType.DEFAULT_EXTENSION)) {
+      final NanoXmlUtil.RootTagNameBuilder rootTagNameBuilder = new NanoXmlUtil.RootTagNameBuilder();
+      try {
+        NanoXmlUtil.parse(virtualFile.getInputStream(), rootTagNameBuilder);
+        final String result = rootTagNameBuilder.getResult();
+        if (result != null && result.equals(SUITE_TAG_NAME)) {
+          return true;
+        }
+      }
+      catch (IOException e) {
+        return false;
       }
     }
     return false;

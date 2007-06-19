@@ -16,7 +16,7 @@ public class SuiteBrowser extends BrowseModuleValueActionListener
     }
 
     @Override
-    protected String showDialog() {
+    public String showDialog() {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true,
                                                                      false,
                                                                      false,

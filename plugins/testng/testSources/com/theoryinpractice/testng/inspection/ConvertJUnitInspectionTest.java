@@ -2,7 +2,7 @@
  * User: anna
  * Date: 04-Jun-2007
  */
-package com.theoryinpractice.testng.inspections;
+package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.theoryinpractice.testng.inspection.JUnitConvertTool;

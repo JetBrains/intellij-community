@@ -10,6 +10,7 @@
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGDeadCodeExtension"/>
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationProducer"/>
         <testFramework implementation="com.theoryinpractice.testng.util.TestNGUtil"/>
+        <inspectionToolProvider implementation="com.theoryinpractice.testng.inspection.TestNGInspectionsToolProvider"/>
     </extensions>
 
 

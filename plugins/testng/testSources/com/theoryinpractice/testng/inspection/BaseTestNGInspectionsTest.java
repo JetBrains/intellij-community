@@ -2,7 +2,7 @@
  * User: anna
  * Date: 31-May-2007
  */
-package com.theoryinpractice.testng.inspections;
+package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;

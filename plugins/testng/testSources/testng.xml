@@ -2,11 +2,12 @@
 <suite name="TestNG Suite">
   <test name="TestNG Intentoins Test">
     <classes>
-      <class name="com.theoryinpractice.testng.inspections.ConvertAnnotationInspectionTest"/>
-      <class name="com.theoryinpractice.testng.inspections.ConvertJavadocInspectionTest"/>
-      <class name="com.theoryinpractice.testng.inspections.ConvertJUnitInspectionTest"/>
-      <class name="com.theoryinpractice.testng.inspections.ConvertOldAnnotationInspectionTest"/>
+      <class name="com.theoryinpractice.testng.inspection.ConvertAnnotationInspectionTest"/>
+      <class name="com.theoryinpractice.testng.inspection.ConvertJavadocInspectionTest"/>
+      <class name="com.theoryinpractice.testng.inspection.ConvertJUnitInspectionTest"/>
+      <class name="com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspectionTest"/>
       <class name="com.theoryinpractice.testng.configuration.ConfigurationsTest"/>
+      <class name="com.theoryinpractice.testng.inspection.UndeclaredTestsInspectionTest"/>
     </classes>
   </test>
 </suite>
