@@ -22,7 +22,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -33,7 +32,6 @@ import org.jetbrains.idea.maven.builder.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 
 public class MavenExternalExecutor extends MavenExecutor {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.builder.executor.MavenExternalExecutor");
 
   private OSProcessHandler myProcessHandler;
 
@@ -47,67 +45,60 @@ public class MavenExternalExecutor extends MavenExecutor {
   public void run() {
     displayProgress();
 
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
     try {
       myProcessHandler =
         new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myBuilderState)) {
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
           public void notifyTextAvailable(final String text, final Key outputType) {
             if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
               super.notifyTextAvailable(text, outputType);
             }
-            if (indicator != null) {
-              if (indicator.isCanceled()) {
-                if (!isCancelled()) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      cancel();
-                    }
-                  });
-                }
-              }
-              if (text.matches(PHASE_INFO_REGEXP)) {
-                indicator.setText2(text.substring(INFO_PREFIX_SIZE));
-              }
-            }
+            updateProgress(indicator, text);
           }
         };
 
       attachToProcess(myProcessHandler);
     }
     catch (ExecutionException e) {
-      LOG.warn(e.getMessage(), e);
-      systemMessage(MavenLogUtil.LEVEL_FATAL, BuilderBundle.message("external.statup.failed"), e);
+      systemMessage(MavenLogUtil.LEVEL_FATAL, BuilderBundle.message("external.startup.failed", e.getMessage()), null);
       return;
     }
 
     start();
     readProcessOutput();
-    int exitValue = stop();
-
-    if (isCancelled()) {
-      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("external.process.aborted", exitValue), null);
-    }
-    else if (exitValue == 0) {
-      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("external.process.finished", exitValue), null);
-    }
-    else {
-      systemMessage(MavenLogUtil.LEVEL_ERROR, BuilderBundle.message("external.process.terminated.abnormally", exitValue), null);
-    }
+    stop();
+    printExitSummary();
   }
 
-  int stop() {
-    super.stop();
-    if (myProcessHandler == null) {
-      return 0;
+  void stop() {
+    if (myProcessHandler != null) {
+      myProcessHandler.destroyProcess();
+      myProcessHandler.waitFor();
+      setExitCode(myProcessHandler.getProcess().exitValue());
     }
-    myProcessHandler.destroyProcess();
-    myProcessHandler.waitFor();
-    return myProcessHandler.getProcess().exitValue();
+    super.stop();
   }
 
   private void readProcessOutput() {
     myProcessHandler.startNotify();
     myProcessHandler.waitFor();
+  }
+
+  private void updateProgress(final ProgressIndicator indicator, final String text) {
+    if (indicator != null) {
+      if (indicator.isCanceled()) {
+        if (!isCancelled()) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              cancel();
+            }
+          });
+        }
+      }
+      if (text.matches(PHASE_INFO_REGEXP)) {
+        indicator.setText2(text.substring(INFO_PREFIX_SIZE));
+      }
+    }
   }
 }

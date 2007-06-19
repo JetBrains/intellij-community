@@ -46,19 +46,17 @@ public class ConsoleAdapter {
   }
 
   protected void systemMessage(int level, String string, Throwable throwable) {
-    if (isNotSuppressed(level)) {
-      StringBuilder builder = new StringBuilder(string);
-      if (throwable != null) {
-        final String message = throwable.getMessage();
-        if (message != null) {
-          builder.append(": ");
-          builder.append(message);
-        }
+    StringBuilder builder = new StringBuilder(string);
+    if (throwable != null) {
+      final String message = throwable.getMessage();
+      if (message != null) {
+        builder.append(": ");
+        builder.append(message);
       }
-      builder.append(MavenLogUtil.LINE_SEPARATOR);
-
-      printMessage(level, builder.toString(), throwable, ConsoleViewContentType.SYSTEM_OUTPUT);
     }
+    builder.append(MavenLogUtil.LINE_SEPARATOR);
+
+    printMessage(level, builder.toString(), throwable, ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
   protected void printMessage(int level, final String string, final Throwable throwable, final ConsoleViewContentType output) {

@@ -86,7 +86,7 @@ public class MavenExternalParameters {
         throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.undefined"), name));
       }
       final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", JAVA_HOME);
-      if (jdk==null){
+      if (jdk == null) {
         throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.invalid"), name));
       }
       return jdk;
@@ -165,7 +165,7 @@ public class MavenExternalParameters {
     }
 
     if (!file.exists()) {
-      throw new ExecutionException(BuilderBundle.message("external.maven.home.does.not.exist", coreState));
+      throw new ExecutionException(BuilderBundle.message("external.maven.home.does.not.exist", file.getPath()));
     }
 
     if (!MavenEnv.isValidMavenHome(file)) {

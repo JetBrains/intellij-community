@@ -21,8 +21,9 @@ package org.jetbrains.idea.maven.builder.executor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.maven.builder.MavenBuilderState;
 import org.jetbrains.idea.maven.builder.BuilderBundle;
+import org.jetbrains.idea.maven.builder.MavenBuilderState;
+import org.jetbrains.idea.maven.builder.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 
 import java.text.MessageFormat;
@@ -37,6 +38,7 @@ public abstract class MavenExecutor extends ConsoleAdapter {
 
   private boolean stopped = true;
   private boolean cancelled = false;
+  private int exitCode = 0;
 
   public MavenExecutor(MavenBuildParameters parameters, MavenCoreState coreState, MavenBuilderState builderState, String caption) {
     super(coreState.getOutputLevel());
@@ -62,10 +64,9 @@ public abstract class MavenExecutor extends ConsoleAdapter {
     stopped = false;
   }
 
-  int stop() {
+  void stop() {
     stopped = true;
     setOutputPaused(false);
-    return 0;
   }
 
   boolean isCancelled() {
@@ -77,12 +78,28 @@ public abstract class MavenExecutor extends ConsoleAdapter {
     stop();
   }
 
+  protected void setExitCode(int exitCode) {
+    this.exitCode = exitCode;
+  }
+
   void displayProgress() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : BuilderBundle.message("maven.building"),
                                              FileUtil.toSystemDependentName(myParameters.getPomPath())));
       indicator.setText2(myParameters.getGoals().toString());
+    }
+  }
+
+  protected void printExitSummary() {
+    if (isCancelled()) {
+      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("maven.execution.aborted"), null);
+    }
+    else if (exitCode == 0) {
+      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("maven.execution.finished"), null);
+    }
+    else {
+      systemMessage(MavenLogUtil.LEVEL_ERROR, BuilderBundle.message("maven.execution.terminated.abnormally", exitCode), null);
     }
   }
 
