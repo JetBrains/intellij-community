@@ -1,6 +1,8 @@
 package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
+import com.intellij.localvcs.integration.ui.models.NullRevisionProcessingProgress;
+import com.intellij.localvcs.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.localvcs.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
@@ -91,12 +93,14 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
 
   private DiffContent getLeftDiffContent(FileHistoryDialogModel m) {
     EditorFactory ef = EditorFactory.getInstance();
-    return m.getDifferenceModel().getLeftDiffContent(gateway, ef);
+    RevisionProcessingProgress p = new NullRevisionProcessingProgress();
+    return m.getDifferenceModel().getLeftDiffContent(gateway, ef, p);
   }
 
   private DiffContent getRightDiffContent(FileHistoryDialogModel m) {
     EditorFactory ef = EditorFactory.getInstance();
-    return m.getDifferenceModel().getRightDiffContent(gateway, ef);
+    RevisionProcessingProgress p = new NullRevisionProcessingProgress();
+    return m.getDifferenceModel().getRightDiffContent(gateway, ef, p);
   }
 
   private FileHistoryDialogModel createFileModelFor(VirtualFile f) {

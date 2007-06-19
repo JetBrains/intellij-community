@@ -7,12 +7,15 @@ import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.localvcs.integration.revertion.Reverter;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
+import com.intellij.localvcs.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.localvcs.integration.ui.views.table.RevisionsTable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -141,16 +144,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract void updateDiffs();
 
-  protected SimpleDiffRequest createDifference(FileDifferenceModel m) {
-    EditorFactory ef = EditorFactory.getInstance();
+  protected SimpleDiffRequest createDifference(final FileDifferenceModel m) {
+    final SimpleDiffRequest r = new SimpleDiffRequest(myGateway.getProject(), m.getTitle());
 
-    SimpleDiffRequest r = new SimpleDiffRequest(myGateway.getProject(), m.getTitle());
+    processRevisions(new RevisionProcessingTask() {
+      public void run(RevisionProcessingProgress p) {
+        EditorFactory ef = EditorFactory.getInstance();
 
-    DiffContent left = m.getLeftDiffContent(myGateway, ef);
-    DiffContent right = m.getRightDiffContent(myGateway, ef);
+        p.processingLeftRevision();
+        DiffContent left = m.getLeftDiffContent(myGateway, ef, p);
 
-    r.setContents(left, right);
-    r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
+        p.processingRightRevision();
+        DiffContent right = m.getRightDiffContent(myGateway, ef, p);
+
+        r.setContents(left, right);
+        r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
+      }
+    });
 
     return r;
   }
@@ -244,6 +254,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     HelpManager.getInstance().invokeHelp(getHelpId());
   }
 
+  protected void processRevisions(final RevisionProcessingTask t) {
+    new Task.Modal(myGateway.getProject(), "Processing revisions", false) {
+      public void run(ProgressIndicator i) {
+        t.run(new RevisionProcessingProgressAdapter(i));
+      }
+    }.queue();
+  }
+
   private class RevertAction extends AnAction {
     public RevertAction() {
       super("Revert", null, IconLoader.getIcon("/actions/rollback.png"));
@@ -281,6 +299,30 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     public void actionPerformed(AnActionEvent e) {
       showHelp();
+    }
+  }
+
+  protected static interface RevisionProcessingTask {
+    void run(RevisionProcessingProgress p);
+  }
+
+  protected static class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
+    private final ProgressIndicator myIndicator;
+
+    public RevisionProcessingProgressAdapter(ProgressIndicator i) {
+      myIndicator = i;
+    }
+
+    public void processingLeftRevision() {
+      myIndicator.setText("Processing left revision");
+    }
+
+    public void processingRightRevision() {
+      myIndicator.setText("Processing right revision");
+    }
+
+    public void processed(int percentage) {
+      myIndicator.setFraction(percentage / 100.0);
     }
   }
 }

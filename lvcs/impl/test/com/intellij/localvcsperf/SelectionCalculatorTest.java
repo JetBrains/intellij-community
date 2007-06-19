@@ -2,6 +2,7 @@ package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
 import com.intellij.localvcs.core.revisions.Revision;
+import com.intellij.localvcs.integration.ui.models.NullProgress;
 import com.intellij.localvcs.integration.ui.models.SelectionCalculator;
 import com.intellij.localvcs.utils.RunnableAdapter;
 import org.junit.Before;
@@ -29,20 +30,20 @@ public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
   public void testCalculationFromTheScratch() {
     assertExecutionTime(16000, new RunnableAdapter() {
       public void doRun() throws Exception {
-        c.getSelectionFor(rr.get(100));
+        c.getSelectionFor(rr.get(100), new NullProgress());
       }
     });
   }
 
   @Test
   public void testUsingCache() {
-    c.getSelectionFor(rr.get(100));
+    c.getSelectionFor(rr.get(100), new NullProgress());
 
     assertExecutionTime(1, new RunnableAdapter() {
       public void doRun() throws Exception {
-        c.getSelectionFor(rr.get(1));
-        c.getSelectionFor(rr.get(50));
-        c.getSelectionFor(rr.get(100));
+        c.getSelectionFor(rr.get(1), new NullProgress());
+        c.getSelectionFor(rr.get(50), new NullProgress());
+        c.getSelectionFor(rr.get(100), new NullProgress());
       }
     });
   }

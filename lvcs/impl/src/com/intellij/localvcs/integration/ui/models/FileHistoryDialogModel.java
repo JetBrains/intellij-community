@@ -15,10 +15,12 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     super(gw, vcs, f);
   }
 
-  public boolean canShowDifference() {
+  public boolean canShowDifference(RevisionProcessingProgress p) {
+    p.processingLeftRevision();
     if (getLeftEntry().hasUnavailableContent()) return false;
-    if (getRightEntry().hasUnavailableContent()) return false;
-    return true;
+
+    p.processingRightRevision();
+    return !getRightEntry().hasUnavailableContent();
   }
 
   public FileDifferenceModel getDifferenceModel() {
@@ -30,12 +32,12 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
       }
 
       @Override
-      public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef) {
+      public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
         if (isCurrentRevisionSelected()) {
           Document d = gw.getDocumentFor(myFile);
           return DocumentContent.fromDocument(gw.getProject(), d);
         }
-        return super.getRightDiffContent(gw, ef);
+        return super.getRightDiffContent(gw, ef, p);
       }
     };
   }

@@ -29,20 +29,20 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef) {
-    return getDiffContent(gw, ef, myLeftRevision);
+  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
+    return getDiffContent(gw, ef, myLeftRevision, p);
   }
 
   @Override
-  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef) {
-    return getDiffContent(gw, ef, myRightRevision);
+  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
+    return getDiffContent(gw, ef, myRightRevision, p);
   }
 
-  private SimpleContent getDiffContent(IdeaGateway gw, EditorFactory ef, Revision r) {
-    return createDiffContent(gw, ef, getContentOf(r), r.getEntry());
+  private SimpleContent getDiffContent(IdeaGateway gw, EditorFactory ef, Revision r, RevisionProcessingProgress p) {
+    return createDiffContent(gw, ef, getContentOf(r, p), r.getEntry());
   }
 
-  private String getContentOf(Revision r) {
-    return myCalculator.getSelectionFor(r).getBlockContent();
+  private String getContentOf(Revision r, RevisionProcessingProgress p) {
+    return myCalculator.getSelectionFor(r, p).getBlockContent();
   }
 }

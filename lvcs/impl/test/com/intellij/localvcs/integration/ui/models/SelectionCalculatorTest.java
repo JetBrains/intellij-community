@@ -6,6 +6,7 @@ import com.intellij.localvcs.core.InMemoryLocalVcs;
 import com.intellij.localvcs.core.LocalVcs;
 import com.intellij.localvcs.core.LocalVcsTestCase;
 import com.intellij.localvcs.core.revisions.Revision;
+import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,8 +19,8 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
     SelectionCalculator c = new SelectionCalculator(rr, 0, 2);
 
-    Block b0 = c.getSelectionFor(rr.get(0));
-    Block b1 = c.getSelectionFor(rr.get(1));
+    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
+    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
 
     assertBlock(0, 2, "abc1\ndef1\nghi1", b0);
     assertBlock(0, 2, "abc\ndef\nghi", b1);
@@ -30,8 +31,8 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
     SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
 
-    Block b0 = c.getSelectionFor(rr.get(0));
-    Block b1 = c.getSelectionFor(rr.get(1));
+    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
+    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
 
     assertBlock(0, 1, "def\nghi", b0);
     assertBlock(1, 2, "def\nghi", b1);
@@ -42,9 +43,9 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
     List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
     SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
 
-    Block b2 = c.getSelectionFor(rr.get(2));
-    Block b1 = c.getSelectionFor(rr.get(1));
-    Block b0 = c.getSelectionFor(rr.get(0));
+    Block b2 = c.getSelectionFor(rr.get(2), new NullProgress());
+    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
+    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
 
     assertBlock(0, 1, "abc\ndef", b0);
     assertBlock(0, 2, "abc\nghi\ndef", b1);
@@ -56,8 +57,8 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
     SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
 
-    Block b0 = c.getSelectionFor(rr.get(0));
-    Block b1 = c.getSelectionFor(rr.get(1));
+    Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
+    Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
 
     assertBlock(0, 1, "abc\ndef", b0);
     assertBlock(0, 1, "abc\ndef", b1);
@@ -69,9 +70,41 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
 
     SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
 
-    assertTrue(c.canCalculateFor(rr.get(0)));
-    assertFalse(c.canCalculateFor(rr.get(1)));
-    assertFalse(c.canCalculateFor(rr.get(2)));
+    assertTrue(c.canCalculateFor(rr.get(0), new NullProgress()));
+    assertFalse(c.canCalculateFor(rr.get(1), new NullProgress()));
+    assertFalse(c.canCalculateFor(rr.get(2), new NullProgress()));
+  }
+
+  @Test
+  public void testProgressOnGetSelection() {
+    List<Revision> rr = createRevisions("one", "two", "three", "four");
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
+
+    Progress p = createStrictMock(Progress.class);
+    p.processed(25);
+    p.processed(50);
+    p.processed(75);
+    p.processed(100);
+    replay(p);
+
+    c.getSelectionFor(rr.get(3), p);
+
+    verify(p);
+  }
+
+  @Test
+  public void testProgressOnCanCalculate() {
+    List<Revision> rr = createRevisions("one", "two");
+    SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
+
+    Progress p = createMock(Progress.class);
+    p.processed(50);
+    p.processed(100);
+    replay(p);
+
+    c.canCalculateFor(rr.get(1), p);
+
+    verify(p);
   }
 
   private List<Revision> createRevisions(String... contents) {

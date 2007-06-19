@@ -7,6 +7,7 @@ import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockEditorFactory;
 import com.intellij.openapi.editor.EditorFactory;
+import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -41,13 +42,28 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     initModelFor("f");
 
     m.selectRevisions(0, 1);
-    assertFalse(m.canShowDifference());
+    assertFalse(m.canShowDifference(new NullRevisionProcessingProgress()));
 
     m.selectRevisions(0, 2);
-    assertTrue(m.canShowDifference());
+    assertTrue(m.canShowDifference(new NullRevisionProcessingProgress()));
 
     m.selectRevisions(1, 2);
-    assertFalse(m.canShowDifference());
+    assertFalse(m.canShowDifference(new NullRevisionProcessingProgress()));
+  }
+
+  @Test
+  public void testCanShowDifferenceProgress() {
+    vcs.createFile("f", cf("abc"), -1);
+    vcs.changeFileContent("f", cf(("def")), -1);
+
+    initModelFor("f");
+    RevisionProcessingProgress p = createMock(RevisionProcessingProgress.class);
+    p.processingLeftRevision();
+    p.processingRightRevision();
+    replay(p);
+
+    m.canShowDifference(p);
+    verify(p);
   }
 
   @Test
@@ -92,8 +108,9 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     EditorFactory ef = new MockEditorFactory();
 
     try {
-      assertEquals(left, new String(dm.getLeftDiffContent(gw, ef).getBytes()));
-      assertEquals(right, new String(dm.getRightDiffContent(gw, ef).getBytes()));
+      RevisionProcessingProgress p = new NullRevisionProcessingProgress();
+      assertEquals(left, new String(dm.getLeftDiffContent(gw, ef, p).getBytes()));
+      assertEquals(right, new String(dm.getRightDiffContent(gw, ef, p).getBytes()));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

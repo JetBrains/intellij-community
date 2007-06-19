@@ -28,9 +28,9 @@ public abstract class FileDifferenceModel {
     return FormatUtil.formatTimestamp(e.getTimestamp()) + " - " + e.getName();
   }
 
-  public abstract DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef);
+  public abstract DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p);
 
-  public abstract DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef);
+  public abstract DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p);
 
   protected SimpleContent createDiffContent(IdeaGateway gw, EditorFactory ef, String content, Entry e) {
     return new SimpleContent(content, gw.getFileType(e.getName()), ef);

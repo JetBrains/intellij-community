@@ -3,10 +3,7 @@ package com.intellij.localvcs.integration.ui.views;
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.core.revisions.Revision;
 import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
-import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
-import com.intellij.localvcs.integration.ui.models.SelectionCalculator;
-import com.intellij.localvcs.integration.ui.models.SelectionDifferenceModel;
+import com.intellij.localvcs.integration.ui.models.*;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
@@ -29,8 +26,12 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   }
 
   @Override
-  public boolean canShowDifference() {
-    return getCalculator().canCalculateFor(getLeftRevision()) && getCalculator().canCalculateFor(getRightRevision());
+  public boolean canShowDifference(RevisionProcessingProgress p) {
+    p.processingLeftRevision();
+    if (!getCalculator().canCalculateFor(getLeftRevision(), p)) return false;
+
+    p.processingRightRevision();
+    return getCalculator().canCalculateFor(getRightRevision(), p);
   }
 
   @Override

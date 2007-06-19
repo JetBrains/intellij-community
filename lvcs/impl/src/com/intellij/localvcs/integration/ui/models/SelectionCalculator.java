@@ -21,9 +21,9 @@ public class SelectionCalculator {
     myToLine = toLine;
   }
 
-  public boolean canCalculateFor(Revision r) {
+  public boolean canCalculateFor(Revision r, Progress p) {
     try {
-      getSelectionFor(myRevisions.indexOf(r));
+      doGetSelectionFor(r, p);
     }
     catch (ContentIsUnavailableException e) {
       return false;
@@ -31,26 +31,33 @@ public class SelectionCalculator {
     return true;
   }
 
-  public Block getSelectionFor(Revision r) {
-    return getSelectionFor(myRevisions.indexOf(r));
+  public Block getSelectionFor(Revision r, Progress p) {
+    return doGetSelectionFor(r, p);
   }
 
-  private Block getSelectionFor(int revisionIndex) {
+  private Block doGetSelectionFor(Revision r, Progress p) {
+    int target = myRevisions.indexOf(r);
+    return getSelectionFor(target, target + 1, p);
+  }
+
+  private Block getSelectionFor(int revisionIndex, int totalRevisions, Progress p) {
     Block cached = myCache.get(revisionIndex);
     if (cached != null) return cached;
 
     String content = getRevisionContent(myRevisions.get(revisionIndex));
+    p.processed(((totalRevisions - revisionIndex) * 100) / totalRevisions);
 
     Block result;
     if (revisionIndex == 0) {
       result = new Block(content, myFromLine, myToLine);
     }
     else {
-      Block prev = getSelectionFor(revisionIndex - 1);
+      Block prev = getSelectionFor(revisionIndex - 1, totalRevisions, p);
       result = new FindBlock(content, prev).getBlockInThePrevVersion();
     }
 
     myCache.put(revisionIndex, result);
+
     return result;
   }
 

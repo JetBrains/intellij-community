@@ -2,11 +2,14 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -62,12 +65,19 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void updateDiffs() {
-    boolean cachedCanShowDiff = myModel.canShowDifference();
-    if (cachedCanShowDiff) {
+    final boolean[] cachedCanShowDiff = new boolean[1];
+
+    processRevisions(new RevisionProcessingTask() {
+      public void run(RevisionProcessingProgress p) {
+        cachedCanShowDiff[0] = myModel.canShowDifference(p);
+      }
+    });
+
+    if (cachedCanShowDiff[0]) {
       myDiffPanel.setDiffRequest(createDifference(myModel.getDifferenceModel()));
     }
 
-    String card = cachedCanShowDiff ? DIFF_CARD : MESSAGE_CARD;
+    String card = cachedCanShowDiff[0] ? DIFF_CARD : MESSAGE_CARD;
     ((CardLayout)myPanel.getLayout()).show(myPanel, card);
   }
 }

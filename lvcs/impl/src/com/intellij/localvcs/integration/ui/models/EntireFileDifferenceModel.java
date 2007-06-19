@@ -26,12 +26,12 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef) {
+  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
     return getDiffContent(gw, ef, myLeft);
   }
 
   @Override
-  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef) {
+  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
     return getDiffContent(gw, ef, myRight);
   }
 
