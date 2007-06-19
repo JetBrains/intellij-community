@@ -8,8 +8,8 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.PackagingFileFilter;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +66,7 @@ public class BuildRecipeImpl implements BuildRecipe {
                                      boolean isDirectory,
                                      @NotNull Module module,
                                      String outputRelativePath,
-                                     @Nullable VirtualFileFilter fileFilter) {
+                                     @Nullable PackagingFileFilter fileFilter) {
     addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, DeploymentUtil.trimForwardSlashes(outputRelativePath),fileFilter));
   }
 

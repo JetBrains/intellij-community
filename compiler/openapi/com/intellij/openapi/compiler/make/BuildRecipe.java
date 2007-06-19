@@ -33,5 +33,5 @@ public interface BuildRecipe {
                               boolean isDirectory,
                               @NotNull Module module,
                               String outputRelativePath,
-                              @Nullable VirtualFileFilter fileFilter);
+                              @Nullable PackagingFileFilter fileFilter);
 }

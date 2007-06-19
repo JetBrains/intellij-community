@@ -1,8 +1,5 @@
-/**
- * @author cdr
- */
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2007 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.openapi.compiler.make;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.compiler.CompileContext;
 
-import java.io.File;
+/**
+ * @author nik
+ */
+public abstract class PackagingFileFilter {
 
-public interface FileCopyInstruction extends BuildInstruction {
-  File getFile();
+  public abstract boolean accept(@NotNull VirtualFile virtualFile, @NotNull CompileContext context);
 
-  boolean isDirectory();
-
-  @Nullable
-  PackagingFileFilter getFileFilter();
 }

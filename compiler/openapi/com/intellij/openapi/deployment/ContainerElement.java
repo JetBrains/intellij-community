@@ -34,11 +34,11 @@ import java.util.Map;
 public abstract class ContainerElement implements JDOMExternalizable, Cloneable, ResolvableElement {
   private final Map<String,String> myAttributes = new LinkedHashMap<String, String>();
   private Module myParentModule;
-  @NonNls private static final String URI_ATTR = "URI";
-  @NonNls private static final String PACKAGING_METHOD_ATTR = "method";
-  @NonNls private static final String ELEMENT_ATTRIBUTE = "attribute";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  @NonNls public static final String URI_ATTR = "URI";
+  @NonNls public static final String PACKAGING_METHOD_ATTR = "method";
+  @NonNls public static final String ELEMENT_ATTRIBUTE = "attribute";
+  @NonNls public static final String ATTRIBUTE_NAME = "name";
+  @NonNls public static final String ATTRIBUTE_VALUE = "value";
 
   protected ContainerElement(@Nullable Module parentModule) {
     myParentModule = parentModule;

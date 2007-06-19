@@ -36,10 +36,7 @@ public interface BuildInstruction {
                      BuildRecipe dependencies,
                      @Nullable Set<String> writtenRelativePaths,
                      @Nullable FileFilter fileFilter) throws IOException;
-  void addFilesToExploded(@NotNull CompileContext context,
-                          @NotNull File outputDir,
-                          @Nullable Set<String> writtenPaths,
-                          @Nullable FileFilter fileFilter) throws IOException;
+
   boolean accept(BuildInstructionVisitor visitor) throws Exception;
 
   boolean isExternalDependencyInstruction();

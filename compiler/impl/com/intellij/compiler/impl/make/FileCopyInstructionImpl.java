@@ -2,26 +2,22 @@ package com.intellij.compiler.impl.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.compiler.make.PackagingFileFilter;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.util.io.ZipUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.jar.JarOutputStream;
 
 public class FileCopyInstructionImpl extends BuildInstructionBase implements FileCopyInstruction {
@@ -29,7 +25,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   private boolean myIsDirectory;
   // for a directory keep the subset of changed files that need to be copied
   private List<FileCopyInstructionImpl> myChangedSet;
-  private @Nullable final VirtualFileFilter myFileFilter;
+  private @Nullable final PackagingFileFilter myFileFilter;
 
   protected FileCopyInstructionImpl(File source,
                                  boolean isDirectory,
@@ -42,34 +38,15 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
                                  boolean isDirectory,
                                  Module module,
                                  String outputRelativePath,
-                                 @Nullable final VirtualFileFilter fileFilter) {
+                                 @Nullable final PackagingFileFilter fileFilter) {
     super(outputRelativePath, module);
     myFileFilter = fileFilter;
     setFile(source, isDirectory);
   }
 
   @Nullable
-  public VirtualFileFilter getFileFilter() {
+  public PackagingFileFilter getFileFilter() {
     return myFileFilter;
-  }
-
-  public void addFilesToExploded(@NotNull CompileContext context,
-                                 @NotNull File outputDir,
-                                 @Nullable Set<String> writtenPaths,
-                                 @Nullable FileFilter fileFilter) throws IOException {
-    if (myChangedSet == null) {
-      final File to = DeploymentUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
-      // todo check for recursive copying
-      if (!DeploymentUtil.checkFileExists(getFile(), context)) return;
-      DeploymentUtil.getInstance().copyFile(getFile(), to, context, writtenPaths, fileFilter);
-    }
-    else {
-      final ProgressIndicator progressIndicator = context.getProgressIndicator();
-      for (FileCopyInstructionImpl singleFileCopyInstruction : myChangedSet) {
-        progressIndicator.checkCanceled();
-        singleFileCopyInstruction.addFilesToExploded(context, outputDir, writtenPaths, fileFilter);
-      }
-    }
   }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
@@ -159,81 +136,9 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     return myIsDirectory;
   }
 
-  public void setFile(File file, boolean isDirectory) {
+  private void setFile(File file, boolean isDirectory) {
     myFile = file;
     myIsDirectory = isDirectory;
   }
 
-  // incremental compiler integration support
-  // instruction implementation should only process the intersection of files it owns and files passed in this method
-  public void addFileToChangedSet(FileCopyInstructionImpl item) {
-    if (myChangedSet == null) {
-      clearChangedSet();
-    }
-    myChangedSet.add(item);
-  }
-
-  public void clearChangedSet() {
-    myChangedSet = new ArrayList<FileCopyInstructionImpl>();
-  }
-
-  public void addFlattenDirectoryItems(Map<VirtualFile, InstructionProcessingItem> items,
-                                       Module targetModule,
-                                       final boolean isExplodedEnabled,
-                                       final VirtualFile fileInExplodedPath,
-                                       final boolean jarEnabled,
-                                       final VirtualFile jarFile,
-                                       String relativePathToModuleOutputRoot) {
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    VirtualFile virtualFile = localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(getFile().getPath()));
-    if (virtualFile == null) return;
-
-    final String outputRelativePath = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(relativePathToModuleOutputRoot, getOutputRelativePath()));
-    addFileItemsRecursively(virtualFile, outputRelativePath, fileInExplodedPath, items, targetModule, isExplodedEnabled, jarEnabled, jarFile);
-  }
-
-  private void addFileItemsRecursively(@NotNull final VirtualFile virtualFile,
-                                       final String outputRelativePath,
-                                       final VirtualFile fileInExplodedPath,
-                                       final Map<VirtualFile, InstructionProcessingItem> items,
-                                       final Module targetModule,
-                                       final boolean isExplodedEnabled,
-                                       final boolean jarEnabled,
-                                       final VirtualFile jarFile) {
-    if (myFileFilter != null && !myFileFilter.accept(virtualFile)) return;
-    if (virtualFile.isDirectory()) {
-      VirtualFile[] children = virtualFile.getChildren();
-      VirtualFile[] explodedChildren = fileInExplodedPath == null ? null : fileInExplodedPath.getChildren();
-      if (explodedChildren == null) explodedChildren = VirtualFile.EMPTY_ARRAY;
-      Map<String, VirtualFile> explodedFilesMap = new THashMap<String, VirtualFile>();
-      for (VirtualFile file : explodedChildren) {
-        explodedFilesMap.put(file.getName(), file);
-      }
-
-      for (final VirtualFile child : children) {
-        VirtualFile childFileInExploded = fileInExplodedPath == null ? null : explodedFilesMap.get(child.getName());
-        addFileItemsRecursively(child,
-                                DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(outputRelativePath, child.getName())),
-                                childFileInExploded,
-                                items,
-                                targetModule,
-                                isExplodedEnabled,
-                                jarEnabled,
-                                jarFile
-        );
-      }
-    }
-    else {
-      InstructionProcessingItem processingItem = items.get(virtualFile);
-      if (processingItem == null) {
-        processingItem = new InstructionProcessingItem(virtualFile);
-        items.put(virtualFile, processingItem);
-      }
-      boolean targetFileExists = (!isExplodedEnabled || fileInExplodedPath != null) && (!jarEnabled || jarFile != null);
-      processingItem.addInstructionInfo(new InstructionProcessingItem.InstructionInfo(this, outputRelativePath, targetModule, targetFileExists));
-    }
-  }
-
-  public void clearCaches() {
-  }
 }

@@ -102,7 +102,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
       final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
       if (conversionHelper != null) {
-        conversionHelper.convertModuleRootToOldFormat(root);
+        conversionHelper.convertModuleRootToOldFormat(root, myModule.getName());
       }
 
       myOptions.put(VERSION_OPTION, Integer.toString(myVersion));

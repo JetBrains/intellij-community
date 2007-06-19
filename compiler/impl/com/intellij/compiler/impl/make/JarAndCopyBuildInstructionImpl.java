@@ -40,17 +40,6 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     super(directoryToJar, false, module, outputRelativePath);
   }
 
-  public void addFilesToExploded(CompileContext context,
-                                 File outputDir,
-                                 Set<String> writtenPaths,
-                                 FileFilter fileFilter) throws IOException {
-    //todo optmization: cache created jar and issue single FileCopy on it
-    final File jarFile = DeploymentUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
-
-    makeJar(context, jarFile, fileFilter);
-    writtenPaths.add(myJarFile.getPath());
-  }
-
   public void addFilesToJar(@NotNull CompileContext context,
                             @NotNull File jarFile,
                             @NotNull JarOutputStream outputStream,
@@ -106,10 +95,6 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
       }
     }
     myJarFile = jarFile;
-  }
-
-  public void clearCaches() {
-    myJarFile = null;
   }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {

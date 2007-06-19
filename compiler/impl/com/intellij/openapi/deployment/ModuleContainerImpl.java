@@ -40,10 +40,6 @@ public class ModuleContainerImpl implements ModuleContainer {
     myDefaultModulesProvider = new DefaultModulesProvider(module.getProject());
   }
 
-  public Module getParentModule() {
-    return myParentModule;
-  }
-
   public ModuleContainerImpl(ModulesProvider modulesProvider) {
     myDefaultModulesProvider = modulesProvider;
   }

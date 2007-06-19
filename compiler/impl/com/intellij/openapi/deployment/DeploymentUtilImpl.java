@@ -48,14 +48,15 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                          @NotNull final Module sourceModule,
                                          Module targetModule,
                                          final String outputRelativePath,
-                                         String possibleBaseOuputPath) {
+                                         String possibleBaseOuputPath,
+                                         @Nullable PackagingFileFilter fileFilter) {
     final File outputPath = getModuleOutputPath(sourceModule);
 
     String[] sourceRoots = getSourceRootUrlsInReadAction(sourceModule);
     boolean ok = true;
     if (outputPath != null && sourceRoots.length != 0) {
       ok = checkModuleOutputExists(outputPath, sourceModule, context);
-      boolean added = addItemsRecursively(items, outputPath, targetModule, outputRelativePath, null, possibleBaseOuputPath);
+      boolean added = addItemsRecursively(items, outputPath, targetModule, outputRelativePath, fileFilter, possibleBaseOuputPath);
       if (!added) {
         String additionalMessage = CompilerBundle.message("message.text.change.module.output.directory.or.module.exploded.directory",
                                                       ModuleUtil.getModuleNameInReadAction(sourceModule),
@@ -217,7 +218,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                            @NotNull File root,
                                            @NotNull Module module,
                                            String outputRelativePath,
-                                           @Nullable VirtualFileFilter fileFilter,
+                                           @Nullable PackagingFileFilter fileFilter,
                                            String possibleBaseOutputPath) {
     if (outputRelativePath == null) outputRelativePath = "";
     outputRelativePath = trimForwardSlashes(outputRelativePath);
@@ -362,7 +363,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
           addJarJavaModuleOutput(instructions, childModule, relativePath, context);
         }
         else if (PackagingMethod.COPY_FILES.equals(packagingMethod)) {
-          addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), explodedPath);
+          addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), explodedPath, null);
         }
         else if (PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST.equals(packagingMethod)) {
           moduleLink.setPackagingMethod(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST);

@@ -19,13 +19,13 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.PackagingFileFilter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.descriptors.ConfigFile;
@@ -49,7 +49,8 @@ public abstract class DeploymentUtil {
                                                   @NotNull Module sourceModule,
                                                   Module targetModule,
                                                   @NonNls String outputRelativePath,
-                                                  @NonNls String possibleBaseOuputPath);
+                                                  @NonNls String possibleBaseOuputPath,
+                                                  @Nullable PackagingFileFilter fileFilter);
 
   public abstract void addLibraryLink(@NotNull CompileContext context,
                                       @NotNull BuildRecipe items,
@@ -67,7 +68,7 @@ public abstract class DeploymentUtil {
                                               @NotNull File root,
                                               @NotNull Module module,
                                               String outputRelativePath,
-                                              @Nullable VirtualFileFilter fileFilter,
+                                              @Nullable PackagingFileFilter fileFilter,
                                               String possibleBaseOutputPath);
 
   public static void reportRecursiveCopying(CompileContext context, final String sourceDirPath, String targetDirPath,

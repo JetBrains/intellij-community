@@ -5,7 +5,6 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -42,41 +40,6 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
 
   public String getConfigurationName() {
     return myBuildParticipant.getConfigurationName();
-  }
-
-  public void addFilesToExploded(@NotNull final CompileContext context,
-                                 @NotNull final File outputDir,
-                                 final Set<String> writtenPaths,
-                                 final FileFilter fileFilter) throws IOException {
-    //todo optmization: cache created directory and issue single FileCopy on it
-    final File target = DeploymentUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
-    final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
-    final BuildRecipe buildRecipe = getChildInstructions(context);
-    try {
-      File fromFile = new File(DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant));
-      boolean builtAlready = myBuildConfiguration.willBuildExploded();
-      if (!builtAlready) {
-        new ModuleBuilder(myBuildParticipant).buildExploded(myBuildConfiguration, fromFile, context, new ArrayList<File>());
-      }
-        DeploymentUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
-        // copy dependencies
-        buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
-          public boolean visitInstruction(BuildInstruction instruction) throws Exception {
-            if (instruction.isExternalDependencyInstruction()) {
-              instruction.addFilesToExploded(context, target, writtenPaths, fileFilter);
-              externalDependencyFound.set(Boolean.TRUE);
-            }
-            return true;
-          }
-        }, false);
-      if (externalDependencyFound.get().booleanValue()) {
-        MakeUtilImpl.writeManifest(buildRecipe, context, target);
-      }
-    }
-    catch (IOException e) {throw e;}
-    catch (RuntimeException e) {throw e;}
-    catch (Exception e) {
-    }
   }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
