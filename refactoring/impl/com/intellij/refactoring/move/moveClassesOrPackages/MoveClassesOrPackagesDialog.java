@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
@@ -342,12 +343,20 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private String verifyInnerClassDestination() {
     PsiClass targetClass = findTargetClass();
     if (targetClass == null) return null;
+
+    for(PsiElement element: myElementsToMove) {
+      if (PsiTreeUtil.isAncestor(element, targetClass, false)) {
+        return RefactoringBundle.message("move.class.to.inner.move.to.self.error");
+      }
+    }
+
     while(targetClass != null) {
       if (targetClass.getContainingClass() != null && !targetClass.hasModifierProperty(PsiModifier.STATIC)) {
         return RefactoringBundle.message("move.class.to.inner.nonstatic.error");
       }
       targetClass = targetClass.getContainingClass();
     }
+    
     return null;
   }
 
