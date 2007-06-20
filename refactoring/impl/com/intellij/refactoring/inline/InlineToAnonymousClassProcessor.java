@@ -222,15 +222,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     PsiElementFactory factory = myClass.getManager().getElementFactory();
 
     PsiClassType superType;
-    final PsiClass[] interfaces = myClass.getInterfaces();
-    if (interfaces.length > 0) {
-      PsiClassType[] interfaceTypes = myClass.getImplementsListTypes();
-      assert interfaces.length == 1;
+    PsiClass superClass = myClass.getSuperClass();
+    PsiClassType[] interfaceTypes = myClass.getImplementsListTypes();
+    if (interfaceTypes.length > 0 && !InlineToAnonymousClassHandler.isRedundantImplements(superClass, interfaceTypes [0])) {
       assert interfaceTypes.length == 1;
       superType = interfaceTypes [0];
     }
     else {
-      PsiClass superClass = myClass.getSuperClass();
       PsiClassType[] classTypes = myClass.getExtendsListTypes();
       if (classTypes.length > 0) {
         superType = classTypes [0];

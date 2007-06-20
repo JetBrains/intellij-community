@@ -1,0 +1,12 @@
+import java.awt.event.*;
+
+class A {
+    private ActionListener b = new MyActionListener() {
+        public void actionPerformed(ActionEvent e) {
+        }
+    };
+
+    private abstract class MyActionListener implements ActionListener {
+    }
+
+}

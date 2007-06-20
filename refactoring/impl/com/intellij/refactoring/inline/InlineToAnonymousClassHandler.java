@@ -18,6 +18,9 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class InlineToAnonymousClassHandler {
+  private InlineToAnonymousClassHandler() {
+  }
+
   public static void invoke(final Project project, final Editor editor, final PsiClass psiClass) {
     PsiCall callToInline = findCallToInline(editor);
 
@@ -80,7 +83,10 @@ public class InlineToAnonymousClassHandler {
       }
       final PsiClass superClass = psiClass.getSuperClass();
       if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-        return RefactoringBundle.message("inline.to.anonymous.no.superclass.and.interface");
+        PsiClassType interfaceType = interfaces[0];
+        if (!isRedundantImplements(superClass, interfaceType)) {
+          return RefactoringBundle.message("inline.to.anonymous.no.superclass.and.interface");
+        }
       }
     }
 
@@ -140,6 +146,18 @@ public class InlineToAnonymousClassHandler {
     }
 
     return null;
+  }
+
+  static boolean isRedundantImplements(final PsiClass superClass, final PsiClassType interfaceType) {
+    boolean redundantImplements = false;
+    PsiClassType[] superClassInterfaces = superClass.getImplementsListTypes();
+    for(PsiClassType superClassInterface: superClassInterfaces) {
+      if (superClassInterface.equals(interfaceType)) {
+        redundantImplements = true;
+        break;
+      }
+    }
+    return redundantImplements;
   }
 
   private static PsiReturnStatement findReturnStatement(final PsiMethod method) {
