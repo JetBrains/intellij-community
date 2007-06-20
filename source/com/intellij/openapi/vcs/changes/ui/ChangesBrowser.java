@@ -265,17 +265,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   private VirtualFile[] getSelectedFiles() {
     final List<Change> changes = myViewer.getSelectedChanges();
-    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (Change change : changes) {
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        final VirtualFile file = afterRevision.getFile().getVirtualFile();
-        if (file != null && file.isValid()) {
-          files.add(file);
-        }
-      }
-    }
-    return files.toArray(new VirtualFile[files.size()]);
+    return ChangesUtil.getFilesFromChanges(changes);
   }
 
   public class RollbackAction extends AnAction {

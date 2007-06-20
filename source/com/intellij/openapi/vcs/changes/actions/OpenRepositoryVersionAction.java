@@ -17,8 +17,9 @@ import com.intellij.pom.Navigatable;
  */
 public class OpenRepositoryVersionAction extends AnAction {
   public OpenRepositoryVersionAction() {
+    // TODO[yole]: real icon
     super("Open Repository Version", "Open editor with selected revision of the file",
-          IconLoader.getIcon("/actions/editSource.png"));
+          IconLoader.getIcon("/objectBrowser/showEditorHighlighting.png"));
   }
 
   public void actionPerformed(AnActionEvent e) {

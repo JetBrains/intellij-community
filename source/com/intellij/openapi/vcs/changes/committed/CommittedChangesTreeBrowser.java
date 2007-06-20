@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
@@ -27,6 +28,7 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +53,7 @@ import java.util.List;
 public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Object MORE_TAG = new Object();
 
+  private final Project myProject;
   private final Tree myChangesTree;
   private final ChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
@@ -67,6 +70,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
 
+    myProject = project;
     myChangeLists = changeLists;
     myChangesTree = new Tree(buildTreeModel()) {
       @Override
@@ -253,6 +257,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
     else if (key.equals(DataKeys.COPY_PROVIDER)) {
       sink.put(DataKeys.COPY_PROVIDER, myCopyProvider);
+    }
+    else if (key.equals(DataKeys.NAVIGATABLE_ARRAY)) {
+      final CommittedChangeList list = getSelectedChangeList();
+      if (list != null) {
+        final Collection<Change> changes = list.getChanges();
+        Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
+        sink.put(DataKeys.NAVIGATABLE_ARRAY, result);
+      }
     }
   }
 

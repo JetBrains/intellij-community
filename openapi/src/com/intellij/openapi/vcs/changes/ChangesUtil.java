@@ -59,6 +59,20 @@ public class ChangesUtil {
     return paths;
   }
 
+  public static VirtualFile[] getFilesFromChanges(final Collection<Change> changes) {
+    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (Change change : changes) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        final VirtualFile file = afterRevision.getFile().getVirtualFile();
+        if (file != null && file.isValid()) {
+          files.add(file);
+        }
+      }
+    }
+    return files.toArray(new VirtualFile[files.size()]);
+  }
+
   public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
     List<Navigatable> result = new ArrayList<Navigatable>();
     for (VirtualFile selectedFile : selectedFiles) {
