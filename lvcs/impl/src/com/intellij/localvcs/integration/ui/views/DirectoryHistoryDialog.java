@@ -120,7 +120,9 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private DirectoryDifference getSelectedChange() {
-    return (DirectoryDifference)myChangesTree.getLeadSelection();
+    List<Change> selected = myChangesTree.getSelectedChanges();
+    if (selected.size() != 1) return null;
+    return (DirectoryDifference)selected.get(0);
   }
 
   private class ShowDifferenceAction extends ActionOnSelection {
