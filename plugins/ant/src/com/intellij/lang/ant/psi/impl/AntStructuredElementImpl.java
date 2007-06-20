@@ -149,9 +149,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public PsiElement findElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
       if (offset != myLastFoundElementOffset) {
-        final PsiElement foundElement = super.findElementAt(offset);
+        PsiElement foundElement = super.findElementAt(offset);
         if (foundElement == null) {
           return null;
+        }
+        if (foundElement instanceof AntNameElementImpl) {
+          foundElement = ((AntNameElementImpl)foundElement).getMirrorElement();
         }
         myLastFoundElement = (AntElement)foundElement;
         myLastFoundElementOffset = offset;
@@ -431,7 +434,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             final XmlAttributeValue valueElement = idAttr.getValueElement();
             if (valueElement != null) {
               final AntNameElementImpl idElement = new AntNameElementImpl(this, valueElement);
-              idElement.setElementToRename(this);
+              idElement.setMirrorElement(this);
               myIdElement = idElement;
               getAntProject().registerRefId(myIdElement.getName(), this);
             }
@@ -454,7 +457,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             final XmlAttributeValue valueElement = nameAttr.getValueElement();
             if (valueElement != null) {
               final AntNameElementImpl element = new AntNameElementImpl(this, valueElement);
-              element.setElementToRename(this);
+              element.setMirrorElement(this);
               myNameElement = element;
             }
           }

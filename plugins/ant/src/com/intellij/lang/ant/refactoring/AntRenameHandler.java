@@ -5,7 +5,6 @@
 package com.intellij.lang.ant.refactoring;
 
 import com.intellij.lang.ant.PsiAntElement;
-import com.intellij.lang.ant.psi.impl.AntNameElementImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,12 +30,6 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
-      if (element instanceof AntNameElementImpl) {
-        elements[idx] = ((AntNameElementImpl)element).getElementToRename();
-      }
-    }
     super.invoke(project, elements, dataContext);
   }
 }

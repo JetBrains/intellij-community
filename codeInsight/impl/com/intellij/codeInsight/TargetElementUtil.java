@@ -1,10 +1,10 @@
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -81,6 +81,14 @@ public class TargetElementUtil {
 
     offset = adjustOffset(document, offset);
 
+    if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
+      final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
+      //if (referenceOrReferencedElement == null) {
+      //  return getReferenceOrReferencedElement(file, editor, flags, offset);
+      //}
+      if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return referenceOrReferencedElement;
+    }
+    
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
@@ -155,14 +163,6 @@ public class TargetElementUtil {
         if ((flags & RETURN_ACCEPTED) == 0) return null;
         return element;
       }
-    }
-
-    if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
-      final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
-      //if (referenceOrReferencedElement == null) {
-      //  return getReferenceOrReferencedElement(file, editor, flags, offset);
-      //}
-      if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return referenceOrReferencedElement;
     }
 
     return null;

@@ -1,0 +1,8 @@
+<project default="test">
+  <target name="init-after">
+  </target>
+
+  <target name="test" depends="init-after">
+
+  </target>
+</project>

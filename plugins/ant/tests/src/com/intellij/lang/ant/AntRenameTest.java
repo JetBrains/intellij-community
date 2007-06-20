@@ -1,5 +1,6 @@
 package com.intellij.lang.ant;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -7,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -102,6 +102,14 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testRenameByRef() throws Exception {
+    doTest();
+  }
+
+  public void testRenameByDeclaration() throws Exception {
+    doTest();
+  }
+
   protected String getTestDataPath() {
     return PathManager.getHomePath().replace('\\', '/') + "/plugins/ant/tests/data/psi/rename/";
   }
@@ -110,24 +118,17 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     final String filename = getTestName(true) + ".xml";
     VirtualFile vfile = VirtualFileManager.getInstance().findFileByUrl("file://" + getTestDataPath() + filename);
     String text = FileDocumentManager.getInstance().getDocument(vfile).getText();
-    int off = text.indexOf("<ren>");
+    final int off = text.indexOf("<ren>");
     text = text.replace("<ren>", "");
     configureFromFileText(filename, text);
     myFile = AntSupport.getAntFile(myFile);
     assertNotNull(myFile);
     assertTrue(myFile instanceof AntFile);
-    PsiElement element = myFile.findElementAt(off);
-    final PsiReference[] refs = element.getReferences();
-    if (refs.length > 0) {
-      int i = 0;
-      element = refs[0].resolve();
-      while (element != null && !text.substring(off).trim().startsWith(((PsiNamedElement)element).getName())) {
-        element = refs[++i].resolve();
-      }
-    }
-    else {
-      element = element.getParent();
-    }
+    PsiElement element = TargetElementUtil.findTargetElement(
+      getEditor(), 
+      TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED, 
+      off
+    );
     assertNotNull(element);
     assertTrue(element instanceof PsiNamedElement);
     final RenameRefactoring rename =

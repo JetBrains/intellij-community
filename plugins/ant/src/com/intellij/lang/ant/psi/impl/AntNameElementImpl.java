@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class AntNameElementImpl extends AntElementImpl {
 
-  private @Nullable AntElement myElementToRename;
+  private @Nullable AntElement myMirrorElement;
   private String myCachedName;
   private volatile long myModCount;
 
@@ -46,15 +46,12 @@ public class AntNameElementImpl extends AntElementImpl {
     return this;
   }
 
-  public final void setElementToRename(@Nullable final AntElement renameElement) {
-    myElementToRename = renameElement;
+  public final void setMirrorElement(@Nullable final AntElement renameElement) {
+    myMirrorElement = renameElement;
   }
 
   @NotNull
-  public final AntElement getElementToRename() {
-    if (myElementToRename != null) {
-      return myElementToRename;
-    }
-    return this;
+  public final AntElement getMirrorElement() {
+    return myMirrorElement != null? myMirrorElement : this;
   }
 }
