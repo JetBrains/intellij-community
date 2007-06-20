@@ -107,10 +107,6 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
       return myBuildConfiguration;
     }
 
-    public String getConfigurationName() {
-      throw new UnsupportedOperationException("'getConfigurationName' not implemented in " + getClass().getName());
-    }
-
     public Module getModule() {
       return null;
     }
