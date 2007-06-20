@@ -201,11 +201,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               if (offset > 0 && !pair.getSecond().contains(offset)) {
                 continue;
               }
-              IntentionAction action = pair.first.getAction();
+              final HighlightInfo.IntentionActionDescriptor actionDescriptor = pair.first;
+              final IntentionAction action = actionDescriptor.getAction();
               if (action.isAvailable(project, myEditor, myFile)) {
                 availableActions.add(action);
-                if (pair.first.getOptions() != null) {
-                  for (IntentionAction intentionAction : pair.first.getOptions()) {
+                final List<IntentionAction> actions = actionDescriptor.getOptions(myFile.findElementAt(myEditor.getCaretModel().getOffset()));
+                if (actions != null) {
+                  for (IntentionAction intentionAction : actions) {
                     if (intentionAction.isAvailable(project, myEditor, myFile)) {
                       availableActions.add(intentionAction);
                     }

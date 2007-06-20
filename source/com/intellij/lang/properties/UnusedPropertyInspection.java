@@ -84,8 +84,8 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
   }
 
 
-  public IntentionAction[] getSuppressActions(ProblemDescriptor context) {
-    Property property = PsiTreeUtil.getParentOfType(context.getPsiElement(), Property.class, false);
+  public IntentionAction[] getSuppressActions(final PsiElement element) {
+    Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
     if (property == null) return new IntentionAction[] {new SuppressForFile()};
     return new IntentionAction[] {new SuppressSinglePropertyFix(property), new SuppressForFile()};
   }

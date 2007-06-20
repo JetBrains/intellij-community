@@ -25,8 +25,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
   @NonNls private static final String SUPPRESS_SUFFIX = " -->\n";
   @NonNls private static final String ALL = "ALL";
 
-  public IntentionAction[] getSuppressActions(final ProblemDescriptor context) {
-    final PsiElement element = context.getPsiElement();
+  public IntentionAction[] getSuppressActions(final PsiElement element) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
     if (tag != null) {
       return new IntentionAction[]{new SuppressTag(tag), new SuppressForFile(), new SuppressAllForFile()};

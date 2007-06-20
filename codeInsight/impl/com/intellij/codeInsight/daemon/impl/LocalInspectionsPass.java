@@ -4,14 +4,10 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.RunInspectionIntention;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
@@ -292,7 +288,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (editable == null) continue;
         HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
         if (patched != null) {
-          registerQuickFixes(tool, injectedPsi, descriptor, patched,emptyActionRegistered);
+          registerQuickFixes(tool, descriptor, patched,emptyActionRegistered);
           infos.add(patched);
         }
       }
@@ -321,47 +317,25 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
     }
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
-    registerQuickFixes(tool, psiElement, descriptor, highlightInfo, emptyActionRegistered);
+    registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);
     return highlightInfo;
   }
 
-  private static void registerQuickFixes(final LocalInspectionTool tool, final PsiElement psiElement, final ProblemDescriptor descriptor,
+  private static void registerQuickFixes(final LocalInspectionTool tool, final ProblemDescriptor descriptor,
                                          final HighlightInfo highlightInfo, final Set<TextRange> emptyActionRegistered) {
-    final List<IntentionAction> options = getStandardIntentionOptions(tool, descriptor, psiElement);
+    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
       for (int k = 0; k < fixes.length; k++) {
         if (fixes[k] != null) { // prevent null fixes from var args
-          final List<IntentionAction> allOptions = new ArrayList<IntentionAction>(options);
-          allOptions.add(new CleanupInspectionIntention(tool, k, descriptor));
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), allOptions, tool.getDisplayName());
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), key, tool.getDisplayName());
         }
       }
     }
     else if (emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
-      EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName(), options);
-      QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, options, tool.getDisplayName());
+      EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
+      QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key, tool.getDisplayName());
     }
-  }
-
-  private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, ProblemDescriptor descriptor, final PsiElement psiElement) {
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(tool));
-    options.add(new RunInspectionIntention(tool));
-    options.add(new AddNoInspectionCommentFix(tool, psiElement));
-    options.add(new AddNoInspectionDocTagFix(tool, psiElement));
-    options.add(new AddNoInspectionForClassFix(tool, psiElement));
-    options.add(new AddNoInspectionAllForClassFix(psiElement));
-
-    if (tool instanceof CustomSuppressableInspectionTool) {
-      options.addAll(Arrays.asList(((CustomSuppressableInspectionTool)tool).getSuppressActions(descriptor)));
-    }
-
-    options.add(new AddSuppressWarningsAnnotationFix(tool, psiElement));
-    options.add(new AddSuppressWarningsAnnotationForClassFix(tool, psiElement));
-    options.add(new AddSuppressWarningsAnnotationForAllFix(psiElement));
-    options.add(new DisableInspectionToolAction(tool));
-    return options;
   }
 
   private static String renderDescriptionMessage(ProblemDescriptor descriptor) {

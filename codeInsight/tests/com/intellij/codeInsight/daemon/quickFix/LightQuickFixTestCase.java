@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -153,14 +154,16 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             && info.quickFixActionRanges != null
         ) {
           for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-            IntentionAction action = pair.first.getAction();
-            TextRange range = pair.second;
-            if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
-                action.isAvailable(editor.getProject(), editor, file)) {
+            final HighlightInfo.IntentionActionDescriptor actionDescriptor = pair.first;
+            final TextRange range = pair.second;
+            final IntentionAction action = actionDescriptor.getAction();
+            final Project project = editor.getProject();
+            if (range.getStartOffset() <= offset && offset <= range.getEndOffset() && action.isAvailable(project, editor, file)) {
               availableActions.add(action);
-              if (pair.first.getOptions() != null) {
-                for (IntentionAction intentionAction : pair.first.getOptions()) {
-                  if (intentionAction.isAvailable(editor.getProject(), editor, file)) {
+              final List<IntentionAction> actions = actionDescriptor.getOptions(file.findElementAt(editor.getCaretModel().getOffset()));
+              if (actions != null) {
+                for (IntentionAction intentionAction : actions) {
+                  if (intentionAction.isAvailable(project, editor, file)) {
                     availableActions.add(intentionAction);
                   }
                 }

@@ -84,7 +84,7 @@ public abstract class ArgumentFixerActionFactory {
           JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
           if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
-            QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, createFix(list, i, parameterType),null,null);
+            QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, createFix(list, i, parameterType),null);
           }
         }
       }

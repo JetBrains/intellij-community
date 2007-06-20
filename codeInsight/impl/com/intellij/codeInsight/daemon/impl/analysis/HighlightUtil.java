@@ -1831,14 +1831,14 @@ public class HighlightUtil {
         if (ref instanceof PsiReferenceExpression) {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageFix(refExpr), null, null);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageFix(refExpr), null, null);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageFix(refExpr), null, null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageFix(refExpr), null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageFix(refExpr), null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageFix(refExpr), null);
           QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix(refExpr));
           if (!ref.isQualified()) {
-            QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeFix(refExpr), null, null);
-            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageFix(refExpr), null, null);
-            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageFix(refExpr), null, null);
+            QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeFix(refExpr), null);
+            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageFix(refExpr), null);
+            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageFix(refExpr), null);
           }
         }
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
@@ -1980,8 +1980,8 @@ public class HighlightUtil {
     info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
-      for (Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.options, quickFixInfo.displayName);
+      for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
+        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
       }
     }
     return info;

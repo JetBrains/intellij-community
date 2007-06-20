@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
@@ -255,12 +254,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        List<IntentionAction> options = null;
-        if (key != null) {
-          options = new ArrayList<IntentionAction>();
-          options.add(new EditInspectionToolsSettingsAction(key));
-        }
-        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, options, HighlightDisplayKey.getDisplayNameByKey(key));
+        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, key);
       }
       addToResults(highlightInfo);
     }
@@ -543,7 +537,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                                final String localizedMessage) {
     final HighlightInfoType tagProblemInfoType;
     IntentionAction[] quickFixes;
-    HighlightDisplayKey key = null;
 
     final RemoveAttributeIntentionFix removeAttributeIntention = new RemoveAttributeIntentionFix(localName,attribute);
 
@@ -574,13 +567,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       addToResults(highlightInfo);
 
       for (IntentionAction quickFix : quickFixes) {
-        if (key != null) {
-          List<IntentionAction> options = new ArrayList<IntentionAction>();
-          options.add(new EditInspectionToolsSettingsAction(key));
-          QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, options, HighlightDisplayKey.getDisplayNameByKey(key));
-        } else {
-          QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
-        }
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
       }
 
       return highlightInfo;

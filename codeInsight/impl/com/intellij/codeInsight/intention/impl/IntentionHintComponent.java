@@ -116,7 +116,7 @@ public class IntentionHintComponent extends JPanel implements Disposable {
         IntentionAction action = descriptor.getAction();
         IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName());
         result &= !cachedActions.add(cachedAction);
-        List<IntentionAction> options = descriptor.getOptions();
+        List<IntentionAction> options = descriptor.getOptions(myFile.findElementAt(myEditor.getCaretModel().getOffset()));
         if (options != null) {
           for (IntentionAction option : options) {
             boolean isErrorFix = myCachedErrorFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
@@ -175,15 +175,15 @@ public class IntentionHintComponent extends JPanel implements Disposable {
     private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
       final ArrayList<HighlightInfo.IntentionActionDescriptor> intentions = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
       for (final IntentionAction optionIntention : action.getOptionIntentions()) {
-        intentions.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null, action.getToolName()));
+        intentions.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null));
       }
       final ArrayList<HighlightInfo.IntentionActionDescriptor> errorFixes = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
       for (final IntentionAction optionFix : action.getOptionErrorFixes()) {
-        errorFixes.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, action.getToolName()));
+        errorFixes.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
       }
       final ArrayList<HighlightInfo.IntentionActionDescriptor> inspectionFixes = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
       for (final IntentionAction optionFix : action.getOptionInspectionFixes()) {
-        inspectionFixes.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, action.getToolName()));
+        inspectionFixes.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
       }
 
       return new IntentionListStep(intentions, errorFixes, inspectionFixes){

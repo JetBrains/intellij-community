@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionActionComposite;
 import com.intellij.openapi.editor.Editor;
@@ -20,21 +21,21 @@ public final class QuickFixAction extends IntentionActionComposite {
     addAvailableActionsForGroups(info, editor, file, list, passId == -1 ? null : new int[]{passId});
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
-    registerQuickFixAction(info, null, action, options, displayName);
+  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key, String displayName) {
+    registerQuickFixAction(info, null, action, key);
   }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
-    registerQuickFixAction(info, null, action, null, null);
+    registerQuickFixAction(info, null, action, null);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final List<IntentionAction> options, final String displayName) {
+  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);
     if (info.quickFixActionRanges == null) {
       info.quickFixActionRanges = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>();
     }
-    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, options, displayName), fixRange));
+    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, key), fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }

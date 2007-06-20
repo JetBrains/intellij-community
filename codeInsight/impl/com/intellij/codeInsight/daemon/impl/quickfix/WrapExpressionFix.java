@@ -112,7 +112,7 @@ public class WrapExpressionFix implements IntentionAction {
     }
 
     if (expectedType != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, expr.getTextRange(), new WrapExpressionFix(expectedType, expr), null, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, expr.getTextRange(), new WrapExpressionFix(expectedType, expr), null);
     }
   }
 

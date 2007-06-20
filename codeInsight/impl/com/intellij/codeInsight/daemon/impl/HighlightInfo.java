@@ -1,6 +1,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,14 +24,17 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 public class HighlightInfo {
@@ -243,10 +254,17 @@ public class HighlightInfo {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private final List<IntentionAction> myOptions;
+    private List<IntentionAction> myOptions;
+    private HighlightDisplayKey myKey;
     private final String myDisplayName;
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final HighlightDisplayKey key) {
+      myAction = action;
+      myKey = key;
+      myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
+    }
+
+    public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
@@ -257,7 +275,26 @@ public class HighlightInfo {
       return myAction;
     }
 
-    public List<IntentionAction> getOptions() {
+    @Nullable
+    public List<IntentionAction> getOptions(@NotNull PsiElement element) {
+      if (myOptions == null && myKey != null) {
+        myOptions = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
+        final InspectionProfileEntry tool = InspectionProjectProfileManager.getInstance(element.getProject())
+          .getInspectionProfile(element)
+          .getInspectionTool(myKey.toString());
+        if (tool instanceof LocalInspectionToolWrapper) {
+          final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
+          Class aClass = myAction.getClass();
+          if (myAction instanceof QuickFixWrapper) {
+            aClass = ((QuickFixWrapper)myAction).getFix().getClass();
+          }
+          myOptions.add(new CleanupInspectionIntention(localInspectionTool, aClass));
+          if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
+             myOptions.addAll(Arrays.asList(((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element)));
+          }
+        }
+        myKey = null;
+      }
       return myOptions;
     }
 

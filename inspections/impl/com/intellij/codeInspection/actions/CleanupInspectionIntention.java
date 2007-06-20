@@ -31,12 +31,9 @@ public class CleanupInspectionIntention implements IntentionAction {
   private LocalInspectionTool myTool;
   private Class myQuickfixClass;
 
-  public CleanupInspectionIntention(final LocalInspectionTool tool, final int k, final ProblemDescriptor descriptor) {
+  public CleanupInspectionIntention(final LocalInspectionTool tool, Class quickFixClass) {
     myTool = tool;
-    final QuickFix[] quickFixes = descriptor.getFixes();
-    if (quickFixes != null && k > -1 && k < quickFixes.length && quickFixes[k] != null) {
-      myQuickfixClass = quickFixes[k].getClass();
-    }
+    myQuickfixClass = quickFixClass;
   }
 
   @NotNull

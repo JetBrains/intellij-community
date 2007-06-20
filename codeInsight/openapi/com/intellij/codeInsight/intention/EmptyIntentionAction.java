@@ -7,19 +7,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * User: anna
  * Date: May 11, 2005
  */
 public class EmptyIntentionAction implements IntentionAction{
   private String myName;
-  private List<IntentionAction> myOptions;
 
-  public EmptyIntentionAction(@NotNull final String name, @NotNull List<IntentionAction> options) {
+  public EmptyIntentionAction(@NotNull final String name) {
     myName = name;
-    myOptions = options;
   }
 
   @NotNull
@@ -33,12 +29,7 @@ public class EmptyIntentionAction implements IntentionAction{
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    for (IntentionAction action : myOptions) {
-      if (action.isAvailable(project, editor, file)){
-        return true;
-      }
-    }
-    return false;
+    return true; //edit inspection settings is always enabled
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -55,7 +46,6 @@ public class EmptyIntentionAction implements IntentionAction{
     final EmptyIntentionAction that = (EmptyIntentionAction)o;
 
     if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
-    if (myOptions != null ? !myOptions.equals(that.myOptions) : that.myOptions != null) return false;
 
     return true;
   }
@@ -63,7 +53,6 @@ public class EmptyIntentionAction implements IntentionAction{
   public int hashCode() {
     int result;
     result = (myName != null ? myName.hashCode() : 0);
-    result = 29 * result + (myOptions != null ? myOptions.hashCode() : 0);
     return result;
   }
 

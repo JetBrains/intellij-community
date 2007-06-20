@@ -209,12 +209,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Project project = psiFile.getProject();
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
-    for (IntentionAction action : allIntentionActions) {
-      if (action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)
-               || action.isAvailable(project, editor, psiFile)) {
-        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
-        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
+    for (final IntentionAction action : allIntentionActions) {
+      if (action instanceof PsiElementBaseIntentionAction) {
+        final PsiElementBaseIntentionAction psiElementBaseIntention = (PsiElementBaseIntentionAction)action;
+        if (psiElementBaseIntention.isAvailable(project, editor, psiElement) || psiElementBaseIntention.isAvailable(project, editor, psiFile)) {
+          List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+              enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+          intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
+        }
       }
     }
 

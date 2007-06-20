@@ -19,6 +19,7 @@ import java.util.List;
  */
 public class DeprecationInspection extends LocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Deprecation";
+  @NonNls public static final String ID = "deprecation";
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
 
 
@@ -45,7 +46,7 @@ public class DeprecationInspection extends LocalInspectionTool {
   @NotNull
   @NonNls
   public String getID() {
-    return "deprecation";
+    return ID;
   }
 
   public boolean isEnabledByDefault() {

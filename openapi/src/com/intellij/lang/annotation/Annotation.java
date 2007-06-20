@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.annotation;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -56,14 +57,22 @@ public final class Annotation {
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
     public final TextRange textRange;
-    public final List<IntentionAction> options;
+    public List<IntentionAction> options;
+    @Deprecated
     public final String displayName;
+    public HighlightDisplayKey key;
 
+    @Deprecated
     public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options, String displayName) {
-      this.quickFix = quickFix;
-      this.textRange = textRange;
+      this(quickFix, textRange, null);
       this.options = options;
-      this.displayName = displayName;
+    }
+
+    public QuickFixInfo(final IntentionAction fix, final TextRange range, final HighlightDisplayKey key) {
+      this.key = key;
+      quickFix = fix;
+      textRange = range;
+      displayName = key != null ? HighlightDisplayKey.getDisplayNameByKey(key) : fix.getText();
     }
   }
 
@@ -97,7 +106,7 @@ public final class Annotation {
   }
 
   public void registerFix(IntentionAction fix, TextRange range) {
-    registerFix(fix,range,null, null);
+    registerFix(fix,range, null);
   }
 
   /**
@@ -107,6 +116,7 @@ public final class Annotation {
    * @param fix   the quick fix implementation.
    * @param range the text range (relative to the document) where the quick fix is available.
    */
+  @Deprecated
   public void registerFix(IntentionAction fix, TextRange range, List<IntentionAction> options, String displayName) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
@@ -115,6 +125,23 @@ public final class Annotation {
       myQuickFixes = new ArrayList<QuickFixInfo>();
     }
     myQuickFixes.add(new QuickFixInfo(fix, range, options, displayName));
+  }
+
+  /**
+   * Registers a quick fix for the annotation which is only available on a particular range of text
+   * within the annotation.
+   *
+   * @param fix   the quick fix implementation.
+   * @param range the text range (relative to the document) where the quick fix is available.
+   */
+  public void registerFix(final IntentionAction fix, TextRange range, final HighlightDisplayKey key) {
+    if (range == null) {
+      range = new TextRange(myStartOffset, myEndOffset);
+    }
+    if (myQuickFixes == null) {
+      myQuickFixes = new ArrayList<QuickFixInfo>();
+    }
+    myQuickFixes.add(new QuickFixInfo(fix, range, key));
   }
 
   /**
