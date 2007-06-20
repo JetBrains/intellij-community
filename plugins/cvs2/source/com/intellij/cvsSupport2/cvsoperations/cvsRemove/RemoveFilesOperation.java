@@ -7,9 +7,6 @@ import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.remove.RemoveCommand;
 
 public class RemoveFilesOperation extends CvsOperationOnFiles {
-  public RemoveFilesOperation() {
-  }
-
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     RemoveCommand result = new RemoveCommand();
     addFilesToCommand(root, result);
@@ -18,5 +15,9 @@ public class RemoveFilesOperation extends CvsOperationOnFiles {
 
   protected String getOperationName() {
     return "remove";
+  }
+
+  public boolean runInReadThread() {
+    return false;
   }
 }
