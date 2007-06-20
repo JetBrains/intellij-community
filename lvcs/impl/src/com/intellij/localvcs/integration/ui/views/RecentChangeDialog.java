@@ -31,11 +31,6 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected boolean shouldRootBeVisible() {
-    return false;
-  }
-
-  @Override
   protected Action[] createActions() {
     Action revert = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -49,6 +44,11 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
     UIUtil.setActionNameAndMnemonic(CommonBundle.getCloseButtonText(), cancel);
 
     return new Action[]{revert, cancel, help};
+  }
+
+  @Override
+  protected boolean showRoot() {
+    return false;
   }
 
   @Override

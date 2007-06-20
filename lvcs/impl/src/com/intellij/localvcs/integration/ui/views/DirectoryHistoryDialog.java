@@ -9,17 +9,21 @@ import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
-  private CheckinPanelTreeTable myDiffTree;
+  private ChangesTreeList<Change> myChangesTree;
 
   public DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f) {
     this(gw, f, true);
@@ -42,39 +46,51 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected JComponent createDiffPanel() {
-    initDiffTree();
+    initChangesTree();
 
     JPanel p = new JPanel(new BorderLayout());
 
     p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
-    p.add(ScrollPaneFactory.createScrollPane(myDiffTree), BorderLayout.CENTER);
+    p.add(myChangesTree, BorderLayout.CENTER);
 
-    ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createDiffTreeActions(), true);
+    ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
     p.add(tb.getComponent(), BorderLayout.NORTH);
 
     return p;
   }
 
-  private void initDiffTree() {
-    DirectoryDifferenceModel m = myModel.getRootDifferenceNodeModel();
-    DirectoryDifferenceNode n = new DirectoryDifferenceNode(m);
-
-    myDiffTree = CheckinPanelTreeTable.createOn(myGateway.getProject(), n);
-    myDiffTree.setRootVisible(shouldRootBeVisible());
-
-    myDiffTree.getFirstTreeColumn().setName(n.getPresentableText(0));
-    myDiffTree.getSecondTreeColumn().setName(n.getPresentableText(1));
-
-    TreeUtil.expandAll(myDiffTree.getTree());
-    addPopupMenuToComponent(myDiffTree, createDiffTreeActions());
-    new ShowDifferenceAction().registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myDiffTree);
+  private void initChangesTree() {
+    myChangesTree = createChangesTree();
+    registerChangesTreeActions();
+    updateDiffs();
   }
 
-  protected boolean shouldRootBeVisible() {
-    return true;
+  private ChangesTreeList<Change> createChangesTree() {
+    return new ChangesTreeList<Change>(getProject(), Collections.<Change>emptyList(), false, false) {
+      @Override
+      protected DefaultTreeModel buildTreeModel(List<Change> cc) {
+        return new TreeModelBuilder(getProject(), false).buildModel(cc);
+      }
+
+      @Override
+      protected List<Change> getSelectedObjects(ChangesBrowserNode node) {
+        return node.getAllChangesUnder();
+      }
+    };
   }
 
-  private ActionGroup createDiffTreeActions() {
+  private void registerChangesTreeActions() {
+    myChangesTree.setDoubleClickHandler(new Runnable() {
+      public void run() {
+        ShowDifferenceAction a = new ShowDifferenceAction();
+        if (a.isEnabled()) a.perform();
+      }
+    });
+    new ShowDifferenceAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
+    myChangesTree.installPopupHandler(createChangesTreeActions());
+  }
+
+  private ActionGroup createChangesTreeActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new ShowDifferenceAction());
     result.add(new RevertSelectionAction());
@@ -83,8 +99,20 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected void updateDiffs() {
-    mySplitter.setFirstComponent(createDiffPanel());
-    mySplitter.revalidate();
+    List<Change> changes = new ArrayList<Change>();
+    flatternChanges(myModel.getRootDifferenceNodeModel(), changes, showRoot());
+    myChangesTree.setChangesToDisplay(changes);
+  }
+
+  private void flatternChanges(DirectoryDifferenceModel m, List<Change> changes, boolean includeSelf) {
+    if (includeSelf) changes.add(new DirectoryDifference(m));
+    for (DirectoryDifferenceModel child : m.getChildren()) {
+      flatternChanges(child, changes, true);
+    }
+  }
+
+  protected boolean showRoot() {
+    return true;
   }
 
   @Override
@@ -92,10 +120,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return "reference.dialogs.localHistory.show.folder";
   }
 
-  private DirectoryDifferenceNode getSelectedNode() {
-    if (myDiffTree.getTree().getSelectionCount() != 1) return null;
-    TreePath path = myDiffTree.getTree().getSelectionPath();
-    return (DirectoryDifferenceNode)path.getLastPathComponent();
+  private DirectoryDifference getSelectedChange() {
+    return (DirectoryDifference)myChangesTree.getLeadSelection();
   }
 
   private class ShowDifferenceAction extends ActionOnSelection {
@@ -104,14 +130,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryDifferenceNode n) {
-      DiffRequest r = createDifference(n.getFileDifferenceModel());
+    protected void performOn(DirectoryDifference c) {
+      DiffRequest r = createDifference(c.getFileDifferenceModel());
       DiffManager.getInstance().getDiffTool().show(r);
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryDifferenceNode n) {
-      return n.canShowFileDifference();
+    protected boolean isEnabledFor(DirectoryDifference c) {
+      return c.canShowFileDifference();
     }
   }
 
@@ -121,12 +147,12 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryDifferenceNode n) {
-      revert(myModel.createRevisionReverter(n.getModel()));
+    protected void performOn(DirectoryDifference c) {
+      revert(myModel.createRevisionReverter(c.getModel()));
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryDifferenceNode n) {
+    protected boolean isEnabledFor(DirectoryDifference c) {
       return myModel.isRevertEnabled();
     }
   }
@@ -138,19 +164,27 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      performOn(getSelectedNode());
+      perform();
     }
 
-    protected abstract void performOn(DirectoryDifferenceNode n);
+    public void perform() {
+      performOn(getSelectedChange());
+    }
+
+    protected abstract void performOn(DirectoryDifference c);
 
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      DirectoryDifferenceNode n = getSelectedNode();
-      p.setEnabled(n != null && isEnabledFor(n));
+      p.setEnabled(isEnabled());
     }
 
-    protected boolean isEnabledFor(DirectoryDifferenceNode n) {
+    public boolean isEnabled() {
+      DirectoryDifference c = getSelectedChange();
+      return c != null && isEnabledFor(c);
+    }
+
+    protected boolean isEnabledFor(DirectoryDifference c) {
       return true;
     }
   }

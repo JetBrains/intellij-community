@@ -46,7 +46,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     myCanNotShowDifferenceLabel =
       new JLabel("<HTML><CENTER><B><FONT color='red'>" + message + "</FONT></B></CENTER></HTML>", JLabel.CENTER);
 
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myGateway.getProject());
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), getProject());
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
 

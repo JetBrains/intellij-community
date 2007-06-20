@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -52,7 +53,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void initModel() {
-    ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
+    ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(getProject());
     myModel = createModel(vcs);
     restoreShowChangesOnlyOption();
   }
@@ -64,12 +65,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     JComponent diff = createDiffPanel();
     JComponent revisions = createRevisionsList();
 
-    mySplitter = new Splitter(true);
+    mySplitter = new Splitter(true, 0.7f);
     mySplitter.setFirstComponent(diff);
     mySplitter.setSecondComponent(revisions);
 
     mySplitter.setPreferredSize(new Dimension(700, 600));
-    mySplitter.setProportion(0.7f);
     restoreSplitterProportion();
 
     return mySplitter;
@@ -128,7 +128,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return ScrollPaneFactory.createScrollPane(myRevisionsTable);
   }
 
-  protected void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
+  private void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
     comp.addMouseListener(new PopupHandler() {
       public void invokePopup(Component c, int x, int y) {
         ActionPopupMenu m = createPopupMenu(ag);
@@ -145,7 +145,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   protected abstract void updateDiffs();
 
   protected SimpleDiffRequest createDifference(final FileDifferenceModel m) {
-    final SimpleDiffRequest r = new SimpleDiffRequest(myGateway.getProject(), m.getTitle());
+    final SimpleDiffRequest r = new SimpleDiffRequest(getProject(), m.getTitle());
 
     processRevisions(new RevisionProcessingTask() {
       public void run(RevisionProcessingProgress p) {
@@ -258,11 +258,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   protected void processRevisions(final RevisionProcessingTask t) {
-    new Task.Modal(myGateway.getProject(), "Processing revisions", false) {
+    new Task.Modal(getProject(), "Processing revisions", false) {
       public void run(ProgressIndicator i) {
         t.run(new RevisionProcessingProgressAdapter(i));
       }
     }.queue();
+  }
+
+  protected Project getProject() {
+    return myGateway.getProject();
   }
 
   private class RevertAction extends AnAction {
