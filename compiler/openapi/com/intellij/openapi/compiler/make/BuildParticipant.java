@@ -37,8 +37,6 @@ public abstract class BuildParticipant {
 
   public abstract BuildConfiguration getBuildConfiguration();
 
-  public abstract String getConfigurationName();
-
   @Nullable
   public String getOrCreateTemporaryDirForExploded() {
     return null;

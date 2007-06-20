@@ -60,7 +60,7 @@ public class BuildJarTarget extends Target {
 
       public boolean visitJ2EEModuleBuildInstruction(JavaeeModuleBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
-        final String configurationName = instruction.getConfigurationName();
+        final String configurationName = parameters.getConfigurationName(instruction);
         // gather child module dependencies
         final BuildRecipe childModuleRecipe = instruction.getChildInstructions(DummyCompileContext.getInstance());
         childModuleRecipe.visitInstructions(new BuildInstructionVisitor() {

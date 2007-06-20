@@ -63,7 +63,7 @@ public class BuildExplodedTarget extends Target {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = "/" + instruction.getOutputRelativePath();
         final String outputPath = BuildProperties.propertyRef(parameters.getExplodedPathProperty()) + outputRelativePath;
-        final String configurationName = instruction.getConfigurationName();
+        final String configurationName = parameters.getConfigurationName(instruction);
 
         final Tag tag;
         if (instruction.getBuildProperties().isExplodedEnabled()) {

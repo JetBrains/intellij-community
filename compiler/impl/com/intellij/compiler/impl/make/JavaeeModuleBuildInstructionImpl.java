@@ -38,8 +38,8 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
     LOG.assertTrue(!isExternalDependencyInstruction());
   }
 
-  public String getConfigurationName() {
-    return myBuildParticipant.getConfigurationName();
+  public BuildParticipant getBuildParticipant() {
+    return myBuildParticipant;
   }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
@@ -69,7 +69,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
       }, false);
     }
     else {
-      tempFile = File.createTempFile(myBuildParticipant.getConfigurationName() +"___", TMP_FILE_SUFFIX);
+      tempFile = File.createTempFile("jar___", TMP_FILE_SUFFIX);
       tempFile.deleteOnExit();
       makeJar(context, tempFile, childDependencies, fileFilter, true);
       childDependencies.visitInstructions(new BuildInstructionVisitor() {
@@ -171,7 +171,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   }
 
   public String toString() {
-    return "Java EE build instruction: " +  myBuildParticipant.getConfigurationName() + " -> " + getOutputRelativePath();
+    return "Java EE build instruction: " +  myBuildParticipant + " -> " + getOutputRelativePath();
   }
 
   public File findFileByRelativePath(String relativePath) {
