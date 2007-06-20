@@ -53,7 +53,7 @@ public class LateBoundUsageGroupingRule implements UsageGroupingRule {
     }
 
     public int compareTo(UsageGroup usageGroup) {
-      return -1;
+      return getText(null).compareTo(usageGroup.getText(null));
     }
 
     public void navigate(boolean b) {
