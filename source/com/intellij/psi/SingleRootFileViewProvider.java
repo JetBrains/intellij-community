@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -79,7 +78,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private static Language calcBaseLanguage(VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
-      if (isTooLarge(file)) return StdLanguages.TEXT;
+      if (fileType != StdFileTypes.JAVA && isTooLarge(file)) return StdLanguages.TEXT;
 
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       return languageFileType.getLanguage();
