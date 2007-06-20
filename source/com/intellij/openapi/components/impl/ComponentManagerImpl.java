@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionInitializer;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -98,7 +99,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         try {
           createComponent(componentInterface);
         }
-        catch (Exception e) {
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch(Exception e) {
           LOG.error(e);
         }
       }
@@ -115,16 +119,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void disposeComponents() {
-    final BaseComponent[] components = getComponents(BaseComponent.class);
+    final List<Object> components = myComponentsRegistry.getRegisteredImplementations();
     myDisposed = true;
 
-    for (int i = components.length - 1; i >= 0; i--) {
-      BaseComponent component = components[i];
-      try {
-        component.disposeComponent();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+    for (int i = components.size() - 1; i >= 0; i--) {
+      Object component = components.get(i);
+      if (component instanceof BaseComponent) {
+        try {
+          ((BaseComponent)component).disposeComponent();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
 
@@ -182,6 +188,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
       if (indicator != null) {
         String name = component instanceof BaseComponent ? ((BaseComponent)component).getComponentName() : component.getClass().getName();
+        indicator.checkCanceled();
         indicator.setText2(name);
         indicator.setIndeterminate(false);
         indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
@@ -468,6 +475,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
     }
 
+    public List<Object> getRegisteredImplementations() {
+      return myImplementations;
+    }
+
     private void registerComponent(ComponentConfig config) {
       myComponentConfigs.add(config);
 
@@ -576,6 +587,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                   initComponent(componentInstance);
                   myInitialized = true;
                 }
+              }
+              catch (ProcessCanceledException e) {
+                throw e;
               }
               catch (Throwable t) {
                 handleInitComponentError(t, componentInstance == null, componentKey.toString());

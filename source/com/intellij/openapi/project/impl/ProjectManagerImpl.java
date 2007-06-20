@@ -14,6 +14,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -196,7 +197,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Project loadProject(String filePath, ProjectConversionHelper conversionHelper) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
     ProjectImpl project = createProject(filePath, false, false, false, conversionHelper);
-    project.getStateStore().loadProject();
+    try {
+      project.getStateStore().loadProject();
+    }
+    catch (ProcessCanceledException e) {
+      Disposer.dispose(project);
+      throw e;
+    }
+
     return project;
   }
 
@@ -334,7 +342,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       final Project[] project = new Project[1];
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           try {
@@ -366,9 +374,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             indicator.setText("Initializing components");
           }
         }
-      }, "Loading Project", false, null);
+      }, "Loading Project", true, null);
 
-      if (project[0] == null || !openProject(project[0])) {
+      if (!ok) {
+        if (project[0] != null) {
+          Disposer.dispose(project[0]);
+          project[0] = null;
+        }
+      }
+
+      if (project[0] == null || !ok || !openProject(project[0])) {
         return null;
       }
 

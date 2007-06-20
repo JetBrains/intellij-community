@@ -925,7 +925,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
-    assertThread();
+    /*assertThread();*/
     final MessageBusConnection connection = myListenerToConnectionMap.remove(listener);
     if (connection != null) {
       connection.disconnect();

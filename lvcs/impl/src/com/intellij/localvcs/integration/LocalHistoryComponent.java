@@ -120,11 +120,15 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   protected void closeVcs() {
-    myStorage.close();
+    if (myStorage != null) {
+      myStorage.close();
+    }
   }
 
   protected void closeService() {
-    myService.shutdown();
+    if (myService != null) {
+      myService.shutdown();
+    }
   }
 
   protected boolean isDefaultProject() {
