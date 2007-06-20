@@ -76,6 +76,9 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
                                                    final String module,
                                                    final CvsEnvironment connectionSettings,
                                                    final VirtualFile rootFile) throws VcsException {
+    if (connectionSettings.isOffline()) {
+      return Collections.emptyList();
+    }
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, rootFile);
     Date dateTo = settings.getDateBeforeFilter();
     Date dateFrom = settings.getDateAfterFilter();
