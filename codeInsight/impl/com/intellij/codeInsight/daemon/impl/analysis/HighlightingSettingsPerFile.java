@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -10,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
 
   private Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
 
-  private Map<PsiFile, InspectionProfile> myProfileSettings = new HashMap<PsiFile, InspectionProfile>();
+  private Map<PsiFile, InspectionProfile> myProfileSettings = new WeakHashMap<PsiFile, InspectionProfile>();
 
   public FileHighlighingSetting getHighlightingSettingForRoot(PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
@@ -114,15 +115,15 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     }
   }
 
-  public void cleanProfileSettings() {
+  public synchronized void cleanProfileSettings() {
     myProfileSettings.clear();
   }
 
-  public InspectionProfile getInspectionProfile(final PsiFile file) {
+  public synchronized InspectionProfile getInspectionProfile(final PsiFile file) {
     return myProfileSettings.get(file);
   }
 
-  public void addProfileSettingForFile(final PsiFile file, final InspectionProfile profile) {
+  public synchronized void addProfileSettingForFile(final PsiFile file, final InspectionProfile profile) {
     myProfileSettings.put(file, profile);
   }
 
