@@ -342,7 +342,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     assertInstanceOf(element, PsiClass.class);
 
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
-    return new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false);
+    return new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false, false, false);
   }
 
   private void performAction(final boolean inlineThisOnly) {
@@ -351,7 +351,8 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(myEditor);
     PsiClass classToInline = (PsiClass) element;
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
-    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly);
+    final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
+                                                                                          false, false);
     UsageInfo[] usages = processor.findUsages();
     ArrayList<String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());

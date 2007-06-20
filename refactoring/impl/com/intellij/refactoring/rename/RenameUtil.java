@@ -96,12 +96,7 @@ public class RenameUtil {
       String stringToSearch = RefactoringUtil.getStringToSearch(element, false);
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, false);
-        RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
-          public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
-            int start = usage.getTextRange().getStartOffset();
-            return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
-          }
-        };
+        RefactoringUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
         RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
       }
     }
@@ -869,4 +864,5 @@ public class RenameUtil {
       message.append(directory.getVirtualFile().getPresentableUrl());
     }
   }
+
 }

@@ -25,17 +25,17 @@ public class UsageViewBundle {
 
   @SuppressWarnings({"AutoBoxing"})
   public static String getUsagesString(int usagesCount, int filesCount) {
-    return "( " + message("occurence.info.usage", usagesCount, filesCount) + " )";
+    return " (" + message("occurence.info.usage", usagesCount, filesCount) + ")";
   }
 
   @SuppressWarnings({"AutoBoxing"})
   public static String getOccurencesString(int usagesCount, int filesCount) {
-    return "( " + message("occurence.info.occurence", usagesCount, filesCount) + " )";
+    return " (" + message("occurence.info.occurence", usagesCount, filesCount) + ")";
   }
 
   @SuppressWarnings({"AutoBoxing"})
   public static String getReferencesString(int usagesCount, int filesCount) {
-    return "( " + message("occurence.info.reference", usagesCount, filesCount) + " )";
+    return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {

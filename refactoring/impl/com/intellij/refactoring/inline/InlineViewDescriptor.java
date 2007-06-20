@@ -36,7 +36,8 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return null;
+    return RefactoringBundle.message("comments.elements.header",
+                                     UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 
 }

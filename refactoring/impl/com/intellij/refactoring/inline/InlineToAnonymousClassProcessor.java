@@ -3,14 +3,18 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.patterns.impl.Pattern;
 import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -28,15 +32,24 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private PsiClass myClass;
   private final PsiCall myCallToInline;
   private final boolean myInlineThisOnly;
+  private final boolean mySearchInComments;
+  private final boolean mySearchInNonJavaFiles;
 
   private Pattern ourCatchClausePattern = psiElement().type(PsiTypeElement.class).withParent(psiElement().type(PsiParameter.class).withParent(psiElement().type(PsiCatchSection.class)));
   private Pattern ourThrowsClausePattern = psiElement().withParent(psiElement().type(PsiReferenceList.class).withFirstChild(psiElement().withText(PsiKeyword.THROWS)));
 
-  protected InlineToAnonymousClassProcessor(Project project, PsiClass psiClass, final PsiCall callToInline, boolean inlineThisOnly) {
+  protected InlineToAnonymousClassProcessor(Project project,
+                                            PsiClass psiClass,
+                                            final PsiCall callToInline,
+                                            boolean inlineThisOnly,
+                                            final boolean searchInComments,
+                                            final boolean searchInNonJavaFiles) {
     super(project);
     myClass = psiClass;
     myCallToInline = callToInline;
     myInlineThisOnly = inlineThisOnly;
+    mySearchInComments = searchInComments;
+    mySearchInNonJavaFiles = searchInNonJavaFiles;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -54,12 +67,48 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
+    List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
+    if (mySearchInComments) {
+      RefactoringUtil.addUsagesInStringsAndComments(myClass, myClass.getQualifiedName(), nonCodeUsages,
+                                                    new NonCodeUsageInfoFactory(myClass, myClass.getQualifiedName()));
+    }
+
+    if (mySearchInNonJavaFiles) {
+      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
+      RefactoringUtil.addTextOccurences(myClass, myClass.getQualifiedName(), projectScope, nonCodeUsages,
+                                        new NonCodeUsageInfoFactory(myClass, myClass.getQualifiedName()));
+    }
+    usages.addAll(nonCodeUsages);
+
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
   protected void refreshElements(PsiElement[] elements) {
     assert elements.length == 1;
     myClass = (PsiClass) elements [0];
+  }
+
+  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    if (super.isPreviewUsages(usages)) return true;
+    for(UsageInfo usage: usages) {
+      if (isForcePreview(usage)) {
+        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isForcePreview(final UsageInfo usage) {
+    if (usage.isNonCodeUsage) return true;
+    PsiElement element = usage.getElement();
+    if (element != null) {
+      PsiFile file = element.getContainingFile();
+      if (!(file instanceof PsiJavaFile)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
