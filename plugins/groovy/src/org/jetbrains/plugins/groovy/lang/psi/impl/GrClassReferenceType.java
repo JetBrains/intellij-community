@@ -36,10 +36,18 @@ public class GrClassReferenceType extends PsiClassType {
 
   @Nullable
   public PsiClass resolve() {
-    PsiElement resolved = myReferenceElement.resolve();
-    return resolved instanceof PsiClass ? (PsiClass) resolved :
-        resolved instanceof PsiMethod ? //constructor
-            ((PsiMethod) resolved).getContainingClass() : null;
+    ResolveResult[] results = myReferenceElement.multiResolve(false);
+    if (results.length == 0) return null;
+    if (results.length == 1) {
+      PsiElement only = results[0].getElement();
+      return only instanceof PsiClass ? (PsiClass) only :
+          only instanceof PsiMethod ? //constructor
+              ((PsiMethod) only).getContainingClass() : null;
+    }
+
+    PsiElement first = results[0].getElement();
+    return first instanceof PsiMethod ? //constructor
+              ((PsiMethod) first).getContainingClass() : null;
   }
 
   public String getClassName() {
