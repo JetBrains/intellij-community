@@ -132,7 +132,9 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
           result.setResult(createLibrary(files));
         }
       }.execute().getResultObject();
-      rootModel.addLibraryEntry(library);
+      if (library != null) {
+        rootModel.addLibraryEntry(library);
+      }
     }
     onChange();
   }
