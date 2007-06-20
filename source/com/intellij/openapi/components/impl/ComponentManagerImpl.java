@@ -11,6 +11,8 @@ import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionInitializer;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
@@ -174,6 +176,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private void initComponent(Object component) {
+    if (!(component instanceof ProgressManager)) {
+      final ProgressManager progressManager = ProgressManager.getInstance();
+
+      final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
+      if (indicator != null) {
+        String name = component instanceof BaseComponent ? ((BaseComponent)component).getComponentName() : component.getClass().getName();
+        indicator.setText2(name);
+        indicator.setIndeterminate(false);
+        indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
+      }
+    }
+
     try {
       getStateStore().initComponent(component);
       if (component instanceof BaseComponent) {
@@ -428,6 +442,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private boolean containsInterface(final Class interfaceClass) {
       if (!myClassesLoaded) loadClasses();
       return myInterfaceToClassMap.containsKey(interfaceClass);
+    }
+
+    public double getPercentageOfComponentsLoaded() {
+      return ((double)myImplementations.size()) / myComponentConfigs.size();
     }
 
     private void registerComponentInstance(final Object component) {
