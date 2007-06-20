@@ -29,6 +29,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ven
@@ -58,8 +59,9 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
       public boolean execute(PsiElement element, int offsetInElement) {
         if (element instanceof GrReferenceExpression &&
             name.equals(((GrReferenceExpression) element).getReferenceName()) &&
-            ((GrReferenceExpression) element).resolve() == null) {
-          return !consumer.process((PsiReference) element);
+            ((GrReferenceExpression) element).resolve() == null &&
+            !PsiUtil.isLValue((GroovyPsiElement) element)) {
+          if (!consumer.process((PsiReference) element)) return false;
         }
         return true;
       }
