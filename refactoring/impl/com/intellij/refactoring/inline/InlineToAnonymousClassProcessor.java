@@ -218,6 +218,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       if (ourThrowsClausePattern.accepts(element)) {
         return "Class cannot be inlined because it is used in a 'throws' clause";
       }
+      if (parentElement instanceof PsiThisExpression) {
+        return "Class cannot be inlined because it is used as a 'this' qualifier";
+      }
       if (parentElement instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
         final PsiMethod[] constructors = myClass.getConstructors();

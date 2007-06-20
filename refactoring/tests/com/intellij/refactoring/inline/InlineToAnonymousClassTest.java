@@ -258,6 +258,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestPreprocessUsages("Class cannot be inlined because it is used in a 'throws' clause");
   }
 
+  public void testNoInlineThisQualifier() throws Exception {
+    doTestPreprocessUsages("Class cannot be inlined because it is used as a 'this' qualifier");
+  }
+
   public void testNoInlineUnresolvedConstructor() throws Exception {
     doTestPreprocessUsages("Class cannot be inlined because a call to its constructor is unresolved");
   }
