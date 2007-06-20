@@ -119,7 +119,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myClassPackageChooser = createPackageChooser();
 
     myInnerClassChooser = new ClassNameReferenceEditor(PsiManager.getInstance(myProject), null, myProject.getProjectScope());
-    myInnerClassChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+    myInnerClassChooser.addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();
       }
