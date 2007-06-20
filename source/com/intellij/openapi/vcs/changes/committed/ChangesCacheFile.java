@@ -631,7 +631,11 @@ public class ChangesCacheFile {
       FilePath localPath = ChangesUtil.getLocalPath(myProject, afterRevision.getFile());
       localPath.refresh();
       VirtualFile file = localPath.getVirtualFile();
-      if (file != null) {
+      if (isDeletedFile(deletedFiles, afterRevision)) {
+        LOG.info("Found deleted file");
+        return true;
+      }
+      else if (file != null) {
         VcsRevisionNumber revision = currentRevisions.get(file);
         if (revision != null) {
           LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
@@ -642,10 +646,6 @@ public class ChangesCacheFile {
         else {
           LOG.info("Failed to fetch revision");
         }
-      }
-      else if (isDeletedFile(deletedFiles, afterRevision)) {
-        LOG.info("Found deleted file");
-        return true;
       }
       else {
         LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
@@ -663,6 +663,10 @@ public class ChangesCacheFile {
       beforeRevision.getFile().refresh();
       if (beforeRevision.getFile().getVirtualFile() == null || createdFiles.contains(beforeRevision.getFile())) {
         // file has already been deleted
+        return true;
+      }
+      else if (!myVcs.fileExistsInVcs(beforeRevision.getFile())) {
+        LOG.info("File exists locally and is unversioned");
         return true;
       }
       else {
