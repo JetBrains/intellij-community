@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -152,7 +153,7 @@ class InlineToAnonymousConstructorProcessor {
         if (ourAssignmentPattern.accepts(stmt, context, new TraverseContext())) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
           if (!processAssignmentInConstructor(expression)) {
-            initializerBlock.addBefore(stmt, initializerBlock.getRBrace());
+            initializerBlock.addBefore(replaceParameterReferences(stmt, null), initializerBlock.getRBrace());
           }
         }
         else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
@@ -191,7 +192,7 @@ class InlineToAnonymousConstructorProcessor {
           final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
           final PsiExpression initializer;
           try {
-            initializer = replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs);
+            initializer = (PsiExpression) replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -310,8 +311,8 @@ class InlineToAnonymousConstructorProcessor {
     }
   }
 
-  private PsiExpression replaceParameterReferences(PsiExpression argument,
-                                                   final List<PsiReferenceExpression> localVarRefs) throws IncorrectOperationException {
+  private PsiElement replaceParameterReferences(PsiElement argument,
+                                                @Nullable final List<PsiReferenceExpression> localVarRefs) throws IncorrectOperationException {
     if (argument instanceof PsiReferenceExpression) {
       PsiElement element = ((PsiReferenceExpression)argument).resolve();
       if (element instanceof PsiParameter) {
@@ -332,7 +333,7 @@ class InlineToAnonymousConstructorProcessor {
         if (psiElement instanceof PsiParameter) {
           parameterReferences.add(new Pair<PsiReferenceExpression, PsiParameter>(expression, (PsiParameter) psiElement));
         }
-        else if (psiElement instanceof PsiVariable) {
+        else if (psiElement instanceof PsiVariable && localVarRefs != null) {
           localVarRefs.add(expression);
         }
       }
