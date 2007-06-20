@@ -91,7 +91,7 @@ public class FileGroup implements JDOMExternalizable {
     myFiles.add(new UpdatedFile(path));
   }
 
-  public void add(@NotNull String path, AbstractVcs vcs, VcsRevisionNumber revision) {
+  public void add(@NotNull String path, @NotNull AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
     myFiles.add(new UpdatedFile(path, vcs.getName(), revision.asString()));
   }
 
