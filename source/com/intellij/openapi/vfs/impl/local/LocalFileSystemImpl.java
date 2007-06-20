@@ -861,11 +861,22 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
 
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
-    for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
-      ((NewVirtualFile)root).markDirtyRecursively();
-    }
+    Runnable heavyRefresh = new Runnable() {
+      public void run() {
+        for (VirtualFile root : ManagingFS.getInstance().getRoots(LocalFileSystemImpl.this)) {
+          ((NewVirtualFile)root).markDirtyRecursively();
+        }
 
-    super.refreshWithoutFileWatcher(asynchronous);
+        refresh(asynchronous);
+      }
+    };
+
+    if (asynchronous && FileWatcher.isAvailable()) {
+      RefreshQueue.getInstance().refresh(true, true, heavyRefresh, ManagingFS.getInstance().getRoots(this));
+    }
+    else {
+      heavyRefresh.run();
+    }
   }
 
   public boolean markNewFilesAsDirty() {
