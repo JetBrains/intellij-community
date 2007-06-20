@@ -5,6 +5,7 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
@@ -51,11 +52,13 @@ public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
 
   public void registerInfoProvider(@NotNull final BreadcrumbsInfoProvider provider) {
     for (final Language lang : provider.getLanguages()) {
-      if (myProviders.containsKey(lang)) {
-        LOG.error("Breadcrumbs info provider for language : " + lang.getID() + " was already registered!");
-      }
+      if (StdLanguages.TEXT != lang) { // to avoid languages, which are not loaded actually
+        if (myProviders.containsKey(lang)) {
+          LOG.error("Breadcrumbs info provider for language : " + lang.getID() + " was already registered!");
+        }
 
-      myProviders.put(lang, provider);
+        myProviders.put(lang, provider);
+      }
     }
   }
 
