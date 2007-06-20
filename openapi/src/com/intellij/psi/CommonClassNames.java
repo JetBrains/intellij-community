@@ -32,6 +32,8 @@ public interface CommonClassNames {
 
   @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
 
+  @NonNls String JAVA_LANG_NUMBER = "java.lang.Number";
+
   @NonNls String JAVA_LANG_BOOLEAN = "java.lang.Boolean";
   @NonNls String JAVA_LANG_BYTE = "java.lang.Byte";
   @NonNls String JAVA_LANG_SHORT = "java.lang.Short";
