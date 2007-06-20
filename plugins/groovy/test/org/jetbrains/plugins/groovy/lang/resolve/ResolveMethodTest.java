@@ -177,4 +177,24 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(((PsiMethod) resolved).isConstructor());
   }
 
+  public void testConstructor1() throws Exception {
+    PsiReference ref = configureByFile("constructor1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    final PsiMethod method = (PsiMethod) resolved;
+    assertTrue(method.isConstructor());
+    assertEquals(0, method.getParameterList().getParameters().length);
+  }
+
+  public void testConstructor2() throws Exception {
+    PsiReference ref = configureByFile("constructor2/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    final PsiMethod method = (PsiMethod) resolved;
+    assertTrue(method.isConstructor());
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    assertEquals(0, parameters.length);
+    assertTrue(parameters[0].getType().equalsToText("java.util.Map"));
+  }
+
 }

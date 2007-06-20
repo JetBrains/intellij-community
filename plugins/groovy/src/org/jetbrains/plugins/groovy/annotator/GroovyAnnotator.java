@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +134,7 @@ public class GroovyAnnotator implements Annotator {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       } else if (element instanceof PsiMethod && element.getUserData(GrMethod.BUILDER_METHOD) == null) {
-        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr);
+        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr, false);
         if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod) element)) {
           GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(refExpr);
           LOG.assertTrue(elementToHighlight != null);

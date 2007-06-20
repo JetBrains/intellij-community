@@ -1,5 +1,5 @@
 def f(int i, int j) {}
 
-def f(Object[] m) {}
+def f(List l) {}
 
-<ref>f(0, new ArrayList())
+<ref>f([0, new ArrayList()])

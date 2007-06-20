@@ -71,8 +71,18 @@ public class PsiUtil {
     if (argumentTypes == null) return true;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length > argumentTypes.length) return false;
+    if (parameters.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
     if (parameters.length == 0 && argumentTypes.length > 0) return false;
+
+    if (parameters.length - 1 == argumentTypes.length) {
+      final PsiType firstType = parameters[0].getType();
+      final PsiClassType mapType = method.getManager().getElementFactory().createTypeByFQClassName("java.util.Map", method.getResolveScope());
+      if (mapType.isAssignableFrom(firstType)) {
+        final PsiParameter[] trimmed = new PsiParameter[parameters.length - 1];
+        System.arraycopy(parameters, 1, trimmed, 0, trimmed.length);
+        parameters = trimmed;
+      } else return false;
+    }
 
     PsiManager manager = method.getManager();
     GlobalSearchScope scope = method.getResolveScope();
@@ -110,17 +120,22 @@ public class PsiUtil {
     return null;
   }
 
+  // Returns arguments types not including Map for named arguments
   @Nullable
-  public static PsiType[] getArgumentTypes(GroovyPsiElement place) {
+  public static PsiType[] getArgumentTypes(GroovyPsiElement place, boolean forConstructor) {
     PsiElementFactory factory = place.getManager().getElementFactory();
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
       GrCallExpression call = (GrCallExpression) parent;
-      GrNamedArgument[] namedArgs = call.getNamedArguments();
-      if (namedArgs.length > 0) {
-        result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+
+      if (!forConstructor) {
+        GrNamedArgument[] namedArgs = call.getNamedArguments();
+        if (namedArgs.length > 0) {
+          result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+        }
       }
+
       GrExpression[] expressions = call.getExpressionArguments();
       for (GrExpression expression : expressions) {
         PsiType type = getArgumentType(expression);

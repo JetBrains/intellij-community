@@ -40,7 +40,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion);
     myIsConstructor = isConstructor;
-    myArgumentTypes = PsiUtil.getArgumentTypes(place);
+    myArgumentTypes = PsiUtil.getArgumentTypes(place, myIsConstructor);
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
