@@ -518,7 +518,9 @@ public class PluginManager {
           }
           pluginDescriptor.setEnabled(false);
           disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
-          message.append(IdeBundle.message("error.required.plugin.not.found", pluginDescriptor.getPluginId(), dependentPluginId));
+          message.append(ourDisabledPlugins.contains(dependentPluginId.getIdString()) ?
+                         IdeBundle.message("error.required.plugin.disabled", pluginDescriptor.getPluginId(), dependentPluginId) :
+                         IdeBundle.message("error.required.plugin.not.installed", pluginDescriptor.getPluginId(), dependentPluginId));
           it.remove();
           break;
         }
