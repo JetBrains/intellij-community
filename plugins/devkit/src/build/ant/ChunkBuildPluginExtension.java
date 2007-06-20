@@ -10,6 +10,7 @@ package org.jetbrains.idea.devkit.build.ant;
 
 import com.intellij.compiler.ant.*;
 import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,10 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
       ExplodedAndJarTargetParameters parameters = new ExplodedAndJarTargetParameters(chunk, module, module.getName(), genOptions,
                                                                                      buildProperties, PluginBuildProperties.PLUGIN_DIR_EXPLODED,
                                                                                      PluginBuildProperties.PLUGIN_PATH_JAR) {
+        public String getConfigurationName(final JavaeeModuleBuildInstruction instruction) {
+          throw new UnsupportedOperationException("'getConfigurationName' not implemented in " + getClass().getName());
+        }
+
         @NonNls
         public String getBuildExplodedTargetName(final String configurationName) {
           return PluginBuildProperties.getBuildExplodedTargetName(configurationName);

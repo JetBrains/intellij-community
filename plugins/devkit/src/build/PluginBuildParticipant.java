@@ -51,10 +51,6 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     return buildRecipe;
   }
 
-  public String getConfigurationName() {
-    return getModule().getName();
-  }
-
   protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
     ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(getModule()).getJdk());
     if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
