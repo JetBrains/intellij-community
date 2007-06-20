@@ -35,6 +35,11 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     return myBaseList.getVcs();
   }
 
+  @NotNull
+  public CommittedChangeList getBaseList() {
+    return myBaseList;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

@@ -62,9 +62,16 @@ public class ChangeListDetailsAction extends AnAction {
     detailsBuilder.append("<br>");
 
     if (provider != null) {
+      final CommittedChangeList originalChangeList;
+      if (changeList instanceof ReceivedChangeList) {
+        originalChangeList = ((ReceivedChangeList) changeList).getBaseList();
+      }
+      else {
+        originalChangeList = changeList;
+      }
       for(ChangeListColumn column: provider.getColumns()) {
         if (ChangeListColumn.isCustom(column)) {
-          String value = column.getValue(changeList).toString();
+          String value = column.getValue(originalChangeList).toString();
           if (value.length() == 0) {
             value = "<none>";
           }
