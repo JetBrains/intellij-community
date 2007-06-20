@@ -55,7 +55,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       myComponent.setOpaque(true);
       myComponent.setLayout(new BorderLayout(2, 0));
       final JPanel textAndProgress = new JPanel(new BorderLayout());
-      myText.setHorizontalAlignment(JLabel.RIGHT);
+      myText.setHorizontalAlignment(JLabel.LEFT);
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
