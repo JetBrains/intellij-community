@@ -933,6 +933,10 @@ public abstract class DialogWrapper {
         }
       }
       revalidate();
+      int minHeight = getContentPane().getMinimumSize().height;
+      if (getContentPane().getHeight() < minHeight) {
+        myPeer.setSize(myPeer.getSize().width, minHeight);
+      }
       repaint();
     }
 

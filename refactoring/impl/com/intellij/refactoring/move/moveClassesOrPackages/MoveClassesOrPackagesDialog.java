@@ -225,16 +225,24 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   protected boolean areButtonsValid() {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      if (name.length() == 0) {
-        return true;
-      }
-      else {
-        return myManager.getNameHelper().isQualifiedName(name);
-      }
+      return name.length() == 0 || myManager.getNameHelper().isQualifiedName(name);
     }
     else {
-      return findTargetClass() != null;
+      return findTargetClass() != null && getValidationError() != null;
     }
+  }
+
+  protected void validateButtons() {
+    super.validateButtons();
+    setErrorText(getValidationError());
+  }
+
+  @Nullable
+  private String getValidationError() {
+    if (!isMoveToPackage()) {
+      return verifyInnerClassDestination();
+    }
+    return null;
   }
 
   @Nullable
@@ -270,11 +278,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       invokeMoveToPackage();
     }
     else {
-      String message = verifyInnerClassDestination();
-      if (message != null) {
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, null, getProject());
-        return;
-      }
       invokeMoveToInner();
     }
   }
