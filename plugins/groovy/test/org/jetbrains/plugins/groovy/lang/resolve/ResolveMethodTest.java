@@ -193,7 +193,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     final PsiMethod method = (PsiMethod) resolved;
     assertTrue(method.isConstructor());
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    assertEquals(0, parameters.length);
+    assertEquals(1, parameters.length);
     assertTrue(parameters[0].getType().equalsToText("java.util.Map"));
   }
 
