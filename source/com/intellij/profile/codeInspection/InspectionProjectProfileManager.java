@@ -25,6 +25,7 @@ import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,14 +59,29 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
 
+    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myProject);
+
+    final InspectionProfile cachedProfile = settingsPerFile.getInspectionProfile(psiFile);
+    if (cachedProfile != null) {
+      return cachedProfile;
+    }
+
+    InspectionProfileImpl inspectionProfile = null;
+
+    //by name
     final String profile = super.getProfileName(psiFile);
     if (profile != null) {
-      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)getProfile(profile);
-      if (inspectionProfile != null) { //to avoid problems with inconsistent ipr files
-        return inspectionProfile;
-      }
+      inspectionProfile = (InspectionProfileImpl)getProfile(profile);
     }
-    return (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
+
+    //default
+    if (inspectionProfile == null) {
+      inspectionProfile = (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
+    }
+
+    settingsPerFile.addProfileSettingForFile(psiFile, inspectionProfile);
+
+    return inspectionProfile;
   }
 
   public InspectionProfileWrapper getProfileWrapper(final PsiElement psiElement){
@@ -129,5 +145,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
       wrapper.cleanup(myProject);
     }
+    HighlightingSettingsPerFile.getInstance(myProject).cleanProfileSettings();
   }
 }

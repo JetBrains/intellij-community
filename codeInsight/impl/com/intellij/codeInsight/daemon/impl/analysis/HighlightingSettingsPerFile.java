@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.codeInspection.InspectionProfile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   }
 
   private Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
+
+  private Map<PsiFile, InspectionProfile> myProfileSettings = new HashMap<PsiFile, InspectionProfile>();
 
   public FileHighlighingSetting getHighlightingSettingForRoot(PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
@@ -109,6 +112,18 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
       }
       element.addContent(child);
     }
+  }
+
+  public void cleanProfileSettings() {
+    myProfileSettings.clear();
+  }
+
+  public InspectionProfile getInspectionProfile(final PsiFile file) {
+    return myProfileSettings.get(file);
+  }
+
+  public void addProfileSettingForFile(final PsiFile file, final InspectionProfile profile) {
+    myProfileSettings.put(file, profile);
   }
 
 }
