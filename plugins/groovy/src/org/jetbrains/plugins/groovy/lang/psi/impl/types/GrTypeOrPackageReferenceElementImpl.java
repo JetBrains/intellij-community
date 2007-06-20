@@ -232,7 +232,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
           return constructorResults.length > 0 ? constructorResults : classResults;
       }
 
-      return null;
+      return GroovyResolveResult.EMPTY_ARRAY;
     }
   }
 
