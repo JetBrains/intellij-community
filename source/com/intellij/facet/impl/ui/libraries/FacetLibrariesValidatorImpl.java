@@ -27,17 +27,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -206,6 +204,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class CollectingLibrariesPolicy extends RootPolicy<List<VirtualFile>> {
+    private Set<Module> myProcessedModules = new HashSet<Module>();
 
     public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
       Library library = libraryOrderEntry.getLibrary();
@@ -217,7 +216,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     public List<VirtualFile> visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final List<VirtualFile> value) {
       Module module = moduleOrderEntry.getModule();
-      if (module != null) {
+      if (module != null && myProcessedModules.add(module)) {
         ModuleRootModel dependency = myContext.getModulesProvider().getRootModel(module);
         if (dependency != null) {
           return dependency.processOrder(this, value);
