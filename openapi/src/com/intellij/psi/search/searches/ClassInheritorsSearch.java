@@ -3,16 +3,20 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
@@ -117,11 +121,20 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     LOG.assertTrue(searchScope != null);
 
     if (baseClass instanceof PsiAnonymousClass) return true;
-    if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return true;
 
+    boolean isFinal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));
+      }
+    }).booleanValue();
+
+    if (isFinal) return true;
+
+    /* TODO
     if ("java.lang.Object".equals(baseClass.getQualifiedName())) { // special case
       // TODO!
     }
+    */
 
     final PsiManager psiManager = PsiManager.getInstance(baseClass.getProject());
 
