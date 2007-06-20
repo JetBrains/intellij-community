@@ -23,6 +23,7 @@ import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -236,6 +237,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
   }
 
+  @Nullable
   private PsiClass findTargetClass() {
     String name = myInnerClassChooser.getText().trim();
     return myManager.findClass(name, myProject.getProjectScope());
@@ -268,6 +270,11 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       invokeMoveToPackage();
     }
     else {
+      String message = verifyInnerClassDestination();
+      if (message != null) {
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, null, getProject());
+        return;
+      }
       invokeMoveToInner();
     }
   }
@@ -326,6 +333,19 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
     refactoringSettings.MOVE_PREVIEW_USAGES = isPreviewUsages();
+  }
+
+  @Nullable
+  private String verifyInnerClassDestination() {
+    PsiClass targetClass = findTargetClass();
+    if (targetClass == null) return null;
+    while(targetClass != null) {
+      if (targetClass.getContainingClass() != null && !targetClass.hasModifierProperty(PsiModifier.STATIC)) {
+        return RefactoringBundle.message("move.class.to.inner.nonstatic.error");
+      }
+      targetClass = targetClass.getContainingClass();
+    }
+    return null;
   }
 
   private void invokeMoveToInner() {
