@@ -93,7 +93,7 @@ public class InlineToAnonymousClassHandler {
         }
       }
       else if (method.findSuperMethods().length == 0) {
-        if (!ReferencesSearch.search(method).forEach(new CheckAncestorProcessor(psiClass))) {
+        if (!ReferencesSearch.search(method).forEach(new AllowedUsagesProcessor(psiClass))) {
           return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
         }
       }
@@ -126,7 +126,7 @@ public class InlineToAnonymousClassHandler {
           return "Class cannot be inlined because it has static fields with non-constant initializers";
         }
       }
-      if (!ReferencesSearch.search(field).forEach(new CheckAncestorProcessor(psiClass))) {
+      if (!ReferencesSearch.search(field).forEach(new AllowedUsagesProcessor(psiClass))) {
         return "Class cannot be inlined because it has usages of fields not inherited from its superclass";
       }
     }
@@ -153,15 +153,29 @@ public class InlineToAnonymousClassHandler {
     return stmt.get();
   }
 
-  private static class CheckAncestorProcessor implements Processor<PsiReference> {
+  private static class AllowedUsagesProcessor implements Processor<PsiReference> {
     private final PsiElement myPsiElement;
 
-    public CheckAncestorProcessor(final PsiElement psiElement) {
+    public AllowedUsagesProcessor(final PsiElement psiElement) {
       myPsiElement = psiElement;
     }
 
     public boolean process(final PsiReference psiReference) {
-      return PsiTreeUtil.isAncestor(myPsiElement, psiReference.getElement(), false);
+      if (PsiTreeUtil.isAncestor(myPsiElement, psiReference.getElement(), false)) {
+        return true;
+      }
+      PsiElement element = psiReference.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+        if (qualifier instanceof PsiNewExpression) {
+          PsiNewExpression newExpr = (PsiNewExpression) qualifier;
+          PsiJavaCodeReferenceElement classRef = newExpr.getClassReference();
+          if (classRef != null && myPsiElement.equals(classRef.resolve())) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 }
