@@ -251,6 +251,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                         getExpressionIndex(expression, expressionList);
                 final PsiParameterList parameterList =
                         method.getParameterList();
+                if (parameterList.getParametersCount() == 0) {
+                    return Collections.EMPTY_LIST;
+                }
                 final PsiParameter[] parameters =
                         parameterList.getParameters();
                 final PsiParameter parameter;
@@ -259,7 +262,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 } else {
                     parameter = parameters[parameters.length - 1];
                 }
-                // fixme variable arity methods
                 final PsiType type = parameter.getType();
                 if (!(type instanceof PsiClassType)) {
                     return Collections.EMPTY_LIST;
