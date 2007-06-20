@@ -17,11 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
@@ -48,5 +48,11 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     } else {
       return null;
     }
+  }
+
+  public IElementType getOperationTokenType() {
+    final ASTNode node = findChildByType(TokenSets.BINARY_OP_SET).getNode();
+    assert node != null;
+    return node.getElementType();
   }
 }

@@ -17,7 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
@@ -30,7 +34,21 @@ public class GrAdditiveExprImpl extends GrBinaryExpressionImpl {
   }
 
   public PsiType getType() {
-    return TypesUtil.getNumericResultType(this);
+    final PsiType numeric = TypesUtil.getNumericResultType(this);
+    if (numeric != null) {
+      return numeric;
+    }
+
+    IElementType tokenType = getOperationTokenType();
+    if (tokenType == GroovyTokenTypes.mPLUS) {
+      final GrExpression lop = getLeftOperand();
+      final PsiType lType = lop.getType();
+      if (lType != null && lType.equalsToText("java.lang.String")) {
+        return getTypeByFQName("java.lang.String");
+      }
+    }
+
+    return null;
   }
 
   public String toString() {

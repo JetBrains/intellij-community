@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author ilyas
@@ -32,4 +33,5 @@ public interface GrBinaryExpression extends GrExpression {
    */
   public GrExpression getRightOperand();
 
+  IElementType getOperationTokenType();
 }

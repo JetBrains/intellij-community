@@ -97,11 +97,11 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     }
 
     // Get container element
-    final PsiElement eclosingContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
-    if (eclosingContainer == null || !(eclosingContainer instanceof GroovyPsiElement)) {
+    final PsiElement enclosingContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
+    if (enclosingContainer == null || !(enclosingContainer instanceof GroovyPsiElement)) {
       return tempContainerNotFound(project);
     }
-    final GroovyPsiElement tempContainer = ((GroovyPsiElement) eclosingContainer);
+    final GroovyPsiElement tempContainer = ((GroovyPsiElement) enclosingContainer);
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(tempContainer)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
       showErrorMessage(message, project);
@@ -135,12 +135,12 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   }
 
   /**
-   * Inserts new variable declaratrions and replaces occurences
+   * Inserts new variable declaratrions and replaces occurrences
    */
   void runRefactoring(final GrExpression selectedExpr,
                       final Editor editor,
                       final GroovyPsiElement tempContainer,
-                      final PsiElement[] occurences,
+                      final PsiElement[] occurrences,
                       final String varName,
                       final boolean replaceAllOccurences,
                       final GrVariableDeclaration varDecl) {
@@ -151,32 +151,32 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       public void run() {
         try {
           /* insert new variable */
-          GroovyRefactoringUtil.sortOccurences(occurences);
-          if (occurences.length == 0 || !(occurences[0] instanceof GrExpression)) {
+          GroovyRefactoringUtil.sortOccurences(occurrences);
+          if (occurrences.length == 0 || !(occurrences[0] instanceof GrExpression)) {
             throw new IncorrectOperationException("Wrong expression occurence");
           }
-          GrExpression firstOccurence;
+          GrExpression firstOccurrence;
           if (replaceAllOccurences) {
-            firstOccurence = ((GrExpression) occurences[0]);
+            firstOccurrence = ((GrExpression) occurrences[0]);
           } else {
-            firstOccurence = selectedExpr;
+            firstOccurrence = selectedExpr;
           }
 
           assert varDecl.getVariables().length > 0;
           resolveLocalConflicts(tempContainer, varDecl.getVariables()[0]);
           // Replace at the place of first occurence
-          boolean alreadyDefined = replaceAloneExpression(firstOccurence, selectedExpr, tempContainer, varDecl);
+          boolean alreadyDefined = replaceAloneExpression(firstOccurrence, selectedExpr, tempContainer, varDecl);
           if (!alreadyDefined) {
             // Insert before first occurence
-            insertVariableDefinition(tempContainer, selectedExpr, occurences, replaceAllOccurences, varDecl, factory);
+            insertVariableDefinition(tempContainer, selectedExpr, occurrences, replaceAllOccurences, varDecl, factory);
           }
 
-          //Replace other occurences
+          //Replace other occurrences
           GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(varName);
           if (replaceAllOccurences) {
             ArrayList<PsiElement> replaced = new ArrayList<PsiElement>();
-            for (PsiElement occurence : occurences) {
-              if (!(alreadyDefined && firstOccurence.equals(occurence))) {
+            for (PsiElement occurence : occurrences) {
+              if (!(alreadyDefined && firstOccurrence.equals(occurence))) {
                 if (occurence instanceof GrExpression) {
                   GrExpression element = (GrExpression) occurence;
                   if (element instanceof GrClosableBlock && element.getParent() instanceof GrMethodCall) {

@@ -279,6 +279,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiClass getSuperClass() {
+    final PsiClassType[] superTypes = getSuperTypes();
+    if (superTypes.length > 0) {
+      return superTypes[0].resolve();
+    }
     return null;
   }
 
