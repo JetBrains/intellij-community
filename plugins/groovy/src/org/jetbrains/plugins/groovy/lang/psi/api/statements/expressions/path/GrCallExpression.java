@@ -15,10 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ven
@@ -31,4 +33,7 @@ public interface GrCallExpression {
   GrExpression[] getExpressionArguments();
 
   GrClosableBlock[] getClosureArguments();
+
+  @Nullable
+  PsiMethod resolveMethod();
 }

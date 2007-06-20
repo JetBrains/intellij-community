@@ -16,20 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-
-import java.util.List;
-import java.util.ArrayList;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -62,7 +61,21 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     String setterName = PropertyUtil.suggestSetterName(propName);
     PsiElement context = getParent().getParent();
     if (context instanceof GrArgumentList) {
-      PsiType type = ((GrExpression) context.getParent()).getType();
+      final PsiElement parent = context.getParent();
+      if (parent instanceof GrCallExpression) {
+        final PsiMethod resolvedMethod = ((GrCallExpression) parent).resolveMethod();
+        if (resolvedMethod != null) {
+          final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
+          if (parameters.length > 0) {
+            if (PsiUtil.getMapType(resolvedMethod.getManager(), resolvedMethod.getResolveScope()).isAssignableFrom(parameters[0].getType())) {
+              //call with named argument, not setting property
+              return null;
+            }
+          }
+        }
+      }
+
+      PsiType type = ((GrExpression) parent).getType();
       if (type instanceof PsiClassType) {
         PsiClass clazz = ((PsiClassType) type).resolve();
         if (clazz != null) {

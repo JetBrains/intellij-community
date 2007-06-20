@@ -108,4 +108,14 @@ public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCa
       return closure.replaceWithExpression(newExpr);
     }
   }
+
+  public PsiMethod resolveMethod() {
+    final GrExpression methodExpr = getInvokedExpression();
+    if (methodExpr instanceof GrReferenceExpression) {
+      final PsiElement resolved = ((GrReferenceExpression) methodExpr).resolve();
+      return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
+    }
+
+    return null;
+  }
 }

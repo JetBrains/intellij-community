@@ -114,6 +114,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertNull(((GrMethod) resolved).getReturnType());
   }
 
+  public void testNotAField() throws Exception {
+    PsiReference ref = configureByFile("notAField/A.groovy");
+    assertNull(ref.resolve());
+  }
+
   public void testUndefinedVar2() throws Exception {
     doUndefinedVarTest("undefinedVar2/A.groovy");
   }

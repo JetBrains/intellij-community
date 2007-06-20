@@ -74,18 +74,18 @@ public class PsiUtil {
     if (parameters.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
     if (parameters.length == 0 && argumentTypes.length > 0) return false;
 
+    final PsiManager manager = method.getManager();
+    final GlobalSearchScope scope = method.getResolveScope();
+
     if (parameters.length - 1 == argumentTypes.length) {
       final PsiType firstType = parameters[0].getType();
-      final PsiClassType mapType = method.getManager().getElementFactory().createTypeByFQClassName("java.util.Map", method.getResolveScope());
+      final PsiClassType mapType = getMapType(manager, scope);
       if (mapType.isAssignableFrom(firstType)) {
         final PsiParameter[] trimmed = new PsiParameter[parameters.length - 1];
         System.arraycopy(parameters, 1, trimmed, 0, trimmed.length);
         parameters = trimmed;
       } else return false;
     }
-
-    PsiManager manager = method.getManager();
-    GlobalSearchScope scope = method.getResolveScope();
 
     for (int i = 0; i < argumentTypes.length; i++) {
       PsiType argType = argumentTypes[i];
@@ -107,6 +107,10 @@ public class PsiUtil {
     }
 
     return true;
+  }
+
+  public static PsiClassType getMapType(PsiManager manager, GlobalSearchScope scope) {
+    return manager.getElementFactory().createTypeByFQClassName("java.util.Map", scope);
   }
 
   @Nullable
