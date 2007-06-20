@@ -1,10 +1,12 @@
 package com.intellij.localvcs.integration.ui.views;
 
+import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;

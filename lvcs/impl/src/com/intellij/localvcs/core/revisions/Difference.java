@@ -8,28 +8,7 @@ import java.util.List;
 
 public class Difference {
   public enum Kind {
-    NOT_MODIFIED {
-      public DifferenceType getDifferenceType() {
-        return DifferenceType.NOT_CHANGED;
-      }
-    },
-    MODIFIED {
-      public DifferenceType getDifferenceType() {
-        return DifferenceType.MODIFIED;
-      }
-    },
-    CREATED {
-      public DifferenceType getDifferenceType() {
-        return DifferenceType.INSERTED;
-      }
-    },
-    DELETED {
-      public DifferenceType getDifferenceType() {
-        return DifferenceType.DELETED;
-      }
-    };
-
-    public abstract DifferenceType getDifferenceType();
+    NOT_MODIFIED, MODIFIED, CREATED, DELETED
   }
 
   private boolean myIsFile;
@@ -52,10 +31,6 @@ public class Difference {
 
   public Kind getKind() {
     return myKind;
-  }
-
-  public DifferenceType getDifferenceType() {
-    return myKind.getDifferenceType();
   }
 
   public Entry getLeft() {

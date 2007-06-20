@@ -47,11 +47,6 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected boolean showRoot() {
-    return false;
-  }
-
-  @Override
   protected String getHelpId() {
     return "reference.dialogs.recentChanges";
   }

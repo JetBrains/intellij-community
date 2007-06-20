@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.core.ILocalVcs;
+import com.intellij.localvcs.core.revisions.Difference;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.DirectoryHistoryDialogModel;
@@ -100,19 +101,17 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   @Override
   protected void updateDiffs() {
     List<Change> changes = new ArrayList<Change>();
-    flatternChanges(myModel.getRootDifferenceNodeModel(), changes, showRoot());
+    flatternChanges(myModel.getRootDifferenceNodeModel(), changes);
     myChangesTree.setChangesToDisplay(changes);
   }
 
-  private void flatternChanges(DirectoryDifferenceModel m, List<Change> changes, boolean includeSelf) {
-    if (includeSelf) changes.add(new DirectoryDifference(m));
-    for (DirectoryDifferenceModel child : m.getChildren()) {
-      flatternChanges(child, changes, true);
+  private void flatternChanges(DirectoryDifferenceModel m, List<Change> changes) {
+    if (!m.getDifferenceKind().equals(Difference.Kind.NOT_MODIFIED)) {
+      changes.add(new DirectoryDifference(m));
     }
-  }
-
-  protected boolean showRoot() {
-    return true;
+    for (DirectoryDifferenceModel child : m.getChildren()) {
+      flatternChanges(child, changes);
+    }
   }
 
   @Override

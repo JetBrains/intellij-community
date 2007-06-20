@@ -5,11 +5,14 @@ import com.intellij.localvcs.core.changes.*;
 import com.intellij.localvcs.core.storage.Content;
 import com.intellij.localvcs.core.tree.Entry;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
   private Entry myRootEntry;
@@ -87,8 +90,13 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     myContentsToApply.put(f, new ContentToApply(e));
   }
 
-  private void unregisterContentToApply(VirtualFile f) {
-    myContentsToApply.remove(f);
+  private void unregisterContentToApply(VirtualFile fileOrDir) {
+    List<VirtualFile> registered = new ArrayList<VirtualFile>(myContentsToApply.keySet());
+    for (VirtualFile f : registered) {
+      if (VfsUtil.isAncestor(fileOrDir, f, false)) {
+        myContentsToApply.remove(f);
+      }
+    }
   }
 
   @Override
