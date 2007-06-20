@@ -64,7 +64,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
   private static final Lock r = rwl.readLock();
-  private static final Lock w = rwl.writeLock();
+  protected static final Lock w = rwl.writeLock();
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;

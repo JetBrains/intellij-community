@@ -360,8 +360,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return myRootTagName2FileDescription.get(rootTagName);
   }
 
-  public final Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
-    return myAcceptingOtherRootTagNamesDescriptions;
+  public final synchronized DomFileDescription[] getAcceptingOtherRootTagNameDescriptions() {
+    return myAcceptingOtherRootTagNamesDescriptions.toArray(new DomFileDescription[myAcceptingOtherRootTagNamesDescriptions.size()]);
   }
 
   public final Map<DomFileDescription, Set<WeakReference<DomFileElementImpl>>> getFileDescriptions() {
@@ -528,7 +528,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
     final XmlFile file = (XmlFile)myElementFactory.createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
-    //final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "root");
     final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name");
     fileElement.putUserData(MOCK_ELEMENT_MODULE, module);
     fileElement.putUserData(MOCK, new Object());
@@ -564,7 +563,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     });
   }
 
-  public final void registerFileDescription(final DomFileDescription description) {
+  public final synchronized void registerFileDescription(final DomFileDescription description) {
     //noinspection unchecked
     final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
