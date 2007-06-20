@@ -2,7 +2,7 @@
   <project-components>
     <component>
       <interface-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</interface-class>
-      <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>
+      <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponentImpl</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

@@ -4,6 +4,7 @@
 
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
@@ -21,15 +23,13 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 
@@ -45,21 +44,26 @@ import java.util.List;
  * @author spleaner
  */
 public class BreadcrumbsComponent extends JComponent implements Disposable {
-  @NonNls private static final String CLASS_ATTRIBUTE_NAME = "class";
-  @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
-
   private Editor myEditor;
   private CrumbLine myLine;
-  private LinkedList<XmlElement> myCurrentList;
+  private List<PsiElement> myCurrentList;
   private PsiFile myFile;
   private MergingUpdateQueue myQueue;
   private boolean myUserCaretChange = true;
+  private BreadcrumbsInfoProvider myInfoProvider;
+  private Language myLanguage;
 
-  public BreadcrumbsComponent(@NotNull final Editor editor) {
+  public BreadcrumbsComponent(@NotNull final Editor editor, @NotNull final BreadcrumbsLoaderComponentImpl loaderComponent) {
     myEditor = editor;
 
     Document document = myEditor.getDocument();
     myFile = PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(document);
+
+    final Pair<Language, BreadcrumbsInfoProvider> pair = findInfoProvider(myFile, loaderComponent);
+    if (pair != null) {
+      myLanguage = pair.first;
+      myInfoProvider = pair.second;
+    }
 
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(final CaretEvent e) {
@@ -79,7 +83,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
     });
 
-
     final Project project = editor.getProject();
     assert project != null;
 
@@ -93,7 +96,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       public boolean isAspectChangeInteresting(final PomModelAspect aspect) {
-        return aspect instanceof XmlAspect;
+        return aspect instanceof XmlAspect; // PsiAspect???!
       }
     }, this);
 
@@ -128,12 +131,37 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     Disposer.register(this, myQueue);
   }
 
+  @Nullable
+  private static Pair<Language, BreadcrumbsInfoProvider> findInfoProvider(@Nullable final PsiFile file,
+                                                          @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
+    Pair<Language, BreadcrumbsInfoProvider> result = null;
+    BreadcrumbsInfoProvider provider;
+    if (file != null) {
+      final FileViewProvider viewProvider = file.getViewProvider();
+      final Language baseLang = viewProvider.getBaseLanguage();
+      provider = loaderComponent.getInfoProvider(baseLang);
+      if (provider == null) {
+        for (final Language language : viewProvider.getPrimaryLanguages()) {
+          provider = loaderComponent.getInfoProvider(language);
+          if (provider != null) {
+            result = new Pair<Language, BreadcrumbsInfoProvider>(language, provider);
+            break;
+          }
+        }
+      } else {
+        result = new Pair<Language, BreadcrumbsInfoProvider>(baseLang, provider);
+      }
+    }
+
+    return result;
+  }
+
   private Editor getEditor() {
     return myEditor;
   }
 
-  private PsiFile getFile() {
-    return myFile;
+  private BreadcrumbsInfoProvider getInfoProvider() {
+    return myInfoProvider;
   }
 
   private void setUserCaretChange(final boolean userCaretChange) {
@@ -148,39 +176,24 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     final int offset = myEditor.logicalPositionToOffset(position);
 
-    //final XmlDocument xmlDocument = ((XmlFile)myFile).getDocument();
-    //assert xmlDocument != null;
-    //return xmlDocument.findElementAt(offset);
-
-    PsiElement element = myFile.getViewProvider().findElementAt(offset);
-    if (!isValidElement(element)) {
-      // ok, now try to get XMLLanguage
-      element = myFile.getViewProvider().findElementAt(offset, StdLanguages.XML);
-    }
-
-    return element;
-  }
-
-  private static boolean isValidElement(@Nullable PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
+    final PsiFile file = myFile.getViewProvider().getPsi(myLanguage);
+    return file != null ? file.getViewProvider().findElementAt(offset) : null;
   }
 
   @NotNull
-  private List<XmlElement> getLineElements(@NotNull final PsiElement endElement) {
-    final LinkedList<XmlElement> result = new LinkedList<XmlElement>();
+  private List<PsiElement> getLineElements(@NotNull final PsiElement endElement) {
+    final LinkedList<PsiElement> result = new LinkedList<PsiElement>();
 
     PsiElement element = endElement;
     while (element != null) {
-      if (element instanceof XmlTag) {
-        result.addFirst((XmlElement)element);
+      if (myInfoProvider.acceptElement(element)) {
+        result.addFirst(element);
       }
 
       element = element.getParent();
     }
 
-    myCurrentList = result;
-
-    return myCurrentList;
+    return result;
   }
 
   public void dispose() {
@@ -198,13 +211,14 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
       final PsiElement element = getCaretElement(position);
       if (element != null) {
-        myLine.setCrumbs(getLineElements(element));
+        myCurrentList = getLineElements(element);
+        myLine.setCrumbs(myCurrentList);
       }
     }
   }
 
   private static class CrumbLine extends JComponent {
-    private List<XmlElement> myElementList = new ArrayList<XmlElement>();
+    private List<PsiElement> myElementList = new ArrayList<PsiElement>();
     private Crumb myHovered;
     private PagedImage myBuffer;
     private List<Crumb> myCrumbs;
@@ -223,10 +237,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       setToolTipText(new String());
     }
 
-    private boolean isHtmlLikeFile() {
-      return myBreadcrumbsComponent.getFile().getLanguage() != StdLanguages.XML;
-    }
-
     public String getToolTipText(final MouseEvent event) {
       final Crumb c = getCrumb(event.getPoint());
       if (c != null) {
@@ -237,12 +247,16 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return super.getToolTipText(event);
     }
 
+    public BreadcrumbsComponent getBreadcrumbsComponent() {
+      return myBreadcrumbsComponent;
+    }
+
     @NotNull
     public Editor getEditor() {
       return myBreadcrumbsComponent.getEditor();
     }
 
-    public void setCrumbs(@NotNull final List<XmlElement> elementList) {
+    public void setCrumbs(@NotNull final List<PsiElement> elementList) {
       if (myElementList != elementList) {
         myElementList = elementList;
         myCrumbs = null;
@@ -333,18 +347,18 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         //myDirty = false;
         //}
 
-        myBuffer.paintPage(g2, crumbList, getPainter(), d.height);
+        myBuffer.paintPage(g2, crumbList, DEFAULT_PAINTER, d.height);
         myCrumbs = crumbList;
       }
     }
 
     private void setSelectedCrumb(@NotNull final Crumb c) {
-      final XmlElement selectedElement = c.getElement();
+      final PsiElement selectedElement = c.getElement();
 
-      final Set<XmlElement> elements = new HashSet<XmlElement>();
+      final Set<PsiElement> elements = new HashSet<PsiElement>();
       boolean light = false;
       for (final Crumb each : myCrumbs) {
-        final XmlElement element = each.getElement();
+        final PsiElement element = each.getElement();
         if (element != null && elements.contains(element)) {
           light = false;
         }
@@ -367,7 +381,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       repaint();
     }
 
-    private void moveEditorCaretTo(@NotNull final XmlElement element) {
+    private void moveEditorCaretTo(@NotNull final PsiElement element) {
       if (element.isValid()) {
         myBreadcrumbsComponent.setUserCaretChange(false);
         getEditor().getCaretModel().moveToOffset(element.getTextOffset());
@@ -375,18 +389,11 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
     }
 
-    private static Painter getPainter() {
-      return System.getProperty("idea.breadcrumbs") != null ? TRANSPARENT_PAINTER : DEFAULT_PAINTER;
-    }
-
     @Nullable
-    private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<XmlElement> elements, final int width) {
+    private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<PsiElement> elements, final int width) {
       if (elements.size() == 0) {
         return null;
       }
-
-      final boolean htmlInfo = isHtmlLikeFile();
-      final Painter painter = getPainter();
 
       final LinkedList<Crumb> result = new LinkedList<Crumb>();
       int screenWidth = 0;
@@ -394,13 +401,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
       // fill up crumb list first going from end to start
       for (int i = elements.size() - 1; i >= 0; i--) {
-        final XmlTag tag = (XmlTag)elements.get(i);
-        final String s = painter.getSettings().prepareString(tag, htmlInfo);
-        final Dimension d = painter.getSize(s, fm);
-        final Crumb crumb = new Crumb(this, s, d.width, tag);
+        final PsiElement element = elements.get(i);
+        final String s = myBreadcrumbsComponent.getInfoProvider().getElementInfo(element);
+        final Dimension d = DEFAULT_PAINTER.getSize(s, fm);
+        final Crumb crumb = new Crumb(this, s, d.width, element);
         if (screenWidth + d.width > width) {
-          final NavigationCrumb forward = new NavigationCrumb(this, fm, true, painter);
-          final NavigationCrumb backward = new NavigationCrumb(this, fm, false, painter);
+          final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
+          final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
 
           Crumb first = null;
           if (screenWidth + backward.getWidth() > width) {
@@ -498,18 +505,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return totalWidth;
     }
 
-    @NotNull
-    private static BufferedImage createBuffer(@NotNull final List<Crumb> crumbList, final int height) {
-      return new BufferedImage(getTotalWidth(crumbList), height, BufferedImage.TYPE_INT_ARGB);
-    }
-
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
     public Dimension getPreferredSize() {
       final Graphics2D g2 = (Graphics2D)getGraphics();
-      return new Dimension(Integer.MAX_VALUE, getPainter().getSize("dummy", g2.getFontMetrics()).height);
+      return new Dimension(Integer.MAX_VALUE, DEFAULT_PAINTER.getSize("dummy", g2.getFontMetrics()).height);
     }
 
     public Dimension getMaximumSize() {
@@ -566,20 +568,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     public void paintPage(@NotNull final Graphics2D g2, @NotNull final List<Crumb> list, @NotNull final Painter p, final int height) {
       repaint(g2, list, p, height);
-
-      //final int offset = getPageOffset();
-      //
-      //int width = myPageWidth;
-      //BufferedImage image2draw = myImage;
-      //if (myImage.getWidth() <= myPageWidth) {
-      //  width = myImage.getWidth();
-      //}
-      //else {
-      //  image2draw = myImage.getSubimage(offset, 0, myPageWidth, myImage.getHeight());
-      //}
-      //
-      //assert (offset + width) <= myImage.getWidth();
-      //g2.drawImage(image2draw, 0, 0, width, myImage.getHeight(), null);
     }
 
     public boolean isValid(final int width) {
@@ -627,13 +615,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     private String myString;
     private int myOffset = -1;
     private int myWidth;
-    private XmlElement myElement;
+    private PsiElement myElement;
     private CrumbLine myLine;
     private boolean mySelected;
     private boolean myHovered;
     private boolean myLight;
 
-    public Crumb(final CrumbLine line, final String string, final int width, final XmlElement element) {
+    public Crumb(final CrumbLine line, final String string, final int width, final PsiElement element) {
       this(string, width);
 
       myLine = line;
@@ -692,39 +680,22 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     @Nullable
     public String getTooltipText() {
-      final XmlElement element = getElement();
+      final PsiElement element = getElement();
       if (element != null) {
-        if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
-          final StringBuffer result = new StringBuffer("<");
-          result.append(tag.getName());
-          final XmlAttribute[] attributes = tag.getAttributes();
-          for (final XmlAttribute each : attributes) {
-            result.append(" ").append(each.getText());
-          }
-
-          if (tag.isEmpty()) {
-            result.append("/>");
-          }
-          else {
-            result.append(">...</").append(tag.getName()).append(">");
-          }
-
-          return result.toString();
-        }
+        return myLine.getBreadcrumbsComponent().getInfoProvider().getElementTooltip(element);
       }
 
       return null;
     }
 
-    public XmlElement getElement() {
+    public PsiElement getElement() {
       return myElement;
     }
 
     public void performAction() {
       myLine.setSelectedCrumb(this);
 
-      final XmlElement element = getElement();
+      final PsiElement element = getElement();
       if (element != null) {
         myLine.moveEditorCaretTo(element);
       }
@@ -798,29 +769,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     Font getFont(@NotNull final Graphics g2, @NotNull final Crumb c) {
       return null;
     }
-
-    @NotNull
-    public String prepareString(@NotNull final XmlTag tag, boolean addHtmlInfo) {
-      final StringBuffer sb = new StringBuffer();
-      sb.append(tag.getName());
-
-      if (addHtmlInfo) {
-        final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
-        if (null != id_value) {
-          sb.append("#").append(id_value);
-        }
-
-        final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
-        if (null != class_value) {
-          final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
-          while (tokenizer.hasMoreTokens()) {
-            sb.append(".").append(tokenizer.nextToken());
-          }
-        }
-      }
-
-      return sb.toString();
-    }
   }
 
   private static class ButtonSettings extends PainterSettings {
@@ -886,14 +834,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       return super.getForegroundColor(c);
-    }
-
-    @NotNull
-    public String prepareString(@NotNull final XmlTag tag, boolean addHtmlInfo) {
-      final String s = super.prepareString(tag, addHtmlInfo);
-
-      final StringBuffer sb = new StringBuffer("<");
-      return sb.append(s).append(">").toString();
     }
 
     @Nullable
