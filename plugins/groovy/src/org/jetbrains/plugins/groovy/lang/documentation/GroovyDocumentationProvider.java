@@ -42,8 +42,11 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       StringBuffer buffer = new StringBuffer();
-      appendTypeString(buffer, method.getReturnType());
-      buffer.append(" ").append(method.getName()).append(" ");
+      if (!method.isConstructor()) {
+        appendTypeString(buffer, method.getReturnType());
+        buffer.append(" ");
+      }
+      buffer.append(method.getName()).append(" ");
       buffer.append("(");
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
