@@ -1,22 +1,21 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.psi.PsiElement;
+import com.intellij.lang.ant.psi.AntNameIdentifier;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class AntNameElementImpl extends AntElementImpl {
+public class AntNameIdentifierImpl extends AntElementImpl implements AntNameIdentifier {
 
-  private @Nullable AntElement myMirrorElement;
   private String myCachedName;
   private volatile long myModCount;
 
-  public AntNameElementImpl(final AntElement parent, final XmlAttributeValue sourceElement) {
+  public AntNameIdentifierImpl(final AntElement parent, final XmlAttributeValue sourceElement) {
     super(parent, sourceElement);
   }
 
@@ -25,7 +24,27 @@ public class AntNameElementImpl extends AntElementImpl {
     return (XmlAttributeValue)super.getSourceElement();
   }
 
+  public TextRange getTextRange() {
+    return getSourceElement().getValueTextRange();
+  }
+
+  public String getText() {
+    return getName();
+  }
+
+  public int getTextOffset() {
+    return getTextRange().getStartOffset();
+  }
+
+  public int getTextLength() {
+    return getText().length();
+  }
+
   public String getName() {
+    return getIdentifierName();
+  }
+
+  public String getIdentifierName() {
     String name = myCachedName;
     final PsiManager psiManager = getManager();
     final long modificationCount = psiManager != null? psiManager.getModificationTracker().getModificationCount() : myModCount;
@@ -37,21 +56,11 @@ public class AntNameElementImpl extends AntElementImpl {
     myCachedName = name;
     return name;
   }
-  
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+
+  public void setIdentifierName(@NotNull String name) throws IncorrectOperationException {
     final XmlAttribute attr = PsiTreeUtil.getParentOfType(getSourceElement(), XmlAttribute.class);
     if (attr != null) {
       attr.setValue(name);
     }
-    return this;
-  }
-
-  public final void setMirrorElement(@Nullable final AntElement renameElement) {
-    myMirrorElement = renameElement;
-  }
-
-  @NotNull
-  public final AntElement getMirrorElement() {
-    return myMirrorElement != null? myMirrorElement : this;
   }
 }

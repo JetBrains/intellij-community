@@ -3,10 +3,13 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +21,7 @@ import java.util.List;
 public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget, AntProperty {
 
   private AntTarget[] myDependsTargets;
-  private AntNameElementImpl myPropElement;
+  private AntNameIdentifier myPropElement;
 
   public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
@@ -159,7 +162,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   @Nullable
   public String[] getNames() {
-    return (myPropElement == null) ? null : new String[]{myPropElement.getName()};
+    return (myPropElement == null) ? null : new String[]{myPropElement.getIdentifierName()};
   }
 
   public boolean isMacroDefined() {
@@ -177,7 +180,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   /* hack */
   public void setPropertyDefinitionElement(final XmlAttributeValue sourceElement) {
-    myPropElement = new AntNameElementImpl(this, sourceElement);
+    myPropElement = new AntPropertyElement(this, sourceElement);
   }
 
   protected AntElement[] getChildrenInner() {
@@ -204,4 +207,16 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     }
   }
 
+  private static final class AntPropertyElement extends AntNameIdentifierImpl implements PsiNamedElement {
+    // since this element mirrors fake property, it must be PsiNamedElement in order for references to reference it.
+    //This will also enable element name update if rename of this 'fake' property was invoked from property reference  
+    public AntPropertyElement(final AntElement parent, final XmlAttributeValue sourceElement) {
+      super(parent, sourceElement);
+    }
+
+    public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
+      setIdentifierName(name);
+      return this;
+    }
+  }
 }

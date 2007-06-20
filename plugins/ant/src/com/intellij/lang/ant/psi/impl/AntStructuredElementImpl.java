@@ -31,10 +31,20 @@ import java.util.regex.Pattern;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
 
+  private static final AntNameIdentifier ourNullIdentifier = new AntNameIdentifierImpl(null, null) {
+    @NonNls
+    public String getIdentifierName() {
+      return "AntNullIdentifier";
+    }
+
+    public boolean isValid() {
+      return true;
+    }
+  };
   protected volatile AntTypeDefinition myDefinition;
   private boolean myDefinitionCloned;
-  private volatile AntElement myIdElement;
-  private volatile AntElement myNameElement;
+  private volatile AntNameIdentifier myIdElement;
+  private volatile AntNameIdentifier myNameElement;
   @NonNls private volatile String myNameElementAttribute;
   private volatile int myLastFoundElementOffset = -1;
   private volatile AntElement myLastFoundElement;
@@ -116,10 +126,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public String getName() {
     if (hasNameElement()) {
-      return computeAttributeValue(getNameElement().getName());
+      return computeAttributeValue(getNameElement().getIdentifierName());
     }
     if (hasIdElement()) {
-      return computeAttributeValue(getIdElement().getName());
+      return computeAttributeValue(getIdElement().getIdentifierName());
     }
     return super.getName();
   }
@@ -127,13 +137,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
     try {
       if (hasNameElement()) {
-        getNameElement().setName(name);
+        getNameElement().setIdentifierName(name);
       }
       else if (hasIdElement()) {
-        getIdElement().setName(name);
-      }
-      else {
-        super.setName(name);
+        getIdElement().setIdentifierName(name);
       }
       return this;
     }
@@ -149,12 +156,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public PsiElement findElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
       if (offset != myLastFoundElementOffset) {
-        PsiElement foundElement = super.findElementAt(offset);
+        final PsiElement foundElement = super.findElementAt(offset);
         if (foundElement == null) {
           return null;
-        }
-        if (foundElement instanceof AntNameElementImpl) {
-          foundElement = ((AntNameElementImpl)foundElement).getMirrorElement();
         }
         myLastFoundElement = (AntElement)foundElement;
         myLastFoundElementOffset = offset;
@@ -296,11 +300,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public boolean hasNameElement() {
-    return getNameElement() != ourNull;
+    return getNameElement() != ourNullIdentifier;
   }
 
   public boolean hasIdElement() {
-    return getIdElement() != ourNull;
+    return getIdElement() != ourNullIdentifier;
   }
 
   @NotNull
@@ -423,20 +427,19 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   @NotNull
-  private AntElement getIdElement() {
+  private AntNameIdentifier getIdElement() {
     synchronized (PsiLock.LOCK) {
       if (myIdElement == null) {
-        myIdElement = ourNull;
+        myIdElement = ourNullIdentifier;
         final XmlTag se = getSourceElement();
         if (se.isValid()) {
           final XmlAttribute idAttr = se.getAttribute(AntFileImpl.ID_ATTR, null);
           if (idAttr != null) {
             final XmlAttributeValue valueElement = idAttr.getValueElement();
             if (valueElement != null) {
-              final AntNameElementImpl idElement = new AntNameElementImpl(this, valueElement);
-              idElement.setMirrorElement(this);
-              myIdElement = idElement;
-              getAntProject().registerRefId(myIdElement.getName(), this);
+              final AntNameIdentifierImpl identifier = new AntNameIdentifierImpl(this, valueElement);
+              myIdElement = identifier;
+              getAntProject().registerRefId(identifier.getIdentifierName(), this);
             }
           }
         }
@@ -446,19 +449,17 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   @NotNull
-  private AntElement getNameElement() {
+  private AntNameIdentifier getNameElement() {
     synchronized (PsiLock.LOCK) {
       if (myNameElement == null) {
-        myNameElement = ourNull;
+        myNameElement = ourNullIdentifier;
         final XmlTag se = getSourceElement();
         if (se.isValid()) {
           final XmlAttribute nameAttr = se.getAttribute(myNameElementAttribute, null);
           if (nameAttr != null) {
             final XmlAttributeValue valueElement = nameAttr.getValueElement();
             if (valueElement != null) {
-              final AntNameElementImpl element = new AntNameElementImpl(this, valueElement);
-              element.setMirrorElement(this);
-              myNameElement = element;
+              myNameElement = new AntNameIdentifierImpl(this, valueElement);
             }
           }
         }

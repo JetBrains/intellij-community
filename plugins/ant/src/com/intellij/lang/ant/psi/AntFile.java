@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface AntFile extends PsiFile, AntElement, ModificationTracker {
+public interface AntFile extends PsiFile, AntElement, PsiNamedElement, ModificationTracker {
 
   AntFile[] NO_FILES = new AntFile[0];
 

@@ -1,12 +1,14 @@
 package com.intellij.lang.ant.psi.usages;
 
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.HelpID;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +37,17 @@ public class AntUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getDescriptiveName(@NotNull PsiElement element) {
-    if( element instanceof AntFile) {
-      return ((AntFile)element).getName();
+    if( element instanceof PsiNamedElement) {
+      final String name = ((PsiNamedElement)element).getName();
+      if (name != null) {
+        return name;
+      }
     }
-    final AntElement antElement = (AntElement)element;
-    final String name = antElement.getName();
-    if (name != null) return name;
-    return ((AntStructuredElement)antElement).getSourceElement().getName();
+    final XmlElement sourceElement = ((AntElement)element).getSourceElement();
+    if (sourceElement instanceof XmlTag) {
+      return ((XmlTag)sourceElement).getName();
+    }
+    return sourceElement.getText();
   }
 
   @NotNull

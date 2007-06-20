@@ -19,7 +19,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ import java.util.List;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
-  protected static AntElement ourNull = new AntElementImpl(null, null) {
+  protected static final AntElement ourNull = new AntElementImpl(null, null) {
     @NonNls
     public String getName() {
       return "AntNull";
@@ -73,10 +72,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
-  }
-
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Can't rename ant element");
   }
 
   @Nullable

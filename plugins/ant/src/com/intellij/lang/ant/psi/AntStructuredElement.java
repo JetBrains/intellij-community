@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface AntStructuredElement extends AntElement {
+public interface AntStructuredElement extends AntElement, PsiNamedElement {
 
   @NotNull
   XmlTag getSourceElement();

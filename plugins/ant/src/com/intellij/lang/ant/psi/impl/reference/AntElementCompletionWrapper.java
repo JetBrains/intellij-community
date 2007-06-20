@@ -3,9 +3,13 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public final class AntElementCompletionWrapper extends AntElementImpl {
+public final class AntElementCompletionWrapper extends AntElementImpl implements PsiNamedElement {
 
   private final String myName;
   private final Project myProject;
@@ -52,5 +56,9 @@ public final class AntElementCompletionWrapper extends AntElementImpl {
 
   public boolean isPhysical() {
     return false;
+  }
+
+  public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Can't rename ant completion element");  
   }
 }

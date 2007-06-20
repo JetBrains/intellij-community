@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.openapi.util.TextRange;
+
 /**
  * @author Mike
  */
@@ -23,4 +25,9 @@ public interface XmlAttributeValue extends XmlElement {
    * @return text inside XML attribute with quotes stripped off
    */
   String getValue();
+  
+  /**
+   * @return the range occupied by text inside XML attribute with quotes stripped off
+   */
+  TextRange getValueTextRange();
 }

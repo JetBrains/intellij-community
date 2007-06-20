@@ -43,6 +43,17 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return StringUtil.stripQuotesAroundValue(getText());
   }
 
+  public TextRange getValueTextRange() {
+    final TextRange range = getTextRange();
+    final String value = getValue();
+    if (value.length() == 0) {
+      return range; 
+    }
+    final int start = range.getStartOffset() + getText().indexOf(value);
+    final int end = start + value.length() - 1;
+    return new TextRange(start, end);
+  }
+
   public void clearCaches() {
     super.clearCaches();
     myCachedReferences = null;

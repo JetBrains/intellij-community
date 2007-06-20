@@ -15,12 +15,12 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author dyoma
  */
-public interface PsiAntElement extends PsiNamedElement {
+public interface PsiAntElement extends PsiElement {
   AntElementRole getRole();
   boolean canRename();
 }
