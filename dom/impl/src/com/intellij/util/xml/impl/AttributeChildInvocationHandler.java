@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -11,8 +12,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -97,14 +102,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   protected final void removeFromCache() {
   }
 
-  protected final Invocation createSetValueInvocation(final Converter converter) {
-    return new SetAttributeValueInvocation(converter);
-  }
-
-  protected final Invocation createGetValueInvocation(final Converter converter) {
-    return new GetAttributeValueInvocation(converter);
-  }
-
   public final void undefineInternal() {
     final XmlTag tag = getXmlTag();
     setDefined(false);
@@ -131,6 +128,41 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
 
   public final XmlTag ensureTagExists() {
     return getParentHandler().ensureTagExists();
+  }
+
+  @Nullable
+  protected String getValue() {
+    final XmlTag tag = getXmlTag();
+    if (tag != null) {
+      final String s = tag.getAttributeValue(getXmlElementName(), tag.getNamespace());
+      if (s != null) {
+        return XmlUtil.unescape(s);
+      }
+    }
+    return null;
+  }
+
+  protected void setValue(@NotNull final String value) {
+    final XmlTag tag = ensureTagExists();
+    final String attributeName = getXmlElementName();
+    final String namespace = getXmlElementNamespace();
+    final String oldValue = XmlUtil.unescape(tag.getAttributeValue(attributeName, namespace));
+    final String newValue = XmlStringUtil.escapeString(value);
+    if (Comparing.equal(oldValue, newValue)) return;
+
+    getManager().runChange(new Runnable() {
+      public void run() {
+        try {
+          tag.setAttribute(attributeName, namespace, newValue);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    });
+    setDefined(true);
+    final DomElement proxy = getProxy();
+    getManager().fireEvent(oldValue != null ? new ElementChangedEvent(proxy) : new ElementDefinedEvent(proxy));
   }
 
 }

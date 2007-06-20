@@ -3,13 +3,12 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 
 /**
  * @author peter
  */
-public abstract class SetInvocation implements Invocation {
+public class SetInvocation implements Invocation {
   private final Converter myConverter;
 
   protected SetInvocation(final Converter converter) {
@@ -29,12 +28,10 @@ public abstract class SetInvocation implements Invocation {
       if (value == null) {
         handler.undefineInternal();
       } else {
-        setValue(handler, value);
+        handler.setValue(value);
       }
     }
     return null;
   }
-
-  protected abstract void setValue(DomInvocationHandler handler, String value) throws IncorrectOperationException;
 
 }

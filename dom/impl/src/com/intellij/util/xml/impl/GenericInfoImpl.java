@@ -34,10 +34,10 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final DomManagerImpl myDomManager;
   private final BidirectionalMap<JavaMethodSignature, Pair<XmlName, Integer>> myFixedChildrenMethods =
     new BidirectionalMap<JavaMethodSignature, Pair<XmlName, Integer>>();
-  private final Map<XmlName, Integer> myFixedChildrenCounts = new THashMap<XmlName, Integer>();
+  private final Map<XmlName, Integer> myFixedChildrenCounts = new TreeMap<XmlName, Integer>();
   private final Map<JavaMethodSignature, XmlName> myCollectionChildrenGetterMethods = new THashMap<JavaMethodSignature, XmlName>();
   private final Map<JavaMethodSignature, XmlName> myCollectionChildrenAdditionMethods = new THashMap<JavaMethodSignature, XmlName>();
-  private final Map<XmlName, Type> myCollectionChildrenClasses = new THashMap<XmlName, Type>();
+  private final Map<XmlName, Type> myCollectionChildrenClasses = new TreeMap<XmlName, Type>();
   private final Map<JavaMethodSignature, XmlName> myAttributeChildrenMethods = new THashMap<JavaMethodSignature, XmlName>();
   private final Map<JavaMethodSignature, Set<XmlName>> myCompositeChildrenMethods = new THashMap<JavaMethodSignature, Set<XmlName>>();
   private final Map<JavaMethodSignature, Pair<XmlName, Set<XmlName>>> myCompositeCollectionAdditionMethods =

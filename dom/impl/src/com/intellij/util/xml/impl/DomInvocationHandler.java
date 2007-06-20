@@ -6,14 +6,12 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -26,6 +24,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.util.xml.events.TagValueChangeEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -151,60 +150,63 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myAbstractType;
   }
 
+  @Nullable
+  protected String getValue() {
+    final XmlTag tag = getXmlTag();
+    return tag == null ? null : getTagValue(tag);
+  }
+
+  protected void setValue(@Nullable final String value) {
+    final XmlTag tag = ensureTagExists();
+    myManager.runChange(new Runnable() {
+      public void run() {
+        setTagValue(tag, value);
+      }
+    });
+    myManager.fireEvent(new TagValueChangeEvent(getProxy(), value));
+  }
+
   public final void copyFrom(DomElement other) {
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType);
-    final XmlTag fromTag = other.getXmlTag();
-    if (fromTag == null) {
-      if (getXmlTag() != null) {
-        undefine();
-      }
+
+    if (other.getXmlElement() == null) {
+      undefine();
       return;
     }
 
-    final XmlTag tag = ensureTagExists();
-    if (!(this instanceof CollectionElementInvocationHandler)) {
-      detach(false);
+    ensureXmlElementExists();
+    for (final AttributeChildDescriptionImpl description : myGenericInfo.getAttributeChildrenDescriptions()) {
+      description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getStringValue());
     }
-    myManager.runChange(new Runnable() {
-      public void run() {
-        try {
-          copyTags(fromTag, tag);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+    for (final FixedChildDescriptionImpl description : myGenericInfo.getFixedChildrenDescriptions()) {
+      final List<? extends DomElement> list = description.getValues(getProxy());
+      final List<? extends DomElement> otherValues = description.getValues(other);
+      for (int i = 0; i < list.size(); i++) {
+        final DomElement otherValue = otherValues.get(i);
+        final DomElement value = list.get(i);
+        if (otherValue.getXmlElement() == null) {
+          value.undefine();
+        } else {
+          value.copyFrom(otherValue);
         }
       }
-    });
-    attach(tag);
+    }
+    for (final CollectionChildDescriptionImpl description : myGenericInfo.getCollectionChildrenDescriptions()) {
+      for (final DomElement value : description.getValues(getProxy())) {
+        value.undefine();
+      }
+      for (final DomElement otherValue : description.getValues(other)) {
+        description.addValue(getProxy(), otherValue.getDomElementType()).copyFrom(otherValue);
+      }
+    }
+
+    final String stringValue = DomManagerImpl.getDomInvocationHandler(other).getValue();
+    if (StringUtil.isNotEmpty(stringValue)) {
+      setValue(stringValue);
+    }
   }
 
-  private static void copyTags(final XmlTag fromTag, final XmlTag toTag) throws IncorrectOperationException {
-    for (PsiElement child : toTag.getChildren()) {
-      if (child instanceof XmlAttribute || child instanceof XmlTag) {
-        child.delete();
-      }
-    }
-
-    PsiElement child = fromTag.getFirstChild();
-    boolean hasChildren = false;
-    while (child != null) {
-      if (child instanceof XmlTag) {
-        final XmlTag xmlTag = (XmlTag)child;
-        if (!StringUtil.isEmpty(xmlTag.getName())) {
-          copyTags(xmlTag, (XmlTag)toTag.add(toTag.createChildTag(xmlTag.getLocalName(), xmlTag.getNamespace(), "", false)));
-          hasChildren = true;          
-        }
-      }
-      else if (child instanceof XmlAttribute) {
-        toTag.add(child);
-      }
-      child = child.getNextSibling();
-    }
-    if (!hasChildren) {
-      toTag.getValue().setText(fromTag.getValue().getText());
-    }
-  }
 
   public final <T extends DomElement> T createMockCopy(final boolean physical) {
     final T copy = myManager.createMockElement((Class<? extends T>)getRawType(), getProxy().getModule(), physical);
@@ -508,12 +510,12 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myGenericInfo.createInvocation(method);
   }
 
-  protected Invocation createSetValueInvocation(final Converter converter) {
-    return new SetValueInvocation(converter);
+  private Invocation createSetValueInvocation(final Converter converter) {
+    return new SetInvocation(converter);
   }
 
-  protected Invocation createGetValueInvocation(final Converter converter) {
-    return new GetValueInvocation(converter);
+  private Invocation createGetValueInvocation(final Converter converter) {
+    return new GetInvocation(converter);
   }
 
   @NotNull

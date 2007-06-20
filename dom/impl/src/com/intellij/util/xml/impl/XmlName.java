@@ -16,7 +16,7 @@ import java.lang.reflect.*;
 /**
  * @author peter
 */
-public class XmlName {
+public class XmlName implements Comparable<XmlName> {
   private final String myLocalName;
   private final String myNamespaceKey;
 
@@ -123,5 +123,12 @@ public class XmlName {
   @Nullable
   public static XmlName create(@NotNull final String name, final JavaMethod method) {
     return create(name, method.getGenericReturnType(), method);
+  }
+
+  public int compareTo(XmlName o) {
+    final int i = myLocalName.compareTo(o.myLocalName);
+    if (i != 0) return i;
+    if (Comparing.equal(myNamespaceKey, o.myNamespaceKey)) return 0;
+    return myNamespaceKey.compareTo(o.myNamespaceKey);
   }
 }

@@ -12,11 +12,12 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.Converter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class GetInvocation implements Invocation {
+public class GetInvocation implements Invocation {
   private static final Key<FactoryMap<Converter,CachedValue>> DOM_VALUE_KEY = Key.create("Dom element value key");
   private final Converter myConverter;
 
@@ -44,7 +45,8 @@ public abstract class GetInvocation implements Invocation {
     return map.get(myConverter).getValue();
   }
 
-  private Object getValueInner(final DomInvocationHandler handler, Converter converter) {
+  @Nullable
+  private static Object getValueInner(final DomInvocationHandler handler, Converter converter) {
     final XmlTag tag = handler.getXmlTag();
     final boolean tagNotNull = tag != null;
     if (handler.isIndicator()) {
@@ -56,9 +58,8 @@ public abstract class GetInvocation implements Invocation {
       }
     }
 
-    final String tagValue = tagNotNull ? getValue(tag, handler) : null;
+    final String tagValue = handler.getValue();
     return converter.fromString(tagValue, new ConvertContextImpl(handler));
   }
 
-  protected abstract String getValue(XmlTag tag, DomInvocationHandler handler);
 }
