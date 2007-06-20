@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.css.CssTerm;
 import com.intellij.psi.css.impl.CssTermTypes;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -131,17 +130,20 @@ public class ImagePreviewComponent extends JPanel {
       }
     }
     else if (element.getParent() instanceof XmlAttributeValue) {
-      XmlAttribute attribute = (XmlAttribute)element.getParent().getParent();
-      String attrName = attribute.getName();
-      if ("background".equals(attrName) || "src".equals(attrName)) {
-        PsiElement parent = element;
-        while (parent != attribute) {
-          final JComponent c = _getPreviewComponent(parent);
-          if (c != null) {
-            return c;
-          }
+      final PsiElement attributeValue = element.getParent();
+      if (attributeValue.getParent() instanceof XmlAttribute) {
+        XmlAttribute attribute = (XmlAttribute)attributeValue.getParent();
+        String attrName = attribute.getName();
+        if ("background".equals(attrName) || "src".equals(attrName)) {
+          PsiElement parent = element;
+          while (parent != attribute) {
+            final JComponent c = _getPreviewComponent(parent);
+            if (c != null) {
+              return c;
+            }
 
-          parent = parent.getParent();
+            parent = parent.getParent();
+          }
         }
       }
     }
@@ -152,9 +154,10 @@ public class ImagePreviewComponent extends JPanel {
   private static JComponent _getPreviewComponent(final PsiElement parent) {
     final PsiReference[] references = parent.getReferences();
     for (final PsiReference reference : references) {
-      if (reference instanceof FileReference) {
-        final PsiFileSystemItem item = ((FileReference)reference).resolve();
-        if (item != null && !item.isDirectory()) {
+      final PsiElement fileItem = reference.resolve();
+      if (fileItem instanceof PsiFileSystemItem) {
+        final PsiFileSystemItem item = (PsiFileSystemItem) fileItem;
+        if (!item.isDirectory()) {
           final VirtualFile file = item.getVirtualFile();
           if (file != null && supportedExtensions.contains(file.getExtension())) {
             try {
