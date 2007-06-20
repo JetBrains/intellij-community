@@ -29,6 +29,10 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
+  public void testInnerImport() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
+  }
+
   public void testMoveMultiple1() throws Exception {
     doTest(new String[] { "pack1.Class1", "pack1.Class2" }, "pack2.A");
   }

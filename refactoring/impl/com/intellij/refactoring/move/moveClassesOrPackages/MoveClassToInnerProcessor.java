@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -111,6 +112,11 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
       retargetClassRefs(myClassToMove, newClass);
 
+      final List<PsiElement> importStatements = new ArrayList<PsiElement>();
+      if (!CodeStyleSettingsManager.getSettings(myProject).INSERT_INNER_CLASS_IMPORTS) {
+        usages = filterUsagesInImportStatements(usages, importStatements);
+      }
+
       Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       oldToNewElementsMapping.put(myClassToMove, newClass);
       myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
@@ -119,6 +125,11 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       PsiManager.getInstance(myProject).getCodeStyleManager().removeRedundantImports((PsiJavaFile)newClass.getContainingFile());
 
       myClassToMove.delete();
+      for(PsiElement element: importStatements) {
+        if (element.isValid()) {
+          element.delete();
+        }
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -216,6 +227,22 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     PsiClass newInnerClass = parentClass.findInnerClassByName(innerClass.getName(), false);
     assert newInnerClass != null;
     return newInnerClass;
+  }
+
+  private static UsageInfo[] filterUsagesInImportStatements(final UsageInfo[] usages, final List<PsiElement> importStatements) {
+    List<UsageInfo> remainingUsages = new ArrayList<UsageInfo>();
+    for(UsageInfo usage: usages) {
+      PsiElement element = usage.getElement();
+      if (element == null) continue;
+      PsiImportStatement stmt = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
+      if (stmt != null) {
+        importStatements.add(stmt);
+      }
+      else {
+        remainingUsages.add(usage);
+      }
+    }
+    return remainingUsages.toArray(new UsageInfo[remainingUsages.size()]);
   }
 
   protected String getCommandName() {
