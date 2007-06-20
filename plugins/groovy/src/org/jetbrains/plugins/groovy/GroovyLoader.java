@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,8 @@ import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
+import org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher;
+import org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
@@ -91,6 +94,8 @@ public class GroovyLoader implements ApplicationComponent {
         new GroovyCompletionData());
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
+    MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
 
     TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());
 

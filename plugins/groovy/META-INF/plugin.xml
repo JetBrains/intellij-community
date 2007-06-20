@@ -122,6 +122,10 @@
     <component>
       <implementation-class>org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider
+      </implementation-class>
+    </component>
   </application-components>
 
 </idea-plugin>

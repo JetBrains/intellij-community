@@ -17,6 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -29,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -190,4 +194,14 @@ public class PsiUtil {
     return expression.getType();
   }
 
+  public static SearchScope restrictScopeToGroovyFiles(final SearchScope originalScope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        if (originalScope instanceof GlobalSearchScope) {
+          return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileType.GROOVY_FILE_TYPE);
+        }
+        return originalScope;
+      }
+    });
+  }
 }
