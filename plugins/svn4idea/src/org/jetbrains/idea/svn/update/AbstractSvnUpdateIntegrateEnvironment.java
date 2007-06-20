@@ -123,7 +123,12 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
               VcsRevisionNumber revision = conflictedGroup.getRevision(myVcs.getProject(), path); 
               conflictedGroup.remove(path);
-              mergedGroup.add(path, myVcs, revision);
+              if (revision != null) {
+                mergedGroup.add(path, myVcs, revision);
+              }
+              else {
+                mergedGroup.add(path);
+              }
             }
           }
         }
