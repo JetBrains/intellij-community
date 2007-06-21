@@ -39,16 +39,16 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       BlockSupportImpl.replaceFileElement(myFile, (FileElement)oldNode, (FileElement)newNode, myPsiManager);
     }
     else {
+      if (oldNode instanceof ChameleonElement) {
+        oldNode = ChameleonTransforming.transform((ChameleonElement)oldNode);
+      }
+
       myRepositoryManager.beforeChildAddedOrRemoved(myFile, oldNode);
 
       TreeUtil.remove((TreeElement)newNode);
       TreeUtil.replaceWithList((TreeElement)oldNode, (TreeElement)newNode);
 
       final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newNode);
-
-      if (oldNode instanceof ChameleonElement) {
-        oldNode = ChameleonTransforming.transform((ChameleonElement)oldNode);
-      }
 
       change.setReplaced(oldNode);
       myEvent.addElementaryChange(newNode, change);
