@@ -10,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
 import com.intellij.psi.xml.XmlTokenType;
-import static com.intellij.psi.xml.XmlTokenType.*;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlParsing {
   private PsiBuilder myBuilder;
   private Stack<String> myTagNamesStack = new Stack<String>();
+  private static final int BALANCING_DEPTH_THRESHOULD = 1000;
 
   public XmlParsing(final PsiBuilder builder) {
     myBuilder = builder;
@@ -197,6 +197,13 @@ public class XmlParsing {
       tag.done(XmlElementType.XML_TAG);
       return null;
     }
+
+    if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOULD) {
+      error(XmlErrorMessages.message("way.too.unbalanced"));
+      tag.done(XmlElementType.XML_TAG);
+      return null;
+    }
+
     return tagName;
   }
 
