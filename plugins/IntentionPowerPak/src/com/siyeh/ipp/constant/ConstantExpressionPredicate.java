@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,19 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class ConstantExpressionPredicate implements PsiElementPredicate{
 
     public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiExpression)){
+        if(!(element instanceof PsiBinaryExpression)){
             return false;
         }
         if(element instanceof PsiLiteralExpression ||
                 element instanceof PsiClassObjectAccessExpression){
 	        return false;
         }
-	    final PsiExpression expression = (PsiExpression) element;
-	    final PsiType type = expression.getType();
+	    final PsiBinaryExpression expression = (PsiBinaryExpression) element;
+        final PsiExpression rhs = expression.getROperand();
+        if (rhs == null) {
+            return false;
+        }
+        final PsiType type = rhs.getType();
 	    if (type == null || type.equalsToText("java.lang.String")){
 		    return false;
 	    }
