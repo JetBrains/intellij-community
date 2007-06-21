@@ -265,7 +265,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(method.getContainingClass())) {
       return null;
     }
@@ -278,7 +278,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(aClass)) {
       return null;
     }
@@ -296,16 +296,12 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(field.getContainingClass())) {
       return null;
     }
-    if (field.getModifierList() != null) {
-      for(PsiAnnotation annotation: field.getModifierList().getAnnotations()) {
-        if (AnnotationUtil.NON_NLS.equals(annotation.getQualifiedName())) {
-          return null;
-        }
-      }
+    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, false)) {
+      return null;
     }
     final PsiExpression initializer = field.getInitializer();
     if (initializer != null) return checkElement(initializer, manager);

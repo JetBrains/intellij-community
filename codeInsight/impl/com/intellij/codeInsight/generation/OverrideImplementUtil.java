@@ -225,8 +225,8 @@ public class OverrideImplementUtil {
         }
       }
       if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0 &&
-          method.getModifierList().findAnnotation(AnnotationUtil.NOT_NULL) != null &&
-          result.getModifierList().findAnnotation(AnnotationUtil.NOT_NULL) == null) {
+          AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false)&&
+          AnnotationUtil.isAnnotated(result, AnnotationUtil.NOT_NULL, false)) {
         PsiAnnotation annotation = method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, null);
         result.getModifierList().addAfter(annotation, null);
       }

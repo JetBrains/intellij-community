@@ -15,7 +15,6 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiVariable;
 
 public class AssignInstruction extends Instruction {
@@ -34,8 +33,7 @@ public class AssignInstruction extends Instruction {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
-      final PsiModifierList modList = psiVariable.getModifierList();
-      if (modList != null && modList.findAnnotation(AnnotationUtil.NOT_NULL) != null) {
+      if (AnnotationUtil.isAnnotated(psiVariable, AnnotationUtil.NOT_NULL, false)) {
         if (!memState.applyNotNull(dfaSource)) {
           onAssigningToNotNullableVariable(runner);
         }

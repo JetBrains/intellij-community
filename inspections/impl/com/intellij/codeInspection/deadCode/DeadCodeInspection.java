@@ -11,6 +11,7 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -376,7 +377,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     if (RefUtil.isEntryPoint(owner)) return true;
     final PsiElement element = owner.getElement();
     if (element instanceof PsiModifierListOwner
-        && SpecialAnnotationsUtil.isSpecialAnnotationPresent((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
+        && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
       return true;
     }
     for (DeadCodeExtension extension : myExtensions) {

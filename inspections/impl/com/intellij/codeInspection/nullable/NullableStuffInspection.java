@@ -62,8 +62,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           if (REPORT_NOT_ANNOTATED_GETTER) {
             final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
             if (getter != null) {
-              final boolean getterAnnotated = AnnotationUtil.findAnnotation(getter, AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL) != null;
-              if (!getterAnnotated) {
+              if (!AnnotationUtil.isAnnotated(getter, AnnotationUtil.ALL_ANNOTATIONS)) {
                 holder.registerProblem(getter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -78,8 +77,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               final PsiParameter[] parameters = setter.getParameterList().getParameters();
               assert parameters.length == 1;
               final PsiParameter parameter = parameters[0];
-              final boolean parameterAnnotated = AnnotationUtil.findAnnotation(parameter, AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL) != null;
-              if (!parameterAnnotated) {
+              if (!AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS)) {
                 holder.registerProblem(parameter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,

@@ -204,13 +204,10 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       String parmName = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
-      PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
-      for(PsiAnnotation ann: annotations) {
-        if (AnnotationUtil.NOT_NULL.equals(ann.getQualifiedName())) {
-          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, field);
-          parm.getModifierList().addAfter(annotation, null);
-          break;
-        }
+
+      if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NOT_NULL, false)) {
+        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, field);
+        parm.getModifierList().addAfter(annotation, null);
       }
 
       constructor.getParameterList().add(parm);

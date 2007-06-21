@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -383,8 +384,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isInjected(final PsiMember member, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    return SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS) ||
-           SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, unusedSymbolInspection.INJECTION_ANNOS);
+    return AnnotationUtil.isAnnotated(member, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS) ||
+           AnnotationUtil.isAnnotated(member, unusedSymbolInspection.INJECTION_ANNOS);
   }
 
   private static boolean isOverriddenOrOverrides(PsiMethod method) {

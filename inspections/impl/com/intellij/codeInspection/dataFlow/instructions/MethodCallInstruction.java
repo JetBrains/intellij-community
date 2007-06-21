@@ -52,7 +52,7 @@ public class MethodCallInstruction extends Instruction {
       final PsiParameter[] params = callee.getParameterList().getParameters();
       myParametersNotNull = new boolean[params.length];
       for (int i = 0; i < params.length; i++) {
-        myParametersNotNull[i] = isNotNullParameter(params[i]);
+        myParametersNotNull[i] = AnnotationUtil.isAnnotated(params[i], AnnotationUtil.NOT_NULL, false);
       }
     }
     else {
@@ -68,14 +68,6 @@ public class MethodCallInstruction extends Instruction {
         myShouldFlushFields = false;
       }
     }
-  }
-
-  private static boolean isNotNullParameter(PsiParameter parameter) {
-    final PsiAnnotation[] annotations = parameter.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      if (AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName())) return true;
-    }
-    return false;
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {

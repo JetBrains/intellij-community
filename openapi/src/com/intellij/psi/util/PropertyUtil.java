@@ -23,8 +23,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.ArrayList;
@@ -315,15 +315,9 @@ public class PropertyUtil {
         getMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
 
-      PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
-      for(PsiAnnotation ann: annotations) {
-        final String qName = ann.getQualifiedName();
-        if (AnnotationUtil.NULLABLE.equals(qName) ||
-            AnnotationUtil.NOT_NULL.equals(qName)) {
-          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + qName, getMethod);
-          getMethod.getModifierList().addAfter(annotation, null);
-          break;
-        }
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, AnnotationUtil.ALL_ANNOTATIONS);
+      if (annotation != null) {
+        getMethod.getModifierList().addAfter(factory.createAnnotationFromText("@" + annotation.getQualifiedName(), getMethod), null);
       }
 
       PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
@@ -352,17 +346,12 @@ public class PropertyUtil {
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       PsiParameter param = factory.createParameter(parameterName, field.getType());
 
-      PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
-      for(PsiAnnotation ann: annotations) {
-        final String qName = ann.getQualifiedName();
-        if (AnnotationUtil.NOT_NULL.equals(qName) ||
-            AnnotationUtil.NULLABLE.equals(qName)) {
-          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + qName, param);
-          param.getModifierList().addAfter(annotation, null);
-          break;
-        }
+      final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(field, AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
+      if (psiAnnotation != null) {
+        final String qName = psiAnnotation.getQualifiedName();
+        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + qName, param);
+        param.getModifierList().addAfter(annotation, null);
       }
-
 
       setMethod.getParameterList().add(param);
       setMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);

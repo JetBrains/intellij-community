@@ -167,12 +167,8 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           modifierList.setModifierProperty(PsiModifier.STATIC, isMethodStatic);
           modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-          PsiAnnotation[] annotations = myParameter.getAnnotations();
-          for(PsiAnnotation ann: annotations) {
-            if (AnnotationUtil.NULLABLE.equals(ann.getQualifiedName())) {
-              modifierList.addAfter(factory.createAnnotationFromText("@" + AnnotationUtil.NULLABLE, field), null);
-              break;
-            }
+          if (AnnotationUtil.isAnnotated(myParameter, AnnotationUtil.NULLABLE, false)) {
+            modifierList.addAfter(factory.createAnnotationFromText("@" + AnnotationUtil.NULLABLE, field), null);
           }
 
           PsiCodeBlock methodBody = method.getBody();

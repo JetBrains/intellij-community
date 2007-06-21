@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -95,10 +92,16 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, Set<String> annotationNames) {
-    final PsiModifierList list = listOwner.getModifierList();
-    if (list == null) return null;
-    final PsiAnnotation[] allAnnotations = list.getAnnotations();
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+    final PsiAnnotation[] allAnnotations;
+    if (listOwner instanceof PsiParameter) {
+      allAnnotations = ((PsiParameter)listOwner).getAnnotations();
+    } else {
+      if (listOwner == null) return null;
+      final PsiModifierList list = listOwner.getModifierList();
+      if (list == null) return null;
+      allAnnotations = list.getAnnotations();
+    }
     for (PsiAnnotation annotation : allAnnotations) {
       String qualifiedName = annotation.getQualifiedName();
       if (annotationNames.contains(qualifiedName)) {
@@ -106,6 +109,21 @@ public class AnnotationUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static PsiAnnotation[] findAnnotations(final PsiMember psiMember, Collection<String> annotationNames) {
+    if (psiMember == null) return PsiAnnotation.EMPTY_ARRAY;
+    final PsiModifierList modifierList = psiMember.getModifierList();
+    if (modifierList == null) return PsiAnnotation.EMPTY_ARRAY;
+    final PsiAnnotation[] annotations = modifierList.getAnnotations();
+    final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    for (final PsiAnnotation psiAnnotation : annotations) {
+      if (annotationNames.contains(psiAnnotation.getQualifiedName())) {
+        result.add(psiAnnotation);
+      }
+    }
+    return result.size() == 0 ? PsiAnnotation.EMPTY_ARRAY : result.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -136,6 +154,13 @@ public class AnnotationUtil {
     }
 
     return null;
+  }
+
+  public static boolean isAnnotated(PsiModifierListOwner listOwner, Collection<String> annotations) {
+    for (String annotation : annotations) {
+      if (isAnnotated(listOwner, annotation, false)) return true;
+    }
+    return false;
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {

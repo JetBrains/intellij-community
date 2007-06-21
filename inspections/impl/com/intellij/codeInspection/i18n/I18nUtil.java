@@ -102,20 +102,17 @@ public class I18nUtil {
     else {
       param = params[idx];
     }
-    final PsiAnnotation[] annotations = param.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      final String qualifiedName = annotation.getQualifiedName();
-      if (qualifiedName != null && annFqn.equals(qualifiedName)) {
-        final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-        final PsiNameValuePair[] attributes = parameterList.getAttributes();
-        for (PsiNameValuePair attribute : attributes) {
-          final String name = attribute.getName();
-          if (annotationAttributeValues.containsKey(name)) {
-            annotationAttributeValues.put(name, attribute.getValue());
-          }
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, annFqn);
+    if (annotation != null) {
+      final PsiAnnotationParameterList parameterList = annotation.getParameterList();
+      final PsiNameValuePair[] attributes = parameterList.getAttributes();
+      for (PsiNameValuePair attribute : attributes) {
+        final String name = attribute.getName();
+        if (annotationAttributeValues.containsKey(name)) {
+          annotationAttributeValues.put(name, attribute.getValue());
         }
-        return true;
       }
+      return true;
     }
     if (nonNlsTargets != null) {
       nonNlsTargets.add(param);

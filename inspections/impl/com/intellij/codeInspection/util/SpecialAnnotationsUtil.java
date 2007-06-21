@@ -26,8 +26,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SortedListModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -36,7 +36,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * @author Gregory.Shrago
@@ -153,16 +152,6 @@ public class SpecialAnnotationsUtil {
     //correct save settings
     ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
     inspectionProfile.save();
-  }
-
-  public static boolean isSpecialAnnotationPresent(final PsiModifierListOwner owner, final Collection<String> annos) {
-    final PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null) {
-      for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        if (annos.contains(psiAnnotation.getQualifiedName())) return true;
-      }
-    }
-    return false;
   }
 
   public static void createAddToSpecialAnnotationFixes(final PsiModifierListOwner owner, final Processor<String> processor) {

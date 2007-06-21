@@ -2,6 +2,7 @@ package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
@@ -125,7 +126,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
     if (!refMethod.isBodyEmpty()) {
       return false;
     }
-    if (SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), EXCLUDE_ANNOS)) {
+    if (AnnotationUtil.isAnnotated(refMethod.getElement(), EXCLUDE_ANNOS)) {
       return false;
     }
     for (final Object extension : Extensions.getExtensions(ExtensionPoints.EMPTY_METHOD_TOOL)) {
