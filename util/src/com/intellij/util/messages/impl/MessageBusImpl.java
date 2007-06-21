@@ -15,6 +15,7 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MessageBusImpl implements MessageBus {
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = new ThreadLocal<Queue<DeliveryJob>>() {
@@ -32,6 +33,7 @@ public class MessageBusImpl implements MessageBus {
   private final MessageBusImpl myParentBus;
 
   //is used for debugging purposes
+  @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
   private Object myOwner;
 
   public MessageBusImpl(MessageBus parentBus) {
@@ -161,7 +163,7 @@ public class MessageBusImpl implements MessageBus {
   public void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
-      topicSubscribers = new ArrayList<MessageBusConnectionImpl>();
+      topicSubscribers = new CopyOnWriteArrayList<MessageBusConnectionImpl>();
       mySubscribers.put(topic, topicSubscribers);
     }
 
