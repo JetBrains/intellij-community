@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -456,8 +457,7 @@ class JavaDocInfoGenerator {
       final PsiElement resolved = nameReferenceElement.resolve();
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
-        final PsiModifierList modifierList = annotationType.getModifierList();
-        if (modifierList.findAnnotation("java.lang.annotation.Documented") != null) {
+        if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
           final PsiClassType type = manager.getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
           generateType(buffer, type, owner);

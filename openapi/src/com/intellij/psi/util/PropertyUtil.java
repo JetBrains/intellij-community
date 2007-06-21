@@ -315,10 +315,7 @@ public class PropertyUtil {
         getMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
 
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, AnnotationUtil.ALL_ANNOTATIONS);
-      if (annotation != null) {
-        getMethod.getModifierList().addAfter(factory.createAnnotationFromText("@" + annotation.getQualifiedName(), getMethod), null);
-      }
+      annotateWithNullableStuff(field, factory, getMethod);
 
       PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
       getMethod.getBody().replace(body);
@@ -346,12 +343,7 @@ public class PropertyUtil {
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       PsiParameter param = factory.createParameter(parameterName, field.getType());
 
-      final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(field, AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
-      if (psiAnnotation != null) {
-        final String qName = psiAnnotation.getQualifiedName();
-        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + qName, param);
-        param.getModifierList().addAfter(annotation, null);
-      }
+      annotateWithNullableStuff(field, factory, param);
 
       setMethod.getParameterList().add(param);
       setMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
@@ -384,6 +376,23 @@ public class PropertyUtil {
       LOG.error(e);
       return null;
     }
+  }
+
+  private static void annotateWithNullableStuff(final PsiModifierListOwner field, final PsiElementFactory factory, final PsiModifierListOwner listOwner)
+    throws IncorrectOperationException {
+    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NOT_NULL, false)) {
+      annotate(factory, listOwner, AnnotationUtil.NOT_NULL);
+    }
+    else if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NULLABLE, false)) {
+      annotate(factory, listOwner, AnnotationUtil.NULLABLE);
+    }
+  }
+
+  private static void annotate(final PsiElementFactory factory, final PsiModifierListOwner listOwner, final String annotationQName)
+    throws IncorrectOperationException {
+    final PsiModifierList modifierList = listOwner.getModifierList();
+    LOG.assertTrue(modifierList != null);
+    modifierList.addAfter(factory.createAnnotationFromText("@" + annotationQName, listOwner), null);
   }
 
   public static String suggestPropertyName(Project project, PsiField field) {
