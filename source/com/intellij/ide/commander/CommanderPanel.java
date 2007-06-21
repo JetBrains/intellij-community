@@ -16,6 +16,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -533,13 +534,13 @@ public class CommanderPanel extends JPanel {
 
   private final class MyDeleteElementProvider implements DeleteProvider {
     public void deleteElement(final DataContext dataContext) {
-      final LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction a = LocalHistory.startAction(myProject, IdeBundle.message("progress.deleting"));
       try {
         final PsiElement[] elements = getSelectedElements();
         DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+        a.finish();
       }
     }
 

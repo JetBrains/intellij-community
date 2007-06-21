@@ -1,4 +1,4 @@
-package com.intellij.localVcs;
+package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;

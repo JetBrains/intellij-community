@@ -2,6 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -306,7 +307,7 @@ public abstract class BaseRefactoringProcessor {
       }
     }
 
-    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
 
     final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
@@ -320,7 +321,7 @@ public abstract class BaseRefactoringProcessor {
       performPsiSpoilingRefactoring();
     }
     finally {
-      LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+      a.finish();
     }
 
     if (usages != null) {

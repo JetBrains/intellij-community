@@ -3,12 +3,11 @@ package com.intellij.ide.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -134,17 +133,16 @@ public abstract class CreateElementActionBase extends AnAction {
         return false;
       }
 
-      final LocalVcs lvcs = LocalVcs.getInstance(myProject);
-
       final Exception[] exception = new Exception[1];
 
       final Runnable command = new Runnable() {
         public void run() {
           final Runnable run = new Runnable() {
             public void run() {
-              LocalHistoryAction action = LvcsAction.EMPTY;
+              LocalHistoryAction action = LocalHistoryAction.NULL;
               try {
-                action = lvcs.startAction_New(getActionName(myDirectory, inputString), "", false);
+                action = LocalHistory.startAction(myProject, getActionName(myDirectory, inputString));
+
                 PsiElement[] psiElements = create(inputString, myDirectory);
                 myCreatedElements = new SmartPsiElementPointer[psiElements.length];
                 SmartPointerManager manager = SmartPointerManager.getInstance(myProject);

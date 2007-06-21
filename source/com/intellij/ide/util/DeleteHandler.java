@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -63,12 +64,12 @@ public class DeleteHandler {
       if (elements == null) return;
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       if (project == null) return;
-      LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(project, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction a = LocalHistory.startAction(project, IdeBundle.message("progress.deleting"));
       try {
         deletePsiElement(elements, project);
       }
       finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(project, action);
+        a.finish();
       }
     }
 

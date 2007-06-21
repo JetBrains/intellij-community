@@ -6,6 +6,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -296,7 +297,7 @@ public class MoveClassesOrPackagesImpl {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final LocalHistoryAction a = LvcsIntegration.checkinFilesBeforeRefactoring(project, commandDescription);
+            LocalHistoryAction a = LocalHistory.startAction(project, commandDescription);
             try {
               rearrangeDirectoriesToTarget(directories, selectedTarget);
             }
@@ -304,7 +305,7 @@ public class MoveClassesOrPackagesImpl {
               ex.set(e);
             }
             finally {
-              LvcsIntegration.checkinFilesAfterRefactoring(project, a);
+              a.finish();
             }
           }
         });

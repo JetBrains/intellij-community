@@ -4,11 +4,11 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -69,19 +69,19 @@ public class CommitHelper {
       return doesntContainErrors(vcsExceptions);
     }
     else {
-      Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true,
-                                                         VcsConfiguration.getInstance(myProject).getCommitOption()) {
-        public void run(final ProgressIndicator indicator) {
-          final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-          vcsManager.startBackgroundVcsOperation();
-          try {
-            action.run();
+      Task.Backgroundable task =
+        new Task.Backgroundable(myProject, myActionName, true, VcsConfiguration.getInstance(myProject).getCommitOption()) {
+          public void run(final ProgressIndicator indicator) {
+            final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+            vcsManager.startBackgroundVcsOperation();
+            try {
+              action.run();
+            }
+            finally {
+              vcsManager.stopBackgroundVcsOperation();
+            }
           }
-          finally {
-            vcsManager.stopBackgroundVcsOperation();
-          }
-        }
-      };
+        };
       ProgressManager.getInstance().run(task);
       return false;
     }
@@ -135,14 +135,14 @@ public class CommitHelper {
         }
       });
 
-      final LocalHistoryAction lvcsAction = ApplicationManager.getApplication().runReadAction(new Computable<LocalHistoryAction>() {
+      final LocalHistoryAction action = ApplicationManager.getApplication().runReadAction(new Computable<LocalHistoryAction>() {
         public LocalHistoryAction compute() {
-          return LocalVcs.getInstance(myProject).startAction_New(myActionName, "", true);
+          return LocalHistory.startAction(myProject, myActionName);
         }
       });
       VirtualFileManager.getInstance().refresh(true, new Runnable() {
         public void run() {
-          lvcsAction.finish();
+          action.finish();
           for (FilePath path : pathsToRefresh) {
             VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
           }

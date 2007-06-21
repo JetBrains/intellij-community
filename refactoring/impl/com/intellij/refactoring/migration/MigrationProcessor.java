@@ -1,6 +1,7 @@
 package com.intellij.refactoring.migration;
 
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -119,7 +120,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     final PsiMigration psiMigration = psiManager.startMigration();
-    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
 
     try {
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
@@ -133,7 +134,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
       }
     }
     finally {
-      LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+      a.finish();
       psiMigration.finish();
     }
   }

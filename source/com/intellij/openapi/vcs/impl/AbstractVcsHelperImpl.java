@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -16,7 +17,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -287,12 +287,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  public LocalHistoryAction startVcsAction(String actionName) {
-    return LocalVcs.getInstance(myProject).startAction_New(actionName, "", false);
-  }
-
-  public void finishVcsAction(LocalHistoryAction action) {
-    action.finish();
+  public LocalHistoryAction startLocalHistoryAction(String actionName) {
+    return LocalHistory.startAction(myProject, actionName);
   }
 
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {

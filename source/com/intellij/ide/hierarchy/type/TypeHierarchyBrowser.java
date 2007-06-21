@@ -10,6 +10,7 @@ import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -550,14 +551,13 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     public final void deleteElement(final DataContext dataContext) {
       final PsiClass aClass = getSelectedClass();
       if (aClass == null || aClass instanceof PsiAnonymousClass) return;
-      final LocalHistoryAction action =
-        LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting.class", aClass.getQualifiedName()));
+      LocalHistoryAction a = LocalHistory.startAction(myProject, IdeBundle.message("progress.deleting.class", aClass.getQualifiedName()));
       try {
         final PsiElement[] elements = new PsiElement[]{aClass};
         DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+        a.finish();
       }
     }
 

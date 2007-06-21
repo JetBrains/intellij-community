@@ -2,6 +2,7 @@ package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
@@ -194,7 +195,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
-    final LocalHistoryAction lvcsAction = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
     try {
       doRefactoring(usages);
     }
@@ -202,7 +203,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       LOG.error(e);
     }
     finally {
-      LvcsIntegration.checkinFilesAfterRefactoring(myProject, lvcsAction);
+      a.finish();
     }
   }
 

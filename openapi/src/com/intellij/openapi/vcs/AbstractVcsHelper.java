@@ -49,9 +49,7 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, String tabDisplayName);
 
-  public abstract LocalHistoryAction startVcsAction(String actionName);
-
-  public abstract void finishVcsAction(LocalHistoryAction action);
+  public abstract LocalHistoryAction startLocalHistoryAction(String actionName);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction

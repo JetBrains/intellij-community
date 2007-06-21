@@ -9,6 +9,7 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -141,7 +142,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
 
   private void doRefactoring(PullUpDialog dialog) {
-    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
     try {
       try {
         PullUpHelper helper = new PullUpHelper(mySubclass, dialog.getSuperClass(), dialog.getSelectedMemberInfos(),
@@ -150,7 +151,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
         helper.moveFieldInitializations();
       }
       finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+        a.finish();
       }
     }
     catch (IncorrectOperationException e) {

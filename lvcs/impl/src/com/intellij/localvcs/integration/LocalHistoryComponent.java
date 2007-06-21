@@ -194,8 +194,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   @NonNls
   @NotNull
   public String getComponentName() {
-    // todo dont forget to change name
-    return "NewLocalVcs";
+    return "Local History";
   }
 
   private IdeaGateway createIdeaGateway() {
@@ -203,7 +202,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public ILocalVcs getLocalVcs() {
-    if (!isEnabled()) throw new RuntimeException("new local vcs is disabled");
+    if (!isEnabled()) throw new RuntimeException("new local history is disabled");
     return myVcs;
   }
 

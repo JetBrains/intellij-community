@@ -2,6 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -193,12 +194,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       myEditor.getCaretModel().moveToLogicalPosition(pos);
     }
 
-    final LocalHistoryAction lvcsAction = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
     try {
       doRefactoring(usages);
     }
     finally {
-      LvcsIntegration.checkinFilesAfterRefactoring(myProject, lvcsAction);
+      a.finish();
     }
 
     if (myEditor != null) {

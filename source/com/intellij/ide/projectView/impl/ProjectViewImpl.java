@@ -18,6 +18,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -840,12 +841,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
       final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
 
-      LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction a = LocalHistory.startAction(myProject, IdeBundle.message("progress.deleting"));
       try {
         DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+        a.finish();
       }
     }
 

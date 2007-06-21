@@ -9,14 +9,13 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -29,8 +28,8 @@ import java.awt.event.InputEvent;
 
 public abstract class AbstractAction extends AnAction {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.AbstractAction");
-  private LocalHistoryAction myLvcsAction = LvcsAction.EMPTY;
   private final boolean myStartLvcsAction;
+  private LocalHistoryAction myLocalHistoryAction = LocalHistoryAction.NULL;
 
   public AbstractAction(boolean startLvcsAction) {
     myStartLvcsAction = startLvcsAction;
@@ -47,11 +46,6 @@ public abstract class AbstractAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     actionPerformed(CvsContextWrapper.createCachedInstance(e));
-  }
-
-  private static LocalVcs getLvcs(Project project) {
-    if (project == null) return null;
-    return LocalVcs.getInstance(project);
   }
 
   protected abstract String getTitle(VcsContext context);
@@ -115,15 +109,17 @@ public abstract class AbstractAction extends AnAction {
 
   private void startAction(VcsContext context) {
     if (!myStartLvcsAction) return;
-    final Project project = context.getProject();
-    if (project == null) return;
-    LocalVcs lvcs = getLvcs(project);
-    if (lvcs != null && getTitle(context) != null) {
 
-      synchronized (lvcs) {
-        myLvcsAction = lvcs.startAction_New(CvsBundle.getCvsDisplayName() + ": " + getTitle(context), "", true);
-      }
-    }
+    Project project = context.getProject();
+    if (project == null || getTitle(context) == null) return;
+
+    String name = CvsBundle.getCvsDisplayName() + ": " + getTitle(context);
+    myLocalHistoryAction = LocalHistory.startAction(project, name);
+  }
+
+  protected void endAction() {
+    myLocalHistoryAction.finish();
+    myLocalHistoryAction = LocalHistoryAction.NULL;
   }
 
   protected static void start(VcsContext context) {
@@ -148,11 +144,6 @@ public abstract class AbstractAction extends AnAction {
     if (refreshablePanel != null) {
       refreshablePanel.refresh();
     }
-  }
-
-  protected void endAction() {
-    myLvcsAction.finish();
-    myLvcsAction = LvcsAction.EMPTY;
   }
 
   protected static void adjustName(boolean showDialogOptions, AnActionEvent e) {

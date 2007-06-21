@@ -1,8 +1,8 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -190,11 +190,10 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous) {
-    final LocalHistoryAction lvcsAction =
-      LocalVcs.getInstance(project).startAction_New(VcsBundle.message("changes.action.rollback.text"), "", true);
+    final LocalHistoryAction action = LocalHistory.startAction(project, VcsBundle.message("changes.action.rollback.text"));
     VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
       public void run() {
-        lvcsAction.finish();
+        action.finish();
         if (!project.isDisposed()) {
           for (FilePath path : pathsToRefresh) {
             VcsDirtyScopeManager.getInstance(project).fileDirty(path);

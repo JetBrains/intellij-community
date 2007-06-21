@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +11,6 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -23,18 +24,18 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
@@ -42,16 +43,18 @@ import com.intellij.ui.dualView.DualView;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
-import com.intellij.util.ui.*;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.TableViewModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -721,7 +724,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     private void refreshFile(VcsFileRevision revision) {
       if (getVirtualFile() == null) {
-        final LocalHistoryAction action = startLvcsAction(revision);
+        final LocalHistoryAction action = startLocalHistoryAction(revision);
         if (getVirtualParent() != null) {
           getVirtualParent().refresh(true, true, new Runnable() {
             public void run() {
@@ -741,7 +744,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         }
       }
 
-      LocalHistoryAction action = file != null ? startLvcsAction(revision) : LvcsAction.EMPTY;
+      LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
 
       final byte[] revisionContent;
       try {
@@ -778,8 +781,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     }
 
-    private LocalHistoryAction startLvcsAction(final VcsFileRevision revision) {
-      return LocalVcs.getInstance(myProject).startAction_New(createGetActionTitle(revision), getFilePath(), false);
+    private LocalHistoryAction startLocalHistoryAction(final VcsFileRevision revision) {
+      return LocalHistory.startAction(myProject, createGetActionTitle(revision));
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {

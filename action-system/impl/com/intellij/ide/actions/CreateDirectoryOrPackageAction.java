@@ -4,13 +4,12 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -146,17 +145,18 @@ public class CreateDirectoryOrPackageAction extends AnAction {
         public void run() {
           final Runnable run = new Runnable() {
             public void run() {
-              LocalHistoryAction lvcsAction = LvcsAction.EMPTY;
+              LocalHistoryAction action = LocalHistoryAction.NULL;
               try {
-                String actionName = myIsDirectory
-                                    ? IdeBundle
-                  .message("progress.creating.directory", myDirectory.getVirtualFile().getPresentableUrl(), File.separator, subDirName)
-                                    : IdeBundle
-                                      .message("progress.creating.package", myDirectory.getPackage().getQualifiedName(), subDirName);
-
-                String directoryPath = myDirectory.getVirtualFile().getPath() + "/" + subDirName;
-
-                lvcsAction = LocalVcs.getInstance(myProject).startAction_New(actionName, directoryPath, false);
+                String actionName;
+                if (myIsDirectory) {
+                  String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
+                  actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
+                }
+                else {
+                  String packagePath = myDirectory.getPackage().getQualifiedName();
+                  actionName = IdeBundle.message("progress.creating.package", packagePath, subDirName);
+                }
+                action = LocalHistory.startAction(myProject, actionName);
 
                 final PsiDirectory createdDir;
                 if (myIsDirectory) {
@@ -193,7 +193,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                 return;
               }
               finally {
-                lvcsAction.finish();
+                action.finish();
               }
             }
           };

@@ -1,6 +1,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +12,6 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -85,25 +85,26 @@ class UndoableGroup {
   }
 
   private void undoOrRedo(final boolean isUndo) {
-    LocalHistoryAction actionStarted = LvcsAction.EMPTY;
+    LocalHistoryAction action = LvcsAction.EMPTY;
+
     if (myProject != null) {
-      LocalVcs lvcs = LocalVcs.getInstance(myProject);
-      if (isComplex() && lvcs != null) {
-        final String lvcsActionName;
+      if (isComplex()) {
+        final String actionName;
         if (isUndo) {
-          lvcsActionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
+          actionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
         }
         else {
-          lvcsActionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
+          actionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
         }
-        actionStarted = lvcs.startAction_New(lvcsActionName, "", false);
+        action = LocalHistory.startAction(myProject, actionName);
       }
     }
+
     try {
       performWritableUndoOrRedoAction(isUndo);
     }
     finally {
-      actionStarted.finish();
+      action.finish();
     }
   }
 

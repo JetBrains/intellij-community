@@ -1,6 +1,7 @@
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -90,7 +91,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
 
 
   private void doRefactoring() throws IncorrectOperationException {
-    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
     PsiClass anInterface = null;
     try {
       anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
@@ -99,7 +100,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
       throw ex;
     }
     finally {
-      LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+      a.finish();
     }
 
     if (anInterface != null) {

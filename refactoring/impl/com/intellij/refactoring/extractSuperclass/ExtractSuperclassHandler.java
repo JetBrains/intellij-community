@@ -5,6 +5,7 @@
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -129,7 +130,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
     final JavaDocPolicy javaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
-    LocalHistoryAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName(subclass, superclassName));
+    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName(subclass, superclassName));
     try {
       PsiClass superclass = null;
 
@@ -138,7 +139,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
           ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
       }
       finally {
-        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+        a.finish();
       }
 
       // ask whether to search references to subclass and turn them into refs to superclass if possible
