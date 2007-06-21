@@ -42,7 +42,7 @@ public class FindUsagesTest extends IdeaTestCase {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
-    builder.addModule(JavaModuleFixtureBuilder.class).addContentRoot(myFixture.getTempDirPath());
+    builder.addModule(JavaModuleFixtureBuilder.class).addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getTestName(true));
     myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/findUsages");
     myFixture.setUp();
 
