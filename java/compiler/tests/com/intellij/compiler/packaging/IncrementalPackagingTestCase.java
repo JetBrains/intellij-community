@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.compiler.impl.make.BuildRecipeImpl;
 import com.intellij.compiler.impl.make.FileCopyInstructionImpl;
 import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
-import com.intellij.compiler.impl.make.JavaeeModuleBuildInstructionImpl;
+import com.intellij.compiler.impl.make.CompoundBuildInstructionImpl;
 import com.intellij.compiler.impl.make.newImpl.*;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockLocalFileSystem;
@@ -51,7 +51,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     final ProcessingItemsBuilderContext context = new ProcessingItemsBuilderContext(compileContext);
     new ProcessingItemsBuilder(participant, context).build();
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
-      public boolean visitJ2EEModuleBuildInstruction(final JavaeeModuleBuildInstruction instruction) throws Exception {
+      public boolean visitCompoundBuildInstruction(final CompoundBuildInstruction instruction) throws Exception {
         final BuildParticipant buildParticipant = new MockBuildParticipant(instruction.getBuildProperties(),
                                                                            instruction.getChildInstructions(compileContext));
         new ProcessingItemsBuilder(buildParticipant, context).build();
@@ -201,7 +201,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
                                                                               "/out" + myCount + "/exploded", "/out" + myCount + "/my.jar");
       myCount++;
       final MockBuildParticipant participant = new MockBuildParticipant(configuration, inner.myBuildRecipe);
-      add(new JavaeeModuleBuildInstructionImpl(null, participant, relativeOutput));
+      add(new CompoundBuildInstructionImpl(null, participant, relativeOutput));
       return inner;
     }
 
