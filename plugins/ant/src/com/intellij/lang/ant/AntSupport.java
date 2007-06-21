@@ -40,7 +40,7 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
     }
   }
 
-  public static AntLanguage getLanguage() {
+  public static synchronized AntLanguage getLanguage() {
     if (ourLanguage == null) {
       if (ourFileType == null) {
         ourFileType = new AntFileType();
@@ -50,7 +50,7 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
     return ourLanguage;
   }
 
-  public static AntChangeVisitor getChangeVisitor() {
+  public static synchronized AntChangeVisitor getChangeVisitor() {
     if (ourChangeVisitor == null) {
       ourChangeVisitor = new AntChangeVisitor();
     }
