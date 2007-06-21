@@ -91,7 +91,7 @@ public class Updater implements CacheUpdater {
   }
 
   public void canceled() {
-    throw new RuntimeException();
+    // TODO ? Save changes processed so far?
   }
 
   private void deleteObsoleteRoots() {

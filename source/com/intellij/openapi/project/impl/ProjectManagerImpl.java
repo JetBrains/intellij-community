@@ -287,11 +287,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         startupManager.runStartupActivities();
       }
-    }, ProjectBundle.message("project.load.progress"), false, project);
+    }, ProjectBundle.message("project.load.progress"), true, project);
+
+    if (!ok) {
+      closeProject(project, false);
+      return false;
+    }
+
     startupManager.runPostStartupActivities();
 
     return true;
@@ -306,11 +312,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         startupManager.runStartupActivities();
       }
-    }, ProjectBundle.message("project.load.progress"), false, project);
+    }, ProjectBundle.message("project.load.progress"), true, project);
+
+    if (!ok) {
+      closeProject(project, false);
+      return false;
+    }
+
     startupManager.runPostStartupActivities();
 
     return true;
@@ -383,7 +395,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
 
-      if (project[0] == null || !ok || !openProject(project[0])) {
+      if (project[0] == null || !ok) {
+        return null;
+      }
+
+      else if (!openProject(project[0])) {
+        Disposer.dispose(project[0]);
         return null;
       }
 
@@ -609,6 +626,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   */
 
   public boolean closeProject(final Project project) {
+    return closeProject(project, true);
+  }
+
+  private boolean closeProject(final Project project, final boolean save) {
     if (!isProjectOpened(project)) return true;
     if (!canClose(project)) return false;
 
@@ -617,14 +638,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      project.save();
+      if (save) {
+        FileDocumentManager.getInstance().saveAllDocuments();
+        project.save();
+      }
 
       myOpenProjects.remove(project);
       fireProjectClosed(project);
 
-      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-      if (!application.isUnitTestMode()) application.saveSettings();
+      if (save) {
+        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        if (!application.isUnitTestMode()) application.saveSettings();
+      }
     }
     finally {
       shutDownTracker.unregisterStopperThread(Thread.currentThread());

@@ -599,8 +599,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myLayout.isToolWindowRegistered(id)) {
-      throw new IllegalArgumentException("window with id=\"" + id + "\" isn't registered");
+      return;
     }
+    
     final WindowInfoImpl info = getInfo(id);
     final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
     // Save recent appearance of tool window

@@ -4,6 +4,9 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
@@ -60,6 +63,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       new Runnable() {
         public void run() {
           runActivities(myPreStartupActivities);
+          myFileSystemSynchronizer.setCancelable(true);
           myFileSystemSynchronizer.execute();
           myFileSystemSynchronizer = null;
           myStartupActivityRunning = true;
@@ -81,13 +85,18 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private static void runActivities(final List<Runnable> activities) {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
 
       while (!activities.isEmpty()) {
         final Runnable runnable = activities.remove(0);
+        if (indicator != null) indicator.checkCanceled();
 
         try {
           runnable.run();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable ex) {
           LOG.error(ex);

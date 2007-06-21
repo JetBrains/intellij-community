@@ -1,13 +1,12 @@
 package com.intellij.ide.startup;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -15,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * @author max
@@ -26,7 +25,6 @@ public class FileSystemSynchronizer {
   private ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
   private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
   private Collection/*<VirtualFile>*/[] myUpdateSets;
-  @NonNls private static final String LOAD_FILES_THREAD_NAME = "File Content Loading Thread";
 
   private boolean myIsCancelable = false;
 
@@ -117,7 +115,7 @@ public class FileSystemSynchronizer {
   }
 
   private void updateFiles() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
       indicator.setText(IdeBundle.message("progress.parsing.files"));
@@ -131,9 +129,13 @@ public class FileSystemSynchronizer {
       public void run() {
         try {
           for (VirtualFile file : myFilesToUpdate) {
+            if (indicator != null) indicator.checkCanceled();
             contentQueue.put(file);
           }
           contentQueue.put(new FileContent(null));
+        }
+        catch (ProcessCanceledException e) {
+          // Do nothing, exit the thread.
         }
         catch (InterruptedException e) {
           LOG.error(e);
@@ -155,6 +157,7 @@ public class FileSystemSynchronizer {
       final VirtualFile file = content.getVirtualFile();
       if (file == null) break;
       if (indicator != null) {
+        indicator.checkCanceled();
         indicator.setFraction(((double)++count) / totalFiles);
         indicator.setText2(file.getPresentableUrl());
       }
@@ -227,6 +230,8 @@ public class FileSystemSynchronizer {
 
     @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
     public void put(VirtualFile file) throws InterruptedException {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
       FileContent content;
       synchronized (this) {
         content = new FileContent(file);
@@ -234,7 +239,8 @@ public class FileSystemSynchronizer {
           try {
             if (content.getPhysicalLength() < SIZE_THRESHOLD) {
               while (totalSize > SIZE_THRESHOLD) {
-                wait();
+                if (indicator != null) indicator.checkCanceled();
+                wait(300);
               }
 
               totalSize += content.getPhysicalBytes().length;
@@ -242,6 +248,9 @@ public class FileSystemSynchronizer {
           }
           catch (IOException e) {
             content.setEmptyContent();
+          }
+          catch(ProcessCanceledException e) {
+            throw e;
           }
           catch (Throwable e) {
             LOG.error(e);

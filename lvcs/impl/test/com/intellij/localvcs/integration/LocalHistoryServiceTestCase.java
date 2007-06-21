@@ -12,6 +12,7 @@ import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
     public FileSystemSynchronizer getFileSystemSynchronizer() {
       return new FileSystemSynchronizer() {
         @Override
-        public void registerCacheUpdater(CacheUpdater u) {
+        public void registerCacheUpdater(@NotNull CacheUpdater u) {
           myUpdater = u;
         }
       };

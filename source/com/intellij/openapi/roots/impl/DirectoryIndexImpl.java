@@ -215,6 +215,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     // exclude root should exclude from its content root and all outer content roots
 
     if (progress != null) {
+      progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.building.exclude.roots.progress"));
     }
     Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new THashMap<VirtualFile, Set<VirtualFile>>();
@@ -246,6 +247,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
+        progress.checkCanceled();
         progress.setText2(ProjectBundle.message("project.index.processing.module.content.progress", module.getName()));
       }
       VirtualFile[] contentRoots = rootManager.getContentRoots();
@@ -264,6 +266,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
+        progress.checkCanceled();
         progress.setText2(ProjectBundle.message("project.index.processing.module.sources.progress", module.getName()));
       }
 
@@ -290,6 +293,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
+        progress.checkCanceled();
         progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
       }
       OrderEntry[] orderEntries = rootManager.getOrderEntries();
@@ -309,6 +313,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
+        progress.checkCanceled();
         progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
       }
       OrderEntry[] orderEntries = rootManager.getOrderEntries();
@@ -324,6 +329,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     if (progress != null) {
+      progress.checkCanceled();
       progress.setText2("");
     }
     // fill order entries

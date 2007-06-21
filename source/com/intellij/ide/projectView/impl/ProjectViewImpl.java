@@ -17,8 +17,8 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -602,9 +602,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void dispose() {
     myConnection.disconnect();
-    Disposer.dispose(getCurrentProjectViewPane());
-    myStructureViewWrapper.dispose();
-    myStructureViewWrapper = null;
+    final AbstractProjectViewPane view = getCurrentProjectViewPane();
+    if (view != null) {
+      Disposer.dispose(view);
+    }
+
+    if (myStructureViewWrapper != null) {
+      myStructureViewWrapper.dispose();
+      myStructureViewWrapper = null;
+    }
   }
 
   public void rebuildStructureViewPane() {
