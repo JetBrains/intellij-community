@@ -4,6 +4,7 @@ import com.intellij.extapi.psi.LightPsiFileBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
@@ -106,6 +107,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
+    AntConfiguration.initAntSupport(getProject());
   }
 
   public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
@@ -608,8 +610,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable /*will return null in case ant installation is not properly configured*/
   public AntTypeDefinition getTargetDefinition() {
-    buildTypeDefinitions();
     synchronized (PsiLock.LOCK) {
+      buildTypeDefinitions();
       if (myTargetDefinition == null) {
         final Class targetClass = ReflectedProject.getProject(getClassLoader()).myTargetClass;
         final AntTypeDefinition targetDef = createTypeDefinition(new AntTypeId(TARGET_TAG), targetClass, false);

@@ -23,6 +23,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,14 @@ public abstract class AntConfiguration {
 
   public static AntConfiguration getInstance(final Project project) {
     return ServiceManager.getService(project, AntConfiguration.class);
+  }
+
+  private static final Key<Boolean> ANT_SUPPORT_INITIALIZED_KEY = new Key<Boolean>("AntSupportInitialized");
+  public static void initAntSupport(final Project project) {
+    if (!Boolean.TRUE.equals(project.getUserData(ANT_SUPPORT_INITIALIZED_KEY))) {
+      ServiceManager.getService(project, AntConfiguration.class);
+      project.putUserData(ANT_SUPPORT_INITIALIZED_KEY, Boolean.TRUE);
+    }
   }
 
   public Project getProject() {

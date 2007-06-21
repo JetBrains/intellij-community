@@ -50,7 +50,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
       return range; 
     }
     final int start = range.getStartOffset() + getText().indexOf(value);
-    final int end = start + value.length() - 1;
+    final int end = start + value.length();
     return new TextRange(start, end);
   }
 
