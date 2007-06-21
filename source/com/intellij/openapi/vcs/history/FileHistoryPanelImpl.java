@@ -11,7 +11,6 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -767,12 +766,20 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       try {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            CommandProcessor.getInstance()
-              .executeCommand(myProject, getVersionRunnable(finalRevisionContent), createGetActionTitle(revision), null);
+            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+                public void run() {
+                  try {
+                    write(finalRevisionContent);
+                  }
+                  catch (IOException e) {
+                    Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                               VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
+                  }
+                }
+              }, createGetActionTitle(revision), null);
           }
         });
         if (file != null) {
-          FileStatusManager.getInstance(myProject).fileStatusChanged(file);
           VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
         }
       }
@@ -797,20 +804,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return myFilePath.getPath();
     }
 
-    private Runnable getVersionRunnable(final byte[] revision) {
-      return new Runnable() {
-        public void run() {
-          try {
-            write(revision);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
-      };
-    }
-
-    private void write(byte[] revision) throws Exception {
+    private void write(byte[] revision) throws IOException {
       if (getVirtualFile() == null) {
         writeContentToIOFile(revision);
       }
@@ -825,7 +819,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     }
 
-    private void writeContentToIOFile(byte[] revisionContent) throws Exception {
+    private void writeContentToIOFile(byte[] revisionContent) throws IOException {
       FileOutputStream outputStream = new FileOutputStream(getIOFile());
       try {
         outputStream.write(revisionContent);
@@ -839,7 +833,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       getVirtualFile().setBinaryContent(revision);
     }
 
-    private void writeContentToDocument(final Document document, byte[] revisionContent) throws Exception {
+    private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
       final String content = StringUtil.convertLineSeparators(new String(revisionContent, myFilePath.getCharset().name()));
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
