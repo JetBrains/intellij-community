@@ -155,7 +155,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public PsiElement findElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
-      if (offset != myLastFoundElementOffset) {
+      if (offset != myLastFoundElementOffset || (myLastFoundElement != null && !myLastFoundElement.isValid())) {
         final PsiElement foundElement = super.findElementAt(offset);
         if (foundElement == null) {
           return null;
@@ -163,7 +163,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         myLastFoundElement = (AntElement)foundElement;
         myLastFoundElementOffset = offset;
       }
-      assert myLastFoundElement == null || myLastFoundElement.isValid() : myLastFoundElement + ": " + offset;
       return myLastFoundElement;
     }
   }
