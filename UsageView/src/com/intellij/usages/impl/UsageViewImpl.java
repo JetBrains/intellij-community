@@ -50,12 +50,12 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -244,6 +244,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (UsageGroupingRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.getActiveRules(project)));
     }
+
+    Collections.sort(list, new Comparator<UsageGroupingRule>() {
+      public int compare(final UsageGroupingRule o1, final UsageGroupingRule o2) {
+        return getRank(o1) - getRank(o2);
+      }
+
+      private int getRank(final UsageGroupingRule rule) {
+        if (rule instanceof OrderableUsageGroupingRule) {
+          return ((OrderableUsageGroupingRule)rule).getRank();
+        }
+
+        return Integer.MAX_VALUE;
+      }
+    });
+
     return list.toArray(new UsageGroupingRule[list.size()]);
   }
 
