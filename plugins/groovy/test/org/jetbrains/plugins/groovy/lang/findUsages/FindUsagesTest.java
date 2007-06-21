@@ -62,9 +62,9 @@ public class FindUsagesTest extends IdeaTestCase {
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition(filePath);
-    assertNotNull(ref);
+    assertNotNull("Did not find reference", ref);
     final PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
+    assertNotNull("Could not resolve reference", resolved);
 
     final Query<PsiReference> query;
     if (resolved instanceof PsiMethod) {
