@@ -43,9 +43,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -474,6 +474,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void beforeRootsChange(boolean filetypes) {
+    if (myProject.isDisposed()) return;
+
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myRootsChangeCounter == 0) {
       if (myIsRootsChangedOnDemandStartedButNotDemanded) {
@@ -501,11 +503,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void rootsChanged(boolean filetypes) {
+    if (myProject.isDisposed()) return;
+
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myRootsChangeCounter--;
     if (myRootsChangeCounter > 0) return;
-
-    if (myProject.isDisposed()) return;
 
     clearScopesCaches();
 
