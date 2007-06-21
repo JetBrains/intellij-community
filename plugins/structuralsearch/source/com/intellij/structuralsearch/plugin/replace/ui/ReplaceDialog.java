@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -108,12 +109,13 @@ public class ReplaceDialog extends SearchDialog {
 
     final Runnable replaceRunnable = new Runnable() {
       public void run() {
-        LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LocalHistoryAction lvcsAction = instance.startAction_New(getDefaultTitle(), null, false);
+        Project p = searchContext.getProject();
+        LocalHistoryAction a = LocalHistory.startAction(p, getDefaultTitle());
 
         doReplace(replaceContext);
         replaceContext.getUsageView().close();
-        lvcsAction.finish();
+
+        a.finish();
       }
     };
 
@@ -126,8 +128,7 @@ public class ReplaceDialog extends SearchDialog {
         final Set<Usage> infos = replaceContext.getUsageView().getSelectedUsages();
         if (infos == null || infos.isEmpty()) return;
 
-        LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LocalHistoryAction lvcsAction = instance.startAction_New(getDefaultTitle(), null, false);
+        LocalHistoryAction a = LocalHistory.startAction(searchContext.getProject(), getDefaultTitle());
 
         for (final Usage info : infos) {
           final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
@@ -137,7 +138,7 @@ public class ReplaceDialog extends SearchDialog {
           }
         }
 
-        lvcsAction.finish();
+        a.finish();
 
         if (replaceContext.getUsageView().getUsagesCount() > 0) {
           for (Usage usage : replaceContext.getUsageView().getSortedUsages()) {
