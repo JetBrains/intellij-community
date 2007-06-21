@@ -636,7 +636,11 @@ public class AnalysisScope {
                                          final Set<String> result,
                                          final ProjectProfileManager profileManager) {
     for (final PsiDirectory directory : psiDirectories) {
-      final PsiFile[] psiFiles = directory.getFiles();
+      final PsiFile[] psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+        public PsiFile[] compute() {
+          return directory.getFiles();
+        }
+      });
       for (PsiFile file : psiFiles) {
         result.add(profileManager.getProfileName(file));
       }
