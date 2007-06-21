@@ -4,7 +4,6 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;

@@ -149,19 +149,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return new UpToDateLineNumberProviderImpl(document, myProject, upToDateContent);
   }
 
-  public synchronized boolean rollbackToLabel(final LvcsLabel label,
-                                              final boolean requestConfirmation,
-                                              final String confirmationMessage,
-                                              final String confirmationTitle) {
-    checkOldLvcsEnabled();
-    return myImplementation.rollbackToLabel(label, requestConfirmation, confirmationMessage, confirmationTitle);
-  }
-
-  public synchronized boolean rollbackToLabel(final LvcsLabel label, final boolean requestConfirmation) {
-    checkOldLvcsEnabled();
-    return myImplementation.rollbackToLabel(label, requestConfirmation);
-  }
-
   public synchronized LvcsLabel[] getAllLabels() {
     checkOldLvcsEnabled();
     return myImplementation.getAllLabels();

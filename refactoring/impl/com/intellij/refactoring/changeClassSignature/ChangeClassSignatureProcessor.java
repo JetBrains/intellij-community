@@ -3,7 +3,6 @@ package com.intellij.refactoring.changeClassSignature;
 import com.intellij.localvcs.integration.LocalHistoryAction;
 import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;

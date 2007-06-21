@@ -59,7 +59,6 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   public void initComponent() {
     if (isDefaultProject()) return;
-    if (!isEnabled()) return;
 
     myStartupManager.registerPreStartupActivity(new Runnable() {
       public void run() {
@@ -97,14 +96,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   public void save() {
     if (isDefaultProject()) return;
 
-    if (!isEnabled()) return;
     if (myVcs != null) myVcs.save();
   }
 
   public void disposeComponent() {
     if (isDefaultProject()) return;
 
-    if (!isEnabled()) return;
     closeVcs();
     closeService();
 
@@ -136,12 +133,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public boolean isEnabled() {
-    return isEnabled(myProject);
+    return true;
   }
 
   @Override
   protected LocalHistoryAction startAction(String name) {
-    if (!isEnabled()) return LocalHistoryActionImpl.NULL;
     return myService.startAction(name);
   }
 
@@ -162,23 +158,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   protected byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c) {
-    if (!isEnabled()) {
-      LvcsFile ff = getOldVcs().findFile(f.getPath());
-      if (ff == null) return null;
-      LvcsFileRevision r = ff.getRevision();
-      while (r != null) {
-        if (c.isSuitable(r.getDate())) return r.getByteContent();
-        r = (LvcsFileRevision)r.getPrevRevision();
-      }
-      return null;
-    }
-
     if (!isUnderControl(f)) return null;
     return myVcs.getByteContent(f.getPath(), c);
-  }
-
-  private com.intellij.openapi.localVcs.LocalVcs getOldVcs() {
-    return com.intellij.openapi.localVcs.LocalVcs.getInstance(myProject);
   }
 
   @Override
@@ -202,7 +183,6 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public ILocalVcs getLocalVcs() {
-    if (!isEnabled()) throw new RuntimeException("new local history is disabled");
     return myVcs;
   }
 

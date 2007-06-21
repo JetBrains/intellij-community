@@ -90,12 +90,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     expect(p.isDefault()).andStubReturn(true);
     replay(p);
 
-    LocalHistoryComponent c = new LocalHistoryComponent(p, sm, null, null, null, null) {
-      @Override
-      public boolean isEnabled() {
-        return true;
-      }
-    };
+    LocalHistoryComponent c = new LocalHistoryComponent(p, sm, null, null, null, null);
 
     c.initComponent();
     c.save();
@@ -125,11 +120,6 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
       @Override
       protected boolean isDefaultProject() {
         return false;
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return true;
       }
     };
 
@@ -203,11 +193,6 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
 
     @Override
     protected void closeService() {
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return true;
     }
   }
 }

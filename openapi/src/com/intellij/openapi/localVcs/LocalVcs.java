@@ -81,13 +81,6 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsLabel[] getAllLabels();
 
-  public abstract boolean rollbackToLabel(LvcsLabel label,
-                                          boolean requestConfirmation,
-                                          String confirmationMessage,
-                                          String confirmationTitle);
-
-  public abstract boolean rollbackToLabel(LvcsLabel label, boolean requestConfirmation);
-
   public abstract void addLvcsLabelListener(LvcsLabelListener listener);
 
   public abstract void removeLvcsLabelListener(LvcsLabelListener listener);

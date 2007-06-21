@@ -34,7 +34,7 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   }
 
   public static boolean isEnabled(Project p) {
-    return System.getProperty("UseOldLocalHistory") == null;
+    return true;
   }
 
   // todo make it private
