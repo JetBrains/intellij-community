@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
@@ -116,8 +117,11 @@ public class IntentionHintComponent extends JPanel implements Disposable {
         IntentionAction action = descriptor.getAction();
         IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName());
         result &= !cachedActions.add(cachedAction);
-        List<IntentionAction> options = descriptor.getOptions(myFile.findElementAt(myEditor.getCaretModel().getOffset()));
-        if (options != null) {
+        final int caretOffset = myEditor.getCaretModel().getOffset();
+        final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
+        final PsiElement element = myFile.findElementAt(fileOffset);
+        final List<IntentionAction> options;
+        if (element != null && (options = descriptor.getOptions(element)) != null) {
           for (IntentionAction option : options) {
             boolean isErrorFix = myCachedErrorFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
             if (isErrorFix) {
