@@ -63,9 +63,6 @@ public class IdeEventQueue extends EventQueue {
 
   private final HashMap<Runnable, MyFireIdleRequest> myListener2Request; // IdleListener -> MyFireIdleRequest
 
-  private final HashMap<Runnable, Integer> myListener2Timeout; // IdleListener -> java.lang.Integer
-
-
   private final IdeKeyEventDispatcher myKeyEventDispatcher;
 
   private final IdeMouseEventDispatcher myMouseEventDispatcher;
@@ -129,7 +126,6 @@ public class IdeEventQueue extends EventQueue {
     myIdleTimeCounterAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     addIdleTimeCounterRequest();
     myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
-    myListener2Timeout = new HashMap<Runnable, Integer>();
     myKeyEventDispatcher = new IdeKeyEventDispatcher();
     myMouseEventDispatcher = new IdeMouseEventDispatcher();
     myPopupManager = new IdePopupManager();
@@ -218,9 +214,8 @@ public class IdeEventQueue extends EventQueue {
     LOG.assertTrue(timeout > 0);
     synchronized (myLock) {
       myIdleListeners.add(runnable);
-      final MyFireIdleRequest request = new MyFireIdleRequest(runnable);
+      final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeout);
       myListener2Request.put(runnable, request);
-      myListener2Timeout.put(runnable, timeout);
       myIdleRequestsAlarm.addRequest(request, timeout);
     }
   }
@@ -236,8 +231,6 @@ public class IdeEventQueue extends EventQueue {
       final MyFireIdleRequest request = myListener2Request.remove(runnable);
       LOG.assertTrue(request != null);
       myIdleRequestsAlarm.cancelRequest(request);
-      final Integer timeout = myListener2Timeout.remove(runnable);
-      LOG.assertTrue(timeout != null);
     }
   }
 
@@ -381,6 +374,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  @SuppressWarnings({"ALL"})
   private static String toDebugString(final AWTEvent e) {
     if (e instanceof InvocationEvent) {
       try {
@@ -420,7 +414,7 @@ public class IdeEventQueue extends EventQueue {
           if (request == null) {
             LOG.assertTrue(false, "There is no request for " + idleListener);
           }
-          final Integer timeout = myListener2Timeout.get(idleListener);
+          final Integer timeout = request.getTimeout();
           LOG.assertTrue(timeout != null);
           myIdleRequestsAlarm.addRequest(request, timeout.intValue(), ModalityState.NON_MODAL);
         }
@@ -533,17 +527,17 @@ public class IdeEventQueue extends EventQueue {
 
 
   public interface EventDispatcher {
-
     boolean dispatch(AWTEvent e);
   }
 
 
   private final class MyFireIdleRequest implements Runnable {
-
     private final Runnable myRunnable;
+    private final int myTimeout;
 
 
-    public MyFireIdleRequest(final Runnable runnable) {
+    public MyFireIdleRequest(final Runnable runnable, final int timeout) {
+      myTimeout = timeout;
       myRunnable = runnable;
     }
 
@@ -551,10 +545,12 @@ public class IdeEventQueue extends EventQueue {
     public void run() {
       myRunnable.run();
       synchronized (myLock) {
-        final Integer timeout = myListener2Timeout.get(myRunnable);
-        LOG.assertTrue(timeout != null);
-        myIdleRequestsAlarm.addRequest(this, timeout.intValue(), ModalityState.NON_MODAL);
+        myIdleRequestsAlarm.addRequest(this, myTimeout, ModalityState.NON_MODAL);
       }
+    }
+
+    public int getTimeout() {
+      return myTimeout;
     }
   }
 
