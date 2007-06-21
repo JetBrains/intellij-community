@@ -28,7 +28,7 @@ import com.siyeh.ig.psiutils.VariableAssignedVisitor;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
 
@@ -83,12 +83,11 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
-            final PsiModifierList modifierList = variable.getModifierList();
-            if (m_ignoreAnnotatedVariables && modifierList != null) {
-                final PsiAnnotation[] annotations =
-                        modifierList.getAnnotations();
-                if (annotations.length > 0) {
-                    return;
+
+            if (m_ignoreAnnotatedVariables) {
+              final PsiModifierList list = variable.getModifierList();
+              if (list != null && list.getAnnotations().length > 0) {
+                  return;
                 }
             }
             if (isCopyVariable(variable)) {

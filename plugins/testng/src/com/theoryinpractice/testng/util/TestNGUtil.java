@@ -10,7 +10,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -29,10 +31,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
+import org.jetbrains.annotations.NonNls;
 import org.testng.Assert;
 import org.testng.TestNG;
 import org.testng.annotations.*;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class TestNGUtil implements TestFramework
             "testng.after-suite",
             "testng.after-test"
     };
-  static final List junitAnnotions =
+  static final List<String> junitAnnotions =
       Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
   private static final Logger LOG = Logger.getInstance("#" + TestNGUtil.class.getName());
   @NonNls private static final String SUITE_TAG_NAME = "suite";
@@ -417,15 +419,7 @@ public class TestNGUtil implements TestFramework
   }
 
   public static boolean containsJunitAnnotions(PsiMethod method) {
-    if (method != null) {
-      PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
-      for (PsiAnnotation annotation : annotations) {
-        if (junitAnnotions.contains(annotation.getQualifiedName())) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return method != null && AnnotationUtil.isAnnotated(method, junitAnnotions);
   }
 
   public static boolean inheritsJUnitTestCase(PsiClass psiClass) {
