@@ -38,6 +38,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final Map<JavaMethodSignature, XmlName> myCollectionChildrenGetterMethods = new THashMap<JavaMethodSignature, XmlName>();
   private final Map<JavaMethodSignature, XmlName> myCollectionChildrenAdditionMethods = new THashMap<JavaMethodSignature, XmlName>();
   private final Map<XmlName, Type> myCollectionChildrenClasses = new TreeMap<XmlName, Type>();
+  private final Map<XmlName, JavaMethodSignature> myAttributes = new TreeMap<XmlName, JavaMethodSignature>();
   private final Map<JavaMethodSignature, XmlName> myAttributeChildrenMethods = new THashMap<JavaMethodSignature, XmlName>();
   private final Map<JavaMethodSignature, Set<XmlName>> myCompositeChildrenMethods = new THashMap<JavaMethodSignature, Set<XmlName>>();
   private final Map<JavaMethodSignature, Pair<XmlName, Set<XmlName>>> myCompositeCollectionAdditionMethods =
@@ -69,8 +70,8 @@ public class GenericInfoImpl implements DomGenericInfo {
     return myCollectionChildrenClasses.get(tagName);
   }
 
-  final Set<Map.Entry<JavaMethodSignature, XmlName>> getAttributeChildrenEntries() {
-    return myAttributeChildrenMethods.entrySet();
+  final Set<Map.Entry<XmlName, JavaMethodSignature>> getAttributeChildrenEntries() {
+    return myAttributes.entrySet();
   }
 
   final Set<XmlName> getFixedChildrenNames() {
@@ -82,7 +83,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   final Collection<XmlName> getAttributeChildrenNames() {
-    return myAttributeChildrenMethods.values();
+    return myAttributes.keySet();
   }
 
   final Pair<XmlName, Integer> getFixedChildInfo(JavaMethodSignature method) {
@@ -256,7 +257,9 @@ public class GenericInfoImpl implements DomGenericInfo {
       final String s = annotation == null ? null : annotation.value();
       String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(signature, true) : s;
       assert attributeName != null && StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
-      myAttributeChildrenMethods.put(signature, XmlName.create(attributeName, method));
+      final XmlName attrName = XmlName.create(attributeName, method);
+      myAttributeChildrenMethods.put(signature, attrName);
+      myAttributes.put(attrName, signature);
       return true;
     }
 
@@ -553,9 +556,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable public AttributeChildDescriptionImpl getAttributeChildDescription(XmlName attributeName) {
-    final JavaMethod getter = findGetterMethod(myAttributeChildrenMethods, attributeName);
-    if (getter == null) return null;
-    return new AttributeChildDescriptionImpl(attributeName, getter);
+    buildMethodMaps();
+    final JavaMethodSignature signature = myAttributes.get(attributeName);
+    return signature == null ? null : new AttributeChildDescriptionImpl(attributeName, JavaMethod.getMethod(myClass, signature));
   }
 
   public final Type[] getConcreteInterfaceVariants() {
@@ -571,9 +574,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     buildMethodMaps();
     final ArrayList<AttributeChildDescriptionImpl> result = new ArrayList<AttributeChildDescriptionImpl>();
-    for (Map.Entry<JavaMethodSignature, XmlName> entry : myAttributeChildrenMethods.entrySet()) {
-      final JavaMethod getter = JavaMethod.getMethod(myClass, entry.getKey());
-      result.add(new AttributeChildDescriptionImpl(entry.getValue(), getter));
+    for (final Map.Entry<XmlName, JavaMethodSignature> entry : myAttributes.entrySet()) {
+      final JavaMethod getter = JavaMethod.getMethod(myClass, entry.getValue());
+      result.add(new AttributeChildDescriptionImpl(entry.getKey(), getter));
     }
     return result;
   }

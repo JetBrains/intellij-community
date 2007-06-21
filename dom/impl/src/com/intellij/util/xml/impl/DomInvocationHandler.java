@@ -608,8 +608,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       myGenericInfo.buildMethodMaps();
 
       if (ATTRIBUTES == qname) {
-        for (Map.Entry<JavaMethodSignature, XmlName> entry : myGenericInfo.getAttributeChildrenEntries()) {
-          getOrCreateAttributeChild(entry.getKey().findMethod(getRawType()), entry.getValue().createEvaluatedXmlName(this));
+        for (Map.Entry<XmlName, JavaMethodSignature> entry : myGenericInfo.getAttributeChildrenEntries()) {
+          getOrCreateAttributeChild(entry.getValue().findMethod(getRawType()), entry.getKey().createEvaluatedXmlName(this));
         }
       }
 
