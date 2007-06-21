@@ -22,6 +22,8 @@ public class TypeOfVariableMacro implements Macro {
 
   public Result calculateResult(Expression[] params, ExpressionContext context) {
     if (params == null || params.length == 0) return null;
+
+    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     Result result = params[0].calculateQuickResult(context);
     if (result instanceof PsiElementResult) {
       final PsiElement element = ((PsiElementResult)result).getElement();
