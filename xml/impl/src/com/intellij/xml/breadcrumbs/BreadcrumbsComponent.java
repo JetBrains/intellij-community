@@ -133,7 +133,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
   @Nullable
   private static Pair<Language, BreadcrumbsInfoProvider> findInfoProvider(@Nullable final PsiFile file,
-                                                          @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
+                                                                          @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
     Pair<Language, BreadcrumbsInfoProvider> result = null;
     BreadcrumbsInfoProvider provider;
     if (file != null) {
@@ -148,7 +148,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
             break;
           }
         }
-      } else {
+      }
+      else {
         result = new Pair<Language, BreadcrumbsInfoProvider>(baseLang, provider);
       }
     }
@@ -180,8 +181,12 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     return file != null ? file.getViewProvider().findElementAt(offset) : null;
   }
 
-  @NotNull
-  private List<PsiElement> getLineElements(@NotNull final PsiElement endElement) {
+  @Nullable
+  private List<PsiElement> getLineElements(@Nullable final PsiElement endElement) {
+    if (endElement == null) {
+      return null;
+    }
+
     final LinkedList<PsiElement> result = new LinkedList<PsiElement>();
 
     PsiElement element = endElement;
@@ -209,11 +214,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         return;
       }
 
-      final PsiElement element = getCaretElement(position);
-      if (element != null) {
-        myCurrentList = getLineElements(element);
-        myLine.setCrumbs(myCurrentList);
-      }
+      myCurrentList = getLineElements(getCaretElement(position));
+      myLine.setCrumbs(myCurrentList);
     }
   }
 
@@ -256,7 +258,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return myBreadcrumbsComponent.getEditor();
     }
 
-    public void setCrumbs(@NotNull final List<PsiElement> elementList) {
+    public void setCrumbs(@Nullable final List<PsiElement> elementList) {
       if (myElementList != elementList) {
         myElementList = elementList;
         myCrumbs = null;
@@ -328,27 +330,31 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       final Dimension d = getSize();
       final FontMetrics fm = g2.getFontMetrics();
 
-      final boolean veryDirty = (myCrumbs == null) || (myBuffer != null && !myBuffer.isValid(d.width));
+      if (myElementList != null) {
+        final boolean veryDirty = (myCrumbs == null) || (myBuffer != null && !myBuffer.isValid(d.width));
 
-      final List<Crumb> crumbList = veryDirty ? createCrumbList(fm, myElementList, d.width) : myCrumbs;
-      if (crumbList != null) {
-        if (veryDirty) {
-          //final BufferedImage bufferedImage = createBuffer(crumbList, d.height);
-          myBuffer = new PagedImage(getTotalWidth(crumbList), d.width);
-          myBuffer.setPage(myBuffer.getPageCount() - 1); // point to the last page
+        final List<Crumb> crumbList = veryDirty ? createCrumbList(fm, myElementList, d.width) : myCrumbs;
+        if (crumbList != null) {
+          if (veryDirty) {
+            //final BufferedImage bufferedImage = createBuffer(crumbList, d.height);
+            myBuffer = new PagedImage(getTotalWidth(crumbList), d.width);
+            myBuffer.setPage(myBuffer.getPageCount() - 1); // point to the last page
+          }
+
+          assert myBuffer != null;
+
+          super.paint(g2);
+
+          //if (myDirty) {
+          //  myBuffer.repaint(crumbList, getPainter());
+          //myDirty = false;
+          //}
+
+          myBuffer.paintPage(g2, crumbList, DEFAULT_PAINTER, d.height);
+          myCrumbs = crumbList;
         }
-
-        assert myBuffer != null;
-
+      } else {
         super.paint(g2);
-
-        //if (myDirty) {
-        //  myBuffer.repaint(crumbList, getPainter());
-        //myDirty = false;
-        //}
-
-        myBuffer.paintPage(g2, crumbList, DEFAULT_PAINTER, d.height);
-        myCrumbs = crumbList;
       }
     }
 
