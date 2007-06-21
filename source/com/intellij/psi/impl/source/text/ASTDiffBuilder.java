@@ -14,6 +14,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 
@@ -33,7 +34,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     myEvent = new TreeChangeEventImpl(fileImpl.getProject().getModel().getModelAspect(TreeAspect.class), fileImpl.getTreeElement());
   }
 
-  public void nodeReplaced(final ASTNode oldNode, final ASTNode newNode) {
+  public void nodeReplaced(ASTNode oldNode, final ASTNode newNode) {
     if (oldNode instanceof FileElement && newNode instanceof FileElement) {
       BlockSupportImpl.replaceFileElement(myFile, (FileElement)oldNode, (FileElement)newNode, myPsiManager);
     }
@@ -44,6 +45,11 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       TreeUtil.replaceWithList((TreeElement)oldNode, (TreeElement)newNode);
 
       final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newNode);
+
+      if (oldNode instanceof ChameleonElement) {
+        oldNode = ChameleonTransforming.transform((ChameleonElement)oldNode);
+      }
+
       change.setReplaced(oldNode);
       myEvent.addElementaryChange(newNode, change);
       ((TreeElement)newNode).clearCaches();
