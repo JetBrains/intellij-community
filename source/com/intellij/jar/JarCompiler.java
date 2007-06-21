@@ -8,7 +8,7 @@ import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.deployment.ModuleContainer;
+import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -199,8 +199,8 @@ public class JarCompiler implements PackagingCompiler {
         for (Module module : modules) {
           BuildJarSettings jarSettings = BuildJarSettings.getInstance(module);
           if (jarSettings == null || !jarSettings.isBuildJar()) continue;
-          ModuleContainer moduleContainer = jarSettings.getModuleContainer();
-          ModuleLink[] containingModules = moduleContainer.getContainingModules();
+          PackagingConfiguration packagingConfiguration = jarSettings.getPackagingConfiguration();
+          ModuleLink[] containingModules = packagingConfiguration.getContainingModules();
           for (ModuleLink moduleLink : containingModules) {
             Module containingModule = moduleLink.getModule();
             if (ArrayUtil.find(affectedModules, containingModule) != -1) {

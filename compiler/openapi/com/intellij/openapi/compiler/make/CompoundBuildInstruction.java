@@ -18,7 +18,7 @@ package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 
-public interface JavaeeModuleBuildInstruction extends BuildInstruction {
+public interface CompoundBuildInstruction extends BuildInstruction {
   
   BuildConfiguration getBuildProperties();
 

@@ -14,7 +14,7 @@ import com.intellij.openapi.compiler.make.FileCopyInstruction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.deployment.ModuleContainer;
+import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -270,13 +270,13 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
 
   static BuildRecipe getBuildRecipe(final Module module, final BuildJarSettings buildJarSettings) {
     final DummyCompileContext compileContext = DummyCompileContext.getInstance();
-    ModuleContainer moduleContainer = buildJarSettings.getModuleContainer();
+    PackagingConfiguration packagingConfiguration = buildJarSettings.getPackagingConfiguration();
     BuildRecipe buildRecipe = DeploymentUtil.getInstance().createBuildRecipe();
-    LibraryLink[] libraries = moduleContainer.getContainingLibraries();
+    LibraryLink[] libraries = packagingConfiguration.getContainingLibraries();
     for (LibraryLink libraryLink : libraries) {
       DeploymentUtil.getInstance().addLibraryLink(compileContext, buildRecipe, libraryLink, module, null);
     }
-    ModuleLink[] modules = moduleContainer.getContainingModules();
+    ModuleLink[] modules = packagingConfiguration.getContainingModules();
     DeploymentUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
     return buildRecipe;
   }

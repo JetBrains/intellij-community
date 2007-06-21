@@ -5,7 +5,7 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.compiler.make.BuildConfiguration;
-import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
+import com.intellij.openapi.compiler.make.CompoundBuildInstruction;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NonNls;
 
@@ -61,7 +61,7 @@ public abstract class ExplodedAndJarTargetParameters {
     return myConfigurationName;
   }
 
-  public abstract String getConfigurationName(JavaeeModuleBuildInstruction instruction);
+  public abstract String getConfigurationName(CompoundBuildInstruction instruction);
 
   @NonNls
   public abstract String getBuildExplodedTargetName(String configurationName);

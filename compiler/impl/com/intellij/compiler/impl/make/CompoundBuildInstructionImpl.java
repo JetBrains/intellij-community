@@ -22,7 +22,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase implements JavaeeModuleBuildInstruction {
+public class CompoundBuildInstructionImpl extends BuildInstructionBase implements CompoundBuildInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final BuildConfiguration myBuildConfiguration;
@@ -30,7 +30,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   private final BuildRecipe myBuildRecipe;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public JavaeeModuleBuildInstructionImpl(@Nullable BuildRecipe buildRecipe, BuildParticipant buildParticipant, String outputRelativePath) {
+  public CompoundBuildInstructionImpl(@Nullable BuildRecipe buildRecipe, BuildParticipant buildParticipant, String outputRelativePath) {
     super(outputRelativePath, buildParticipant.getModule());
     myBuildRecipe = buildRecipe;
     myBuildConfiguration = buildParticipant.getBuildConfiguration();
@@ -43,7 +43,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   }
 
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
-    return visitor.visitJ2EEModuleBuildInstruction(this);
+    return visitor.visitCompoundBuildInstruction(this);
   }
 
   public void addFilesToJar(@NotNull final CompileContext context,

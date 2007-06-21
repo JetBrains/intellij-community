@@ -324,7 +324,7 @@ public class BuildJarDialog extends DialogWrapper {
       myModifiedBuildJarSettings = new BuildJarSettings(module);
       copySettings(buildJarSettings, myModifiedBuildJarSettings);
 
-      myEditor = new PackagingSettingsEditor(module, myModifiedBuildJarSettings.getModuleContainer());
+      myEditor = new PackagingSettingsEditor(module, myModifiedBuildJarSettings.getPackagingConfiguration());
     }
 
     private void refreshControls() {

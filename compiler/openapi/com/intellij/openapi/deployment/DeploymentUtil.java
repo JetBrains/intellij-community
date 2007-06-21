@@ -139,11 +139,11 @@ public abstract class DeploymentUtil {
 
   public abstract LibraryLink createLibraryLink(Library library, @NotNull Module parentModule);
 
-  public abstract ModuleContainer createModuleContainer(@NotNull Module module);
+  public abstract PackagingConfiguration createPackagingConfiguration(@NotNull Module module);
 
   public abstract BuildRecipe createBuildRecipe();
 
-  public @Nullable abstract ContainerElement findElementByOrderEntry(ModuleContainer container, OrderEntry entry);
+  public @Nullable abstract ContainerElement findElementByOrderEntry(PackagingConfiguration packagingConfiguration, OrderEntry entry);
 
   @Nullable
   public abstract String getConfigFileErrorMessage(ConfigFile configFile);

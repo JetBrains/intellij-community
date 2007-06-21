@@ -22,7 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.Nullable;
 
-public interface ModuleContainer extends JDOMExternalizable {
+public interface PackagingConfiguration extends JDOMExternalizable {
   ModuleLink[] getContainingModules();
 
   @Nullable

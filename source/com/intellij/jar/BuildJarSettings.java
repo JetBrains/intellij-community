@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.ModuleContainer;
+import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.util.InvalidDataException;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   @NonNls private static final String ELEMENT_CONTAINERINFO = "containerInfo";
-  private final ModuleContainer myModuleContainer;
+  private final PackagingConfiguration myPackagingConfiguration;
   private final Module myModule;
   private String myJarUrl = "";
   private boolean myBuildJar;
@@ -38,7 +38,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   }
   public BuildJarSettings(Module module) {
     myModule = module;
-    myModuleContainer = DeploymentUtil.getInstance().createModuleContainer(myModule);
+    myPackagingConfiguration = DeploymentUtil.getInstance().createPackagingConfiguration(myModule);
   }
 
   public boolean isBuildJar() {
@@ -52,7 +52,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   public void readExternal(Element element) throws InvalidDataException {
     Element settings = element.getChild(ELEMENT_CONTAINERINFO);
     if (settings != null) {
-      myModuleContainer.readExternal(settings);
+      myPackagingConfiguration.readExternal(settings);
     }
     myJarUrl = JDOMExternalizer.readString(element, "jarUrl");
     if (myJarUrl == null) {
@@ -69,14 +69,14 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     if (!myBuildJar) throw new WriteExternalException();
     Element settings = new Element(ELEMENT_CONTAINERINFO);
     element.addContent(settings);
-    myModuleContainer.writeExternal(settings);
+    myPackagingConfiguration.writeExternal(settings);
     JDOMExternalizer.write(element, "jarUrl", myJarUrl);
     JDOMExternalizer.write(element, "buildJar", myBuildJar);
     JDOMExternalizer.write(element, "mainClass", myMainClass);
   }
 
-  public ModuleContainer getModuleContainer() {
-    return myModuleContainer;
+  public PackagingConfiguration getPackagingConfiguration() {
+    return myPackagingConfiguration;
   }
 
   public String getJarUrl() {

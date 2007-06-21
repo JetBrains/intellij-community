@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * @author Alexey Kudravtsev
  */
-public class ModuleContainerImpl implements ModuleContainer {
+public class PackagingConfigurationImpl implements PackagingConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.J2EEModuleContainerImpl");
   protected ModulesProvider myDefaultModulesProvider;
   protected Module myParentModule;
@@ -35,12 +35,12 @@ public class ModuleContainerImpl implements ModuleContainer {
   @NonNls private static final String LIBRARY_TYPE = "library";
   public static final TObjectHashingStrategy<ContainerElement> IGNORING_ATTRIBUTES_EQUALITY = new ElementIgnoringAttributesEquality();
 
-  public ModuleContainerImpl(@NotNull Module module) {
+  public PackagingConfigurationImpl(@NotNull Module module) {
     myParentModule = module;
     myDefaultModulesProvider = new DefaultModulesProvider(module.getProject());
   }
 
-  public ModuleContainerImpl(ModulesProvider modulesProvider) {
+  public PackagingConfigurationImpl(ModulesProvider modulesProvider) {
     myDefaultModulesProvider = modulesProvider;
   }
 

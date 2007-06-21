@@ -59,7 +59,7 @@ public class BuildExplodedTarget extends Target {
         return true;
       }
 
-      public boolean visitJ2EEModuleBuildInstruction(JavaeeModuleBuildInstruction instruction) throws RuntimeException {
+      public boolean visitCompoundBuildInstruction(CompoundBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = "/" + instruction.getOutputRelativePath();
         final String outputPath = BuildProperties.propertyRef(parameters.getExplodedPathProperty()) + outputRelativePath;

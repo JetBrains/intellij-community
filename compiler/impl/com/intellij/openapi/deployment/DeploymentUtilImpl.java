@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -243,8 +242,8 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
   }
 
-  public static boolean containsExternalDependencyInstruction(@NotNull ModuleContainer moduleProperties) {
-    final ContainerElement[] elements = moduleProperties.getElements();
+  public static boolean containsExternalDependencyInstruction(@NotNull PackagingConfiguration packagingConfiguration) {
+    final ContainerElement[] elements = packagingConfiguration.getElements();
     for (ContainerElement element : elements) {
       if (element.getPackagingMethod() == PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
           || element.getPackagingMethod() == PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST) {
@@ -404,20 +403,20 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return new LibraryLinkImpl(library, parentModule);
   }
 
-  public ModuleContainer createModuleContainer(@NotNull Module module) {
-    return new ModuleContainerImpl(module);
+  public PackagingConfiguration createPackagingConfiguration(@NotNull Module module) {
+    return new PackagingConfigurationImpl(module);
   }
 
   public BuildRecipe createBuildRecipe() {
     return new BuildRecipeImpl();
   }
 
-  public @Nullable ContainerElement findElementByOrderEntry(ModuleContainer container, OrderEntry entry) {
+  public @Nullable ContainerElement findElementByOrderEntry(PackagingConfiguration packagingConfiguration, OrderEntry entry) {
     if (entry instanceof ModuleOrderEntry) {
       final Module module = ((ModuleOrderEntry)entry).getModule();
       if (module == null) return null;
 
-      for (ModuleLink link : container.getContainingModules()) {
+      for (ModuleLink link : packagingConfiguration.getContainingModules()) {
         if (link.getModule() == module) {
           return link;
         }
@@ -427,7 +426,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
       final Library library = ((LibraryOrderEntry)entry).getLibrary();
       if (library == null) return null;
 
-      for (LibraryLink link : container.getContainingLibraries()) {
+      for (LibraryLink link : packagingConfiguration.getContainingLibraries()) {
         if (OrderEntryUtil.equals(library, link.getLibrary())) {
           return link;
         }

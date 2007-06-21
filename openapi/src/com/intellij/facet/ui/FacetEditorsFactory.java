@@ -30,12 +30,14 @@ public abstract class FacetEditorsFactory {
     return ServiceManager.getService(FacetEditorsFactory.class);
   }
 
+  @Deprecated
   public abstract FacetLibrariesEditor createLibrariesEditor(FacetEditorContext editorContext,
                                                              FacetValidatorsManager validatorsManager,
                                                              FacetLibrariesConfiguration configuration,
                                                              FacetLibrariesEditorDescription editorDescription,
                                                              LibraryInfo[] libraryInfos);
 
+  @Deprecated
   public abstract FacetLibrariesConfiguration createLibrariesConfiguration();
 
 
