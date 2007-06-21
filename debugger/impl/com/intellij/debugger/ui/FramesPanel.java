@@ -26,6 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBComboBox;
 import com.intellij.ui.PopupHandler;
@@ -124,6 +125,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
 
+  /*invoked in swing thread*/
   protected void rebuild(final boolean updateOnly) {
     if (!updateOnly) {
       myThreadsCombo.removeAllItems();
@@ -270,16 +272,26 @@ public class FramesPanel extends UpdatableDebuggerView {
       catch (ObjectCollectedException e) {
         return;
       }
-      EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
-      final DefaultListModel model = myFramesList.getModel();
-      final int size = model.getSize();
-      for (int i = 0; i < size; i++) {
-        final Object elem = model.getElementAt(i);
-        if (elem instanceof StackFrameDescriptorImpl) {
-          final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)elem;
-          descriptor.setContext(evaluationContext);
-          descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+      
+      final java.util.List<StackFrameDescriptorImpl> descriptors = new ArrayList<StackFrameDescriptorImpl>();
+      
+      DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
+        public void run() {
+          final DefaultListModel model = myFramesList.getModel();
+          final int size = model.getSize();
+          for (int i = 0; i < size; i++) {
+            final Object elem = model.getElementAt(i);
+            if (elem instanceof StackFrameDescriptorImpl) {
+              descriptors.add((StackFrameDescriptorImpl)elem);
+            }
+          }
         }
+      }, ModalityState.defaultModalityState());
+      
+      final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+      for (StackFrameDescriptorImpl descriptor : descriptors) {
+        descriptor.setContext(evaluationContext);
+        descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
       }
     }
 
@@ -342,6 +354,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
 
+  /*invoked in swing thread*/
   private void selectFrame(StackFrameProxy frame) {
     final int count = myFramesList.getElementCount();
     final Object selectedValue = myFramesList.getSelectedValue();
