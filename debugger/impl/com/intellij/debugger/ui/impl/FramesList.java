@@ -30,7 +30,8 @@ public class FramesList extends JList implements OccurenceNavigator {
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
-          final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)getSelectedValue();
+          final Object selectedValue = getSelectedValue();
+          final StackFrameDescriptorImpl descriptor = selectedValue instanceof StackFrameDescriptorImpl? (StackFrameDescriptorImpl)selectedValue : null;
           final Method newMethod = descriptor != null? descriptor.getMethod() : null;
           if (!Comparing.equal(mySelectedMethod, newMethod)) {
             SwingUtilities.invokeLater(new Runnable() {
