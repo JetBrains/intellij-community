@@ -73,9 +73,9 @@ public abstract class BasicAction extends AnAction {
     final String actionName = getActionName(vcs);
 
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
-    LocalHistoryAction lvcsAction = null;
+    LocalHistoryAction action = LocalHistoryAction.NULL;
     if (actionName != null) {
-      lvcsAction = helper.startVcsAction(actionName);
+      action = helper.startLocalHistoryAction(actionName);
     }
 
     try {
@@ -104,9 +104,7 @@ public abstract class BasicAction extends AnAction {
       helper.showErrors(exceptions, actionName != null ? actionName : vcs.getName());
     }
     finally {
-      if (lvcsAction != null) {
-        helper.finishVcsAction(lvcsAction);
-      }
+      action.finish();
     }
   }
 
