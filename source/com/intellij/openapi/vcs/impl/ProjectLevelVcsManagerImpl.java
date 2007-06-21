@@ -58,6 +58,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
@@ -604,7 +605,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void setDirectoryMapping(final String path, final String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
-    myDirectoryMappingList.setDirectoryMapping(path, activeVcsName);
+    myDirectoryMappingList.setDirectoryMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {

@@ -50,12 +50,18 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public void projectOpened() {
     VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myIsInitialized = true;
-        markEverythingDirty();
-      }
-    });
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myIsInitialized = true;
+      markEverythingDirty();
+    }
+    else {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          myIsInitialized = true;
+          markEverythingDirty();
+        }
+      });
+    }
 
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {

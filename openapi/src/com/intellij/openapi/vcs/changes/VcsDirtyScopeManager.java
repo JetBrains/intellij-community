@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.List;
+
 /**
  * Manages asynchronous file status updating for files under VCS.
  *
@@ -40,4 +42,6 @@ public abstract class VcsDirtyScopeManager {
    * @param dir the directory for which the file status update is requested.
    */
   public abstract void dirDirtyRecursively(VirtualFile dir, final boolean scheduleUpdate);
+
+  public abstract List<VcsDirtyScope> retrieveScopes();
 }
