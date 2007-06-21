@@ -12,14 +12,12 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -77,7 +75,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     }
   }
 
-  private class MyCommittedChangesListener implements CommittedChangesListener {
+  private class MyCommittedChangesListener extends CommittedChangesAdapter {
     public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -88,7 +86,17 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
       });
     }
 
-    public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+    public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (lastError != null) {
+            myComponent.setErrorText("Error refreshing changes: " + lastError.getMessage());
+          }
+          else {
+            myComponent.setErrorText("");
+          }
+        }
+      });
     }
   }
 }

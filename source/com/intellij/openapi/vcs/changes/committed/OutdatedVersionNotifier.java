@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,10 +48,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
                                  MessageBus messageBus) {
     myFileEditorManager = fileEditorManager;
     myCache = cache;
-    messageBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
-      public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-      }
-
+    messageBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
         if (myCache.getCachedIncomingChanges() == null) {
           requestLoadIncomingChanges();

@@ -6,12 +6,15 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,6 +26,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private MessageBus myBus;
   private CommittedChangesTreeBrowser myBrowser;
   private MessageBusConnection myConnection;
+  private JLabel myErrorLabel = new JLabel();
 
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;
@@ -38,7 +42,12 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myConnection = myBus.connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     loadChangesToBrowser();
-    return myBrowser;
+
+    JPanel contentPane = new JPanel(new BorderLayout());
+    contentPane.add(myBrowser, BorderLayout.CENTER);
+    contentPane.add(myErrorLabel, BorderLayout.SOUTH);
+    myErrorLabel.setForeground(Color.red);
+    return contentPane;
   }
 
   public void disposeContent() {
@@ -68,13 +77,26 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     }
   }
 
-  private class MyCommittedChangesListener implements CommittedChangesListener {
+  private class MyCommittedChangesListener extends CommittedChangesAdapter {
     public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
       updateModel();
     }
 
     public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
       updateModel();
+    }
+
+    public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (lastError != null) {
+            myErrorLabel.setText("Error refreshing changes: " + lastError.getMessage());
+          }
+          else {
+            myErrorLabel.setText("");
+          }
+        }
+      });
     }
   }
 }

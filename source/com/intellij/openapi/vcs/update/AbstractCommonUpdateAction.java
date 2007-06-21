@@ -46,8 +46,8 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -181,10 +181,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                                                                                              myActionInfo);
                     updateInfoTree.setCanGroupByChangeList(true);
                     final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
-                    messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
-                      public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-                      }
-
+                    messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
                       public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
                         if (receivedChanges != null) {
                           updateInfoTree.setChangeLists(receivedChanges);

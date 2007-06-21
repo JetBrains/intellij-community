@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -19,9 +18,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -38,10 +37,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
   public IncomingChangesIndicator(Project project, CommittedChangesCache cache, MessageBus bus) {
     myProject = project;
     myCache = cache;
-    bus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
-      public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-      }
-
+    bus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

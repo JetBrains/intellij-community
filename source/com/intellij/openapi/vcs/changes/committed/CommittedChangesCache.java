@@ -195,8 +195,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final int maxCount,
-                                              final boolean cacheOnly)
-    throws VcsException {
+                                              final boolean cacheOnly) throws VcsException {
     final AbstractVcs vcs = myVcsManager.getVcsFor(file);
     assert vcs != null;
     final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
@@ -502,8 +501,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private void processUpdatedFilesAfterRefresh(final ChangesCacheFile cache, final UpdatedFiles updatedFiles) {
-    refreshCacheAsync(cache, false, new Consumer<List<CommittedChangeList>>() {
-      public void consume(final List<CommittedChangeList> committedChangeLists) {
+    refreshCacheAsync(cache, false, new RefreshResultConsumer() {
+      public void receivedChanges(final List<CommittedChangeList> committedChangeLists) {
         try {
           LOG.info("Processing updated files after refresh in " + cache.getLocation());
           boolean result = true;
@@ -525,12 +524,20 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           LOG.error(e);
         }
       }
+
+      public void receivedError(VcsException ex) {
+        notifyRefreshError(ex);
+      }
     });
   }
 
   private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
     final ArrayList<CommittedChangeList> listCopy = receivedChanges == null ? null : new ArrayList<CommittedChangeList>(receivedChanges);
     myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(listCopy);
+  }
+
+  private void notifyRefreshError(final VcsException e) {
+    myBus.syncPublisher(COMMITTED_TOPIC).refreshErrorStatusChanged(e);
   }
 
   public boolean isRefreshingIncomingChanges() {
@@ -574,14 +581,30 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty) {
-    final Consumer<List<CommittedChangeList>> notifyConsumer = new Consumer<List<CommittedChangeList>>() {
-      public void consume(final List<CommittedChangeList> committedChangeLists) {
-        if (committedChangeLists.size() > 0) {
+    final List<ChangesCacheFile> files = getAllCaches();
+    final RefreshResultConsumer notifyConsumer = new RefreshResultConsumer() {
+      private VcsException myError = null;
+      private int myCount = 0;
+
+      public void receivedChanges(List<CommittedChangeList> changes) {
+        if (changes.size() > 0) {
           notifyReloadIncomingChanges();
+        }
+        checkDone();
+      }
+
+      public void receivedError(VcsException ex) {
+        myError = ex;
+        checkDone();
+      }
+
+      private void checkDone() {
+        myCount++;
+        if (myCount == files.size()) {
+          notifyRefreshError(myError);
         }
       }
     };
-    final List<ChangesCacheFile> files = getAllCaches();
     for(ChangesCacheFile file: files) {
       refreshCacheAsync(file, initIfEmpty, notifyConsumer);
     }
@@ -593,7 +616,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
-                                 @Nullable final Consumer<List<CommittedChangeList>> postRunnable) {
+                                 @Nullable final RefreshResultConsumer consumer) {
     try {
       if (!initIfEmpty && cache.isEmpty()) {
         return;
@@ -613,15 +636,20 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           else {
             list = refreshCache(cache);
           }
-          if (postRunnable != null) {
-            postRunnable.consume(list);
+          if (consumer != null) {
+            consumer.receivedChanges(list);
           }
         }
         catch(ProcessCanceledException ex) {
           // ignore
         }
-        catch (Exception e) {
+        catch (IOException e) {
           LOG.error(e);
+        }
+        catch (VcsException e) {
+          if (consumer != null) {
+            consumer.receivedError(e);
+          }
         }
       }
     };
@@ -697,5 +725,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     }
     return null;
+  }
+
+  private interface RefreshResultConsumer {
+    void receivedChanges(List<CommittedChangeList> changes);
+    void receivedError(VcsException ex);
   }
 }

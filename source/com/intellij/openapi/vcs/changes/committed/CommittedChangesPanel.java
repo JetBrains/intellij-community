@@ -47,6 +47,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private int myMaxCount = 0;
   private FilterComponent myFilterComponent = new MyFilterComponent();
   private List<CommittedChangeList> myChangesFromProvider;
+  private JLabel myErrorLabel = new JLabel();
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings) {
     super(new BorderLayout());
@@ -55,6 +56,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myProvider = provider;
     myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
     add(myBrowser, BorderLayout.CENTER);
+
+    myErrorLabel.setForeground(Color.red);
+    add(myErrorLabel, BorderLayout.SOUTH);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
@@ -200,6 +204,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void dispose() {
     myBrowser.dispose();
+  }
+
+  public void setErrorText(String text) {
+    myErrorLabel.setText(text);
   }
 
   private class MyFilterComponent extends FilterComponent {
