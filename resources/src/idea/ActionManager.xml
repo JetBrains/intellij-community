@@ -169,10 +169,6 @@
       <action id="LocalHistory.ShowHistory" class="com.intellij.localvcs.integration.ui.actions.ShowHistoryAction"/>
       <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.localvcs.integration.ui.actions.ShowSelectionHistoryAction"/>
       <action id="LocalHistory.PutLabel" class="com.intellij.localvcs.integration.ui.actions.PutLabelAction"/>
-
-      <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction"/>
-      <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction"/>
-      <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
     </group>
 
     <group id="VcsGroups" popup="true">
@@ -345,13 +341,9 @@
 
         <separator/>
 
-        <action id="RecentChangesOld" class="com.intellij.localVcs.actions.RecentChangesAction"/>
-        <!--<keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>-->
-        <!--</action>-->
         <action id="RecentChanges" class="com.intellij.localvcs.integration.ui.actions.RecentChangesAction">
           <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
         </action>
-
       </group>
 
       <!-- Go to -->
@@ -1094,14 +1086,6 @@
       <separator/>
       <reference ref="ExternalToolsGroup"/>
     </group>
-
-    <group id="Lvcs.DirectoryHistoryPopup">
-      <action id="Lvcs.ShowLvcsDiffAction" class="com.intellij.localVcs.ui.ShowLvcsDiffAction"
-              icon="/actions/diff.png"/>
-      <action id="Lvcs.RollbackFileAction" class="com.intellij.localVcs.ui.RollbackFileAction"
-              icon="/actions/rollback.png"/>
-    </group>
-
 
     <group id="Vcs.CheckinProjectPopup">
       <separator/>
