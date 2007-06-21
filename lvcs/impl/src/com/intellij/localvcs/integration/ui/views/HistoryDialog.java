@@ -313,7 +313,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     void run(RevisionProcessingProgress p);
   }
 
-  protected static class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
+  private static class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
     private final ProgressIndicator myIndicator;
 
     public RevisionProcessingProgressAdapter(ProgressIndicator i) {
