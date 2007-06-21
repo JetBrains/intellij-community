@@ -19,7 +19,7 @@ import com.intellij.localvcs.integration.LocalHistoryAction;
 
 
 /**
- * author: lesya
+ * @deprecated see LocalHistoryAction
  */
 public interface LvcsAction extends LocalHistoryAction {
   LvcsAction EMPTY = new LvcsAction() {

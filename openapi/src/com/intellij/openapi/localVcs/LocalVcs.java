@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Mike
+ * @deprecated use LocalHistory instead
  */
 public abstract class LocalVcs implements SettingsSavingComponent {
   public static LocalVcs getInstance(Project project) {

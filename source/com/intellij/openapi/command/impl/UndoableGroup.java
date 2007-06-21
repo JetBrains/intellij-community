@@ -85,7 +85,7 @@ class UndoableGroup {
   }
 
   private void undoOrRedo(final boolean isUndo) {
-    LocalHistoryAction action = LvcsAction.EMPTY;
+    LocalHistoryAction action = LocalHistoryAction.NULL;
 
     if (myProject != null) {
       if (isComplex()) {
