@@ -105,6 +105,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Project myProject;
   private final MessageBus myMessageBus;
 
+  private boolean myIsInitialized = false;
   private boolean myIsDisposed = false;
 
   private ContentManager myContentManager;
@@ -294,6 +295,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void initialize() {
+    myIsInitialized = true;
     final AbstractVcs[] abstractVcses = myVcss.toArray(new AbstractVcs[myVcss.size()]);
     for (AbstractVcs abstractVcs : abstractVcses) {
       registerVcs(abstractVcs);
@@ -784,6 +786,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void updateActiveVcss() {
+    if (!myIsInitialized) {
+      initialize();
+    }
     HashSet<AbstractVcs> oldActiveVcss = new HashSet<AbstractVcs>(myActiveVcss);
     myActiveVcss.clear();
     // some VCSes may want to reconfigure mappings on activation, so we need to iterate a copy of the list
