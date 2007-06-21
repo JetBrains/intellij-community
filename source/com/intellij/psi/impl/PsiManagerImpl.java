@@ -99,10 +99,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final List<PsiTreeChangeListener> myTreeChangeListeners = new CopyOnWriteArrayList<PsiTreeChangeListener>();
   private boolean myTreeChangeEventIsFiring = false;
 
-  private final ArrayList<Runnable> myRunnablesOnChange = new ArrayList<Runnable>();
-  private final ArrayList<WeakReference<Runnable>> myWeakRunnablesOnChange = new ArrayList<WeakReference<Runnable>>();
-  private final ArrayList<Runnable> myRunnablesOnAnyChange = new ArrayList<Runnable>();
-  private final ArrayList<Runnable> myRunnablesAfterAnyChange = new ArrayList<Runnable>();
+  private final List<Runnable> myRunnablesOnChange = new CopyOnWriteArrayList<Runnable>();
+  private final List<WeakReference<Runnable>> myWeakRunnablesOnChange = new CopyOnWriteArrayList<WeakReference<Runnable>>();
+  private final List<Runnable> myRunnablesOnAnyChange = new CopyOnWriteArrayList<Runnable>();
+  private final List<Runnable> myRunnablesAfterAnyChange = new CopyOnWriteArrayList<Runnable>();
 
   private final ExternalResourceListener myExternalResourceListener;
   private boolean myIsDisposed;
@@ -958,7 +958,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     runRunnables(myRunnablesAfterAnyChange);
   }
 
-  private static void runRunnables(ArrayList<Runnable> runnables) {
+  private static void runRunnables(List<Runnable> runnables) {
     if (runnables.isEmpty()) return;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < runnables.size(); i++) {
