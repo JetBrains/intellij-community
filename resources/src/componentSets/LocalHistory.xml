@@ -8,12 +8,12 @@
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcs</interface-class>
-      <implementation-class>com.intellij.localVcs.common.CommonLVCS</implementation-class>
+      <implementation-class>com.intellij.localvcs.deprecated.DeprecatedLVCS</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcsServices</interface-class>
-      <implementation-class>com.intellij.openapi.localVcs.impl.LocalVcsServicesImpl</implementation-class>
+      <implementation-class>com.intellij.localvcs.deprecated.DeprecatedLvcsServicesImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.localvcs.integration.LocalHistory</interface-class>

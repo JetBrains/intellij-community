@@ -17,6 +17,9 @@ package com.intellij.openapi.localVcs;
 
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @deprecated use LocalHistory instead
+ */
 public interface LvcsRevision extends Comparable{
   @NonNls String PROPERTY_UP_TO_DATE = "upToDate";
 

@@ -1,7 +1,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -63,7 +62,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
   private CommandMerger myCurrentMerger;
   private CurrentEditorProvider myCurrentEditorProvider;
-  private AbstractFileOperationsUndoProvider myFileOperationUndoProvider;
+  private FileOperationsUndoProvider myFileOperationUndoProvider;
 
   private Project myCurrentActionProject = DummyProject.getInstance();
   private int myCommandCounter = 1;
@@ -162,12 +161,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myDocumentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
     myLastMerger = new CommandMerger(this, myEditorFactory);
 
-    if (LocalHistory.isEnabled(myProject)) {
-      myFileOperationUndoProvider = new NewFileOperationsUndoProvider(this, myProject);
-    }
-    else {
-      myFileOperationUndoProvider = new OldFileOperationsUndoProvider(this, myProject);
-    }
+    myFileOperationUndoProvider = new FileOperationsUndoProvider(this, myProject);
 
     myBeforeFileDeletionListener = new MyBeforeDeletionListener();
     myVirtualFileManager.addVirtualFileListener(myBeforeFileDeletionListener);

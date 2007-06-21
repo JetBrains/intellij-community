@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.localVcs;
 
+/**
+ * @deprecated use LocalHistory instead
+ */
 public interface LvcsLabelListener {
   void labelAdded(LvcsLabel label);
   void labelDeleted(LvcsLabel label);

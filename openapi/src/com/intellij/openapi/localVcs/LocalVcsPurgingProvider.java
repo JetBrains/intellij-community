@@ -15,14 +15,10 @@
  */
 package com.intellij.openapi.localVcs;
 
-
-
 /**
- * author: lesya
+ * @deprecated use LocalHistory instead
  */
-
 public interface LocalVcsPurgingProvider {
-
   void registerLocker(LocalVcsItemsLocker locker);
   void unregisterLocker(LocalVcsItemsLocker locker);
 

@@ -18,7 +18,7 @@ package com.intellij.openapi.localVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
- * @author Mike
+ * @deprecated use LocalHistory instead
  */
 public interface LvcsDirectory extends LvcsObject {
   LvcsFile[] getFiles();

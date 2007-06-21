@@ -132,10 +132,6 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return myProject.isDefault();
   }
 
-  public boolean isEnabled() {
-    return true;
-  }
-
   @Override
   protected LocalHistoryAction startAction(String name) {
     return myService.startAction(name);

@@ -1,4 +1,4 @@
-package com.intellij.openapi.localVcs.impl;
+package com.intellij.localvcs.deprecated;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
@@ -12,12 +12,12 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
+public class DeprecatedUpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
   private final Document myDocument;
   private final Project myProject;
   private final String myUpToDateContent;
 
-  public UpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent) {
+  public DeprecatedUpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent) {
     myDocument = document;
     myProject = project;
     myUpToDateContent = upToDateContent;

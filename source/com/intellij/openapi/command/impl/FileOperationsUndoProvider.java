@@ -7,14 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 
-class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
+class FileOperationsUndoProvider extends VirtualFileAdapter {
   private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
   private Project myProject;
   private UndoManagerImpl myUndoManager;
   private boolean myIsInsideCommand;
 
-  public NewFileOperationsUndoProvider(UndoManagerImpl m, Project p) {
+  public FileOperationsUndoProvider(UndoManagerImpl m, Project p) {
     myUndoManager = m;
     myProject = p;
 
@@ -22,7 +22,6 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
     getFileManager().addVirtualFileListener(this);
   }
 
-  @Override
   public void dispose() {
     if (myProject == null) return;
     getFileManager().removeVirtualFileListener(this);
@@ -32,13 +31,11 @@ class NewFileOperationsUndoProvider extends AbstractFileOperationsUndoProvider {
     return VirtualFileManager.getInstance();
   }
 
-  @Override
   public void commandStarted(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = true;
   }
 
-  @Override
   public void commandFinished(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = false;

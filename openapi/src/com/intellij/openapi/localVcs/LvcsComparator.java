@@ -18,9 +18,8 @@ package com.intellij.openapi.localVcs;
 import java.util.Comparator;
 
 /**
- * author: lesya
+ * @deprecated use LocalHistory instead
  */
-
 public class LvcsComparator implements Comparator{
 
   public static final Comparator INSTANCE = new LvcsComparator();

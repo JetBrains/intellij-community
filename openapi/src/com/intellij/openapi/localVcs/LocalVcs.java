@@ -36,23 +36,18 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract String[] getRootPaths();
 
-  // CvsChangeProvider
   @Nullable
   public abstract LvcsFile findFile(String filePath);
 
-  // OldFileOperationsUndoProvider
   @Nullable
   public abstract LvcsFile findFile(String filePath, boolean ignoreDeleted);
 
-  // unused
   @Nullable
   public abstract LvcsFileRevision findFileRevisionByDate(final String filePath, long date);
 
-  // GlobalUndoTest.purgeRoot
   @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath);
 
-  // OldFileOperationsUndoProvider
   @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath, boolean ignoreDeleted);
 
@@ -60,9 +55,6 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsLabel addLabel(byte type, String name, String path);
 
-  /**
-   * @deprecated use LocalHistory.startAction(...) instead
-   */
   public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
 
   public abstract LvcsRevision[] getRevisions(String path, LvcsLabel label);
@@ -74,10 +66,6 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   public abstract boolean isAvailable();
 
   public abstract LocalVcsPurgingProvider getLocalVcsPurgingProvider();
-
-  public abstract void markSourcesAsCurrent(String label);
-
-  public abstract void markModuleSourcesAsCurrent(Module module, String label);
 
   public abstract LvcsLabel[] getAllLabels();
 

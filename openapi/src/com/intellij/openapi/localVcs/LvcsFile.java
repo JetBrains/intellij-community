@@ -16,7 +16,7 @@
 package com.intellij.openapi.localVcs;
 
 /**
- * @author Mike
+ * @deprecated use LocalHistory instead
  */
 public interface LvcsFile extends LvcsObject {
   byte[] getByteContent();

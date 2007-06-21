@@ -15,7 +15,7 @@ public abstract class LocalHistoryAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
-    if (getProject(e) == null || !LocalHistory.isEnabled(getProject(e))) {
+    if (getProject(e) == null) {
       p.setVisible(false);
       p.setEnabled(false);
       return;

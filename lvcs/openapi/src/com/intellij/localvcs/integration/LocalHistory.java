@@ -33,10 +33,6 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).hasUnavailableContent(f);
   }
 
-  public static boolean isEnabled(Project p) {
-    return true;
-  }
-
   // todo make it private
   protected static LocalHistory getInstance(Project p) {
     return p.getComponent(LocalHistory.class);

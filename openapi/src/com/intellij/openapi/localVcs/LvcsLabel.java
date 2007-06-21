@@ -18,7 +18,7 @@ package com.intellij.openapi.localVcs;
 
 
 /**
- * @author Mike
+ * @deprecated use LocalHistory instead
  */
 public interface LvcsLabel extends Comparable<LvcsLabel>{
   byte TYPE_BEFORE_ACTION = 1;

@@ -16,7 +16,7 @@
 package com.intellij.openapi.localVcs;
 
 /**
- * author: lesya
+ * @deprecated use LocalHistory instead
  */
 public interface LocalVcsItemsLocker {
   boolean itemCanBePurged(LvcsRevision lvcsObject);

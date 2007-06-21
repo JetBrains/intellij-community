@@ -18,7 +18,7 @@ package com.intellij.openapi.localVcs;
 import java.io.IOException;
 
 /**
- * author: lesya
+ * @deprecated use LocalHistory instead
  */
 public interface VirtualFileInfo {
   String getFilePath();
