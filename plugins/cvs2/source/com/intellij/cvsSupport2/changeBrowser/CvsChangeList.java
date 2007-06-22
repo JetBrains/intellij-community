@@ -10,24 +10,25 @@
  */
 package com.intellij.cvsSupport2.changeBrowser;
 
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
-import java.io.File;
-import java.io.DataOutput;
 import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -218,7 +219,7 @@ public class CvsChangeList implements CommittedChangeList {
     stream.writeLong(myDate);
     stream.writeLong(myFinishDate);
     stream.writeLong(myNumber);
-    stream.writeUTF(myDescription);
+    IOUtil.writeUTFTruncated(stream, myDescription);
     stream.writeUTF(myUser);
     stream.writeUTF(myRootPath);
     stream.writeInt(myRevisions.size());

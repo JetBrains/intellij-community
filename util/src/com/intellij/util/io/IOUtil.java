@@ -52,4 +52,13 @@ public class IOUtil {
 
     stream.write(bytes);
   }
+
+  public static void writeUTFTruncated(final DataOutput stream, final String text) throws IOException {
+    if (text.length() > 65535) {
+      stream.writeUTF(text.substring(0, 65535));
+    }
+    else {
+      stream.writeUTF(text);
+    }
+  }
 }
