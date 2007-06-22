@@ -491,7 +491,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       final VirtualFile existingFile = findFileByPathIfCached(rootPath);
       if (existingFile != null) {
         if (!isAlreadyWatched(result)) {
-          existingFile.refresh(false, toWatchRecursively);
+          existingFile.refresh(true, toWatchRecursively);
         }
       }
       myRootsToWatch.add(result);
