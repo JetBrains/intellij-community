@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
 import org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher;
 import org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher;
+import org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
@@ -95,6 +96,8 @@ public class GroovyLoader implements ApplicationComponent {
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
+
+    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferencesSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
 
     TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());

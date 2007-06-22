@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -348,6 +349,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod) element)) {
+      return getManager().areElementsEquivalent(element, resolve());
+    } if (element instanceof GrField && ((GrField) element).isProperty()) {
       return getManager().areElementsEquivalent(element, resolve());
     } else if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
