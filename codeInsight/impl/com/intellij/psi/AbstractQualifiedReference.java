@@ -151,7 +151,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @NotNull
   protected abstract T parseReference(String newText);
 
-  protected final boolean isAccessible(final PsiElement element) {
+  protected boolean isAccessible(final PsiElement element) {
     if (element instanceof PsiMember) {
       final PsiMember member = (PsiMember)element;
       return ResolveUtil.isAccessible(member, member.getContainingClass(), member.getModifierList(), this, null, null);
@@ -209,7 +209,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @NonNls
   public final String getReferenceName() {
     final PsiElement element = getReferenceNameElement();
-    return element == null ? null : element.getText();
+    return element == null ? null : element.getText().trim();
   }
 
   public final boolean isSoft() {
