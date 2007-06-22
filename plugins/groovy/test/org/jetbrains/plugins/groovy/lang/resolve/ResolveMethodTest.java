@@ -163,6 +163,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
   }
 
+  //test we don't resolve to field in case explicit getter is present
+  public void testFromGetter() throws Exception {
+    PsiReference ref = configureByFile("fromGetter/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
+
   public void testOverload1() throws Exception {
     PsiReference ref = configureByFile("overload1/A.groovy");
     PsiElement resolved = ref.resolve();
