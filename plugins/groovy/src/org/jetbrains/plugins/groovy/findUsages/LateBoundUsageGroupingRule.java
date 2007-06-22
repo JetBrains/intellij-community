@@ -15,7 +15,7 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.OrderableUsageGroupingRule;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.Usage;
@@ -30,8 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 /**
  * @author ven
  */
-public class LateBoundUsageGroupingRule implements UsageGroupingRule {
-  class LateBoundGroup implements UsageGroup {
+public class LateBoundUsageGroupingRule implements OrderableUsageGroupingRule {
+  private LateBoundGroup INSTANCE = new LateBoundGroup();
+
+  private class LateBoundGroup implements UsageGroup {
 
     public Icon getIcon(boolean isOpen) {
       return null;
@@ -72,10 +74,14 @@ public class LateBoundUsageGroupingRule implements UsageGroupingRule {
     if (usage instanceof PsiElementUsage) {
       final PsiElement element = ((PsiElementUsage) usage).getElement();
       if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).resolve() == null) {
-        return new LateBoundGroup();
+        return INSTANCE;
       }
     }
 
     return null;
+  }
+
+  public int getRank() {
+    return 0;
   }
 }
