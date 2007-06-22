@@ -61,7 +61,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
       FileDocumentManager.getInstance().saveAllDocuments();
       final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
       if (addHistoryLabel) {
-        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
+        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()));
       }
       RemoteConnection connection = DebuggerManagerImpl
         .createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
@@ -70,7 +70,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     else if (state instanceof PatchedRunnableState) {
       FileDocumentManager.getInstance().saveAllDocuments();
       if (addHistoryLabel) {
-        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
+        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()));
       }
       final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
       contentDescriptor = manager.attachVirtualMachine(runProfile, this, state, reuseContent, connection, true);
@@ -78,7 +78,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     else if (state instanceof RemoteState) {
       FileDocumentManager.getInstance().saveAllDocuments();
       if (addHistoryLabel) {
-        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", runProfile.getName()), "");
+        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", runProfile.getName()));
       }
       RemoteState remoteState = (RemoteState)state;
       final RemoteConnection connection = createRemoteDebugConnection(remoteState, state.getRunnerSettings());

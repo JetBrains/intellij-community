@@ -4,9 +4,9 @@
  */
 package com.intellij.execution.testframework;
 
-import com.intellij.openapi.localVcs.LvcsLabel;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.openapi.localVcs.LvcsLabel;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 public class LvcsHelper {
@@ -29,6 +29,7 @@ public class LvcsHelper {
       }
     }
     final TestConsoleProperties consoleProperties = model.getProperties();
-    LocalVcs.getInstance(consoleProperties.getProject()).addLabel(labelType, label + " " + consoleProperties.getConfiguration().getName(), "");
+    String name = label + " " + consoleProperties.getConfiguration().getName();
+    LocalHistory.putLabel(consoleProperties.getProject(), name);
   }
 }
