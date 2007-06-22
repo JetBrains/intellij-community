@@ -43,6 +43,7 @@ JNIEXPORT void JNICALL Java_com_intellij_rt_execution_application_AppMain_trigge
 #endif
 }
 
+#ifndef defined(WIN32)
 
 int isKernel26OrHigher() {
   char buffer[1024];
@@ -59,3 +60,4 @@ int isKernel26OrHigher() {
 
   return 0;
 }
+#endif
