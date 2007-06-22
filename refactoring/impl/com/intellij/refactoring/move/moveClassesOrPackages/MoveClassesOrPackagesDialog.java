@@ -229,7 +229,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       return name.length() == 0 || myManager.getNameHelper().isQualifiedName(name);
     }
     else {
-      return findTargetClass() != null && getValidationError() != null;
+      return findTargetClass() != null && getValidationError() == null;
     }
   }
 
