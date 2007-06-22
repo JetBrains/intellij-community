@@ -1,9 +1,9 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.core.LocalVcs;
-import com.intellij.localvcs.core.TestLocalVcs;
-import com.intellij.localvcs.core.storage.Storage;
-import com.intellij.localvcs.integration.TestVirtualFile;
+import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.TestLocalVcs;
+import com.intellij.history.core.storage.Storage;
+import com.intellij.history.integration.TestVirtualFile;
 import org.junit.After;
 import org.junit.Before;
 

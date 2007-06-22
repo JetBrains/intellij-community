@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.localVcs;
 
-import com.intellij.localvcs.integration.LocalHistoryAction;
-import com.intellij.localvcs.integration.LocalHistoryConfiguration;
+import com.intellij.history.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;

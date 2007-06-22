@@ -1,6 +1,6 @@
 package com.intellij.localvcsintegr.revertion;
 
-import com.intellij.localvcs.integration.revertion.Reverter;
+import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

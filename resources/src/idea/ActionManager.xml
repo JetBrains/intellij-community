@@ -165,10 +165,10 @@
     <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles"/>
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor"/>
 
-    <group id="LocalHistory" class="com.intellij.localvcs.integration.ui.actions.LocalHistoryGroup" popup="true">
-      <action id="LocalHistory.ShowHistory" class="com.intellij.localvcs.integration.ui.actions.ShowHistoryAction"/>
-      <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.localvcs.integration.ui.actions.ShowSelectionHistoryAction"/>
-      <action id="LocalHistory.PutLabel" class="com.intellij.localvcs.integration.ui.actions.PutLabelAction"/>
+    <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
+      <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction"/>
+      <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction"/>
+      <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
     </group>
 
     <group id="VcsGroups" popup="true">
@@ -341,7 +341,7 @@
 
         <separator/>
 
-        <action id="RecentChanges" class="com.intellij.localvcs.integration.ui.actions.RecentChangesAction">
+        <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
           <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
         </action>
       </group>

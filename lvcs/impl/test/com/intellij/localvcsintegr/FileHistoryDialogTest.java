@@ -1,9 +1,9 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
-import com.intellij.localvcs.integration.ui.models.NullRevisionProcessingProgress;
-import com.intellij.localvcs.integration.ui.models.RevisionProcessingProgress;
-import com.intellij.localvcs.integration.ui.views.FileHistoryDialog;
+import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
+import com.intellij.history.integration.ui.models.NullRevisionProcessingProgress;
+import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
+import com.intellij.history.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.editor.EditorFactory;

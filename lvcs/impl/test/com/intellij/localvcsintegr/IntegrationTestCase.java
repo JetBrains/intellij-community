@@ -1,12 +1,12 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.core.ILocalVcs;
-import com.intellij.localvcs.core.Paths;
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.Clock;
-import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.LocalHistoryComponent;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.Paths;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.Clock;
+import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryComponent;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;

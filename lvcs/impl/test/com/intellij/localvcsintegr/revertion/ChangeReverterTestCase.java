@@ -1,8 +1,8 @@
 package com.intellij.localvcsintegr.revertion;
 
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.revertion.ChangeReverter;
-import com.intellij.localvcs.integration.revertion.Reverter;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.revertion.ChangeReverter;
+import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.localvcsintegr.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 

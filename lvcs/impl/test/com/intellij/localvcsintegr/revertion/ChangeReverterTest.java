@@ -1,12 +1,10 @@
 package com.intellij.localvcsintegr.revertion;
 
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.Clock;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.Clock;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 
 import java.io.IOException;
 import java.util.Date;

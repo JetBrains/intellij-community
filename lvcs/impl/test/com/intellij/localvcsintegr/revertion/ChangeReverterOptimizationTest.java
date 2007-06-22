@@ -1,6 +1,6 @@
 package com.intellij.localvcsintegr.revertion;
 
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;

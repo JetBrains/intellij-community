@@ -1,8 +1,8 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.localvcs.integration.LocalHistory;
-import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.integration.LocalHistoryAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -12,7 +12,6 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;

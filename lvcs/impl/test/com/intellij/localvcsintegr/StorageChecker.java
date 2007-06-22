@@ -1,12 +1,12 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.core.LocalVcs;
-import com.intellij.localvcs.core.TestLocalVcs;
-import com.intellij.localvcs.core.changes.Change;
-import com.intellij.localvcs.core.storage.IContentStorage;
-import com.intellij.localvcs.core.storage.Storage;
-import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.integration.FormatUtil;
+import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.TestLocalVcs;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.storage.IContentStorage;
+import com.intellij.history.core.storage.Storage;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.FormatUtil;
 
 import java.io.File;
 import java.io.IOException;

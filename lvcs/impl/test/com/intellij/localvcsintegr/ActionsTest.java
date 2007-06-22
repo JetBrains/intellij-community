@@ -1,10 +1,10 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.LocalHistory;
-import com.intellij.localvcs.integration.LocalHistoryAction;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.integration.LocalHistoryAction;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;

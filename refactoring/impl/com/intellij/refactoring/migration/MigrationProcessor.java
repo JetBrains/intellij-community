@@ -1,7 +1,7 @@
 package com.intellij.refactoring.migration;
 
-import com.intellij.localvcs.integration.LocalHistoryAction;
-import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.history.integration.LocalHistoryAction;
+import com.intellij.history.integration.LocalHistory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

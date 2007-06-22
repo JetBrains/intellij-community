@@ -1,6 +1,6 @@
 package com.intellij.localvcsintegr.ui;
 
-import com.intellij.localvcs.integration.ui.views.SelectionHistoryDialog;
+import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.localvcsintegr.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 

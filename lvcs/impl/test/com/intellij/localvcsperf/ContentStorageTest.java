@@ -1,8 +1,8 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
-import com.intellij.localvcs.core.storage.ContentStorage;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.storage.ContentStorage;
+import com.intellij.history.utils.RunnableAdapter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.localVcs;
 
-import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.history.integration.LocalHistoryAction;
 
 
 /**

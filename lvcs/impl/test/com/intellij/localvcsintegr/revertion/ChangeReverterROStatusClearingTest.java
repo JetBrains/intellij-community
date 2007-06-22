@@ -1,7 +1,7 @@
 package com.intellij.localvcsintegr.revertion;
 
-import com.intellij.localvcs.integration.IdeaGateway;
-import com.intellij.localvcs.integration.revertion.ChangeReverter;
+import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

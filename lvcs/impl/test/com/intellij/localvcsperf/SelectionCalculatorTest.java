@@ -1,10 +1,10 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.ui.models.NullProgress;
-import com.intellij.localvcs.integration.ui.models.SelectionCalculator;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.ui.models.NullProgress;
+import com.intellij.history.integration.ui.models.SelectionCalculator;
+import com.intellij.history.utils.RunnableAdapter;
 import org.junit.Before;
 import org.junit.Test;
 

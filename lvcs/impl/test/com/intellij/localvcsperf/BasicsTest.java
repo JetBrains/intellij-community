@@ -1,13 +1,13 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
-import com.intellij.localvcs.core.changes.Change;
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.integration.CacheUpdaterHelper;
-import com.intellij.localvcs.integration.TestIdeaGateway;
-import com.intellij.localvcs.integration.TestVirtualFile;
-import com.intellij.localvcs.integration.Updater;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.CacheUpdaterHelper;
+import com.intellij.history.integration.TestIdeaGateway;
+import com.intellij.history.integration.TestVirtualFile;
+import com.intellij.history.integration.Updater;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;

@@ -1,26 +1,26 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.localvcs.integration.LocalHistoryConfiguration</interface-class>
-      <implementation-class>com.intellij.localvcs.integration.LocalHistoryConfiguration</implementation-class>
+      <interface-class>com.intellij.history.integration.LocalHistoryConfiguration</interface-class>
+      <implementation-class>com.intellij.history.integration.LocalHistoryConfiguration</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.localvcs.integration.NewLocalHistoryComponent</interface-class>
-      <implementation-class>com.intellij.localvcs.integration.NewLocalHistoryComponentImpl</implementation-class>
+      <interface-class>com.intellij.history.integration.NewLocalHistoryComponent</interface-class>
+      <implementation-class>com.intellij.history.integration.NewLocalHistoryComponentImpl</implementation-class>
     </component>
   </application-components>
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcs</interface-class>
-      <implementation-class>com.intellij.localvcs.deprecated.DeprecatedLVCS</implementation-class>
+      <implementation-class>com.intellij.history.deprecated.DeprecatedLVCS</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcsServices</interface-class>
-      <implementation-class>com.intellij.localvcs.deprecated.DeprecatedLvcsServicesImpl</implementation-class>
+      <implementation-class>com.intellij.history.deprecated.DeprecatedLvcsServicesImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.localvcs.integration.LocalHistory</interface-class>
-      <implementation-class>com.intellij.localvcs.integration.LocalHistoryComponent</implementation-class>
+      <interface-class>com.intellij.history.integration.LocalHistory</interface-class>
+      <implementation-class>com.intellij.history.integration.LocalHistoryComponent</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

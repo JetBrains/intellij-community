@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.codeInsight.CodeSmellInfo;
-import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.history.integration.LocalHistoryAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;

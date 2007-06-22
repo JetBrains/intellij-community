@@ -1,7 +1,7 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.idea.Bombed;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.utils.RunnableAdapter;
 import org.junit.Test;
 
 import java.util.Calendar;

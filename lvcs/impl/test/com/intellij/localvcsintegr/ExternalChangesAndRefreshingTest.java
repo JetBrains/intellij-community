@@ -1,9 +1,9 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.core.Paths;
-import com.intellij.localvcs.core.revisions.Revision;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.Paths;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;

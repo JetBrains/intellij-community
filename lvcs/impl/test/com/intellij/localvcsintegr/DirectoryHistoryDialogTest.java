@@ -1,7 +1,7 @@
 package com.intellij.localvcsintegr;
 
-import com.intellij.localvcs.integration.ui.models.DirectoryHistoryDialogModel;
-import com.intellij.localvcs.integration.ui.views.DirectoryHistoryDialog;
+import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
+import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

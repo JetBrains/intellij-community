@@ -1,8 +1,8 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.localvcs.integration.LocalHistoryAction;
-import com.intellij.localvcs.integration.LocalHistory;
+import com.intellij.history.integration.LocalHistoryAction;
+import com.intellij.history.integration.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;

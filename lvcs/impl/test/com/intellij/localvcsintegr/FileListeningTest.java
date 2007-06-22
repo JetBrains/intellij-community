@@ -1,10 +1,10 @@
 package com.intellij.localvcsintegr;
 
 
-import com.intellij.localvcs.core.ContentFactory;
-import com.intellij.localvcs.core.Paths;
-import com.intellij.localvcs.core.tree.Entry;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.ContentFactory;
+import com.intellij.history.core.Paths;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;

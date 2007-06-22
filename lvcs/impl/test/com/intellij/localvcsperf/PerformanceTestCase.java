@@ -1,7 +1,7 @@
 package com.intellij.localvcsperf;
 
-import com.intellij.localvcs.core.TempDirTestCase;
-import com.intellij.localvcs.utils.RunnableAdapter;
+import com.intellij.history.core.TempDirTestCase;
+import com.intellij.history.utils.RunnableAdapter;
 
 import java.util.Random;
 
