@@ -28,7 +28,7 @@ import java.util.*;
 
 /**
  * @author ven
- * Resolves methods from method call or function application.
+ * Resolves methods from call expression or function application.
  */
 public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
@@ -58,9 +58,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
 
       return true;
-    } else {
+    } else if (myForCompletion || myCandidates.isEmpty()) {
       return super.execute(element, substitutor);
     }
+
+    return true;
   }
 
   public GroovyResolveResult[] getCandidates() {
