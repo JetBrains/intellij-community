@@ -52,7 +52,9 @@ int isKernel26OrHigher() {
      int major;
      int minor;
      fscanf(fp, "Linux version %d.%d", &major, &minor);
-     return major >=2 && minor >= 6;
+     if (major < 2) return 0;
+     if (major == 2) return minor >= 6;
+     return 1;  
   }
 
   return 0;
