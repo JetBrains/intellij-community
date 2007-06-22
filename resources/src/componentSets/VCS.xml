@@ -46,12 +46,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.vfs.ReadonlyStatusHandler</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
