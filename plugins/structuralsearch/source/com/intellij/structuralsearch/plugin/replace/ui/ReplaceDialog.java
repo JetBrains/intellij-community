@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.history.integration.LocalHistory;
-import com.intellij.history.integration.LocalHistoryAction;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
