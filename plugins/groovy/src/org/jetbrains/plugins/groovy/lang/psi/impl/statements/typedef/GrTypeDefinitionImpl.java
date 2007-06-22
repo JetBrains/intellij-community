@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
@@ -32,15 +33,17 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLoader;
-import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -51,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceE
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -198,10 +202,46 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
             if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY)) return false;
           }
         }
+
+        final boolean isGetter = name.startsWith("get");
+        final boolean isSetter = name.startsWith("set");
+        if (isGetter || isSetter) {
+          final String propName = StringUtil.decapitalize(name.substring(3));
+          if (propName.length() > 0) {
+            Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this); //cached
+            final PsiField aField = fieldsMap.get(propName);
+            if (aField instanceof GrField && ((GrField) aField).isProperty() && isPropertyReference(place, aField, isGetter)) {
+              if (!processor.execute(aField, PsiSubstitutor.EMPTY)) return false;
+            }
+          }
+        }
       }
     }
 
     return true;
+  }
+
+  private boolean isPropertyReference(PsiElement place, PsiField aField, boolean isGetter) {
+    //filter only in groovy, todo: analyze java place
+    if (place.getLanguage() != GroovyFileType.GROOVY_FILE_TYPE.getLanguage()) return true;
+
+    if (place instanceof GrReferenceExpression) {
+      final PsiElement parent = place.getParent();
+      if (parent instanceof GrMethodCall) {
+        final GrMethodCall call = (GrMethodCall) parent;
+        if (call.getNamedArguments().length > 0 || call.getClosureArguments().length > 0) return false;
+        final GrExpression[] args = call.getExpressionArguments();
+        if (isGetter) {
+          return args.length == 0;
+        } else {
+          return args.length == 1 &&
+              TypesUtil.isAssignableByMethodCallConversion(aField.getType(), args[0].getType(),
+                  place.getManager(), place.getResolveScope());
+        }
+      }
+    }
+
+    return false;
   }
 
   private boolean isMethodVisible(boolean isPlaceGroovy, PsiMethod method) {

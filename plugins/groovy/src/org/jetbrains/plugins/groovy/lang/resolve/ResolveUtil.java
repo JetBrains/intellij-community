@@ -41,10 +41,11 @@ public class ResolveUtil {
 
   public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
     PsiElement lastParent = null;
-    while (place != null) {
-      if (!place.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
-      lastParent = place;
-      place = place.getParent();
+    PsiElement run = place;
+    while (run != null) {
+      if (!run.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
+      lastParent = run;
+      run = run.getParent();
     }
 
     return true;
