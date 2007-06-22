@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiUtil;
@@ -121,6 +122,7 @@ public class LookupItemUtil{
     }
     else if (object instanceof PsiPackage) {
       tailType = TailType.DOT;
+      s = StringUtil.notNullize(s);
     }
     else if (object instanceof PsiKeyword) {
       s = ((PsiKeyword)object).getText();
@@ -156,11 +158,6 @@ public class LookupItemUtil{
       }
 
       if (dim > 0) {
-        final StringBuffer tail = new StringBuffer();
-        for (int i = 0; i < dim; i++) {
-          tail.append("[]");
-        }
-        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
         item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
         item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, dim);
       }
