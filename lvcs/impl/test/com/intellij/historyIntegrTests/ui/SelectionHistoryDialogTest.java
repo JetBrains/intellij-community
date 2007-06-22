@@ -1,7 +1,7 @@
-package com.intellij.localvcsintegr.ui;
+package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
-import com.intellij.localvcsintegr.IntegrationTestCase;
+import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

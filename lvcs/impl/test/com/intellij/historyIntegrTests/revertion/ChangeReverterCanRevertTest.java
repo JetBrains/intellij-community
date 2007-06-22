@@ -1,4 +1,4 @@
-package com.intellij.localvcsintegr.revertion;
+package com.intellij.historyIntegrTests.revertion;
 
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;

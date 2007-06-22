@@ -1,4 +1,4 @@
-package com.intellij.localvcsintegr.revertion;
+package com.intellij.historyIntegrTests.revertion;
 
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.Clock;

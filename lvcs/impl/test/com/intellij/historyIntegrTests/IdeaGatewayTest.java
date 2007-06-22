@@ -1,4 +1,4 @@
-package com.intellij.localvcsintegr;
+package com.intellij.historyIntegrTests;
 
 import com.intellij.openapi.vfs.VirtualFile;
 

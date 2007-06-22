@@ -1,4 +1,4 @@
-package com.intellij.localvcsperf;
+package com.intellij.historyPerfTests;
 
 import com.intellij.history.core.TempDirTestCase;
 import com.intellij.history.utils.RunnableAdapter;

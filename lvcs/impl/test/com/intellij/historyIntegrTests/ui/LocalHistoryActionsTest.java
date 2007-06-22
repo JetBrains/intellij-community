@@ -1,9 +1,9 @@
-package com.intellij.localvcsintegr.ui;
+package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction;
-import com.intellij.localvcsintegr.IntegrationTestCase;
+import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;

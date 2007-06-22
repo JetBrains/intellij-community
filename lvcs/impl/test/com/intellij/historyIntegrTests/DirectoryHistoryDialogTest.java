@@ -1,4 +1,4 @@
-package com.intellij.localvcsintegr;
+package com.intellij.historyIntegrTests;
 
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;

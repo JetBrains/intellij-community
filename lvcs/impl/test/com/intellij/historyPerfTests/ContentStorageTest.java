@@ -1,4 +1,4 @@
-package com.intellij.localvcsperf;
+package com.intellij.historyPerfTests;
 
 import com.intellij.idea.Bombed;
 import com.intellij.history.core.storage.ContentStorage;

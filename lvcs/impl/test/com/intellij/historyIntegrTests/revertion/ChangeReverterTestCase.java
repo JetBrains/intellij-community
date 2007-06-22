@@ -1,9 +1,9 @@
-package com.intellij.localvcsintegr.revertion;
+package com.intellij.historyIntegrTests.revertion;
 
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
-import com.intellij.localvcsintegr.IntegrationTestCase;
+import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;

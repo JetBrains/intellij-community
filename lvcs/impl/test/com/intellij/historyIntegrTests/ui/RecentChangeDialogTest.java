@@ -1,10 +1,10 @@
-package com.intellij.localvcsintegr.ui;
+package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.history.integration.ui.views.RecentChangeDialog;
-import com.intellij.localvcsintegr.IntegrationTestCase;
+import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
