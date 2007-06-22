@@ -11,9 +11,11 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.projectImport.eclipse.action.EclipseProjectImporter;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 
 import javax.swing.*;
+import java.io.IOException;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -22,6 +24,8 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
 
   public void doImport(final Project currentProject) {
     final String title = getTitle();
+
+    //new ProjectImportWizardDialog(title, new ProjectImportWizardDialog.Context()).show();
 
     final String[] options = new String[]{IdeBundle.message("project.import.into.new.project"),
       IdeBundle.message("project.import.into.existing.project"), CommonBundle.getCancelButtonText()};
@@ -86,7 +90,17 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
       }
     }
 
-    rootManager.setCompilerOutputUrl(EclipseProjectImporter.getUrl(compilerOutput));
+    rootManager.setCompilerOutputUrl(getUrl(compilerOutput));
+  }
+
+  public static String getUrl(String path) {
+    try {
+      path = FileUtil.resolveShortWindowsName(path);
+    }
+    catch (IOException e) {
+      //file doesn't exist
+    }
+    return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path));
   }
 
   protected String getTitle() {

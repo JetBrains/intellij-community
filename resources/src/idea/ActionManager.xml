@@ -226,7 +226,6 @@
         <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
         <separator/>
         <reference ref="ProjectImport"/>
-        <action id="ExportToEclipse" class="com.intellij.projectImport.eclipse.action.ExportEclipseProjectsAction"/>
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction"/>

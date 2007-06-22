@@ -45,9 +45,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
   private ClasspathPanel myPanel;
   private ModulesProvider myModulesProvider;
 
-  private Map<String,String> formatIdToDescr = new HashMap<String, String>();
-
-  private JComboBox cbClasspathFormat;
+  private ClasspathFormatPanel myClasspathFormatPanel;
 
   public ClasspathEditor(Project project, ModifiableRootModel model, final ModulesProvider modulesProvider) {
     super(project, model);
@@ -55,7 +53,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
   }
 
   public boolean isModified() {
-    return super.isModified() || isClasspathFormatModified();
+    return super.isModified() || ( myClasspathFormatPanel != null && myClasspathFormatPanel.isModified());
   }
 
   public String getHelpTopic() {
@@ -76,7 +74,9 @@ public class ClasspathEditor extends ModuleElementsEditor {
   }
 
   public void apply () throws ConfigurationException {
-    setModuleClasspathFormat();
+    if(myClasspathFormatPanel!=null) {
+      myClasspathFormatPanel.apply();
+    }
   }
 
   public JComponent createComponentImpl() {
@@ -97,60 +97,14 @@ public class ClasspathEditor extends ModuleElementsEditor {
     panel.add(jdkConfigurable.createComponent(), BorderLayout.NORTH);
     jdkConfigurable.reset();
     registerDisposable(jdkConfigurable);
-    panel.add(createFormatPanel(), BorderLayout.SOUTH);
+
+    List<ClasspathStorageProvider> providers = ClasspathStorage.getProviders();
+    if(providers.size()>1){
+      myClasspathFormatPanel = new ClasspathFormatPanel(providers);
+      panel.add(myClasspathFormatPanel, BorderLayout.SOUTH);
+    }
 
     return panel;
-  }
-
-  private JPanel createFormatPanel() {
-    JPanel formatPanel = new JPanel(new GridBagLayout());
-    formatPanel.add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
-                    new GridBagConstraints(0,0,1,1,0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 6, 6, 0), 0, 0));
-
-    formatIdToDescr.put ( ClasspathStorage.DEFAULT_STORAGE, ClasspathStorage.DEFAULT_STORAGE_DESCR);
-    for (ClasspathStorageProvider provider : ClasspathStorage.getProviders()){
-      formatIdToDescr.put ( provider.getID(), provider.getDescription());
-    }
-
-    final Object[] items = formatIdToDescr.values().toArray();
-    cbClasspathFormat = new JComboBox(items);
-    updateClasspathFormat();
-    formatPanel.add(cbClasspathFormat,
-                    new GridBagConstraints(1,0,1,1,1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
-    return formatPanel;
-  }
-
-  private void updateClasspathFormat() {
-    cbClasspathFormat.setSelectedItem(formatIdToDescr.get(getModuleClasspathFormat()));
-  }
-
-  private boolean isClasspathFormatModified() {
-    return !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
-  }
-
-  private String getSelectedClasspathFormat() {
-    final String selected = (String)cbClasspathFormat.getSelectedItem();
-    for ( Map.Entry<String,String> entry : formatIdToDescr.entrySet() ) {
-      if ( entry.getValue().equals(selected)) {
-        return entry.getKey();
-      }
-    }
-    throw new IllegalStateException(selected);
-  }
-
-  @NotNull
-  private String getModuleClasspathFormat() {
-    return ClasspathStorage.getStorageType(myModel.getModule());
-  }
-
-  private void setModuleClasspathFormat() throws ConfigurationException {
-    final String storageID = getSelectedClasspathFormat();
-    if (!storageID.equals(ClasspathStorage.DEFAULT_STORAGE)) {
-      ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
-    }
-    if (isClasspathFormatModified()) {
-      ClasspathStorage.setStorageType(myModel.getModule(), storageID);
-    }
   }
 
   public void flushChangesToModel() {
@@ -161,6 +115,60 @@ public class ClasspathEditor extends ModuleElementsEditor {
   public void moduleStateChanged() {
     if (myPanel != null) {
       myPanel.initFromModel();
+    }
+  }
+
+  private class ClasspathFormatPanel extends JPanel {
+
+    private JComboBox cbClasspathFormat;
+
+    private Map<String,String> formatIdToDescr = new HashMap<String, String>();
+
+    private ClasspathFormatPanel(final List<ClasspathStorageProvider> providers) {
+      super(new GridBagLayout());
+      add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
+                      new GridBagConstraints(0,0,1,1,0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 6, 6, 0), 0, 0));
+
+      for (ClasspathStorageProvider provider : providers){
+        formatIdToDescr.put ( provider.getID(), provider.getDescription());
+      }
+
+      final Object[] items = formatIdToDescr.values().toArray();
+      cbClasspathFormat = new JComboBox(items);
+      updateClasspathFormat();
+      add(cbClasspathFormat,
+                      new GridBagConstraints(1,0,1,1,1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
+    }
+
+    private void updateClasspathFormat() {
+      cbClasspathFormat.setSelectedItem(formatIdToDescr.get(getModuleClasspathFormat()));
+    }
+
+    private String getSelectedClasspathFormat() {
+      final String selected = (String)cbClasspathFormat.getSelectedItem();
+      for ( Map.Entry<String,String> entry : formatIdToDescr.entrySet() ) {
+        if ( entry.getValue().equals(selected)) {
+          return entry.getKey();
+        }
+      }
+      throw new IllegalStateException(selected);
+    }
+
+    @NotNull
+    private String getModuleClasspathFormat() {
+      return ClasspathStorage.getStorageType(myModel.getModule());
+    }
+
+    boolean isModified () {
+      return cbClasspathFormat != null && !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
+    }
+
+    void apply () throws ConfigurationException {
+      if (isModified()) {
+        final String storageID = getSelectedClasspathFormat();
+        ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
+        ClasspathStorage.setStorageType(myModel.getModule(), storageID);
+      }
     }
   }
 }

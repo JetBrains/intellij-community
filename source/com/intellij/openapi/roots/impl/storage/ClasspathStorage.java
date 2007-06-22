@@ -4,23 +4,25 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.eclipse.config.EclipseClasspathStorage;
-import com.intellij.projectImport.eclipse.util.PathUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,8 +41,8 @@ public class ClasspathStorage implements StateStorage {
 
   public static final String DEFAULT_STORAGE_DESCR = ProjectBundle.message("project.roots.classpath.format.default.descr");
 
-  @NonNls private static final String CLASSPATH_OPTION = "classpath";
-  @NonNls private static final String CLASSPATH_DIR_OPTION = "classpath-dir";
+  @NonNls public static final String CLASSPATH_OPTION = "classpath";
+  @NonNls public static final String CLASSPATH_DIR_OPTION = "classpath-dir";
 
   @NonNls private static final String COMPONENT_TAG = "component";
   private Object mySession;
@@ -105,19 +107,6 @@ public class ClasspathStorage implements StateStorage {
     catch (IOException e) {
       throw new StateStorageException(e);
     }
-  }
-
-  public static ClasspathStorageProvider getProvider(final String type) {
-    for (ClasspathStorageProvider provider : getProviders()) {
-      if (type.equals(provider.getID())) {
-        return provider;
-      }
-    }
-    return new ClasspathStorageProvider.UnsupportedStorageProvider(type);
-  }
-
-  public static ClasspathStorageProvider[] getProviders() {
-    return new ClasspathStorageProvider[]{new EclipseClasspathStorage.EclipseStorageProvider()};
   }
 
   @NotNull
@@ -202,15 +191,20 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static String getStorageRootFromOptions(final Module module) {
-    final String moduleRoot = getModuleDir(module);
-    final String storageRef = module.getOptionValue(CLASSPATH_DIR_OPTION);
-    return storageRef != null ? PathUtil.concatPath(moduleRoot, storageRef) : moduleRoot;
+  public static ClasspathStorageProvider getProvider(final String type) {
+    for (ClasspathStorageProvider provider : getProviders()) {
+      if (type.equals(provider.getID())) {
+        return provider;
+      }
+    }
+    return new UnsupportedStorageProvider(type);
   }
 
-  @NotNull
-  public static String getStorageCategory(final Module module) {
-    return getStorageType(module).equals(DEFAULT_STORAGE) ? DEFAULT_STORAGE : SPECIAL_STORAGE;
+  public static List<ClasspathStorageProvider> getProviders() {
+    final List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
+    list.add(new DefaultStorageProvider());
+    list.addAll(Arrays.asList(Extensions.getExtensions(ClasspathStorageProvider.EXTENSION_POINT_NAME)));
+    return list;
   }
 
   @NotNull
@@ -219,15 +213,30 @@ public class ClasspathStorage implements StateStorage {
     return id != null ? id : DEFAULT_STORAGE;
   }
 
+  public static String getModuleDir(final Module module) {
+    return new File(module.getModuleFilePath()).getParent();
+  }
+
+  public static String getStorageRootFromOptions(final Module module) {
+    final String moduleRoot = getModuleDir(module);
+    final String storageRef = module.getOptionValue(CLASSPATH_DIR_OPTION);
+    if (storageRef == null) {
+      return moduleRoot;
+    }
+    else if (new File(storageRef).isAbsolute()) {
+      return storageRef;
+    } else {
+      return FileUtil.toSystemIndependentName(new File(moduleRoot, storageRef).getPath());
+    }
+  }
+
   public static void setStorageType(final Module module, final String storageID) {
     final String oldStorageType = getStorageType(module);
     if (oldStorageType.equals(storageID)) {
       return;
     }
 
-    if (!oldStorageType.equals(DEFAULT_STORAGE)) {
-      getProvider(oldStorageType).cancel(module);
-    }
+    getProvider(oldStorageType).detach(module);
 
     if (storageID.equals(DEFAULT_STORAGE)) {
       module.clearOption(CLASSPATH_OPTION);
@@ -236,15 +245,11 @@ public class ClasspathStorage implements StateStorage {
     else {
       module.setOption(CLASSPATH_OPTION, storageID);
 
-      final String relPath = PathUtil.getRelative(getModuleDir(module), getStorageRoot(module, null));
-      if (!relPath.equals(".")) {
+      final String relPath = FileUtil.getRelativePath(new File(getModuleDir(module)), new File(getStorageRoot(module, null)));
+      if (relPath != null && !relPath.equals(".")) {
         module.setOption(CLASSPATH_DIR_OPTION, relPath);
       }
     }
-  }
-
-  public static String getModuleDir(final Module module) {
-    return new File(module.getModuleFilePath()).getParent();
   }
 
   @Nullable
@@ -263,9 +268,73 @@ public class ClasspathStorage implements StateStorage {
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
       final String storageRoot = getStorageRoot(aModule, moduleBeingLoaded);
       if (storageRoot != null) {
-        map.put(aModule.getName(), PathUtil.normalize(storageRoot));
+        map.put(aModule.getName(), FileUtil.toSystemIndependentName(storageRoot));
       }
     }
     return map;
+  }
+
+  private static class DefaultStorageProvider implements ClasspathStorageProvider {
+    @NonNls
+    public String getID() {
+      return DEFAULT_STORAGE;
+    }
+
+    @Nls
+    public String getDescription() {
+      return DEFAULT_STORAGE_DESCR;
+    }
+
+    public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+    }
+
+    public void detach(Module module) {
+    }
+
+    public ClasspathConverter createConverter(Module module) {
+      throw new UnsupportedOperationException(getDescription());
+    }
+  }
+
+  public static class UnsupportedStorageProvider implements ClasspathStorageProvider {
+    private final String myType;
+
+    public UnsupportedStorageProvider(final String type) {
+      myType = type;
+    }
+
+    @NonNls
+    public String getID() {
+      return myType;
+    }
+
+    @Nls
+    public String getDescription() {
+      return "Unsupported classpath format " + myType;
+    }
+
+    public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+      throw new UnsupportedOperationException(getDescription());
+    }
+
+    public void detach(final Module module) {
+      throw new UnsupportedOperationException(getDescription());
+    }
+
+    public ClasspathConverter createConverter(final Module module) {
+      return new ClasspathConverter() {
+        public FileSet getFileSet() {
+          throw new UnsupportedOperationException(getDescription());
+        }
+
+        public void getClasspath(final Element element) throws IOException, InvalidDataException {
+          throw new InvalidDataException(getDescription());
+        }
+
+        public void setClasspath(final Element element) throws IOException, WriteExternalException {
+          throw new WriteExternalException(getDescription());
+        }
+      };
+    }
   }
 }

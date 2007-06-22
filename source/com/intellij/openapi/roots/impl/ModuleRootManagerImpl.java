@@ -661,7 +661,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
     public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
-      final String id = ClasspathStorage.getStorageCategory(moduleRootManager.getModule());
+      final String storageType = ClasspathStorage.getStorageType(moduleRootManager.getModule());
+      final String id = storageType.equals(ClasspathStorage.DEFAULT_STORAGE)? ClasspathStorage.DEFAULT_STORAGE: ClasspathStorage.SPECIAL_STORAGE;
       for (Storage storage : storages) {
         if (storage.id().equals(id)) return new Storage[]{storage};
       }
