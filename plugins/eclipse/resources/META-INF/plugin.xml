@@ -1,0 +1,34 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin url="http://www.jetbrains.com/idea">
+  <name>Eclipse Integration</name>
+  <id>org.jetbrains.idea.eclipse</id>
+  <description>Eclipse Integration plugin</description>
+  <version>2.0</version>
+  <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
+  <change-notes>
+    <![CDATA[]]>
+  </change-notes>
+  <idea-version since-build="7020"/>
+  <extensions xmlns="com.intellij">
+    <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
+    <projectImportProvider implementation="org.jetbrains.idea.eclipse.action.EclipseImportWizard"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseProjectResolver</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
+  <module-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseModuleManager</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </module-components>
+  <actions>
+    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.action.ExportEclipseProjectsAction" text="Export to Eclipse">
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ProjectImport"/>
+    </action>
+  </actions>
+</idea-plugin>
