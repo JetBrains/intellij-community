@@ -1,31 +1,20 @@
 package org.jetbrains.idea.svn.dialogs;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.TreeSet;
-
-import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import com.intellij.openapi.application.ApplicationManager;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import com.intellij.openapi.application.ApplicationManager;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import java.util.*;
 
 public class RepositoryTreeNode implements TreeNode {
 
   private TreeNode myParentNode;
   private SVNRepository myRepository;
-  private List myChildren;
+  private List<TreeNode> myChildren;
   private RepositoryTreeModel myModel;
   private String myPath;
   private SVNURL myURL;
@@ -93,7 +82,7 @@ public class RepositoryTreeNode implements TreeNode {
 
   protected List getChildren() {
     if (myChildren == null) {
-      myChildren = new ArrayList();
+      myChildren = new ArrayList<TreeNode>();
       myChildren.add(new DefaultMutableTreeNode("Loading"));
       loadChildren();
     }
@@ -103,9 +92,13 @@ public class RepositoryTreeNode implements TreeNode {
   protected void loadChildren() {
     Runnable loader = new Runnable() {
       public void run() {
-        Collection entries = new TreeSet();
+        final Collection<SVNDirEntry> entries = new TreeSet<SVNDirEntry>();
         try {
-          entries = myRepository.getDir(myPath, -1, null, entries);
+          myRepository.getDir(myPath, -1, null, new ISVNDirEntryHandler() {
+            public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+              entries.add(dirEntry);
+            }
+          });
         } catch (SVNException e) {
           final SVNErrorMessage err = e.getErrorMessage();
           SwingUtilities.invokeLater(new Runnable() {
@@ -121,9 +114,8 @@ public class RepositoryTreeNode implements TreeNode {
           return;
         }
         // create new node for each entry, then update browser in a swing thread.
-        final List nodes = new ArrayList();
-        for (Iterator iter = entries.iterator(); iter.hasNext();) {
-          SVNDirEntry entry = (SVNDirEntry) iter.next();
+        final List<TreeNode> nodes = new ArrayList<TreeNode>();
+        for (final SVNDirEntry entry : entries) {
           if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
             continue;
           }
