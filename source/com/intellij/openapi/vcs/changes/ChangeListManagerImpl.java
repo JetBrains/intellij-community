@@ -1012,13 +1012,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void reopenFiles(List<FilePath> paths) {
     final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandlerImpl.getInstance(myProject);
-    final boolean savedOption = readonlyStatusHandler.SHOW_DIALOG;
-    readonlyStatusHandler.SHOW_DIALOG = false;
+    final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
+    readonlyStatusHandler.getState().SHOW_DIALOG = false;
     try {
       readonlyStatusHandler.ensureFilesWritable(collectFiles(paths));
     }
     finally {
-      readonlyStatusHandler.SHOW_DIALOG = savedOption;
+      readonlyStatusHandler.getState().SHOW_DIALOG = savedOption;
     }
   }
 

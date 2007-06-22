@@ -112,7 +112,7 @@ public class VcsGeneralConfigurationPanel {
     getRemoveConfirmation().setValue(getSelected(myOnFileRemovingGroup));
 
 
-    getReadOnlyStatusHandler().SHOW_DIALOG = myShowReadOnlyStatusDialog.isSelected();
+    getReadOnlyStatusHandler().getState().SHOW_DIALOG = myShowReadOnlyStatusDialog.isSelected();
   }
 
   private VcsShowConfirmationOption getAddConfirmation() {
@@ -161,7 +161,7 @@ public class VcsGeneralConfigurationPanel {
       return true;
     }
 
-    if (getReadOnlyStatusHandler().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
+    if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
     }
 
@@ -179,7 +179,7 @@ public class VcsGeneralConfigurationPanel {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
-    myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().SHOW_DIALOG);
+    myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
     myCbCommitInBackground.setSelected(settings.PERFORM_COMMIT_IN_BACKGROUND);
     myCbUpdateInBackground.setSelected(settings.PERFORM_UPDATE_IN_BACKGROUND);
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);

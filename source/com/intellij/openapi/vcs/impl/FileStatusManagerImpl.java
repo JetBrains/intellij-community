@@ -18,9 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -218,7 +216,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       final AbstractVcs vcs = myVcsManager.getVcsFor(file);
       if (vcs == null) return;
       if (cachedStatus == FileStatus.MODIFIED && file.getModificationStamp() == doc.getModificationStamp()) {
-        if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).SHOW_DIALOG) {
+        if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG) {
           vcs.rollbackIfUnchanged(file);
         }
       }

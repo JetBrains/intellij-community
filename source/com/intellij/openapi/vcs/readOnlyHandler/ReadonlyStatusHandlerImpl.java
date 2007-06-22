@@ -33,30 +33,52 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.vcs.EditFileProvider;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.EditFileProvider;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
-public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements ProjectComponent, JDOMExternalizable{
+@State(
+  name="ReadonlyStatusHandler",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
   private final Project myProject;
 
-  public boolean SHOW_DIALOG = true;
+  public static class State {
+    public boolean SHOW_DIALOG = true;
+  }
+
+  private State myState = new State();
 
   public ReadonlyStatusHandlerImpl(Project project) {
     myProject = project;
+  }
+
+  public State getState() {
+    return myState;
+  }
+
+  public void loadState(State state) {
+    myState = state;
   }
 
   public OperationStatus ensureFilesWritable(VirtualFile... files) {
@@ -84,7 +106,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
-    if (SHOW_DIALOG) {
+    if (myState.SHOW_DIALOG) {
       new ReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
@@ -116,42 +138,11 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
     List<FileInfo> fileInfos = new ArrayList<FileInfo>();
     for (final VirtualFile file : files) {
-      if (file != null && !file.isWritable() && isLocal(file)) {
+      if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
         fileInfos.add(new FileInfo(file, myProject));
       }
     }
     return fileInfos.toArray(new FileInfo[fileInfos.size()]);
-  }
-
-  private static boolean isLocal(final VirtualFile file) {
-    return file.isInLocalFileSystem();
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ReadonlyStatusHandler";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this,  element);
   }
 
   public static void processFiles(final List<FileInfo> fileInfos) {
@@ -204,7 +195,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     for (FileInfo fileInfo : copy) {
-      if (fileInfo.getFile().isWritable()) {
+      if (!fileInfo.getFile().exists() || fileInfo.getFile().isWritable()) {
         fileInfos.remove(fileInfo);
       }
     }

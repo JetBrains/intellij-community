@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 
 public abstract class ReadonlyStatusHandler {
 
@@ -73,6 +74,6 @@ public abstract class ReadonlyStatusHandler {
   public abstract OperationStatus ensureFilesWritable(VirtualFile... files);
 
   public static ReadonlyStatusHandler getInstance(Project project) {
-    return project.getComponent(ReadonlyStatusHandler.class);
+    return ServiceManager.getService(project, ReadonlyStatusHandler.class);
   }
 }
