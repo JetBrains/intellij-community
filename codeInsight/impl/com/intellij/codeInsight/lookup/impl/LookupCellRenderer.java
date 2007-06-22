@@ -546,8 +546,11 @@ class LookupCellRenderer implements ListCellRenderer {
     buffer.append(' ');
     buffer.append(template.getDescription());
     if (buffer.length() > max){
-      buffer.setLength(max - "...".length());
-      buffer.append("...");
+      final String ellipsis = "...";
+      if (max > ellipsis.length()){
+        buffer.setLength(max - ellipsis.length());
+        buffer.append(ellipsis);
+      }
     }
     else if (!myHasNonTemplates){
       while(buffer.length() < max){
