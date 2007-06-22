@@ -32,7 +32,7 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.localvcs.integration.LocalHistoryAction;
+import com.intellij.history.integration.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
