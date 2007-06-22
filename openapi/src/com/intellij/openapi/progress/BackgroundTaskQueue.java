@@ -27,11 +27,13 @@ import java.util.Queue;
  * @author yole
  */
 public class BackgroundTaskQueue {
+  private final Project myProject;
   private final Queue<Task> myQueue = new LinkedList<Task>();
   private boolean myHasActiveTask = false;
   private Task.Backgroundable myRunnerTask;
 
   public BackgroundTaskQueue(final Project project, String title) {
+    myProject = project;
     myRunnerTask = new Task.Backgroundable(project, title) {
       public void run(final ProgressIndicator indicator) {
         myHasActiveTask = true;
@@ -80,7 +82,9 @@ public class BackgroundTaskQueue {
         else {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              ProgressManager.getInstance().run(myRunnerTask);
+              if (!myProject.isDisposed()) {
+                ProgressManager.getInstance().run(myRunnerTask);
+              }
             }
           });
         }
