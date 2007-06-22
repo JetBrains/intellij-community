@@ -171,7 +171,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   @NonNls
   @NotNull
   public String getComponentName() {
-    return "Local History";
+    return "Project Local History";
   }
 
   private IdeaGateway createIdeaGateway() {

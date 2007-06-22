@@ -4,12 +4,15 @@
       <interface-class>com.intellij.localvcs.integration.LocalHistoryConfiguration</interface-class>
       <implementation-class>com.intellij.localvcs.integration.LocalHistoryConfiguration</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.localvcs.integration.NewLocalHistoryComponent</interface-class>
+      <implementation-class>com.intellij.localvcs.integration.NewLocalHistoryComponentImpl</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcs</interface-class>
       <implementation-class>com.intellij.localvcs.deprecated.DeprecatedLVCS</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcsServices</interface-class>
