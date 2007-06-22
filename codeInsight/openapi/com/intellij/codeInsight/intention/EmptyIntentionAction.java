@@ -7,6 +7,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: May 11, 2005
@@ -14,7 +16,12 @@ import org.jetbrains.annotations.NotNull;
 public class EmptyIntentionAction implements IntentionAction{
   private String myName;
 
-  public EmptyIntentionAction(@NotNull final String name) {
+  @Deprecated
+  public EmptyIntentionAction(@NotNull final String name, @NotNull List<IntentionAction> options) {
+    myName = name;
+  }
+
+  public EmptyIntentionAction(final String name) {
     myName = name;
   }
 
