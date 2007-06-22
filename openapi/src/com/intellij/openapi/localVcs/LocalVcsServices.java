@@ -16,14 +16,14 @@
 package com.intellij.openapi.localVcs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
-public abstract class LocalVcsServices{
-
-  public static LocalVcsServices getInstance(Project project){
+/**
+ * @deprecated use LocalHistory instead
+ */
+public abstract class LocalVcsServices {
+  public static LocalVcsServices getInstance(Project project) {
     return project.getComponent(LocalVcsServices.class);
-  }
+  }                  
 
   public abstract LocalVcsItemsLocker getUpToDateRevisionProvider();
 }
