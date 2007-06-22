@@ -7,16 +7,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -120,15 +117,6 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
     return moduleLinks.toArray(new ModuleLink[moduleLinks.size()]);
   }
 
-  @Nullable
-  public ModuleLink findModuleLink(final Module module) {
-    return ContainerUtil.find(getContainingModules(), new Condition<ModuleLink>() {
-      public boolean value(final ModuleLink object) {
-        return object.getModule() == module;
-      }
-    });
-  }
-
   public LibraryLink[] getContainingLibraries() {
     final List<LibraryLink> libraryLinks = new ArrayList<LibraryLink>();
     ContainerElement[] elements = getElements();
@@ -162,7 +150,7 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
     myContents.addAll(Arrays.asList(elements));
   }
 
-  public void removeModule(Module module) {
+  protected void removeModuleLinkInternal(Module module) {
     for (final ContainerElement containerElement : myContents) {
       if (containerElement instanceof ModuleLink && ((ModuleLink)containerElement).getModule() == module) {
         myContents.remove(containerElement);

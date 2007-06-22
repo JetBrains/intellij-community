@@ -20,23 +20,15 @@ package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
-import org.jetbrains.annotations.Nullable;
 
 public interface PackagingConfiguration extends JDOMExternalizable {
   ModuleLink[] getContainingModules();
-
-  @Nullable
-  ModuleLink findModuleLink(Module module);
 
   LibraryLink[] getContainingLibraries();
 
   ContainerElement[] getElements();
 
   void setElements(ContainerElement[] elements);
-
-  void addElement(ContainerElement element);
-
-  void removeModule(Module module);
 
   Module[] getContainingIdeaModules();
 }
