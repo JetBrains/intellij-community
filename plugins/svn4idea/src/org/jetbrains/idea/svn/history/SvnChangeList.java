@@ -23,11 +23,12 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -36,10 +37,10 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.io.DataInput;
 import java.util.*;
 
 public class SvnChangeList implements CommittedChangeList {
@@ -193,7 +194,7 @@ public class SvnChangeList implements CommittedChangeList {
     stream.writeLong(myRevision);
     stream.writeUTF(myAuthor);
     stream.writeLong(myDate.getTime());
-    stream.writeUTF(myMessage);
+    IOUtil.writeUTFTruncated(stream, myMessage);
     writeFiles(stream, myChangedPaths);
     writeFiles(stream, myAddedPaths);
     writeFiles(stream, myDeletedPaths);
