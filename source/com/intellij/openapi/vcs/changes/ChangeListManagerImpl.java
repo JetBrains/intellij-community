@@ -122,12 +122,18 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void projectOpened() {
     createDefaultChangelistIfNecessary();
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myInitialized = true;
-        ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
-      }
-    });
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myInitialized = true;
+      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+    }
+    else {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          myInitialized = true;
+          ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+        }
+      });
+    }
   }
 
   private void createDefaultChangelistIfNecessary() {
