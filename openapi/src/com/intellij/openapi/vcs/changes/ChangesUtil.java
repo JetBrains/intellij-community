@@ -32,6 +32,18 @@ public class ChangesUtil {
     return revision.getFile();
   }
 
+  @Nullable
+  public static FilePath getBeforePath(@NotNull final Change change) {
+    ContentRevision revision = change.getBeforeRevision();
+    return revision == null ? null : revision.getFile();
+  }
+
+  @Nullable
+  public static FilePath getAfterPath(@NotNull final Change change) {
+    ContentRevision revision = change.getAfterRevision();
+    return revision == null ? null : revision.getFile();
+  }
+
   public static AbstractVcs getVcsForChange(Change change, final Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
