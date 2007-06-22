@@ -9,10 +9,10 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.localvcs.integration.LocalHistory;
 import com.intellij.localvcs.integration.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -53,16 +53,15 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
                                  final RunProfile runProfile,
                                  RunContentDescriptor reuseContent,
                                  final Project project) throws ExecutionException {
-    final boolean addLvcsLabel = LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
-    final LocalVcs localVcs = LocalVcs.getInstance(project);
+    final boolean addHistoryLabel = LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
     RunContentDescriptor contentDescriptor = null;
 
     final DebuggerPanelsManager manager = DebuggerPanelsManager.getInstance(project);
     if (state instanceof JavaCommandLine) {
       FileDocumentManager.getInstance().saveAllDocuments();
       final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
-      if (addLvcsLabel) {
-        localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
+      if (addHistoryLabel) {
+        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
       }
       RemoteConnection connection = DebuggerManagerImpl
         .createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
@@ -70,16 +69,16 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     }
     else if (state instanceof PatchedRunnableState) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      if (addLvcsLabel) {
-        localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
+      if (addHistoryLabel) {
+        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
       }
       final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
       contentDescriptor = manager.attachVirtualMachine(runProfile, this, state, reuseContent, connection, true);
     }
     else if (state instanceof RemoteState) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      if (addLvcsLabel) {
-        localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", runProfile.getName()), "");
+      if (addHistoryLabel) {
+        LocalHistory.putLabel(project, DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", runProfile.getName()), "");
       }
       RemoteState remoteState = (RemoteState)state;
       final RemoteConnection connection = createRemoteDebugConnection(remoteState, state.getRunnerSettings());
