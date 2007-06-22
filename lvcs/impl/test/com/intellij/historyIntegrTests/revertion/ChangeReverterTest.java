@@ -1,7 +1,7 @@
 package com.intellij.historyIntegrTests.revertion;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.Clock;
+import com.intellij.history.Clock;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;

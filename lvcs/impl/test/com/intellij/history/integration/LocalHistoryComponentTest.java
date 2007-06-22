@@ -6,6 +6,7 @@ import com.intellij.history.core.TempDirTestCase;
 import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.integration.stubs.StubStartupManagerEx;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.project.Project;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.After;

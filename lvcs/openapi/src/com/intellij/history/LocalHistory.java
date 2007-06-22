@@ -1,4 +1,4 @@
-package com.intellij.history.integration;
+package com.intellij.history;
 
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.project.Project;

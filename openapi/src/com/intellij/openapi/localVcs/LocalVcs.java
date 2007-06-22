@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.localVcs;
 
-import com.intellij.history.integration.LocalHistoryConfiguration;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;

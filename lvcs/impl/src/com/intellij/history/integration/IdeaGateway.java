@@ -2,6 +2,7 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.Clock;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;

@@ -15,7 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.history.LocalHistoryBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.Application;

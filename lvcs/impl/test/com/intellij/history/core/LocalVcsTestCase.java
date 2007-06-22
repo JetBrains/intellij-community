@@ -4,7 +4,7 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.storage.ByteContent;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.Clock;
+import com.intellij.history.Clock;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

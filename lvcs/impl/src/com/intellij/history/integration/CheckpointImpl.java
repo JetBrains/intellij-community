@@ -6,6 +6,7 @@ import com.intellij.history.core.changes.ChangeFileContentChange;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.integration.revertion.ChangeRevertionVisitor;
+import com.intellij.history.Checkpoint;
 
 import java.io.IOException;
 

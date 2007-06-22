@@ -6,8 +6,8 @@ import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
-import com.intellij.history.integration.Clock;
-import com.intellij.history.integration.RevisionTimestampComparator;
+import com.intellij.history.Clock;
+import com.intellij.history.RevisionTimestampComparator;
 
 import java.io.IOException;
 import java.util.ArrayList;

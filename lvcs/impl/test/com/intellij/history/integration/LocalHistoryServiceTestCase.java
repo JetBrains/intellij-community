@@ -9,6 +9,7 @@ import com.intellij.history.integration.stubs.StubCommandProcessor;
 import com.intellij.history.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.history.integration.stubs.StubStartupManagerEx;
 import com.intellij.history.integration.stubs.StubVirtualFileManagerEx;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;

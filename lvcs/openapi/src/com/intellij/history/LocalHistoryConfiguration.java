@@ -1,4 +1,4 @@
-package com.intellij.history.integration;
+package com.intellij.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;

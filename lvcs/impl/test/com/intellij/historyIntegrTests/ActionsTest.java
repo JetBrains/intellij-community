@@ -2,8 +2,8 @@ package com.intellij.historyIntegrTests;
 
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.LocalHistory;
-import com.intellij.history.integration.LocalHistoryAction;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;

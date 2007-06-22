@@ -15,7 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.history.LocalHistoryBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;

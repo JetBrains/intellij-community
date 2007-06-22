@@ -1,6 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.Clock;
 import com.intellij.openapi.command.CommandEvent;
 import org.junit.Test;
 

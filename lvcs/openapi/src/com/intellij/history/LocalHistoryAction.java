@@ -1,4 +1,4 @@
-package com.intellij.history.integration;
+package com.intellij.history;
 
 public interface LocalHistoryAction {
   LocalHistoryAction NULL = new LocalHistoryAction() {

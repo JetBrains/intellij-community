@@ -3,7 +3,7 @@ package com.intellij.history.integration.ui.views;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
-import com.intellij.history.integration.LocalHistoryConfiguration;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;

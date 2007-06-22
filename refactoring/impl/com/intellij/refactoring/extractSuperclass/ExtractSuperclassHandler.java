@@ -4,8 +4,8 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.history.integration.LocalHistoryAction;
-import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

@@ -5,8 +5,8 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.history.integration.LocalHistoryAction;
-import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;

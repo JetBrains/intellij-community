@@ -4,6 +4,7 @@ import com.intellij.history.core.InMemoryLocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.LocalVcsTestCase;
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.Clock;
 import org.junit.Test;
 
 import java.util.List;

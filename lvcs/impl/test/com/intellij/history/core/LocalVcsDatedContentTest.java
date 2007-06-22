@@ -1,6 +1,6 @@
 package com.intellij.history.core;
 
-import com.intellij.history.integration.RevisionTimestampComparator;
+import com.intellij.history.RevisionTimestampComparator;
 import org.junit.Test;
 
 public class LocalVcsDatedContentTest extends LocalVcsTestCase {

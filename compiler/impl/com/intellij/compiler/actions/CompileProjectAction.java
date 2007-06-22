@@ -1,7 +1,7 @@
 package com.intellij.compiler.actions;
 
-import com.intellij.history.integration.LocalHistory;
-import com.intellij.history.integration.LocalHistoryConfiguration;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;

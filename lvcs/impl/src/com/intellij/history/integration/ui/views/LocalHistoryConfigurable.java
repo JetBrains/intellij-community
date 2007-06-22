@@ -1,7 +1,7 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.integration.LocalHistoryConfiguration;
+import com.intellij.history.LocalHistoryBundle;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;

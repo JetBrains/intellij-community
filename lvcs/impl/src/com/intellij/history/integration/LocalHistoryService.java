@@ -4,6 +4,8 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;

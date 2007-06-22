@@ -1,7 +1,7 @@
 package com.intellij.openapi.command.impl;
 
-import com.intellij.history.integration.Checkpoint;
-import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.Checkpoint;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;

@@ -1,8 +1,8 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.history.integration.LocalHistoryAction;
-import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;

@@ -1,4 +1,4 @@
-package com.intellij.history.integration;
+package com.intellij.history;
 
 public class Clock {
   private static long myTimestamp = -1;

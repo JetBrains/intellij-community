@@ -5,7 +5,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.history.integration.LocalHistory;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.localVcs.LvcsLabel;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 

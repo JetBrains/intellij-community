@@ -4,8 +4,8 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.history.integration.LocalHistory;
-import com.intellij.history.integration.LocalHistoryAction;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;

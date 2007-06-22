@@ -1,6 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.LocalHistoryAction;
 import org.junit.Test;
 
 import java.util.List;

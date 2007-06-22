@@ -5,6 +5,7 @@ import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.ThreadSafeLocalVcs;
 import com.intellij.history.core.storage.Storage;
+import com.intellij.history.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
