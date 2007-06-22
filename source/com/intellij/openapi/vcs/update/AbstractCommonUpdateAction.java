@@ -45,14 +45,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
@@ -77,6 +75,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   protected void actionPerformed(final VcsContext context) {
     final Project project = context.getProject();
+    final ProjectLevelVcsManagerEx projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
 
     boolean showUpdateOptions = myActionInfo.showOptions(project);
 
@@ -106,7 +105,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                                                            VcsConfiguration.getInstance(project).getUpdateOption()) {
           public void run(final ProgressIndicator indicator) {
             ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
-            ProjectLevelVcsManager.getInstance(project).startBackgroundVcsOperation();
+            projectLevelVcsManager.startBackgroundVcsOperation();
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             int toBeProcessed = vcsToVirtualFiles.size();
             int processed = 0;
@@ -175,10 +174,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                   else if (!updatedFiles.isEmpty()) {
                     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
                     restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
-                    final ProjectLevelVcsManagerEx vcsManagerEx = ProjectLevelVcsManagerEx.getInstanceEx(project);
-                    final UpdateInfoTree updateInfoTree = vcsManagerEx.showUpdateProjectInfo(updatedFiles,
-                                                                                             getTemplatePresentation().getText(),
-                                                                                             myActionInfo);
+                    final UpdateInfoTree updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles,
+                                                                                                       getTemplatePresentation().getText(),
+                                                                                                       myActionInfo);
                     updateInfoTree.setCanGroupByChangeList(true);
                     final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
                     messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
@@ -197,7 +195,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 }
               });
             }
-            ProjectLevelVcsManager.getInstance(project).stopBackgroundVcsOperation();
+            projectLevelVcsManager.stopBackgroundVcsOperation();
           }
 
           public void onCancel() {
@@ -320,15 +318,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
     return result.toArray(new FilePath[result.size()]);
-  }
-
-  private static FilePath[] createFilePathsOn(final VirtualFile[] children) {
-    final VcsContextFactory vcsContextFactory = PeerFactory.getInstance().getVcsContextFactory();
-    final FilePath[] result = new FilePath[children.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = vcsContextFactory.createFilePathOn(children[i]);
-    }
-    return result;
   }
 
   protected abstract boolean filterRootsBeforeAction();

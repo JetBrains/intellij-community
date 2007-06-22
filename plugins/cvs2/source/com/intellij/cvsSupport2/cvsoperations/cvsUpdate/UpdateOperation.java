@@ -26,13 +26,16 @@ import java.io.File;
  */
 
 public class UpdateOperation extends CvsOperationOnFiles {
-
   private final UpdateSettings myUpdateSettings;
   private final Project myProject;
+  private final ProjectLevelVcsManager myVcsManager;
+  private final CvsVcs2 myVcs;
 
   public UpdateOperation(FilePath[] files, UpdateSettings updateSettings, Project project) {
     myUpdateSettings = updateSettings;
     myProject = project;
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myVcs = CvsVcs2.getInstance(project);
     addAllFiles(files);
   }
 
@@ -93,8 +96,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
   }
 
   public boolean fileIsUnderProject(VirtualFile file) {
-    if (!super.fileIsUnderProject(file)) return false;
-    return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) == CvsVcs2.getInstance(myProject);
+    return super.fileIsUnderProject(file) && myVcsManager.getVcsFor(file) == myVcs;
   }
 
   protected IIgnoreFileFilter getIgnoreFileFilter() {
@@ -105,8 +107,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
           return true;
         }
         VirtualFile fileByIoFile = CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject));
-        if (fileByIoFile == null) return false;
-        return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(fileByIoFile) != CvsVcs2.getInstance(myProject);
+        return fileByIoFile != null && myVcsManager.getVcsFor(fileByIoFile) != myVcs;
       }
     };
   }
