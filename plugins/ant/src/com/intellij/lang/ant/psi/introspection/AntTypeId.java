@@ -50,9 +50,6 @@ public class AntTypeId {
 
   private void init(@NonNls final String name, @Nullable final String nsPrefix) {
     myName = AntStringInterner.intern(name);
-    myNsPrefix = nsPrefix;
-    if (nsPrefix != null) {
-      myNsPrefix = (nsPrefix.length() > 0) ? AntStringInterner.intern(nsPrefix) : null;
-    }
+    myNsPrefix = (nsPrefix != null && nsPrefix.length() > 0) ? AntStringInterner.intern(nsPrefix) : null;
   }
 }
