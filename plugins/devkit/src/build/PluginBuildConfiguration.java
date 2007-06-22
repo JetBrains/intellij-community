@@ -16,8 +16,8 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -32,10 +32,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.descriptors.ConfigFile;
-import com.intellij.util.descriptors.ConfigFileInfo;
 import com.intellij.util.descriptors.ConfigFileContainer;
 import com.intellij.util.descriptors.ConfigFileFactory;
+import com.intellij.util.descriptors.ConfigFileInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
   private PluginBuildParticipant myBuildParticipant;
+  private String myPluginXmlUrl;
 
   public PluginBuildConfiguration(Module module) {
     myModule = module;
@@ -108,7 +110,16 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     return "DevKit.ModuleBuildProperties";
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+    StartupManager.getInstance(myModule.getProject()).registerStartupActivity(new Runnable() {
+      public void run() {
+        if (myPluginXmlUrl != null) {
+          setPluginXmlUrl(myPluginXmlUrl);
+          myPluginXmlUrl = null;
+        }
+      }
+    });
+  }
 
   public void disposeComponent() {
   }
@@ -116,7 +127,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTR);
     if (url != null) {
-      setPluginXmlUrl(url);
+      myPluginXmlUrl = url;
     }
     url = element.getAttributeValue(MANIFEST_ATTR);
     if (url != null) {
@@ -169,7 +180,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     setPluginXmlUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
   }
 
-  public void setPluginXmlUrl(final String url) {
+  private void setPluginXmlUrl(final String url) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     new WriteAction() {
       protected void run(final Result result) throws Throwable {
