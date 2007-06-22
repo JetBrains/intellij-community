@@ -92,6 +92,11 @@ public class AnnotationUtil {
   }
 
   @Nullable
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Set<String> annotationNames) {
+    return findAnnotation(listOwner, (Collection<String>)annotationNames);
+  }
+  
+  @Nullable
   public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames) {
     final PsiAnnotation[] allAnnotations;
     if (listOwner instanceof PsiParameter) {
