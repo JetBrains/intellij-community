@@ -43,7 +43,7 @@ JNIEXPORT void JNICALL Java_com_intellij_rt_execution_application_AppMain_trigge
 #endif
 }
 
-#ifndef defined(WIN32)
+#ifndef WIN32
 
 int isKernel26OrHigher() {
   char buffer[1024];
@@ -55,6 +55,7 @@ int isKernel26OrHigher() {
      fscanf(fp, "Linux version %d.%d", &major, &minor);
      if (major < 2) return 0;
      if (major == 2) return minor >= 6;
+     fclose (fp);
      return 1;  
   }
 
