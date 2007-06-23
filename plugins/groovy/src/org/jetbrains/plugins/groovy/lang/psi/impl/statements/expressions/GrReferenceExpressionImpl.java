@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -87,6 +88,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           } else {
             //todo encapsulate fields:)
           }
+        }
+      }
+    } else if (resolved instanceof GrField && ((GrField) resolved).isProperty()) {
+      final GrField field = (GrField) resolved;
+      final String oldName = getReferenceName();
+      if (!oldName.equals(field.getName())) { //was accessor reference to property
+        if (oldName.startsWith("get")) {
+          return super.handleElementRename("get" + StringUtil.capitalize(newElementName));
+        } else if (oldName.startsWith("set")) {
+          return super.handleElementRename("set" + StringUtil.capitalize(newElementName));
         }
       }
     }
