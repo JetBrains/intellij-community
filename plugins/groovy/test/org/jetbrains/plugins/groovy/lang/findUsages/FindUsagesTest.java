@@ -20,6 +20,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -42,7 +43,7 @@ public class FindUsagesTest extends IdeaTestCase {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
-    builder.addModule(JavaModuleFixtureBuilder.class).addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getTestName(true));
+    builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome()).addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getTestName(true));
     myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/findUsages");
     myFixture.setUp();
 
@@ -75,11 +76,12 @@ public class FindUsagesTest extends IdeaTestCase {
     assertNotNull("Could not resolve reference", resolved);
 
     final Query<PsiReference> query;
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
     if (resolved instanceof PsiMethod) {
-      query = MethodReferencesSearch.search((PsiMethod) resolved);
+      query = MethodReferencesSearch.search((PsiMethod) resolved, projectScope, true);
     }
     else {
-      query = ReferencesSearch.search(resolved);
+      query = ReferencesSearch.search(resolved, projectScope);
     }
 
     assertEquals(expectedUsagesCount, query.findAll().size());
