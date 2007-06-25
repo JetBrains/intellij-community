@@ -19,8 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -41,40 +45,39 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
   }
 
   private void appendDescriptors(ASTNode node, Document document, List<FoldingDescriptor> descriptors) {
-
-    node.getPsi().getChildren();
-
     // Method body
-    if (node.getPsi() != null && node.getPsi() instanceof GrMethod) {
-      GrMethod method = (GrMethod) node.getPsi();
+    final PsiElement element = node.getPsi();
+    assert element != null;
+
+    if (element instanceof GrMethod) {
+      GrMethod method = (GrMethod) element;
       GrOpenBlock body = method.getBlock();
       if (body != null) {
-        ASTNode myNode = body.getNode();
-        if (myNode != null) {
-          descriptors.add(new FoldingDescriptor(myNode, myNode.getTextRange()));
+        ASTNode bodyNode = body.getNode();
+        if (bodyNode != null && isMultiline(bodyNode, document)) {
+          descriptors.add(new FoldingDescriptor(bodyNode, bodyNode.getTextRange()));
         }
       }
+    } else if (element instanceof GrClosableBlock && isMultiline(node, document)) {
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
-    // Inner class or interface body
-    if (node.getPsi() != null && node.getPsi().getParent() != null &&
-            node.getPsi() instanceof GrTypeDefinition &&
-            !(node.getPsi().getParent() instanceof GroovyFile)) {
-      GrTypeDefinition typeDef = (GrTypeDefinition) node.getPsi();
+    // class body
+    if (element.getParent() != null &&
+            element instanceof GrTypeDefinition &&
+            !(element.getParent() instanceof GroovyFile)) {
+      GrTypeDefinition typeDef = (GrTypeDefinition) element;
       GrTypeDefinitionBody body = typeDef.getBody();
       if (body != null) {
-        ASTNode myNode = body.getNode();
-        if (myNode != null &&
-                (myNode.getText().contains("\n") || myNode.getText().contains("\t"))) {
-          descriptors.add(new FoldingDescriptor(myNode, myNode.getTextRange()));
+        ASTNode bodyNode = body.getNode();
+        if (bodyNode != null && isMultiline(bodyNode, document)) {
+          descriptors.add(new FoldingDescriptor(bodyNode, bodyNode.getTextRange()));
         }
       }
     }
 
-    // Doc comments
-    if (node.getElementType().equals(mML_COMMENT) &&
-            node.getText().substring(0, 3).equals("/**") &&
-            (node.getText().contains("\n") || node.getText().contains("\r"))) {
+    // comments
+    if (node.getElementType().equals(mML_COMMENT) && isMultiline(node, document)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
@@ -86,14 +89,18 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
 
   }
 
+  private boolean isMultiline(ASTNode node, Document document) {
+    final TextRange range = node.getTextRange();
+    return document.getLineNumber(range.getStartOffset()) < document.getLineNumber(range.getEndOffset());
+  }
+
   public String getPlaceholderText(ASTNode node) {
-    if (GroovyElementTypes.BLOCK_SET.contains(node.getElementType())) {
+    final IElementType elemType = node.getElementType();
+    if (GroovyElementTypes.BLOCK_SET.contains(elemType) || elemType == GroovyElementTypes.CLOSABLE_BLOCK) {
       return "{...}";
     }
-    if (node.getElementType().equals(mML_COMMENT) &&
-            node.getText().substring(0, 3).equals("/**") &&
-            (node.getText().contains("\n") || node.getText().contains("\r"))) {
-      return "/**...*/";
+    if (elemType.equals(mML_COMMENT)) {
+      return node.getText().startsWith("/**") ? "/**...*/" : "/*...*/";
     }
     return null;
   }
