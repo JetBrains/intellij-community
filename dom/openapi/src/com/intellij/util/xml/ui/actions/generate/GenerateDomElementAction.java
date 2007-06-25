@@ -6,8 +6,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -55,8 +55,11 @@ public class GenerateDomElementAction extends BaseGenerateAction {
     if (element == null) return null;
 
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-    if (tag != null) {
-      return DomManager.getDomManager(project).getDomElement(tag);
+    while (tag != null) {
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+      if(domElement != null) return domElement;
+
+      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
     }
     return null;
   }
