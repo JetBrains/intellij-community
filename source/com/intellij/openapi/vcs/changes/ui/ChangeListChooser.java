@@ -14,6 +14,7 @@ import java.util.Collection;
  * @author max
  */
 public class ChangeListChooser extends DialogWrapper {
+  private final Project myProject;
   private LocalChangeList mySelectedList;
   private ChangeListChooserPanel myPanel;
 
@@ -23,8 +24,9 @@ public class ChangeListChooser extends DialogWrapper {
                            final String title,
                            @Nullable final String defaultName) {
     super(project, false);
+    myProject = project;
 
-    myPanel = new ChangeListChooserPanel(project);
+    myPanel = new ChangeListChooserPanel();
     myPanel.setChangeLists(changelists);
     myPanel.setDefaultSelection(defaultSelection);
 
@@ -45,7 +47,7 @@ public class ChangeListChooser extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    mySelectedList = myPanel.getSelectedList();
+    mySelectedList = myPanel.getSelectedList(myProject);
     if (mySelectedList != null) {
       super.doOKAction();
     }

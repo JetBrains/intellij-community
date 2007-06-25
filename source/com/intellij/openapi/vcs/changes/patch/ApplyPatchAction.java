@@ -35,9 +35,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -62,11 +65,11 @@ public class ApplyPatchAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    applyPatch(project, dialog.getPatches(), dialog.getApplyPatchContext());
+    applyPatch(project, dialog.getPatches(), dialog.getApplyPatchContext(), dialog.getSelectedChangeList());
   }
 
-  public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches,
-                                            final ApplyPatchContext context) {
+  private static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches,
+                                            final ApplyPatchContext context, final LocalChangeList targetChangeList) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     if (!prepareFiles(project, patches, context, filesToMakeWritable)) {
       return ApplyPatchStatus.FAILURE;
@@ -76,7 +79,12 @@ public class ApplyPatchAction extends AnAction {
     if (readonlyStatus.hasReadonlyFiles()) {
       return ApplyPatchStatus.FAILURE;
     }
-    return applyFilePatches(project, patches, context, null);
+    final List<FilePath> affectedPaths = new ArrayList<FilePath>();
+    final ApplyPatchStatus patchStatus = applyFilePatches(project, patches, context, affectedPaths);
+    if (patchStatus != ApplyPatchStatus.FAILURE) {
+      moveChangesToList(project, affectedPaths, targetChangeList);
+    }
+    return patchStatus;
   }
 
   public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches,
@@ -247,6 +255,21 @@ public class ApplyPatchAction extends AnAction {
     }
     else {
       e.getPresentation().setEnabled(project != null);
+    }
+  }
+
+  public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (targetChangeList != changeListManager.getDefaultChangeList()) {
+      changeListManager.ensureUpToDate(false);
+      List<Change> changes = new ArrayList<Change>();
+      for(FilePath file: files) {
+        final Change change = changeListManager.getChange(file);
+        if (change != null) {
+          changes.add(change);
+        }
+      }
+      changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
     }
   }
 }

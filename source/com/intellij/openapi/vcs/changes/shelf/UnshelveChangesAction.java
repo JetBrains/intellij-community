@@ -18,9 +18,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 
 import java.util.ArrayList;
@@ -63,17 +63,7 @@ public class UnshelveChangesAction extends AnAction {
       unshelvedFiles.addAll(result);
     }
 
-    if (chooser.getSelectedList() != changeListManager.getDefaultChangeList()) {
-      changeListManager.ensureUpToDate(false);
-      List<Change> unshelvedChanges = new ArrayList<Change>();
-      for(FilePath file: unshelvedFiles) {
-        final Change change = changeListManager.getChange(file);
-        if (change != null) {
-          unshelvedChanges.add(change);
-        }
-      }
-      changeListManager.moveChangesTo(chooser.getSelectedList(), unshelvedChanges.toArray(new Change[unshelvedChanges.size()]));
-    }
+    ApplyPatchAction.moveChangesToList(project, unshelvedFiles, chooser.getSelectedList());
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,21 +20,21 @@ import java.util.Collection;
  * @author yole
  */
 public class ChangeListChooserPanel extends JPanel {
-  private final Project myProject;
   private JPanel myPanel;
   private JRadioButton myRbExisting;
   private JRadioButton myRbNew;
   private JComboBox myExisitingsCombo;
   private EditChangelistPanel myNewListPanel;
 
-  public ChangeListChooserPanel(Project project) {
+  public ChangeListChooserPanel() {
     super(new BorderLayout());
-    myProject = project;
     add(myPanel, BorderLayout.CENTER);
 
     myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        append(((ChangeList)value).getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        if (value != null) {
+          append(((ChangeList)value).getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
       }
     });
 
@@ -70,11 +71,12 @@ public class ChangeListChooserPanel extends JPanel {
     }
   }
 
-  public LocalChangeList getSelectedList() {
+  @Nullable
+  public LocalChangeList getSelectedList(Project project) {
     if (myRbNew.isSelected()) {
       String newText = myNewListPanel.getName();
-      if (ChangeListManager.getInstance(myProject).findChangeList(newText) != null) {
-        Messages.showErrorDialog(myProject,
+      if (ChangeListManager.getInstance(project).findChangeList(newText) != null) {
+        Messages.showErrorDialog(project,
                                  VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
                                  VcsBundle.message("changes.newchangelist.warning.already.exists.title"));
         return null;
@@ -85,7 +87,7 @@ public class ChangeListChooserPanel extends JPanel {
       return (LocalChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
-      return ChangeListManager.getInstance(myProject).addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
+      return ChangeListManager.getInstance(project).addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
     }
   }
 

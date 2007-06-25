@@ -11,6 +11,8 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,29 +22,27 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +62,8 @@ public class ApplyPatchDialog extends DialogWrapper {
   private JLabel myStatusLabel;
   private TextFieldWithBrowseButton myBaseDirectoryField;
   private JSpinner myStripLeadingDirectoriesSpinner;
-  private TableView myPatchContentsTable;
+  private JList myPatchContentsList;
+  private ChangeListChooserPanel myChangeListChooser;
   private List<FilePatch> myPatches;
   private Collection<FilePatch> myPatchesFailedToLoad;
   private final Alarm myLoadPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -72,32 +73,7 @@ public class ApplyPatchDialog extends DialogWrapper {
   private int myDetectedStripLeadingDirs = -1;
   private final Project myProject;
   private boolean myInnerChange;
-
-  private ColumnInfo<FilePatch, FilePatch> PATH_COLUMN = new ColumnInfo<FilePatch, FilePatch>(VcsBundle.message("column.name.file.path")) {
-    private TableCellRenderer myRenderer = new PatchCellRenderer();
-
-    public FilePatch valueOf(final FilePatch filePatch) {
-      return filePatch;
-    }
-
-    public TableCellRenderer getRenderer(final FilePatch filePatch) {
-      return myRenderer;
-    }
-  };
-
-  private static ColumnInfo<FilePatch, String> TYPE_COLUMN = new ColumnInfo<FilePatch, String>(VcsBundle.message("column.name.type")) {
-    public String valueOf(final FilePatch filePatch) {
-      if (filePatch.isNewFile()) return VcsBundle.message("change.type.new");
-      if (filePatch.isDeletedFile()) return VcsBundle.message("change.type.deleted");
-      return VcsBundle.message("change.type.modified");
-    }
-
-    @Override
-    public String getMaxStringValue() {
-      return VcsBundle.message("change.type.modified") + "   ";
-    }
-  };
-  private ListTableModel<FilePatch> myPatchTableModel;
+  private LocalChangeList mySelectedChangeList;
 
   public ApplyPatchDialog(Project project) {
     super(project, true);
@@ -144,6 +120,12 @@ public class ApplyPatchDialog extends DialogWrapper {
         }
       }
     });
+
+    myPatchContentsList.setCellRenderer(new PatchCellRendererPanel());
+
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    myChangeListChooser.setChangeLists(changeListManager.getChangeLists());
+    myChangeListChooser.setDefaultSelection(changeListManager.getDefaultChangeList());
 
     init();
     updateOKAction();
@@ -280,9 +262,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myPatchTableModel != null) {
-          myPatchTableModel.fireTableDataChanged();
-        }
+        myPatchContentsList.repaint();
         myStatusLabel.setText("");
       }
     });
@@ -348,13 +328,18 @@ public class ApplyPatchDialog extends DialogWrapper {
 
   private void updatePatchTableModel() {
     if (myPatches != null) {
-      myPatchTableModel = new ListTableModel<FilePatch>(PATH_COLUMN, TYPE_COLUMN);
-      myPatchTableModel.setItems(myPatches);
-      myPatchContentsTable.setModel(myPatchTableModel);
+      myPatchContentsList.setModel(new AbstractListModel() {
+        public int getSize() {
+          return myPatches.size();
+        }
+
+        public Object getElementAt(int index) {
+          return myPatches.get(index);
+        }
+      });
     }
     else {
-      myPatchTableModel = null;
-      myPatchContentsTable.setModel(new DefaultTableModel());
+      myPatchContentsList.setModel(new DefaultListModel());
     }
   }
 
@@ -394,6 +379,7 @@ public class ApplyPatchDialog extends DialogWrapper {
   @Override
   protected void dispose() {
     myLoadPatchAlarm.dispose();
+    myVerifyPatchAlarm.dispose();
     super.dispose();
   }
 
@@ -408,33 +394,38 @@ public class ApplyPatchDialog extends DialogWrapper {
       checkLoadPatches();
     }
     if (myLoadPatchError == null) {
+      mySelectedChangeList = myChangeListChooser.getSelectedList(myProject);
+      if (mySelectedChangeList == null) return;
       final Collection<String> missingDirs = verifyPatchPaths();
-      if (missingDirs.size() > 0) {
-        StringBuilder messageBuilder = new StringBuilder(VcsBundle.message("apply.patch.create.dirs.prompt.header"));
-        for(String missingDir: missingDirs) {
-          messageBuilder.append(missingDir).append("\r\n");
-        }
-        messageBuilder.append(VcsBundle.message("apply.patch.create.dirs.prompt.footer"));
-        int rc = Messages.showYesNoCancelDialog(myProject, messageBuilder.toString(), VcsBundle.message("patch.apply.dialog.title"),
-                                                Messages.getQuestionIcon());
-        if (rc == 0) {
-          for(String dir: missingDirs) {
-            new File(dir).mkdirs();
-          }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              for(String dir: missingDirs) {
-                LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
-              }
-            }
-          });
-        }
-        else if (rc != 1) {
-          return;
-        }
-      }
+      if (missingDirs.size() > 0 && !checkCreateMissingDirs(missingDirs)) return;
       super.doOKAction();
     }
+  }
+
+  private boolean checkCreateMissingDirs(final Collection<String> missingDirs) {
+    StringBuilder messageBuilder = new StringBuilder(VcsBundle.message("apply.patch.create.dirs.prompt.header"));
+    for(String missingDir: missingDirs) {
+      messageBuilder.append(missingDir).append("\r\n");
+    }
+    messageBuilder.append(VcsBundle.message("apply.patch.create.dirs.prompt.footer"));
+    int rc = Messages.showYesNoCancelDialog(myProject, messageBuilder.toString(), VcsBundle.message("patch.apply.dialog.title"),
+                                            Messages.getQuestionIcon());
+    if (rc == 0) {
+      for(String dir: missingDirs) {
+        new File(dir).mkdirs();
+      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for(String dir: missingDirs) {
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
+          }
+        }
+      });
+    }
+    else if (rc != 1) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -458,14 +449,65 @@ public class ApplyPatchDialog extends DialogWrapper {
     return new ApplyPatchContext(getBaseDirectory(), getStripLeadingDirectories(), false, false);
   }
 
-  private class PatchCellRenderer extends ColoredTableCellRenderer {
+  public LocalChangeList getSelectedChangeList() {
+    return mySelectedChangeList;
+  }
+
+  private static String getChangeType(final FilePatch filePatch) {
+    if (filePatch.isNewFile()) return VcsBundle.message("change.type.new");
+    if (filePatch.isDeletedFile()) return VcsBundle.message("change.type.deleted");
+    return VcsBundle.message("change.type.modified");
+  }
+
+  private class PatchCellRendererPanel extends JPanel implements ListCellRenderer {
+    private PatchCellRenderer myRenderer;
+    private JLabel myFileTypeLabel;
+
+    public PatchCellRendererPanel() {
+      super(new BorderLayout());
+      setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+      myRenderer = new PatchCellRenderer();
+      add(myRenderer, BorderLayout.CENTER);
+      myFileTypeLabel = new JLabel();
+      myFileTypeLabel.setHorizontalAlignment(JLabel.RIGHT);
+      add(myFileTypeLabel, BorderLayout.EAST);
+    }
+
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      FilePatch patch = (FilePatch) value;
+      myRenderer.getListCellRendererComponent(list, value, index, isSelected, false);
+      myFileTypeLabel.setText("(" + getChangeType(patch) + ")");
+      if (isSelected) {
+        setBackground(UIUtil.getListSelectionBackground());
+        setForeground(UIUtil.getListSelectionForeground());
+        myFileTypeLabel.setForeground(UIUtil.getListSelectionForeground());
+      }
+      else {
+        setBackground(UIUtil.getListBackground());
+        setForeground(UIUtil.getListForeground());        
+        myFileTypeLabel.setForeground(Color.gray);
+      }
+      return this;
+    }
+  }
+
+  private class PatchCellRenderer extends ColoredListCellRenderer {
     private SimpleTextAttributes myNewAttributes = new SimpleTextAttributes(0, FileStatus.ADDED.getColor());
     private SimpleTextAttributes myDeletedAttributes = new SimpleTextAttributes(0, FileStatus.DELETED.getColor());
     private SimpleTextAttributes myModifiedAttributes = new SimpleTextAttributes(0, FileStatus.MODIFIED.getColor());
 
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+    private boolean assumeProblemWillBeFixed(final FilePatch filePatch) {
+      // if some of the files are valid, assume that "red" new files will be fixed by creating directories
+      return (filePatch.isNewFile() && myPatchesFailedToLoad.size() != myPatches.size());
+    }
+
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       FilePatch filePatch = (FilePatch) value;
       String name = filePatch.getAfterNameRelative(getStripLeadingDirectories());
+
+      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+      setIcon(fileType.getIcon());
+
       if (myPatchesFailedToLoad.contains(filePatch) && !assumeProblemWillBeFixed(filePatch)) {
         append(name, SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
@@ -478,11 +520,6 @@ public class ApplyPatchDialog extends DialogWrapper {
       else {
         append(name, myModifiedAttributes);
       }
-    }
-
-    private boolean assumeProblemWillBeFixed(final FilePatch filePatch) {
-      // if some of the files are valid, assume that "red" new files will be fixed by creating directories
-      return (filePatch.isNewFile() && myPatchesFailedToLoad.size() != myPatches.size());
     }
   }
 }

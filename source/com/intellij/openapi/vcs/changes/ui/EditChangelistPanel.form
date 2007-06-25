@@ -46,7 +46,7 @@
             <properties>
               <columns value="50"/>
               <lineWrap value="true"/>
-              <rows value="10"/>
+              <rows value="5"/>
               <wrapStyleWord value="true"/>
             </properties>
           </component>
