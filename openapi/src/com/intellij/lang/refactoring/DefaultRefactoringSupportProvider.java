@@ -20,6 +20,7 @@ package com.intellij.lang.refactoring;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Default implementation of <code>RefactoringSupportProvider</code> to inherit from
@@ -30,6 +31,11 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
   }
 
   public RefactoringActionHandler getIntroduceVariableHandler() {
+    return null;
+  }
+
+  @Nullable
+  public InlineHandler getInlineHandler() {
     return null;
   }
 }

@@ -44,6 +44,15 @@ public class InlineHandler implements RefactoringActionHandler {
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element != null) {
+      final com.intellij.lang.refactoring.InlineHandler languageSpecific =
+        element.getLanguage().getRefactoringSupportProvider().getInlineHandler();
+      if (languageSpecific != null) {
+        GenericInlineHandler.invoke(element, editor, languageSpecific);
+        return;
+      }
+    }
+
     if (element instanceof PsiLocalVariable) {
       final PsiReference psiReference = TargetElementUtil.findReference(editor);
       final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;

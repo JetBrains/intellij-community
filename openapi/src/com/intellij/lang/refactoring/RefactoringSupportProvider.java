@@ -43,4 +43,10 @@ public interface RefactoringSupportProvider {
    * @see com.intellij.refactoring.RefactoringActionHandler;
    */
   @Nullable RefactoringActionHandler getIntroduceVariableHandler();
+
+  /**
+   * @return language specific part for performing inline
+   * @see com.intellij.lang.refactoring.InlineHandler
+   */
+  @Nullable InlineHandler getInlineHandler();
 }
