@@ -97,20 +97,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     final VirtualFile file = selectFile;
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (file == null || !file.isValid()) {
-          return;
+    if (file != null && file.isValid()) {
+      myFileSystemTree.select(file, new Runnable() {
+        public void run() {
+          if (!file.equals(myFileSystemTree.getSelectedFile())) {
+            VirtualFile parent = file.getParent();
+            if (parent != null) {
+              myFileSystemTree.select(parent, null);
+            }
+          }
         }
-        if (select(file)) {
-          return;
-        }
-        VirtualFile parent = file.getParent();
-        if (parent != null) {
-          select(parent);
-        }
-      }
-    });
+      });
+    }
+
     show();
 
     return myChosenFiles;
@@ -261,10 +260,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   public final void doCancelAction() {
     myChosenFiles = VirtualFile.EMPTY_ARRAY;
     super.doCancelAction();
-  }
-
-  public final boolean select(final VirtualFile file) {
-    return myFileSystemTree.select(file);
   }
 
   protected JTree createTree() {

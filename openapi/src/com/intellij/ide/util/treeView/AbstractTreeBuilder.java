@@ -18,8 +18,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -296,8 +296,16 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myRootNodeWasInitialized) return;
 
     myRootNodeWasInitialized = true;
-
     Object rootElement = myTreeStructure.getRootElement();
+    addNodeAction(rootElement, new NodeAction() {
+      public void onReady(final DefaultMutableTreeNode node) {
+        final Runnable[] runnables = myDeferredSelections.toArray(new Runnable[myDeferredSelections.size()]);
+        myDeferredSelections.clear();
+        for (Runnable runnable : runnables) {
+          runnable.run();
+        }
+      }
+    });
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
     myRootNode.setUserObject(nodeDescriptor);
     updateNodeDescriptor(nodeDescriptor);
@@ -878,8 +886,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
     _select(element, onDone, false);
   }
 
+  final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
   private void _select(final Object element, final Runnable onDone, final boolean addToSelection) {
-    _expand(element, new Runnable() {
+    final Runnable _onDone = new Runnable() {
       public void run() {
         final DefaultMutableTreeNode toSelect = getNodeForElement(element);
         if (toSelect == null) return;
@@ -889,7 +898,17 @@ public abstract class AbstractTreeBuilder implements Disposable {
           onDone.run();
         }
       }
-    }, true);
+    };
+    if (wasRootNodeInitialized()) {
+      _expand(element, _onDone, true);
+    }
+    else {
+      myDeferredSelections.add(new Runnable() {
+        public void run() {
+          _expand(element, _onDone, true);
+        }
+      });
+    }
   }
 
   public void expand(final Object element, @Nullable final Runnable onDone) {
