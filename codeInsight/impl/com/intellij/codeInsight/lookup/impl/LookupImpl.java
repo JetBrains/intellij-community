@@ -203,11 +203,13 @@ public class LookupImpl extends LightweightHint implements Lookup {
     DefaultListModel model = new DefaultListModel();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     final String prefix = myPrefix;
-    for (LookupItem item : myItems) {
-      String text = item.getLookupString();
-      if (StringUtil.startsWithIgnoreCase(text, prefix) || matcher.matches(text, pattern)) {
-        model.addElement(item);
-        array.add(item);
+    for (LookupItem<?> item : myItems) {
+      for (final String text : item.getAllLookupStrings()) {
+        if (StringUtil.startsWithIgnoreCase(text, prefix) || matcher.matches(text, pattern)) {
+          model.addElement(item);
+          array.add(item);
+          break;
+        }
       }
     }
     boolean isEmpty = array.size() == 0;
