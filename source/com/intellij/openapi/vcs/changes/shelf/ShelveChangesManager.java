@@ -198,6 +198,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return FileUtil.findSequentNonexistentFile(file, defaultPath, PATCH_EXTENSION);
   }
 
+  @Nullable
   public List<FilePath> unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
                                            @Nullable final List<ShelvedBinaryFile> binaryFiles) {
     List<FilePath> result = new ArrayList<FilePath>();
