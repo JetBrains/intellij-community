@@ -361,14 +361,14 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
       def.setDefiningElement(this);
       if (parent != null) {
-        parent.registerCustomType(def);
         if (!(parent instanceof AntProject)) {
-          // make custom definition available at project level 
+          // make custom definition available at project level first 
           final AntProject antProject = parent.getAntProject();
           if (antProject != null) {
             antProject.registerCustomType(def);
           }
         }
+        parent.registerCustomType(def);
       }
       else {
         antFile.registerCustomType(def);
