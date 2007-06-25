@@ -15,14 +15,24 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.execution.*;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.Icons;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
-public class GroovyScriptRunConfigurationType implements ConfigurationType {
+public class GroovyScriptRunConfigurationType implements LocatableConfigurationType {
   private GroovyScriptConfigurationFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
@@ -53,10 +63,43 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[]
-            {
-                    myConfigurationFactory
-            };
+    return new ConfigurationFactory[]{myConfigurationFactory};
   }
 
+  public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
+    final PsiElement element = location.getPsiElement();
+    final PsiClass clazz = getScriptClass(element);
+    if (clazz == null) return null;
+    return createConfiguration(clazz);
+  }
+
+  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass) {
+    final Project project = aClass.getProject();
+    RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
+    final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration) settings.getConfiguration();
+    final PsiFile file = aClass.getContainingFile();
+    final PsiDirectory dir = file.getContainingDirectory();
+    assert dir != null;
+    configuration.setAbsoluteWorkDir(dir.getVirtualFile().getPath());
+    final VirtualFile vFile = file.getVirtualFile();
+    assert vFile != null;
+    configuration.scriptPath = vFile.getPath();
+    configuration.setName(ExecutionUtil.getPresentableClassName(aClass.getQualifiedName(), configuration.getConfigurationModule()));
+    configuration.setModule(ExecutionUtil.findModule(aClass));
+    return settings;
+  }
+
+  public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
+    final PsiClass aClass = getScriptClass(element);
+    if (aClass == null) return false;
+    final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+    if (vFile == null) return false;
+    return Comparing.equal(((GroovyScriptRunConfiguration) configuration).scriptPath, vFile.getPath());
+  }
+
+  private PsiClass getScriptClass(PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (!(file instanceof GroovyFile)) return null;
+    return ((GroovyFile) file).getScriptClass();
+  }
 }
