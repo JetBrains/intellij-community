@@ -1,18 +1,18 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -77,7 +77,6 @@ public class PluginTable extends Table {
 
   private void initializeHeader(final PluginTableModel model) {
     final JTableHeader header = getTableHeader();
-    header.setDefaultRenderer(new PluginTableHeaderRenderer(model));
 
     header.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -145,23 +144,5 @@ public class PluginTable extends Table {
       }
     }
     return selection;
-  }
-
-  private static class PluginTableHeaderRenderer extends TableHeaderRenderer {
-    private final PluginTableModel myTabelModel;
-
-    public PluginTableHeaderRenderer(final PluginTableModel model) {
-      super(model);
-      myTabelModel = model;
-    }
-
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-      final JTableHeader header = table.getTableHeader();
-      //hide title for plugin name
-      myLabel.setForeground(column == myTabelModel.getNameColumn() ? header.getBackground() : header.getForeground());
-      return this;
-    }
   }
 }
