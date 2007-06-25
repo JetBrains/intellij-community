@@ -97,7 +97,7 @@ public class ActionMenuItem extends JMenuItem {
   }
 
   public void updateUI() {
-    if (UIUtil.useStandardMenuLaf()) {
+    if (UIUtil.isWinLafOnVista()) {
       super.updateUI();
     }
     else {

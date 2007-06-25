@@ -737,7 +737,7 @@ public class UIUtil {
     return "<style> body, div, td { font-family: " + font.getFamily() + "; font-size: " + font.getSize() + "; } </style>";
   }
 
-  public static boolean useStandardMenuLaf() {
+  public static boolean isWinLafOnVista() {
     return SystemInfo.isWindowsVista && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
 }
