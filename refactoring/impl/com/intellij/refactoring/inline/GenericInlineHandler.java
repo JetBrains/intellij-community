@@ -3,14 +3,14 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.refactoring.ui.ConflictsDialog;
 
 import java.util.Collection;
 import java.util.Collections;
