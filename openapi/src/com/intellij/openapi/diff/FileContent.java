@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -30,11 +31,10 @@ public class FileContent extends DiffContent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.FileContent");
   private final VirtualFile myFile;
   private Document myDocument;
-  private Project myProject;
+  private final Project myProject;
 
-  public FileContent(Project project, VirtualFile file) {
+  public FileContent(Project project, @NotNull VirtualFile file) {
     myProject = project;
-    LOG.assertTrue(file != null);
     myFile = file;
   }
 
