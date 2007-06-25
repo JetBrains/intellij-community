@@ -88,6 +88,9 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
   public Boolean INTRODUCE_PARAMETER_CREATE_FINALS = null;
 
+  public boolean INLINE_CLASS_SEARCH_IN_COMMENTS = true;
+  public boolean INLINE_CLASS_SEARCH_IN_NON_JAVA = true;
+
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_INHERITORS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_VARIABLES = true;
 
