@@ -26,7 +26,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBComboBox;
 import com.intellij.ui.PopupHandler;
@@ -129,7 +128,9 @@ public class FramesPanel extends UpdatableDebuggerView {
   protected void rebuild(final boolean updateOnly) {
     if (!updateOnly) {
       myThreadsCombo.removeAllItems();
-      myFramesList.clear();
+      synchronized (myFramesList) {
+        myFramesList.clear();
+      }
     }
 
     getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly));
@@ -273,22 +274,20 @@ public class FramesPanel extends UpdatableDebuggerView {
         return;
       }
       
+      final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
       final java.util.List<StackFrameDescriptorImpl> descriptors = new ArrayList<StackFrameDescriptorImpl>();
-      
-      DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
-        public void run() {
-          final DefaultListModel model = myFramesList.getModel();
-          final int size = model.getSize();
-          for (int i = 0; i < size; i++) {
-            final Object elem = model.getElementAt(i);
-            if (elem instanceof StackFrameDescriptorImpl) {
-              descriptors.add((StackFrameDescriptorImpl)elem);
-            }
+
+      synchronized (myFramesList) {
+        final DefaultListModel model = myFramesList.getModel();
+        final int size = model.getSize();
+        for (int i = 0; i < size; i++) {
+          final Object elem = model.getElementAt(i);
+          if (elem instanceof StackFrameDescriptorImpl) {
+            descriptors.add((StackFrameDescriptorImpl)elem);
           }
         }
-      }, ModalityState.defaultModalityState());
-      
-      final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+      }
+
       for (StackFrameDescriptorImpl descriptor : descriptors) {
         descriptor.setContext(evaluationContext);
         descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
@@ -356,18 +355,20 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   /*invoked in swing thread*/
   private void selectFrame(StackFrameProxy frame) {
-    final int count = myFramesList.getElementCount();
-    final Object selectedValue = myFramesList.getSelectedValue();
-    final DefaultListModel model = myFramesList.getModel();
-    for (int idx = 0; idx < count; idx++) {
-      final Object elem = model.getElementAt(idx);
-      if (elem instanceof StackFrameDescriptorImpl) {
-        final StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)elem;
-        if (frame.equals(item.getFrameProxy())) {
-          if (!item.equals(selectedValue)) {
-            myFramesList.setSelectedIndex(idx);
+    synchronized (myFramesList) {
+      final int count = myFramesList.getElementCount();
+      final Object selectedValue = myFramesList.getSelectedValue();
+      final DefaultListModel model = myFramesList.getModel();
+      for (int idx = 0; idx < count; idx++) {
+        final Object elem = model.getElementAt(idx);
+        if (elem instanceof StackFrameDescriptorImpl) {
+          final StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)elem;
+          if (frame.equals(item.getFrameProxy())) {
+            if (!item.equals(selectedValue)) {
+              myFramesList.setSelectedIndex(idx);
+            }
+            return;
           }
-          return;
         }
       }
     }
@@ -400,21 +401,23 @@ public class FramesPanel extends UpdatableDebuggerView {
         public void run() {
           try {
             myFramesListener.setEnabled(false);
-            final DefaultListModel model = myFramesList.getModel();
-            if (model.size() == 0) {
-              for (int idx = 0; idx < myTotalFramesCount; idx++) {
-                final String label = "<frame " + idx + ">";
-                model.addElement(new Object() {
-                  public String toString() {
-                    return label;
-                  }
-                });
+            synchronized (myFramesList) {
+              final DefaultListModel model = myFramesList.getModel();
+              if (model.size() == 0) {
+                for (int idx = 0; idx < myTotalFramesCount; idx++) {
+                  final String label = "<frame " + idx + ">";
+                  model.addElement(new Object() {
+                    public String toString() {
+                      return label;
+                    }
+                  });
+                }
               }
-            }
-            model.remove(myIndexToInsert); // remove placeholder
-            model.insertElementAt(descriptor, myIndexToInsert);
-            if (myIsContextFrame) {
-              myFramesList.setSelectedIndex(myIndexToInsert);
+              model.remove(myIndexToInsert); // remove placeholder
+              model.insertElementAt(descriptor, myIndexToInsert);
+              if (myIsContextFrame) {
+                myFramesList.setSelectedIndex(myIndexToInsert);
+              }
             }
           }
           finally {
