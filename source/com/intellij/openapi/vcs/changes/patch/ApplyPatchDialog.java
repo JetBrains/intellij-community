@@ -2,57 +2,102 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2006
- * Time: 17:09:11
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
+/**
+ * @author yole
+ */
 public class ApplyPatchDialog extends DialogWrapper {
+  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchDialog");
+
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myFileNameField;
   private JLabel myStatusLabel;
   private TextFieldWithBrowseButton myBaseDirectoryField;
   private JSpinner myStripLeadingDirectoriesSpinner;
+  private TableView myPatchContentsTable;
   private List<FilePatch> myPatches;
-  private Alarm myLoadPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Collection<FilePatch> myPatchesFailedToLoad;
+  private final Alarm myLoadPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myVerifyPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private String myLoadPatchError = null;
   private String myDetectedBaseDirectory = null;
   private int myDetectedStripLeadingDirs = -1;
   private final Project myProject;
+  private boolean myInnerChange;
+
+  private ColumnInfo<FilePatch, FilePatch> PATH_COLUMN = new ColumnInfo<FilePatch, FilePatch>(VcsBundle.message("column.name.file.path")) {
+    private TableCellRenderer myRenderer = new PatchCellRenderer();
+
+    public FilePatch valueOf(final FilePatch filePatch) {
+      return filePatch;
+    }
+
+    public TableCellRenderer getRenderer(final FilePatch filePatch) {
+      return myRenderer;
+    }
+  };
+
+  private static ColumnInfo<FilePatch, String> TYPE_COLUMN = new ColumnInfo<FilePatch, String>(VcsBundle.message("column.name.type")) {
+    public String valueOf(final FilePatch filePatch) {
+      if (filePatch.isNewFile()) return VcsBundle.message("change.type.new");
+      if (filePatch.isDeletedFile()) return VcsBundle.message("change.type.deleted");
+      return VcsBundle.message("change.type.modified");
+    }
+
+    @Override
+    public String getMaxStringValue() {
+      return VcsBundle.message("change.type.modified") + "   ";
+    }
+  };
+  private ListTableModel<FilePatch> myPatchTableModel;
 
   public ApplyPatchDialog(Project project) {
     super(project, true);
@@ -83,11 +128,47 @@ public class ApplyPatchDialog extends DialogWrapper {
     myBaseDirectoryField.setText(project.getBaseDir().getPresentableUrl());
     myBaseDirectoryField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.base.directory.title"), "", project,
                                                  new FileChooserDescriptor(false, true, false, false, false, false));
+    myBaseDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myInnerChange) {
+          queueVerifyPatchPaths();
+        }
+      }
+    });
 
     myStripLeadingDirectoriesSpinner.setModel(new SpinnerNumberModel(0, 0, 256, 1));
+    myStripLeadingDirectoriesSpinner.addChangeListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        if (!myInnerChange) {
+          queueVerifyPatchPaths();
+        }
+      }
+    });
 
     init();
     updateOKAction();
+  }
+
+  @Override
+  @NonNls
+  protected String getDimensionServiceKey() {
+    return "vcs.ApplyPatchDialog";
+  }
+
+  private void queueVerifyPatchPaths() {
+    myStatusLabel.setForeground(UIUtil.getLabelForeground());
+    myStatusLabel.setText(VcsBundle.message("apply.patch.progress.verifying"));
+    myVerifyPatchAlarm.cancelAllRequests();
+    myVerifyPatchAlarm.addRequest(new Runnable() {
+      public void run() {
+        try {
+          verifyPatchPaths();
+        }
+        catch(Exception ex) {
+          LOG.error(ex);
+        }
+      }
+    }, 400);
   }
 
   public void setFileName(String fileName) {
@@ -103,6 +184,7 @@ public class ApplyPatchDialog extends DialogWrapper {
       return;
     }
     myPatches = new ArrayList<FilePatch>();
+    myPatchesFailedToLoad = new HashSet<FilePatch>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         PatchReader reader;
@@ -144,6 +226,7 @@ public class ApplyPatchDialog extends DialogWrapper {
   }
 
   private void autoDetectBaseDirectory() {
+    boolean autodetectFailed = false;
     for(FilePatch patch: myPatches) {
       VirtualFile baseDir = myDetectedBaseDirectory == null
                             ? getBaseDirectory()
@@ -154,25 +237,56 @@ public class ApplyPatchDialog extends DialogWrapper {
         fileToPatch = patch.findFileToPatch(new ApplyPatchContext(baseDir, skipTopDirs, false, false));
       }
       catch (IOException e) {
+        myPatchesFailedToLoad.add(patch);
         continue;
       }
       if (fileToPatch == null) {
-        String oldDetectedBaseDirectory = myDetectedBaseDirectory;
-        int oldDetectedStripLeadingDirs = myDetectedStripLeadingDirs;
-        boolean success = detectDirectoryByName(patch.getBeforeName());
-        if (!success) {
-          success = detectDirectoryByName(patch.getAfterName());
-        }
-        if (success) {
-          if ((oldDetectedBaseDirectory != null && !Comparing.equal(oldDetectedBaseDirectory, myDetectedBaseDirectory)) ||
-              (oldDetectedStripLeadingDirs >= 0 && oldDetectedStripLeadingDirs != myDetectedStripLeadingDirs)) {
-            myDetectedBaseDirectory = null;
-            myDetectedStripLeadingDirs = -1;
-            break;
+        boolean success = false;
+        if (!autodetectFailed) {
+          String oldDetectedBaseDirectory = myDetectedBaseDirectory;
+          int oldDetectedStripLeadingDirs = myDetectedStripLeadingDirs;
+          success = detectDirectoryByName(patch.getBeforeName());
+          if (!success) {
+            success = detectDirectoryByName(patch.getAfterName());
           }
+          if (success) {
+            if ((oldDetectedBaseDirectory != null && !Comparing.equal(oldDetectedBaseDirectory, myDetectedBaseDirectory)) ||
+                (oldDetectedStripLeadingDirs >= 0 && oldDetectedStripLeadingDirs != myDetectedStripLeadingDirs)) {
+              myDetectedBaseDirectory = null;
+              myDetectedStripLeadingDirs = -1;
+              autodetectFailed = true;
+            }
+          }
+        }
+        if (!success) {
+          myPatchesFailedToLoad.add(patch);
         }
       }
     }
+  }
+
+  private Collection<String> verifyPatchPaths() {
+    final ApplyPatchContext context = getApplyPatchContext();
+    myPatchesFailedToLoad.clear();
+    for(FilePatch patch: myPatches) {
+      try {
+        if (context.getBaseDir() == null || patch.findFileToPatch(context) == null) {
+          myPatchesFailedToLoad.add(patch);
+        }
+      }
+      catch (IOException e) {
+        myPatchesFailedToLoad.add(patch);
+      }
+    }
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myPatchTableModel != null) {
+          myPatchTableModel.fireTableDataChanged();
+        }
+        myStatusLabel.setText("");
+      }
+    });
+    return context.getMissingDirectories();
   }
 
   private boolean detectDirectoryByName(final String patchFileName) {
@@ -205,13 +319,19 @@ public class ApplyPatchDialog extends DialogWrapper {
       });
       return;
     }
-    if (myDetectedBaseDirectory != null) {
-      myBaseDirectoryField.setText(myDetectedBaseDirectory);
-      myDetectedBaseDirectory = null;
+    myInnerChange = true;
+    try {
+      if (myDetectedBaseDirectory != null) {
+        myBaseDirectoryField.setText(myDetectedBaseDirectory);
+        myDetectedBaseDirectory = null;
+      }
+      if (myDetectedStripLeadingDirs != -1) {
+        myStripLeadingDirectoriesSpinner.setValue(myDetectedStripLeadingDirs);
+        myDetectedStripLeadingDirs = -1;
+      }
     }
-    if (myDetectedStripLeadingDirs != -1) {
-      myStripLeadingDirectoriesSpinner.setValue(myDetectedStripLeadingDirs);
-      myDetectedStripLeadingDirs = -1;
+    finally {
+      myInnerChange = false;
     }
     myLoadPatchError = s;
     if (s == null) {
@@ -222,7 +342,20 @@ public class ApplyPatchDialog extends DialogWrapper {
       myStatusLabel.setText(s);
       myStatusLabel.setForeground(Color.red);
     }
+    updatePatchTableModel();
     updateOKAction();
+  }
+
+  private void updatePatchTableModel() {
+    if (myPatches != null) {
+      myPatchTableModel = new ListTableModel<FilePatch>(PATH_COLUMN, TYPE_COLUMN);
+      myPatchTableModel.setItems(myPatches);
+      myPatchContentsTable.setModel(myPatchTableModel);
+    }
+    else {
+      myPatchTableModel = null;
+      myPatchContentsTable.setModel(new DefaultTableModel());
+    }
   }
 
   private String buildPatchSummary() {
@@ -240,7 +373,7 @@ public class ApplyPatchDialog extends DialogWrapper {
         changedFiles++;
       }
     }
-    StringBuilder summaryBuilder = new StringBuilder("<html><body><b>Summary:</b> ");
+    StringBuilder summaryBuilder = new StringBuilder("<html><body><b>").append(VcsBundle.message("apply.patch.summary.title")).append("</b> ");
     appendSummary(changedFiles, 0, summaryBuilder, "patch.summary.changed.files");
     appendSummary(newFiles, changedFiles, summaryBuilder, "patch.summary.new.files");
     appendSummary(deletedFiles, changedFiles + newFiles, summaryBuilder, "patch.summary.deleted.files");
@@ -275,6 +408,31 @@ public class ApplyPatchDialog extends DialogWrapper {
       checkLoadPatches();
     }
     if (myLoadPatchError == null) {
+      final Collection<String> missingDirs = verifyPatchPaths();
+      if (missingDirs.size() > 0) {
+        StringBuilder messageBuilder = new StringBuilder(VcsBundle.message("apply.patch.create.dirs.prompt.header"));
+        for(String missingDir: missingDirs) {
+          messageBuilder.append(missingDir).append("\r\n");
+        }
+        messageBuilder.append(VcsBundle.message("apply.patch.create.dirs.prompt.footer"));
+        int rc = Messages.showYesNoCancelDialog(myProject, messageBuilder.toString(), VcsBundle.message("patch.apply.dialog.title"),
+                                                Messages.getQuestionIcon());
+        if (rc == 0) {
+          for(String dir: missingDirs) {
+            new File(dir).mkdirs();
+          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              for(String dir: missingDirs) {
+                LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
+              }
+            }
+          });
+        }
+        else if (rc != 1) {
+          return;
+        }
+      }
       super.doOKAction();
     }
   }
@@ -288,15 +446,43 @@ public class ApplyPatchDialog extends DialogWrapper {
     return myPatches;
   }
 
-  public VirtualFile getBaseDirectory() {
-    return LocalFileSystem.getInstance().findFileByPath(myBaseDirectoryField.getText().replace(File.separatorChar, '/'));
+  private VirtualFile getBaseDirectory() {
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myBaseDirectoryField.getText()));
   }
 
-  public int getStripLeadingDirectories() {
+  private int getStripLeadingDirectories() {
     return ((Integer) myStripLeadingDirectoriesSpinner.getValue()).intValue();
   }
 
   public ApplyPatchContext getApplyPatchContext() {
     return new ApplyPatchContext(getBaseDirectory(), getStripLeadingDirectories(), false, false);
+  }
+
+  private class PatchCellRenderer extends ColoredTableCellRenderer {
+    private SimpleTextAttributes myNewAttributes = new SimpleTextAttributes(0, FileStatus.ADDED.getColor());
+    private SimpleTextAttributes myDeletedAttributes = new SimpleTextAttributes(0, FileStatus.DELETED.getColor());
+    private SimpleTextAttributes myModifiedAttributes = new SimpleTextAttributes(0, FileStatus.MODIFIED.getColor());
+
+    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      FilePatch filePatch = (FilePatch) value;
+      String name = filePatch.getAfterNameRelative(getStripLeadingDirectories());
+      if (myPatchesFailedToLoad.contains(filePatch) && !assumeProblemWillBeFixed(filePatch)) {
+        append(name, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      }
+      else if (filePatch.isNewFile()) {
+        append(name, myNewAttributes);
+      }
+      else if (filePatch.isDeletedFile()) {
+        append(name, myDeletedAttributes);
+      }
+      else {
+        append(name, myModifiedAttributes);
+      }
+    }
+
+    private boolean assumeProblemWillBeFixed(final FilePatch filePatch) {
+      // if some of the files are valid, assume that "red" new files will be fixed by creating directories
+      return (filePatch.isNewFile() && myPatchesFailedToLoad.size() != myPatches.size());
+    }
   }
 }

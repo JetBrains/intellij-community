@@ -14,9 +14,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +72,11 @@ public class FilePatch {
 
   public void addHunk(final PatchHunk hunk) {
     myHunks.add(hunk);
+  }
+
+  public String getAfterNameRelative(int skipDirs) {
+    String[] components = myAfterName.split("/");
+    return StringUtil.join(components, skipDirs, components.length, "/");
   }
 
   public List<PatchHunk> getHunks() {
@@ -230,6 +236,7 @@ public class FilePatch {
           }
         }
         else {
+          context.registerMissingDirectory(patchedDir, pathNameComponents, i);
           return null;
         }
       }

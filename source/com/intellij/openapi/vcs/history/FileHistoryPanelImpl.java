@@ -157,7 +157,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private static class MessageColumnInfo extends VcsColumnInfo<String> {
-    private MessageRenderer myRenderer;
+    private final MessageRenderer myRenderer;
 
     public MessageColumnInfo(Project project) {
       super(FileHistoryPanelImpl.COMMIT_MESSAGE_TITLE);

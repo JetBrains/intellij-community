@@ -4,22 +4,23 @@
 
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * @author yole
  */
 public class ApplyPatchContext {
-  private VirtualFile myBaseDir;
-  private int mySkipTopDirs;
-  private boolean myCreateDirectories;
-  private boolean myAllowRename;
+  private final VirtualFile myBaseDir;
+  private final int mySkipTopDirs;
+  private final boolean myCreateDirectories;
+  private final boolean myAllowRename;
   private Map<VirtualFile, String> myPendingRenames = null;
-
+  private TreeSet<String> myMissingDirectories = new TreeSet<String>();
+  
   public ApplyPatchContext(final VirtualFile baseDir, final int skipTopDirs, final boolean createDirectories, final boolean allowRename) {
     myBaseDir = baseDir;
     mySkipTopDirs = skipTopDirs;
@@ -61,5 +62,17 @@ public class ApplyPatchContext {
       }
       myPendingRenames = null;
     }
+  }
+
+  public void registerMissingDirectory(final VirtualFile existingDir, final String[] pathNameComponents, final int firstMissingIndex) {
+    String path = existingDir.getPath();
+    for(int i=firstMissingIndex; i<pathNameComponents.length-1; i++) {
+      path += "/" + pathNameComponents [i];
+      myMissingDirectories.add(FileUtil.toSystemDependentName(path));
+    }
+  }
+
+  public Collection<String> getMissingDirectories() {
+    return Collections.unmodifiableSet(myMissingDirectories);
   }
 }
