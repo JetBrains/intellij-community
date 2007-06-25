@@ -22,10 +22,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 
@@ -43,7 +41,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   public PsiType getType() {
     PsiType type = null;
-    GrTypeOrPackageReferenceElement refElement = getReferenceElement();
+    GrCodeReferenceElement refElement = getReferenceElement();
     if (refElement != null) {
       type = new GrClassReferenceType(refElement);
     } else {
@@ -61,8 +59,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return null;
   }
 
-  public GrTypeOrPackageReferenceElement getReferenceElement() {
-    return findChildByClass(GrTypeOrPackageReferenceElement.class);
+  public GrCodeReferenceElement getReferenceElement() {
+    return findChildByClass(GrCodeReferenceElement.class);
   }
 
   public int getArrayCount() {
@@ -71,7 +69,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   @Nullable
   public PsiMethod resolveMethod() {
-    final GrTypeOrPackageReferenceElement referenceElement = getReferenceElement();
+    final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return null;
 
     final PsiElement resolved = referenceElement.resolve();

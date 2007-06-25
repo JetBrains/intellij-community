@@ -29,10 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeOrPackageReferenceElementImpl.ReferenceKind.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -40,13 +40,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.EnumSet;
+import java.util.List;import java.util.ArrayList;import java.util.Arrays;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl implements GrTypeOrPackageReferenceElement {
-  public GrTypeOrPackageReferenceElementImpl(@NotNull ASTNode node) {
+public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implements GrCodeReferenceElement {
+  public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -54,8 +55,8 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
     return "Reference element";
   }
 
-  public GrTypeOrPackageReferenceElement getQualifier() {
-    return (GrTypeOrPackageReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+  public GrCodeReferenceElement getQualifier() {
+    return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   enum ReferenceKind {
@@ -63,7 +64,8 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
     CLASS,
     CLASS_OR_PACKAGE,
     PACKAGE_FQ,
-    CLASS_OR_PACKAGE_FQ
+    CLASS_OR_PACKAGE_FQ,
+    STATIC_MEMBER_FQ
   }
 
   @Nullable
@@ -74,14 +76,19 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
 
   private ReferenceKind getKind() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTypeOrPackageReferenceElement) {
-      ReferenceKind parentKind = ((GrTypeOrPackageReferenceElementImpl) parent).getKind();
+    if (parent instanceof GrCodeReferenceElement) {
+      ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind();
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
+      if (parentKind == STATIC_MEMBER_FQ) return CLASS_OR_PACKAGE_FQ;
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
       return PACKAGE_FQ;
     } else if (parent instanceof GrImportStatement) {
-      return CLASS_OR_PACKAGE_FQ;
+      if (!((GrImportStatement) parent).isStatic()) {
+        return CLASS_OR_PACKAGE_FQ;
+      }
+
+      return STATIC_MEMBER_FQ;
     } else if (parent instanceof GrNewExpression) {
       return CONSTRUCTOR;
     }
@@ -108,6 +115,28 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
     PsiManager manager = getManager();
     final ReferenceKind kind = getKind();
     switch (kind) {
+      case STATIC_MEMBER_FQ:
+      {
+        final GrCodeReferenceElement qualifier = getQualifier();
+        final String refName = getReferenceName();
+        if (qualifier != null) {
+          final PsiElement resolve = qualifier.resolve();
+          if (resolve instanceof PsiClass) {
+            final PsiClass clazz = (PsiClass) resolve;
+            List<PsiElement> result = new ArrayList<PsiElement>();
+            final PsiField field = clazz.findFieldByName(refName, false);
+            if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+              result.add(field);
+            }
+
+            result.addAll(Arrays.asList(clazz.findMethodsByName(refName, false)));
+
+            return result.toArray(new PsiElement[result.size()]);
+          }
+        }
+      }
+      //fallthrough
+
       case PACKAGE_FQ:
       case CLASS_OR_PACKAGE_FQ: {
         final String refText = PsiUtil.getQualifiedReferenceText(this);
@@ -131,7 +160,7 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
 
       case CONSTRUCTOR: //todo
       case CLASS: {
-        GrTypeOrPackageReferenceElement qualifier = getQualifier();
+        GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
           PsiElement qualifierResolved = qualifier.resolve();
           if (qualifierResolved instanceof PsiPackage) {
@@ -155,14 +184,15 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
     return false;
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantResolver<GrTypeOrPackageReferenceElementImpl> {
+  private static class MyResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
-    public GroovyResolveResult[] resolve(GrTypeOrPackageReferenceElementImpl reference, boolean incompleteCode) {
+    public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return null;
       return _resolve(reference, reference.getManager(), reference.getKind());
     }
 
-    private GroovyResolveResult[] _resolve(GrTypeOrPackageReferenceElementImpl ref, PsiManager manager, ReferenceKind kind) {
+    private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager, ReferenceKind kind) {
+      final String refName=ref.getReferenceName();
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(ref), ref.getResolveScope());
@@ -178,9 +208,8 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
           return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
 
         case CLASS:
-        case CLASS_OR_PACKAGE:
-          GrTypeOrPackageReferenceElement qualifier = ref.getQualifier();
-          String refName = ref.getReferenceName();
+        case CLASS_OR_PACKAGE: {
+          GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
             if (qualifierResolved instanceof PsiPackage) {
@@ -194,7 +223,8 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
 
               if (kind == CLASS_OR_PACKAGE) {
                 for (final PsiPackage subpackage : ((PsiPackage) qualifierResolved).getSubPackages()) {
-                  if (refName.equals(subpackage.getName())) return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
+                  if (refName.equals(subpackage.getName()))
+                    return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
               }
             }
@@ -208,19 +238,20 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
               PsiPackage defaultPackage = ref.getManager().findPackage("");
               if (defaultPackage != null) {
                 for (final PsiPackage subpackage : defaultPackage.getSubPackages()) {
-                  if (refName.equals(subpackage.getName())) return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
+                  if (refName.equals(subpackage.getName()))
+                    return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
               }
             }
           }
 
           break;
-
+        }
         case CONSTRUCTOR:
           final GroovyResolveResult[] classResults = _resolve(ref, manager, CLASS);
           if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
-          final MethodResolverProcessor processor = new MethodResolverProcessor(ref.getReferenceName(), ref, false, true);
+          final MethodResolverProcessor processor = new MethodResolverProcessor(refName, ref, false, true);
           for (GroovyResolveResult classResult : classResults) {
             final PsiElement element = classResult.getElement();
             if (element instanceof PsiClass) {
@@ -230,6 +261,30 @@ public class GrTypeOrPackageReferenceElementImpl extends GrReferenceElementImpl 
 
           final GroovyResolveResult[] constructorResults = processor.getCandidates();
           return constructorResults.length > 0 ? constructorResults : classResults;
+
+        case STATIC_MEMBER_FQ:
+        {
+          final GrCodeReferenceElement qualifier = ref.getQualifier();
+          if (qualifier != null) {
+            final PsiElement resolve = qualifier.resolve();
+            if (resolve instanceof PsiClass) {
+              final PsiClass clazz = (PsiClass) resolve;
+              PsiResolveHelper helper = clazz.getManager().getResolveHelper();
+              List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+              final PsiField field = clazz.findFieldByName(refName, false);
+              if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+                result.add(new GroovyResolveResultImpl(field, helper.isAccessible(field, ref, null)));
+              }
+
+              final PsiMethod[] methods = clazz.findMethodsByName(refName, false);
+              for (PsiMethod method : methods) {
+                result.add(new GroovyResolveResultImpl(method, helper.isAccessible(method, ref, null)));
+              }
+
+              return result.toArray(new GroovyResolveResult[result.size()]);
+            }
+          }
+        }
       }
 
       return GroovyResolveResult.EMPTY_ARRAY;

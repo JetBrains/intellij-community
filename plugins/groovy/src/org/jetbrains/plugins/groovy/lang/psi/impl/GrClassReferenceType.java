@@ -21,15 +21,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author ven
 */
 public class GrClassReferenceType extends PsiClassType {
-  private GrTypeOrPackageReferenceElement myReferenceElement;
+  private GrCodeReferenceElement myReferenceElement;
 
-  public GrClassReferenceType(GrTypeOrPackageReferenceElement referenceElement) {
+  public GrClassReferenceType(GrCodeReferenceElement referenceElement) {
     myReferenceElement = referenceElement;
     myLanguageLevel = LanguageLevel.JDK_1_5;
   }

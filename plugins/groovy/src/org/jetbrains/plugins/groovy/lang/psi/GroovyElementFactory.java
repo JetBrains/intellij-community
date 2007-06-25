@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author ven
@@ -72,7 +72,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException;
 
-  public abstract GrTypeOrPackageReferenceElement createTypeOrPackageReference(String qName);
+  public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
 
   public abstract GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException;
 }

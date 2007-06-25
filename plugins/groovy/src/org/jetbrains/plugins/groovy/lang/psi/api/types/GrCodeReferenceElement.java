@@ -15,16 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrTypeOrPackageReferenceElement extends GrReferenceElement {
-  GrTypeOrPackageReferenceElement[] EMPTY_ARRAY = new GrTypeOrPackageReferenceElement[0];
+public interface GrCodeReferenceElement extends GrReferenceElement {
+  GrCodeReferenceElement[] EMPTY_ARRAY = new GrCodeReferenceElement[0];
 
-  GrTypeOrPackageReferenceElement getQualifier();
+  GrCodeReferenceElement getQualifier();
 }

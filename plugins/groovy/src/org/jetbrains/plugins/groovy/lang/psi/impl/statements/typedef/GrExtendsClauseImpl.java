@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -36,7 +36,7 @@ public class GrExtendsClauseImpl extends GroovyPsiElementImpl implements GrExten
   }
 
   @NotNull
-  public GrTypeOrPackageReferenceElement[] getReferenceElements() {
-    return findChildrenByClass(GrTypeOrPackageReferenceElement.class);
+  public GrCodeReferenceElement[] getReferenceElements() {
+    return findChildrenByClass(GrCodeReferenceElement.class);
   }
 }

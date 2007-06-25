@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
@@ -89,7 +89,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
         final GrImportStatement added = file.addImportForClass(clazz);
         if (!isReferenceTo(element)) {
           file.removeImport(added);
-          final GrTypeOrPackageReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+          final GrCodeReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
           getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
           return qualifiedRef;
         }
@@ -98,7 +98,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       }
     } else if (element instanceof PsiPackage) {
       final String qName = ((PsiPackage) element).getQualifiedName();
-      final GrTypeOrPackageReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+      final GrCodeReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
       getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
       return qualifiedRef;
     }

@@ -18,14 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -45,13 +42,21 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     if (isOnDemand()) {
-      GrTypeOrPackageReferenceElement ref = getImportReference();
+      GrCodeReferenceElement ref = getImportReference();
       if (ref != null) {
         String qName = PsiUtil.getQualifiedReferenceText(ref);
         if (qName != null) {
-          PsiPackage aPackage = getManager().findPackage(qName);
-          if (aPackage != null) {
-            if (!aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
+          if (!isStatic()) {
+            PsiPackage aPackage = getManager().findPackage(qName);
+            if (aPackage != null) {
+              if (!aPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
+            }
+          } else {
+            PsiClass clazz = getManager().findClass(qName, getResolveScope());
+            if (clazz != null) {
+              if (!processAllMembers(processor, substitutor, clazz)) return false;
+
+            }
           }
         }
       }
@@ -60,12 +65,35 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       if (name != null) {
         NameHint nameHint = processor.getHint(NameHint.class);
         if (nameHint == null || name.equals(nameHint.getName())) {
-          GrTypeOrPackageReferenceElement ref = getImportReference();
+          GrCodeReferenceElement ref = getImportReference();
           if (ref != null) {
             String qName = PsiUtil.getQualifiedReferenceText(ref);
-            if (qName!= null) {
-              PsiClass clazz = getManager().findClass(qName, getResolveScope());
-              if (clazz != null && !processor.execute(clazz, substitutor)) return false;
+            if (qName != null) {
+              if (!isStatic()) {
+                PsiClass clazz = getManager().findClass(qName, getResolveScope());
+                if (clazz != null && !processor.execute(clazz, substitutor)) return false;
+              } else {
+                final int i = qName.lastIndexOf('.');
+                if (i > 0) {
+                  final String classQName = qName.substring(0, i);
+                  PsiClass clazz = getManager().findClass(classQName, getResolveScope());
+                  if (clazz != null) {
+                    if (nameHint == null) {
+                      return processAllMembers(processor, substitutor, clazz);
+                    } else {
+                      final String refName = ref.getReferenceName();
+                      final PsiField field = clazz.findFieldByName(refName, false);
+                      if (field != null && field.hasModifierProperty(PsiModifier.STATIC) &&
+                          !processor.execute(field, substitutor)) return false;
+
+                      for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
+                        if (method.hasModifierProperty(PsiModifier.STATIC) &&
+                            !processor.execute(method, substitutor)) return false;
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -75,8 +103,20 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     return true;
   }
 
-  public GrTypeOrPackageReferenceElement getImportReference() {
-    return findChildByClass(GrTypeOrPackageReferenceElement.class);
+  private boolean processAllMembers(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiClass clazz) {
+    for (PsiField field : clazz.getFields()) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(field, substitutor))
+        return false;
+    }
+    for (PsiMethod method : clazz.getMethods()) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, substitutor))
+        return false;
+    }
+    return true;
+  }
+
+  public GrCodeReferenceElement getImportReference() {
+    return findChildByClass(GrCodeReferenceElement.class);
   }
 
   @Nullable
@@ -87,13 +127,15 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       return identifier.getText();
     }
 
-    GrTypeOrPackageReferenceElement ref = findChildByClass(GrTypeOrPackageReferenceElement.class);
+    GrCodeReferenceElement ref = findChildByClass(GrCodeReferenceElement.class);
     return ref == null ? null : ref.getReferenceName();
+  }
+
+  public boolean isStatic() {
+    return findChildByType(GroovyTokenTypes.kSTATIC) != null;
   }
 
   public boolean isOnDemand() {
     return findChildByType(GroovyTokenTypes.mSTAR) != null;
   }
-
-
 }

@@ -20,33 +20,34 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.awt.*;
 
@@ -62,8 +63,8 @@ public class GroovyAnnotator implements Annotator {
   public static final GroovyAnnotator INSTANCE = new GroovyAnnotator();
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
-    if (element instanceof GrTypeOrPackageReferenceElement) {
-      checkReferenceElement(holder, (GrTypeOrPackageReferenceElement) element);
+    if (element instanceof GrCodeReferenceElement) {
+      checkReferenceElement(holder, (GrCodeReferenceElement) element);
     } else if (element instanceof GrReferenceExpression) {
       checkReferenceExpression(holder, (GrReferenceExpression) element);
     } else if (element instanceof GrTypeDefinition) {
@@ -74,14 +75,7 @@ public class GroovyAnnotator implements Annotator {
       checkAssignmentExpression((GrAssignmentExpression) element, holder);
     } else if (element instanceof GrTraditionalForClauseImpl) {
       forbidTraditionalForClause(((GrTraditionalForClauseImpl) element), holder);
-    } else if (element instanceof GrField) {
-      annotateField((GrField) element, holder);
     }
-  }
-
-  private void annotateField(GrField grField, AnnotationHolder holder) {
-    Annotation annotation = holder.createInfoAnnotation(grField, null);
-    annotation.setEnforcedTextAttributes(new TextAttributes(Color.MAGENTA, null, Color.black, null, 1));
   }
 
   private void checkAssignmentExpression(GrAssignmentExpression assignment, AnnotationHolder holder) {
@@ -177,14 +171,23 @@ public class GroovyAnnotator implements Annotator {
         refExpr.equals(((GrAssignmentExpression) refExpr.getParent()).getLValue());
   }
 
-  private void checkReferenceElement(AnnotationHolder holder, final GrTypeOrPackageReferenceElement refElement) {
-    if (refElement.getParent() instanceof GrNewExpression) {
+  private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
+    final PsiElement parent=refElement.getParent();
+
+    if (parent instanceof GrNewExpression) {
       //checkApplicability
     }
     else if (refElement.getReferenceName() != null) {
       GroovyResolveResult resolveResult = refElement.advancedResolve();
       final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {
+        if (parent instanceof GrImportStatement && ((GrImportStatement) parent).isStatic()) { //multiple members might be imported by single static import
+          final ResolveResult[] allResults = refElement.multiResolve(false);
+          if (allResults.length > 0) {
+            return;
+          }
+        }
+
         String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
 
         // Register quickfix

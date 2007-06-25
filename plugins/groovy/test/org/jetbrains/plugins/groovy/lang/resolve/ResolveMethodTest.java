@@ -204,4 +204,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(parameters[0].getType().equalsToText("java.util.Map"));
   }
 
+  public void testStaticImport() throws Exception {
+    PsiReference ref = configureByFile("staticImport/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
 }

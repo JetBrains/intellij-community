@@ -20,7 +20,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 
@@ -44,7 +44,7 @@ public class GrThrowClauseImpl extends GroovyPsiElementImpl implements GrThrowCl
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    GrTypeOrPackageReferenceElement[] refs = findChildrenByClass(GrTypeOrPackageReferenceElement.class);
+    GrCodeReferenceElement[] refs = findChildrenByClass(GrCodeReferenceElement.class);
     if (refs.length == 0) return PsiClassType.EMPTY_ARRAY;
     PsiClassType[] result = new PsiClassType[refs.length];
     for (int i = 0; i < result.length; i++) {

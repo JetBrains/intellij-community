@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -42,17 +42,17 @@ import java.util.List;
  */
 public class PsiUtil {
   @Nullable
-  public static String getQualifiedReferenceText(GrTypeOrPackageReferenceElement referenceElement) {
+  public static String getQualifiedReferenceText(GrCodeReferenceElement referenceElement) {
     StringBuilder builder = new StringBuilder();
     if (!appendName(referenceElement, builder)) return null;
 
     return builder.toString();
   }
 
-  private static boolean appendName(GrTypeOrPackageReferenceElement referenceElement, StringBuilder builder) {
+  private static boolean appendName(GrCodeReferenceElement referenceElement, StringBuilder builder) {
     String refName = referenceElement.getReferenceName();
     if (refName == null) return false;
-    GrTypeOrPackageReferenceElement qualifier = referenceElement.getQualifier();
+    GrCodeReferenceElement qualifier = referenceElement.getQualifier();
     if (qualifier != null) {
       appendName(qualifier, builder);
       builder.append(".");

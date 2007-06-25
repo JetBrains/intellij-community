@@ -8,5 +8,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GrClassTypeElement extends GrTypeElement {
   @NotNull
-  GrTypeOrPackageReferenceElement getReferenceElement();
+  GrCodeReferenceElement getReferenceElement();
 }

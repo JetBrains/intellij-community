@@ -50,7 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -283,7 +283,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     PsiClassType[] result = PsiClassType.EMPTY_ARRAY;
 
     if (extendsClause != null) {
-      GrTypeOrPackageReferenceElement[] extendsRefElements = extendsClause.getReferenceElements();
+      GrCodeReferenceElement[] extendsRefElements = extendsClause.getReferenceElements();
 
       result = new PsiClassType[extendsRefElements.length];
 
@@ -305,7 +305,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     PsiClassType[] result = PsiClassType.EMPTY_ARRAY;
     if (implementsClause != null) {
-      GrTypeOrPackageReferenceElement[] implementsRefElements = implementsClause.getReferenceElements();
+      GrCodeReferenceElement[] implementsRefElements = implementsClause.getReferenceElements();
 
       result = new PsiClassType[implementsRefElements.length];
 
@@ -347,8 +347,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   @NotNull
   public PsiClassType[] getSuperTypes() {
     GrExtendsClause extendsClause = findChildByClass(GrExtendsClause.class);
-    GrTypeOrPackageReferenceElement[] extendsRefs = GrTypeOrPackageReferenceElement.EMPTY_ARRAY;
-    GrTypeOrPackageReferenceElement[] implementsRefs = GrTypeOrPackageReferenceElement.EMPTY_ARRAY;
+    GrCodeReferenceElement[] extendsRefs = GrCodeReferenceElement.EMPTY_ARRAY;
+    GrCodeReferenceElement[] implementsRefs = GrCodeReferenceElement.EMPTY_ARRAY;
     if (extendsClause != null) {
       extendsRefs = extendsClause.getReferenceElements();
     }

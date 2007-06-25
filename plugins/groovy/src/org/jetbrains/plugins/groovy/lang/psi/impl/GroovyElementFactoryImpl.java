@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
@@ -47,7 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeOrPackageReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -135,7 +134,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrMethod) node.getPsi()).getParameters()[0];
   }
 
-  public GrTypeOrPackageReferenceElement createTypeOrPackageReference(String qName) {
+  public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
     final GroovyFile file = createDummyFile(qName + " i");
     GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
