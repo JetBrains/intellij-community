@@ -176,11 +176,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         myScheme = StorageScheme.DEFAULT;
         stateStorageManager.addMacro(PROJECT_FILE_MACRO, filePath);
 
-        if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-          String workspacePath =
-            filePath.substring(0, filePath.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length()) + WORKSPACE_EXTENSION;
-          stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
-        }
+
+        int lastDot = filePath.lastIndexOf(".");
+        final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
+        String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
+        stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
       }
     }
   }

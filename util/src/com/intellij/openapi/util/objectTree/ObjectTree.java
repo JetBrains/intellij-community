@@ -51,10 +51,6 @@ public final class ObjectTree {
     else {
       parentNode.addChild(child);
     }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Registered: " + child + " for parent " + parent);
-    }
   }
 
   private void checkIfValid(Object child) {

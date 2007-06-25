@@ -17,7 +17,7 @@ abstract class AbstractCollectionBinding implements Binding {
   private Class myElementType;
   private XmlSerializerImpl myXmlSerializer;
   private String myTagName;
-  @Nullable private Accessor myAccessor;
+  @Nullable protected Accessor myAccessor;
   private AbstractCollection myAnnotation = null;
   private boolean myUsingOptionBinding = false;
 

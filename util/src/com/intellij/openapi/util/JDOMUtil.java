@@ -177,6 +177,10 @@ public class JDOMUtil {
         Text text = (Text)o;
         text.setText(interner.intern(text.getText()));
       }
+      else if (o instanceof Comment) {
+        Comment comment = (Comment)o;
+        comment.setText(interner.intern(comment.getText()));
+      }
       else {
         throw new IllegalArgumentException("Wrong node: " + o);
       }

@@ -290,7 +290,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
           final String name = element.getAttributeValue(NAME);
 
           if (name == null) {
-            LOG.error("Broken file : " + this);
+            LOG.error("Broken content in file : " + this);
             continue;
           }
 

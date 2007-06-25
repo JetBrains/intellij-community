@@ -210,10 +210,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
       }
     }
     catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
+      LOG.error("Error while initializing: " + component, e);
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.error("Error while initializing: " + component, e);
     }
 
     if (state != null) {

@@ -11,6 +11,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
 
 
   Object processResult(List result, Object target) {
+    assert target instanceof Collection : "Wrong target: " + target.getClass() + " in " + myAccessor;
     Collection c = (Collection)target;
     c.clear();
     //noinspection unchecked
