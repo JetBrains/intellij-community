@@ -131,7 +131,8 @@ public class TextFieldWithHistory extends JPanel {
     });
 
     setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), myTextField.getBorder()));
-    
+
+    myTextField.setOpaque(true);
     myTextField.setBorder(null);
 
     final ActionManager actionManager = ActionManager.getInstance();
