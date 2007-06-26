@@ -193,10 +193,6 @@ class MoveDropTargetListener implements DropTargetListener {
       return psiElement == null || (!(psiElement instanceof PsiPackage) && !(psiElement instanceof PsiDirectory));
     }
 
-    public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {
-      return sourceNode.getParent() == targetNode;
-    }
-
     protected abstract boolean canDrop(@NotNull TreeNode[] sourceNodes, @Nullable TreeNode targetNode);
 
     @Nullable
@@ -262,6 +258,10 @@ class MoveDropTargetListener implements DropTargetListener {
         return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
       }
     }
+
+    public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {
+      return sourceNode.getParent() == targetNode;
+    }
   }
 
   private class CopyDropHandler extends MoveCopyDropHandler {
@@ -287,6 +287,10 @@ class MoveDropTargetListener implements DropTargetListener {
         psiPackage = psiDirectory == null ? null : psiDirectory.getPackage();
       }
       CopyHandler.doCopy(sourceElements, psiPackage, psiDirectory );
+    }
+
+    public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {
+      return false;
     }
   }
 }
