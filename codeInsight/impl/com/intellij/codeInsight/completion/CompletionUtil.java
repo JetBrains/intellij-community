@@ -217,50 +217,12 @@ public class CompletionUtil {
     return lazyValue == null ? null : lazyValue.getValue();
   }
 
-  public static boolean checkName(String name, CompletionContext context, boolean forceCaseInsensitive) {
-    if (name == null) {
-      return false;
-    }
-
+  public static boolean checkName(LookupItem<?> item, CompletionContext context, boolean forceCaseInsensitive) {
     String prefix = context.getPrefix();
-    if (forceCaseInsensitive) {
-      return StringUtil.startsWithIgnoreCase(name, prefix);
+    for (final String name : item.getAllLookupStrings()) {
+      if (forceCaseInsensitive && StringUtil.startsWithIgnoreCase(name, prefix) || context.prefixMatches(name)) return true;
     }
-
-    return context.prefixMatches(name);
-
-    /*
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean ret = true;
-    if (prefix != null) {
-      int variant = settings.COMPLETION_CASE_SENSITIVE;
-      variant = forceCaseInsensitive ? CodeInsightSettings.NONE : variant;
-
-      switch (variant) {
-        case CodeInsightSettings.NONE:
-          ret = name.toLowerCase().startsWith(prefix.toLowerCase());
-          break;
-        case CodeInsightSettings.FIRST_LETTER:
-          if (name.length() > 0) {
-            if (prefix.length() > 0) {
-              ret = name.charAt(0) == prefix.charAt(0) && name.toLowerCase().startsWith(prefix.substring(1).toLowerCase(), 1);
-            }
-          }
-          else {
-            if (prefix.length() > 0) ret = false;
-          }
-
-          break;
-        case CodeInsightSettings.ALL:
-          ret = name.startsWith(prefix, 0);
-          break;
-        default:
-          ret = false;
-      }
-    }
-    return ret;
-    */
+    return false;
   }
 
 

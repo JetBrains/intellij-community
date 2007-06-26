@@ -111,6 +111,9 @@ public class LookupItemUtil{
       }
       s = PsiUtil.getName(element);
     }
+    if (object instanceof PsiEnumConstant) {
+      item.addLookupStrings(((PsiEnumConstant)object).getName());
+    }
     TailType tailType = TailType.NONE;
     if (object instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)object;

@@ -13,16 +13,19 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class represents an item of a lookup list.
@@ -71,10 +74,11 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     }
   };
   @NotNull private OverwriteHandler myOverwriteHandler = DEFAULT_OVERWRITE_HANDLER;
+  private Set<String> myAllLookupStrings = new THashSet<String>();
 
   public LookupItem(T o, @NotNull @NonNls String lookupString){
     setObject(o);
-    myLookupString = lookupString;
+    setLookupString(lookupString);
   }
 
   public void setObject(@NotNull T o) {
@@ -94,13 +98,14 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
       LookupItem item = (LookupItem)o;
       return Comparing.equal(myObject, item.myObject)
              && Comparing.equal(myLookupString, item.myLookupString)
+             && Comparing.equal(myAllLookupStrings, item.myAllLookupStrings)
              && Comparing.equal(myAttributes, item.myAttributes);
     }
     return false;
   }
 
   public int hashCode() {
-    return myLookupString.hashCode();
+    return myAllLookupStrings.hashCode();
   }
 
   public String toString() {
@@ -130,7 +135,9 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   }
 
   public void setLookupString(@NotNull String lookupString) {
+    if (myAllLookupStrings.contains("")) myAllLookupStrings.remove("");
     myLookupString = lookupString;
+    myAllLookupStrings.add(lookupString);
   }
 
   public Object getAttribute(Object key){
@@ -223,6 +230,15 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   public LookupItem<T> setCaseSensitive(final boolean caseSensitive) {
     setAttribute(LookupItem.CASE_INSENSITIVE, !caseSensitive);
     return this;
+  }
+
+  public LookupItem<T> addLookupStrings(final String... additionalLookupStrings) {
+    myAllLookupStrings.addAll(Arrays.asList(additionalLookupStrings));
+    return this;
+  }
+
+  public Set<String> getAllLookupStrings() {
+    return myAllLookupStrings;
   }
 
   private class MyInsertHandler implements InsertHandler {

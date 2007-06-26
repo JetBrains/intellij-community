@@ -91,12 +91,7 @@ public class CompletionData {
   }
 
   public void addKeywordVariants(Set<CompletionVariant> set, CompletionContext context, PsiElement position){
-    CompletionVariant[] variants = findVariants(position, context);
-    for (CompletionVariant variant : variants) {
-      if (!set.contains(variant)) {
-        set.add(variant);
-      }
-    }
+    set.addAll(Arrays.asList(findVariants(position, context)));
   }
 
   public static void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position){
