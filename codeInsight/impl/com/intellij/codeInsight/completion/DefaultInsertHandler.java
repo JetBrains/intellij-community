@@ -600,7 +600,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     Object o = item.getObject();
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
-      int length = aClass.getName().length();
+      int length = item.getLookupString().length();
       final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
       shortenReference(file, newOffset);
       return newOffset;
@@ -657,11 +657,16 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     int length = document.getTextLength();
     int newStartOffset = startOffset;
 
-    PsiElement element = file.findElementAt(startOffset);
-    String refText = chars.subSequence(startOffset, endOffset).toString();
-    PsiClass refClass = helper.resolveReferencedClass(refText, element);
-    if (refClass != null && (refClass.getQualifiedName() == null/* local classes and parameters*/
-                             || manager.areElementsEquivalent(aClass, refClass))) return newStartOffset;
+    final PsiReference reference = file.findReferenceAt(startOffset);
+    if (reference != null) {
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiClass) {
+        if ((((PsiClass)resolved).getQualifiedName() == null/* local classes and parameters*/
+                                 || manager.areElementsEquivalent(aClass, resolved))) return newStartOffset;
+
+      }
+    }
+
     boolean insertSpace = endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset));
 
     if (insertSpace){
@@ -673,7 +678,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
-    element = file.findElementAt(startOffset);
+    PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier){
       PsiElement parent = element.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()){
