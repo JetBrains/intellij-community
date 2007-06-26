@@ -58,8 +58,8 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
       }
       else if (mapType.isAssignableFrom(type)) {
         try {
-          result.add(elementFactory.createExpressionFromText(var.getName() + ".keySet()", place));
-          result.add(elementFactory.createExpressionFromText(var.getName() + ".values()", place));
+          result.add(elementFactory.createExpressionFromText(var.getName() + ".keySet()", var.getParent()));
+          result.add(elementFactory.createExpressionFromText(var.getName() + ".values()", var.getParent()));
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
