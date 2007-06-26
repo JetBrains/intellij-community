@@ -17,6 +17,7 @@ package com.siyeh.ig;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JFormattedTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.lang.reflect.Field;
@@ -44,7 +45,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
     private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
     @NonNls private static final String INSPECTION = "Inspection";
-    private static final Map<String, String> packageGroupDisplayNameMap = new HashMap();
+    @NonNls private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<String, String>();
     static {
         packageGroupDisplayNameMap.put("abstraction", GroupNames.ABSTRACTION_GROUP_NAME);
         packageGroupDisplayNameMap.put("assignment", GroupNames.ASSIGNMENT_GROUP_NAME);
@@ -126,7 +127,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected LocalQuickFix buildFix(PsiElement location) {
         return null;
     }
 

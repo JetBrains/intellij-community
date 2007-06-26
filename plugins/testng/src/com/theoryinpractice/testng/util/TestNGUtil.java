@@ -65,6 +65,7 @@ public class TestNGUtil implements TestFramework
             AfterTest.class.getName()
     };
 
+    @NonNls
     private static final String[] CONFIG_JAVADOC_TAGS = {
             "testng.configuration",
             "testng.before-class",
@@ -130,8 +131,8 @@ public class TestNGUtil implements TestFramework
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
         boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, false);
         if (hasAnnotation) {
-            PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, TEST_ANNOTATION_FQN);
             if (checkDisabled) {
+              PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, TEST_ANNOTATION_FQN);
               assert annotation != null;
               PsiNameValuePair[] attribs = annotation.getParameterList().getAttributes();
               for (PsiNameValuePair attrib : attribs) {

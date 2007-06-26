@@ -173,11 +173,11 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         if(fixes != null){
             return fixes;
         }
-        final InspectionGadgetsFix fix = inspection.buildFix(location);
+        final LocalQuickFix fix = inspection.buildFix(location);
         if(fix == null){
             return null;
         }
-        return new InspectionGadgetsFix[]{fix};
+        return new LocalQuickFix[]{fix};
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {

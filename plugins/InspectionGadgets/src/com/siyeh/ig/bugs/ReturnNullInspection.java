@@ -16,22 +16,19 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ReturnNullInspection extends BaseInspection {
 
@@ -59,43 +56,15 @@ public class ReturnNullInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected LocalQuickFix buildFix(PsiElement location) {
         if (AnnotationUtil.isAnnotatingApplicable(location)) {
-            return new MakeNullableFix();
+            return new AnnotateMethodFix(AnnotationUtil.NULLABLE);
         } else {
             return null;
         }
     }
 
-    private static class MakeNullableFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message("return.of.null.quickfix");
-        }
-
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement nullToken = descriptor.getPsiElement();
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(nullToken, PsiMethod.class);
-            if (method == null) {
-                return;
-            }
-            final PsiManager manager = method.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
-            final PsiAnnotation annotation =
-                    factory.createAnnotationFromText(
-                            '@' + AnnotationUtil.NULLABLE, method);
-            final PsiModifierList modifierList = method.getModifierList();
-            modifierList.addAfter(annotation, null);
-            final CodeStyleManager styleManager = manager.getCodeStyleManager();
-            styleManager.shortenClassReferences(modifierList);
-        }
-
-    }
-
-    public JComponent createOptionsPanel() {
+  public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
