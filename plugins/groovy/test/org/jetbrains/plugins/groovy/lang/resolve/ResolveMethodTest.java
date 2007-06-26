@@ -204,6 +204,16 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(parameters[0].getType().equalsToText("java.util.Map"));
   }
 
+  //grvy-101
+  public void testConstructor3() throws Exception {
+    PsiReference ref = configureByFile("constructor3/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    final PsiMethod method = (PsiMethod) resolved;
+    assertTrue(method.isConstructor());
+    assertEquals(0, method.getParameterList().getParameters().length);
+  }
+
   public void testStaticImport() throws Exception {
     PsiReference ref = configureByFile("staticImport/A.groovy");
     PsiElement resolved = ref.resolve();
