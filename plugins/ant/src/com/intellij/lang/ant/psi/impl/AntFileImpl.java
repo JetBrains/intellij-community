@@ -581,7 +581,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public AntTypeDefinition getBaseTypeDefinition(final String className) {
     synchronized (PsiLock.LOCK) {
       buildTypeDefinitions();
-      return myTypeDefinitions.get(className);
+      return lookupTypeDefinition(className);
     }
   }
 
@@ -663,9 +663,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public void registerCustomType(final AntTypeDefinition def) {
     synchronized (PsiLock.LOCK) {
       buildTypeDefinitions();
-      myTypeDefinitionArray = null;
-      final String classname = def.getClassName();
-      myTypeDefinitions.put(classname, def);
+      addTypeDefinition(def);
       if (myTargetDefinition != null && myTargetDefinition != def) {
         if (canBeUsedInTarget(def)) {
           myTargetDefinition.registerNestedType(def.getTypeId(), def.getClassName());
@@ -674,21 +672,33 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
+  private AntTypeDefinition lookupTypeDefinition(final String className) {
+    return myTypeDefinitions.get(className);
+  }
+
+  private void addTypeDefinition(final AntTypeDefinition def) {
+    myTypeDefinitions.put(def.getClassName(), def);
+    myTypeDefinitionArray = null;
+  }
+
+  private void removeTypeDefinition(final AntTypeDefinition def) {
+    myTypeDefinitions.remove(def.getClassName());
+    myTypeDefinitionArray = null;
+  }
+
   public void unregisterCustomType(final AntTypeDefinition def) {
     synchronized (PsiLock.LOCK) {
-      myTypeDefinitionArray = null;
-      final String classname = def.getClassName();
       if (myTypeDefinitions != null) {
-        myTypeDefinitions.remove(classname);
+        removeTypeDefinition(def);
       }
       if (myProjectElements != null) {
         final String registeredClassName = myProjectElements.get(def.getTypeId());
-        if (registeredClassName != null && registeredClassName.equals(classname)) {
+        if (registeredClassName != null && registeredClassName.equals(def.getClassName())) {
           myProjectElements.remove(def.getTypeId());
         }
       }
       if (myTargetDefinition != null && myTargetDefinition != def) {
-        myTargetDefinition = null;
+        myTargetDefinition.unregisterNestedType(def.getTypeId());
       }
     }
   }
@@ -717,7 +727,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       final AntTypeDefinition def = createTypeDefinition(typeId, typeClass, isTask);
       if (def != null) {
         final String className = def.getClassName();
-        myTypeDefinitions.put(className, def);
+        addTypeDefinition(def);
         myProjectElements.put(typeId, className);
         /**
          * some types are defined only as nested elements, project doesn't return their classes
@@ -736,10 +746,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       while (nestedEnum.hasMoreElements()) {
         final String nestedElement = (String)nestedEnum.nextElement();
         final Class nestedElementClass = helper.getElementType(nestedElement);
-        if (nestedElementClass != null && myTypeDefinitions.get(nestedElementClass.getName()) == null) {
+        if (nestedElementClass != null && lookupTypeDefinition(nestedElementClass.getName()) == null) {
           final AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), nestedElementClass, false);
           if (nestedDef != null) {
-            myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
+            addTypeDefinition(nestedDef);
             registerNestedDefinitionsRecursively(nestedElementClass);
           }
         }

@@ -100,7 +100,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
         else {
           final AntProject project = getAntProject();
           final List<AntTarget> targets = new ArrayList<AntTarget>();
-          for (final String name : depends.split(",")) {
+          for (final String name : depends.split(",|[\\s]+")) {
             final AntTarget antTarget = project.getTarget(name);
             if (antTarget != null) {
               targets.add(antTarget);

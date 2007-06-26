@@ -160,8 +160,12 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       if (myNewDefinitions != null) {
         final AntStructuredElement parent = getAntParent();
         if (parent != null) {
+          final AntProject antProject = !(parent instanceof AntProject)? parent.getAntProject() : null;
           for (final AntTypeDefinition def : myNewDefinitions) {
             parent.unregisterCustomType(def);
+            if (antProject != null) {
+              antProject.unregisterCustomType(def);
+            }
           }
         }
         myNewDefinitions = null;
