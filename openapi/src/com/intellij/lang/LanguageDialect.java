@@ -18,6 +18,9 @@ package com.intellij.lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class LanguageDialect extends Language {
   private final Language myBaseLanguage;
@@ -34,5 +37,10 @@ public abstract class LanguageDialect extends Language {
   @Nullable
   public ParserDefinition getParserDefinition() {
     return myBaseLanguage.getParserDefinition();
+  }
+
+  @NotNull
+  public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
+    return myBaseLanguage.getSyntaxHighlighter(project, virtualFile);
   }
 }
