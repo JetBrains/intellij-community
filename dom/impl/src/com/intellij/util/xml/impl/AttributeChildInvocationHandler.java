@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -43,6 +42,10 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
 
   protected final XmlTag setEmptyXmlTag() {
     return ensureTagExists();
+  }
+
+  public boolean isValid() {
+    return getParentHandler().isValid();
   }
 
   protected boolean isAttribute() {
