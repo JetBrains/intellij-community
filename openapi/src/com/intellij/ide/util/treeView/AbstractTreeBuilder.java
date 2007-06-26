@@ -962,10 +962,13 @@ public abstract class AbstractTreeBuilder implements Disposable {
     expand(toExpand);
   }
 
+  @Nullable
   private Object getElementFor(DefaultMutableTreeNode node) {
-    final Object o = node.getUserObject();
-    if (o instanceof NodeDescriptor) {
-      return ((NodeDescriptor)o).getElement();
+    if (node != null) {
+      final Object o = node.getUserObject();
+      if (o instanceof NodeDescriptor) {
+        return ((NodeDescriptor)o).getElement();
+      }
     }
 
     return null;
