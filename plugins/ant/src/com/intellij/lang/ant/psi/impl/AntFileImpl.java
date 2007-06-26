@@ -792,7 +792,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         nestedDefinitions.put(new AntTypeId(nestedElement), className);
       }
     }
-    return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions);
+
+    return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions, helper.getExtensionPointTypes(), null);
   }
   
   @Nullable
