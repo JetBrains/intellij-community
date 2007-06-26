@@ -78,8 +78,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     PsiElement parent = getParent();
     if (parent instanceof GrCodeReferenceElement) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind();
-      if (parentKind == CLASS) return CLASS_OR_PACKAGE;
-      if (parentKind == STATIC_MEMBER_FQ) return CLASS_OR_PACKAGE_FQ;
+      if (parentKind == CLASS ||
+          parentKind == CONSTRUCTOR ||
+          parentKind == STATIC_MEMBER_FQ) return CLASS_OR_PACKAGE;
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
       return PACKAGE_FQ;
@@ -144,6 +145,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       }
       //fallthrough
 
+      case CONSTRUCTOR: //todo
       case PACKAGE_FQ:
       case CLASS_OR_PACKAGE_FQ: {
         final String refText = PsiUtil.getQualifiedReferenceText(this);
@@ -165,7 +167,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         }
       }
 
-      case CONSTRUCTOR: //todo
       case CLASS: {
         GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {

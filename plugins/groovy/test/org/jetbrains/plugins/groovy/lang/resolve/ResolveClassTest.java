@@ -55,6 +55,10 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     doTest("grvy102/Test.groovy");
   }
 
+  public void testGrvy101() throws Exception {
+    doTest("grvy101/Test.groovy");
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
