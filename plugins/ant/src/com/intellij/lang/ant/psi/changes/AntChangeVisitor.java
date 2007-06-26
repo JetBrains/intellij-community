@@ -75,6 +75,9 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     }
     AntElement element = file.lightFindElementAt(textRange.getStartOffset());
     final boolean shouldInvalidateProperties = element instanceof AntProperty;
+    if (element instanceof AntTypeDef) {
+      ((AntTypeDef)element).clearClassesCache();
+    }
     if (element != null) {
       do{
         element = element.getAntParent();
