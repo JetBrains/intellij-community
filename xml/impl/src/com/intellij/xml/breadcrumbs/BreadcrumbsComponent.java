@@ -46,24 +46,21 @@ import java.util.List;
 public class BreadcrumbsComponent extends JComponent implements Disposable {
   private Editor myEditor;
   private CrumbLine myLine;
-  private List<PsiElement> myCurrentList;
+  private List<LineElement> myCurrentList;
   private PsiFile myFile;
   private MergingUpdateQueue myQueue;
   private boolean myUserCaretChange = true;
   private BreadcrumbsInfoProvider myInfoProvider;
-  private Language myLanguage;
+  private BreadcrumbsLoaderComponentImpl myLoaderComponent;
 
   public BreadcrumbsComponent(@NotNull final Editor editor, @NotNull final BreadcrumbsLoaderComponentImpl loaderComponent) {
     myEditor = editor;
+    myLoaderComponent = loaderComponent;
 
     Document document = myEditor.getDocument();
     myFile = PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(document);
 
-    final Pair<Language, BreadcrumbsInfoProvider> pair = findInfoProvider(myFile, loaderComponent);
-    if (pair != null) {
-      myLanguage = pair.first;
-      myInfoProvider = pair.second;
-    }
+    myInfoProvider = findInfoProvider(myFile, loaderComponent);
 
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(final CaretEvent e) {
@@ -132,10 +129,14 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
   }
 
   @Nullable
-  private static Pair<Language, BreadcrumbsInfoProvider> findInfoProvider(@Nullable final PsiFile file,
+  BreadcrumbsInfoProvider findProviderForElement(@NotNull final PsiElement element) {
+    return myLoaderComponent.getInfoProvider(element.getLanguage());
+  }
+
+  @Nullable
+  private static BreadcrumbsInfoProvider findInfoProvider(@Nullable final PsiFile file,
                                                                           @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
-    Pair<Language, BreadcrumbsInfoProvider> result = null;
-    BreadcrumbsInfoProvider provider;
+    BreadcrumbsInfoProvider provider = null;
     if (file != null) {
       final FileViewProvider viewProvider = file.getViewProvider();
       final Language baseLang = viewProvider.getBaseLanguage();
@@ -144,25 +145,17 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         for (final Language language : viewProvider.getPrimaryLanguages()) {
           provider = loaderComponent.getInfoProvider(language);
           if (provider != null) {
-            result = new Pair<Language, BreadcrumbsInfoProvider>(language, provider);
             break;
           }
         }
       }
-      else {
-        result = new Pair<Language, BreadcrumbsInfoProvider>(baseLang, provider);
-      }
     }
 
-    return result;
+    return provider;
   }
 
   private Editor getEditor() {
     return myEditor;
-  }
-
-  private BreadcrumbsInfoProvider getInfoProvider() {
-    return myInfoProvider;
   }
 
   private void setUserCaretChange(final boolean userCaretChange) {
@@ -177,22 +170,28 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     final int offset = myEditor.logicalPositionToOffset(position);
 
-    final PsiFile file = myFile.getViewProvider().getPsi(myLanguage);
-    return file != null ? file.getViewProvider().findElementAt(offset) : null;
+    //final PsiFile file = myFile.getViewProvider().getPsi(myLanguage);
+    //return file != null ? file.getViewProvider().findElementAt(offset) : null;
+    return myFile.getViewProvider().findElementAt(offset);
   }
 
   @Nullable
-  private List<PsiElement> getLineElements(@Nullable final PsiElement endElement) {
+  private List<LineElement> getLineElements(@Nullable final PsiElement endElement) {
     if (endElement == null) {
       return null;
     }
 
-    final LinkedList<PsiElement> result = new LinkedList<PsiElement>();
+    final LinkedList<LineElement> result = new LinkedList<LineElement>();
 
     PsiElement element = endElement;
     while (element != null) {
-      if (myInfoProvider.acceptElement(element)) {
-        result.addFirst(element);
+      BreadcrumbsInfoProvider provider = findProviderForElement(element);
+      if (provider == null) {
+        provider = myInfoProvider;
+      }
+
+      if (provider != null && provider.acceptElement(element)) {
+        result.addFirst(new LineElement(element, provider));
       }
 
       element = element.getParent();
@@ -206,6 +205,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     myCurrentList = null;
     myFile = null;
     myQueue = null;
+    myLoaderComponent = null;
   }
 
   private void updateCrumbs(final LogicalPosition position) {
@@ -219,8 +219,36 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
   }
 
+  private static class LineElement {
+    private BreadcrumbsInfoProvider myProvider;
+    private PsiElement myElement;
+
+    public LineElement(final PsiElement element, final BreadcrumbsInfoProvider provider) {
+      myElement = element;
+      myProvider = provider;
+    }
+
+    public BreadcrumbsInfoProvider getProvider() {
+      return myProvider;
+    }
+
+    public PsiElement getPsiElement() {
+      return myElement;
+    }
+
+    public String getInfoString() {
+      return myProvider.getElementInfo(getPsiElement());
+    }
+
+    public String getTooltipString() {
+      return myProvider.getElementTooltip(getPsiElement());
+    }
+
+  }
+
+
   private static class CrumbLine extends JComponent {
-    private List<PsiElement> myElementList = new ArrayList<PsiElement>();
+    private List<LineElement> myElementList = new ArrayList<LineElement>();
     private Crumb myHovered;
     private PagedImage myBuffer;
     private List<Crumb> myCrumbs;
@@ -258,7 +286,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return myBreadcrumbsComponent.getEditor();
     }
 
-    public void setCrumbs(@Nullable final List<PsiElement> elementList) {
+    public void setCrumbs(@Nullable final List<LineElement> elementList) {
       if (myElementList != elementList) {
         myElementList = elementList;
         myCrumbs = null;
@@ -359,20 +387,20 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     private void setSelectedCrumb(@NotNull final Crumb c) {
-      final PsiElement selectedElement = c.getElement();
+      final LineElement selectedElement = c.getElement();
 
       final Set<PsiElement> elements = new HashSet<PsiElement>();
       boolean light = false;
       for (final Crumb each : myCrumbs) {
-        final PsiElement element = each.getElement();
-        if (element != null && elements.contains(element)) {
+        final LineElement element = each.getElement();
+        if (element != null && elements.contains(element.getPsiElement())) {
           light = false;
         }
 
         each.setLight(light);
 
         if (element != null && !light) {
-          elements.add(element);
+          elements.add(element.getPsiElement());
         }
 
         if (selectedElement == element) {
@@ -396,7 +424,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     @Nullable
-    private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<PsiElement> elements, final int width) {
+    private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<LineElement> elements, final int width) {
       if (elements.size() == 0) {
         return null;
       }
@@ -407,8 +435,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
       // fill up crumb list first going from end to start
       for (int i = elements.size() - 1; i >= 0; i--) {
-        final PsiElement element = elements.get(i);
-        final String s = myBreadcrumbsComponent.getInfoProvider().getElementInfo(element);
+        final LineElement element = elements.get(i);
+        final String s = element.getInfoString();
         final Dimension d = DEFAULT_PAINTER.getSize(s, fm);
         final Crumb crumb = new Crumb(this, s, d.width, element);
         if (screenWidth + d.width > width) {
@@ -621,13 +649,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     private String myString;
     private int myOffset = -1;
     private int myWidth;
-    private PsiElement myElement;
+    private LineElement myElement;
     private CrumbLine myLine;
     private boolean mySelected;
     private boolean myHovered;
     private boolean myLight;
 
-    public Crumb(final CrumbLine line, final String string, final int width, final PsiElement element) {
+    public Crumb(final CrumbLine line, final String string, final int width, final LineElement element) {
       this(string, width);
 
       myLine = line;
@@ -686,22 +714,22 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     @Nullable
     public String getTooltipText() {
-      final PsiElement element = getElement();
+      final LineElement element = getElement();
       if (element != null) {
-        return myLine.getBreadcrumbsComponent().getInfoProvider().getElementTooltip(element);
+        return element.getTooltipString();
       }
 
       return null;
     }
 
-    public PsiElement getElement() {
+    public LineElement getElement() {
       return myElement;
     }
 
     public void performAction() {
       myLine.setSelectedCrumb(this);
 
-      final PsiElement element = getElement();
+      final PsiElement element = getElement().getPsiElement();
       if (element != null) {
         myLine.moveEditorCaretTo(element);
       }
