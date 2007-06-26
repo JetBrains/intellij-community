@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -74,7 +74,7 @@ public final class AntInstrospector {
     return null;
   }
 
-  private <T> T invokeMethod(@NonNls String methodName, Object... params) {
+  private <T> T invokeMethod(@NonNls String methodName, final boolean ignoreErrors, Object... params) {
     final Class helperClass = myHelper.getClass();
     final Class[] types = new Class[params.length];
     try {
@@ -85,10 +85,14 @@ public final class AntInstrospector {
       return (T)method.invoke(myHelper, params);
     }
     catch (IllegalAccessException e) {
-      LOG.error(e);
+      if (!ignoreErrors) {
+        LOG.error(e);
+      }
     }
     catch (NoSuchMethodException e) {
-      LOG.error(e);
+      if (!ignoreErrors) {
+        LOG.error(e);
+      }
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
@@ -98,19 +102,36 @@ public final class AntInstrospector {
       if (cause instanceof Error) {
         throw (Error)cause;
       }
-      LOG.error(e);
+      if (!ignoreErrors) {
+        LOG.error(e);
+      }
     }
     return null;
   }
 
+  public Set<String> getExtensionPointTypes() {
+    final List<Method> methods = invokeMethod("getExtensionPoints", true);
+    if (methods == null || methods.size() == 0) {
+      return Collections.emptySet();
+    }
+    final Set<String> types = new HashSet<String>();
+    for (Method method : methods) {
+      final Class<?>[] paramTypes = method.getParameterTypes();
+      for (Class<?> paramType : paramTypes) {
+        types.add(paramType.getName());
+      }
+    }
+    return types;
+  }
+  
   public Enumeration getNestedElements() {
-    return invokeMethod("getNestedElements");
+    return invokeMethod("getNestedElements", false);
   }
   
   @Nullable
   public Class getElementType(String name) {
     try {
-      return invokeMethod("getElementType", name);
+      return invokeMethod("getElementType", false, name);
     }
     catch (RuntimeException e) {
       return null;
@@ -118,13 +139,13 @@ public final class AntInstrospector {
   }
 
   public Enumeration getAttributes() {
-    return invokeMethod("getAttributes");
+    return invokeMethod("getAttributes", false);
   }
 
   @Nullable
   public Class getAttributeType(final String attr) {
     try {
-      return invokeMethod("getAttributeType", attr);
+      return invokeMethod("getAttributeType", false, attr);
     }
     catch (RuntimeException e) {
       return null;

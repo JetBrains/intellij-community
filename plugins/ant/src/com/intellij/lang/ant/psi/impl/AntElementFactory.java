@@ -130,7 +130,12 @@ public class AntElementFactory {
         result = (AntStructuredElementImpl)antElementCreator.create(parent, tag);
       }
       else if (typeDef.isTask()) {
-        result = new AntTaskImpl(parent, tag, typeDef);
+        if (typeDef.isProperty()) {
+          result = new AntPropertyImpl(parent, tag, typeDef);
+        }
+        else {
+          result = new AntTaskImpl(parent, tag, typeDef);
+        }
       }
     }
     if (result == null) {

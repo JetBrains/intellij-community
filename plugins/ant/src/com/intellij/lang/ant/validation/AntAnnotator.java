@@ -31,7 +31,7 @@ public class AntAnnotator implements Annotator {
       final String name = se.getSourceElement().getName();
       final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset() + 1);
       if (def == null) {
-        if (!isLegateeOfUndefinedElement(se.getAntParent())) {
+        if (!isSuccessorOfUndefinedElement(se.getAntParent())) {
           boolean macroDefined = false;
           while (parent != null) {
             if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
@@ -53,7 +53,7 @@ public class AntAnnotator implements Annotator {
         if (!se.hasImportedTypeDefinition() && parent instanceof AntStructuredElement) {
           final AntStructuredElement pe = (AntStructuredElement)parent;
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
-          if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null && !isLegateeOfUndefinedElement(se)) {
+          if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null && !isExtensionPointType(pe, def) && !isSuccessorOfUndefinedElement(se)) {
             holder.createErrorAnnotation(absoluteRange, AntBundle.message("nested.element.is.not.allowed.here", name));
           }
         }
@@ -78,7 +78,20 @@ public class AntAnnotator implements Annotator {
     checkReferences(element, holder);
   }
 
-  private static boolean isLegateeOfUndefinedElement(AntElement element) {
+  private static boolean isExtensionPointType(final AntStructuredElement parent, final AntTypeDefinition maybeNested) {
+    final AntTypeDefinition parentDef = parent.getTypeDefinition();
+    if (parentDef == null) {
+      return false;
+    }
+    try {
+      return parentDef.isExtensionPointType(parent.getAntFile().getClassLoader().loadClass(maybeNested.getClassName()));
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
+  private static boolean isSuccessorOfUndefinedElement(AntElement element) {
     while (element instanceof AntStructuredElement) {
       final AntTypeDefinition def = ((AntStructuredElement)element).getTypeDefinition();
       if (def == null) {
@@ -116,7 +129,7 @@ public class AntAnnotator implements Annotator {
       final PsiElement attrName = attr.getFirstChild();
       if (attrName != null) {
         if (type == null) {
-          if (!isLegateeOfUndefinedElement(se)) {
+          if (!isSuccessorOfUndefinedElement(se)) {
             holder.createErrorAnnotation(attrName, AntBundle.message("attribute.is.not.allowed.here", name));
           }
         }

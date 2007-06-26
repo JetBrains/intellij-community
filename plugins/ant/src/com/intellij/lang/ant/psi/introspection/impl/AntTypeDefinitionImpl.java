@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
@@ -21,8 +19,10 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private static final AntTypeId ourUnzipId = new AntTypeId(AntFileImpl.UNZIP_TAG);
 
   private AntTypeId myTypeId;
+  private final Set<String> myExtensionPoints;
   private String myClassName;
   private boolean myIsTask;
+  private boolean myIsProperty;
   private PsiElement myDefiningElement;
   /**
    * Attribute names to their types.
@@ -58,7 +58,18 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
                                @NonNls @NotNull final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements,
                                final PsiElement definingElement) {
+    this(id, className, isTask, attributes, nestedElements, Collections.<String>emptySet(), definingElement);
+  }
+  
+  public AntTypeDefinitionImpl(final AntTypeId id,
+                               final String className,
+                               final boolean isTask,
+                               @NonNls @NotNull final Map<String, AntAttributeType> attributes,
+                               final Map<AntTypeId, String> nestedElements,
+                               final Set<String> extensionPoints,
+                               final PsiElement definingElement) {
     myTypeId = id;
+    myExtensionPoints = extensionPoints;
     setClassName(className);
     myIsTask = isTask;
     attributes.put(AntFileImpl.ID_ATTR, AntAttributeType.STRING);
@@ -81,6 +92,10 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public final boolean isTask() {
     return myIsTask;
+  }
+
+  public boolean isProperty() {
+    return myIsProperty;
   }
 
   @NotNull
@@ -118,6 +133,22 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public final Map<AntTypeId, String> getNestedElementsMap() {
     return myNestedClassNames;
+  }
+
+  public boolean isExtensionPointType(final Class<?> aClass) {
+    if (aClass == null || "java.lang.Object".equals(aClass.getName())) {
+      return false;
+    }
+    if (myExtensionPoints.contains(aClass.getName())) {
+      return true;
+    }
+    final Class[] interfaces = aClass.getInterfaces();
+    for (Class iface : interfaces) {
+      if (isExtensionPointType(iface)) {
+        return true;
+      }
+    }
+    return isExtensionPointType(aClass.getSuperclass());
   }
 
   @Nullable
@@ -160,7 +191,11 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   public final void setIsTask(final boolean isTask) {
     myIsTask = isTask;
   }
-
+  
+  public final void setIsProperty(final boolean isProperty) {
+    myIsProperty = isProperty;
+  }
+  
   public final void setClassName(final String className) {
     myClassName = AntStringInterner.intern(className);
   }

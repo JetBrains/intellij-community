@@ -16,6 +16,8 @@ public interface AntTypeDefinition {
 
   boolean isTask();
 
+  boolean isProperty();
+  
   @NotNull
   String[] getAttributes();
 
@@ -27,6 +29,8 @@ public interface AntTypeDefinition {
   @Nullable
   String getNestedClassName(final AntTypeId id);
 
+  boolean isExtensionPointType(Class<?> aClass);
+  
   void registerNestedType(final AntTypeId typeId, final String className);
 
   void unregisterNestedType(final AntTypeId typeId);

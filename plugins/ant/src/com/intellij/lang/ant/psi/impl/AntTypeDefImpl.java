@@ -356,7 +356,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     else {
       myClassesLoaded = true;
-      def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isTask(clazz));
+      def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isAssignableFrom(Task.class.getName(), clazz));
+      def.setIsProperty(isAssignableFrom(org.apache.tools.ant.taskdefs.Property.class.getName(), clazz));
       if (newlyLoaded) {
         CLASS_CACHE.setClass(urls, classname, clazz);
       }
@@ -393,12 +394,12 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return def;
   }
 
-  private static boolean isTask(final Class clazz) {
+  private static boolean isAssignableFrom(final String baseClassName, final Class clazz) {
     try {
       final ClassLoader loader = clazz.getClassLoader();
       if (loader != null) {
-        final Class taskClass = loader.loadClass(Task.class.getName());
-        return taskClass.isAssignableFrom(clazz);
+        final Class baseClass = loader.loadClass(baseClassName);
+        return baseClass.isAssignableFrom(clazz);
       }
     }
     catch (ClassNotFoundException ignored) {
