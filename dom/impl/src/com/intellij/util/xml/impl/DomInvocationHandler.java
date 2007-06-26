@@ -232,6 +232,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public XmlTag ensureTagExists() {
+    assert isValid();
     if (myXmlTag != null) return myXmlTag;
 
     attach(setEmptyXmlTag());
