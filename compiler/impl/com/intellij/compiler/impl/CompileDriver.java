@@ -84,7 +84,7 @@ public class CompileDriver {
   private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
 
   public CompileDriver(Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // to be able to run WriteAction
+    //ApplicationManager.getApplication().assertIsDispatchThread(); // to be able to run WriteAction
     myProject = project;
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
     myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
