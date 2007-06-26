@@ -23,6 +23,9 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.patterns.impl.Pattern;
+import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
+import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -48,6 +51,8 @@ public final class FormSourceCodeGenerator {
   @NonNls private static TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
   @NonNls private static TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<String>();
   @NonNls private static TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<String>();
+
+  private static final Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
@@ -285,7 +290,8 @@ public final class FormSourceCodeGenerator {
     PsiElement anchor = psiCodeBlock.getRBrace();
     Ref<Boolean> callsThisConstructor = new Ref<Boolean>(Boolean.FALSE);
     for(PsiStatement statement: statements) {
-      if (hasCustomComponentAffectingReferences(statement, classToBind, rootContainer, callsThisConstructor)) {
+      if (!ourSuperCallPattern.accepts(statement) &&
+          hasCustomComponentAffectingReferences(statement, classToBind, rootContainer, callsThisConstructor)) {
         anchor = statement;
         break;
       }
