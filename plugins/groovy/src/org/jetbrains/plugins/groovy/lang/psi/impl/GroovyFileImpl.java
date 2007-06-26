@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -128,7 +127,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       }
     }
 
-    if (!ResolveUtil.processChildren(this, processor, substitutor, lastParent, place)) return false;
+    if (!processChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
       PsiPackage aPackage = manager.findPackage(implicitlyImported);
@@ -151,6 +150,18 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
           if (!ResolveUtil.processElement(processor, subpackage)) return false;
         }
       }
+    }
+
+    return true;
+  }
+
+  private static boolean processChildrenScopes(PsiElement element, PsiScopeProcessor processor,
+                                        PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+    PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
+    while(run != null) {
+      if (!(run instanceof GrTopLevelDefintion) &&
+          !run.processDeclarations(processor, substitutor, null, place)) return false;
+      run = run.getPrevSibling();
     }
 
     return true;

@@ -15,16 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -74,7 +73,6 @@ public class ResolveUtil {
 
   public static ClassHint.ResolveKind getResolveKind(PsiElement element) {
     if (element instanceof PsiVariable) return ClassHint.ResolveKind.PROPERTY;
-    if (element instanceof GrVariable) return ClassHint.ResolveKind.PROPERTY;
     if (element instanceof GrReferenceExpression) return ClassHint.ResolveKind.PROPERTY;
 
     else if (element instanceof PsiMethod) return  ClassHint.ResolveKind.METHOD;
