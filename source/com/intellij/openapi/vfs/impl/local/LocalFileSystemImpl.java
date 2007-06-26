@@ -182,7 +182,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   @Nullable
   public VirtualFile refreshAndFindFileByPath(String path) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
     return super.refreshAndFindFileByPath(canonicalPath);
