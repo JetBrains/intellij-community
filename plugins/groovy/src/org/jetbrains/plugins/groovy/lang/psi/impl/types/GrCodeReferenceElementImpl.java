@@ -84,7 +84,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     } else if (parent instanceof GrPackageDefinition) {
       return PACKAGE_FQ;
     } else if (parent instanceof GrImportStatement) {
-      if (!((GrImportStatement) parent).isStatic()) {
+      final GrImportStatement importStatement = (GrImportStatement) parent;
+      if (!importStatement.isStatic() || importStatement.isOnDemand()) {
         return CLASS_OR_PACKAGE_FQ;
       }
 
@@ -124,12 +125,18 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           if (resolve instanceof PsiClass) {
             final PsiClass clazz = (PsiClass) resolve;
             List<PsiElement> result = new ArrayList<PsiElement>();
-            final PsiField field = clazz.findFieldByName(refName, false);
-            if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
-              result.add(field);
+
+            for (PsiField field : clazz.getFields()) {
+              if (field.hasModifierProperty(PsiModifier.STATIC)) {
+                result.add(field);
+              }
             }
 
-            result.addAll(Arrays.asList(clazz.findMethodsByName(refName, false)));
+            for (PsiMethod method : clazz.getMethods()) {
+              if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                result.add(method);
+              }
+            }
 
             return result.toArray(new PsiElement[result.size()]);
           }

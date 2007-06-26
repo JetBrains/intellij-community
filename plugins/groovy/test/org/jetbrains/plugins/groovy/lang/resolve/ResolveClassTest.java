@@ -51,6 +51,9 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     doTest("qualifiedRefExpr/A.groovy");
   }
 
+  public void testGrvy102() throws Exception {
+    doTest("grvy102/Test.groovy");
+  }
 
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
