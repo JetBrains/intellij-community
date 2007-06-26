@@ -14,9 +14,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
  * @author ven
@@ -25,10 +26,18 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private PsiElement myElement;
   private boolean myIsAccessible;
 
+  private GrImportStatement myImportStatementContext;
+
   public GroovyResolveResultImpl(PsiElement element, boolean isAccessible) {
+    this(element, isAccessible, null);
+  }
+
+  public GroovyResolveResultImpl(PsiElement element, boolean isAccessible, GrImportStatement importStatementContext) {
+    myImportStatementContext = importStatementContext;
     myElement = element;
     myIsAccessible = isAccessible;
   }
+
 
   public boolean isAccessible() {
     return myIsAccessible;
@@ -60,5 +69,9 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     result = myElement.hashCode();
     result = 31 * result + (myIsAccessible ? 1 : 0);
     return result;
+  }
+
+  public GrImportStatement getImportStatementContext() {
+    return myImportStatementContext;
   }
 }

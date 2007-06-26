@@ -38,9 +38,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 import java.util.EnumSet;
-import java.util.List;import java.util.ArrayList;import java.util.Arrays;
+import java.util.List;import java.util.ArrayList;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -179,8 +180,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         } else {
           ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), this, true);
           ResolveUtil.treeWalkUp(this, processor);
-          GroovyResolveResult[] candidates = processor.getCandidates();
-          return ResolveUtil.mapToElements(candidates);
+          return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
         }
       }
     }

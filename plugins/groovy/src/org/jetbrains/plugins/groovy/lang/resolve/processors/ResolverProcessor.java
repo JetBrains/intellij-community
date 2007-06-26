@@ -25,6 +25,7 @@ import java.util.*;
 
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -39,6 +40,16 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
 
+  public GrImportStatement getImportStatementContext() {
+    return myImportStatementContext;
+  }
+
+  public void setImportStatementContext(GrImportStatement importStatementContext) {
+    myImportStatementContext = importStatementContext;
+  }
+
+  protected GrImportStatement myImportStatementContext;
+
   public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, GroovyPsiElement place, boolean forCompletion) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
@@ -52,7 +63,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       if (namedElement instanceof PsiMethod && ((PsiMethod) namedElement).isConstructor()) return true; //constructors are not interesting
 
       boolean isAccessible = isAccessible(namedElement);
-      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible));
+      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myImportStatementContext));
       return myForCompletion || !isAccessible;
     }
 
@@ -81,8 +92,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return null;
   }
 
-  public void handleEvent(Event event, Object associated) {
-  }
+  public void handleEvent(Event event, Object associated) {}
 
   public String getName() {
     return myName;
