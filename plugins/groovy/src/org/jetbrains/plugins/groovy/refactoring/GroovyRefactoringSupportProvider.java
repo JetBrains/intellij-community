@@ -15,18 +15,17 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider;
-import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
 
 /**
  * @author ilyas
  */
-public class GroovyRefactoringSupportProvider implements RefactoringSupportProvider {
+public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 
