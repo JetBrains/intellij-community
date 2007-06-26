@@ -46,8 +46,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JCheckBox myCbSearchTextOccurences;
   private JCheckBox myCbMoveToAnotherSourceFolder;
   private String myHelpID;
-  private Project myProject;
-  private boolean mySearchTextOccurencesEnabled;
+  private final Project myProject;
+  private final boolean mySearchTextOccurencesEnabled;
   private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
   private JPanel myMainPanel;
@@ -178,6 +178,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myInitialTargetDirectory = initialTargetDirectory;
     if (targetPackageName.length() != 0) {
       myWithBrowseButtonReference.prependItem(targetPackageName);
+      myClassPackageChooser.prependItem(targetPackageName);
     }
 
     String nameFromCallback = (myMoveCallback instanceof MoveClassesOrPackagesCallback)
