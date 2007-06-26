@@ -146,7 +146,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       }
       //fallthrough
 
-      case CONSTRUCTOR: //todo
       case PACKAGE_FQ:
       case CLASS_OR_PACKAGE_FQ: {
         final String refText = PsiUtil.getQualifiedReferenceText(this);
@@ -168,6 +167,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         }
       }
 
+      case CONSTRUCTOR: //todo
       case CLASS: {
         GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
