@@ -15,14 +15,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,12 +43,9 @@ public abstract class AbstractMissingFilesAction extends AnAction {
     final List<VcsException> allExceptions = new ArrayList<VcsException>();
     ChangesUtil.processFilePathsByVcs(project, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
       public void process(final AbstractVcs vcs, final List<FilePath> items) {
-        final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-        if (environment != null) {
-          final List<VcsException> exceptions = processFiles(environment, files);
-          if (exceptions != null) {
-            allExceptions.addAll(exceptions);
-          }
+        final List<VcsException> exceptions = processFiles(vcs, files);
+        if (exceptions != null) {
+          allExceptions.addAll(exceptions);
         }
       }
     });
@@ -63,5 +59,5 @@ public abstract class AbstractMissingFilesAction extends AnAction {
     }
   }
 
-  protected abstract List<VcsException> processFiles(final CheckinEnvironment environment, final List<FilePath> files);
+  protected abstract List<VcsException> processFiles(final AbstractVcs vcs, final List<FilePath> files);
 }

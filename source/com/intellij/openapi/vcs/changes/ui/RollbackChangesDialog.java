@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +86,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     if (affectedVcs.size() == 1) {
       AbstractVcs vcs = (AbstractVcs)affectedVcs.toArray()[0];
       if (vcs.getCheckinEnvironment() != null) {
-        final String rollbackOperationName = vcs.getCheckinEnvironment().getRollbackOperationName();
+        final String rollbackOperationName = vcs.getRollbackEnvironment().getRollbackOperationName();
         setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
         setOKButtonText(rollbackOperationName);
       }
@@ -145,7 +145,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       public void run() {
         ChangesUtil.processChangesByVcs(project, changes, new ChangesUtil.PerVcsProcessor<Change>() {
           public void process(AbstractVcs vcs, List<Change> changes) {
-            final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+            final RollbackEnvironment environment = vcs.getRollbackEnvironment();
             if (environment != null) {
               pathsToRefresh.addAll(getFilePaths(changes));
 

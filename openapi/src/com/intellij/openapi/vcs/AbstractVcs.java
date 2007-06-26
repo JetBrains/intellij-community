@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -116,6 +117,16 @@ public abstract class AbstractVcs {
    */
   @Nullable
   public CheckinEnvironment getCheckinEnvironment() {
+    return null;
+  }
+
+  /**
+   * Returns the interface for performing revert / rollback operations.
+   *
+   * @return the rollback interface, or null if rollbacks are not supported by the VCS.
+   */
+  @Nullable
+  public RollbackEnvironment getRollbackEnvironment() {
     return null;
   }
 
@@ -214,9 +225,6 @@ public abstract class AbstractVcs {
       return (CachingCommittedChangesProvider)provider;
     }
     return null;
-  }
-
-  public void rollbackIfUnchanged(VirtualFile file) {
   }
 
   @Nullable

@@ -17,10 +17,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +42,9 @@ public class RollbackAction extends AnAction {
         for(VirtualFile file: files) {
           final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getData(DataKeys.PROJECT)).getVcsFor(file);
           if (vcs != null) {
-            final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-            if (checkinEnvironment != null) {
-              e.getPresentation().setText(checkinEnvironment.getRollbackOperationName());
+            final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+            if (rollbackEnvironment != null) {
+              e.getPresentation().setText(rollbackEnvironment.getRollbackOperationName());
             }
           }
         }
@@ -142,9 +145,9 @@ public class RollbackAction extends AnAction {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-        final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-        if (checkinEnvironment != null) {
-          exceptions.addAll(checkinEnvironment.rollbackModifiedWithoutCheckout(items));
+        final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+        if (rollbackEnvironment != null) {
+          exceptions.addAll(rollbackEnvironment.rollbackModifiedWithoutCheckout(items));
         }
       }
     });

@@ -8,6 +8,7 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
+import com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -62,6 +64,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private final CvsHistoryProvider myCvsHistoryProvider;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
+  private RollbackEnvironment myCvsRollbackEnvironment;
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
   private final CvsStatusEnvironment myCvsStatusEnvironment;
@@ -256,6 +259,13 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   @NotNull
   public CheckinEnvironment getCheckinEnvironment() {
     return myCvsCheckinEnvironment;
+  }
+
+  public RollbackEnvironment getRollbackEnvironment() {
+    if (myCvsRollbackEnvironment == null) {
+      myCvsRollbackEnvironment = new CvsRollbackEnvironment(myProject);
+    }
+    return myCvsRollbackEnvironment;
   }
 
   public VcsHistoryProvider getVcsBlockHistoryProvider() {

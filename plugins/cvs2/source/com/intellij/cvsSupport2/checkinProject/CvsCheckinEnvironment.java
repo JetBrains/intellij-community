@@ -1,33 +1,30 @@
 package com.intellij.cvsSupport2.checkinProject;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
-import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.CvsBundle;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Collection;
 import java.io.File;
-import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * author: lesya
@@ -84,10 +81,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return CvsBundle.message("operation.name.checkin.project");
   }
 
-  public String getRollbackOperationName() {
-    return VcsBundle.message("changes.action.rollback.text");
-  }
-
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
     FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
@@ -109,54 +102,10 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return executor.getResult().getErrorsAndWarnings();
   }
 
-  public List<VcsException> rollbackChanges(List<Change> changes) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
-
-    CvsRollbacker rollbacker = new CvsRollbacker(myProject);
-    for (Change change : changes) {
-      final FilePath filePath = ChangesUtil.getFilePath(change);
-      VirtualFile parent = filePath.getVirtualFileParent();
-      String name = filePath.getName();
-
-      try {
-        switch (change.getType()) {
-          case DELETED:
-            rollbacker.rollbackFileDeleting(parent, name);
-            break;
-
-          case MODIFICATION:
-            rollbacker.rollbackFileModifying(parent, name);
-            break;
-
-          case MOVED:
-            rollbacker.rollbackFileCreating(parent, name);
-            break;
-
-          case NEW:
-            rollbacker.rollbackFileCreating(parent, name);
-            break;
-        }
-      }
-      catch (IOException e) {
-        exceptions.add(new VcsException(e));
-      }
-    }
-
-    return exceptions;
-  }
-
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(myProject, ChangesUtil.filePathsToFiles(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
-    return Collections.emptyList();
-  }
-
-  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> filePaths) {
-    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[filePaths.size()]),
-                                                                              CvsConfiguration.getInstance(myProject));
-    final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
   }
 
@@ -165,9 +114,5 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
-  }
-
-  public List<VcsException> rollbackModifiedWithoutCheckout(final List<VirtualFile> files) {
-    throw new UnsupportedOperationException();
   }
 }

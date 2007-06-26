@@ -11,16 +11,20 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 
+import java.util.Collections;
 import java.util.List;
 
 public class RollbackDeletionAction extends AbstractMissingFilesAction {
-  protected List<VcsException> processFiles(final CheckinEnvironment environment, final List<FilePath> files) {
+  protected List<VcsException> processFiles(final AbstractVcs vcs, final List<FilePath> files) {
+    RollbackEnvironment environment = vcs.getRollbackEnvironment();
+    if (environment == null) return Collections.emptyList();
     final List<VcsException> result = environment.rollbackMissingFileDeletion(files);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

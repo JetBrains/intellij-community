@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -217,7 +218,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       if (vcs == null) return;
       if (cachedStatus == FileStatus.MODIFIED && file.getModificationStamp() == doc.getModificationStamp()) {
         if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG) {
-          vcs.rollbackIfUnchanged(file);
+          RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+          if (rollbackEnvironment != null) {
+            rollbackEnvironment.rollbackIfUnchanged(file);
+          }
         }
       }
       fileStatusChanged(file);
