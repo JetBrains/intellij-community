@@ -190,10 +190,6 @@ public class CompletionVariant {
   public void addKeywords(PsiElementFactory factory, Set<LookupItem> set, CompletionContext context, PsiElement position){
     for (final CompletionVariantItem ce : myCompletionsList) {
       final Object comp = ce.myCompletion;
-      if (comp instanceof OffsetDependant) {
-        ((OffsetDependant)comp).setOffset(context.startOffset);
-      }
-
       if (comp instanceof String) {
         myPeer.addKeyword(factory, set, ce.myTailType, comp, context);
       }
