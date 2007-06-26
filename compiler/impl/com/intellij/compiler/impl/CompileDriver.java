@@ -84,6 +84,7 @@ public class CompileDriver {
   private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
 
   public CompileDriver(Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // to be able to run WriteAction
     myProject = project;
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
     myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
@@ -273,7 +274,7 @@ public class CompileDriver {
                        final CompilerMessage message,
                        final boolean checkCachesVersion,
                        final boolean trackDependencies) {
-    final CompilerTask indicator = new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
+    final CompilerTask compileTask = new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
                                                     forceCompile
                                                     ? CompilerBundle.message("compiler.content.name.compile")
                                                     : CompilerBundle.message("compiler.content.name.make"), false);
@@ -281,7 +282,7 @@ public class CompileDriver {
 
     final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath);
     final CompileContextImpl compileContext =
-      new CompileContextImpl(myProject, indicator, scope, dependencyCache, this, !isRebuild && !forceCompile);
+      new CompileContextImpl(myProject, compileTask, scope, dependencyCache, this, !isRebuild && !forceCompile);
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
     for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
@@ -290,7 +291,7 @@ public class CompileDriver {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    indicator.start(new Runnable() {
+    compileTask.start(new Runnable() {
       public void run() {
         try {
           if (LOG.isDebugEnabled()) {
