@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,6 +60,7 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -93,6 +95,7 @@ public class SvnVcs extends AbstractVcs {
   private Project myProject;
 
   private CheckinEnvironment myCheckinEnvironment;
+  private RollbackEnvironment myRollbackEnvironment;
   private UpdateEnvironment mySvnUpdateEnvironment;
   private UpdateEnvironment mySvnIntegrateEnvironment;
   private VcsHistoryProvider mySvnHistoryProvider;
@@ -289,6 +292,13 @@ public class SvnVcs extends AbstractVcs {
       myCheckinEnvironment = new SvnCheckinEnvironment(this);
     }
     return myCheckinEnvironment;
+  }
+
+  public RollbackEnvironment getRollbackEnvironment() {
+    if (myRollbackEnvironment == null) {
+      myRollbackEnvironment = new SvnRollbackEnvironment(this);
+    }
+    return myRollbackEnvironment;
   }
 
   public VcsHistoryProvider getVcsHistoryProvider() {
