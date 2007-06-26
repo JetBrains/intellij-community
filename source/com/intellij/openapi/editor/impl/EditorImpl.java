@@ -37,7 +37,6 @@ import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
@@ -83,7 +82,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private EditorGutterComponentImpl myGutterComponent;
 
   static {
-    ComplementaryFontsRegistry registry; // load costly font info 
+    ComplementaryFontsRegistry registry; // load costly font info
   }
 
   private CommandProcessor myCommandProcessor;
@@ -613,7 +612,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
-  public int getSpaceWidth(int  fontType) {
+  public int getSpaceWidth(int fontType) {
     int width = charWidth(' ', fontType);
     return width > 0 ? width : 1;
   }
@@ -638,50 +637,50 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int x = 0;
     outer:
-        while (true) {
-          if (offset >= textLength) break;
+    while (true) {
+      if (offset >= textLength) break;
 
-          if (offset >= state.getEndOffset()) {
-            state.advance();
-            fontType = state.getMergedAttributes().getFontType();
-          }
+      if (offset >= state.getEndOffset()) {
+        state.advance();
+        fontType = state.getMergedAttributes().getFontType();
+      }
 
-          FoldRegion region = state.getCurrentFold();
-          if (region != null) {
-            char[] placeholder = region.getPlaceholderText().toCharArray();
-            for (char aPlaceholder : placeholder) {
-              c = aPlaceholder;
-              x += charWidth(c, fontType);
-              if (x >= p.x) break outer;
-              column++;
-            }
-            offset = region.getEndOffset();
-          }
-          else {
-            prevX = x;
-            c = text.charAt(offset);
-            if (c == '\n') {
-              break;
-            }
-            if (c == '\t') {
-              x = nextTabStop(x);
-            }
-            else {
-              x += charWidth(c, fontType);
-            }
-
-            if (x >= p.x) break;
-
-            if (c == '\t') {
-              column += (x - prevX) / spaceSize;
-            }
-            else {
-              column++;
-            }
-
-            offset++;
-          }
+      FoldRegion region = state.getCurrentFold();
+      if (region != null) {
+        char[] placeholder = region.getPlaceholderText().toCharArray();
+        for (char aPlaceholder : placeholder) {
+          c = aPlaceholder;
+          x += charWidth(c, fontType);
+          if (x >= p.x) break outer;
+          column++;
         }
+        offset = region.getEndOffset();
+      }
+      else {
+        prevX = x;
+        c = text.charAt(offset);
+        if (c == '\n') {
+          break;
+        }
+        if (c == '\t') {
+          x = nextTabStop(x);
+        }
+        else {
+          x += charWidth(c, fontType);
+        }
+
+        if (x >= p.x) break;
+
+        if (c == '\t') {
+          column += (x - prevX) / spaceSize;
+        }
+        else {
+          column++;
+        }
+
+        offset++;
+      }
+    }
 
     int charWidth = charWidth(c, fontType);
 
@@ -797,42 +796,42 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int column = 0;
     outer:
-        while (column < pos.column) {
-          if (offset >= textLength) break;
+    while (column < pos.column) {
+      if (offset >= textLength) break;
 
-          if (offset >= state.getEndOffset()) {
-            state.advance();
-            fontType = state.getMergedAttributes().getFontType();
-          }
+      if (offset >= state.getEndOffset()) {
+        state.advance();
+        fontType = state.getMergedAttributes().getFontType();
+      }
 
-          FoldRegion region = state.getCurrentFold();
+      FoldRegion region = state.getCurrentFold();
 
-          if (region != null) {
-            char[] placeholder = region.getPlaceholderText().toCharArray();
-            for (char aPlaceholder : placeholder) {
-              x += charWidth(aPlaceholder, fontType);
-              column++;
-              if (column >= pos.column) break outer;
-            }
-            offset = region.getEndOffset();
-          }
-          else {
-            char c = text.charAt(offset);
-            if (c == '\n') {
-              break;
-            }
-            if (c == '\t') {
-              int prevX = x;
-              x = nextTabStop(x);
-              column += (x - prevX) / spaceSize;
-            }
-            else {
-              x += charWidth(c, fontType);
-              column++;
-            }
-            offset++;
-          }
+      if (region != null) {
+        char[] placeholder = region.getPlaceholderText().toCharArray();
+        for (char aPlaceholder : placeholder) {
+          x += charWidth(aPlaceholder, fontType);
+          column++;
+          if (column >= pos.column) break outer;
         }
+        offset = region.getEndOffset();
+      }
+      else {
+        char c = text.charAt(offset);
+        if (c == '\n') {
+          break;
+        }
+        if (c == '\t') {
+          int prevX = x;
+          x = nextTabStop(x);
+          column += (x - prevX) / spaceSize;
+        }
+        else {
+          x += charWidth(c, fontType);
+          column++;
+        }
+        offset++;
+      }
+    }
 
     if (column != pos.column) {
       x += getSpaceWidth(fontType) * (pos.column - column);
@@ -878,10 +877,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int yStartLine = logicalLineToY(startLine);
     int yEndLine = visibleRect.y + visibleRect.height;
 
-    myEditorComponent.repaintEditorComponent(visibleRect.x,
-                                             yStartLine,
-                                             visibleRect.x + visibleRect.width,
-                                             yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleRect.x, yStartLine, visibleRect.x + visibleRect.width, yEndLine - yStartLine);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
   }
 
@@ -890,10 +886,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int yStartLine = logicalLineToY(startLine);
     int yEndLine = logicalLineToY(endLine) + getLineHeight() + WAVE_HEIGHT;
 
-    myEditorComponent.repaintEditorComponent(visibleRect.x,
-                                             yStartLine,
-                                             visibleRect.x + visibleRect.width,
-                                             yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleRect.x, yStartLine, visibleRect.x + visibleRect.width, yEndLine - yStartLine);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
   }
 
@@ -1098,16 +1091,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void paintComposedTextDecoration(Graphics2D g) {
     if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
-      VisualPosition visStart = offsetToVisualPosition(
-        Math.min(myInputMethodRequestsHandler.composedTextStart, myDocument.getTextLength()));
+      VisualPosition visStart =
+        offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextStart, myDocument.getTextLength()));
       int y = visibleLineNumberToYPosition(visStart.line) + getLineHeight() - getDescent() + 1;
       Point p1 = visualPositionToXY(visStart);
-      Point p2 = logicalPositionToXY(
-        offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextEnd, myDocument.getTextLength())));
+      Point p2 =
+        logicalPositionToXY(offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextEnd, myDocument.getTextLength())));
 
       Stroke saved = g.getStroke();
-      BasicStroke dotted = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{0, 2, 0, 2},
-                                           0);
+      BasicStroke dotted = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{0, 2, 0, 2}, 0);
       g.setStroke(dotted);
       UIUtil.drawLine(g, p1.x, y, p2.x, y);
       g.setStroke(saved);
@@ -1147,8 +1139,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void paintSegmentHighlighterAfterEndOfLine(Graphics g, RangeHighlighterEx segmentHighlighter,
-                                                     int startLineNumber, int endLineNumber) {
+  private void paintSegmentHighlighterAfterEndOfLine(Graphics g,
+                                                     RangeHighlighterEx segmentHighlighter,
+                                                     int startLineNumber,
+                                                     int endLineNumber) {
     if (!segmentHighlighter.isValid()) {
       return;
     }
@@ -1241,8 +1235,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()),
-                                      position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()), position, fontType,
+                                      defaultBackground, clip);
 
           if (lIterator.getLineNumber() < lastLineIndex) {
             if (backColor != null && !backColor.equals(defaultBackground)) {
@@ -1266,13 +1260,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
         if (collapsedFolderAt != null) {
-          position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(),
-                                      position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
         }
         else {
           if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-            position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()),
-                                        position, fontType, defaultBackground, clip);
+            position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()), position, fontType,
+                                        defaultBackground, clip);
           }
           else {
             position.x = drawBackground(g, backColor, text.subSequence(start, hEnd), position, fontType, defaultBackground, clip);
@@ -1315,8 +1308,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     g.fillRect(x, y, width, height);
   }
 
-  private static void paintAfterFileEndBackground(IterationState iterationState, Graphics g, Point position,
-                                                  Rectangle clip, int lineHeight, final Color defaultBackground) {
+  private static void paintAfterFileEndBackground(IterationState iterationState,
+                                                  Graphics g,
+                                                  Point position,
+                                                  Rectangle clip,
+                                                  int lineHeight,
+                                                  final Color defaultBackground) {
     Color backColor = iterationState.getPastFileEndBackground();
     if (backColor != null && !backColor.equals(defaultBackground)) {
       g.setColor(backColor);
@@ -1333,12 +1330,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                              Rectangle clip) {
     int w = getTextSegmentWidth(text, position.x, fontType);
 
-    if (backColor != null && !backColor.equals(defaultBackground) &&
-        clip.intersects(position.x, position.y, w, getLineHeight())) {
-      if (backColor.equals(myLastBackgroundColor) &&
-          myLastBackgroundPosition.y == position.y &&
-          myLastBackgroundPosition.x + myLastBackgroundWidth == position.x
-        ) {
+    if (backColor != null && !backColor.equals(defaultBackground) && clip.intersects(position.x, position.y, w, getLineHeight())) {
+      if (backColor.equals(myLastBackgroundColor) && myLastBackgroundPosition.y == position.y &&
+          myLastBackgroundPosition.x + myLastBackgroundWidth == position.x) {
         myLastBackgroundWidth += w;
       }
       else {
@@ -1375,7 +1369,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final int boldSpaceWidth = getSpaceWidth(Font.BOLD);
     final int italicSpaceWidth = getSpaceWidth(Font.ITALIC);
     final int boldItalicSpaceWidth = getSpaceWidth(Font.BOLD | Font.ITALIC);
-    mySpacesHaveSameWidth = plainSpaceWidth == boldSpaceWidth && plainSpaceWidth == italicSpaceWidth && plainSpaceWidth == boldItalicSpaceWidth;
+    mySpacesHaveSameWidth =
+      plainSpaceWidth == boldSpaceWidth && plainSpaceWidth == italicSpaceWidth && plainSpaceWidth == boldItalicSpaceWidth;
 
     int lineHeight = getLineHeight();
 
@@ -1415,8 +1410,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          drawString(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor, effectType,
-                     fontType, currentColor);
+          drawString(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor, effectType, fontType,
+                     currentColor);
           position.x = 0;
           if (position.y > clip.y + clip.height) break;
           position.y += lineHeight;
@@ -1430,16 +1425,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
         if (collapsedFolderAt != null) {
           int foldingXStart = position.x;
-          position.x = drawString(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
-                                  fontType, currentColor);
-          BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, position.x, getLineHeight(), effectColor,
-                                         effectType);
+          position.x =
+            drawString(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor);
+          BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, position.x, getLineHeight(), effectColor, effectType);
 
         }
         else {
           if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-            position.x = drawString(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
-                                    effectType, fontType, currentColor);
+            position.x = drawString(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor, effectType,
+                                    fontType, currentColor);
           }
           else {
             position.x = drawString(g, chars, start, hEnd, position, clip, effectColor, effectType, fontType, currentColor);
@@ -1465,10 +1459,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
     if (collapsedFolderAt != null) {
       int foldingXStart = position.x;
-      int foldingXEnd = drawString(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType,
-                                   currentColor);
-      BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor,
-                                     effectType);
+      int foldingXEnd =
+        drawString(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor);
+      BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
 //      myBorderEffect.collapsedFolderReached(g, this);
     }
 
@@ -1583,18 +1576,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int endShift = clip.x + clip.width;
       g.setColor(separatorColor);
 
-      if (mySettings.isRightMarginShown()
-          && myScheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) != null) {
-        endShift =
-        Math.min(endShift, mySettings.getRightMargin(myProject) * getSpaceWidth(Font.PLAIN));
+      if (mySettings.isRightMarginShown() && myScheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) != null) {
+        endShift = Math.min(endShift, mySettings.getRightMargin(myProject) * getSpaceWidth(Font.PLAIN));
       }
 
       UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
     }
   }
 
-  private int drawString(Graphics g, final char[] text, int start, int end, Point position, Rectangle clip, Color effectColor,
-                         EffectType effectType, int fontType, Color fontColor) {
+  private int drawString(Graphics g,
+                         final char[] text,
+                         int start,
+                         int end,
+                         Point position,
+                         Rectangle clip,
+                         Color effectColor,
+                         EffectType effectType,
+                         int fontType,
+                         Color fontColor) {
     if (start >= end) return position.x;
 
     boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
@@ -1606,8 +1605,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor, clip);
   }
 
-  private int drawString(Graphics g, String text, Point position, Rectangle clip, Color effectColor,
-                         EffectType effectType, int fontType, Color fontColor) {
+  private int drawString(Graphics g,
+                         String text,
+                         Point position,
+                         Rectangle clip,
+                         Color effectColor,
+                         EffectType effectType,
+                         int fontType,
+                         Color fontColor) {
     boolean isInClip = getLineHeight() + position.y >= clip.y && position.y <= clip.y + clip.height;
 
     if (!isInClip) return position.x;
@@ -1615,12 +1620,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int y = getLineHeight() - getDescent() + position.y;
     int x = position.x;
 
-    return drawTabbedString(g, text.toCharArray(), 0, text.length(), x, y, effectColor, effectType, fontType,
-                            fontColor, clip);
+    return drawTabbedString(g, text.toCharArray(), 0, text.length(), x, y, effectColor, effectType, fontType, fontColor, clip);
   }
 
-  private int drawTabbedString(Graphics g, char[] text, int start, int end, int x, int y, Color effectColor,
-                               EffectType effectType, int fontType, Color fontColor, final Rectangle clip) {
+  private int drawTabbedString(Graphics g,
+                               char[] text,
+                               int start,
+                               int end,
+                               int x,
+                               int y,
+                               Color effectColor,
+                               EffectType effectType,
+                               int fontType,
+                               Color fontColor,
+                               final Rectangle clip) {
     int xStart = x;
 
     for (int i = start; i < end; i++) {
@@ -1637,27 +1650,37 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     x = drawTablessString(text, start, end, g, x, y, fontType, fontColor, clip);
 
     if (effectColor != null) {
-      final CharSequence original = new CharArrayCharSequence(text, start, end); // TODO optimize getTextSegmentWidth parameter type to char[].
       final Color savedColor = g.getColor();
 
-      int w = getTextSegmentWidth(original, xStart, fontType);
 //      myBorderEffect.flushIfCantProlong(g, this, effectType, effectColor);
+      int xEnd = x;
+      if (xStart < clip.x && xEnd < clip.x || xStart > clip.x + clip.width && xEnd > clip.x + clip.width) {
+        return x;
+      }
+
+      if (xEnd > clip.x + clip.width) {
+        xEnd = clip.x + clip.width;
+      }
+      if (xStart < clip.x) {
+        xStart = clip.x;
+      }
+
       if (effectType == EffectType.LINE_UNDERSCORE) {
         g.setColor(effectColor);
-        UIUtil.drawLine(g, xStart, y + 1, xStart + w, y + 1);
+        UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
         g.setColor(savedColor);
       }
       else {
         if (effectType == EffectType.STRIKEOUT) {
           g.setColor(effectColor);
           int y1 = y - getCharHeight() / 2;
-          UIUtil.drawLine(g, xStart, y1, xStart + w, y1);
+          UIUtil.drawLine(g, xStart, y1, xEnd, y1);
           g.setColor(savedColor);
         }
         else {
           if (effectType == EffectType.WAVE_UNDERSCORE) {
             g.setColor(effectColor);
-            drawWave(g, xStart, xStart + w, y + 1);
+            drawWave(g, xStart, xEnd, y + 1);
             g.setColor(savedColor);
           }
         }
@@ -1716,20 +1739,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int top = y - charHeight;
       UIUtil.drawLine(g, start, mid, stop, mid);
       UIUtil.drawLine(g, stop, y, stop, top);
-      g.fillPolygon(new int[]{stop - halfCharHeight, stop - halfCharHeight, stop},
-                    new int[]{y, y - charHeight, y - halfCharHeight}, 3);
+      g.fillPolygon(new int[]{stop - halfCharHeight, stop - halfCharHeight, stop}, new int[]{y, y - charHeight, y - halfCharHeight}, 3);
       g.setColor(oldColor);
     }
   }
 
-  private void drawCharsCached(Graphics g,
-                               char[] data,
-                               int start,
-                               int end,
-                               int x,
-                               int y,
-                               int fontType,
-                               Color color) {
+  private void drawCharsCached(Graphics g, char[] data, int start, int end, int x, int y, int fontType, Color color) {
     if (mySpacesHaveSameWidth && myLastCache != null && spacesOnly(data, start, end)) {
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
@@ -1873,16 +1888,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getPreferredSize() {
     if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
-      return new Dimension(1,1);
+      return new Dimension(1, 1);
     }
 
     final Dimension draft = getSizeWithoutCaret();
     final int additionalSpace = mySettings.getAdditionalColumnsCount() * getSpaceWidth(Font.PLAIN);
-    
+
     if (!myDocument.isInBulkUpdate()) {
       int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
       draft.width = Math.max(caretX, draft.width) + additionalSpace;
-    } else {
+    }
+    else {
       draft.width += additionalSpace;
     }
     return draft;
@@ -1893,9 +1909,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isOneLineMode()) return new Dimension(size.width, getLineHeight());
     if (mySettings.isAdditionalPageAtBottom()) {
       int lineHeight = getLineHeight();
-      return new Dimension(size.width,
-                           size.height +
-                           Math.max(getScrollingModel().getVisibleArea().height - 2 * lineHeight, lineHeight));
+      return new Dimension(size.width, size.height + Math.max(getScrollingModel().getVisibleArea().height - 2 * lineHeight, lineHeight));
     }
 
     return getContentSize();
@@ -1974,8 +1988,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0; idx--) {
       FoldRegion region = toplevel[idx];
       if (region.isValid()) {
-        if (region.getDocument().getLineNumber(region.getEndOffset()) == logicalPos.line &&
-            region.getEndOffset() <= offset) {
+        if (region.getDocument().getLineNumber(region.getEndOffset()) == logicalPos.line && region.getEndOffset() <= offset) {
           LogicalPosition foldStart = offsetToLogicalPosition(region.getStartOffset());
           LogicalPosition foldEnd = offsetToLogicalPosition(region.getEndOffset());
           column += foldStart.column + region.getPlaceholderText().length() - foldEnd.column;
@@ -1993,7 +2006,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new VisualPosition(line, Math.max(0, column));
   }
 
-  private @Nullable FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
+  private
+  @Nullable
+  FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
     FoldRegion[] topLevelCollapsed = myFoldingModel.fetchTopLevel();
 
     if (topLevelCollapsed == null) return null;
@@ -2163,8 +2178,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
     // But this trigger is always consumed by popup handler. In that case we have to
     // also move caret.
-    if (event.isConsumed() &&
-        !(event.getMouseEvent().isPopupTrigger() || event.getArea() == EditorMouseEventArea.EDITING_AREA)) {
+    if (event.isConsumed() && !(event.getMouseEvent().isPopupTrigger() || event.getArea() == EditorMouseEventArea.EDITING_AREA)) {
       return;
     }
 
@@ -2239,8 +2253,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void processMousePressed(MouseEvent e) {
-    if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
-        System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
+    if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
       setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
     }
 
@@ -2271,8 +2284,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (e.getSource() == myGutterComponent) {
-      if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
-          eventArea == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA || eventArea == EditorMouseEventArea.ANNOTATIONS_AREA) {
         myGutterComponent.mousePressed(e);
         if (e.isConsumed()) return;
       }
@@ -2289,8 +2301,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int caretOffset = getCaretModel().getOffset();
 
     myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
-    myMousePressedInsideSelection = mySelectionModel.hasSelection() &&
-                                    caretOffset >= mySelectionModel.getSelectionStart() &&
+    myMousePressedInsideSelection = mySelectionModel.hasSelection() && caretOffset >= mySelectionModel.getSelectionStart() &&
                                     caretOffset <= mySelectionModel.getSelectionEnd();
 
     if (!myMousePressedInsideSelection && mySelectionModel.hasBlockSelection()) {
@@ -2441,8 +2452,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myGutterComponent.setActiveFoldRegion(null);
-      if (getSelectionModel().hasSelection() &&
-          (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK)) == 0) {
+      if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK)) == 0) {
         int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
         if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
           myEditorComponent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -2509,16 +2519,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int newCaretOffset = getCaretModel().getOffset();
       int caretShift = newCaretOffset - mySavedSelectionStart;
 
-      if (myMousePressedEvent != null &&
-          getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.EDITING_AREA &&
+      if (myMousePressedEvent != null && getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.EDITING_AREA &&
           getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.LINE_NUMBERS_AREA) {
         selectionModel.setSelection(oldSelectionStart, newCaretOffset);
       }
       else {
         if (isColumnMode()) {
-          final LogicalPosition blockStart = selectionModel.hasBlockSelection()
-                                             ? selectionModel.getBlockStart()
-                                             : oldLogicalCaret;
+          final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
           selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
         }
         else {
@@ -2530,8 +2537,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               else {
                 if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                  newSelection = logicalPositionToOffset(
-                    visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
+                  newSelection =
+                    logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
                 }
               }
               if (newSelection < 0) newSelection = newCaretOffset;
@@ -2545,8 +2552,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               else {
                 if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                  newSelection = logicalPositionToOffset(
-                    visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
+                  newSelection =
+                    logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
                 }
               }
               if (newSelection < 0) newSelection = newCaretOffset;
@@ -2565,10 +2572,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 if (mySettings.isDndEnabled()) {
                   boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
                   mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
-                  getContentComponent().getTransferHandler().exportAsDrag(getContentComponent(), e,
-                                                                          isCopy
-                                                                          ? TransferHandler.COPY
-                                                                          : TransferHandler.MOVE);
+                  getContentComponent().getTransferHandler()
+                    .exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY : TransferHandler.MOVE);
                 }
                 else {
                   selectionModel.removeSelection();
@@ -2825,80 +2830,77 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myTimer != null) {
         return;
       }
-      myTimer = new Timer(TIMER_PERIOD,
-                          new ActionListener() {
-                            public void actionPerformed(ActionEvent e) {
-                              myCommandProcessor.executeCommand(myProject, new Runnable() {
-                                public void run() {
-                                  int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-                                  LogicalPosition caretPosition = getCaretModel().getLogicalPosition();
-                                  int columnNumber = caretPosition.column;
-                                  xPassedCycles++;
-                                  if (xPassedCycles >= myXCycles) {
-                                    xPassedCycles = 0;
-                                    columnNumber += myDx;
-                                  }
+      myTimer = new Timer(TIMER_PERIOD, new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          myCommandProcessor.executeCommand(myProject, new Runnable() {
+            public void run() {
+              int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+              LogicalPosition caretPosition = getCaretModel().getLogicalPosition();
+              int columnNumber = caretPosition.column;
+              xPassedCycles++;
+              if (xPassedCycles >= myXCycles) {
+                xPassedCycles = 0;
+                columnNumber += myDx;
+              }
 
-                                  int lineNumber = caretPosition.line;
-                                  yPassedCycles++;
-                                  if (yPassedCycles >= myYCycles) {
-                                    yPassedCycles = 0;
-                                    lineNumber += myDy;
-                                  }
+              int lineNumber = caretPosition.line;
+              yPassedCycles++;
+              if (yPassedCycles >= myYCycles) {
+                yPassedCycles = 0;
+                lineNumber += myDy;
+              }
 
-                                  LogicalPosition pos = new LogicalPosition(lineNumber, columnNumber);
-                                  getCaretModel().moveToLogicalPosition(pos);
-                                  getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+              LogicalPosition pos = new LogicalPosition(lineNumber, columnNumber);
+              getCaretModel().moveToLogicalPosition(pos);
+              getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-                                  int newCaretOffset = getCaretModel().getOffset();
-                                  int caretShift = newCaretOffset - mySavedSelectionStart;
+              int newCaretOffset = getCaretModel().getOffset();
+              int caretShift = newCaretOffset - mySavedSelectionStart;
 
-                                  if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-                                    if (caretShift < 0) {
-                                      int newSelection = newCaretOffset;
-                                      if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                                        newSelection = mySelectionModel.getWordAtCaretStart();
-                                      }
-                                      else {
-                                        if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                                          newSelection = logicalPositionToOffset(visualToLogicalPosition(
-                                            new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
-                                        }
-                                      }
-                                      if (newSelection < 0) newSelection = newCaretOffset;
-                                      mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
-                                      getCaretModel().moveToOffset(newSelection);
-                                    }
-                                    else {
-                                      int newSelection = newCaretOffset;
-                                      if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                                        newSelection = mySelectionModel.getWordAtCaretEnd();
-                                      }
-                                      else {
-                                        if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                                          newSelection = logicalPositionToOffset(visualToLogicalPosition(
-                                            new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
-                                        }
-                                      }
-                                      if (newSelection < 0) newSelection = newCaretOffset;
-                                      mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
-                                      getCaretModel().moveToOffset(newSelection);
-                                    }
-                                    return;
-                                  }
+              if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+                if (caretShift < 0) {
+                  int newSelection = newCaretOffset;
+                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+                    newSelection = mySelectionModel.getWordAtCaretStart();
+                  }
+                  else {
+                    if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+                      newSelection =
+                        logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
+                    }
+                  }
+                  if (newSelection < 0) newSelection = newCaretOffset;
+                  mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
+                  getCaretModel().moveToOffset(newSelection);
+                }
+                else {
+                  int newSelection = newCaretOffset;
+                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+                    newSelection = mySelectionModel.getWordAtCaretEnd();
+                  }
+                  else {
+                    if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+                      newSelection = logicalPositionToOffset(
+                        visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
+                    }
+                  }
+                  if (newSelection < 0) newSelection = newCaretOffset;
+                  mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
+                  getCaretModel().moveToOffset(newSelection);
+                }
+                return;
+              }
 
-                                  if (mySelectionModel.hasBlockSelection()) {
-                                    mySelectionModel.setBlockSelection(mySelectionModel.getBlockStart(),
-                                                                       getCaretModel().getLogicalPosition());
-                                  }
-                                  else {
-                                    mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
-                                  }
-                                }
-                              },
-                                                                EditorBundle.message("move.cursor.command.name"), getDocument());
-                            }
-                          });
+              if (mySelectionModel.hasBlockSelection()) {
+                mySelectionModel.setBlockSelection(mySelectionModel.getBlockStart(), getCaretModel().getLogicalPosition());
+              }
+              else {
+                mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
+              }
+            }
+          }, EditorBundle.message("move.cursor.command.name"), getDocument());
+        }
+      });
       myTimer.start();
     }
 
@@ -3230,12 +3232,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return r[0];
     }
 
-    public AttributedCharacterIterator getCommittedText(final int beginIndex, final int endIndex,
+    public AttributedCharacterIterator getCommittedText(final int beginIndex,
+                                                        final int endIndex,
                                                         final AttributedCharacterIterator.Attribute[] attributes) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        return myDelegate.getCommittedText(beginIndex,
-                                           endIndex,
-                                           attributes);
+        return myDelegate.getCommittedText(beginIndex, endIndex, attributes);
       }
       final AttributedCharacterIterator[] r = new AttributedCharacterIterator[1];
       try {
@@ -3353,8 +3354,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return chars.subSequence(startIdx, endIdx).toString();
     }
 
-    public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex,
-                                                        AttributedCharacterIterator.Attribute[] attributes) {
+    public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
       int composedStartIndex = 0;
       int composedEndIndex = 0;
       if (composedText != null) {
@@ -3369,13 +3369,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           int firstPartLength = composedStartIndex - beginIndex;
-          committed = getText(beginIndex, firstPartLength) +
-                      getText(composedEndIndex, endIndex - beginIndex - firstPartLength);
+          committed = getText(beginIndex, firstPartLength) + getText(composedEndIndex, endIndex - beginIndex - firstPartLength);
         }
       }
       else {
-        committed = getText(beginIndex + (composedEndIndex - composedStartIndex),
-                            endIndex - beginIndex);
+        committed = getText(beginIndex + (composedEndIndex - composedStartIndex), endIndex - beginIndex);
       }
 
       return new AttributedString(committed).getIterator();
@@ -3402,8 +3400,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       StringBuffer strBuf = new StringBuffer();
 
       // create attributed string with no attributes
-      for (char c = text.setIndex(composedIndex);
-           c != CharacterIterator.DONE; c = text.next()) {
+      for (char c = text.setIndex(composedIndex); c != CharacterIterator.DONE; c = text.next()) {
         strBuf.append(c);
       }
 
@@ -3545,9 +3542,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         TooltipController controller = HintManager.getInstance().getTooltipController();
         if (fold != null) {
           DocumentFragment range = new DocumentFragment(myDocument, fold.getStartOffset(), fold.getEndOffset());
-          final Point p = SwingUtilities.convertPoint((Component)e.getSource(),
-                                                      e.getPoint(),
-                                                      getComponent().getRootPane().getLayeredPane());
+          final Point p =
+            SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), getComponent().getRootPane().getLayeredPane());
           controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
         }
         else {
@@ -3701,9 +3697,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final EditorImpl editor = (EditorImpl)getEditor(comp);
 
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (myDraggedRange != null &&
-          myDraggedRange.getStartOffset() <= caretOffset &&
-          caretOffset < myDraggedRange.getEndOffset()) {
+      if (myDraggedRange != null && myDraggedRange.getStartOffset() <= caretOffset && caretOffset < myDraggedRange.getEndOffset()) {
         return false;
       }
 
@@ -3727,8 +3721,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
                 if (editor.getDocument().getRangeGuard(offset, offset) != null) return;
 
-                EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(
-                  IdeActions.ACTION_EDITOR_PASTE);
+                EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 Transferable backup = clipboard.getContents(this);
                 ClipboardOwner clipboardOwner = new ClipboardOwner() {
@@ -3869,8 +3862,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void changedUpdate(DocumentEvent e) {
-      int startLine = e.getOldLength() == 0 ? myOldEndLine:getVisualPositionLine(e.getOffset());
-      int newEndLine = e.getNewLength() == 0 ? startLine:getVisualPositionLine(e.getOffset() + e.getNewLength());
+      int startLine = e.getOldLength() == 0 ? myOldEndLine : getVisualPositionLine(e.getOffset());
+      int newEndLine = e.getNewLength() == 0 ? startLine : getVisualPositionLine(e.getOffset() + e.getNewLength());
       int oldEndLine = myOldEndLine;
 
       final int lineWidthSize = myLineWidths.size();
@@ -3968,7 +3961,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (lineCount > 0) {
-        myLineWidths.set(lineCount - 1, x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
+        myLineWidths.set(lineCount - 1,
+                         x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
       }
 
       int maxWidth = 0;
@@ -4009,7 +4003,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int prevX = x;
         x = nextTabStop(x);
         column += (x - prevX) / spaceSize;
-      } else {
+      }
+      else {
         x += charWidth(c, fontType);
         column++;
       }
