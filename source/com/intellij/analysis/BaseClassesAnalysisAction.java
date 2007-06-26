@@ -60,11 +60,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
   private void doAnalyze(final Project project, final AnalysisScope scope) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
       public void run(final ProgressIndicator indicator) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            analyzeClasses(project, scope, indicator);
-          }
-        });
+        analyzeClasses(project, scope, indicator);
       }
     });
   }
