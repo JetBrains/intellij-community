@@ -1,3 +1,10 @@
+= version 1.1.3
+
++ Encrypted credentials supported on Windows.
++ OpenVMS support improved.
++ Bugfixes.
++ Daily builds now available at http://teamcity.svnkit.com/
+
 = version 1.1.2
 
 + SVNKit command line client: interactive credentials prompt added.
