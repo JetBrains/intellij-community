@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -40,23 +41,23 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
 
   public PsiType getType() {
     IElementType elemType = getFirstChild().getNode().getElementType();
-    if (elemType == GroovyTokenTypes.mGSTRING_LITERAL || elemType == GroovyTokenTypes.mSTRING_LITERAL) {
+    if (elemType == mGSTRING_LITERAL || elemType == mSTRING_LITERAL || elemType == mREGEX_LITERAL) {
       return getTypeByFQName("java.lang.String");
-    } else if (elemType == GroovyTokenTypes.mNUM_INT) {
+    } else if (elemType == mNUM_INT) {
       return getTypeByFQName("java.lang.Integer");
-    } else if (elemType == GroovyTokenTypes.mNUM_LONG) {
+    } else if (elemType == mNUM_LONG) {
       return getTypeByFQName("java.lang.Long");
-    } else if (elemType == GroovyTokenTypes.mNUM_FLOAT) {
+    } else if (elemType == mNUM_FLOAT) {
       return getTypeByFQName("java.lang.Float");
-    } else if (elemType == GroovyTokenTypes.mNUM_DOUBLE) {
+    } else if (elemType == mNUM_DOUBLE) {
       return getTypeByFQName("java.lang.Double");
-    } else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
+    } else if (elemType == mNUM_BIG_INT) {
       return getTypeByFQName("java.math.BigInteger");
-    } else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
+    } else if (elemType == mNUM_BIG_DECIMAL) {
       return getTypeByFQName("java.math.BigDecimal");
-    } else if (elemType == GroovyTokenTypes.kFALSE || elemType == GroovyTokenTypes.kTRUE) {
+    } else if (elemType == kFALSE || elemType == kTRUE) {
       return getTypeByFQName("java.lang.Boolean");
-    }  else if (elemType == GroovyTokenTypes.kNULL) {
+    }  else if (elemType == kNULL) {
       return PsiType.NULL;
     }
 
