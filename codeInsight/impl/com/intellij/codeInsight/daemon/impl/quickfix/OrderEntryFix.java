@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
@@ -68,11 +69,11 @@ public abstract class OrderEntryFix implements IntentionAction {
           return getText();
         }
 
-        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
-        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
           boolean isJunit4 = ! referenceName.equals("TestCase");
           addBundledJarToRoots(project, editor, currentModule, reference,
                                isJunit4 ? "org.junit." + referenceName : "junit.framework.TestCase",
@@ -94,11 +95,11 @@ public abstract class OrderEntryFix implements IntentionAction {
           return getText();
         }
 
-        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
-        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
           LocateLibraryDialog dialog = new LocateLibraryDialog (currentModule, PathManager.getLibPath(), "annotations.jar", 
                                                                 QuickFixBundle.message("add.library.annotations.description"));
           dialog.show();
@@ -132,11 +133,11 @@ public abstract class OrderEntryFix implements IntentionAction {
             return QuickFixBundle.message("orderEntry.fix.family.add.module.dependency");
           }
 
-          public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
             return !project.isDisposed() && !classModule.isDisposed() && !currentModule.isDisposed();
           }
 
-          public void invoke(final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+          public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
             final Runnable doit = new Runnable() {
               public void run() {
                 ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
@@ -176,12 +177,12 @@ public abstract class OrderEntryFix implements IntentionAction {
               return QuickFixBundle.message("orderEntry.fix.family.add.library.to.classpath");
             }
 
-            public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+            public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
               return !project.isDisposed() && !currentModule.isDisposed() && libraryEntry.isValid();
             }
 
-            public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              addLibraryToRoots(libraryEntry, currentModule);
+            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+              OrderEntryUtil.addLibraryToRoots(libraryEntry, currentModule);
               new AddImportAction(project, reference, editor, aClass).execute();
             }
           });
@@ -215,27 +216,6 @@ public abstract class OrderEntryFix implements IntentionAction {
     if ( aClass != null ) {
       new AddImportAction(project, reference, editor, aClass).execute();
     }
-  }
-
-  private static void addLibraryToRoots(final LibraryOrderEntry libraryOrderEntry, final Module module) {
-    Library library = libraryOrderEntry.getLibrary();
-    if (library == null) return;
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = manager.getModifiableModel();
-
-    if (libraryOrderEntry.isModuleLevel()) {
-      final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-      final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-      VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-      for (VirtualFile jarFile : files) {
-        libraryModel.addRoot(jarFile, OrderRootType.CLASSES);
-      }
-      libraryModel.commit();
-    }
-    else {
-      rootModel.addLibraryEntry(library);
-    }
-    rootModel.commit();
   }
 
   private static void addJarToRoots(VirtualFile jarFile, final Module module) {

@@ -7,6 +7,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -413,7 +414,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
             manager.findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
           for(PsiModifierListOwner element: nonNlsTargets) {
             if (manager.isInProject(element)) {
-              fixes.add(new AnnotateQuickFix(element, AnnotationUtil.NON_NLS, AnnotationUtil.NON_NLS_SIMPLE_NAME));
+              fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
             }
           }
         }

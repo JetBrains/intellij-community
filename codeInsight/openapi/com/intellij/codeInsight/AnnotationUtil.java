@@ -44,6 +44,7 @@ public class AnnotationUtil {
 
   /**
    * The full qualified name of the standard NonNls annotation.
+   *
    * @since 5.0.1
    */
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
@@ -62,14 +63,11 @@ public class AnnotationUtil {
   }
 
   public static boolean isNullable(PsiModifierListOwner owner) {
-    if (isNotNull(owner)) return false;
-    final PsiAnnotation ann = findAnnotationInHierarchy(owner, ALL_ANNOTATIONS);
-    return ann != null && NULLABLE.equals(ann.getQualifiedName());
+    return !isNotNull(owner) && isAnnotated(owner, NULLABLE, true);
   }
 
   public static boolean isNotNull(PsiModifierListOwner owner) {
-    final PsiAnnotation ann = findAnnotationInHierarchy(owner, ALL_ANNOTATIONS);
-    return ann != null && NOT_NULL.equals(ann.getQualifiedName());
+    return isAnnotated(owner, NOT_NULL, true);
   }
 
   @Nullable
@@ -88,20 +86,21 @@ public class AnnotationUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String... annotationNames) {
-    return findAnnotation(listOwner, new HashSet<String> (Arrays.asList(annotationNames)));
+    return findAnnotation(listOwner, new HashSet<String>(Arrays.asList(annotationNames)));
   }
 
   @Nullable
   public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Set<String> annotationNames) {
     return findAnnotation(listOwner, (Collection<String>)annotationNames);
   }
-  
+
   @Nullable
   public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Collection<String> annotationNames) {
     final PsiAnnotation[] allAnnotations;
     if (listOwner instanceof PsiParameter) {
       allAnnotations = ((PsiParameter)listOwner).getAnnotations();
-    } else {
+    }
+    else {
       if (listOwner == null) return null;
       final PsiModifierList list = listOwner.getModifierList();
       if (list == null) return null;
@@ -111,6 +110,12 @@ public class AnnotationUtil {
       String qualifiedName = annotation.getQualifiedName();
       if (annotationNames.contains(qualifiedName)) {
         return annotation;
+      }
+    }
+    for (String annotationName : annotationNames) {
+      final PsiAnnotation annotation = ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationName);
+      if (annotation != null) {
+        return null;
       }
     }
     return null;
@@ -146,7 +151,9 @@ public class AnnotationUtil {
     return findAnnotationInHierarchy(methodSignature, annotationNames, method);
   }
 
-  private static PsiAnnotation findAnnotationInHierarchy(HierarchicalMethodSignature signature, Set<String> annotationNames, PsiElement place) {
+  private static PsiAnnotation findAnnotationInHierarchy(HierarchicalMethodSignature signature,
+                                                         Set<String> annotationNames,
+                                                         PsiElement place) {
     List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
     PsiResolveHelper resolveHelper = place.getManager().getResolveHelper();
     for (HierarchicalMethodSignature superSignature : superSignatures) {
@@ -172,7 +179,7 @@ public class AnnotationUtil {
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
       PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
-      for(PsiAnnotation annotation: paramAnnotations) {
+      for (PsiAnnotation annotation : paramAnnotations) {
         if (annotationFQN.equals(annotation.getQualifiedName())) {
           return true;
         }
@@ -185,6 +192,7 @@ public class AnnotationUtil {
     }
     PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
     if (annotation != null) return true;
+    if (ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationFQN) != null) return true;
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;
       final PsiMethod[] superMethods = method.findSuperMethods();

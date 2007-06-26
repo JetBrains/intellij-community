@@ -72,6 +72,7 @@ public class LibraryTableEditor implements Disposable {
   private JButton myAttachJavadocsButton;
   private JButton myAttachUrlJavadocsButton;
   private JPanel myTreePanel;
+  private JButton myAttachAnnotationsButton;
   private Tree myTree;
   private Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
@@ -192,6 +193,7 @@ public class LibraryTableEditor implements Disposable {
     myAttachSourcesButton.addActionListener(new AttachSourcesAction());
     myAttachJavadocsButton.addActionListener(new AttachJavadocAction());
     myAttachUrlJavadocsButton.addActionListener(new AttachUrlJavadocAction());
+    myAttachAnnotationsButton.addActionListener(new AttachAnnotationsAction());
 
     treeSelectionListener.updateButtons();
     Disposer.register(this, myTreeBuilder);
@@ -230,6 +232,7 @@ public class LibraryTableEditor implements Disposable {
   public void disableAttachButtons() {
     myAttachJavadocsButton.setVisible(false);
     myAttachSourcesButton.setVisible(false);
+    myAttachAnnotationsButton.setVisible(false);
     myAttachUrlJavadocsButton.setVisible(false);
   }
 
@@ -661,6 +664,20 @@ public class LibraryTableEditor implements Disposable {
       }
 
       return result.toArray(new VirtualFile[result.size()]);
+    }
+  }
+
+  private class AttachAnnotationsAction extends AttachItemAction {
+    protected String getTitle() {
+      return ProjectBundle.message("library.attach.external.annotations.action");
+    }
+
+    protected String getDescription() {
+      return ProjectBundle.message("library.attach.external.annotations.description");
+    }
+
+    protected OrderRootType getRootType() {
+      return OrderRootType.ANNOTATIONS;
     }
   }
 

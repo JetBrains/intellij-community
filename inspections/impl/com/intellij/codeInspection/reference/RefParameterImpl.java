@@ -116,10 +116,7 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
       public void run() {
         PsiParameter parameter = getElement();
         LOG.assertTrue(parameter != null);
-        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-        final RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
-        LOG.assertTrue(refMethod != null);
-        result[0] = refMethod.getExternalName() + " " + PsiFormatUtil.formatVariable(parameter, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+        result[0] = PsiFormatUtil.getExternalName(parameter);
       }
     };
 

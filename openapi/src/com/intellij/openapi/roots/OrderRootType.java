@@ -44,9 +44,14 @@ public enum OrderRootType {
   /**
    * JavaDoc paths.
    */
-  JAVADOC;
+  JAVADOC,
+
+  /**
+   * External annotations path
+   */
+  ANNOTATIONS;
 
   public static final OrderRootType[] ALL_TYPES = {
-    CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC
+    CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC, ANNOTATIONS
   };
 }

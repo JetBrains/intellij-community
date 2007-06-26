@@ -28,8 +28,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
 
@@ -44,7 +44,8 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    */
   public abstract boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element);
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!file.getManager().isInProject(file)) return false;
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
     return isAvailable(project, editor, file.findElementAt(position));

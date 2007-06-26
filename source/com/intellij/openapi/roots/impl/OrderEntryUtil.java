@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -90,5 +91,38 @@ public class OrderEntryUtil {
       }
     }
     return true;
+  }
+
+  public static void addLibraryToRoots(final LibraryOrderEntry libraryOrderEntry, final Module module) {
+    Library library = libraryOrderEntry.getLibrary();
+    if (library == null) return;
+    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    final ModifiableRootModel rootModel = manager.getModifiableModel();
+
+    if (libraryOrderEntry.isModuleLevel()) {
+      final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
+      final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
+      VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+      for (VirtualFile jarFile : files) {
+        libraryModel.addRoot(jarFile, OrderRootType.CLASSES);
+      }
+      final VirtualFile[] sources = library.getFiles(OrderRootType.SOURCES);
+      for (VirtualFile source : sources) {
+        libraryModel.addRoot(source, OrderRootType.SOURCES);
+      }
+      final VirtualFile[] javadocs = library.getFiles(OrderRootType.JAVADOC);
+      for (VirtualFile javadoc : javadocs) {
+        libraryModel.addRoot(javadoc, OrderRootType.JAVADOC);
+      }
+      final VirtualFile[] annotations = library.getFiles(OrderRootType.ANNOTATIONS);
+      for (VirtualFile annotation : annotations) {
+        libraryModel.addRoot(annotation, OrderRootType.ANNOTATIONS);
+      }
+      libraryModel.commit();
+    }
+    else {
+      rootModel.addLibraryEntry(library);
+    }
+    rootModel.commit();
   }
 }

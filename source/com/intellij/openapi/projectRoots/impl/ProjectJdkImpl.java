@@ -220,6 +220,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.CLASS);
     copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.SOURCE);
     copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.JAVADOC);
+    copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.ANNOTATIONS);
     dest.myRootContainer.finishChange();
   }
 
@@ -287,6 +288,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     ourOrderRootsToProjectRoots.put(OrderRootType.COMPILATION_CLASSES, ProjectRootType.CLASS);
     ourOrderRootsToProjectRoots.put(OrderRootType.SOURCES, ProjectRootType.SOURCE);
     ourOrderRootsToProjectRoots.put(OrderRootType.JAVADOC, ProjectRootType.JAVADOC);
+    ourOrderRootsToProjectRoots.put(OrderRootType.ANNOTATIONS, ProjectRootType.ANNOTATIONS);
   }
 
   // SdkModificator implementation

@@ -16,7 +16,9 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -401,5 +403,42 @@ public class PsiFormatUtil {
     else{
       return ref.getText();
     }
+  }
+
+  @Nullable
+  public static String getExternalName(PsiModifierListOwner owner) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      if (owner instanceof PsiClass) {
+        ClassUtil.formatClassName((PsiClass)owner, builder);
+        return builder.toString();
+      }
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(owner, PsiClass.class, false);
+      assert psiClass != null;
+      ClassUtil.formatClassName(psiClass, builder);
+      if (owner instanceof PsiMethod) {
+        return builder.toString() + " " +
+               PsiFormatUtil.formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil
+                 .SHOW_FQ_NAME | PsiFormatUtil
+                 .SHOW_TYPE | PsiFormatUtil
+                 .SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+      }
+      else if (owner instanceof PsiField) {
+        return builder.toString() + " " + ((PsiField)owner).getName();
+      }
+      else if (owner instanceof PsiParameter) {
+        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
+        return builder.toString() + " " +
+               PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil
+                 .SHOW_FQ_NAME | PsiFormatUtil
+                 .SHOW_TYPE | PsiFormatUtil
+                 .SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE) + " " + PsiFormatUtil
+          .formatVariable((PsiVariable)owner, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+      }
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+    return null;
   }
 }

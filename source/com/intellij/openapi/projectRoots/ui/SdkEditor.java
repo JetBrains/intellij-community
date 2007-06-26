@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -42,6 +43,7 @@ public class SdkEditor implements Configurable{
   private PathEditor myClassPathEditor;
   private PathEditor mySourcePathEditor;
   private PathEditor myJavadocPathEditor;
+  private PathEditor myAnnotationPathEditor;
 
   private TextFieldWithBrowseButton myHomeComponent;
   private Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
@@ -103,6 +105,7 @@ public class SdkEditor implements Configurable{
     myClassPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.classpath.tab"), ProjectRootType.CLASS, new FileChooserDescriptor(true, true, true, false, true, true), false);
     mySourcePathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), ProjectRootType.SOURCE, new FileChooserDescriptor(true, true, true, false, true, true), false);
     myJavadocPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), ProjectRootType.JAVADOC, new FileChooserDescriptor(false, true, true, false, true, true), true);
+    myAnnotationPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.annotations.tab"), ProjectRootType.ANNOTATIONS, FileChooserDescriptorFactory.createSingleFolderDescriptor(), false);
 
     myMainPanel = new JPanel(new GridBagLayout());
 
@@ -110,6 +113,7 @@ public class SdkEditor implements Configurable{
     myTabbedPane.addTab(myClassPathEditor.getDisplayName(), myClassPathEditor.createComponent());
     myTabbedPane.addTab(mySourcePathEditor.getDisplayName(), mySourcePathEditor.createComponent());
     myTabbedPane.addTab(myJavadocPathEditor.getDisplayName(), myJavadocPathEditor.createComponent());
+    myTabbedPane.addTab(myAnnotationPathEditor.getDisplayName(), myAnnotationPathEditor.createComponent());
 
     myHomeComponent = new TextFieldWithBrowseButton(new ActionListener(){
       public void actionPerformed(ActionEvent e){
@@ -141,6 +145,7 @@ public class SdkEditor implements Configurable{
     isModified = isModified || myClassPathEditor.isModified();
     isModified = isModified || mySourcePathEditor.isModified();
     isModified = isModified || myJavadocPathEditor.isModified();
+    isModified = isModified || myAnnotationPathEditor.isModified();
     final AdditionalDataConfigurable configurable = getAdditionalDataConfigurable();
     if (configurable != null) {
       isModified = isModified || configurable.isModified();
@@ -162,6 +167,7 @@ public class SdkEditor implements Configurable{
       myClassPathEditor.apply(sdkModificator);
       mySourcePathEditor.apply(sdkModificator);
       myJavadocPathEditor.apply(sdkModificator);
+      myAnnotationPathEditor.apply(sdkModificator);
       ApplicationManager.getApplication().runWriteAction(new Runnable() { // fix SCR #29193
         public void run() {
           sdkModificator.commitChanges();
@@ -180,12 +186,14 @@ public class SdkEditor implements Configurable{
       myClassPathEditor.reset(null);
       mySourcePathEditor.reset(null);
       myJavadocPathEditor.reset(null);
+      myAnnotationPathEditor.reset(null);
     }
     else{
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
       myClassPathEditor.reset(sdkModificator.getRoots(myClassPathEditor.getRootType()));
       mySourcePathEditor.reset(sdkModificator.getRoots(mySourcePathEditor.getRootType()));
       myJavadocPathEditor.reset(sdkModificator.getRoots(myJavadocPathEditor.getRootType()));
+      myAnnotationPathEditor.reset(sdkModificator.getRoots(myAnnotationPathEditor.getRootType()));
       sdkModificator.commitChanges();
       setHomePathValue(mySdk.getHomePath().replace('/', File.separatorChar));
     }
@@ -221,6 +229,7 @@ public class SdkEditor implements Configurable{
     myClassPathEditor.clearList();
     mySourcePathEditor.clearList();
     myJavadocPathEditor.clearList();
+    myAnnotationPathEditor.clearList();
   }
 
   private void setHomePathValue(String absolutePath) {
@@ -330,6 +339,7 @@ public class SdkEditor implements Configurable{
       myClassPathEditor.addPaths(sdkModificator.getRoots(myClassPathEditor.getRootType()));
       mySourcePathEditor.addPaths(sdkModificator.getRoots(mySourcePathEditor.getRootType()));
       myJavadocPathEditor.addPaths(sdkModificator.getRoots(myJavadocPathEditor.getRootType()));
+      myAnnotationPathEditor.addPaths(sdkModificator.getRoots(myAnnotationPathEditor.getRootType()));
 
       mySdkModel.getMulticaster().sdkHomeSelected(mySdk, homePath);
     }
@@ -432,6 +442,9 @@ public class SdkEditor implements Configurable{
       if (ProjectRootType.SOURCE.equals(rootType)) {
         return mySourcePathEditor.getRoots();
       }
+      if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
+        return myAnnotationPathEditor.getRoots();
+      }
       return VirtualFile.EMPTY_ARRAY;
     }
 
@@ -444,6 +457,8 @@ public class SdkEditor implements Configurable{
       }
       else if (ProjectRootType.SOURCE.equals(rootType)) {
         mySourcePathEditor.addPaths(new VirtualFile[] {root});
+      } else if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
+        myAnnotationPathEditor.addPaths(new VirtualFile[]{root});
       }
     }
 
@@ -456,6 +471,8 @@ public class SdkEditor implements Configurable{
       }
       else if (ProjectRootType.SOURCE.equals(rootType)) {
         mySourcePathEditor.removePaths(new VirtualFile[] {root});
+      } else if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
+        myAnnotationPathEditor.removePaths(new VirtualFile[]{root});
       }
     }
 
@@ -468,6 +485,8 @@ public class SdkEditor implements Configurable{
       }
       else if (ProjectRootType.SOURCE.equals(rootType)) {
         mySourcePathEditor.clearList();
+      } else if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
+        myAnnotationPathEditor.clearList();
       }
     }
 
@@ -475,6 +494,7 @@ public class SdkEditor implements Configurable{
       myClassPathEditor.clearList();
       myJavadocPathEditor.clearList();
       mySourcePathEditor.clearList();
+      myAnnotationPathEditor.clearList();
     }
 
     public void commitChanges() {

@@ -81,6 +81,9 @@ public class ProjectRootUtil {
     if (type == ProjectRootType.JAVADOC) {
       return "javadocPath";
     }
+    if (type == ProjectRootType.ANNOTATIONS) {
+      return "annotationsPath";
+    }
     if (type == ProjectRootType.PROJECT) {
       return "projectPath";
     }

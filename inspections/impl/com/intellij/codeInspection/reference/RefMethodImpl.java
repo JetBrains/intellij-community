@@ -419,13 +419,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       public void run() {
         final PsiMethod psiMethod = (PsiMethod)getElement();
         LOG.assertTrue(psiMethod != null);
-        final RefClass refClass = (RefClass)getRefManager().getReference(psiMethod.getContainingClass());
-        LOG.assertTrue(refClass != null);
-        result[0] = refClass.getExternalName() + " " +
-                    PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil
-                      .SHOW_FQ_NAME | PsiFormatUtil
-                      .SHOW_TYPE | PsiFormatUtil
-                      .SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+        result[0] = PsiFormatUtil.getExternalName(psiMethod);
       }
     };
 

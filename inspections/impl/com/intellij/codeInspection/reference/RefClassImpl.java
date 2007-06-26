@@ -12,12 +12,11 @@ import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -352,104 +351,12 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       public void run() {
         final PsiClass psiClass = getElement();
         LOG.assertTrue(psiClass != null);
-        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          formatClassName(psiClass, builder);
-          result[0] = builder.toString();
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        result[0] = PsiFormatUtil.getExternalName(psiClass);
       }
     });
     return result[0];
   }
 
-  private static void formatClassName(@NotNull final PsiClass aClass, final StringBuilder buf) {
-    final String qName = aClass.getQualifiedName();
-    if (qName != null) {
-      buf.append(qName);
-    }
-    else {
-      final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
-      if (parentClass != null) {
-        formatClassName(parentClass, buf);
-        buf.append("$");
-        buf.append(getNonQualifiedClassIdx(aClass));
-        final String name = aClass.getName();
-        if (name != null) {
-          buf.append(name);
-        }
-      }
-    }
-  }
-
-  private static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass) {
-    final int [] result = new int[] {-1};
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
-    LOG.assertTrue(containingClass != null);
-    containingClass.accept(new PsiRecursiveElementVisitor(){
-      private int myCurrentIdx = 0;
-
-      public void visitElement(PsiElement element) {
-        if (result[0] == -1) {
-          super.visitElement(element);
-        }
-      }
-
-      public void visitClass(PsiClass aClass) {
-        super.visitClass(aClass);
-        if (aClass.getQualifiedName() == null) {
-          myCurrentIdx++;
-          if (psiClass == aClass) {
-            result[0] = myCurrentIdx;
-          }
-        }        
-      }     
-    });
-    return result[0];
-  }
-
-  private static PsiClass findNonQualifiedClassByIndex(final String indexName, @NotNull final PsiClass contaningClass) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = 0; i < indexName.length(); i++) {
-        final char c = indexName.charAt(i);
-        if (Character.isDigit(c)) {
-          builder.append(c);
-        }
-        else {
-          break;
-        }
-      }
-      final int idx = Integer.parseInt(builder.toString());
-      final String name = builder.length() < indexName.length() ? indexName.substring(builder.length()) : null;
-      final PsiClass[] result = new PsiClass[1];
-      contaningClass.accept(new PsiRecursiveElementVisitor() {
-        private int myCurrentIdx = 0;
-
-        public void visitElement(PsiElement element) {
-          if (result[0] == null) {
-            super.visitElement(element);
-          }
-        }
-
-        public void visitClass(PsiClass aClass) {
-          super.visitClass(aClass);
-          if (aClass.getQualifiedName() == null) {
-            myCurrentIdx++;
-            if (myCurrentIdx == idx && Comparing.strEqual(name, aClass.getName())) {
-              result[0] = aClass;
-            }
-          }
-        }
-      });
-      return result[0];
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-  }
 
   @Nullable
   public static RefClass classFromExternalName(RefManager manager, String externalName) {
@@ -472,9 +379,9 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       externalName = externalName.substring(topIdx + 1);
       final int nextIdx = externalName.indexOf("$");
       if (nextIdx > -1) {
-        return findPsiClass(psiManager, externalName.substring(nextIdx), findNonQualifiedClassByIndex(externalName.substring(0, nextIdx), psiClass));
+        return findPsiClass(psiManager, externalName.substring(nextIdx), ClassUtil.findNonQualifiedClassByIndex(externalName.substring(0, nextIdx), psiClass));
       } else {
-        return findNonQualifiedClassByIndex(externalName, psiClass);
+        return ClassUtil.findNonQualifiedClassByIndex(externalName, psiClass);
       }
     } else {
       return psiManager.findClass(externalName, GlobalSearchScope.allScope(psiManager.getProject()));

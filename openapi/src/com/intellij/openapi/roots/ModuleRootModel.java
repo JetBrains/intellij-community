@@ -203,4 +203,7 @@ public interface ModuleRootModel {
    * @return the array of javadoc root URLs.
    */
   @NotNull String[] getJavadocUrls();
+
+  @NotNull VirtualFile[] getAnnotationPaths();
+  @NotNull String[] getAnnotationUrls();
 }

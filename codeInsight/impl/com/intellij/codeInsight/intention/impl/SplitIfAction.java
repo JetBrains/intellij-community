@@ -11,8 +11,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -22,8 +22,6 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
-
-    if (!element.getManager().isInProject(element)) return false;
 
     if (!(element instanceof PsiJavaToken)) {
       return false;

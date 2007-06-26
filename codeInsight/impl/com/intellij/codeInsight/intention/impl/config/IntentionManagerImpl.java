@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.*;
@@ -45,6 +46,8 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);
     registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CATEGORY);
     registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CATEGORY);
+    registerIntentionAndMetaData(new AddAnnotationFix(AnnotationUtil.NOT_NULL), CONTROL_FLOW_CATEGORY);
+    registerIntentionAndMetaData(new AddAnnotationFix(AnnotationUtil.NULLABLE), CONTROL_FLOW_CATEGORY);
 
     String[] DECLARATION_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
     registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CATEGORY);

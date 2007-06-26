@@ -183,11 +183,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     result.put(OrderRootType.CLASSES_AND_OUTPUT, classesRoots);
     result.put(OrderRootType.JAVADOC, VirtualFilePointerManager.getInstance().createContainer());
     result.put(OrderRootType.SOURCES, VirtualFilePointerManager.getInstance().createContainer());
+    result.put(OrderRootType.ANNOTATIONS, VirtualFilePointerManager.getInstance().createContainer());
     return result;
   }
 
   private static final OrderRootType[] SERIALIZABLE_ROOT_TYPES = {
-    OrderRootType.CLASSES, OrderRootType.JAVADOC, OrderRootType.SOURCES
+    OrderRootType.CLASSES, OrderRootType.JAVADOC, OrderRootType.SOURCES, OrderRootType.ANNOTATIONS
   };
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -220,8 +221,9 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
     for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
-      final Element rootTypeElement = new Element(rootType.name());
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
+      if (roots.size() == 0 && OrderRootType.ANNOTATIONS.equals(rootType)) continue; //compatibility iml/ipr
+      final Element rootTypeElement = new Element(rootType.name());
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
     }

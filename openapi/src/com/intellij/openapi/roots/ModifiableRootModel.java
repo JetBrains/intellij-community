@@ -186,5 +186,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   void setJavadocUrls(String[] urls);
 
+  void setAnnotationUrls(String[] urls);
+
   String getJdkName();
 }

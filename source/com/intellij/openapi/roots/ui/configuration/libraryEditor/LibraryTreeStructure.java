@@ -54,6 +54,11 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
         elements.add(new ClassesElement(myRootElement));
       }
 
+      final String[] annotations = myParentEditor.getLibraryEditor(library).getUrls(OrderRootType.ANNOTATIONS);
+      if (annotations.length > 0) {
+        elements.add(new AnnotationElement(myRootElement));
+      }
+
       return elements.toArray();
     }
 
@@ -67,6 +72,10 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
 
     if (element instanceof JavadocElement) {
       return buildItems(element, ((JavadocElement)element).getParent().getLibrary(), OrderRootType.JAVADOC);
+    }
+
+    if (element instanceof AnnotationElement) {
+      return buildItems(element, ((AnnotationElement)element).getParent().getLibrary(), OrderRootType.ANNOTATIONS);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -96,6 +105,9 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
     if (element instanceof JavadocElement) {
       return ((JavadocElement)element).getParent();
     }
+    if (element instanceof AnnotationElement) {
+      return ((AnnotationElement)element).getParent();
+    }
     if (element instanceof ItemElement) {
       return ((ItemElement)element).getParent();
     }
@@ -118,6 +130,9 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
     }
     if (element instanceof JavadocElement) {
       return new JavadocElementDescriptor(parentDescriptor, (JavadocElement)element);
+    }
+    if (element instanceof AnnotationElement) {
+      return new AnnotationsElementDescriptor(parentDescriptor, (AnnotationElement)element);
     }
     if (element instanceof ItemElement) {
       return new ItemElementDescriptor(parentDescriptor, (ItemElement)element);

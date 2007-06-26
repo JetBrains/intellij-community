@@ -218,6 +218,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     ourProjectRootTypeToOrderRootType.put(ProjectRootType.CLASS, OrderRootType.CLASSES);
     ourProjectRootTypeToOrderRootType.put(ProjectRootType.SOURCE, OrderRootType.SOURCES);
     ourProjectRootTypeToOrderRootType.put(ProjectRootType.JAVADOC, OrderRootType.JAVADOC);
+    ourProjectRootTypeToOrderRootType.put(ProjectRootType.ANNOTATIONS, OrderRootType.ANNOTATIONS);
   }
 
   public VirtualFile[] getRootFiles(ProjectRootType type) {
@@ -633,11 +634,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           rootPaths.addAll(getRootsToTrack(library, OrderRootType.CLASSES));
           rootPaths.addAll(getRootsToTrack(library, OrderRootType.SOURCES));
           rootPaths.addAll(getRootsToTrack(library, OrderRootType.JAVADOC));
+          rootPaths.addAll(getRootsToTrack(library, OrderRootType.ANNOTATIONS));
         }
         else if (entry instanceof JdkOrderEntry) {
           rootPaths.addAll(getRootsToTrack(entry, OrderRootType.CLASSES));
           rootPaths.addAll(getRootsToTrack(entry, OrderRootType.SOURCES));
           rootPaths.addAll(getRootsToTrack(entry, OrderRootType.JAVADOC));
+          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.ANNOTATIONS));
         }
       }
     }

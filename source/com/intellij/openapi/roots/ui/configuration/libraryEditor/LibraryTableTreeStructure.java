@@ -41,7 +41,8 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
       LibraryElement[] elements = new LibraryElement[libraries.length];
       for (int idx = 0; idx < libraries.length; idx++) {
         final Library library = libraries[idx];
-        final boolean allPathsValid = allPathsValid(library, OrderRootType.CLASSES) && allPathsValid(library, OrderRootType.SOURCES) && allPathsValid(library, OrderRootType.JAVADOC);
+        final boolean allPathsValid = allPathsValid(library, OrderRootType.CLASSES) && allPathsValid(library, OrderRootType.SOURCES)
+                                      && allPathsValid(library, OrderRootType.JAVADOC)  && allPathsValid(library, OrderRootType.ANNOTATIONS);
         elements[idx] = new LibraryElement(library, myParentEditor, !allPathsValid);
       }
       return elements;
@@ -65,6 +66,12 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
       if (javadocs.length > 0) {
         elements.add(new JavadocElement(libraryItemElement));
       }
+
+      final String[] annotations = myParentEditor.getLibraryEditor(library).getUrls(OrderRootType.ANNOTATIONS);
+      if (annotations.length > 0) {
+        elements.add(new AnnotationElement(libraryItemElement));
+      }
+
       return elements.toArray();
     }
 
@@ -78,6 +85,9 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
 
     if (element instanceof JavadocElement) {
       return buildItems(element, ((JavadocElement)element).getParent().getLibrary(), OrderRootType.JAVADOC);
+    }
+    if (element instanceof AnnotationElement) {
+      return buildItems(element, ((AnnotationElement)element).getParent().getLibrary(), OrderRootType.ANNOTATIONS);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

@@ -65,6 +65,7 @@ class RootModelImpl implements ModifiableRootModel {
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
   private final VirtualFilePointerContainer myJavadocPointerContainer;
+  private final VirtualFilePointerContainer myAnnotationPointerContainer;
 
   private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
     public VirtualFilePointer create(VirtualFile file) {
@@ -87,9 +88,10 @@ class RootModelImpl implements ModifiableRootModel {
   };
   @NonNls private static final String PROPERTIES_CHILD_NAME = "orderEntryProperties";
   @NonNls private static final String JAVADOC_PATHS_NAME = "javadoc-paths";
-  @NonNls private static final String JAVADOC_ROOT_ELEMENT = "root";
+  @NonNls private static final String ROOT_ELEMENT = "root";
   private ProjectRootManagerImpl myProjectRootManager;
   @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
+  @NonNls private static final String ANNOTATION_PATHS_NAME = "annotation-paths";
 
 
   public String getCompilerOutputPathUrl() {
@@ -112,6 +114,7 @@ class RootModelImpl implements ModifiableRootModel {
     addSourceOrderEntries();
     myOrderEntryProperties = new OrderEntryProperties();
     myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+    myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
     myInheritedCompilerOutput = false;
   }
@@ -179,7 +182,13 @@ class RootModelImpl implements ModifiableRootModel {
     myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     final Element javaDocPaths = element.getChild(JAVADOC_PATHS_NAME);
     if (javaDocPaths != null) {
-      myJavadocPointerContainer.readExternal(javaDocPaths, JAVADOC_ROOT_ELEMENT);
+      myJavadocPointerContainer.readExternal(javaDocPaths, ROOT_ELEMENT);
+    }
+
+    myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+    final Element annotationPaths = element.getChild(ANNOTATION_PATHS_NAME);
+    if (annotationPaths != null) {
+      myAnnotationPointerContainer.readExternal(annotationPaths, ROOT_ELEMENT);
     }
   }
 
@@ -239,6 +248,9 @@ class RootModelImpl implements ModifiableRootModel {
     myOrderEntryProperties = rootModel.myOrderEntryProperties.copy(this);
     myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     myJavadocPointerContainer.addAll(rootModel.myJavadocPointerContainer);
+
+    myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+    myAnnotationPointerContainer.addAll(rootModel.myAnnotationPointerContainer);
   }
 
   @NotNull
@@ -553,8 +565,14 @@ class RootModelImpl implements ModifiableRootModel {
 
     if (myJavadocPointerContainer.size() > 0) {
       final Element javaDocPaths = new Element(JAVADOC_PATHS_NAME);
-      myJavadocPointerContainer.writeExternal(javaDocPaths, JAVADOC_ROOT_ELEMENT);
+      myJavadocPointerContainer.writeExternal(javaDocPaths, ROOT_ELEMENT);
       element.addContent(javaDocPaths);
+    }
+
+    if (myAnnotationPointerContainer.size() > 0) {
+      final Element annotationPaths = new Element(ANNOTATION_PATHS_NAME);
+      myAnnotationPointerContainer.writeExternal(annotationPaths, ROOT_ELEMENT);
+      element.addContent(annotationPaths);
     }
   }
 
@@ -877,7 +895,9 @@ class RootModelImpl implements ModifiableRootModel {
     }
     final String[] urls = myJavadocPointerContainer.getUrls();
     final String[] thatUrls = getSourceModel().myJavadocPointerContainer.getUrls();
-    return !Arrays.equals(urls, thatUrls);
+    if (!Arrays.equals(urls, thatUrls)) return true;
+
+    return !Arrays.equals(myAnnotationPointerContainer.getUrls(), getSourceModel().myAnnotationPointerContainer.getUrls());
   }
 
   void addExportedUrs(OrderRootType type, List<String> result, Set<Module> processed) {
@@ -1128,11 +1148,29 @@ class RootModelImpl implements ModifiableRootModel {
     return myJavadocPointerContainer.getUrls();
   }
 
+  @NotNull
+  public VirtualFile[] getAnnotationPaths() {
+    return myAnnotationPointerContainer.getFiles();
+  }
+
+  @NotNull
+  public String[] getAnnotationUrls() {
+    return myAnnotationPointerContainer.getUrls();
+  }
+
   public void setJavadocUrls(String[] urls) {
     assertWritable();
     myJavadocPointerContainer.clear();
     for (final String url : urls) {
       myJavadocPointerContainer.add(url);
+    }
+  }
+
+  public void setAnnotationUrls(final String[] urls) {
+    assertWritable();
+    myAnnotationPointerContainer.clear();
+    for (String url : urls) {
+      myAnnotationPointerContainer.add(url);
     }
   }
 

@@ -2,6 +2,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
@@ -81,7 +82,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 holder.registerProblem(parameter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AnnotateQuickFix(parameter, anno, simpleName));
+                                 new AddAnnotationFix(anno, parameter));
               }
             }
           }
@@ -197,7 +198,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             holder.registerProblem(parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new AnnotateQuickFix(parameter, AnnotationUtil.NOT_NULL, AnnotationUtil.NOT_NULL_SIMPLE_NAME));
+                                   new AddAnnotationFix(AnnotationUtil.NOT_NULL, parameter));
           }
         }
       }

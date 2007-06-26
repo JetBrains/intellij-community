@@ -342,6 +342,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
+    else if (OrderRootType.ANNOTATIONS.equals(rootType)) {
+      return getUrls(OrderRootType.ANNOTATIONS, processed);
+    }
     LOG.error("Unknown root type: " + rootType);
     return null;
 
@@ -390,6 +393,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
       else if (OrderRootType.JAVADOC.equals(rootType)) {
         return getFiles(OrderRootType.JAVADOC, processed);
+      }
+      else if (OrderRootType.ANNOTATIONS.equals(rootType)) {
+        return getFiles(OrderRootType.ANNOTATIONS, processed);
       }
       else {
         LOG.error("Unknown root type: " + rootType);
@@ -537,6 +543,16 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   public String[] getJavadocUrls() {
     return myRootModel.getJavadocUrls();
+  }
+
+  @NotNull
+  public VirtualFile[] getAnnotationPaths() {
+    return myRootModel.getAnnotationPaths();
+  }
+
+  @NotNull
+  public String[] getAnnotationUrls() {
+    return myRootModel.getAnnotationUrls();
   }
 
   public void dropCaches() {

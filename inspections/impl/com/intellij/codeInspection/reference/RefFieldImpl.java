@@ -141,10 +141,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
       public void run() {
         PsiField psiField = getElement();
         LOG.assertTrue(psiField != null);
-        final PsiClass psiClass = psiField.getContainingClass();
-        final RefClass refClass = (RefClass)getRefManager().getReference(psiClass);
-        LOG.assertTrue(refClass != null);
-        result[0] = refClass.getExternalName() + " " + PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+        result[0] = PsiFormatUtil.getExternalName(psiField);
       }
     };
 

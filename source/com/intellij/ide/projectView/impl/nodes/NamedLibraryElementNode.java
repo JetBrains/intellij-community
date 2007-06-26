@@ -67,7 +67,8 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   private static boolean orderEntryContainsFile(OrderEntry orderEntry, VirtualFile file) {
     return containsFileInOrderType(orderEntry, OrderRootType.CLASSES, file) ||
            containsFileInOrderType(orderEntry, OrderRootType.SOURCES, file) ||
-           containsFileInOrderType(orderEntry, OrderRootType.JAVADOC, file);
+           containsFileInOrderType(orderEntry, OrderRootType.JAVADOC, file) ||
+           containsFileInOrderType(orderEntry, OrderRootType.ANNOTATIONS, file);
   }
 
   private static boolean containsFileInOrderType(final OrderEntry orderEntry, final OrderRootType orderType, final VirtualFile file) {
