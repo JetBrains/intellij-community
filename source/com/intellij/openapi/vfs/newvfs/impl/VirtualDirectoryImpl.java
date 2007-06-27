@@ -158,21 +158,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  public synchronized VirtualFile[] asArray() {
+  private synchronized VirtualFile[] asArray() {
     if (myChildren instanceof VirtualFile[]) return (VirtualFile[])myChildren;
     return null;
   }
 
   @Nullable
   @SuppressWarnings({"unchecked"})
-  public synchronized Map<String, VirtualFile> asMap() {
+  private synchronized Map<String, VirtualFile> asMap() {
     if (myChildren instanceof Map) return (Map<String, VirtualFile>)myChildren;
     return null;
   }
 
-  @SuppressWarnings({"unchecked"})
   @NotNull
-  public synchronized Map<String, VirtualFile> ensureAsMap() {
+  @SuppressWarnings({"unchecked"})
+  private synchronized Map<String, VirtualFile> ensureAsMap() {
     assert !(myChildren instanceof VirtualFile[]);
 
     if (myChildren == null) {

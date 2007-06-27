@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface {
-  @NonNls protected static final String FILE_SEPARATORS = "/" + File.separator;
+  @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new HashMap<VirtualFileListener, VirtualFileListener>();
 
   public abstract boolean isCaseSensitive();
@@ -89,7 +89,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return file;
   }
 
-  public String normalize(final String path) {
+  protected String normalize(final String path) {
     return path;
   }
 
@@ -105,7 +105,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return true;
   }
 
-  public abstract String extractRootPath(String path);
+  protected abstract String extractRootPath(String path);
 
   public void addVirtualFileListener(final VirtualFileListener listener) {
     synchronized (myListenerWrappers) {

@@ -31,7 +31,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
   private VirtualFileManagerEx myManager = null;
 
-  final ReadWriteLock LOCK = new ReentrantReadWriteLock();
+  private final ReadWriteLock LOCK = new ReentrantReadWriteLock();
   final Lock READ_LOCK = LOCK.readLock();
   final Lock WRITE_LOCK = LOCK.writeLock();
 
@@ -41,14 +41,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private final Set<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
   private final Set<String> myDeletedFiles = new HashSet<String>();
 
-  private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
+  private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
   private List<String> myManualWatchRoots = new ArrayList<String>();
 
   private static class WatchRequestImpl implements WatchRequest {
-    public String myRootPath;
+    public final String myRootPath;
 
     public String myFSRootPath;
-    public boolean myToWatchRecursively;
+    public final boolean myToWatchRecursively;
 
     public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) {
       myToWatchRecursively = toWatchRecursively;
@@ -141,14 +141,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final File file = new File(FileUtil.getTempDirectory());
     String path = file.getCanonicalPath().replace(File.separatorChar, '/');
     addRootToWatch(path, true);
-  }
-
-  final VirtualFileManagerEx getManager() {
-    if (myManager == null) {
-      myManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
-    }
-
-    return myManager;
   }
 
   private static void updateFileWatcher() {
@@ -256,10 +248,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return virtualFile.getLength();
   }
 
-  public String extractPresentableUrl(String path) {
-    return super.extractPresentableUrl(path);
-  }
-
   private WatchRequest[] normalizeRootsForRefresh() {
     if (myCachedNormalizedRequests != null) return myCachedNormalizedRequests;
     List<WatchRequest> result = new ArrayList<WatchRequest>();
@@ -293,7 +281,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return myCachedNormalizedRequests;
   }
 
-  public void storeRefreshStatusToFiles() {
+  private void storeRefreshStatusToFiles() {
     if (FileWatcher.isAvailable()) {
       final String[] dirtyFiles;
       synchronized (myDirtyFiles) {
