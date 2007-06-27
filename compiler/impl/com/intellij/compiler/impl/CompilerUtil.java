@@ -107,16 +107,6 @@ public class CompilerUtil {
     }
   }
 
-  public static void refreshVirtualFiles(final Collection<VirtualFile> files) {
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (files.size() < 10) {
-      fs.refreshFiles(files);
-    }
-    else {
-      fs.refresh(false);
-    }
-  }
-
   public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed) {
     // need to specify default encoding so that javac outputs messages in 'correct' language
     //noinspection HardCodedStringLiteral

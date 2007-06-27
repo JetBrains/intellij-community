@@ -486,7 +486,7 @@ public class CompileDriver {
       for (VirtualFile output : context.getAllOutputDirectories()) {
         walkChildren(output);
       }
-      CompilerUtil.refreshVirtualFiles(Arrays.asList(context.getAllOutputDirectories()));
+      RefreshQueue.getInstance().refresh(false, true, null, context.getAllOutputDirectories());
       
       boolean didSomething = false;
 
@@ -1510,7 +1510,7 @@ public class CompileDriver {
         for (FileProcessingCompiler.ProcessingItem aProcessed : processed) {
           vFiles.add(aProcessed.getFile());
         }
-        CompilerUtil.refreshVirtualFiles(vFiles);
+        LocalFileSystem.getInstance().refreshFiles(vFiles);
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             for (FileProcessingCompiler.ProcessingItem item : processed) {
