@@ -8,6 +8,6 @@ import com.intellij.testFramework.InspectionTestCase;
  */
 public abstract class IGInspectionTestCase extends InspectionTestCase {
   protected String getTestDataPath() {
-      return PathManager.getHomePath() + "/plugins/InspectionGadgets/test";
+      return PathManager.getHomePath() + "/svnPlugins/InspectionGadgets/test";
   }
 }
