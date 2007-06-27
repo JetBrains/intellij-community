@@ -39,6 +39,7 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#getUrl
    * @see VirtualFileManager#getFileSystem
    */
+  @NonNls
   public abstract String getProtocol();
 
   /**
