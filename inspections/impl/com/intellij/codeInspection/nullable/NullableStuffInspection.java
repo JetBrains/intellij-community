@@ -191,8 +191,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
           if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL &&
-              !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false) &&
-              !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NULLABLE, false) &&
+              !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS) &&
               AnnotationUtil.isAnnotated(superParameter, AnnotationUtil.NOT_NULL, false)) {
             reported_not_annotated_parameter_overrides_notnull[i] = true;
             holder.registerProblem(parameter.getNameIdentifier(),
@@ -234,6 +233,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
               if (parameterAnnotated[i] && !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false)) {
+                parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], AnnotationUtil.NOT_NULL);
                 holder.registerProblem(annotation,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
