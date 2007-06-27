@@ -145,7 +145,7 @@ public class CompletionActionTest extends ActionTestCase {
       ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
       final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
       for (LookupItem item : items) {
-        if (CompletionUtil.checkName(item.getLookupString(), context, false)) {
+        if (CompletionUtil.checkName(item, context, false)) {
           lookupItems.add(item);
         }
       }
