@@ -461,7 +461,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean applyInstanceofOrNull(DfaRelationValue dfaCond) {
-    DfaVariableValue dfaVar = (DfaVariableValue)dfaCond.getLeftOperand();
+    DfaValue left = dfaCond.getLeftOperand();
+    if (left instanceof DfaBoxedValue) {
+      left = ((DfaBoxedValue)left).getWrappedValue();
+    }
+    else if (left instanceof DfaUnboxedValue) {
+      left = ((DfaUnboxedValue)left).getVariable();
+    }
+
+    DfaVariableValue dfaVar = (DfaVariableValue)left;
     DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
     final DfaVariableState varState = getVariableState(dfaVar);
