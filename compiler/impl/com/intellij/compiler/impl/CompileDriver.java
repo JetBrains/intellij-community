@@ -1479,9 +1479,15 @@ public class CompileDriver {
       if (LOG.isDebugEnabled()) {
         if (!urlsToRemove.isEmpty()) {
           LOG.debug("Found urls to remove, compiler " + adapter.getCompiler().getDescription());
+          for (String url : urlsToRemove) {
+            LOG.debug("\t" + url);
+          }
         }
         if (!toProcess.isEmpty()) {
           LOG.debug("Found items to compile, compiler " + adapter.getCompiler().getDescription());
+          for (FileProcessingCompiler.ProcessingItem item : toProcess) {
+            LOG.debug("\t" + item.getFile().getPresentableUrl());
+          }
         }
       }
       throw new ExitException(ExitStatus.CANCELLED);
