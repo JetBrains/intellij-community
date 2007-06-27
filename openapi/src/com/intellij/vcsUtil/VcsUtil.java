@@ -209,13 +209,16 @@ public class VcsUtil {
 
   @Nullable
   public static AbstractVcs getVcsFor(final Project project, final FilePath file) {
-    final AbstractVcs[] vcss = new AbstractVcs[1];
+    final AbstractVcs[] vcss = new AbstractVcs[ 1 ];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        vcss[0] = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+        ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
+        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
+        //  a future task after the component has been disposed.
+        vcss[ 0 ] = (mgr != null) ? mgr.getVcsFor(file) : null;
       }
     });
-    return vcss[0];
+    return vcss[ 0 ];
   }
 
   @Nullable
@@ -223,7 +226,7 @@ public class VcsUtil {
     final AbstractVcs[] vcss = new AbstractVcs[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        vcss[0] = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+        vcss[0] = ProjectLevelVcsManager.getInstance( project ).getVcsFor( file );
       }
     });
     return vcss[0];
@@ -234,7 +237,7 @@ public class VcsUtil {
     final VirtualFile[] roots = new VirtualFile[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        roots[0] = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+        roots[0] = ProjectLevelVcsManager.getInstance( project ).getVcsRootFor( file );
       }
     });
     return roots[0];
