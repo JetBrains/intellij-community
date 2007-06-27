@@ -7,6 +7,7 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -23,19 +24,20 @@ public class CompilerDirectoryTimestamp extends FileAttribute {
   private static final CompilerDirectoryTimestamp INSTANCE = new CompilerDirectoryTimestamp();
 
   private CompilerDirectoryTimestamp() {
-    super("_compiler_stamp_", 1);
+    super("_compiler_stamp_", 2);
   }
 
   public static boolean isUpToDate(Collection<VirtualFile> files) {
     try {
+      final ManagingFS managingFS = ManagingFS.getInstance();
       for (VirtualFile file : files) {
         final DataInputStream stream = INSTANCE.readAttribute(file);
         if (stream == null) {
           return false;
         }
         try {
-          final long savedStamp = stream.readLong();
-          if (savedStamp != file.getTimeStamp()) {
+          final int savedStamp = stream.readInt();
+          if (savedStamp != managingFS.getModificationCount(file)) {
             return false;
           }
         }
@@ -53,10 +55,11 @@ public class CompilerDirectoryTimestamp extends FileAttribute {
   
   public static void updateTimestamp(Collection<VirtualFile> files) {
     try {
+      final ManagingFS managingFS = ManagingFS.getInstance();
       for (VirtualFile file : files) {
         final DataOutputStream stream = INSTANCE.writeAttribute(file);
         try {
-          stream.writeLong(file.getTimeStamp());
+          stream.writeInt(managingFS.getModificationCount(file));
         }
         finally {
           stream.close();

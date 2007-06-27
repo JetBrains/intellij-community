@@ -588,7 +588,7 @@ public class CompileDriver {
 
   private static void walkChildren(VirtualFile from) {
     final VirtualFile[] files = from.getChildren();
-    if (files != null) {
+    if (files != null && files.length > 0) {
       for (VirtualFile file : files) {
         walkChildren(file);
       }
