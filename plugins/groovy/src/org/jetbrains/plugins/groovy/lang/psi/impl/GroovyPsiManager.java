@@ -154,6 +154,8 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   private void addDefaultMethod(PsiMethod method, boolean isStatic) {
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return;
+
     PsiParameter[] parameters = method.getParameterList().getParameters();
     LOG.assertTrue(parameters.length > 0);
     PsiType thisType = parameters[0].getType();

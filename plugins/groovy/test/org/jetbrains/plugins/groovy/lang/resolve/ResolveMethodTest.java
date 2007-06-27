@@ -101,6 +101,15 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof DefaultGroovyMethod);
   }
 
+  public void testGrvy111() throws Exception {
+    PsiReference ref = configureByFile("grvy111/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertEquals(0, ((PsiMethod) resolved).getParameterList().getParametersCount());
+    assertTrue(((PsiMethod) resolved).hasModifierProperty(PsiModifier.PUBLIC));
+  }
+
   public void testScriptMethod() throws Exception {
    PsiReference ref = configureByFile("scriptMethod/A.groovy");
    PsiElement resolved = ref.resolve();

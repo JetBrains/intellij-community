@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 
 /**
  * @author ven
@@ -42,6 +43,11 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       StringBuffer buffer = new StringBuffer();
+
+      if (method instanceof DefaultGroovyMethod) {
+        buffer.append("[GDK] ");
+      }
+
       if (!method.isConstructor()) {
         appendTypeString(buffer, method.getReturnType());
         buffer.append(" ");

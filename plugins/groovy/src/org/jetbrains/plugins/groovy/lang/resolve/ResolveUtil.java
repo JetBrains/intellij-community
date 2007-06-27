@@ -114,7 +114,7 @@ public class ResolveUtil {
   }
 
   private static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project,  Set<String> visited) {
-    String qName = type.getCanonicalText();
+    String qName = rawCanonicalText(type);
 
     if (qName != null) {
       if (visited.contains(qName)) return true;
@@ -130,6 +130,13 @@ public class ResolveUtil {
     }
 
     return true;
+  }
+
+  private static String rawCanonicalText(PsiType type) {
+    final String result = type.getCanonicalText();
+    final int i = result.indexOf('<');
+    if (i > 0) return result.substring(0, i);
+    return result;
   }
 
   public static PsiType getListTypeForSpreadOperator(GrReferenceExpression refExpr, PsiType componentType) {
