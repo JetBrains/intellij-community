@@ -145,6 +145,9 @@ public class CompileDriver {
   }
 
   public boolean isUpToDate(CompileScope scope) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("isUpToDate operation started");
+    }
     scope = addAdditionalRoots(scope);
 
     final CompilerTask task = new CompilerTask(myProject, true, "", true);
@@ -153,6 +156,9 @@ public class CompileDriver {
 
     checkCachesVersion(compileContext);
     if (compileContext.isRebuildRequested()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Rebuild requested, up-to-date=false");
+      }
       return false;
     }
 
@@ -168,6 +174,9 @@ public class CompileDriver {
       }
     });
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("isUpToDate operation finished");
+    }
 
     return ExitStatus.UP_TO_DATE.equals(status.get());
   }
@@ -444,6 +453,9 @@ public class CompileDriver {
       if (isRebuild) {
         deleteAll(context, outputDirectories);
         if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+          if (LOG.isDebugEnabled()) {
+            logErrorMessages(context);
+          }
           return ExitStatus.ERRORS;
         }
       }
@@ -452,6 +464,9 @@ public class CompileDriver {
         try {
           context.getProgressIndicator().pushState();
           if (!executeCompileTasks(context, true)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Compilation cancelled");
+            }
             return ExitStatus.CANCELLED;
           }
         }
@@ -461,6 +476,9 @@ public class CompileDriver {
       }
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+        if (LOG.isDebugEnabled()) {
+          logErrorMessages(context);
+        }
         return ExitStatus.ERRORS;
       }
       
@@ -498,6 +516,10 @@ public class CompileDriver {
                                                       forceCompile, true, onlyCheckStatus);
       }
       catch (ExitException e) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(e);
+          logErrorMessages(context);
+        }
         return e.getExitStatus();
       }
       finally {
@@ -539,6 +561,9 @@ public class CompileDriver {
       }
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+        if (LOG.isDebugEnabled()) {
+          logErrorMessages(context);
+        }
         return ExitStatus.ERRORS;
       }
       if (!didSomething) {
@@ -551,7 +576,17 @@ public class CompileDriver {
     }
   }
 
-  private void walkChildren(VirtualFile from) {
+  private static void logErrorMessages(final CompileContextImpl context) {
+    final CompilerMessage[] errors = context.getMessages(CompilerMessageCategory.ERROR);
+    if (errors.length > 0) {
+      LOG.debug("There were errors while deleting output directories");
+      for (CompilerMessage error : errors) {
+        LOG.debug("\t" + error.getMessage());
+      }
+    }
+  }
+
+  private static void walkChildren(VirtualFile from) {
     final VirtualFile[] files = from.getChildren();
     if (files != null) {
       for (VirtualFile file : files) {
@@ -924,6 +959,14 @@ public class CompileDriver {
       if ((toGenerate.isEmpty() && pathsToRemove.isEmpty())) {
         return false;
       }
+      if (LOG.isDebugEnabled()) {
+        if (!toGenerate.isEmpty()) {
+          LOG.debug("Found items to generate, compiler " + compiler.getDescription());
+        }
+        if (!pathsToRemove.isEmpty()) {
+          LOG.debug("Found paths to remove, compiler " + compiler.getDescription());
+        }
+      }
       throw new ExitException(ExitStatus.CANCELLED);
     }
 
@@ -1064,6 +1107,14 @@ public class CompileDriver {
       if (onlyCheckStatus) {
         if (toDelete.isEmpty() && toCompile.isEmpty()) {
           return false;
+        }
+        if (LOG.isDebugEnabled()) {
+          if (!toDelete.isEmpty()) {
+            LOG.debug("Found items to delete, compiler " + compiler.getDescription());
+          }
+          if (!toCompile.isEmpty()) {
+            LOG.debug("Found items to compile, compiler " + compiler.getDescription());
+          }
         }
         throw new ExitException(ExitStatus.CANCELLED);
       }
@@ -1424,6 +1475,14 @@ public class CompileDriver {
     if (onlyCheckStatus) {
       if (urlsToRemove.isEmpty() && toProcess.isEmpty()) {
         return false;
+      }
+      if (LOG.isDebugEnabled()) {
+        if (!urlsToRemove.isEmpty()) {
+          LOG.debug("Found urls to remove, compiler " + adapter.getCompiler().getDescription());
+        }
+        if (!toProcess.isEmpty()) {
+          LOG.debug("Found items to compile, compiler " + adapter.getCompiler().getDescription());
+        }
       }
       throw new ExitException(ExitStatus.CANCELLED);
     }
