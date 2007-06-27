@@ -162,6 +162,10 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, new HashSet<PsiMethod>());
+  }
+
+  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy, Set<PsiMethod> processed) {
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
       PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
@@ -181,9 +185,11 @@ public class AnnotationUtil {
     if (ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationFQN) != null) return true;
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;
+      if (processed.contains(method)) return false;
+      processed.add(method);
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
-        if (isAnnotated(superMethod, annotationFQN, checkHierarchy)) return true;
+        if (isAnnotated(superMethod, annotationFQN, checkHierarchy, processed)) return true;
       }
     }
     return false;
