@@ -600,7 +600,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     Object o = item.getObject();
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
-      int length = item.getLookupString().length();
+      final String lookupString = item.getLookupString();
+      int length = lookupString.length();
+      final int i = lookupString.indexOf('<');
+      if (i >= 0) length = i;
       final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
       shortenReference(file, newOffset);
       return newOffset;
