@@ -210,12 +210,16 @@ public class VcsUtil {
   @Nullable
   public static AbstractVcs getVcsFor(final Project project, final FilePath file) {
     final AbstractVcs[] vcss = new AbstractVcs[ 1 ];
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
         //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
         //  a future task after the component has been disposed.
-        vcss[ 0 ] = (mgr != null) ? mgr.getVcsFor(file) : null;
+        if( !project.isDisposed() )
+        {
+          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
+          vcss[ 0 ] = (mgr != null) ? mgr.getVcsFor(file) : null;
+        }
       }
     });
     return vcss[ 0 ];
@@ -224,12 +228,16 @@ public class VcsUtil {
   @Nullable
   public static AbstractVcs getVcsFor(final Project project, final VirtualFile file) {
     final AbstractVcs[] vcss = new AbstractVcs[1];
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
         //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
         //  a future task after the component has been disposed.
-        vcss[ 0 ] = (mgr != null) ? mgr.getVcsFor(file) : null;
+        if( !project.isDisposed() )
+        {
+          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
+          vcss[ 0 ] = (mgr != null) ? mgr.getVcsFor(file) : null;
+        }
       }
     });
     return vcss[0];
@@ -238,10 +246,16 @@ public class VcsUtil {
   @Nullable
   public static VirtualFile getVcsRootFor(final Project project, final FilePath file) {
     final VirtualFile[] roots = new VirtualFile[1];
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
-        roots[ 0 ] = (mgr != null) ? mgr.getVcsRootFor( file ) : null;
+        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
+        //  a future task after the component has been disposed.
+        if( !project.isDisposed() )
+        {
+          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
+          roots[ 0 ] = (mgr != null) ? mgr.getVcsRootFor( file ) : null;
+        }
       }
     });
     return roots[0];
