@@ -31,7 +31,7 @@ public class CreateClassFixTest {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.setTestDataPath(PathManager.getHomePath() + "/plugins/devkit/testData");
+    myFixture.setTestDataPath(PathManager.getHomePath() + "/svnPlugins/devkit/testData");
 
     testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
       .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());

@@ -44,7 +44,7 @@ public class ConfigurationsTest {
     myFixture = fixtureFactory.createTempDirTestFixture();
     myFixture.setUp();
 
-    FileUtil.copyDir(new File(PathManager.getHomePath() + "/plugins/testng/testData/runConfiguration/module1"),
+    FileUtil.copyDir(new File(PathManager.getHomePath() + "/svnPlugins/testng/testData/runConfiguration/module1"),
                      new File(myFixture.getTempDirPath()), false);
 
     myProjectFixture = testFixtureBuilder.getFixture();

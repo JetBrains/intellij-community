@@ -26,7 +26,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @NonNls
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/testng/testData/inspection";
+    return PathManager.getHomePath() + "/svnPlugins/testng/testData/inspection";
   }
 
   @DataProvider

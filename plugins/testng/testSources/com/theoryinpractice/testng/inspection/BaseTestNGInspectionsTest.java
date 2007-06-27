@@ -37,7 +37,7 @@ public abstract class BaseTestNGInspectionsTest {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.setTestDataPath(PathManager.getHomePath() + "/plugins/testng/testData");
+    myFixture.setTestDataPath(PathManager.getHomePath() + "/svnPlugins/testng/testData");
     final JavaModuleFixtureBuilder builder =
       (JavaModuleFixtureBuilder)testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
         .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
