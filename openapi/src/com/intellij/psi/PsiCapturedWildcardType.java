@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class PsiCapturedWildcardType extends PsiType {
-  private PsiWildcardType myExistential;
-  private PsiElement myContext;
+  private final PsiWildcardType myExistential;
+  private final PsiElement myContext;
 
   public boolean equals(final Object o) {
     if (!(o instanceof PsiCapturedWildcardType)) return false;

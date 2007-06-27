@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Manages virtual file systems
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
  * @see JarFileSystem
  */
 public abstract class VirtualFileManager {
-  public static Topic<BulkFileListener> VFS_CHANGES = new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
 
   /**
    * Gets the instance of <code>VirtualFileManager</code>.

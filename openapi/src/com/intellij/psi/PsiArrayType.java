@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PsiArrayType extends PsiType {
-  private PsiType myComponentType;
+  private final PsiType myComponentType;
 
   /**
    * Creates an array type with the specified component type.

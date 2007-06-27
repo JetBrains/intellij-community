@@ -15,8 +15,8 @@
  */
 package com.intellij.psi;
 
-import com.intellij.util.containers.Stack;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.util.containers.Stack;
 
 
 /**
@@ -26,7 +26,7 @@ import com.intellij.psi.jsp.JspFile;
 public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.
-  private Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
+  private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
 
   public void visitElement(PsiElement element) {
     if (myRefExprsInVisit.size() > 0 && myRefExprsInVisit.peek() == element) {

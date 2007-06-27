@@ -34,8 +34,6 @@ public abstract class PsiTreeChangeEvent extends EventObject {
 
   @NonNls public static final String PROP_FILE_TYPES = "propFileTypes";
 
-  protected PsiManager myManager;
-
   protected PsiElement myParent;
   protected PsiElement myOldParent;
   protected PsiElement myNewParent;
@@ -54,11 +52,6 @@ public abstract class PsiTreeChangeEvent extends EventObject {
 
   protected PsiTreeChangeEvent(PsiManager manager) {
     super(manager);
-    myManager = manager;
-  }
-
-  public PsiManager getManager(){
-    return myManager;
   }
 
   public PsiElement getParent() {

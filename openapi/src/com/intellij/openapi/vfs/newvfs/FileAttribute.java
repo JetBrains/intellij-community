@@ -17,7 +17,7 @@ import java.util.Set;
 
 public class FileAttribute {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.FileAttribute");
-  private static Set<String> ourRegisteredIds = new HashSet<String>();
+  private static final Set<String> ourRegisteredIds = new HashSet<String>();
   private final String myId;
   private final int myVersion;
 

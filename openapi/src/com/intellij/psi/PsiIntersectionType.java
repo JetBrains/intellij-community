@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 // Intersection types arise in the process of computing lub.
 public class PsiIntersectionType extends PsiType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiIntersectionType");
-  private PsiType[] myConjuncts;
+  private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(PsiType[] conjuncts) {
     LOG.assertTrue(conjuncts.length > 1);

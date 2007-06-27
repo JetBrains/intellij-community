@@ -17,9 +17,9 @@ package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Representation of Java type (primitive type, array or class type).
@@ -35,7 +35,7 @@ public abstract class PsiType {
   public static final PsiType BOOLEAN = PsiPrimitiveType.BOOLEAN;
   public static final PsiType VOID = PsiPrimitiveType.VOID;
   public static final PsiType NULL = PsiPrimitiveType.NULL;
-  public static PsiType[] EMPTY_ARRAY = new PsiType[0];
+  public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
 
   /**
    * Creates array type with this type as a component.
