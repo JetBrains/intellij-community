@@ -26,7 +26,14 @@ public class ChameleonTransforming implements Constants {
       LOG.debug("\"transforming chameleon:\" + chameleon + \" in \" + chameleon.parent");
     }
     final ASTNode parent = chameleon.getTreeParent();
-    if (parent == null) return null;
+    if (parent == null) {
+      // We have already transformed this, this is a race condition workaround. See, for instance CompositeElement.findChildAsPsiElement();
+      final TreeElement existingExpansion = chameleon.getExpandedTo();
+      if (existingExpansion != null && TreeUtil.getFileElement(existingExpansion) != null) return existingExpansion;
+      
+      return null;
+    }
+
     parent.getTextLength();
     PsiFileImpl file = (PsiFileImpl)TreeUtil.getFileElement((TreeElement)parent).getPsi();
     if (file == null) return null;
