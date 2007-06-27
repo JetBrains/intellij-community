@@ -76,14 +76,16 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     RangeHighlighter lineMarker = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(
       lineIndex, HighlighterLayer.ERROR + 1, null);
     if (lineMarker == null) return;
-    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, getAutoDescription(editor), number);
+    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, getAutoDescription(editor, lineIndex), number);
     myEditorBookmarks.addBookmark(bookmark);
   }
 
-  public static String getAutoDescription(final Editor editor) {
+  public static String getAutoDescription(final Editor editor, final int lineIndex) {
     String autoDescription = editor.getSelectionModel().getSelectedText();
     if ( autoDescription == null ) {
-      return "";
+      Document document = editor.getDocument();
+      autoDescription = document.getCharsSequence()
+        .subSequence(document.getLineStartOffset(lineIndex), document.getLineEndOffset(lineIndex)).toString().trim();
     }
     if ( autoDescription.length () > MAX_AUTO_DESCRIPTION_SIZE) {
       return autoDescription.substring(0, MAX_AUTO_DESCRIPTION_SIZE)+"...";
