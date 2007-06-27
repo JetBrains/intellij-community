@@ -81,18 +81,14 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
                     final String classQName = qName.substring(0, i);
                     PsiClass clazz = getManager().findClass(classQName, getResolveScope());
                     if (clazz != null) {
-                      if (nameHint == null) {
-                        return processAllMembers(processor, substitutor, clazz);
-                      } else {
-                        final String refName = ref.getReferenceName();
-                        final PsiField field = clazz.findFieldByName(refName, false);
-                        if (field != null && field.hasModifierProperty(PsiModifier.STATIC) &&
-                            !processor.execute(field, substitutor)) return false;
+                      final String refName = ref.getReferenceName();
+                      final PsiField field = clazz.findFieldByName(refName, false);
+                      if (field != null && field.hasModifierProperty(PsiModifier.STATIC) &&
+                          !processor.execute(field, substitutor)) return false;
 
-                        for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
-                          if (method.hasModifierProperty(PsiModifier.STATIC) &&
-                              !processor.execute(method, substitutor)) return false;
-                        }
+                      for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
+                        if (method.hasModifierProperty(PsiModifier.STATIC) &&
+                            !processor.execute(method, substitutor)) return false;
                       }
                     }
                   }

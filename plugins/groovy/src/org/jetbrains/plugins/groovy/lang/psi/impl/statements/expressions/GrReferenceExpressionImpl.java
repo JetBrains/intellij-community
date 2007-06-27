@@ -57,6 +57,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -428,7 +429,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     String[] properties = addPretendedProperties(elements);
-    return ArrayUtil.mergeArrays(elements, properties, Object.class);
+    final Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
+    return ArrayUtil.mergeArrays(variants, properties, Object.class);
   }
 
   private void getVariantsFromQualifierForSpreadOperator(ResolverProcessor processor, GrExpression qualifier) {
