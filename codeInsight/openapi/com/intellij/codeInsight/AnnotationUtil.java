@@ -71,20 +71,6 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String annotationName) {
-    final PsiModifierList list = listOwner.getModifierList();
-    if (list == null) return null;
-    final PsiAnnotation[] allAnnotations = list.getAnnotations();
-    for (PsiAnnotation annotation : allAnnotations) {
-      String qualifiedName = annotation.getQualifiedName();
-      if (annotationName.equals(qualifiedName)) {
-        return annotation;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String... annotationNames) {
     return findAnnotation(listOwner, new HashSet<String>(Arrays.asList(annotationNames)));
   }
@@ -115,7 +101,7 @@ public class AnnotationUtil {
     for (String annotationName : annotationNames) {
       final PsiAnnotation annotation = ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationName);
       if (annotation != null) {
-        return null;
+        return annotation;
       }
     }
     return null;

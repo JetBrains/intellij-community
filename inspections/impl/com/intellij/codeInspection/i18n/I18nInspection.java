@@ -413,9 +413,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing() &&
             manager.findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
           for(PsiModifierListOwner element: nonNlsTargets) {
-            if (manager.isInProject(element)) {
-              fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
-            }
+            fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
           }
         }
 
@@ -606,8 +604,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
                                                        new HashMap<String, Object>(), null);
       }
     }
-    final PsiModifierList modifierList = parent.getModifierList();
-    return modifierList != null && modifierList.findAnnotation(AnnotationUtil.NON_NLS) != null;
+    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false);
   }
 
   private static boolean isInNonNlsEquals(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
@@ -717,25 +714,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
     if (method == null) return false;
 
-    if (isMethodAnnotated(method, new HashSet<PsiMethod>(), AnnotationUtil.NON_NLS)) {
+    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, true)) {
       return true;
     }
     nonNlsTargets.add(method);
-    return false;
-  }
-
-  private static boolean isMethodAnnotated(final PsiMethod method, Collection<PsiMethod> processed, final String annFqn) {
-    if (processed.contains(method)) return false;
-    processed.add(method);
-
-    if (method.getModifierList().findAnnotation(annFqn) != null) return true;
-
-
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    for (PsiMethod superMethod : superMethods) {
-      if (isMethodAnnotated(superMethod, processed, annFqn)) return true;
-    }
-
     return false;
   }
 
