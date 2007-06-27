@@ -161,6 +161,11 @@ public class LookupItemUtil{
       }
 
       if (dim > 0) {
+        final StringBuilder tail = new StringBuilder();
+        for (int i = 0; i < dim; i++) {
+          tail.append("[]");
+        }
+        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
         item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
         item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, dim);
       }

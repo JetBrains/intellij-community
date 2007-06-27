@@ -20,9 +20,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.ui.RowIcon;
 import com.intellij.ui.StrikeoutLabel;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 
@@ -107,7 +109,7 @@ class LookupCellRenderer implements ListCellRenderer {
 
     final LookupItem[] items = lookup.getItems();
     if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
-    
+
     for (LookupItem item : items) {
       if (!(item.getObject() instanceof Template)) {
         myHasNonTemplates = true;
@@ -373,7 +375,7 @@ class LookupCellRenderer implements ListCellRenderer {
       text = ((LookupValueWithUIHint)o).getTypeHint();
     }
     else {
-      text = (String)item.getAttribute(LookupItem.TYPE_TEXT_ATTR); 
+      text = (String)item.getAttribute(LookupItem.TYPE_TEXT_ATTR);
     }
     return text;
   }
@@ -409,6 +411,9 @@ class LookupCellRenderer implements ListCellRenderer {
         }
       }
     }
+    else if (o instanceof PsiArrayType){
+      name = ((PsiArrayType)o).getDeepComponentType().getPresentableText();
+    }
     else if (o instanceof PsiType){
       name = ((PsiType)o).getPresentableText();
     }
@@ -441,26 +446,31 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private Icon getIcon(LookupItem item){
-    Icon iconAttr = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
-    if (iconAttr != null) return iconAttr;
-    Icon icon = null;
-    Object o = item.getObject();
+    Icon icon = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
+    if (icon == null) {
+      Object o = item.getObject();
 
-    if (o instanceof Iconable && !(o instanceof PsiElement)) {
-      icon = ((Iconable)o).getIcon(ICON_FLAGS);
-    } else {
-      if (o instanceof LookupValueWithPsiElement) {
-        o = ((LookupValueWithPsiElement)o).getElement();
-      }
-      if (o instanceof PsiElement) {
-        final PsiElement element = (PsiElement)o;
-        if (element.isValid()) {
-          icon = element.getIcon(ICON_FLAGS);
+      if (o instanceof Iconable && !(o instanceof PsiElement)) {
+        icon = ((Iconable)o).getIcon(ICON_FLAGS);
+      } else {
+        if (o instanceof LookupValueWithPsiElement) {
+          o = ((LookupValueWithPsiElement)o).getElement();
+        }
+        if (o instanceof PsiElement) {
+          final PsiElement element = (PsiElement)o;
+          if (element.isValid()) {
+            icon = element.getIcon(ICON_FLAGS);
+          }
         }
       }
     }
     if (icon == null){
       icon = EMPTY_ICON;
+    } else if (icon.getIconWidth() < EMPTY_ICON.getIconWidth()) {
+      final RowIcon rowIcon = new RowIcon(2);
+      rowIcon.setIcon(icon, 0);
+      rowIcon.setIcon(new EmptyIcon(EMPTY_ICON.getIconWidth() - icon.getIconWidth()), 1);
+      icon = rowIcon;
     }
     return icon;
   }
