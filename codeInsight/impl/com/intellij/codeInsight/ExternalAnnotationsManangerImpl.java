@@ -105,6 +105,7 @@ public class ExternalAnnotationsManangerImpl extends ExternalAnnotationsManager 
             annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, virtualFiles[0], packageName));
           }
           else {
+            if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
                 final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -129,9 +130,10 @@ public class ExternalAnnotationsManangerImpl extends ExternalAnnotationsManager 
     }
   }
 
-  public boolean useExternalAnnotations(@NotNull final PsiFile file) {
-    final Project project = file.getProject();
-    final VirtualFile virtualFile = file.getVirtualFile();
+  public boolean useExternalAnnotations(@NotNull final PsiElement element) {
+    if (!element.getManager().isInProject(element)) return true;
+    final Project project = element.getProject();
+    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
     for (OrderEntry entry : entries) {

@@ -95,7 +95,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
       final PsiModifierList modifierList = myModifierListOwner.getModifierList();
       LOG.assertTrue(modifierList != null);
       if (modifierList.findAnnotation(myFQN) != null) return;
-      if (annotationsManager.useExternalAnnotations(file)) {
+      if (annotationsManager.useExternalAnnotations(myModifierListOwner)) {
         annotationsManager.annotateExternally(myModifierListOwner, myFQN);
       }
       else {

@@ -6,7 +6,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +23,6 @@ public abstract class ExternalAnnotationsManager {
 
   public abstract void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName);
 
-  public abstract boolean useExternalAnnotations(final PsiFile file);
+  public abstract boolean useExternalAnnotations(final PsiElement element);
 
 }
