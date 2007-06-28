@@ -15,25 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
-import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.util.IncorrectOperationException;
-
-
-import java.io.IOException;
-import java.util.*;
+import junit.framework.Test;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ilyas
@@ -54,5 +39,9 @@ public class KeywordCompletionTest extends CompletionTestBase {
 
   protected LookupItem[] getAcceptableItems(CompletionData data) {
     return getAcceptableItemsImpl(data, true, false);
+  }
+
+  public static Test suite() {
+    return new KeywordCompletionTest();
   }
 }
