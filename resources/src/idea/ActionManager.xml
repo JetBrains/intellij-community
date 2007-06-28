@@ -574,6 +574,7 @@
           <separator/>
           <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
                   text="Mark File Dirty"/>
+          <action id="DumpIntentions" internal="true" class="com.intellij.internalUtilities.DumpIntentionsAction" text="Dupm Intentions"/>
         </group>
       </group>
 
