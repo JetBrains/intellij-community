@@ -147,6 +147,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void projectClosed() {
     myDisposed = true;
     ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
+    if (myUpdateChangesProgressIndicator != null) {
+      myUpdateChangesProgressIndicator.cancel();
+    }
     cancelUpdates();
     synchronized(myPendingUpdatesLock) {
       waitForUpdateDone(null);
@@ -154,9 +157,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void cancelUpdates() {
-    if (myUpdateChangesProgressIndicator != null) {
-      myUpdateChangesProgressIndicator.cancel();
-    }
     if (myCurrentUpdate != null) {
       myCurrentUpdate.cancel(false);
       myCurrentUpdate = null;
@@ -312,15 +312,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   processChangeInList( change, (ChangeList)null );
                 }
 
-                public void processChangeInList(final Change change, final String changeListName ) {
+                public void processChangeInList(final Change change, final String changeListName) {
                   LocalChangeList list = null;
-                  if( changeListName != null ){
-                    list = findChangeList( changeListName );
-                    if( list == null ){
-                      list = addChangeList( changeListName, null );
+                  if (changeListName != null) {
+                    list = findChangeList(changeListName);
+                    if (list == null) {
+                      list = addChangeList(changeListName, null);
                     }
                   }
-                  processChangeInList( change, list );
+                  processChangeInList(change, list);
                 }
 
                 public void processChangeInList(final Change change, final ChangeList changeList) {

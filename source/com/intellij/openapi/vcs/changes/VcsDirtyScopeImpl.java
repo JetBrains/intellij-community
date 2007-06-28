@@ -34,7 +34,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private AbstractVcs myVcs;
+  private final AbstractVcs myVcs;
 
   public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {
     myProject = project;
