@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -141,10 +140,6 @@ public class CompletionActionTest extends ActionTestCase {
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, context, insertedElement);
         CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-        final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
-        if (ref != null) {
-          completionData.completeReference(ref, lookupSet, context, insertedElement);
-        }
       }
 
       ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
