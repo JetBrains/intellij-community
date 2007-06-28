@@ -28,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 /**
  * @author ilyas
  */
-public class GrUnaryExprImpl extends GrExpressionImpl implements GrUnaryExpression {
+public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
   private static final String PATTERN_FQ_NAME = "java.util.regex.Pattern";
 
-  public GrUnaryExprImpl(@NotNull ASTNode node) {
+  public GrUnaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -44,11 +44,16 @@ public class GrUnaryExprImpl extends GrExpressionImpl implements GrUnaryExpressi
     GrExpression operand = getOperand();
     if (operand == null) return null;
     PsiType opType = operand.getType();
+    if (opToken == GroovyTokenTypes.mINC || opToken == GroovyTokenTypes.mDEC) {
+      return TypesUtil.getTypeForIncOrDecExpression(this);
+    }
+    
     if (opToken == GroovyTokenTypes.mBNOT) {
       if (opType.equalsToText("java.lang.String")) {
         return getTypeByFQName(PATTERN_FQ_NAME);
       }
     }
+
     return opType;
   }
 

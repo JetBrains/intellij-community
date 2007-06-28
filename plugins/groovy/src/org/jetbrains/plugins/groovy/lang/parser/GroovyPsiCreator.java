@@ -206,7 +206,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(MULTIPLICATIVE_EXPRESSION)) return new GrMultiplicativeExprImpl(node);
     if (elem.equals(POWER_EXPRESSION)) return new GrPowerExprImpl(node);
     if (elem.equals(POWER_EXPRESSION_SIMPLE)) return new GrPowerExprImpl(node);
-    if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExprImpl(node);
+    if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExpressionImpl(node);
     if (elem.equals(POSTFIX_EXPRESSION)) return new GrPostfixExprImpl(node);
     if (elem.equals(CAST_EXPRESSION)) return new GrTypeCastExpressionImpl(node);
     if (elem.equals(TYPE_CAST)) return new GrTypeCastImpl(node);

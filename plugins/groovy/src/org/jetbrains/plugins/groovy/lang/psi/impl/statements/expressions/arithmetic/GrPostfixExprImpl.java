@@ -19,13 +19,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrPostfixExprImpl extends GrExpressionImpl implements GrPostfixExpression {
+public class GrPostfixExprImpl extends GrUnaryExpressionImpl implements GrPostfixExpression {
 
   public GrPostfixExprImpl(@NotNull ASTNode node) {
     super(node);
@@ -36,6 +34,7 @@ public class GrPostfixExprImpl extends GrExpressionImpl implements GrPostfixExpr
   }
 
   public PsiType getType() {
-    return null;
+    return TypesUtil.getTypeForIncOrDecExpression(this);
   }
+
 }

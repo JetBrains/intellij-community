@@ -8,10 +8,12 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.Map;
@@ -38,14 +40,19 @@ public class TypesUtil {
       return binaryExpression.getManager().getElementFactory().createTypeByFQClassName(RANK_TO_TYPE.get(resultRank), binaryExpression.getResolveScope());
     }
 
-    if (lType instanceof PsiClassType) {
-      final PsiClass lClass = ((PsiClassType) lType).resolve();
+    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType}, ourBinaryOperationsToOperatorNames);
+  }
+
+  public static PsiType getOverloadedOperatorType(PsiType thisType, IElementType tokenType,
+                                                  GroovyPsiElement place, PsiType[] argumentTypes,
+                                                  Map<IElementType, String> map) {
+    if (thisType instanceof PsiClassType) {
+      final PsiClass lClass = ((PsiClassType) thisType).resolve();
       if (lClass != null) {
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        final String operatorName = ourBinaryOperationsToOperatorNames.get(tokenType);
+        final String operatorName = map.get(tokenType);
         if (operatorName != null) {
-          MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, binaryExpression, false, false, new PsiType[]{rType});
-          lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, binaryExpression);
+          MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes);
+          lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place);
           final GroovyResolveResult[] candidates = processor.getCandidates();
           if (candidates.length == 1) {
             final PsiElement element = candidates[0].getElement();
@@ -72,6 +79,12 @@ public class TypesUtil {
     ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
     ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
     ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
+  }
+
+  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
+  static  {
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
+    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
@@ -136,7 +149,7 @@ public class TypesUtil {
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 
-  private static boolean isNumericType(PsiType type) {
+  public static boolean isNumericType(PsiType type) {
     if (type instanceof PsiClassType) {
       return TYPE_TO_RANK.contains(type.getCanonicalText());
     }
@@ -179,5 +192,23 @@ public class TypesUtil {
     }
 
     return result;
+  }
+
+  static PsiType getTypeForIncOrDecExpression(GrUnaryExpression expr) {
+    final GrExpression op = expr.getOperand();
+    if (op != null) {
+      final PsiType opType = op.getType();
+      if (opType != null) {
+        final PsiType overloaded = getOverloadedOperatorType(opType, expr.getOperationTokenType(), expr, PsiType.EMPTY_ARRAY, ourUnaryOperationsToOperatorNames);
+        if (overloaded != null) {
+          return overloaded;
+        }
+        if (isNumericType(opType)) {
+          return opType;
+        }
+      }
+    }
+
+    return null;
   }
 }
