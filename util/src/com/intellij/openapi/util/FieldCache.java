@@ -18,11 +18,13 @@ public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
     T result;
 
     r.lock();
-
-    result = getValue(owner,a);
+    try {
+      result = getValue(owner,a);
+    } finally {
+      r.unlock();
+    }
 
     if (result == null) {
-      r.unlock();
       w.lock();
 
       try {
@@ -36,10 +38,6 @@ public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
         w.unlock();
       }
     }
-    else {
-      r.unlock();
-    }
-
     return result;
   }
 
