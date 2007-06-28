@@ -254,8 +254,8 @@ public class ExternalAnnotationsManangerImpl extends ExternalAnnotationsManager 
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile != null) {
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-        for (OrderEntry entry : entries) {
-          final VirtualFile[] externalFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
+        if (!entries.isEmpty()) {
+          final VirtualFile[] externalFiles = entries.get(0).getFiles(OrderRootType.ANNOTATIONS);
           for (VirtualFile file : externalFiles) {
             final VirtualFile ext = file.getFileSystem().findFileByPath(file.getPath() + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
             if (ext != null) {
