@@ -85,7 +85,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public String[] listPersisted(final VirtualFile file) {
-    int id = getFileId(file);
+    return listPersisted(getFileId(file));
+  }
+
+  private String[] listPersisted(final int id) {
     final int[] childrenIds = myRecords.list(id);
     String[] names = new String[childrenIds.length];
     for (int i = 0; i < childrenIds.length; i++) {
@@ -609,8 +612,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private void setFlag(VirtualFile file, int mask, boolean value) {
-    final int id = getFileId(file);
+    setFlag(getFileId(file), mask, value);
+  }
 
+  private void setFlag(final int id, final int mask, final boolean value) {
     int oldFlags = myRecords.getFlags(id);
     int flags = value ? (oldFlags | mask) : (oldFlags & (~mask));
 
@@ -652,5 +657,28 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public String getName(final int id) {
     return myRecords.getName(id);
+  }
+
+  public void cleanPersistedContents() {
+    try {
+      final int[] roots = myRecords.listRoots();
+      for (int root : roots) {
+        cleanPersistedContentsRecursively(root);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void cleanPersistedContentsRecursively(int id) {
+    if (isDirectory(id)) {
+      for (int child : myRecords.list(id)) {
+        cleanPersistedContentsRecursively(child);
+      }
+    }
+    else {
+      setFlag(id, MUST_RELOAD_CONTENT, true);
+    }
   }
 }

@@ -280,6 +280,33 @@ public class FSRecords implements Disposable {
     myConnection.getRecords().putInt(HEADER_FREE_RECORD_OFFSET, id);
   }
 
+  public int[] listRoots() throws IOException {
+    w.lock();
+    try {
+      final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+      if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+
+      int[] result;
+      try {
+        final int count = input.readInt();
+        result = new int[count];
+        for (int i = 0; i < count; i++) {
+          input.readInt(); // Name
+          result[i] = input.readInt(); // Id
+        }
+      }
+      finally {
+        input.close();
+      }
+
+      return result;
+    }
+    finally{
+      w.unlock();
+    }
+  }
+
+
   public int findRootRecord(String rootUrl) throws IOException {
     w.lock();
     try {

@@ -34,6 +34,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -85,8 +87,17 @@ import java.util.HashSet;
   }
 
   protected void initApplication() throws Exception {
+    boolean firstTime = ourApplication == null;
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
+
+    if (firstTime) {
+      cleanPersistedVFSContent();
+    }
+  }
+
+  private static void cleanPersistedVFSContent() {
+    ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
   }
 
   protected void setUp() throws Exception {

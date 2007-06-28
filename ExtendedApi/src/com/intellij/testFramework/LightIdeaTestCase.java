@@ -40,6 +40,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -165,6 +167,10 @@ import java.util.Map;
     resetClassFields(aClass.getSuperclass());
   }
 
+  private static void cleanPersistedVFSContent() {
+    ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
+  }
+
 
   private static void initProject(final ProjectJdk projectJDK) throws Exception {
     final File projectFile = File.createTempFile("temp", ".ipr");
@@ -173,6 +179,9 @@ import java.util.Map;
       public void run() {
         if (ourProject != null) {
           ProjectUtil.closeProject(ourProject);
+        }
+        else {
+          cleanPersistedVFSContent();
         }
 
         ourProject = ProjectManagerEx.getInstanceEx().newProject(projectFile.getPath(), false, false);
