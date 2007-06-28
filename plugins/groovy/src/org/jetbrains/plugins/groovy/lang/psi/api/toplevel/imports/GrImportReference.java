@@ -15,15 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
 
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
  */
-public interface GrImportReference extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
-  String toString();
+public interface GrImportReference extends GroovyPsiElement {
 }

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 /**
  * @author ilyas
  */
-public interface GrImportStatement extends UserDataHolderEx, Cloneable, Iconable, NavigationItem, GrTopStatement {
+public interface GrImportStatement extends GrTopStatement {
   GrCodeReferenceElement getImportReference();
 
   String getImportedName();
