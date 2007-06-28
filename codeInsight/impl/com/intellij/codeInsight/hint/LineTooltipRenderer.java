@@ -79,34 +79,38 @@ public class LineTooltipRenderer implements TooltipRenderer {
       }
     });
 
-    int width = pane.getPreferredSize().width;
-
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     int widthLimit = layeredPane.getWidth() - 10;
     int heightLimit = layeredPane.getHeight() - 5;
 
-    String text = myText;
+    int width = pane.getPreferredSize().width;
+    int height = pane.getPreferredSize().height;
 
     if (alignToRight) {
-      p.x -= pane.getPreferredSize().width;
+      p.x -= width;
     }
 
     // try to make cursor outside tooltip. SCR 15038
     p.x += 3;
     p.y += 3;
-    width = pane.getPreferredSize().width;
+
     if (p.x + width >= widthLimit) {
       p.x = widthLimit - width;
+      width = widthLimit;
     }
+
     if (p.x < 3) {
       p.x = 3;
     }
 
-    final int height = pane.getPreferredSize().height;
     if (p.y + height > heightLimit) {
       p.y = heightLimit - height;
+      height = heightLimit;
     }
+
+    pane.setSize(width, height); //in order to restrict tooltip size
+
     final LightweightHint hint = new LightweightHint(pane);
     hintManager.showEditorHint(hint, editor, p,
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
