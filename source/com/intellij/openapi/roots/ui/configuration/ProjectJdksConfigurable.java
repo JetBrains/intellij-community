@@ -62,6 +62,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     super();
     myProject = project;
     myProjectJdksModel = ProjectJdksModel.getInstance(project);
+
+    initTree();
   }
 
   protected void initTree() {
