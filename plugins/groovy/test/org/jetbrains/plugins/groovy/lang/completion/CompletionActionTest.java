@@ -136,7 +136,7 @@ public class CompletionActionTest extends ActionTestCase {
       final CompletionContext context = new CompletionContext(project, myEditor, myFile, offset1, offset2);
       context.setPrefix(elem, context.startOffset, completionData);
 
-      if (lookupSet.size() == 0 || !CodeInsightUtil.isAntFile(myFile)) {
+      if (lookupSet.size() == 0) {
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, context, insertedElement);
         CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
