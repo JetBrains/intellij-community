@@ -286,14 +286,19 @@ public class ModelMergerImpl implements ModelMerger {
 
   @Nullable
   private static Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) {
-    if (implementation instanceof GenericValue) {
-      return singleValuedInvocation? Boolean.TRUE : ((GenericValue)implementation).getValue();
-    }
     final Method method = getPrimaryKeyMethod(implementation.getClass());
-    if (method == null) return null;
-
-    final Object o = DomReflectionUtil.invokeMethod(method, implementation);
-    return ReflectionCache.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+    if (method != null) {
+      final Object o = DomReflectionUtil.invokeMethod(method, implementation);
+      return ReflectionCache.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+    }
+    else {
+      if (implementation instanceof GenericValue) {
+        return singleValuedInvocation? Boolean.TRUE : ((GenericValue)implementation).getValue();
+      }
+      else {
+        return null;
+      }
+    }
   }
 
   @Nullable
