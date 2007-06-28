@@ -436,12 +436,6 @@ class LookupCellRenderer implements ListCellRenderer {
       name = "";
     }
 
-    if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){
-      if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
-        name = ((PsiMember)o).getContainingClass().getName() + "." + name;
-      }
-    }
-
     return name;
   }
 
