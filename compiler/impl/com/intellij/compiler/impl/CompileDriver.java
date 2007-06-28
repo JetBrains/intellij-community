@@ -1432,6 +1432,9 @@ public class CompileDriver {
       public void run() {
         for (FileProcessingCompiler.ProcessingItem item : items) {
           final VirtualFile file = item.getFile();
+          if (file == null) {
+            LOG.assertTrue(false, "FileProcessingCompiler.ProcessingItem.getFile() must not return null: compiler" + adapter.getCompiler().getDescription());
+          }
           final String url = file.getUrl();
           allUrls.add(url);
           if (!forceCompile && cache.getTimestamp(url) == file.getTimeStamp()) {
