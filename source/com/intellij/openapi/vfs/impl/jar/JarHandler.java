@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +70,19 @@ public class JarHandler implements FileSystemInterface {
       NewVirtualFile root = (NewVirtualFile)
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
       if (root != null) {
-        root.markDirtyRecursively();
-        /*RefreshQueue.getInstance().refresh(true, true, null, root);*/
+        root.markDirty();
+        try {
+          for (VirtualFile child : root.getChildren()) {
+            child.delete(this);
+          }
+
+          RefreshQueue.getInstance().refresh(false, true, null, root);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        // root.markDirtyRecursively();
+        /*;*/
       }
     }
     finally {

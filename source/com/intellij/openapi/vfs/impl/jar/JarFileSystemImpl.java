@@ -234,7 +234,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
-    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
