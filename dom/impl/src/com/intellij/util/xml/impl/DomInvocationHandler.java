@@ -368,13 +368,13 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   public final void initializeAllChildren() {
     myGenericInfo.buildMethodMaps();
     for (final XmlName s : myGenericInfo.getFixedChildrenNames()) {
-      checkInitialized(s.createEvaluatedXmlName(this));
+      checkInitialized(createEvaluatedXmlName(s));
     }
     for (final XmlName s : myGenericInfo.getCollectionChildrenNames()) {
-      checkInitialized(s.createEvaluatedXmlName(this));
+      checkInitialized(createEvaluatedXmlName(s));
     }
     for (final XmlName s : myGenericInfo.getAttributeChildrenNames()) {
-      checkInitialized(s.createEvaluatedXmlName(this));
+      checkInitialized(createEvaluatedXmlName(s));
     }
   }
 
@@ -541,11 +541,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final JavaMethodSignature method) {
     myGenericInfo.buildMethodMaps();
-    return getAttributeChild(myGenericInfo.getAttributeName(method).createEvaluatedXmlName(this));
+    return getAttributeChild(createEvaluatedXmlName(myGenericInfo.getAttributeName(method)));
   }
 
   @NotNull
-  final AttributeChildInvocationHandler getAttributeChild(final EvaluatedXmlName attributeName) {
+  private final AttributeChildInvocationHandler getAttributeChild(final EvaluatedXmlName attributeName) {
     checkInitialized(ATTRIBUTES);
     final AttributeChildInvocationHandler domElement = myAttributeChildren.get(attributeName);
     assert domElement != null : attributeName;
@@ -610,7 +610,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
       if (ATTRIBUTES == qname) {
         for (Map.Entry<XmlName, JavaMethodSignature> entry : myGenericInfo.getAttributeChildrenEntries()) {
-          getOrCreateAttributeChild(entry.getValue().findMethod(getRawType()), entry.getKey().createEvaluatedXmlName(this));
+          getOrCreateAttributeChild(entry.getValue().findMethod(getRawType()), createEvaluatedXmlName(entry.getKey()));
         }
       }
 
@@ -817,6 +817,15 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   public void setFixedChildClass(final EvaluatedXmlName tagName, final Class<? extends DomElement> aClass) {
     assert !isInitialized(tagName);
     myFixedChildrenClasses.put(tagName, aClass);
+  }
+
+  @NotNull
+  public EvaluatedXmlName createEvaluatedXmlName(final XmlName xmlName) {
+    String namespaceKey = xmlName.getNamespaceKey();
+    if (namespaceKey == null) {
+      namespaceKey = getXmlName().getNamespaceKey();
+    }
+    return new EvaluatedXmlName(xmlName, namespaceKey);
   }
 }
 

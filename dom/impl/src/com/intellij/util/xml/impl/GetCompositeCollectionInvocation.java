@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlName;
 
 import java.util.Set;
 import java.util.Collections;
@@ -24,7 +25,7 @@ class GetCompositeCollectionInvocation implements Invocation {
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     for (final XmlName qname : myQnames) {
-      handler.checkInitialized(qname.createEvaluatedXmlName(handler));
+      handler.checkInitialized(handler.createEvaluatedXmlName(qname));
     }
     final XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();

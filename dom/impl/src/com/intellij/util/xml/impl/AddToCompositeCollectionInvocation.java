@@ -7,6 +7,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.XmlName;
 
 import java.util.Set;
 import java.lang.reflect.Type;
@@ -33,7 +34,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
     }
 
     for (final XmlName qname : myQnames) {
-      handler.checkInitialized(qname.createEvaluatedXmlName(handler));
+      handler.checkInitialized(handler.createEvaluatedXmlName(qname));
     }
 
     final XmlTag tag = handler.ensureTagExists();
@@ -55,7 +56,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
     final DomManagerImpl manager = handler.getManager();
     final boolean b = manager.setChanging(true);
     try {
-      final EvaluatedXmlName evaluatedXmlName = myTagName.createEvaluatedXmlName(handler);
+      final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(myTagName);
       final XmlTag emptyTag = handler.createChildTag(evaluatedXmlName);
       final XmlTag newTag;
       if (lastTag == null) {

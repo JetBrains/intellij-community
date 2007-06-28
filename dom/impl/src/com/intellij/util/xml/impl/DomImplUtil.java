@@ -16,6 +16,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -115,11 +116,11 @@ public class DomImplUtil {
     });
   }
 
-  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, final DomInvocationHandler handler) {
-    return isNameSuitable(name.createEvaluatedXmlName(handler), tag, handler);
+  private static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler) {
+    return isNameSuitable(handler.createEvaluatedXmlName(name), tag, handler);
   }
 
-  public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final DomInvocationHandler handler) {
+  private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, @NotNull final DomInvocationHandler handler) {
     return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), handler);
   }
 

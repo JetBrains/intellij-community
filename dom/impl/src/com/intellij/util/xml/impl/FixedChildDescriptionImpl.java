@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   public void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     assert handler != null;
-    handler.setFixedChildClass(getXmlName().createEvaluatedXmlName(handler), aClass);
+    handler.setFixedChildClass(handler.createEvaluatedXmlName(getXmlName()), aClass);
   }
 
   @Nullable
@@ -57,7 +58,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @NotNull
-  public List<? extends DomElement> getValues(final DomElement element) {
+  public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     final ArrayList<DomElement> result = new ArrayList<DomElement>();
     for (JavaMethod method : myGetterMethods) {
       if (method != null) {
@@ -67,7 +68,8 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return result;
   }
 
-  public String getCommonPresentableName(DomNameStrategy strategy) {
+  @NotNull
+  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
   }
 

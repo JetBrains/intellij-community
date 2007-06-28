@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
@@ -232,7 +233,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final Class<T> rootElementClass = description.getRootElementClass();
     final XmlName xmlName = XmlName.create(description.getRootTagName(), rootElementClass, null);
     assert xmlName != null;
-    final EvaluatedXmlName rootTagName = xmlName.createEvaluatedXmlName(null);
+    final EvaluatedXmlName rootTagName = new EvaluatedXmlName(xmlName, xmlName.getNamespaceKey());
     myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName, myDomManager);
     computeCachedValue(dependencyItems);
 

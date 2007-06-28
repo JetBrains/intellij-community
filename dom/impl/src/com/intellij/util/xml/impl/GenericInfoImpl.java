@@ -668,7 +668,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   public DomChildDescriptionImpl findChildrenDescription(DomInvocationHandler handler, final String localName, String namespace, boolean attribute, final String qName) {
     for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
       if (description instanceof AttributeChildDescriptionImpl == attribute) {
-        final EvaluatedXmlName xmlName = description.getXmlName().createEvaluatedXmlName(handler);
+        final EvaluatedXmlName xmlName = handler.createEvaluatedXmlName(description.getXmlName());
         if (DomImplUtil.isNameSuitable(xmlName, localName, qName, namespace, handler)) {
           return description;
         }

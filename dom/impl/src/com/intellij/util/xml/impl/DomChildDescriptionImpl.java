@@ -9,6 +9,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,16 +30,18 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     myType = type;
   }
 
+  @NotNull
   public String getXmlElementName() {
     return myTagName.getLocalName();
   }
 
+  @NotNull
   public final XmlName getXmlName() {
     return myTagName;
   }
 
   @NotNull
-  public List<? extends DomElement> getStableValues(final DomElement parent) {
+  public List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
     final ArrayList<DomElement> result = new ArrayList<DomElement>(list.size());
     final DomManager domManager = parent.getManager();
@@ -57,19 +60,23 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     return result;
   }
 
+  @NotNull
   public Type getType() {
     return myType;
   }
 
-  public String getCommonPresentableName(DomElement parent) {
+  @NotNull
+  public String getCommonPresentableName(@NotNull DomElement parent) {
     return getCommonPresentableName(getDomNameStrategy(parent));
   }
 
-  public DomNameStrategy getDomNameStrategy(DomElement parent) {
+  @NotNull
+  public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myType), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 
+  @NotNull
   public final GenericInfoImpl getChildGenericInfo(Project project) {
     return DomManagerImpl.getDomManager(project).getGenericInfo(myType);
   }

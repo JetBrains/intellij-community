@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlName;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +26,7 @@ public class GetCollectionChildInvocation implements Invocation {
     XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    final EvaluatedXmlName xmlName = myQname.createEvaluatedXmlName(handler);
+    final EvaluatedXmlName xmlName = handler.createEvaluatedXmlName(myQname);
     handler.checkInitialized(xmlName);
     final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, xmlName, handler);
     if (subTags.isEmpty()) return Collections.emptyList();

@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

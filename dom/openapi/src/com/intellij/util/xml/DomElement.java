@@ -69,8 +69,10 @@ public interface DomElement extends AnnotatedElement{
   @NotNull
   DomManager getManager();
 
+  @NotNull
   Type getDomElementType();
 
+  @NotNull
   DomNameStrategy getNameStrategy();
 
   @NotNull

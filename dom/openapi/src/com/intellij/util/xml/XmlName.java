@@ -2,12 +2,9 @@
  * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.util.xml.impl;
+package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.xml.DomReflectionUtil;
-import com.intellij.util.xml.JavaMethod;
-import com.intellij.util.xml.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,15 +57,6 @@ public class XmlName implements Comparable<XmlName> {
     return result;
   }
 
-  @NotNull
-  public EvaluatedXmlName createEvaluatedXmlName(@Nullable DomInvocationHandler parent) {
-    String namespaceKey = myNamespaceKey;
-    if (namespaceKey == null && parent != null) {
-      namespaceKey = parent.getXmlName().getNamespaceKey();
-    }
-    return new EvaluatedXmlName(this, namespaceKey);
-  }
-
   @Nullable
   public static XmlName create(@NotNull String name, Type type, @Nullable JavaMethod javaMethod) {
     final Class<?> aClass = getErasure(type);
@@ -115,7 +103,7 @@ public class XmlName implements Comparable<XmlName> {
 
 
   @Nullable
-  public static String getNamespaceKey(@NotNull Class<?> type) {
+  private static String getNamespaceKey(@NotNull Class<?> type) {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(type, Namespace.class);
     return namespace != null ? namespace.value() : null;
   }

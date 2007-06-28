@@ -5,10 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +25,8 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     myGetterMethod = getter;
   }
 
-  public DomNameStrategy getDomNameStrategy(DomElement parent) {
+  @NotNull
+  public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), true);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
@@ -44,11 +42,12 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @NotNull
-  public List<? extends DomElement> getValues(DomElement parent) {
+  public List<? extends DomElement> getValues(@NotNull DomElement parent) {
     return Arrays.asList(getDomAttributeValue(parent));
   }
 
-  public String getCommonPresentableName(DomNameStrategy strategy) {
+  @NotNull
+  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     throw new UnsupportedOperationException("Method getCommonPresentableName is not yet implemented in " + getClass().getName());
   }
 

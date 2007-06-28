@@ -7,23 +7,41 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
 import java.util.List;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
  */
 public interface DomChildrenDescription extends AnnotatedElement {
-  String getXmlElementName();
+
   @NotNull
-  List<? extends DomElement> getValues(DomElement parent);
+  XmlName getXmlName();
+
   @NotNull
-  List<? extends DomElement> getStableValues(DomElement parent);
+  List<? extends DomElement> getValues(@NotNull DomElement parent);
+
+  @NotNull
   Type getType();
-  String getCommonPresentableName(DomNameStrategy strategy);
-  String getCommonPresentableName(DomElement parent);
-  DomNameStrategy getDomNameStrategy(DomElement parent);
+
+  @NotNull
+  String getXmlElementName();
+
+  @NotNull
+  List<? extends DomElement> getStableValues(@NotNull DomElement parent);
+
+  @NotNull
+  String getCommonPresentableName(@NotNull DomNameStrategy strategy);
+
+  @NotNull
+  String getCommonPresentableName(@NotNull DomElement parent);
+
+  @NotNull
+  DomNameStrategy getDomNameStrategy(@NotNull DomElement parent);
+
+  @NotNull
   DomGenericInfo getChildGenericInfo(Project project);
 }

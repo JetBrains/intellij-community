@@ -9,6 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     try {
       final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
       assert handler != null;
-      return handler.addChild(getXmlName().createEvaluatedXmlName(handler), type, index);
+      return handler.addChild(handler.createEvaluatedXmlName(getXmlName()), type, index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
@@ -100,11 +101,12 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @NotNull
-  public List<? extends DomElement> getValues(final DomElement element) {
+  public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     return (List<? extends DomElement>)myGetterMethod.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
-  public String getCommonPresentableName(DomNameStrategy strategy) {
+  @NotNull
+  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     String words = strategy.splitIntoWords(getXmlElementName());
     return StringUtil.capitalizeWords(words.endsWith(ES) ? words: StringUtil.pluralize(words), true);
   }
