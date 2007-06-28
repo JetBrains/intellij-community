@@ -21,6 +21,8 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -115,8 +117,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   public Object[] getVariants() {
+    return getVariantsImpl(getKind());
+  }
+
+  private Object[] getVariantsImpl(ReferenceKind kind) {
     PsiManager manager = getManager();
-    final ReferenceKind kind = getKind();
     switch (kind) {
       case STATIC_MEMBER_FQ:
       {
@@ -167,7 +172,31 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         }
       }
 
-      case CONSTRUCTOR: //todo
+      case CONSTRUCTOR: {
+        final Object[] classVariants = getVariantsImpl(CLASS);
+        List<Object> result = new ArrayList<Object>();
+        for (Object variant : classVariants) {
+          if (variant instanceof PsiClass) {
+            final PsiClass clazz = (PsiClass) variant;
+            final LookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
+            GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement);
+            result.add(lookupElement);
+          }
+          else if (variant instanceof LookupElement) {
+            final LookupElement lookupElement = (LookupElement) variant;
+            final Object obj = lookupElement.getObject();
+            if (obj instanceof PsiClass) {
+              GroovyCompletionUtil.setTailTypeForConstructor((PsiClass) obj, lookupElement);
+            }
+            result.add(lookupElement);
+          }
+          else {
+            result.add(variant);
+          }
+        }
+        return result.toArray(new Object[result.size()]);
+      }
+
       case CLASS: {
         GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
