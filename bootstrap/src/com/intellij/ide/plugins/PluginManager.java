@@ -226,38 +226,8 @@ public class PluginManager {
       final String pluginId = System.getProperty("idea.load.plugins.id");
       shouldLoad = pluginId == null || (descriptor.getPluginId() != null &&
                                   pluginId.equals(idString));
-      final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
-      if (shouldLoad && file.isFile()) {
-        if (ourDisabledPlugins == null) {
-          ourDisabledPlugins = new ArrayList<String>();
-          FileReader fileReader = null;
-          BufferedReader reader = null;
-          try {
-            fileReader = new FileReader(file);
-            reader = new BufferedReader(fileReader);
-            String id;
-            while ((id = reader.readLine()) != null) {
-              ourDisabledPlugins.add(id.trim());
-            }
-          }
-          catch (IOException e) {
-            return false;
-          }
-          finally {
-            try {
-              if (reader != null) {
-                reader.close();
-              }
-              if (fileReader != null) {
-                fileReader.close();
-              }
-            }
-            catch (IOException e) {
-              //return false
-            }
-          }
-        }
-        shouldLoad = !ourDisabledPlugins.contains(idString);
+      if (shouldLoad) {
+        shouldLoad = !getDisabledPlugins().contains(idString);
       }
     }
 
@@ -518,7 +488,7 @@ public class PluginManager {
           }
           pluginDescriptor.setEnabled(false);
           disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
-          message.append(ourDisabledPlugins.contains(dependentPluginId.getIdString()) ?
+          message.append(getDisabledPlugins().contains(dependentPluginId.getIdString()) ?
                          IdeBundle.message("error.required.plugin.disabled", pluginDescriptor.getPluginId(), dependentPluginId) :
                          IdeBundle.message("error.required.plugin.not.installed", pluginDescriptor.getPluginId(), dependentPluginId));
           it.remove();
@@ -983,6 +953,37 @@ public class PluginManager {
         printWriter.close();
       }
     }
+  }
+
+  public static List<String> getDisabledPlugins() {
+    if (ourDisabledPlugins == null) {
+      ourDisabledPlugins = new ArrayList<String>();
+      final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
+      if (file.isFile()) {
+        BufferedReader reader = null;
+        try {
+          reader = new BufferedReader(new FileReader(file));
+          String id;
+          while ((id = reader.readLine()) != null) {
+            ourDisabledPlugins.add(id.trim());
+          }
+        }
+        catch (IOException e) {
+          //do nothing
+        }
+        finally {
+          try {
+            if (reader != null) {
+              reader.close();
+            }
+          }
+          catch (IOException e) {
+            //do nothing
+          }
+        }
+      }
+    }
+    return ourDisabledPlugins;
   }
 
   private static class IdeaLogProvider implements LogProvider {
