@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
@@ -232,20 +231,24 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return myProvider;
     }
 
+    public boolean isValid() {
+      return getPsiElement().isValid();
+    }
+
     public PsiElement getPsiElement() {
       return myElement;
     }
 
+    @NonNls
     public String getInfoString() {
-      return myProvider.getElementInfo(getPsiElement());
+      return isValid() ? myProvider.getElementInfo(getPsiElement()) : "?";
     }
 
+    @Nullable
     public String getTooltipString() {
-      return myProvider.getElementTooltip(getPsiElement());
+      return isValid() ? myProvider.getElementTooltip(getPsiElement()) : null;
     }
-
   }
-
 
   private static class CrumbLine extends JComponent {
     private List<LineElement> myElementList = new ArrayList<LineElement>();
