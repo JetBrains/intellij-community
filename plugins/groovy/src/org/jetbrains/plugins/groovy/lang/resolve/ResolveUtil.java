@@ -134,6 +134,7 @@ public class ResolveUtil {
 
   private static String rawCanonicalText(PsiType type) {
     final String result = type.getCanonicalText();
+    if (result == null) return null;
     final int i = result.indexOf('<');
     if (i > 0) return result.substring(0, i);
     return result;

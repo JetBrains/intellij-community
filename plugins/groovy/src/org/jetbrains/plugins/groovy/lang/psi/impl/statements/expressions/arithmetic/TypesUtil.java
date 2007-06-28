@@ -1,17 +1,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.Map;
 
@@ -36,7 +37,41 @@ public class TypesUtil {
       int resultRank = Math.max(lRank, rRank);
       return binaryExpression.getManager().getElementFactory().createTypeByFQClassName(RANK_TO_TYPE.get(resultRank), binaryExpression.getResolveScope());
     }
+
+    if (lType instanceof PsiClassType) {
+      final PsiClass lClass = ((PsiClassType) lType).resolve();
+      if (lClass != null) {
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
+        final String operatorName = ourBinaryOperationsToOperatorNames.get(tokenType);
+        if (operatorName != null) {
+          MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, binaryExpression, false, false, new PsiType[]{rType});
+          lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, binaryExpression);
+          final GroovyResolveResult[] candidates = processor.getCandidates();
+          if (candidates.length == 1) {
+            final PsiElement element = candidates[0].getElement();
+            if (element instanceof PsiMethod) {
+              return ((PsiMethod) element).getReturnType();
+            }
+          }
+        }
+      }
+    }
     return null;
+  }
+
+  private static final Map<IElementType, String> ourBinaryOperationsToOperatorNames = new HashMap<IElementType, String>();
+
+  static  {
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
+    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
