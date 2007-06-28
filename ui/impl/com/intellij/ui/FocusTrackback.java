@@ -200,6 +200,10 @@ public class FocusTrackback {
     myFocusOwner = focusOwner;
   }
 
+  public void setMustBeShown(final boolean mustBeShown) {
+    myMustBeShown = mustBeShown;
+  }
+
   public static interface Provider {
     FocusTrackback getFocusTrackback();
   }

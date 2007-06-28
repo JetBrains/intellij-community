@@ -18,6 +18,7 @@ import java.awt.*;
  */
 public class LanguageLevelCombo extends ComboBox {
   public static final String USE_PROJECT_LANGUAGE_LEVEL = ProjectBundle.message("project.language.level.combo.item");
+
   public LanguageLevelCombo() {
     addItem(LanguageLevel.JDK_1_3);
     addItem(LanguageLevel.JDK_1_4);

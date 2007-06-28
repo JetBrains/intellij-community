@@ -80,7 +80,7 @@ public abstract class JBPopupFactory {
                                                   String title,
                                                   Component component,
                                                   boolean honorActionMnemonics,
-                                                  int defaultOptionIndex);
+                                                  int defaultOptionIndex, final boolean autoSelectionEnabled);
 
   /**
    * Possible ways to select actions in a popup from keyboard.

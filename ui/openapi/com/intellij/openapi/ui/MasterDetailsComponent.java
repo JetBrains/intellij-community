@@ -18,6 +18,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -44,10 +46,11 @@ import java.util.List;
  * User: anna
  * Date: 29-May-2006
  */
-public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState> {
+public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState>, DetailsComponent.Facade {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   protected NamedConfigurable myCurrentConfigurable;
+  private Splitter mySplitter;
 
   public static class UIState {
     public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
@@ -57,26 +60,28 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
   protected UIState myState = new UIState();
 
-  protected Runnable TREE_UPDATER = new Runnable() {
-    public void run() {
-      MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-      if (node != null) {
-        myState.lastEditedConfigurable = node.getDisplayName(); //survive after rename
-        myBanner.setText(node.getConfigurable().getBannerSlogan());
-        ((DefaultTreeModel)myTree.getModel()).reload(node);
-        fireItemsChangedExternally();
+  protected Runnable TREE_UPDATER;
+
+  {
+    TREE_UPDATER = new Runnable() {
+      public void run() {
+        MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+        if (node != null) {
+          myState.lastEditedConfigurable = node.getDisplayName(); //survive after rename
+          myDetails.setText(node.getConfigurable().getBannerSlogan());
+          ((DefaultTreeModel)myTree.getModel()).reload(node);
+          fireItemsChangedExternally();
+        }
       }
-    }
-  };
+    };
+  }
 
   protected MyNode myRoot = new MyRootNode();
-  protected Tree myTree;
+  protected Tree myTree = new Tree();
 
-  private JPanel myOptionsPanel;
+  private DetailsComponent myDetails = new DetailsComponent();
   protected JPanel myWholePanel;
-  public JPanel myNorthPanel;
-  private JScrollPane myScrollPane;
-  private JLabel myBanner;
+  public JPanel myNorthPanel = new JPanel(new BorderLayout());
 
   private ArrayList<ItemsChangeListener> myListners = new ArrayList<ItemsChangeListener>();
 
@@ -86,7 +91,20 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
   protected MasterDetailsComponent() {
-    myOptionsPanel.setLayout(new BorderLayout());
+    myWholePanel = new JPanel(new BorderLayout());
+    mySplitter = new Splitter(false, .2f);
+    myWholePanel.add(mySplitter, BorderLayout.CENTER);
+
+    JPanel left = new JPanel(new BorderLayout());
+    left.add(myNorthPanel, BorderLayout.NORTH);
+    left.add(new JScrollPane(myTree), BorderLayout.CENTER);
+    mySplitter.setFirstComponent(left);
+
+    final JPanel right = new JPanel(new BorderLayout());
+    right.add(myDetails.getComponent(), BorderLayout.CENTER);
+
+    mySplitter.setSecondComponent(right);
+
     myAutoScrollHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return isAutoScrollEnabled();
@@ -99,11 +117,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       protected void scrollToSource(Component tree) {
         final TreePath path = myTree.getSelectionPath();
         if (path != null) {
-          final MyNode node = (MyNode)path.getLastPathComponent();
+          final Object lastPathComp = path.getLastPathComponent();
+          if (!(lastPathComp instanceof MyNode)) return;
+          final MyNode node = (MyNode)lastPathComp;
           final NamedConfigurable configurable = node.getConfigurable();
-          if (configurable != null) {
-            updateSelection(configurable);
-          }
+          updateSelection(configurable);
+        } else {
+          updateSelection(null);
         }
       }
 
@@ -116,6 +136,14 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
   }
 
+  public DetailsComponent getDetailsComponent() {
+    return myDetails;
+  }
+
+  public Splitter getSplitter() {
+    return mySplitter;
+  }
+
   protected boolean isAutoScrollEnabled() {
     return true;
   }
@@ -125,9 +153,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
-        if (action instanceof ActionGroupWithPreselection){
+        if (action instanceof ActionGroupWithPreselection) {
           group.add(new MyActionGroupWrapper((ActionGroupWithPreselection)action));
-        } else {
+        }
+        else {
           group.add(action);
         }
       }
@@ -142,9 +171,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
   public JComponent createComponent() {
     SwingUtilities.updateComponentTreeUI(myWholePanel);
-    final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
-    myScrollPane.setPreferredSize(preferredSize);
-    myScrollPane.setMaximumSize(new Dimension(150, -1));
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
         return new Dimension(800, 600);
@@ -231,10 +257,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
         TreeUtil.selectFirstNode(myTree);
       }
     });
-    //update tree size
-    final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
-    myScrollPane.setPreferredSize(preferredSize);
-    myScrollPane.setMaximumSize(new Dimension(150, -1));
     myState.proportions.restoreSplitterProportions(myWholePanel);
   }
 
@@ -252,7 +274,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   public void disposeUIResources() {
     myState.proportions.saveSplitterProportions(myWholePanel);
     myAutoScrollHandler.cancelAllRequests();
-    myOptionsPanel.removeAll();
+    myDetails.disposeUIResources();
     myInitializedConfigurables.clear();
     TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
@@ -282,7 +304,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
-      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      public void customizeCellRenderer(JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
         if (value instanceof MyNode) {
           final MyNode node = ((MyNode)value);
           final Icon icon = node.getConfigurable().getIcon();
@@ -294,7 +322,8 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
           else {
             setFont(font.deriveFont(Font.PLAIN));
           }
-          append(node.getDisplayName(), node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(node.getDisplayName(),
+                 node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });
@@ -312,7 +341,8 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
           group.add(action);
         }
       }
-      PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
+      PopupHandler
+        .installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
     }
   }
 
@@ -343,7 +373,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
       @SuppressWarnings({"NonStaticInitializer"})
       public JToolTip createToolTip() {
-        final JToolTip toolTip = new JToolTip(){
+        final JToolTip toolTip = new JToolTip() {
           {
             setUI(new MultiLineTooltipUI());
           }
@@ -374,7 +404,8 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myTree.requestFocus();
     if (nodeToSelect != null) {
       return TreeUtil.selectInTree(nodeToSelect, true, myTree, center);
-    } else {
+    }
+    else {
       return TreeUtil.selectFirstNode(myTree);
     }
   }
@@ -434,19 +465,26 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     return nodeToSelect[0];
   }
 
-  protected void updateSelection(@NotNull NamedConfigurable configurable) {
-    myState.lastEditedConfigurable = configurable.getDisplayName();
-    myBanner.setText(configurable.getBannerSlogan());
-    myBanner.repaint();
-    myOptionsPanel.removeAll();
+  protected void updateSelection(@Nullable NamedConfigurable configurable) {
+    myState.lastEditedConfigurable = configurable != null ? configurable.getDisplayName() : null;
+    myDetails.setText(configurable != null ? configurable.getBannerSlogan() : null);
+
     myCurrentConfigurable = configurable;
-    myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
-    if (!isInitialized(configurable)) {
-      configurable.reset();
-      initializeConfigurable(configurable);
+
+    if (configurable != null) {
+      myDetails.setContent(configurable.createComponent());
+      if (!isInitialized(configurable)) {
+        configurable.reset();
+        initializeConfigurable(configurable);
+      }
+    } else {
+      myDetails.setContent(null);
+      myDetails.setEmptyContentText(getEmptySelectionString());
     }
-    myOptionsPanel.revalidate();
-    myOptionsPanel.repaint();
+  }
+
+  protected @Nullable String getEmptySelectionString() {
+    return null;
   }
 
   protected void initializeConfigurable(final NamedConfigurable configurable) {
@@ -457,13 +495,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     String alreadyExist = null;
     for (MyNode rootNode : rootNodes) {
       alreadyExist = alreadyExist(rootNode);
-      if (alreadyExist != null){
+      if (alreadyExist != null) {
         break;
       }
     }
-    if (alreadyExist != null){
+    if (alreadyExist != null) {
       final Object o = getSelectedObject();
-      if (o instanceof NamedScope && !Comparing.strEqual(alreadyExist, ((NamedScope)o).getName())){
+      if (o instanceof NamedScope && !Comparing.strEqual(alreadyExist, ((NamedScope)o).getName())) {
         selectNodeInTree(alreadyExist);
       }
       Messages.showErrorDialog(myWholePanel, CommonBundle.message("smth.already.exist.error.message", prefix, alreadyExist), title);
@@ -475,7 +513,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   @Nullable
   private static String alreadyExist(MyNode root) {
     final Set<String> names = new HashSet<String>();
-    for (int i = 0; i < root.getChildCount(); i++){
+    for (int i = 0; i < root.getChildCount(); i++) {
       final NamedConfigurable scopeConfigurable = ((MyNode)root.getChildAt(i)).getConfigurable();
       final String name = scopeConfigurable.getDisplayName();
       if (names.contains(name)) {
@@ -503,7 +541,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
-      if (selectionPath != null){
+      if (selectionPath != null) {
         for (TreePath path : selectionPath) {
           if (!myCondition.value(path.getLastPathComponent())) return;
         }
@@ -530,11 +568,11 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
         namedConfigurable.disposeUIResources();
       }
       ((DefaultTreeModel)myTree.getModel()).reload();
-      if (parentNode != null && idx != -1){
-        TreeUtil.selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount()
-                                                       ? parentNode.getChildAt(idx)
-                                                       : parentNode), true, myTree);
-      } else {
+      if (parentNode != null && idx != -1) {
+        TreeUtil
+          .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
+      }
+      else {
         TreeUtil.selectFirstNode(myTree);
       }
     }
@@ -626,6 +664,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
   public static interface ActionGroupWithPreselection {
     ActionGroup getActionGroup();
+
     int getDefaultIndex();
   }
 
@@ -639,8 +678,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     }
 
     public MyActionGroupWrapper(final ActionGroup actionGroup) {
-      super(actionGroup.getTemplatePresentation().getText(),
-            actionGroup.getTemplatePresentation().getDescription(),
+      super(actionGroup.getTemplatePresentation().getText(), actionGroup.getTemplatePresentation().getDescription(),
             actionGroup.getTemplatePresentation().getIcon());
       myActionGroup = actionGroup;
       registerCustomShortcutSet(actionGroup.getShortcutSet(), myTree);
@@ -648,23 +686,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
     public void actionPerformed(AnActionEvent e) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup,
-                                                                e.getDataContext(),
-                                                                false,
-                                                                false,
-                                                                myActionGroup.getTemplatePresentation().getText(),
-                                                                myTree,
-                                                                true,
-                                                                myPreselection != null
-                                                                  ? myPreselection.getDefaultIndex()
-                                                                  : 0);
+      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup, e.getDataContext(), false, false,
+                                                                myActionGroup.getTemplatePresentation().getText(), myTree, true,
+                                                                myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
+      listPopup.setHandleAutoSelectionBeforeShow(true);
       listPopup.showUnderneathOf(myNorthPanel);
-      SwingUtilities.invokeLater(new Runnable(){
-        public void run() {
-          listPopup.handleSelect(false);
-        }
-      });
     }
   }
+
 }

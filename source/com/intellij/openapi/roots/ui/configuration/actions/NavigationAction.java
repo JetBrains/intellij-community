@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.ui.navigation.History;
 
@@ -29,7 +29,7 @@ abstract class NavigationAction extends AnAction {
   protected abstract void doUpdate(final AnActionEvent e);
 
   protected final History getHistory(final AnActionEvent e) {
-    final ProjectRootConfigurable config = e.getData(ProjectRootConfigurable.KEY);
+    final ProjectStructureConfigurable config = e.getData(ProjectStructureConfigurable.KEY);
     if (config == null) return null;
     return config.getHistory();
   }

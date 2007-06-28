@@ -13,7 +13,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -75,7 +76,7 @@ class JdkComboBox extends JComboBox{
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     setUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ProjectRootConfigurable configurable = ProjectRootConfigurable.getInstance(project);
+        final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
         DefaultActionGroup group = new DefaultActionGroup();
         jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<ProjectJdk>() {
           public void consume(final ProjectJdk jdk) {
@@ -102,14 +103,14 @@ class JdkComboBox extends JComboBox{
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ProjectJdk projectJdk = retrieveJDK.compute();
-        ProjectRootConfigurable.getInstance(project).selectNodeInTree(projectJdk);
+        ModuleStructureConfigurable.getInstance(project).selectNodeInTree(projectJdk);
       }
     });
     addActionListener(new ActionListener(){
       public void actionPerformed(ActionEvent e) {
         final JdkComboBoxItem selectedItem = getSelectedItem();
         if (selectedItem instanceof ProjectJdkComboBoxItem) {
-          myEditButton.setEnabled(ProjectRootConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk() != null);
+          myEditButton.setEnabled(ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk() != null);
         } else {
           myEditButton.setEnabled(!(selectedItem instanceof InvalidJdkComboBoxItem) && selectedItem != null && selectedItem.getJdk() != null);
         }

@@ -1,6 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
@@ -12,11 +15,19 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.HistoryAware;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
+import com.intellij.openapi.ui.ChooseView;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +48,7 @@ import java.util.List;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ModuleEditor {
   private final Project myProject;
-  private JPanel myPanel;
+  private JPanel myGenericSettingsPanel;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
   private static String ourSelectedTabName;
   private TabbedPaneWrapper myTabbedPane;
@@ -50,9 +61,22 @@ public class ModuleEditor {
 
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
-  private final FacetsProvider myFacetsProvider;
   private HistoryAware.Facade myHistoryFacade;
   private ModuleConfigurable myConfigurable;
+
+  private Wrapper myComponent = new Wrapper();
+  private ChooseView myChooseView;
+
+  private FacetEditorFacadeImpl myFacetEditorFacade;
+  private ModuleEditor.GeneralView myGeneralView;
+
+  private static final String GENERAL_VIEW = "General";
+  private ModuleEditor.ManageFacets myManageFacets;
+
+  private Disposable myRoot = new Disposable() {
+    public void dispose() {
+    }
+  };
 
   @Nullable
   public ModuleBuilder getModuleBuilder() {
@@ -64,13 +88,63 @@ public class ModuleEditor {
     myConfigurable = configurable;
   }
 
+  public void init(final String selectedTab, final ChooseView chooseView, final FacetEditorFacadeImpl facetEditorFacade) {
+    setSelectedTabName(selectedTab);
+    myChooseView = chooseView;
+    myFacetEditorFacade = facetEditorFacade;
+
+    myGeneralView = new GeneralView();
+    myManageFacets = new ManageFacets();
+
+    updateViewChooser();
+
+
+    myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).addListener(new FacetModel.Listener() {
+      public void onChanged() {
+        updateViewChooser();
+      }
+    }, myRoot);
+  }
+
+  private void updateViewChooser() {
+    myChooseView.clear();
+
+    final FacetModel facetModel = myFacetEditorFacade.getFacetConfigurator().getFacetModel(getModule());
+    final Facet[] facets = facetModel.getSortedFacets();
+
+    addView(myGeneralView);
+
+    myChooseView.addSeparator("Facet Settings");
+
+    for (Facet each : facets) {
+      addView(new FacetView(each));
+    }
+
+    myChooseView.addSeparator(null);
+    addView(myManageFacets);
+
+    if (myChooseView.isSelectionValid()) {
+      myGeneralView.switchTo();
+    }
+
+  }
+
+  private void addView(final ViewItem item) {
+    myChooseView.addView(item.getKey(), item.getStep(), item.getIcon(), new ChooseView.ViewCheck() {
+      public boolean isSelectable(final String key) {
+        if (item instanceof SwitchView) {
+          return !myChooseView.isSelected(key);
+        }
+        return true;
+      }
+    });
+  }
+
   public static interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, @Nullable ModuleBuilder moduleBuilder,
-                      final FacetsProvider facetsProvider) {
-    myFacetsProvider = facetsProvider;
+  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, @Nullable ModuleBuilder moduleBuilder) {
     myProject = project;
     myModulesProvider = modulesProvider;
     myName = moduleName;
@@ -131,8 +205,8 @@ public class ModuleEditor {
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
-    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, getModifiableRootModelProxy(), 
-                                                                      myFacetsProvider);
+    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, getModifiableRootModelProxy()
+      ,/*myFacetsProvider */ null);
   }
 
   private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
@@ -144,13 +218,13 @@ public class ModuleEditor {
     getModifiableRootModel(); //initialize model if needed
     getModifiableRootModelProxy();
 
-    myPanel = new ModuleEditorPanel();
+    myGenericSettingsPanel = new ModuleEditorPanel();
 
     createEditors(getModule());
 
     JPanel northPanel = new JPanel(new GridBagLayout());
 
-    myPanel.add(northPanel, BorderLayout.NORTH);
+    myGenericSettingsPanel.add(northPanel, BorderLayout.NORTH);
 
     myTabbedPane = new TabbedPaneWrapper();
 
@@ -160,7 +234,7 @@ public class ModuleEditor {
     }
     setSelectedTabName(ourSelectedTabName);
 
-    myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    myGenericSettingsPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     myTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         ourSelectedTabName = getSelectedTabName();
@@ -168,7 +242,7 @@ public class ModuleEditor {
       }
     });
 
-    return myPanel;
+    return myGenericSettingsPanel;
   }
 
   private void pushHistory() {
@@ -179,7 +253,7 @@ public class ModuleEditor {
 
     myHistoryFacade.getHistory().pushPlace(new Place(new Object[] {myConfigurable, tabName}) {
       public void goThere() {
-        myHistoryFacade.selectInTree(myConfigurable).doWhenDone(new Runnable() {
+        myHistoryFacade.select(myConfigurable).doWhenDone(new Runnable() {
           public void run() {
             setSelectedTabName(tabName);
           }
@@ -205,10 +279,23 @@ public class ModuleEditor {
   }
 
   public JPanel getPanel() {
-    if (myPanel == null) {
-      myPanel = createPanel();
+    if (myGenericSettingsPanel == null) {
+      myGenericSettingsPanel = createPanel();
     }
-    return myPanel;
+
+    return myComponent;
+  }
+
+  public void setSelectedView(SwitchView view, final boolean showName) {
+    myComponent.setContent(view.getComponent());
+
+    if (myConfigurable != null) {
+      myConfigurable.setNameFieldShown(showName);
+    }
+
+    myChooseView.setSelected(view.getKey());
+    myComponent.revalidate();
+    myComponent.repaint();
   }
 
   public void moduleCountChanged(int oldCount, int newCount) {
@@ -248,7 +335,10 @@ public class ModuleEditor {
       }
 
 
-      myPanel = null;
+      myGenericSettingsPanel = null;
+
+      Disposer.dispose(myRoot);
+
       return myModifiableRootModel;
     }
     finally {
@@ -478,5 +568,98 @@ public class ModuleEditor {
       return null;
     }
 
+  }
+
+  abstract class ViewItem {
+    String myText;
+    Icon myIcon;
+
+    public ViewItem(final String text, final Icon icon) {
+      myText = text;
+      myIcon = icon;
+    }
+
+    abstract PopupStep getStep();
+
+    Icon getIcon() {
+      return myIcon;
+    }
+
+    abstract String getKey();
+
+  }
+
+  class ManageFacets extends ViewItem {
+    public ManageFacets() {
+      super("Manage Facets...", new EmptyIcon(16));
+    }
+
+    PopupStep getStep() {
+      return new BaseListPopupStep(myText, new Object[0]) {
+        public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
+          return FINAL_CHOICE;
+        }
+      };
+    }
+
+    String getKey() {
+      return null;
+    }
+  }
+
+  abstract class SwitchView extends ViewItem {
+
+    String myKey;
+    private boolean myShowModuleName;
+
+    protected SwitchView(String key, final String text, final Icon icon, boolean showModuleName) {
+      super(text, icon);
+      myKey = key;
+      myShowModuleName = showModuleName;
+    }
+
+
+    abstract JComponent getComponent();
+
+    PopupStep getStep() {
+      return new BaseListPopupStep(myText, new Object[0]) {
+        public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
+          setSelectedView(SwitchView.this, myShowModuleName);
+          return PopupStep.FINAL_CHOICE;
+        }
+      };
+    }
+
+    void switchTo() {
+      getStep().onChosen(myText, true);
+    }
+
+    String getKey() {
+      return myKey;
+    }
+  }
+
+  class GeneralView extends SwitchView {
+    public GeneralView() {
+      super(GENERAL_VIEW, "General Module Settings", IconLoader.getIcon("/fileTypes/java.png"), true);
+    }
+
+    JComponent getComponent() {
+      return myGenericSettingsPanel;
+    }
+  }
+
+  class FacetView extends SwitchView {
+
+    private Facet myFacet;
+
+    public FacetView(Facet facet) {
+      super(facet.getType().getStringId(), myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).getFacetName(facet), facet.getType().getIcon(), false);
+      myFacet = facet;
+    }
+
+    JComponent getComponent() {
+      return myFacetEditorFacade.getFacetConfigurator().getOrCreateEditor(myFacet).getComponent();
+    }
   }
 }

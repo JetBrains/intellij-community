@@ -9,6 +9,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,7 +36,19 @@ public class IdeConfigurablesGroup implements ConfigurableGroup {
     result.addAll(Arrays.asList(extensions));
     result.addAll(Arrays.asList(components));
 
+    removeAssistants(result);
+
     return result.toArray(new Configurable[result.size()]);
+  }
+
+  static void removeAssistants(final List<Configurable> result) {
+    final Iterator<Configurable> iterator = result.iterator();
+    while (iterator.hasNext()) {
+      Configurable each = iterator.next();
+      if (each instanceof Configurable.Assistant) {
+        iterator.remove();
+      }
+    }
   }
 
   public boolean equals(Object object) {

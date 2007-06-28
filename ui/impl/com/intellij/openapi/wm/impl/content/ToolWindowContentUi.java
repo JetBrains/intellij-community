@@ -1,6 +1,5 @@
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.TitlePanel;
@@ -8,7 +7,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.util.ui.GraphicsConfig;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;

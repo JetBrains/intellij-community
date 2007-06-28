@@ -25,4 +25,11 @@ public interface ListPopup extends JBPopup {
    * is opened (as if the right arrow key was pressed). 
    */
   void handleSelect(boolean handleFinalChoices);
+
+  /**
+   * If default selection is set, then handleSelect is invoked without showing a popup
+   * @param autoHandle
+   */
+  void setHandleAutoSelectionBeforeShow(boolean autoHandle);
+
 }

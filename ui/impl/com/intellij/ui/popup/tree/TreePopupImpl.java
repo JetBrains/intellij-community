@@ -161,7 +161,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     super.dispose();
   }
 
-  protected void beforeShow() {
+  protected boolean beforeShow() {
     addListeners();
 
     expandAll();
@@ -172,6 +172,8 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     if (mySavedSelected != null) {
       myWizardTree.setSelectionPath(mySavedSelected);
     }
+
+    return true;
   }
 
   protected void afterShow() {

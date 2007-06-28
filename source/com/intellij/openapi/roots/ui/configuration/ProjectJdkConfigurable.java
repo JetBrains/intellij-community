@@ -14,7 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
@@ -113,10 +113,10 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   private void clearCaches(final ProjectJdk oldJdk) {
-    final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
     Module[] modules = rootConfigurable.getModules();
     for (Module module : modules) {
-      rootConfigurable.clearCaches(module, oldJdk, getSelectedProjectJdk());
+      rootConfigurable.getContext().clearCaches(module, oldJdk, getSelectedProjectJdk());
     }
   }
 
@@ -130,6 +130,8 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   public void reset() {
+    reloadModel();
+
     final String sdkName = ProjectRootManager.getInstance(myProject).getProjectJdkName();
     if (sdkName != null) {
       final ProjectJdk jdk = (ProjectJdk)myJdksModel.findSdk(sdkName);

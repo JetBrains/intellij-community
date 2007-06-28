@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanelListener;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +93,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
     panel.add(myPanel, BorderLayout.CENTER);
 
     final ModuleJdkConfigurable jdkConfigurable =
-      new ModuleJdkConfigurable(this, myModel, ProjectRootConfigurable.getInstance(myProject).getProjectJdksModel());
+      new ModuleJdkConfigurable(this, myModel, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel());
     panel.add(jdkConfigurable.createComponent(), BorderLayout.NORTH);
     jdkConfigurable.reset();
     registerDisposable(jdkConfigurable);

@@ -22,11 +22,11 @@ import java.util.*;
  */
 public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl");
-  private ProjectRootConfigurable myConfigurable;
+  private ModuleStructureConfigurable myConfigurable;
   private Runnable myTreeUpdater;
   private Map<Facet, MasterDetailsComponent.MyNode> myNodes = new HashMap<Facet, MasterDetailsComponent.MyNode>();
 
-  public FacetEditorFacadeImpl(final ProjectRootConfigurable configurable, final Runnable treeUpdater) {
+  public FacetEditorFacadeImpl(final ModuleStructureConfigurable configurable, final Runnable treeUpdater) {
     myConfigurable = configurable;
     myTreeUpdater = treeUpdater;
   }
@@ -98,7 +98,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return true;
   }
 
-  private ProjectFacetsConfigurator getFacetConfigurator() {
+  public ProjectFacetsConfigurator getFacetConfigurator() {
     return myConfigurable.getFacetConfigurator();
   }
 

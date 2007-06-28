@@ -1,13 +1,13 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.ui.navigation.History;
 
 public interface HistoryAware {
 
 
-  interface Configurable {
+  interface Config {
 
     void setHistoryFacade(Facade facade);
 
@@ -19,7 +19,7 @@ public interface HistoryAware {
 
     History getHistory();
 
-    ActionCallback selectInTree(NamedConfigurable configurable);
+    ActionCallback select(Configurable configurable);
 
   }
 

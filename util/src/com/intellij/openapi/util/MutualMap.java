@@ -58,4 +58,9 @@ public class MutualMap<Key, Value> {
   public Collection<Key> getKeys() {
     return myKey2Value.keySet();
   }
+
+  public void clear() {
+    myKey2Value.clear();
+    myValue2Key.clear();
+  }
 }

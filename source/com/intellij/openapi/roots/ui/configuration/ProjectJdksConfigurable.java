@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -50,7 +51,7 @@ import java.util.TreeMap;
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class ProjectJdksConfigurable extends MasterDetailsComponent {
+public class ProjectJdksConfigurable extends MasterDetailsComponent implements Configurable.Assistant {
 
   private ProjectJdksModel myProjectJdksModel;
   private Project myProject;
@@ -61,7 +62,6 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     super();
     myProject = project;
     myProjectJdksModel = ProjectJdksModel.getInstance(project);
-    initTree();
   }
 
   protected void initTree() {
@@ -71,6 +71,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
     }, true);
+
+    myTree.setRootVisible(false);
   }
 
   public void reset() {

@@ -32,7 +32,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.Messages;
@@ -200,7 +202,7 @@ public class ClasspathPanel extends JPanel {
     final int selectedRow = myEntryTable.getSelectedRow();
     final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
     Object toSelect = null;
-    final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject());
+    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myRootModel.getModule().getProject());
     if (entry instanceof ModuleOrderEntry){
       toSelect = ((ModuleOrderEntry)entry).getModule();
     } 
@@ -312,12 +314,12 @@ public class ClasspathPanel extends JPanel {
           }
           final Module module = myRootModel.getModule();
           final Project project = module.getProject();
-          final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
+          final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(project);
           if (orderEntry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;            
-            rootConfigurable.clearCaches(module, libEntry);
+            rootConfigurable.getContext().clearCaches(module, libEntry);
           }
-          rootConfigurable.clearCaches(module);
+          rootConfigurable.getContext().clearCaches(module);
           myRootModel.removeOrderEntry(orderEntry);
         }        
         final int[] selectedRows = myEntryTable.getSelectedRows();
@@ -364,12 +366,12 @@ public class ClasspathPanel extends JPanel {
           };
         }
         else {
-          provider = ProjectRootConfigurable.getInstance(myProject).createModifiableModelProvider(table.getTableLevel(), false);
+          provider = ProjectStructureConfigurable.getInstance(myProject).getContext().createModifiableModelProvider(table.getTableLevel(), false);
         }
         final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
         editor.openDialog(ClasspathPanel.this, Collections.singletonList(library), true);
         myEntryTable.repaint();
-        ProjectRootConfigurable.getInstance(myProject).getTree().repaint();
+        ModuleStructureConfigurable.getInstance(myProject).getTree().repaint();
       }
     });
     return panel;
@@ -488,7 +490,7 @@ public class ClasspathPanel extends JPanel {
 
   private void initPopupActions() {
     if (myPopupActions == null) {
-      final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+      final StructureConfigrableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
       final List<PopupAction> actions = new ArrayList<PopupAction>(Arrays.<PopupAction>asList(
         new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
@@ -509,11 +511,11 @@ public class ClasspathPanel extends JPanel {
             return new CreateModuleLibraryDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), myProject);
           }
         },
-        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider(true)),
-        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider(true))));
+        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), context.getProjectLibrariesProvider(true)),
+        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), context.getGlobalLibrariesProvider(true))));
 
       int index = 4;
-      for (final LibraryTableModifiableModelProvider provider : projectRootConfigurable.getCustomLibrariesProviders(true)) {
+      for (final LibraryTableModifiableModelProvider provider : context.getCustomLibrariesProviders(true)) {
         actions.add(new ChooseNamedLibraryAction(index++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
       }
 
@@ -1027,7 +1029,7 @@ public class ClasspathPanel extends JPanel {
         chosen.removeAll(getAlreadyAddedLibraries());
         final Module module = myRootModel.getModule();
         final Project project = module.getProject();
-        ProjectRootConfigurable.getInstance(project).clearCaches(module, chosen);
+        ModuleStructureConfigurable.getInstance(project).getContext().clearCaches(module, chosen);
         return chosen;
       }
 

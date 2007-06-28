@@ -8,8 +8,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
@@ -62,18 +64,19 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
       public void actionPerformed(ActionEvent e) {
 
         final Project project = getProject(context, type);
-        final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
-        final ProjectJdksModel projectJdksModel = rootConfigurable.getProjectJdksModel();
+        final ProjectStructureConfigurable projectConfig = ProjectStructureConfigurable.getInstance(project);
+        final JdkListConfigurable jdkConfig = JdkListConfigurable.getInstance(project);
+        final ProjectJdksModel projectJdksModel = projectConfig.getProjectJdksModel();
         final boolean[] successfullyAdded = new boolean[1];
         projectJdksModel.doAdd(type, myPanel, new Consumer<ProjectJdk>() {
           public void consume(final ProjectJdk jdk) {
-            successfullyAdded[0] = rootConfigurable.addJdkNode(jdk, false);
+            successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
             myJdkChooser.updateList(jdk, type);
           }
         });
         if (!successfullyAdded[0]) {
           try {
-            projectJdksModel.apply(rootConfigurable);
+            projectJdksModel.apply(jdkConfig);
           }
           catch (ConfigurationException e1) {
             //name can't be wrong

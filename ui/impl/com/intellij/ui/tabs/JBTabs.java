@@ -5,7 +5,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.util.ui.GraphicsConfig;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
 
@@ -357,20 +357,19 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     final int alpha;
     final boolean paintFocused = myFocused || myActivePopup != null;
     if (paintFocused) {
-      alpha = 100;
-      from = toAlpha(UIUtil.getListSelectionBackground(), alpha);
-      to = toAlpha(UIUtil.getListSelectionBackground(), alpha);
+      from = UIUtil.getFocusedFillColor();
+      to = UIUtil.getFocusedFillColor();
     }
     else {
       alpha = 150;
-      from = toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
-      to = toAlpha(UIUtil.getPanelBackgound(), alpha);
+      from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
+      to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
     }
 
     g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, from, mySelectedBounds.x, bottomY, to));
     g2d.fill(path);
     if (paintFocused) {
-      g2d.setColor(UIUtil.getListSelectionBackground().darker().darker());
+      g2d.setColor(UIUtil.getFocusedBoundsColor());
     }
     else {
       g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
@@ -382,9 +381,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     config.restore();
   }
 
-  private Color toAlpha(final Color color, final int alpha) {
-    return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
-  }
 
   private Max computeMaxSize() {
     Max max = new Max();

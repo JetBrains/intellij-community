@@ -20,8 +20,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -253,7 +256,7 @@ public class LibraryTableEditor implements Disposable {
     myLibraryToEditorMap.remove(library);
     myTableModifiableModel.removeLibrary(library);
     if (myProject != null){
-      ProjectRootConfigurable.getInstance(myProject).fireItemsChangeListener(library);
+      ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(library);
     }
   }
 
@@ -448,7 +451,7 @@ public class LibraryTableEditor implements Disposable {
       final Library library = myTableModifiableModel.createLibrary(libraryName);
       selectLibrary(library, true);
       if (myProject != null){
-        final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+        final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
         final LibraryEditor libraryEditor = getLibraryEditor(library);
         if (libraryEditor.hasChanges()) {
           ApplicationManager.getApplication().runWriteAction(new Runnable(){
@@ -461,14 +464,14 @@ public class LibraryTableEditor implements Disposable {
         if (myNeedSelection){
           rootConfigurable.selectNodeInTree(libraryNode);
           if (!myEditingModuleLibraries) {
-            appendLibraryToModules(rootConfigurable, library);
+            appendLibraryToModules(ModuleStructureConfigurable.getInstance(myProject), library);
           }
         }
       }
       librariesChanged(true);
     }
 
-    private void appendLibraryToModules(final ProjectRootConfigurable rootConfigurable, final Library libraryToSelect) {
+    private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
       final List<Module> modules = new ArrayList<Module>();
       modules.addAll(Arrays.asList(rootConfigurable.getModules()));
       Collections.sort(modules, new Comparator<Module>() {

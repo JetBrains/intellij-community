@@ -21,7 +21,8 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,11 +44,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
   private Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
-  private final ProjectRootConfigurable myProjectRootConfigurable;
+  private final StructureConfigrableContext myContext;
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
 
-  public ProjectFacetsConfigurator(final ProjectRootConfigurable projectRootConfigurable, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
-    myProjectRootConfigurable = projectRootConfigurable;
+  public ProjectFacetsConfigurator(final StructureConfigrableContext context, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+    myContext = context;
     myModuleStateProvider = moduleStateProvider;
   }
 
@@ -73,7 +74,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   public void addFacetInfo(final Facet facet) {
-    LOG.assertTrue(!myFacet2Info.containsKey(facet));
+    final FacetInfo exiting = myFacet2Info.get(facet);
+    if (exiting != null) {
+      LOG.assertTrue(exiting.getConfiguration() == facet.getConfiguration());
+      return;
+    }
+
     FacetInfo info = new FacetInfo(facet.getType(), facet.getName(), facet.getConfiguration(), myFacet2Info.get(facet.getUnderlyingFacet()));
     myFacet2Info.put(facet, info);
     myInfo2Facet.put(info, facet);
@@ -243,7 +249,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     }
 
     public Library createProjectLibrary(final String baseName, final VirtualFile[] roots) {
-      LibraryTableModifiableModelProvider provider = myProjectRootConfigurable.getProjectLibrariesProvider(false);
+      LibraryTableModifiableModelProvider provider = myContext.getProjectLibrariesProvider(false);
       LibraryTable.ModifiableModel model = provider.getModifiableModel();
       Library library = model.createLibrary(getUniqueLibraryName(baseName, model));
       LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
@@ -254,7 +260,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     }
 
     public VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType) {
-      LibraryTable.ModifiableModel model = myProjectRootConfigurable.getProjectLibrariesProvider(false).getModifiableModel();
+      LibraryTable.ModifiableModel model = myContext.getProjectLibrariesProvider(false).getModifiableModel();
       LibrariesModifiableModel librariesModifiableModel = (LibrariesModifiableModel)model;
       if (librariesModifiableModel.hasLibraryEditor(library)) {
         LibraryEditor libraryEditor = librariesModifiableModel.getLibraryEditor(library);

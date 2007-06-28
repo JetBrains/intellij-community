@@ -7,10 +7,12 @@ package com.intellij.facet.impl;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -21,6 +23,8 @@ public abstract class FacetModelBase implements FacetModel {
   private Map<FacetTypeId, Collection<Facet>> myType2Facets;
   private Map<Pair<Facet, FacetTypeId>, Collection<Facet>> myChildFacets;
   private Facet[] mySortedFacets;
+
+  private Set<Listener> myListeners = new HashSet<Listener>();
 
   @NotNull
   public Facet[] getSortedFacets() {
@@ -105,9 +109,23 @@ public abstract class FacetModelBase implements FacetModel {
       return facets != null ? facets : Collections.<F>emptyList();
     }
 
+  public void addListener(final Listener listener, Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
+  }
+
   protected void facetsChanged() {
     myChildFacets = null;
     myType2Facets = null;
     mySortedFacets = null;
+
+    final Listener[] all = myListeners.toArray(new Listener[myListeners.size()]);
+    for (Listener each : all) {
+      each.onChanged();
+    }
   }
 }

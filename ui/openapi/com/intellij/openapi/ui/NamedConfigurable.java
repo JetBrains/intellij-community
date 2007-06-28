@@ -47,6 +47,14 @@ public abstract class NamedConfigurable<T> implements Configurable {
     return myNameEditable;
   }
 
+  public void setNameFieldShown(boolean shown) {
+    if (myNamePanel.isVisible() == shown) return;
+
+    myNamePanel.setVisible(shown);
+    myWholePanel.revalidate();
+    myWholePanel.repaint();
+  }
+
   public abstract void setDisplayName(String name);
   public abstract T getEditableObject();
   public abstract String getBannerSlogan();

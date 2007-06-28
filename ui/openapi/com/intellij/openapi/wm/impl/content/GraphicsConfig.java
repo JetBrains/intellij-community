@@ -1,4 +1,4 @@
-package com.intellij.util.ui;
+package com.intellij.openapi.wm.impl.content;
 
 import java.awt.*;
 import java.util.Map;

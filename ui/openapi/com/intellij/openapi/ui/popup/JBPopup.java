@@ -104,4 +104,5 @@ public interface JBPopup extends Disposable {
   void setLocation(@NotNull Point screenPoint);
 
   void setSize(@NotNull Dimension size);
+
 }

@@ -26,6 +26,8 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
 
   private int myIndexForShowingChild = -1;
   private int myMaxRowCount = 20;
+  private boolean myAutoHandleBeforeShow;
+
 
   public ListPopupImpl(ListPopupStep aStep, int maxRowCount) {
     super(aStep);
@@ -55,25 +57,41 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     return myListModel;
   }
 
-  protected void beforeShow() {
+  protected boolean beforeShow() {
+    if (myAutoHandleBeforeShow) {
+      return !tryToAutoSelect(true);
+    }
+
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
 
     myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
+
+    return true;
   }
 
   protected void afterShow() {
+    tryToAutoSelect(false);
+  }
+
+  private boolean tryToAutoSelect(boolean handleFinalChoices) {
     final int defaultIndex = getListStep().getDefaultOptionIndex();
-    if (defaultIndex > 0 && defaultIndex < myList.getModel().getSize()) {
+    if (defaultIndex >= 0 && defaultIndex < myList.getModel().getSize()) {
       ListScrollingUtil.selectItem(myList, defaultIndex);
     }
     else {
       selectFirstSelectableItem();
     }
 
-    if (hasSingleSelectableItemWithSubmenu() && getListStep().isAutoSelectionEnabled()) {
-      handleSelect(true);
+    if (getListStep().isAutoSelectionEnabled()) {
+      if (!isVisible() && getSelectableCount() == 1) {
+        return _handleSelect(handleFinalChoices);
+      } else if (isVisible() && hasSingleSelectableItemWithSubmenu()) {
+        return _handleSelect(handleFinalChoices);
+      }
     }
+
+    return false;
   }
 
   private void selectFirstSelectableItem() {
@@ -101,6 +119,18 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
       }
     }
     return oneSubmenuFound && countSelectables == 1;
+  }
+
+  private int getSelectableCount() {
+    int count = 0;
+    for (int i = 0; i < myListModel.getSize(); i++) {
+      final Object each = myListModel.getElementAt(i);
+      if (getListStep().isSelectable(each)) {
+        count++;
+      }
+    }
+
+    return count;
   }
 
   protected JComponent createContent() {
@@ -188,39 +218,45 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   }
 
   public void handleSelect(boolean handleFinalChoices) {
-    if (myList.getSelectedIndex() == -1) return;
+    _handleSelect(handleFinalChoices);
+  }
+
+  private boolean _handleSelect(final boolean handleFinalChoices) {
+    if (myList.getSelectedIndex() == -1) return false;
 
     if (myList.getSelectedIndex() == getIndexForShowingChild()) {
-      return;
+      return false;
     }
 
-    if (!getListStep().isSelectable(myList.getSelectedValue())) return;
+    if (!getListStep().isSelectable(myList.getSelectedValue())) return false;
 
-    if (!getListStep().hasSubstep(myList.getSelectedValue()) && !handleFinalChoices) return;
+    if (!getListStep().hasSubstep(myList.getSelectedValue()) && !handleFinalChoices) return false;
 
     disposeChildren();
 
     if (myListModel.getSize() == 0) {
       disposeAllParents();
       setIndexForShowingChild(-1);
-      return;
+      return true;
     }
 
 
-    handleNextStep(myStep.onChosen(myList.getSelectedValue(), handleFinalChoices), myList.getSelectedValue());
+    return handleNextStep(myStep.onChosen(myList.getSelectedValue(), handleFinalChoices), myList.getSelectedValue());
   }
 
-  private void handleNextStep(final PopupStep nextStep, Object parentValue) {
+  private boolean handleNextStep(final PopupStep nextStep, Object parentValue) {
     if (nextStep != PopupStep.FINAL_CHOICE) {
       final Point point = myList.indexToLocation(myList.getSelectedIndex());
       SwingUtilities.convertPointToScreen(point, myList);
       myChild = createPopup(this, nextStep, parentValue);
       myChild.show(getContainer(), point.x + myContainer.getWidth() - STEP_X_PADDING, point.y);
       setIndexForShowingChild(myList.getSelectedIndex());
+      return false;
     }
     else {
       disposeAllParents();
       setIndexForShowingChild(-1);
+      return true;
     }
   }
 
@@ -322,4 +358,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     }
   }
 
+  public void setHandleAutoSelectionBeforeShow(final boolean autoHandle) {
+    myAutoHandleBeforeShow = autoHandle;
+  }
 }

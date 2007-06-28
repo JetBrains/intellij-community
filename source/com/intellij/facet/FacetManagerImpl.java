@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -305,6 +306,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     }
   }
 
+  public void addListener(final Listener listener, final Disposable parent) {
+    throw new UnsupportedOperationException();
+  }
+
   private static class FacetManagerModel extends FacetModelBase {
     private Facet[] myAllFacets = Facet.EMPTY_ARRAY;
 
@@ -330,4 +335,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       myNewName = newName;
     }
   }
+
+
 }

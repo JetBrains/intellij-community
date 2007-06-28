@@ -7,7 +7,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -150,7 +150,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       return myModule;
     }
     if (myModule == null) {
-      return ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).getModule(myModuleName);      
+      return ModuleStructureConfigurable.getInstance(myRootModel.getModule().getProject()).getModule(myModuleName);
     }
     return myModule;
   }

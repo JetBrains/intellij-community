@@ -58,4 +58,9 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @Nullable
   @NonNls String getHelpTopic();
+
+  interface Assistant extends Configurable {
+
+  }
+
 }

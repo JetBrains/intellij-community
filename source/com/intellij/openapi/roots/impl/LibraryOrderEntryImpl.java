@@ -10,7 +10,10 @@ import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -122,14 +125,14 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
     final Project project = getRootModel().getModule().getProject();
-    final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
+    final StructureConfigrableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
     Library library = null;
     if (myLibrary == null) {
       if (myLibraryName != null) {
-        library = rootConfigurable.getLibrary(myLibraryName, myLibraryLevel);
+        library = context.getLibrary(myLibraryName, myLibraryLevel);
       }
     } else {
-      library = rootConfigurable.getLibrary(myLibrary.getName(), myLibrary.getTable().getTableLevel());
+      library = context.getLibrary(myLibrary.getName(), myLibrary.getTable().getTableLevel());
     }
     if (library != null) { //library was not deleted
       return library;

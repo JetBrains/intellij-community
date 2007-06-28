@@ -23,7 +23,7 @@ import javax.swing.*;
  * User: anna
  * Date: 04-Jun-2006
  */
-public class ModuleConfigurable extends NamedConfigurable<Module> implements HistoryAware.Configurable {
+public class ModuleConfigurable extends NamedConfigurable<Module> implements HistoryAware.Config {
   private Module myModule;
   private ModulesConfigurator myConfigurator;
   private String myModuleName;
@@ -67,6 +67,10 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements His
 
   public Icon getIcon() {
     return myModule.getModuleType().getNodeIcon(false);
+  }
+
+  public Module getModule() {
+    return myModule;
   }
 
   @Nullable

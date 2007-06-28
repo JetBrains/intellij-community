@@ -4,8 +4,8 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
@@ -32,8 +33,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.Alarm;
+import com.intellij.util.Chunk;
 import com.intellij.util.graph.Graph;
-import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: Dec 15, 2003
  */
-public class ProjectConfigurable extends NamedConfigurable<Project> {
+public class ProjectConfigurable extends NamedConfigurable<Project> implements DetailsComponent.Facade {
 
   private final Project myProject;
 
@@ -74,6 +75,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   private JPanel myWholePanel;
 
   private boolean myFreeze = false;
+  private DetailsComponent myDetailsComponent;
 
   public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectJdksModel model) {
     myProject = project;
@@ -82,9 +84,18 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   }
 
 
+  public DetailsComponent getDetailsComponent() {
+    return myDetailsComponent;
+  }
+
   public JComponent createOptionsPanel() {
+    myDetailsComponent = new DetailsComponent();
+    myDetailsComponent.setContent(myPanel);
+    myDetailsComponent.setText(getBannerSlogan());
+
     myProjectJdkConfigurable.createComponent(); //reload changed jdks
-    return myPanel;
+
+    return myDetailsComponent.getComponent();
   }
 
   private void init(final ProjectJdksModel model) {
@@ -230,7 +241,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   }
 
   public String getDisplayName() {
-    return ProjectBundle.message("project.roots.project.display.name", myProject.getName());
+    return ProjectBundle.message("project.roots.project.display.name");
   }
 
   public Icon getIcon() {
@@ -301,5 +312,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
       }
     }
   }
+
 
 }

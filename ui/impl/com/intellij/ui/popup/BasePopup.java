@@ -221,8 +221,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     show(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
   }
 
-  protected void beforeShow() {
-
+  protected boolean beforeShow() {
+    return true;
   }
 
   protected void afterShow() {
@@ -241,7 +241,10 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     myFocusTrackback = new FocusTrackback(this, owner, true);
 
     myScrollPane.getViewport().setPreferredSize(myContent.getPreferredSize());
-    beforeShow();
+    boolean shouldShow = beforeShow();
+    if (!shouldShow) {
+      myFocusTrackback.setMustBeShown(false);
+    }
 
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), myContainer.getPreferredSize());
     ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
@@ -260,15 +263,19 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     }
 
     myPopup = setupPopupFactory().getPopup(owner, myContainer, targetBounds.x, targetBounds.y);
-    myPopup.show();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        requestFocus();
-        myFocusTrackback.onShown(getPreferredFocusableComponent());
-        afterShow();
-      }
-    });
+    if (shouldShow) {
+      myPopup.show();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          requestFocus();
+          myFocusTrackback.onShown(getPreferredFocusableComponent());
+          afterShow();
+        }
+      });
+    } else {
+      cancel();
+    }
   }
 
   private static PopupFactory setupPopupFactory() {

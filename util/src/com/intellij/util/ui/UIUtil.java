@@ -740,5 +740,18 @@ public class UIUtil {
   public static boolean isWinLafOnVista() {
     return SystemInfo.isWindowsVista && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
+
+  public static Color getFocusedFillColor() {
+    return toAlpha(UIUtil.getListSelectionBackground(), 100);
+  }
+
+  public static Color getFocusedBoundsColor() {
+    return UIUtil.getListSelectionBackground().darker().darker();
+  }
+
+  public static Color toAlpha(final Color color, final int alpha) {
+    return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+  }
+
 }
 

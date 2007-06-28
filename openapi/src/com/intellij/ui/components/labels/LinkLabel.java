@@ -99,11 +99,15 @@ public class LinkLabel extends JLabel {
   public void doClick() {
     if (myClickIsBeingProcessed) return;
 
-    myClickIsBeingProcessed = true;
-    if (myLinkListener != null) myLinkListener.linkSelected(this, myLinkData);
-    ourVisitedLinks.add(myVisitedLinksKey);
-    repaint();
-    myClickIsBeingProcessed = false;
+    try {
+      myClickIsBeingProcessed = true;
+      if (myLinkListener != null) myLinkListener.linkSelected(this, myLinkData);
+      ourVisitedLinks.add(myVisitedLinksKey);
+      repaint();
+    }
+    finally {
+      myClickIsBeingProcessed = false;
+    }
   }
 
   public boolean isVisited() {

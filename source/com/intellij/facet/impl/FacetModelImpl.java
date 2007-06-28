@@ -49,6 +49,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   public void rename(final Facet facet, final String newName) {
     myFacet2NewName.put(facet, newName);
+    facetsChanged();
   }
 
   @Nullable
@@ -73,4 +74,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     return myFacets.toArray(new Facet[myFacets.size()]);
   }
 
+  public String getFacetName(final Facet facet) {
+    return myFacet2NewName.containsKey(facet) ? myFacet2NewName.get(facet) : facet.getName();
+  }
 }

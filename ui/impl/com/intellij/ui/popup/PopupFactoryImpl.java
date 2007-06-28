@@ -139,17 +139,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                          final String title,
                                          final Component component,
                                          final boolean honorActionMnemonics) {
-    return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0);
+    return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
   }
 
-  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions, String title,
-                                Component component,
-                                boolean honorActionMnemonics,
-                                int defaultOptionIndex) {
+  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
+                                         String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
+                                         final boolean autoSelectionEnabled) {
     final ArrayList<ActionItem> items = new ArrayList<ActionItem>();
     fillModel(items, actionGroup, dataContext, showNumbers, showDisabledActions, new HashMap<AnAction, Presentation>(), 0, false, honorActionMnemonics);
 
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex);
+    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
+                               autoSelectionEnabled) {};
   }
 
   private static boolean itemsHaveMnemonics(final ArrayList<ActionItem> items) {
@@ -415,17 +415,19 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Component myContext;
     private boolean myEnableMnemonics;
     private int myDefaultOptionIndex;
+    private boolean myAutoSelectionEnabled;
 
     public ActionPopupStep(@NotNull final ArrayList<ActionItem> items,
                            final String title,
                            Component context,
                            boolean enableMnemonics,
-                           final int defaultOptionIndex) {
+                           final int defaultOptionIndex, final boolean autoSelection) {
       myItems = items;
       myTitle = title;
       myContext = context;
       myEnableMnemonics = enableMnemonics;
       myDefaultOptionIndex = defaultOptionIndex;
+      myAutoSelectionEnabled = autoSelection;
     }
 
     @NotNull
@@ -522,7 +524,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean isAutoSelectionEnabled() {
-      return false;
+      return myAutoSelectionEnabled;
     }
 
     public SpeedSearchFilter<ActionItem> getSpeedSearchFilter() {

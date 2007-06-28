@@ -53,6 +53,8 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
       }
     }
 
+    IdeConfigurablesGroup.removeAssistants(result);
+
     return result.toArray(new Configurable[result.size()]);
   }
 

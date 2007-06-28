@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtil;
@@ -54,7 +55,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   private boolean myInitialized = false;
 
   public static ProjectJdksModel getInstance(Project project){
-    return ProjectRootConfigurable.getInstance(project).getProjectJdksModel();
+    return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
   }
 
 

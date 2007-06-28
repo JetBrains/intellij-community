@@ -28,7 +28,7 @@ public class GroupToolbarAction extends AnAction {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     final ListPopupStep popupStep = popupFactory.createActionsStep(myGroup, e.getDataContext(), false, false,
                                                                    myGroup.getTemplatePresentation().getText(), myToolbarComponent, false,
-                                                                   0);
+                                                                   0, false);
     popupFactory.createListPopup(popupStep).showUnderneathOf(myToolbarComponent);
   }
 

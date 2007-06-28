@@ -6,10 +6,10 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;

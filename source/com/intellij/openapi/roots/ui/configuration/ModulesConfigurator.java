@@ -1,10 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.ConfigureFacetsStep;
-import com.intellij.facet.Facet;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,11 +20,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Chunk;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
@@ -44,7 +46,7 @@ import java.util.List;
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ModulesConfigurator");
   private final Project myProject;
-  private final ProjectRootConfigurable myProjectRootConfigurable;
+  //private final ModuleStructureConfigurable myProjectRootConfigurable;
 
   private boolean myModified = false;
 
@@ -67,11 +69,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
-  public ModulesConfigurator(Project project, ProjectRootConfigurable configurable) {
+  private StructureConfigrableContext myContext;
+
+  public ModulesConfigurator(Project project, ProjectJdksModel projectJdksModel) {
     myProject = project;
-    myProjectRootConfigurable = configurable;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
+    myProjectConfigurable = new ProjectConfigurable(project, this, projectJdksModel);
+  }
+
+  public void setContext(final StructureConfigrableContext context) {
+    myContext = context;
     myFacetsConfigurator = createFacetsConfigurator();
   }
 
@@ -162,7 +169,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder, final @Nullable ConfigureFacetsStep facetsStep) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder, myFacetsConfigurator);
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder);
     if (facetsStep != null) {
       myFacetsConfigurator.registerEditors(module, facetsStep);
     }
@@ -214,19 +221,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               models.add(model);
             }
           }
-          myFacetsConfigurator.applyEditors();
+          //myFacetsConfigurator.applyEditors();
 
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
-          myFacetsConfigurator.commitFacets();
+          //myFacetsConfigurator.commitFacets();
 
         }
         catch (ConfigurationException e) {
           ex[0] = e;
         }
         finally {
-          myFacetsConfigurator.disposeEditors();
-          myFacetsConfigurator = createFacetsConfigurator();
+          //myFacetsConfigurator.disposeEditors();
+          //myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           for (Module module : myModuleModel.getModules()) {
             if (!module.isDisposed()) {
@@ -253,7 +260,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
-    return new ProjectFacetsConfigurator(myProjectRootConfigurable, new NotNullFunction<Module, ModuleConfigurationState>() {
+    return new ProjectFacetsConfigurator(myContext, new NotNullFunction<Module, ModuleConfigurationState>() {
       @NotNull
       public ModuleConfigurationState fun(final Module module) {
         return getModuleEditor(module).createModuleConfigurationState();
@@ -393,18 +400,18 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
-    return myModified || myFacetsConfigurator.isModified();
+    return myModified /*|| myFacetsConfigurator.isModified()*/;
   }
 
 
   public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
                                                 final @Nullable String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
-    final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
+    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
+    return ShowSettingsUtil.getInstance().editConfigurable(project, moduleStructureConfigurable, new Runnable() {
       public void run() {
-        projectRootConfigurable.selectFacetTab(facet, tabNameToSelect);
-        projectRootConfigurable.setStartModuleWizard(false);
+        moduleStructureConfigurable.selectFacetTab(facet, tabNameToSelect);
+        moduleStructureConfigurable.setStartModuleWizard(false);
       }
     });
   }
@@ -413,16 +420,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
                                    @Nullable final String moduleToSelect,
                                    final String tabNameToSelect,
                                    final boolean showModuleWizard) {
-    final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
+    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
+    return ShowSettingsUtil.getInstance().editConfigurable(project, moduleStructureConfigurable, new Runnable() {
       public void run() {
         if (moduleToSelect != null) {
-          projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
+          moduleStructureConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
         }
-        projectRootConfigurable.setStartModuleWizard(showModuleWizard);
+        moduleStructureConfigurable.setStartModuleWizard(showModuleWizard);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            projectRootConfigurable.setStartModuleWizard(false);
+            moduleStructureConfigurable.setStartModuleWizard(false);
           }
         });
       }
@@ -433,7 +440,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors) {
       if (Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
-        moduleEditor.updateCompilerOutputPathChanged(ProjectRootConfigurable.getInstance(myProject).getCompilerOutputUrl(), name);
+        moduleEditor.updateCompilerOutputPathChanged(ModuleStructureConfigurable.getInstance(myProject).getCompilerOutputUrl(), name);
         return;
       }
     }
