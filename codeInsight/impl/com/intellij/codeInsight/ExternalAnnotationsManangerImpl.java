@@ -240,7 +240,8 @@ public class ExternalAnnotationsManangerImpl extends ExternalAnnotationsManager 
     final PsiFile containingFile = listOwner.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      final PsiPackage psiPackage = psiManager.findPackage(javaFile.getPackageName());
+      final String packageName = javaFile.getPackageName();
+      final PsiPackage psiPackage = psiManager.findPackage(packageName);
       if (psiPackage != null) {
         final PsiDirectory[] dirsWithExternalAnnotations = psiPackage.getDirectories();
         for (final PsiDirectory directory : dirsWithExternalAnnotations) {
@@ -249,19 +250,18 @@ public class ExternalAnnotationsManangerImpl extends ExternalAnnotationsManager 
             return (XmlFile)psiFile;
           }
         }
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
-        if (virtualFile != null) {
-          final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-          for (OrderEntry entry : entries) {
-            final VirtualFile[] externalFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
-            for (VirtualFile file : externalFiles) {
-              final VirtualFile ext = file.getFileSystem()
-                .findFileByPath(file.getPath() + "/" + psiPackage.getQualifiedName().replace(".", "/") + "/" + ANNOTATIONS_XML);
-              if (ext != null) {
-                final PsiFile psiFile = psiManager.findFile(ext);
-                if (psiFile instanceof XmlFile) {
-                  return (XmlFile)psiFile;
-                }
+      }
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile != null) {
+        final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
+        for (OrderEntry entry : entries) {
+          final VirtualFile[] externalFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
+          for (VirtualFile file : externalFiles) {
+            final VirtualFile ext = file.getFileSystem().findFileByPath(file.getPath() + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
+            if (ext != null) {
+              final PsiFile psiFile = psiManager.findFile(ext);
+              if (psiFile instanceof XmlFile) {
+                return (XmlFile)psiFile;
               }
             }
           }

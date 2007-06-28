@@ -17,9 +17,12 @@
 
 package com.intellij.testFramework.builders;
 
-import com.intellij.testFramework.fixtures.ModuleFixture;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.ModuleFixture;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Map;
 
 /**
  * @author mike
@@ -34,6 +37,8 @@ public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends Modul
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
   JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls String... classPath);
+
+  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, Map<OrderRootType, String[]> roots);
 
   JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls String basePath, @NonNls String... jarNames);
 
