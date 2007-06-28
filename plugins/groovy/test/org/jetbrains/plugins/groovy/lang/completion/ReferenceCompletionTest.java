@@ -52,19 +52,6 @@ public class ReferenceCompletionTest extends CompletionTestBase {
     );
   }
 
-
-  public String transform(String testName, String[] data) throws Exception {
-    setSettings();
-    String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, fileText);
-    String result = processFile(psiFile);
-    System.out.println("------------------------ " + testName + " ------------------------");
-    System.out.println(result);
-    System.out.println("");
-    return result;
-  }
-
-
   protected LookupItem[] getAcceptableItems(CompletionData data) {
     return getAcceptableItemsImpl(data, false, true);
   }
