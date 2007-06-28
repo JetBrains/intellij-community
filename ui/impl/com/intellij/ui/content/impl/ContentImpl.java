@@ -105,6 +105,9 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public Disposable getDisposer() {
+    if (myDisposer == null) {
+      return this;
+    }
     return myDisposer;
   }
 

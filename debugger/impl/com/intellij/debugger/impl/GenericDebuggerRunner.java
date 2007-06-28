@@ -38,6 +38,10 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     public String getStartActionText() {
       return DebuggerBundle.message("debugger.runner.start.action.text");
     }
+
+    public Icon getDisabledIcon() {
+      return ICON;
+    }
   };
 
   public GenericDebuggerRunner() {

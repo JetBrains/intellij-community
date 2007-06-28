@@ -7,12 +7,15 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.TerminateRemoteProcessDialog;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -24,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -31,14 +35,16 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.List;
 
 public class RunContentManagerImpl implements RunContentManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
@@ -244,7 +250,7 @@ public class RunContentManagerImpl implements RunContentManager {
     final ContentManager contentManager = getContentManagerForRunner(runnerInfo);
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor);
 
-    Content content;
+    final Content content;
 
     if(oldDescriptor != null) {
       content = oldDescriptor.getAttachedContent();
@@ -258,6 +264,24 @@ public class RunContentManagerImpl implements RunContentManager {
 
     content.setComponent(descriptor.getComponent());
     content.putUserData(DESCRIPTOR_KEY, descriptor);
+    final ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler != null) {
+      final ProcessAdapter processAdapter = new ProcessAdapter() {
+        public void startNotified(final ProcessEvent event) {
+          content.setIcon(runnerInfo.getIcon());
+        }
+
+        public void processTerminated(final ProcessEvent event) {
+          content.setIcon(runnerInfo.getDisabledIcon());
+        }
+      };
+      processHandler.addProcessListener(processAdapter);
+      Disposer.register(content.getDisposer(), new Disposable() {
+        public void dispose() {
+          processHandler.removeProcessListener(processAdapter);
+        }
+      });
+    }
     content.setDisplayName(descriptor.getDisplayName());
     descriptor.setAttachedContent(content);
     content.getManager().setSelectedContent(content);
