@@ -64,16 +64,11 @@ public class CompilerUtil {
     }
 
     final LocalFileSystem fs = LocalFileSystem.getInstance();
-    fs.refresh(false);        
     for (String path : paths) {
-      fs.findFileByPath(path);
-
-      /*
       final VirtualFile file = fs.refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
       if (file != null) {
         file.refresh(false, false);
       }
-      */
     }
   }
 
@@ -87,16 +82,11 @@ public class CompilerUtil {
       return;
     }
 
-    /*for (File file1 : files) {
+    for (File file1 : files) {
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
       if (file != null) {
         file.refresh(false, false);
       }
-    }*/
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
-    fs.refresh(false);
-    for (File file : files) {
-      fs.findFileByIoFile(file);
     }
   }
 

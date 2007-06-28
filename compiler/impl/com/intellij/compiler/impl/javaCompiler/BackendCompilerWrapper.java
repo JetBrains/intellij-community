@@ -28,8 +28,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.Chunk;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 
 public class BackendCompilerWrapper {
@@ -134,7 +134,13 @@ public class BackendCompilerWrapper {
         }
       }
       myCompileContext.getProgressIndicator().popState();
+      /*
+      if (myOutputItems.size() > 0) {
+        RefreshQueue.getInstance().refresh(true, true, null, myCompileContext.getAllOutputDirectories());
+      }
+      */
     }
+
     if (!myCompileContext.getProgressIndicator().isCanceled()) {
       myFilesToRecompile = new HashSet<VirtualFile>(Arrays.asList(myFilesToCompile));
       if (dependentFiles != null) {

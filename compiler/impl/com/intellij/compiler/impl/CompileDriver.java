@@ -1282,8 +1282,7 @@ public class CompileDriver {
             className = null;
           }
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Putting: [outputPath, className, sourceFile] = [" + outputPath + ";" + className + ";" +
-                      sourceFile.getPresentableUrl() + "]");
+            LOG.debug("Putting: [outputPath, className, sourceFile] = [" + outputPath + ";" + className + ";" + sourceFile.getPresentableUrl() + "]");
           }
           cache.update(outputPath, className, sourceFile);
         }
@@ -1442,6 +1441,9 @@ public class CompileDriver {
               continue;
             }
           }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Adding item to process: " + url + "; saved ts= " + cache.getTimestamp(url) + "; VFS ts=" + file.getTimeStamp());
+          }
           toProcess.add(item);
         }
       }
@@ -1508,9 +1510,20 @@ public class CompileDriver {
       try {
         List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
         for (FileProcessingCompiler.ProcessingItem aProcessed : processed) {
-          vFiles.add(aProcessed.getFile());
+          final VirtualFile file = aProcessed.getFile();
+          vFiles.add(file);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("File processed by " + adapter.getCompiler().getDescription());
+            LOG.debug("\tFile processed " + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
+          }
         }
         LocalFileSystem.getInstance().refreshFiles(vFiles);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Files after VFS refresh:");
+          for (VirtualFile file : vFiles) {
+            LOG.debug("\t" + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
+          }
+        }
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             for (FileProcessingCompiler.ProcessingItem item : processed) {
