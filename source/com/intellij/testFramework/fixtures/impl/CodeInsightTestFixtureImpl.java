@@ -7,6 +7,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -14,6 +15,8 @@ import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -57,9 +60,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -253,6 +259,35 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void testCompletion(String fileBefore, String fileAfter) throws Throwable {
     testCompletion(new String[] { fileBefore }, fileAfter);
+  }
+
+  public void testCompletionVariants(final String fileBefore, final String... items) throws Throwable {
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+
+      protected void run() throws Throwable {
+        configureByFiles(fileBefore);
+        final Ref<LookupItem[]> myItems = Ref.create(null);
+        new CodeCompletionHandler(){
+          protected Lookup showLookup(Project project,
+                                      Editor editor,
+                                      LookupItem[] items,
+                                      String prefix,
+                                      LookupData data, PsiFile file) {
+            myItems.set(items);
+            return null;
+          }
+
+        }.invoke(getProject(), myEditor, myFile);
+        final LookupItem[] items1 = myItems.get();
+        UsefulTestCase.assertNotNull(items1);
+        checkResultByFile(fileBefore, myFile, false);
+        UsefulTestCase.assertSameElements(ContainerUtil.map(items1, new Function<LookupItem, String>() {
+          public String fun(final LookupItem lookupItem) {
+            return lookupItem.getLookupString();
+          }
+        }), items);
+      }
+    }.execute().throwException();
   }
 
   public void testRename(final String fileBefore, final String fileAfter, final String newName) throws Throwable {

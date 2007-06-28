@@ -18,6 +18,7 @@ package com.intellij.xml;
 
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -30,11 +31,13 @@ public interface XmlAttributeDescriptor extends PsiMetaData{
   boolean hasIdType();
   boolean hasIdRefType();
 
+  @Nullable
   String getDefaultValue();
 
   //todo: refactor to hierarchy of value descriptor?
   boolean isEnumerated();
   String[] getEnumeratedValues();
 
+  @Nullable
   String validateValue(XmlElement context, String value);
 }

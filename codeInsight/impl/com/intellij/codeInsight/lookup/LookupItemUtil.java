@@ -2,7 +2,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,15 +30,6 @@ public class LookupItemUtil{
   @Nullable
   public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix) {
     return addLookupItem(set, object, prefix, TailType.UNKNOWN);
-  }
-
-  @Nullable
-  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, InsertHandler handler) {
-    LookupItem item = addLookupItem(set, object, prefix, TailType.UNKNOWN);
-    if (item != null) {
-      item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, handler);
-    }
-    return item;
   }
 
   @Nullable

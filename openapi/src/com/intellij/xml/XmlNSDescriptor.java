@@ -19,13 +19,20 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
  */
 public interface XmlNSDescriptor extends PsiMetaData{
-  XmlElementDescriptor getElementDescriptor(XmlTag tag);
-  XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document);
+  @Nullable
+  XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag);
+
+  @NotNull
+  XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document);
+
+  @Nullable
   XmlFile getDescriptorFile();
 
   boolean isHierarhyEnabled();

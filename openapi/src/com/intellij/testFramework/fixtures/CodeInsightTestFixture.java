@@ -173,6 +173,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void testCompletion(String fileBefore, String fileAfter) throws Throwable;
 
+  void testCompletionVariants(String fileBefore, String... items) throws Throwable;
+
   /**
    * Launches renaming refactoring and checks the result.
    *

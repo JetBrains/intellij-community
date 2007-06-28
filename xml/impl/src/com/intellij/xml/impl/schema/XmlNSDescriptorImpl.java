@@ -21,6 +21,7 @@ import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -493,7 +494,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return value;
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
+  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     PsiElement parent = tag.getParent();
     final String namespace = tag.getNamespace();
     while(parent instanceof XmlTag && !namespace.equals(((XmlTag)parent).getNamespace()))
@@ -538,7 +539,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return elementDescriptor;
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument doc) {
+  @NotNull
+  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
     class CollectElementsProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
       
@@ -570,11 +572,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return processor.result.toArray(new XmlAttributeDescriptor[processor.result.size()]);
   }
 
-  public boolean processTagsInNamespace(final XmlTag rootTag, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
+  public boolean processTagsInNamespace(@NotNull final XmlTag rootTag, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
     return processTagsInNamespaceInner(rootTag, tagNames, processor, null);
   }
 
-  private static boolean processTagsInNamespaceInner(final XmlTag rootTag, final String[] tagNames,
+  private static boolean processTagsInNamespaceInner(@NotNull final XmlTag rootTag, final String[] tagNames,
                                                      final PsiElementProcessor<XmlTag> processor, Set<XmlTag> visitedTags) {
     if (visitedTags == null) visitedTags = new HashSet<XmlTag>(3);
     else if (visitedTags.contains(rootTag)) return true;

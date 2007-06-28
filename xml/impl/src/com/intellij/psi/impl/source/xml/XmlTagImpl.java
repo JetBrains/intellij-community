@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BidirectionalMap;
@@ -162,7 +164,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return tag.getValue().getText();
   }
 
-  private Map<String, CachedValue<XmlNSDescriptor>> initNSDescriptorsMap() {
+  protected final Map<String, CachedValue<XmlNSDescriptor>> initNSDescriptorsMap() {
     Map<String, CachedValue<XmlNSDescriptor>> map = myNSDescriptorsMap;
     if(map == null){
       boolean exceptionOccurred = false;
@@ -172,10 +174,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         final String noNamespaceDeclaration = getAttributeValue("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
         final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
 
-        if(noNamespaceDeclaration != null){
+        if(noNamespaceDeclaration != null) {
           map = initializeSchema(XmlUtil.EMPTY_URI, noNamespaceDeclaration, map);
         }
-        if(schemaLocationDeclaration != null){
+        if(schemaLocationDeclaration != null) {
           final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
           while(tokenizer.hasMoreTokens()){
             final String uri = tokenizer.nextToken();
@@ -187,9 +189,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         // namespace attributes processing (XSD declaration via ExternalResourceManager)
 
         if (hasNamespaceDeclarations()) {
-          final XmlAttribute[] attributes = getAttributes();
-
-          for (final XmlAttribute attribute : attributes) {
+          for (final XmlAttribute attribute : getAttributes()) {
             if (attribute.isNamespaceDeclaration()) {
               String ns = attribute.getValue();
               if (ns == null) ns = XmlUtil.EMPTY_URI;
@@ -218,22 +218,25 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final String namespace, final String fileLocation, Map<String, CachedValue<XmlNSDescriptor>> map) {
     if(map == null) map = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+    final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
 
-    XmlFile file = retrieveFile(fileLocation);
-    PsiMetaBaseOwner owner = retrieveOwner(file, namespace);
-
-    if (owner != null){
+    if (retrieveOwner(retrieveFile(fileLocation), namespace) != null || externalResourceManager.getImplicitNamespaceDescriptor(fileLocation) != null) {
       map.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
-        public CachedValueProvider.Result<XmlNSDescriptor> compute() {
+        public Result<XmlNSDescriptor> compute() {
+          XmlNSDescriptor descriptor = externalResourceManager.getImplicitNamespaceDescriptor(fileLocation);
+          if (descriptor != null) {
+            return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
+          }
+
           XmlFile currentFile = retrieveFile(fileLocation);
           PsiMetaBaseOwner currentOwner = retrieveOwner(currentFile, namespace);
-          if (currentOwner == null) return new Result<XmlNSDescriptor>(null, XmlTagImpl.this);
-
-          final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)currentOwner.getMetaData();
-          return new Result<XmlNSDescriptor>(
-            nsDescriptor,
-            nsDescriptor != null ? nsDescriptor.getDependences() : currentFile
-          );
+          if (currentOwner != null) {
+            descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
+            if (descriptor != null) {
+              return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
+            }
+          }
+          return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile);
         }
       }, false));
     }
@@ -245,28 +248,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return fileLocation.equals(targetNs) ? null : XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
   }
 
+  @Nullable
   private PsiMetaBaseOwner retrieveOwner(final XmlFile file, final String namespace) {
-    final PsiMetaBaseOwner owner;
     if (file == null) {
-      final String attributeValue = XmlUtil.getTargetSchemaNsFromTag(this);
-
-      if (namespace.equals(attributeValue)) {
-        owner = this;
-      } else {
-        owner = null;
-      }
-    } else {
-      owner = file.getDocument();
+      return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }
-    return owner;
+    return file.getDocument();
   }
 
   public PsiReference getReference() {
     final PsiReference[] references = getReferences();
-    if (references.length > 0){
-      return references[0];
-    }
-    return null;
+    return references.length > 0 ? references[0] : null;
   }
 
   public XmlElementDescriptor getDescriptor() {

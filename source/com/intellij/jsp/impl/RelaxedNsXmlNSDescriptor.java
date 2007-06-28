@@ -6,14 +6,16 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Class to support any xml element descriptor from other namespace
  */
 public class RelaxedNsXmlNSDescriptor extends XmlNSDescriptorImpl {
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
+  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
 
     if (elementDescriptor == null &&
@@ -29,7 +31,8 @@ public class RelaxedNsXmlNSDescriptor extends XmlNSDescriptorImpl {
     return new RelaxedNsXmlElementDescriptor(tag);
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument doc) {
+  @NotNull
+  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
     return ArrayUtil.mergeArrays(
       super.getRootElementsDescriptors(doc),
       HtmlUtil.getCustomTagDescriptors(doc),

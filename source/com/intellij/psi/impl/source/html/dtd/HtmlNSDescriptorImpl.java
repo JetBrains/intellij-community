@@ -11,6 +11,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +68,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
     return decls;
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
+  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final String name = tag.getName().toLowerCase();
 
     XmlElementDescriptor xmlElementDescriptor = buildDeclarationMap().get(name);
@@ -76,10 +78,12 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
     return xmlElementDescriptor;
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
+  @NotNull
+  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     return myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(document);
   }
 
+  @Nullable
   public XmlFile getDescriptorFile() {
     return myDelegate == null ? null : myDelegate.getDescriptorFile();
   }

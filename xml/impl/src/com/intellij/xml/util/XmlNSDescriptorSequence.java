@@ -3,11 +3,13 @@ package com.intellij.xml.util;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +40,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     sequence.add(descriptor);
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag){
+  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag){
     final Iterator iterator = sequence.iterator();
     while(iterator.hasNext()){
       final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
@@ -48,7 +50,8 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     return null;
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
+  @NotNull
+  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
     final Iterator iterator = sequence.iterator();
     while(iterator.hasNext()){

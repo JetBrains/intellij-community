@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,21 +19,23 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mike
@@ -198,7 +202,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   public int displayToPhysical(int displayIndex) {
     String displayValue = getDisplayValue();
-    if (displayIndex < 0 || displayIndex > displayValue.length()) return -1;
+    if (displayValue == null || displayIndex < 0 || displayIndex > displayValue.length()) return -1;
     if (myGapDisplayStarts.length == 0) return displayIndex;
 
     final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
@@ -333,7 +337,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public Object[] getVariants() {
-      final List<String> variants = new ArrayList<String>();
+      final List<LookupElement<String>> variants = new ArrayList<LookupElement<String>>();
 
       final XmlElementDescriptor parentDescriptor = getParent().getDescriptor();
       if (parentDescriptor != null){
@@ -341,27 +345,49 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         final XmlAttribute[] attributes = declarationTag.getAttributes();
         XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors(declarationTag);
 
-        final XmlAttributeImpl context = XmlAttributeImpl.this;
+        descriptors = HtmlUtil.appendHtmlSpecificAttributeCompletions(declarationTag, descriptors, XmlAttributeImpl.this);
 
-        descriptors = HtmlUtil.appendHtmlSpecificAttributeCompletions(declarationTag, descriptors, context);
-
-        outer:
-        for (XmlAttributeDescriptor descriptor : descriptors) {
-          if (descriptor instanceof TldAttributeDescriptor &&
-              ((TldAttributeDescriptor)descriptor).isIndirectSyntax()
-             ) {
-            continue;
+        addVariants(variants, attributes, descriptors);
+        XmlTag tag = declarationTag;
+        final Set<String> processed = new THashSet<String>();
+        while (tag != null) {
+          if (tag instanceof XmlTagImpl) {
+            final Map<String,CachedValue<XmlNSDescriptor>> map = ((XmlTagImpl)tag).initNSDescriptorsMap();
+            for (final String s : map.keySet()) {
+              if (!processed.contains(s)) {
+                processed.add(s);
+                final XmlNSDescriptor descriptor = map.get(s).getValue();
+                if (descriptor instanceof XmlNSDescriptorEx) {
+                  addVariants(variants, attributes, ((XmlNSDescriptorEx)descriptor).getAttributeDescriptors(declarationTag));
+                }
+              }
+            }
           }
-          
-          for (final XmlAttribute attribute : attributes) {
-            if (attribute == context) continue;
-            final String name = attribute.getName();
-            if (name.equals(descriptor.getName())) continue outer;
-          }
-          variants.add(descriptor.getName(declarationTag));
+          tag = tag.getParentTag();
         }
       }
       return variants.toArray();
+    }
+
+    private void addVariants(final Collection<LookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
+      final XmlTag tag = getParent();
+      for (XmlAttributeDescriptor descriptor : descriptors) {
+        if (isValidVariant(descriptor, attributes)) {
+          final LookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(descriptor.getName(tag));
+          if (descriptor instanceof PsiPresentableMetaData) {
+            element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
+          }
+          variants.add(element);
+        }
+      }
+    }
+
+    private boolean isValidVariant(XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes) {
+      if (descriptor instanceof TldAttributeDescriptor && ((TldAttributeDescriptor)descriptor).isIndirectSyntax()) return false;
+      for (final XmlAttribute attribute : attributes) {
+        if (attribute != XmlAttributeImpl.this && attribute.getName().equals(descriptor.getName())) return false;
+      }
+      return true;
     }
 
     public boolean isSoft() {

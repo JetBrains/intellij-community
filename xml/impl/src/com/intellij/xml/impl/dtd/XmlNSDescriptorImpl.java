@@ -20,6 +20,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -111,12 +112,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
      }, false);
   }
 
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
+  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     String name = tag.getName();
     return getElementDescriptor(name);
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
+  @NotNull
+  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     // Suggest more appropriate variant if DOCTYPE <element_name> exists
     final XmlProlog prolog = document != null ? document.getProlog():null;
 

@@ -5,6 +5,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -15,7 +16,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,16 +40,17 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
 
 
-  private Map<String, String> myResources = new HashMap<String, String>();
-  private Set<String> myIgnoredResources = new HashSet<String>();
-  private Map<String, String> myStdResources = new HashMap<String, String>();
-  private List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
+  private final Map<String, String> myResources = new HashMap<String, String>();
+  private final Map<String, XmlNSDescriptorImpl> myImplicitNamespaces = new THashMap<String, XmlNSDescriptorImpl>();
+  private final Set<String> myIgnoredResources = new HashSet<String>();
+  private final Map<String, String> myStdResources = new HashMap<String, String>();
+  private final List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
   private long myModificationCount = 0;
-  private PathMacrosImpl myPathMacros;
-  @NonNls protected static final String RESOURCE_ELEMENT = "resource";
-  @NonNls protected static final String URL_ATTR = "url";
-  @NonNls protected static final String LOCATION_ATTR = "location";
-  @NonNls protected static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
+  private final PathMacrosImpl myPathMacros;
+  @NonNls private static final String RESOURCE_ELEMENT = "resource";
+  @NonNls private static final String URL_ATTR = "url";
+  @NonNls private static final String LOCATION_ATTR = "location";
+  @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
@@ -203,7 +207,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public boolean isIgnoredResource(String url) {
-    return myIgnoredResources.contains(url);
+    return myIgnoredResources.contains(url) || getImplicitNamespaceDescriptor(url) != null;
   }
 
   public String[] getIgnoredResources() {
@@ -270,9 +274,22 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   private void fireExternalResourceChanged() {
-    ExternalResourceListener[] listeners = myListeners.toArray(new ExternalResourceListener[myListeners.size()]);
-    for (ExternalResourceListener listener : listeners) {
+    for (ExternalResourceListener listener : myListeners.toArray(new ExternalResourceListener[myListeners.size()])) {
       listener.externalResourceChanged();
     }
+  }
+
+  public void addImplicitNamespace(@NotNull final String ns, @NotNull XmlNSDescriptorImpl descriptor, Disposable parentDisposable) {
+    myImplicitNamespaces.put(ns, descriptor);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        myImplicitNamespaces.remove(ns);
+      }
+    });
+  }
+
+  @Nullable
+  public XmlNSDescriptorImpl getImplicitNamespaceDescriptor(@NotNull final String ns) {
+    return myImplicitNamespaces.get(ns);
   }
 }
