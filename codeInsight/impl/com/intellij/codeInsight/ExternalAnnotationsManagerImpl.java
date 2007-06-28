@@ -39,8 +39,8 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
-public class ExternalAnnotationsManangerImpl extends ExternalAnnotationsManager {
-  private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManangerImpl.class.getName());
+public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
+  private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
   @NonNls private static final String EXTERNAL_ANNOTATIONS_PROPERTY = "ExternalAnnotations";
 
