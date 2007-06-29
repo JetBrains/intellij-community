@@ -3,7 +3,6 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.LayeredIcon;
@@ -105,9 +104,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public Disposable getDisposer() {
-    if (myDisposer == null) {
-      return this;
-    }
     return myDisposer;
   }
 

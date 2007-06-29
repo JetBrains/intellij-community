@@ -276,11 +276,14 @@ public class RunContentManagerImpl implements RunContentManager {
         }
       };
       processHandler.addProcessListener(processAdapter);
-      Disposer.register(content.getDisposer(), new Disposable() {
-        public void dispose() {
-          processHandler.removeProcessListener(processAdapter);
-        }
-      });
+      final Disposable disposer = content.getDisposer();
+      if (disposer != null) {
+        Disposer.register(disposer, new Disposable() {
+          public void dispose() {
+            processHandler.removeProcessListener(processAdapter);
+          }
+        });
+      }
     }
     content.setDisplayName(descriptor.getDisplayName());
     descriptor.setAttachedContent(content);
