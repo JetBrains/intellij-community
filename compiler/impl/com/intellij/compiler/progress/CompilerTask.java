@@ -261,7 +261,17 @@ public class CompilerTask extends Task.Backgroundable {
 
   public void start(Runnable compileWork) {
     myCompileWork = compileWork;
-    queue();
+    if (isHeadless()) {
+      // make sure compilation is run in a separate thread
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          queue();
+        }
+      });
+    }
+    else {
+      queue();
+    }
   }
 
   private void updateProgressText() {
