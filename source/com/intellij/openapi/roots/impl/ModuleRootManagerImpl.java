@@ -343,7 +343,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
     else if (OrderRootType.ANNOTATIONS.equals(rootType)) {
-      return getUrls(OrderRootType.ANNOTATIONS, processed);
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     LOG.error("Unknown root type: " + rootType);
     return null;

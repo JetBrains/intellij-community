@@ -100,31 +100,25 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
         if (!entries.isEmpty()) {
           final OrderEntry entry = entries.get(0);
-          final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
-          if (virtualFiles.length > 0) {
-            annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, virtualFiles[0], packageName));
-          }
-          else {
-            if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-                descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
-                descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
-                final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
-                if (files.length > 0) {
-                  new WriteCommandAction(project, null) {
-                    protected void run(final Result result) throws Throwable {
-                      if (files[0] != null) {
-                        appendChosenAnnotationsRoot(entry, files[0]);
-                        annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
-                      }
+          if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+              descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
+              descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
+              final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
+              if (files.length > 0) {
+                new WriteCommandAction(project, null) {
+                  protected void run(final Result result) throws Throwable {
+                    if (files[0] != null) {
+                      appendChosenAnnotationsRoot(entry, files[0]);
+                      annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
                     }
-                  }.execute();
-                }
+                  }
+                }.execute();
               }
-            });
-          }
+            }
+          });
         }
       }
     }
