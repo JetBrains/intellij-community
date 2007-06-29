@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,8 +28,8 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -264,6 +265,18 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     Place.queryFurther(mySelectedConfigurable, place);
   }
 
+  public ActionCallback select(final String moduleToSelect, final String tabNameToSelect) {
+    final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
+    assert module != null;
+
+    return navigateTo(new Place()
+      .putPath(CATEGORY, myModulesConfig)
+      .putPath(ModuleStructureConfigurable.MODULE_TREE_OBJECT, module)
+      .putPath(ModuleEditor.MODULE_VIEW_KEY, ModuleEditor.GENERAL_VIEW)
+      .putPath(ModuleEditor.MODULE_VIEW_GENERAL_TAB, tabNameToSelect));
+  }
+
+
   public ActionCallback navigateTo(@Nullable final Place place) {
     final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
 
@@ -300,12 +313,8 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     }
 
 
-    final ActionCallback result = new ActionCallback() {
-      public void consume() {
-        super.consume();
-      }
-    };
-    Place.goFurther(toSelect, place).setChildDone(result);
+    final ActionCallback result = new ActionCallback();
+    Place.goFurther(toSelect, place).markDone(result);
 
     myDetails.revalidate();
     myDetails.repaint();
@@ -398,7 +407,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
   }
 
   public BaseLibrariesConfigurable getConfigurableFor(final Library library) {
-    if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(library.getTable())) {
+    if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(library.getTable().getTableLevel())) {
       return myProjectLibrariesConfig;
     } else {
       return myGlobalLibrariesConfig;

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Iterator;
 
 public class Place implements ComparableObject {
 
@@ -45,6 +46,28 @@ public class Place implements ComparableObject {
 
   public void copyFrom(final Place from) {
     myPath = (LinkedHashMap<String, Object>)from.myPath.clone();
+  }
+
+  public boolean isMoreGeneralFor(final Place place) {
+    if (myPath.size() >= place.myPath.size()) return false;
+
+    final Iterator<String> thisIterator = myPath.keySet().iterator();
+    final Iterator<String> otherIterator = place.myPath.keySet().iterator();
+
+    while (thisIterator.hasNext()) {
+      String thisKey = thisIterator.next();
+      String otherKey = otherIterator.next();
+      if (thisKey == null || !thisKey.equals(otherKey)) return false;
+
+      final Object thisValue = myPath.get(thisKey);
+      final Object otherValue = place.myPath.get(otherKey);
+
+      if (thisValue == null || !thisValue.equals(otherValue)) return false;
+
+    }
+
+
+    return true;
   }
 
 

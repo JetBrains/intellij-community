@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.Chunk;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -420,16 +421,18 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
                                    @Nullable final String moduleToSelect,
                                    final String tabNameToSelect,
                                    final boolean showModuleWizard) {
-    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, moduleStructureConfigurable, new Runnable() {
+    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
+    return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
-        if (moduleToSelect != null) {
-          moduleStructureConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
-        }
-        moduleStructureConfigurable.setStartModuleWizard(showModuleWizard);
-        SwingUtilities.invokeLater(new Runnable() {
+        final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
+        config.select(moduleToSelect, tabNameToSelect).doWhenDone(new Runnable() {
           public void run() {
-            moduleStructureConfigurable.setStartModuleWizard(false);
+            modulesConfig.setStartModuleWizard(showModuleWizard);
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                modulesConfig.setStartModuleWizard(false);
+              }
+            });
           }
         });
       }

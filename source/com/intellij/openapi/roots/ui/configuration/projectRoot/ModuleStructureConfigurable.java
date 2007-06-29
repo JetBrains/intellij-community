@@ -70,7 +70,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private ProjectConfigurable myProjectConfigurable;
 
   private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
-  @NonNls private static final String MODULE_TREE_CONFIGURABLE = "moduleTreeElement";
+  @NonNls public static final String MODULE_TREE_OBJECT = "moduleTreeElement";
+  private boolean myAutoScrollEnabled = true;
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
@@ -106,33 +107,46 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     updateSelection(configurable, selectedTab);
 
     if (configurable != null) {
-      myHistory.pushPlaceForElement(MODULE_TREE_CONFIGURABLE, configurable.getEditableObject());
+      myHistory.pushPlaceForElement(MODULE_TREE_OBJECT, configurable.getEditableObject());
     }
   }
 
   public ActionCallback navigateTo(@Nullable final Place place) {
     if (place == null) return new ActionCallback.Done();
 
-    final Object object = place.getPath(MODULE_TREE_CONFIGURABLE);
+    final Object object = place.getPath(MODULE_TREE_OBJECT);
     if (object == null) return new ActionCallback.Done();
 
-    final ActionCallback result = new ActionCallback();
+    final MyNode node = findNodeByObject(myRoot, object);
+    if (node == null) return new ActionCallback.Done();
 
-    selectNodeInTree(findNodeByObject(myRoot, object)).doWhenDone(new Runnable() {
+    final NamedConfigurable config = node.getConfigurable();
+
+    final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
       public void run() {
-        updateSelection();
-        if (myCurrentConfigurable != null) {
-          Place.goFurther(myCurrentConfigurable, place).setChildDone(result);
-        }
+        myAutoScrollEnabled = true;
+      }
+    });
+
+    myAutoScrollEnabled = false;
+    myAutoScrollHandler.cancelAllRequests();
+    selectNodeInTree(node).doWhenDone(new Runnable() {
+      public void run() {
+        updateSelection(config);
+        Place.goFurther(config, place).markDone(result);
       }
     });
 
     return result;
   }
 
+  protected boolean isAutoScrollEnabled() {
+    return myAutoScrollEnabled;
+  }
+
   public void queryPlace(@NotNull final Place place) {
     if (myCurrentConfigurable != null) {
-      place.putPath(MODULE_TREE_CONFIGURABLE, myCurrentConfigurable);
+      place.putPath(MODULE_TREE_OBJECT, myCurrentConfigurable.getEditableObject());
       Place.queryFurther(myCurrentConfigurable, place);
     }
   }
@@ -145,7 +159,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private void updateTabSelection(final NamedConfigurable configurable, final String selectedTab) {
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
-      myFacetEditorFacade.getFacetConfigurator().addFacetInfos(moduleConfigurable.getModule());
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       editor.init(selectedTab, getDetailsComponent().getChooseView(), myFacetEditorFacade, myHistory);
     } else {
@@ -518,6 +531,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public StructureConfigrableContext getContext() {
     return myContext;
   }
+
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
     public MyDataProviderWrapper(final JComponent component) {

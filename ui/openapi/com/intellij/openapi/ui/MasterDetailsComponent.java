@@ -97,7 +97,12 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
   protected MasterDetailsComponent() {
-    myWholePanel = new JPanel(new BorderLayout());
+    myWholePanel = new JPanel(new BorderLayout()) {
+      public void addNotify() {
+        super.addNotify();
+        MasterDetailsComponent.this.addNotify();
+      }
+    };
     mySplitter = new Splitter(false, .2f);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
@@ -127,10 +132,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       protected boolean needToCheckFocus() {
         return false;
       }
-
     };
     myAutoScrollHandler.install(myTree);
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
+  }
+
+  protected void addNotify() {
+    updateSelection();
   }
 
   protected void updateSelection() {
@@ -246,27 +254,25 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myHasDeletedItems = false;
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTree.requestFocus();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myState.lastEditedConfigurable == null) {
-          TreeUtil.selectFirstNode(myTree);
+
+    if (myState.lastEditedConfigurable == null) {
+      TreeUtil.selectFirstNode(myTree);
+      return;
+    }
+    final Enumeration enumeration = myRoot.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      final MyNode node = (MyNode)enumeration.nextElement();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof Configurable) {
+        final Configurable configurable = (Configurable)userObject;
+        if (Comparing.strEqual(configurable.getDisplayName(), myState.lastEditedConfigurable)) {
+          TreeUtil.selectInTree(node, true, myTree);
           return;
         }
-        final Enumeration enumeration = myRoot.breadthFirstEnumeration();
-        while (enumeration.hasMoreElements()) {
-          final MyNode node = (MyNode)enumeration.nextElement();
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof Configurable) {
-            final Configurable configurable = (Configurable)userObject;
-            if (Comparing.strEqual(configurable.getDisplayName(), myState.lastEditedConfigurable)) {
-              TreeUtil.selectInTree(node, true, myTree);
-              return;
-            }
-          }
-        }
-        TreeUtil.selectFirstNode(myTree);
       }
-    });
+    }
+    TreeUtil.selectFirstNode(myTree);
+
     myState.proportions.restoreSplitterProportions(myWholePanel);
   }
 
@@ -428,6 +434,18 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final NamedConfigurable configurable = node.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
       return configurable.getEditableObject();
+    }
+    return null;
+  }
+
+  @Nullable
+  public NamedConfigurable getSelectedConfugurable() {
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null) {
+      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+      final NamedConfigurable configurable = node.getConfigurable();
+      LOG.assertTrue(configurable != null, "already disposed");
+      return configurable;
     }
     return null;
   }

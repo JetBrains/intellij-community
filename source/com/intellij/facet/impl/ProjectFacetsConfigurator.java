@@ -75,10 +75,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
 
   public void addFacetInfo(final Facet facet) {
     final FacetInfo exiting = myFacet2Info.get(facet);
-    if (exiting != null) {
-      LOG.assertTrue(exiting.getConfiguration() == facet.getConfiguration());
-      return;
-    }
+    LOG.assertTrue(exiting == null);
 
     FacetInfo info = new FacetInfo(facet.getType(), facet.getName(), facet.getConfiguration(), myFacet2Info.get(facet.getUnderlyingFacet()));
     myFacet2Info.put(facet, info);

@@ -147,6 +147,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   public final void release() {
     myComponent = null;
+    myPreferredFocusableComponent = null;
     myManager = null;
 
     clearUserData();
@@ -205,8 +206,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void dispose() {
-    if (myDisposer != null) {
-      Disposer.dispose(myDisposer);
-    }
+    release();
   }
 }

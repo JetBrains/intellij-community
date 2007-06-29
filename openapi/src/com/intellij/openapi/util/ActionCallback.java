@@ -2,26 +2,32 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class ActionCallback {
 
   private boolean myDone;
-  private Runnable myRunnable;
+  private List<Runnable> myRunnables;
 
-  private boolean myConsumed;
-
-  public final void setDone() {
-    if (myConsumed) return;
+  public void setDone() {
     myDone = true;
     callback();
   }
 
-  public final void doWhenDone(@NotNull final Runnable runnable) {
-    if (myConsumed) return;
-    myRunnable = runnable;
+  public final ActionCallback doWhenDone(@NotNull final Runnable runnable) {
+    if (myRunnables == null) {
+      myRunnables = new ArrayList<Runnable>();
+    }
+
+    myRunnables.add(runnable);
+
     callback();
+
+    return this;
   }
 
-  public final void setChildDone(final ActionCallback child) {
+  public final void markDone(final ActionCallback child) {
     doWhenDone(new Runnable() {
       public void run() {
         child.setDone();
@@ -30,20 +36,13 @@ public class ActionCallback {
   }
 
   private void callback() {
-    if (myDone && myRunnable != null) {
-      myRunnable.run();
-      consume();
+    if (myDone && myRunnables != null) {
+      final Runnable[] all = myRunnables.toArray(new Runnable[myRunnables.size()]);
+      myRunnables.clear();
+      for (Runnable each : all) {
+        each.run();
+      }
     }
-  }
-
-  public void consume() {
-    if (myConsumed) return;
-
-    myConsumed = true;
-    onConsumed();
-  }
-
-  protected void onConsumed() {
   }
 
   public static class Done extends ActionCallback {

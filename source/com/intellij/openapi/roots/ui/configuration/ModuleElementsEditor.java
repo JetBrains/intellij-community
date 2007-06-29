@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.navigation.History;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -22,9 +23,15 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   protected JComponent myComponent;
   private List<Disposable> myDisposables = new ArrayList<Disposable>();
 
+  protected History myHistory;
+
   protected ModuleElementsEditor(Project project, ModifiableRootModel model) {
     myProject = project;
     myModel = model;
+  }
+
+  public void setHistory(final History history) {
+    myHistory = history;
   }
 
   public boolean isModified() {

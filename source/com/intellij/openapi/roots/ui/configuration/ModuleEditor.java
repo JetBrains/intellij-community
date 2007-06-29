@@ -50,12 +50,16 @@ import java.util.List;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ModuleEditor implements Place.Navigator {
 
-  @NonNls private static final String MODULE_VIEW = "module.view";
+  @NonNls public static final String MODULE_VIEW_KEY = "module.view.key";
+  public static final String GENERAL_VIEW = "General";
 
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
+
   private static String ourSelectedTabName;
+  private static String ourSelectedViewKey;
+
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private String myName;
@@ -74,7 +78,6 @@ public class ModuleEditor implements Place.Navigator {
   private FacetEditorFacadeImpl myFacetEditorFacade;
   private ModuleEditor.GeneralView myGeneralView;
 
-  private static final String GENERAL_VIEW = "General";
   private ModuleEditor.ManageFacets myManageFacets;
 
   private Disposable myRoot = new Disposable() {
@@ -84,11 +87,14 @@ public class ModuleEditor implements Place.Navigator {
   private History myHistory;
   private SwitchView myCurrentView;
   private Map<String, ViewItem> myKey2Item = new HashMap<String, ViewItem>();
+  @NonNls public static final String MODULE_VIEW_GENERAL_TAB = "module.view.general.tab";
 
   @Nullable
   public ModuleBuilder getModuleBuilder() {
     return myModuleBuilder;
   }
+
+
 
   public void setHistoryFacade(ModuleConfigurable configurable) {
     myConfigurable = configurable;
@@ -96,6 +102,12 @@ public class ModuleEditor implements Place.Navigator {
 
   public void init(final String selectedTab, final ChooseView chooseView, final FacetEditorFacadeImpl facetEditorFacade, History history) {
     myHistory = history;
+
+    for (ModuleConfigurationEditor each : myEditors) {
+      if (each instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)each).setHistory(myHistory);
+      }
+    }
 
     setSelectedTabName(selectedTab);
     myChooseView = chooseView;
@@ -131,10 +143,12 @@ public class ModuleEditor implements Place.Navigator {
     myChooseView.addSeparator(null);
     addView(myManageFacets);
 
-    if (myChooseView.isSelectionValid()) {
+    final ModuleEditor.ViewItem item = myKey2Item.get(ourSelectedViewKey);
+    if (item != null && item instanceof SwitchView) {
+      ((SwitchView)item).switchTo();
+    } else {
       myGeneralView.switchTo();
     }
-
   }
 
   private void addView(final ViewItem item) {
@@ -147,6 +161,13 @@ public class ModuleEditor implements Place.Navigator {
         return true;
       }
     });
+  }
+
+  public void swithToFacetEditor(final Facet facet) {
+    final ModuleEditor.ViewItem item = myKey2Item.get(getFacetName(facet));
+    if (item instanceof SwitchView) {
+      ((SwitchView)item).switchTo();
+    }
   }
 
   public static interface ChangeListener extends EventListener {
@@ -255,11 +276,11 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   private void pushHistory() {
-    myHistory.pushPlaceForElement("general.tab", myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
+    myHistory.pushPlaceForElement(MODULE_VIEW_GENERAL_TAB, myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
   }
 
   public ActionCallback navigateTo(@Nullable final Place place) {
-    final ModuleEditor.ViewItem item = myKey2Item.get(place.getPath(MODULE_VIEW));
+    final ModuleEditor.ViewItem item = myKey2Item.get(place.getPath(MODULE_VIEW_KEY));
     if (item instanceof SwitchView) {
       ((SwitchView)item).navigateTo(place);
     }
@@ -614,13 +635,16 @@ public class ModuleEditor implements Place.Navigator {
     PopupStep getStep() {
       return new BaseListPopupStep(myText, new Object[0]) {
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
+          final Place place = myHistory.getPlaceForElement(MODULE_VIEW_KEY, myGeneralView.getKey());
+          place.putPath(MODULE_VIEW_GENERAL_TAB, ManageFacetsEditor.DISPLAY_NAME);
+          myHistory.navigateTo(place);
           return FINAL_CHOICE;
         }
       };
     }
 
     String getKey() {
-      return null;
+      return "ManageFacets";
     }
   }
 
@@ -641,6 +665,7 @@ public class ModuleEditor implements Place.Navigator {
     PopupStep getStep() {
       return new BaseListPopupStep(myText, new Object[0]) {
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
+          ourSelectedViewKey = myKey;
           setSelectedView(SwitchView.this, myShowModuleName);
           return PopupStep.FINAL_CHOICE;
         }
@@ -656,7 +681,7 @@ public class ModuleEditor implements Place.Navigator {
     }
 
     public void queryPlace(Place place) {
-      place.putPath(MODULE_VIEW, myKey);
+      place.putPath(MODULE_VIEW_KEY, myKey);
     }
 
     public void navigateTo(final Place place) {
@@ -675,13 +700,18 @@ public class ModuleEditor implements Place.Navigator {
 
     public void queryPlace(final Place place) {
       super.queryPlace(place);
-      place.putPath("module.view.general.tab", getSelectedTabName());
+      place.putPath(MODULE_VIEW_GENERAL_TAB, getSelectedTabName());
     }
 
     public void navigateTo(final Place place) {
       super.navigateTo(place);
-      setSelectedTabName((String)place.getPath("module.view.general.tab"));
+      setSelectedTabName((String)place.getPath(MODULE_VIEW_GENERAL_TAB));
     }
+  }
+
+
+  private String getFacetName(final Facet facet) {
+    return myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).getFacetName(facet);
   }
 
   class FacetView extends SwitchView {
@@ -689,7 +719,7 @@ public class ModuleEditor implements Place.Navigator {
     private Facet myFacet;
 
     public FacetView(Facet facet) {
-      super(facet.getType().getStringId(), myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).getFacetName(facet), facet.getType().getIcon(), false);
+      super(getFacetName(facet), getFacetName(facet), facet.getType().getIcon(), false);
       myFacet = facet;
     }
 
@@ -711,4 +741,5 @@ public class ModuleEditor implements Place.Navigator {
       return myFacetEditorFacade.getFacetConfigurator().getOrCreateEditor(myFacet).getComponent();
     }
   }
+
 }

@@ -33,9 +33,18 @@ public final class History {
     }
 
     if (myHistory.size() > 0) {
-      if (myHistory.get(myHistory.size() - 1).equals(place)) return;
+      final Place prev = myHistory.get(myHistory.size() - 1);
+      if (prev.equals(place)) return;
+
+      if (prev.isMoreGeneralFor(place)) {
+        myHistory.remove(prev);
+      }
     }
 
+    addPlace(place);
+  }
+
+  private void addPlace(Place place) {
     myHistory.add(place);
     myCurrentPos = myHistory.size() - 1;
   }
@@ -46,6 +55,17 @@ public final class History {
     final Place checkPlace = getCheckPlace(name);
     if (checkPlace == null) return;
     pushPlace(checkPlace.cloneForElement(name, value));
+  }
+
+  public Place getPlaceForElement(String name, String value) {
+    final Place checkPlace = getCheckPlace(name);
+    if (checkPlace == null) return new Place();
+
+    return checkPlace.cloneForElement(name, value);
+  }
+
+  public void navigateTo(Place place) {
+    myRoot.navigateTo(place);
   }
 
   public void back() {
@@ -125,13 +145,5 @@ public final class History {
   }
 
 
-  public void updateCurrentPlace() {
-    final Place current = getCurrent();
-    if (current != null) {
-      final Place query = query();
-      if (query != null) {
-        current.copyFrom(query);
-      }
-    }
-  }
+
 }
