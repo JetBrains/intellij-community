@@ -87,6 +87,8 @@ public class GroovyAnnotator implements Annotator {
       if (expr != null) {
         final PsiType argType = expr.getType();
         if (argType != null) {
+          final PsiClassType listType = namedArgument.getManager().getElementFactory().createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
+          if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
           checkAssignability(holder, expectedType, argType, namedArgument);
         }
       }
