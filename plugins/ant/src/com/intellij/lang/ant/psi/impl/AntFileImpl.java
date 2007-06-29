@@ -17,6 +17,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
@@ -49,7 +50,7 @@ import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntFileImpl extends LightPsiFileBase implements AntFile {
-  
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntFileImpl");
   @NonNls public static final String PROJECT_TAG = "project";
   @NonNls public static final String TARGET_TAG = "target";
   @NonNls public static final String IMPORT_TAG = "import";
@@ -802,7 +803,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       return AntInstrospector.getInstance(c);
     }
     catch (Throwable e) {
-      // can't be
+      LOG.error(e);// can't be
     }
     return null;
   }

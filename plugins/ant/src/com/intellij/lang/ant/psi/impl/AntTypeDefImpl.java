@@ -350,13 +350,17 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
     final AntTypeId id = (nsPrefix == null) ? new AntTypeId(name) : new AntTypeId(name, nsPrefix);
-    final AntTypeDefinitionImpl def;
+    AntTypeDefinitionImpl def = null;
     if (clazz == null) {
       def = new AntTypeDefinitionImpl(id, classname, isTask());
     }
     else {
       myClassesLoaded = true;
-      def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isAssignableFrom(Task.class.getName(), clazz));
+      final boolean isTask = isAssignableFrom(Task.class.getName(), clazz);
+      def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isTask);
+      if (def == null) { // can be null if failed to introspect the class for some reason
+        def = new AntTypeDefinitionImpl(id, classname, isTask);
+      }
       def.setIsProperty(isAssignableFrom(org.apache.tools.ant.taskdefs.Property.class.getName(), clazz));
       if (newlyLoaded) {
         CLASS_CACHE.setClass(urls, classname, clazz);
