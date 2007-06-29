@@ -4,22 +4,26 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  *
  */
 public class PsiImplUtil {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr) throws IncorrectOperationException {
     if (oldExpr.getParent() == null ||
-        oldExpr.getParent().getNode() == null ||
-        newExpr.getNode() == null) {
+            oldExpr.getParent().getNode() == null) {
       throw new IncorrectOperationException();
     }
     // Remove unnecessary parentheses
@@ -34,6 +38,33 @@ public class PsiImplUtil {
       throw new IncorrectOperationException();
     }
     return ((GrExpression) newNode.getPsi());
+  }
+
+  public static void shortenReferences(GroovyPsiElement typeElement) {
+    doShorten(typeElement);
+  }
+
+  private static void doShorten(PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (child != null) {
+      if (child instanceof GrReferenceElement) {
+        final GrCodeReferenceElement ref = (GrCodeReferenceElement) child;
+        if (ref.getQualifier() != null) {
+          final PsiElement resolved = ref.resolve();
+          if (resolved instanceof PsiClass) {
+            ref.setQualifier(null);
+            try {
+              ref.bindToElement(resolved);
+            } catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+
+      doShorten(child);
+      child = child.getNextSibling();
+    }
   }
 
 }

@@ -104,7 +104,7 @@ public class IntroduceVariableTest extends ActionTestCase {
           GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
 
       introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),
-          occurences, varName, replaceAllOccurences, varDecl);
+          occurences, varName, varType, replaceAllOccurences, varDecl);
 
 
       result = myEditor.getDocument().getText();

@@ -78,6 +78,10 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     return null;
   }
 
+  public void setType(@Nullable PsiType type) {
+    throw new RuntimeException("NIY");
+  }
+
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     return findChildByClass(GrTypeElement.class);

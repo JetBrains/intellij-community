@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ven
@@ -75,4 +76,6 @@ public abstract class GroovyElementFactory {
   public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
 
   public abstract GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException;
+
+  public abstract GrTypeElement createTypeElement(PsiType type);
 }

@@ -15,16 +15,17 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -40,10 +41,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -62,6 +64,22 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
+  public void setQualifier(@Nullable GrCodeReferenceElement newQualifier) {
+    final GrCodeReferenceElement qualifier = getQualifier();
+    if(newQualifier == null) {
+      if (qualifier == null) return;
+      getNode().removeRange(getNode().getFirstChildNode(), getReferenceNameElement().getNode());
+    } else {
+      if (qualifier == null) {
+        final ASTNode refNameNode = getReferenceNameElement().getNode();
+        getNode().addChild(newQualifier.getNode(), refNameNode);
+        getNode().addLeaf(GroovyTokenTypes.mDOT, ".", refNameNode);
+      } else {
+        getNode().replaceChild(qualifier.getNode(), newQualifier.getNode());
+      }
+    }
+  }
+
   enum ReferenceKind {
     CONSTRUCTOR,
     CLASS,
@@ -73,7 +91,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
   @Nullable
   public PsiElement resolve() {
-    ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
     return results.length == 1 ? results[0].getElement() : null;
   }
 
@@ -126,7 +144,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       case STATIC_MEMBER_FQ:
       {
         final GrCodeReferenceElement qualifier = getQualifier();
-        final String refName = getReferenceName();
         if (qualifier != null) {
           final PsiElement resolve = qualifier.resolve();
           if (resolve instanceof PsiClass) {
@@ -331,12 +348,12 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   private static MyResolver RESOLVER = new MyResolver();
 
   public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
   @NotNull
   public ResolveResult[] multiResolve(boolean b) {
-    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    return getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
   }
 }

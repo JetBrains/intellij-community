@@ -128,7 +128,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final GrVariableDeclaration varDecl = factory.createVariableDeclaration(varName,
         GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
 
-    runRefactoring(selectedExpr, editor, tempContainer, occurences, varName, replaceAllOccurences, varDecl);
+    runRefactoring(selectedExpr, editor, tempContainer, occurences, varName, varType, replaceAllOccurences, varDecl);
 
     return true;
 
@@ -142,7 +142,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                       final GroovyPsiElement tempContainer,
                       final PsiElement[] occurrences,
                       final String varName,
-                      final boolean replaceAllOccurences,
+                      final PsiType varType, final boolean replaceAllOccurences,
                       final GrVariableDeclaration varDecl) {
     final Project project = selectedExpr.getProject();
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
@@ -170,6 +170,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             // Insert before first occurence
             insertVariableDefinition(tempContainer, selectedExpr, occurrences, replaceAllOccurences, varDecl, factory);
           }
+
+          varDecl.getVariables()[0].setType(varType);
 
           //Replace other occurrences
           GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(varName);

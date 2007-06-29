@@ -15,12 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry.Krasilschikov
  */
 public interface GroovyPsiElement extends PsiElement {
-
+  @NotNull
+  ASTNode getNode();
 }

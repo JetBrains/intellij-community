@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -39,4 +40,9 @@ public interface GrVariable extends GrNamedElement, PsiVariable, GroovyPsiElemen
 
   @Nullable
   PsiType getTypeGroovy();
+
+  void setType(@Nullable PsiType type);
+
+  @Nullable
+  GrTypeElement getTypeElementGroovy();
 }

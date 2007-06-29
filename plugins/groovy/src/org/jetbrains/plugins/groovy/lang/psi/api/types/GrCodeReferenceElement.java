@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
@@ -25,4 +26,6 @@ public interface GrCodeReferenceElement extends GrReferenceElement {
   GrCodeReferenceElement[] EMPTY_ARRAY = new GrCodeReferenceElement[0];
 
   GrCodeReferenceElement getQualifier();
+
+  void setQualifier(@Nullable GrCodeReferenceElement newQualifier);
 }

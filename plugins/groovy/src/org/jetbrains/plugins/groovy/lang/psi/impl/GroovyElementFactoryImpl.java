@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -86,7 +87,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     }
     if (type != null) {
       type = TypesUtil.unboxPrimitiveType(type);
-      text.append(type.getPresentableText()).append(" "); //todo qualified + shorten
+      text.append(type.getCanonicalText()).append(" ");
     }
 
     text.append(identifier);
@@ -147,6 +148,14 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     final GrTypeDefinition[] classes = file.getTypeDefinitions();
     if (classes.length != 1) throw new IncorrectOperationException("Incorrect type definition text");
     return classes[0];
+  }
+
+  public GrTypeElement createTypeElement(PsiType type) {
+    final String canonicalText = type.getCanonicalText();
+    if (canonicalText == null) throw new RuntimeException("Cannot create type element: canonical text is null");
+    final GroovyFile file = createDummyFile(canonicalText + " someVar");
+    GrVariableDeclaration decl = (GrVariableDeclaration) file.getTopStatements()[0];
+    return decl.getTypeElementGroovy();
   }
 
   private PsiFile createGroovyFile(String idText) {

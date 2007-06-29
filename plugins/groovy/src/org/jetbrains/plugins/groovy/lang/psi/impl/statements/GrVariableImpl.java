@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -52,8 +53,13 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   @Nullable
+  public GrTypeElement getTypeElementGroovy() {
+    return ((GrVariableDeclaration) getParent()).getTypeElementGroovy();
+  }
+
+  @Nullable
   public PsiType getTypeGroovy() {
-    GrTypeElement typeElement = ((GrVariableDeclaration) getParent()).getTypeElementGroovy();
+    GrTypeElement typeElement = getTypeElementGroovy();
     if (typeElement != null) return typeElement.getType();
 
     GrExpression initializer = getInitializerGroovy();
@@ -65,6 +71,38 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
     }
 
     return null;
+  }
+
+  public void setType(@Nullable PsiType type) {
+    final GrTypeElement typeElement = getTypeElementGroovy();
+    if (type == null) {
+      if (typeElement == null) return;
+      final ASTNode typeElementNode = typeElement.getNode();
+      final ASTNode parent = typeElementNode.getTreeParent();
+      parent.addLeaf(GroovyTokenTypes.kDEF, "def", typeElementNode);
+      parent.removeChild(typeElementNode);
+    } else {
+      GrTypeElement newTypeElement = GroovyElementFactory.getInstance(getProject()).createTypeElement(type);
+      final ASTNode newTypeElementNode = newTypeElement.getNode();
+      if (typeElement == null) {
+        final PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);
+        if (defKeyword != null) {
+          final ASTNode defKeywordNode = defKeyword.getNode();
+          assert defKeywordNode != null;
+          defKeywordNode.getTreeParent().removeChild(defKeywordNode);
+        }
+        final PsiElement nameID = getNameIdentifierGroovy();
+        final ASTNode nameIdNode = nameID.getNode();
+        assert nameIdNode != null;
+        nameIdNode.getTreeParent().addChild(newTypeElementNode);
+      } else {
+        final ASTNode typeElementNode = typeElement.getNode();
+        final ASTNode parent = typeElementNode.getTreeParent();
+        parent.replaceChild(typeElementNode, newTypeElementNode);
+      }
+
+      PsiImplUtil.shortenReferences(newTypeElement);
+    }
   }
 
   @Nullable
@@ -88,10 +126,6 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   public Object computeConstantValue() {
     return null;
   }
-
-  /*public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitVariable(this);
-  }*/
 
   public String getName() {
     return getNameIdentifierGroovy().getText();
