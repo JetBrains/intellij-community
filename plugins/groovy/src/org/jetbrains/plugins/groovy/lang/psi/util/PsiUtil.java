@@ -24,10 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -118,12 +115,14 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GroovyPsiElement getArgumentsElement(GrReferenceExpression methodRef) {
+  public static GroovyPsiElement getArgumentsElement(GroovyPsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrMethodCall) {
       return ((GrMethodCall) parent).getArgumentList();
     } else if (parent instanceof GrApplicationExpression) {
       return ((GrApplicationExpression) parent).getArgumentList();
+    } else if (parent instanceof GrNewExpression) {
+      return ((GrNewExpression) parent).getArgumentList();
     }
     return null;
   }

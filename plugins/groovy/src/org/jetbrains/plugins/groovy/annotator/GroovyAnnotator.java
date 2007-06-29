@@ -128,14 +128,8 @@ public class GroovyAnnotator implements Annotator {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       } else if (element instanceof PsiMethod && element.getUserData(GrMethod.BUILDER_METHOD) == null) {
-        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refExpr, false);
-        if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, (PsiMethod) element)) {
-          GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(refExpr);
-          LOG.assertTrue(elementToHighlight != null);
-          //todo more specific error message
-          String message = GroovyBundle.message("cannot.apply.method", refExpr.getReferenceName());
-          holder.createWarningAnnotation(elementToHighlight, message);
-        }
+        final PsiMethod method = (PsiMethod) element;
+        checkMethodApplicability(method, refExpr, holder);
       }
       if (isAssignmentLHS(refExpr) || element instanceof PsiPackage) return;
     } else {
@@ -166,19 +160,33 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
+  private void checkMethodApplicability(PsiMethod method, GroovyPsiElement place, AnnotationHolder holder) {
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
+    if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method)) {
+      GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+      if (elementToHighlight == null) {
+        elementToHighlight = place;
+      }
+
+      //todo more specific error message
+      String message = GroovyBundle.message("cannot.apply.method", method.getName());
+      holder.createWarningAnnotation(elementToHighlight, message);
+    }
+  }
+
   private boolean isAssignmentLHS(GrReferenceExpression refExpr) {
     return refExpr.getParent() instanceof GrAssignmentExpression &&
         refExpr.equals(((GrAssignmentExpression) refExpr.getParent()).getLValue());
   }
 
   private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
-    final PsiElement parent=refElement.getParent();
+    final PsiElement parent = refElement.getParent();
 
+    GroovyResolveResult resolveResult = refElement.advancedResolve();
     if (parent instanceof GrNewExpression) {
-      //checkApplicability
+      checkNewExpression(holder, refElement, resolveResult);
     }
     else if (refElement.getReferenceName() != null) {
-      GroovyResolveResult resolveResult = refElement.advancedResolve();
       final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {
         if (parent instanceof GrImportStatement && ((GrImportStatement) parent).isStatic()) { //multiple members might be imported by single static import
@@ -197,6 +205,20 @@ public class GroovyAnnotator implements Annotator {
       } else if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
         holder.createErrorAnnotation(refElement, message);
+      }
+    }
+  }
+
+  private void checkNewExpression(AnnotationHolder holder, GrCodeReferenceElement refElement, GroovyResolveResult resolveResult) {
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PsiMethod) {
+      checkMethodApplicability((PsiMethod) element, refElement, holder);
+    } else if (element instanceof PsiClass) {
+      //default constructor invocation
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
+      if (argumentTypes != null && argumentTypes.length > 0) {
+        String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) element).getName());
+        holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
       }
     }
   }
