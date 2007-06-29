@@ -43,14 +43,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, HistoryAware.Config,
-                                                                                          Disposable, Configurable.Assistant {
+public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Configurable.Assistant {
 
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
   protected StructureConfigrableContext myContext;
 
   protected final Project myProject;
-  protected HistoryAware.Facade myHistoryFacade;
 
   protected boolean myUiDisposed = true;
 
@@ -222,10 +220,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     super.reset();
-  }
-
-  public void setHistoryFacade(final HistoryAware.Facade facade) {
-    myHistoryFacade = facade;
   }
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.ForwardAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
@@ -29,11 +28,12 @@ import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @State(
   name = "ProjectStructureConfigurable.UI",
@@ -43,13 +43,14 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class ProjectStructureConfigurable implements SearchableConfigurable, HistoryAware.Facade, PersistentStateComponent<ProjectStructureConfigurable.UIState> {
+public class ProjectStructureConfigurable implements SearchableConfigurable, PersistentStateComponent<ProjectStructureConfigurable.UIState>, Place.Navigator {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
   private UIState myUiState = new UIState();
   private Splitter mySplitter;
   private JComponent myToolbarComponent;
+  @NonNls private static final String CATEGORY = "category";
 
   public static class UIState {
     public float proportion;
@@ -61,7 +62,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
   private Project myProject;
   private ModuleManager myModuleManager;
 
-  private History myHistory = new History();
+  private History myHistory = new History(this);
   private SidePanel mySidePanel;
 
   private JPanel myComponent;
@@ -77,9 +78,8 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
   private ModuleStructureConfigurable myModulesConfig;
 
   private boolean myWasIntialized;
-  private boolean myHistoryNavigatedNow;
 
-  private Map<Configurable, ConfigPlace> myConfig2Place = new HashMap<Configurable, ConfigPlace>();
+  private Map<String, Configurable> myName2Config = new HashMap<String, Configurable>();
   private StructureConfigrableContext myContext;
   private ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
@@ -152,43 +152,43 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
   }
 
   private void initSidePanel() {
-    mySidePanel = new SidePanel(this);
+    mySidePanel = new SidePanel(this, myHistory);
     mySidePanel.addSeparator("Project Settings");
-    mySidePanel.addPlace(createProjectConfig());
-    mySidePanel.addPlace(createModulesConfig());
-    mySidePanel.addPlace(createProjectLibrariesConfig());
+    addProjectConfig();
+    addModulesConfig();
+    addProjectLibrariesConfig();
     mySidePanel.addSeparator("Platform Settings");
-    mySidePanel.addPlace(createJdkListConfig());
-    mySidePanel.addPlace(createGlobalLibrariesConfig());
+    addJdkListConfig();
+    addGlobalLibrariesConfig();
   }
 
-  private ConfigPlace createJdkListConfig() {
+  private void addJdkListConfig() {
     myJdkListConfig = JdkListConfigurable.getInstance(myProject);
-    return new ConfigPlace(myJdkListConfig);
+    init(myJdkListConfig);
   }
 
-  private ConfigPlace createProjectConfig() {
+  private void addProjectConfig() {
     myProjectConfig = new ProjectConfigurable(myProject, myModuleConfigurator, myProjectJdksModel);
-    return new ConfigPlace(myProjectConfig);
+    init(myProjectConfig);
   }
 
-  private ConfigPlace createProjectLibrariesConfig() {
+  private void addProjectLibrariesConfig() {
     myProjectLibrariesConfig = ProjectLibrariesConfigurable.getInstance(myProject);
-    return new ConfigPlace(myProjectLibrariesConfig);
+    init(myProjectLibrariesConfig);
   }
 
-  private ConfigPlace createGlobalLibrariesConfig() {
+  private void addGlobalLibrariesConfig() {
     myGlobalLibrariesConfig = GlobalLibrariesConfigurable.getInstance(myProject);
-    return new ConfigPlace(myGlobalLibrariesConfig);
+    init(myGlobalLibrariesConfig);
   }
 
-  private ConfigPlace createModulesConfig() {
+  private void addModulesConfig() {
     myModulesConfig = ModuleStructureConfigurable.getInstance(myProject);
-    return new ConfigPlace(myModulesConfig);
+    init(myModulesConfig);
   }
 
   public boolean isModified() {
-    for (Configurable each : getConfigurables()) {
+    for (Configurable each : myName2Config.values()) {
       if (each.isModified()) return true;
     }
 
@@ -196,7 +196,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
   }
 
   public void apply() throws ConfigurationException {
-    for (Configurable each : getConfigurables()) {
+    for (Configurable each : myName2Config.values()) {
       if (each.isModified()) {
         each.apply();
       }
@@ -208,7 +208,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
     myContext.reset();
 
     Configurable toSelect = null;
-    for (Configurable each : getConfigurables()) {
+    for (Configurable each : myName2Config.values()) {
       if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
         toSelect = each;
       }
@@ -217,13 +217,13 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
 
     myHistory.clear();
 
-    if (toSelect == null && getConfigurables().size() > 0) {
-      toSelect = getConfigurables().get(0);
+    if (toSelect == null && myName2Config.size() > 0) {
+      toSelect = myName2Config.values().iterator().next();
     }
 
     removeSelected();
 
-    select(toSelect);
+    navigateTo(toSelect != null ? createPlaceFor(toSelect) : null);
 
     if (myUiState.proportion > 0) {
       mySplitter.setProportion(myUiState.proportion);
@@ -244,74 +244,81 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
     myUiState.proportion = mySplitter.getProportion();
     saveSideProportion();
 
-    for (Configurable each : getConfigurables()) {
+    for (Configurable each : myName2Config.values()) {
       each.disposeUIResources();
     }
 
     myWasIntialized = false;
   }
 
-  private List<Configurable> getConfigurables() {
-    List<Configurable> result = new ArrayList<Configurable>();
-    final Collection<Place> places = mySidePanel.getPlaces();
-    for (Iterator<Place> iterator = places.iterator(); iterator.hasNext();) {
-      result.add(((Place<NamedConfigurable>)iterator.next()).getObject());
-    }
-    return result;
-  }
-
-  public boolean isHistoryNavigatedNow() {
-    return myHistoryNavigatedNow;
-  }
-
   public History getHistory() {
     return myHistory;
   }
 
-  public ActionCallback select(final Configurable configurable) {
-    if (mySelectedConfigurable == configurable) return new ActionCallback.Done();
+  public void setHistory(final History history) {
+    myHistory = history;
+  }
 
-    saveSideProportion();
+  public void queryPlace(@NotNull final Place place) {
+    place.putPath(CATEGORY, mySelectedConfigurable);
+    Place.queryFurther(mySelectedConfigurable, place);
+  }
 
-    removeSelected();
+  public ActionCallback navigateTo(@Nullable final Place place) {
+    final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
 
-    if (configurable != null) {
-      final JComponent c = configurable.createComponent();
-      myDetails.setContent(c);
-      JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(c);
-      if (toFocus == null) {
-        toFocus = c;
+    if (mySelectedConfigurable != toSelect) {
+      saveSideProportion();
+      removeSelected();
+
+      if (toSelect != null) {
+        final JComponent c = toSelect.createComponent();
+        myDetails.setContent(c);
+        JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(c);
+        if (toFocus == null) {
+          toFocus = c;
+        }
+        c.requestFocus();
       }
-      c.requestFocus();
-    }
 
-    mySelectedConfigurable = configurable;
-    if (mySelectedConfigurable != null) {
-      myUiState.lastEditedConfigurable = mySelectedConfigurable.getDisplayName();
-    }
+      mySelectedConfigurable = toSelect;
+      if (mySelectedConfigurable != null) {
+        myUiState.lastEditedConfigurable = mySelectedConfigurable.getDisplayName();
+      }
 
-    if (configurable instanceof MasterDetailsComponent) {
-      final MasterDetailsComponent masterDetails = (MasterDetailsComponent)configurable;
-      if (myUiState.sideProportion > 0) {
-        masterDetails.getSplitter().setProportion(myUiState.sideProportion);
+      if (toSelect instanceof MasterDetailsComponent) {
+        final MasterDetailsComponent masterDetails = (MasterDetailsComponent)toSelect;
+        if (myUiState.sideProportion > 0) {
+          masterDetails.getSplitter().setProportion(myUiState.sideProportion);
+        }
+        masterDetails.setHistory(myHistory);
+      }
+
+      if (toSelect instanceof DetailsComponent.Facade) {
+        ((DetailsComponent.Facade)toSelect).getDetailsComponent().setBannerMinHeight(myToolbarComponent.getPreferredSize().height);
       }
     }
 
-    if (configurable instanceof DetailsComponent.Facade) {
-      ((DetailsComponent.Facade)configurable).getDetailsComponent().setBannerMinHeight(myToolbarComponent.getPreferredSize().height);
-    }
+
+    final ActionCallback result = new ActionCallback() {
+      public void consume() {
+        super.consume();
+      }
+    };
+    Place.goFurther(toSelect, place).setChildDone(result);
 
     myDetails.revalidate();
     myDetails.repaint();
 
-    final Place place = myConfig2Place.get(configurable);
-    if (!isHistoryNavigatedNow() && configurable != null) {
-      getHistory().pushPlace(place);
+    if (toSelect != null) {
+      mySidePanel.select(createPlaceFor(toSelect));
     }
 
-    mySidePanel.select(place);
+    if (!myHistory.isNavigatingNow() && mySelectedConfigurable != null) {
+      myHistory.pushQueryPlace();
+    }
 
-    return new ActionCallback.Done();
+    return result;
   }
 
   private void saveSideProportion() {
@@ -356,36 +363,20 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, His
     return myProjectConfig;
   }
 
-  private class ConfigPlace extends Place<Configurable> {
-
-    private Configurable myConfig;
-
-    public ConfigPlace(final Configurable config) {
-      super(config);
-      myConfig = config;
-      final Presentation p = new Presentation(config.getDisplayName());
-      setPresentation(p);
-      setObject(config);
-      if (config instanceof HistoryAware.Config) {
-        ((HistoryAware.Config)config).setHistoryFacade(ProjectStructureConfigurable.this);
-      }
-
-      if (config instanceof BaseStructureConfigurable) {
-        ((BaseStructureConfigurable)config).init(myContext);
-      }
-
-      myConfig2Place.put(config, this);
+  private void init(Configurable configurable) {
+    if (configurable instanceof BaseStructureConfigurable) {
+      ((BaseStructureConfigurable)configurable).init(myContext);
     }
 
-    public void goThere() {
-      myHistoryNavigatedNow = true;
-      select(myConfig).doWhenDone(new Runnable() {
-        public void run() {
-          myHistoryNavigatedNow = false;
-        }
-      });
-    }
+    myName2Config.put(configurable.getDisplayName(), configurable);
+
+    mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));
   }
+
+  private Place createPlaceFor(final Configurable configurable) {
+    return new Place().putPath(CATEGORY, configurable);
+  }
+
 
   public StructureConfigrableContext getContext() {
     return myContext;

@@ -16,7 +16,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -59,7 +58,7 @@ import java.util.*;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class ModuleStructureConfigurable extends BaseStructureConfigurable {
+public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
 
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
@@ -70,8 +69,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable {
 
   private ProjectConfigurable myProjectConfigurable;
 
-
   private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
+  @NonNls private static final String MODULE_TREE_CONFIGURABLE = "moduleTreeElement";
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
@@ -103,26 +102,39 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable {
 
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    
     final String selectedTab = ModuleEditor.getSelectedTab();
-
-    if (!myHistoryFacade.isHistoryNavigatedNow()) {
-      myHistoryFacade.getHistory().pushPlace(new Place(new Object[] {configurable, selectedTab}) {
-        public void goThere() {
-          select(configurable).doWhenDone(new Runnable() {
-            public void run() {
-              updateTabSelection(configurable, selectedTab);
-            }
-          });
-        }
-      });
-    }
-
     updateSelection(configurable, selectedTab);
+
+    if (configurable != null) {
+      myHistory.pushPlaceForElement(MODULE_TREE_CONFIGURABLE, configurable.getEditableObject());
+    }
   }
 
-  protected boolean isAutoScrollEnabled() {
-    return !myHistoryFacade.isHistoryNavigatedNow();
+  public ActionCallback navigateTo(@Nullable final Place place) {
+    if (place == null) return new ActionCallback.Done();
+
+    final Object object = place.getPath(MODULE_TREE_CONFIGURABLE);
+    if (object == null) return new ActionCallback.Done();
+
+    final ActionCallback result = new ActionCallback();
+
+    selectNodeInTree(findNodeByObject(myRoot, object)).doWhenDone(new Runnable() {
+      public void run() {
+        updateSelection();
+        if (myCurrentConfigurable != null) {
+          Place.goFurther(myCurrentConfigurable, place).setChildDone(result);
+        }
+      }
+    });
+
+    return result;
+  }
+
+  public void queryPlace(@NotNull final Place place) {
+    if (myCurrentConfigurable != null) {
+      place.putPath(MODULE_TREE_CONFIGURABLE, myCurrentConfigurable);
+      Place.queryFurther(myCurrentConfigurable, place);
+    }
   }
 
   private void updateSelection(final NamedConfigurable configurable, final String selectedTab) {
@@ -130,37 +142,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable {
     updateTabSelection(configurable, selectedTab);
   }
 
-  public ActionCallback select(final Configurable configurable) {
-    final ActionCallback callback = new ActionCallback() {
-      protected void onConsumed() {
-        //myHistoryNavigatedNow = false;
-      }
-    };
-
-    final MyNode toSelect = findNodeByObject(myRoot, ((NamedConfigurable)configurable).getEditableObject());
-
-    myHistoryFacade.select(this).doWhenDone(new Runnable() {
-      public void run() {
-        selectNodeInTree(toSelect, false).doWhenDone(new Runnable() {
-          public void run() {
-            updateSelection((NamedConfigurable)configurable);
-            callback.setDone();
-          }
-        });
-      }
-    });
-
-
-    return callback;
-  }
-
   private void updateTabSelection(final NamedConfigurable configurable, final String selectedTab) {
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       myFacetEditorFacade.getFacetConfigurator().addFacetInfos(moduleConfigurable.getModule());
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
-      editor.setHistoryFacade(myHistoryFacade, moduleConfigurable);
-      editor.init(selectedTab, getDetailsComponent().getChooseView(), myFacetEditorFacade);
+      editor.init(selectedTab, getDetailsComponent().getChooseView(), myFacetEditorFacade, myHistory);
     } else {
       getDetailsComponent().getChooseView().clear();
     }

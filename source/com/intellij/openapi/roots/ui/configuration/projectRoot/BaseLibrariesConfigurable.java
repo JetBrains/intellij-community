@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable implements HistoryAware.Config {
+public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   protected String myLevel;
 
   protected BaseLibrariesConfigurable(final Project project) {

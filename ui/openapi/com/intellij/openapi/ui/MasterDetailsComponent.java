@@ -18,10 +18,11 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.navigation.Place;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -51,6 +51,12 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   protected NamedConfigurable myCurrentConfigurable;
   private Splitter mySplitter;
+
+  protected History myHistory;
+
+  public void setHistory(final History history) {
+    myHistory = history;
+  }
 
   public static class UIState {
     public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
@@ -115,16 +121,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       }
 
       protected void scrollToSource(Component tree) {
-        final TreePath path = myTree.getSelectionPath();
-        if (path != null) {
-          final Object lastPathComp = path.getLastPathComponent();
-          if (!(lastPathComp instanceof MyNode)) return;
-          final MyNode node = (MyNode)lastPathComp;
-          final NamedConfigurable configurable = node.getConfigurable();
-          updateSelection(configurable);
-        } else {
-          updateSelection(null);
-        }
+        updateSelection();
       }
 
       protected boolean needToCheckFocus() {
@@ -136,6 +133,19 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
   }
 
+  protected void updateSelection() {
+    final TreePath path = myTree.getSelectionPath();
+    if (path != null) {
+      final Object lastPathComp = path.getLastPathComponent();
+      if (!(lastPathComp instanceof MyNode)) return;
+      final MyNode node = (MyNode)lastPathComp;
+      final NamedConfigurable configurable = node.getConfigurable();
+      updateSelection(configurable);
+    } else {
+      updateSelection(null);
+    }
+  }
+
   public DetailsComponent getDetailsComponent() {
     return myDetails;
   }
@@ -145,7 +155,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   protected boolean isAutoScrollEnabled() {
-    return true;
+    return myHistory != null ? !myHistory.isNavigatingNow() : true;
   }
 
   private void initToolbar() {

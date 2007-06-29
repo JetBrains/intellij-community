@@ -21,6 +21,14 @@ public class ActionCallback {
     callback();
   }
 
+  public final void setChildDone(final ActionCallback child) {
+    doWhenDone(new Runnable() {
+      public void run() {
+        child.setDone();
+      }
+    });
+  }
+
   private void callback() {
     if (myDone && myRunnable != null) {
       myRunnable.run();
@@ -28,7 +36,7 @@ public class ActionCallback {
     }
   }
 
-  public final void consume() {
+  public void consume() {
     if (myConsumed) return;
 
     myConsumed = true;

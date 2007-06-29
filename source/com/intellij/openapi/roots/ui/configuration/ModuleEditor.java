@@ -16,19 +16,21 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.HistoryAware;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
 import com.intellij.openapi.ui.ChooseView;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +48,10 @@ import java.util.List;
  *         Time: 6:29:56 PM
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-public class ModuleEditor {
+public class ModuleEditor implements Place.Navigator {
+
+  @NonNls private static final String MODULE_VIEW = "module.view";
+
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
@@ -61,7 +66,6 @@ public class ModuleEditor {
 
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
-  private HistoryAware.Facade myHistoryFacade;
   private ModuleConfigurable myConfigurable;
 
   private Wrapper myComponent = new Wrapper();
@@ -77,18 +81,22 @@ public class ModuleEditor {
     public void dispose() {
     }
   };
+  private History myHistory;
+  private SwitchView myCurrentView;
+  private Map<String, ViewItem> myKey2Item = new HashMap<String, ViewItem>();
 
   @Nullable
   public ModuleBuilder getModuleBuilder() {
     return myModuleBuilder;
   }
 
-  public void setHistoryFacade(final HistoryAware.Facade facade, ModuleConfigurable configurable) {
-    myHistoryFacade = facade;
+  public void setHistoryFacade(ModuleConfigurable configurable) {
     myConfigurable = configurable;
   }
 
-  public void init(final String selectedTab, final ChooseView chooseView, final FacetEditorFacadeImpl facetEditorFacade) {
+  public void init(final String selectedTab, final ChooseView chooseView, final FacetEditorFacadeImpl facetEditorFacade, History history) {
+    myHistory = history;
+
     setSelectedTabName(selectedTab);
     myChooseView = chooseView;
     myFacetEditorFacade = facetEditorFacade;
@@ -130,6 +138,7 @@ public class ModuleEditor {
   }
 
   private void addView(final ViewItem item) {
+    myKey2Item.put(item.getKey(), item);
     myChooseView.addView(item.getKey(), item.getStep(), item.getIcon(), new ChooseView.ViewCheck() {
       public boolean isSelectable(final String key) {
         if (item instanceof SwitchView) {
@@ -246,20 +255,22 @@ public class ModuleEditor {
   }
 
   private void pushHistory() {
-    if (myHistoryFacade == null) return;
-    if (myHistoryFacade.isHistoryNavigatedNow()) return;
+    myHistory.pushPlaceForElement("general.tab", myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex()));
+  }
 
-    final String tabName = ourSelectedTabName;
+  public ActionCallback navigateTo(@Nullable final Place place) {
+    final ModuleEditor.ViewItem item = myKey2Item.get(place.getPath(MODULE_VIEW));
+    if (item instanceof SwitchView) {
+      ((SwitchView)item).navigateTo(place);
+    }
 
-    myHistoryFacade.getHistory().pushPlace(new Place(new Object[] {myConfigurable, tabName}) {
-      public void goThere() {
-        myHistoryFacade.select(myConfigurable).doWhenDone(new Runnable() {
-          public void run() {
-            setSelectedTabName(tabName);
-          }
-        });
-      }
-    });
+    return new ActionCallback.Done();
+  }
+
+  public void queryPlace(@NotNull final Place place) {
+    if (myCurrentView != null) {
+      myCurrentView.queryPlace(place);
+    }
   }
 
   public static String getSelectedTab(){
@@ -287,6 +298,9 @@ public class ModuleEditor {
   }
 
   public void setSelectedView(SwitchView view, final boolean showName) {
+    myCurrentView = view;
+
+
     myComponent.setContent(view.getComponent());
 
     if (myConfigurable != null) {
@@ -294,6 +308,9 @@ public class ModuleEditor {
     }
 
     myChooseView.setSelected(view.getKey());
+
+    myHistory.pushQueryPlace();
+
     myComponent.revalidate();
     myComponent.repaint();
   }
@@ -637,6 +654,14 @@ public class ModuleEditor {
     String getKey() {
       return myKey;
     }
+
+    public void queryPlace(Place place) {
+      place.putPath(MODULE_VIEW, myKey);
+    }
+
+    public void navigateTo(final Place place) {
+      switchTo();
+    }
   }
 
   class GeneralView extends SwitchView {
@@ -646,6 +671,16 @@ public class ModuleEditor {
 
     JComponent getComponent() {
       return myGenericSettingsPanel;
+    }
+
+    public void queryPlace(final Place place) {
+      super.queryPlace(place);
+      place.putPath("module.view.general.tab", getSelectedTabName());
+    }
+
+    public void navigateTo(final Place place) {
+      super.navigateTo(place);
+      setSelectedTabName((String)place.getPath("module.view.general.tab"));
     }
   }
 
@@ -658,7 +693,21 @@ public class ModuleEditor {
       myFacet = facet;
     }
 
+    public void queryPlace(final Place place) {
+      super.queryPlace(place);
+      Place.queryFurther(getEditorComponent(), place);
+    }
+
+    public void navigateTo(final Place place) {
+      super.navigateTo(place);
+      Place.goFurther(getEditorComponent(), place);
+    }
+
     JComponent getComponent() {
+      return getEditorComponent();
+    }
+
+    private JComponent getEditorComponent() {
       return myFacetEditorFacade.getFacetConfigurator().getOrCreateEditor(myFacet).getComponent();
     }
   }

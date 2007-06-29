@@ -13,9 +13,12 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -23,7 +26,7 @@ import javax.swing.*;
  * User: anna
  * Date: 04-Jun-2006
  */
-public class ModuleConfigurable extends NamedConfigurable<Module> implements HistoryAware.Config {
+public class ModuleConfigurable extends NamedConfigurable<Module> implements Place.Navigator {
   private Module myModule;
   private ModulesConfigurator myConfigurator;
   private String myModuleName;
@@ -105,7 +108,11 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements His
     return myConfigurator.getModuleEditor(myModule);
   }
 
-  public void setHistoryFacade(final HistoryAware.Facade facade) {
-    getModuleEditor().setHistoryFacade(facade, this);
+  public ActionCallback navigateTo(@Nullable final Place place) {
+    return getModuleEditor().navigateTo(place);
+  }
+
+  public void queryPlace(@NotNull final Place place) {
+    getModuleEditor().queryPlace(place);
   }
 }

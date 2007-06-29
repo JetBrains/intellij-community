@@ -1,27 +1,35 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SidePanel extends JPanel {
 
   private JList myList;
   private DefaultListModel myModel;
-  private ProjectStructureConfigurable myStructure;
+  private Place.Navigator myNavigator;
   private ArrayList<Place> myPlaces = new ArrayList<Place>();
 
   private Map<Integer, String> myIndex2Separator = new HashMap<Integer, String>();
+  private Map<Place, Presentation> myPlace2Presentation = new HashMap<Place, Presentation>();
+  private History myHistory;
 
-  public SidePanel(ProjectStructureConfigurable stucture) {
-    myStructure = stucture;
+  public SidePanel(Place.Navigator navigator, History history) {
+    myHistory = history;
+    myNavigator = navigator;
 
     setLayout(new BorderLayout());
 
@@ -30,7 +38,7 @@ public class SidePanel extends JPanel {
 
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
       public String getTextFor(final Object value) {
-        return ((Place)value).getPresentation().getText();
+        return myPlace2Presentation.get(value).getText();
       }
 
       public String getTooltipFor(final Object value) {
@@ -39,7 +47,7 @@ public class SidePanel extends JPanel {
 
       public Icon getIconFor(final Object value) {
         return null;
-        //return ((Place)value).getPresentation().getIcon();
+        //return myPlace2Presentation.get(value).getIcon();
       }
 
       public boolean hasSeparatorAboveOf(final Object value) {
@@ -60,20 +68,17 @@ public class SidePanel extends JPanel {
 
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        if (e.getValueIsAdjusting() || myStructure.isHistoryNavigatedNow()) return;
+        if (e.getValueIsAdjusting()) return;
         final Object value = myList.getSelectedValue();
-        if (value == null) {
-          myStructure.select(null);
-        } else {
-          myStructure.select(((Place<NamedConfigurable>)value).getObject());
-        }
+        myNavigator.navigateTo(((Place)value));
       }
     });
   }
 
-  public void addPlace(Place place) {
+  public void addPlace(Place place, @NotNull Presentation presentation) {
     myModel.addElement(place);
     myPlaces.add(place);
+    myPlace2Presentation.put(place, presentation);
     revalidate();
     repaint();
   }
