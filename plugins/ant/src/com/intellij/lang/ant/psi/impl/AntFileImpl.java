@@ -803,7 +803,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       return AntInstrospector.getInstance(c);
     }
     catch (Throwable e) {
-      LOG.error(e);// can't be
+      LOG.info(e);
     }
     return null;
   }
