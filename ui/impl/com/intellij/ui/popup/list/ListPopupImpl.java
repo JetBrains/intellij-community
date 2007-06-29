@@ -58,16 +58,12 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   }
 
   protected boolean beforeShow() {
-    if (myAutoHandleBeforeShow) {
-      return !tryToAutoSelect(true);
-    }
-
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
 
     myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
 
-    return true;
+    return !myAutoHandleBeforeShow || !tryToAutoSelect(true);
   }
 
   protected void afterShow() {
@@ -249,7 +245,9 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
       final Point point = myList.indexToLocation(myList.getSelectedIndex());
       SwingUtilities.convertPointToScreen(point, myList);
       myChild = createPopup(this, nextStep, parentValue);
-      myChild.show(getContainer(), point.x + myContainer.getWidth() - STEP_X_PADDING, point.y);
+      final JComponent container = getContainer();
+      assert container != null : "container == null";
+      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, point.y);
       setIndexForShowingChild(myList.getSelectedIndex());
       return false;
     }
