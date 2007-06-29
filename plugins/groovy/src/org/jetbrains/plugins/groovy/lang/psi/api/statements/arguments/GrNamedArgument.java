@@ -20,10 +20,17 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public interface GrNamedArgument extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface GrNamedArgument extends GroovyPsiElement {
   public static final GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
+
+  @NotNull
+  GrArgumentLabel getLabel();
+
+  GrExpression getExpression();
 }

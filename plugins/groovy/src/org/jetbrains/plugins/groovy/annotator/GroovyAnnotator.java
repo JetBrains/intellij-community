@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
@@ -35,11 +36,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -75,6 +74,22 @@ public class GroovyAnnotator implements Annotator {
       checkAssignmentExpression((GrAssignmentExpression) element, holder);
     } else if (element instanceof GrTraditionalForClauseImpl) {
       forbidTraditionalForClause(((GrTraditionalForClauseImpl) element), holder);
+    } else if (element instanceof GrNamedArgument) {
+      checkCommandArgument((GrNamedArgument)element, holder);
+    }
+  }
+
+  private void checkCommandArgument(GrNamedArgument namedArgument, AnnotationHolder holder) {
+    PsiType expectedType = namedArgument.getLabel().getExpectedArgumentType();
+    if (expectedType != null) {
+      expectedType = TypeConversionUtil.erasure(expectedType);
+      final GrExpression expr = namedArgument.getExpression();
+      if (expr != null) {
+        final PsiType argType = expr.getType();
+        if (argType != null) {
+          checkAssignability(holder, expectedType, argType, namedArgument);
+        }
+      }
     }
   }
 

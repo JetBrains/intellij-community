@@ -138,4 +138,21 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     assert element != null;
     return element;
   }
+
+  @Nullable
+  public PsiType getExpectedArgumentType() {
+    final PsiElement resolved = resolve();
+    if (resolved instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) resolved;
+      if (PropertyUtil.isSimplePropertyGetter(method))
+        return method.getReturnType();
+      if (PropertyUtil.isSimplePropertySetter(method))
+        return method.getParameterList().getParameters()[0].getType();
+      
+    } else if (resolved instanceof PsiField) {
+      return ((PsiField) resolved).getType();
+    }
+
+    return null;
+  }
 }
