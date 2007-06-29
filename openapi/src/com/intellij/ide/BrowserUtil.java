@@ -15,14 +15,15 @@
  */
 package com.intellij.ide;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -30,8 +31,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
 
 public class BrowserUtil {
 
@@ -63,7 +62,6 @@ public class BrowserUtil {
 
   public static URL getURL(String url) throws java.net.MalformedURLException {
     if (!isAbsoluteURL(url)) {
-      //noinspection HardCodedStringLiteral
       return new URL("file", "", url);
     }
 
@@ -108,8 +106,7 @@ public class BrowserUtil {
   /**
    * This method works around Windows 'start' command behaivor of dropping anchors from the url for local urls.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String redirectUrl(String url, String urlString) throws IOException {
+  private static String redirectUrl(String url, @NonNls String urlString) throws IOException {
     if (url.indexOf('&') == -1 && (!urlString.startsWith("file:") || urlString.indexOf("#") == -1)) return urlString;
 
     File redirect = File.createTempFile("redirect", ".html");

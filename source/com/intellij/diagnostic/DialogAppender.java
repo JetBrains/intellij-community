@@ -58,7 +58,6 @@ public class DialogAppender extends AppenderSkeleton {
       final ErrorLogger logger = errorLoggers[i];
       if (logger.canHandle(ideaEvent)) {
 
-        //noinspection HardCodedStringLiteral
         myDialogRunnable = new Runnable() {
           public void run() {
             try {

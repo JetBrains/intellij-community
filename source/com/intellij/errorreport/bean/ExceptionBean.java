@@ -66,7 +66,6 @@ public class ExceptionBean {
 
   private static String md5 (String buffer, @NonNls String key)
     throws NoSuchAlgorithmException {
-    //noinspection HardCodedStringLiteral
     MessageDigest md5 = MessageDigest.getInstance("MD5");
     md5.update(buffer.getBytes());
     byte [] code = md5.digest(key.getBytes());

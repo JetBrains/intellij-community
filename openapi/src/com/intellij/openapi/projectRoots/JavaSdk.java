@@ -40,7 +40,6 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
 
   public abstract ProjectJdk createJdk(@NonNls String jdkName, String home, boolean isJre);
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean checkForJdk(File file) {
     file = new File(file.getAbsolutePath() + File.separator + "bin");
     if (!file.exists()) return false;
@@ -57,7 +56,6 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
     return (children != null && children.length >= 2);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean checkForJre(String file){
     File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
     if (!ioFile.exists()) return false;

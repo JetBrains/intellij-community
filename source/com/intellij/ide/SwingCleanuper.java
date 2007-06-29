@@ -62,7 +62,6 @@ public final class SwingCleanuper implements ApplicationComponent{
 
                 SwingUtilities.invokeLater(
                   new Runnable() {
-                    @SuppressWarnings({"HardCodedStringLiteral"})
                     public void run() {
 
                       // KeyboardFocusManager.newFocusOwner

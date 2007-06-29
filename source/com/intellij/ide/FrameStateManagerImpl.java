@@ -32,7 +32,6 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public FrameStateManagerImpl() {
 
     myShouldSynchronize = false;

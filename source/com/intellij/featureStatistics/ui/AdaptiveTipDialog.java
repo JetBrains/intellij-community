@@ -44,7 +44,6 @@ public class AdaptiveTipDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
-    //noinspection HardCodedStringLiteral
     myBrowser = new JEditorPane("text/html", "");
 
     panel.add(new JScrollPane(myBrowser));

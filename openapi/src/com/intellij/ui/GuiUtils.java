@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -298,7 +299,6 @@ public class GuiUtils {
     }, excludeComponents);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void enableComponent(Component component, boolean enabled) {
     if (component.isEnabled() == enabled) return;
     component.setEnabled(enabled);
@@ -312,9 +312,9 @@ public class GuiUtils {
     else if (component instanceof JLabel) {
       Color color = UIUtil.getTextInactiveTextColor();
       if (color == null) color = component.getForeground();
-      String changeColorString = "<font color=#" + colorToHex(color) +">";
+      @NonNls String changeColorString = "<font color=#" + colorToHex(color) +">";
       final JLabel label = (JLabel)component;
-      String text = label.getText();
+      @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
         if (text.startsWith("<html>"+changeColorString) && enabled) {
           text = "<html>"+text.substring(("<html>"+changeColorString).length());

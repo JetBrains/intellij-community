@@ -57,9 +57,7 @@ public class DirectoryChooser extends DialogWrapper {
     final ActionMap actionMap = component.getActionMap();
     final Object oldActionKey = inputMap.get(enterKeyStroke);
     final Action oldAction = oldActionKey != null ? actionMap.get(oldActionKey) : null;
-    //noinspection HardCodedStringLiteral
     inputMap.put(enterKeyStroke, "clickButton");
-    //noinspection HardCodedStringLiteral
     actionMap.put("clickButton", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (isOKActionEnabled()) {

@@ -849,7 +849,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return 0;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   @Override
   public void createSnapshotLayout(final SnapshotContext context,
                                    final JComponent parent,

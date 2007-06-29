@@ -42,7 +42,6 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
     // delete obsolete template
     FileTemplateManager manager = FileTemplateManager.getInstance();
-    //noinspection HardCodedStringLiteral
     final FileTemplate template = manager.getTemplate("GUI Form");
     //noinspection HardCodedStringLiteral
     if (template != null && template.getExtension().equals("form")) {

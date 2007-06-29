@@ -127,7 +127,6 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
 
       final ColorChooserUI ui = myColorChooser.getUI();
       try {
-        //noinspection HardCodedStringLiteral
         final Field field = ui.getClass().getDeclaredField("tabbedPane");
         field.setAccessible(true);
         JTabbedPane tabbedPane = (JTabbedPane) field.get(ui);

@@ -43,7 +43,6 @@ public class ColorChooser {
       }
 
       if (dlgClass != null) {
-        //noinspection HardCodedStringLiteral
         final Field cancelButton = dlgClass.getDeclaredField("cancelButton");
         cancelButton.setAccessible(true);
         cancelButton.set(null, null);

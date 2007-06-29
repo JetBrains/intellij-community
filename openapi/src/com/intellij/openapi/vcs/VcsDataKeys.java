@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface VcsDataKeys {
   DataKey<File[]> IO_FILE_ARRAY = DataKey.create(VcsDataConstants.IO_FILE_ARRAY);
   DataKey<File> IO_FILE = DataKey.create(VcsDataConstants.IO_FILE);

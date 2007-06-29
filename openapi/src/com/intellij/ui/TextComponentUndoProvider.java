@@ -32,7 +32,6 @@ public class TextComponentUndoProvider {
     Shortcut[] undoShortcuts = activeKeymap.getShortcuts("$Undo");
     Shortcut[] redoShortcuts = activeKeymap.getShortcuts("$Redo");
 
-    //noinspection HardCodedStringLiteral
     Action undoAction = new AbstractAction ("Undo") {
       public void actionPerformed(ActionEvent e) {
         if (myUndoManager.canUndo())
@@ -40,7 +39,6 @@ public class TextComponentUndoProvider {
       }
     };
 
-    //noinspection HardCodedStringLiteral
     Action redoAction = new AbstractAction ("Redo") {
       public void actionPerformed(ActionEvent e) {
         if (myUndoManager.canRedo())

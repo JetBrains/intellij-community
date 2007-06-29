@@ -34,7 +34,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   private static final float kByte = 1024.0f;
 
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String[] COLUMNS = {
     IdeBundle.message("column.plugins.name"),
     IdeBundle.message("column.plugins.downloads"),
@@ -168,7 +167,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       String p2 = part2[idx];
 
       int cmp;
-      //noinspection HardCodedStringLiteral
       if (p1.matches("\\d+") && p2.matches("\\d+")) {
         cmp = new Integer(p1).compareTo(new Integer(p2));
       }

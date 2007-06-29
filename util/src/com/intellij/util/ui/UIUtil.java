@@ -96,27 +96,22 @@ public class UIUtil {
     action.putValue(Action.NAME, text);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getLabelFont() {
     return UIManager.getFont("Label.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getLabelBackground() {
     return UIManager.getColor("Label.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getLabelForeground() {
     return UIManager.getColor("Label.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getOptionPanelWarningIcon() {
     return UIManager.getIcon("OptionPane.warningIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getOptionPanelQuestionIcon() {
     return UIManager.getIcon("OptionPane.questionIcon");
   }
@@ -157,348 +152,278 @@ public class UIUtil {
     return value;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableHeaderBackground() {
     return UIManager.getColor("TableHeader.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeTextForeground() {
     return UIManager.getColor("Tree.textForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeSelectonForeground() {
     return UIManager.getColor("Tree.selectionForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeSelectionBackground() {
     return UIManager.getColor("Tree.selectionBackground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeTextBackground() {
     return UIManager.getColor("Tree.textBackground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getListSelectionForeground() {
      return UIManager.getColor("List.selectionForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getFieldForegroundColor() {
     return UIManager.getColor("field.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableSelectionBackground() {
     return UIManager.getColor("Table.selectionBackground");
   }
 
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getActiveTextColor() {
     return UIManager.getColor("textActiveText");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getInactiveTextColor() {
     return UIManager.getColor("textInactiveText");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getTreeFont() {
     return UIManager.getFont("Tree.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getListFont() {
     return UIManager.getFont("List.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeSelectionForeground() {
     return UIManager.getColor("Tree.selectionForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTextInactiveTextColor() {
     return UIManager.getColor("textInactiveText");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void installPopupMenuColorAndFonts(final JComponent contentPane) {
     LookAndFeel.installColorsAndFont(contentPane, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void installPopupMenuBorder(final JComponent contentPane) {
     LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isMotifLookAndFeel() {
     return "Motif".equals(UIManager.getLookAndFeel().getID());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeSelectionBorderColor() {
     return UIManager.getColor("Tree.selectionBorderColor");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Object getTreeRightChildIndent() {
     return UIManager.get("Tree.rightChildIndent");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Object getTreeLeftChildIndent() {
     return UIManager.get("Tree.leftChildIndent");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   static public Color getToolTipBackground() {
     return UIManager.getColor("ToolTip.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   static public Color getToolTipForeground() {
     return UIManager.getColor("ToolTip.foreground");
   }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    public static Color getComboBoxDisabledForeground() {
+  public static Color getComboBoxDisabledForeground() {
     return UIManager.getColor("ComboBox.disabledForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getComboBoxDisabledBackground() {
     return UIManager.getColor("ComboBox.disabledBackground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getButtonSelectColor() {
     return UIManager.getColor("Button.select");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Integer getPropertyMaxGutterIconWidth(final String propertyPrefix) {
     return (Integer)UIManager.get(propertyPrefix + ".maxGutterIconWidth");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getMenuItemDisabledForeground() {
     return UIManager.getColor("MenuItem.disabledForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Object getMenuItemDisabledForegroundObject() {
     return UIManager.get("MenuItem.disabledForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Object getTabbedPanePaintContentBorder(final JComponent c) {
     return c.getClientProperty("TabbedPane.paintContentBorder");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isMenuCrossMenuMnemonics() {
     return UIManager.getBoolean("Menu.crossMenuMnemonic");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableBackground() {
     return UIManager.getColor("Table.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableSelectionForeground() {
     return UIManager.getColor("Table.selectionForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableForeground() {
     return UIManager.getColor("Table.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getListBackground() {
      return UIManager.getColor("List.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getListForeground() {
     return UIManager.getColor("List.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getPanelBackground() {
     return UIManager.getColor("Panel.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTreeForeground() {
     return UIManager.getColor("Tree.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableFocusCellBackground() {
      return UIManager.getColor("Table.focusCellBackground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getListSelectionBackground() {
     return UIManager.getColor("List.selectionBackground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTextFieldForeground() {
     return UIManager.getColor("TextField.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTextFieldBackground() {
     return UIManager.getColor("TextField.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getButtonFont() {
     return UIManager.getFont("Button.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getToolTipFont() {
     return UIManager.getFont("ToolTip.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTabbedPaneBackground() {
     return UIManager.getColor("TabbedPane.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setSliderIsFilled(final JSlider slider, final boolean value) {
     slider.putClientProperty("JSlider.isFilled", Boolean.valueOf(value));
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getLabelTextForeground() {
     return UIManager.getColor("Label.textForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getControlColor() {
     return UIManager.getColor("control");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getOptionPaneMessageFont() {
     return UIManager.getFont("OptionPane.messageFont");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getSeparatorShadow() {
-    return  UIManager.getColor("Separator.shadow");
+    return UIManager.getColor("Separator.shadow");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Font getMenuFont() {
     return UIManager.getFont("Menu.font");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getSeparatorHighlight() {
     return UIManager.getColor("Separator.highlight");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Border getTableFocusCellHighlightBorder() {
     return  UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setLineStyleAngled(final TreeTableCellRenderer component) {
       component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setLineStyleAngled(final JTree component) {
       component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTableFocusCellForeground() {
     return UIManager.getColor("Table.focusCellForeground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getPanelBackgound() {
     return UIManager.getColor("Panel.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Border getTextFieldBorder() {
     return UIManager.getBorder("TextField.border");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Border getButtonBorder() {
     return UIManager.getBorder("Button.border");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getErrorIcon() {
     return UIManager.getIcon("OptionPane.errorIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getInformationIcon() {
     return UIManager.getIcon("OptionPane.informationIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getQuestionIcon() {
     return UIManager.getIcon("OptionPane.questionIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getWarningIcon() {
     return UIManager.getIcon("OptionPane.warningIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getRadioButtonIcon() {
     return UIManager.getIcon("RadioButton.icon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getTreeCollapsedIcon() {
     return UIManager.getIcon("Tree.collapsedIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getTreeExpandedIcon() {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Border getTableHeaderCellBorder() {
     return UIManager.getBorder("TableHeader.cellBorder");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getWindowColor() {
     return UIManager.getColor("window");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTextAreaForeground() {
     return UIManager.getColor("TextArea.foreground");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getOptionPaneBackground() {
     return UIManager.getColor("OptionPane.background");
   }
@@ -565,7 +490,7 @@ public class UIUtil {
   }
 
   public static String displayPropertiesToCSS(Font font, Color fg) {
-    StringBuffer rule = new StringBuffer("body {");
+    @NonNls StringBuffer rule = new StringBuffer("body {");
     if (font != null) {
       rule.append(" font-family: ");
       rule.append(font.getFamily());

@@ -12,7 +12,6 @@ import java.util.concurrent.ThreadFactory;
 
 public abstract class JobScheduler {
   private static final ScheduledExecutorService ourScheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public Thread newThread(final Runnable r) {
       return new Thread(r, "Periodic tasks thread");
     }

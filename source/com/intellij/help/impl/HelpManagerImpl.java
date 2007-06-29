@@ -57,7 +57,6 @@ public class HelpManagerImpl extends HelpManager {
     myBroker.setDisplayed(true);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static HelpSet createHelpSet() {
     // This is a temporary solution: path to the help should be customized somehow
     String urlToHelp = PathManager.getHelpURL() + "/" + HELP_HS;

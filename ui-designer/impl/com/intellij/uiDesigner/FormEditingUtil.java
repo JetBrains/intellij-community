@@ -228,7 +228,6 @@ public final class FormEditingUtil {
 
   public static Cursor getMoveDropCursor() {
     try {
-      //noinspection HardCodedStringLiteral
       return Cursor.getSystemCustomCursor("MoveDrop.32x32");
     }
     catch (Exception ex) {
@@ -238,7 +237,6 @@ public final class FormEditingUtil {
 
   public static Cursor getMoveNoDropCursor() {
     try {
-      //noinspection HardCodedStringLiteral
       return Cursor.getSystemCustomCursor("MoveNoDrop.32x32");
     }
     catch (Exception ex) {
@@ -248,7 +246,6 @@ public final class FormEditingUtil {
 
   public static Cursor getCopyDropCursor() {
     try {
-      //noinspection HardCodedStringLiteral
       return Cursor.getSystemCustomCursor("CopyDrop.32x32");
     }
     catch (Exception ex) {

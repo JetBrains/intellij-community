@@ -13,7 +13,6 @@ public final class CopyResourcesUtil {
   private CopyResourcesUtil() {
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static File copyClass(final String targetPath, @NonNls final String className, final boolean deleteOnExit) throws IOException{
     final File targetDir = new File(targetPath).getAbsoluteFile();
     final File file = new File(targetDir, className + ".class");
@@ -23,7 +22,7 @@ public final class CopyResourcesUtil {
         f.deleteOnExit();
       }
     }
-    final String resourceName = "/" + className + ".class";
+    @NonNls final String resourceName = "/" + className + ".class";
     final InputStream stream = PreviewFormAction.class.getResourceAsStream(resourceName);
     if (stream == null) {
       throw new IOException("cannot load " + resourceName);

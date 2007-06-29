@@ -127,7 +127,6 @@ public class CommanderPanel extends JPanel {
       }
     });
 
-    //noinspection HardCodedStringLiteral
     myList.getActionMap().put("selectAll", new AbstractAction() {
       public void actionPerformed(final ActionEvent e) {
       }

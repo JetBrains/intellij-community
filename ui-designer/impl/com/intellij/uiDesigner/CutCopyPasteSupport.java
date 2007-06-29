@@ -209,7 +209,6 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private static final DataFlavor ourDataFlavor;
   static {
     try {
-      //noinspection HardCodedStringLiteral
       ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=com.intellij.uiDesigner.SerializedComponentData");
     }
     catch (ClassNotFoundException e) {

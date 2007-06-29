@@ -121,7 +121,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
 
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "HardCodedStringLiteral"})
+  @SuppressWarnings({"UseOfObsoleteCollectionType"})
   @Override
   public void addSnapshotComponent(final JComponent parent,
                                    final JComponent child,

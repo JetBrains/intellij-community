@@ -21,6 +21,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -77,12 +78,12 @@ public abstract class BaseTableView extends Table {
     super.setModel(dataModel);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   private static String orderPropertyName(final int index) {
     return "Order"+index;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   private static String widthPropertyName(final int index) {
     return "Width" + index;
   }

@@ -145,9 +145,8 @@ public class FeatureDescriptor{
     return myUsageCount < myMinUsageCount;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
 
     buffer.append("id = [");
     buffer.append(myId);

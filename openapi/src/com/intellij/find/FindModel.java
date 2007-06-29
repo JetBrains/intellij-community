@@ -16,6 +16,7 @@
 package com.intellij.find;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.search.SearchScope;
 
 /**
@@ -439,9 +440,8 @@ public class FindModel implements Cloneable {
   }
 
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuilder buffer = new StringBuilder();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("--- FIND MODEL ---\n");
     buffer.append("myStringToFind =").append(myStringToFind).append("\n");
     buffer.append("myStringToReplace =").append(myStringToReplace).append("\n");

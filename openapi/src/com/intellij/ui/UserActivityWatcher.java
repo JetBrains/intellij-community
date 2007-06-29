@@ -126,7 +126,6 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
     if (parentComponent instanceof JTable) {
       JTable table = (JTable)parentComponent;
-      //noinspection HardCodedStringLiteral
       table.addPropertyChangeListener("model", myTableListener);
       TableModel model = table.getModel();
       if (model != null) {

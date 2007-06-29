@@ -10,6 +10,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -150,7 +151,6 @@ final class BindToExistingBeanStep extends StepAdapter{
       myCbx = new ComboBox();
       myCbx.setEditable(true);
       myCbx.setRenderer(new BeanPropertyListCellRenderer());
-      //noinspection HardCodedStringLiteral
       myCbx.putClientProperty("tableCellEditor", this);
 
       final JComponent editorComponent = (JComponent)myCbx.getEditor().getEditorComponent();
@@ -163,8 +163,7 @@ final class BindToExistingBeanStep extends StepAdapter{
      * @return whether it's possible to convert <code>type1</code> into <code>type2</code>
      * and vice versa.
      */
-    private boolean canConvert(final String type1, final String type2){
-      //noinspection HardCodedStringLiteral
+    private boolean canConvert(@NonNls final String type1, @NonNls final String type2){
       if("boolean".equals(type1) || "boolean".equals(type2)){
         return type1.equals(type2);
       }
@@ -204,9 +203,8 @@ final class BindToExistingBeanStep extends StepAdapter{
           LOG.assertTrue(returnType != null);
 
           // There are two possible types: boolean and java.lang.String
-          final String typeName = returnType.getCanonicalText();
+          @NonNls final String typeName = returnType.getCanonicalText();
           LOG.assertTrue(typeName != null);
-          //noinspection HardCodedStringLiteral
           if(!"boolean".equals(typeName) && !"java.lang.String".equals(typeName)){
             continue;
           }

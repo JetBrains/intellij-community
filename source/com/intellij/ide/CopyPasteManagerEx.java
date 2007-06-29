@@ -115,7 +115,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     };
 
     if (Patches.SUN_BUG_ID_4818143) {
-      //noinspection HardCodedStringLiteral
       final Future<?> accessorFuture = ApplicationManager.getApplication().executeOnPooledThread(accessor);
 
       try {
@@ -327,7 +326,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private static final DataFlavor ourDataFlavor;
   static {
     try {
-      //noinspection HardCodedStringLiteral
       ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyData.class.getName());
     }
     catch (ClassNotFoundException e) {
@@ -461,7 +459,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     };
 
     if (Patches.SUN_BUG_ID_4818143) {
-      //noinspection HardCodedStringLiteral
       Future<?> accessorFuture = ApplicationManager.getApplication().executeOnPooledThread(accessor);
 
       try {

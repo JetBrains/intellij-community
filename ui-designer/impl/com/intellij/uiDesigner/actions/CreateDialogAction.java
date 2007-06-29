@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -77,14 +78,13 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     return UIDesignerBundle.message("error.cannot.create.dialog");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String createClassBody(
     final String className,
     final boolean generateOK,
     final boolean generateCancel,
     final boolean generateMain
   ) {
-    final StringBuffer result = new StringBuffer(1024);
+    @NonNls final StringBuffer result = new StringBuffer(1024);
 
     result.append("public class ").append(className).append(" extends javax.swing.JDialog {\n");
     result.append("private javax.swing.JPanel contentPane;\n");

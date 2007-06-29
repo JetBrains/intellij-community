@@ -424,7 +424,6 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     DataFlavor[] flavors;
     try {
       final Class aClass = MyTransferable.class;
-      //noinspection HardCodedStringLiteral
       flavors = new DataFlavor[]{new DataFlavor(
                       DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(),
                       FavoritesTreeViewPanel.ABSTRACT_TREE_NODE_TRANSFERABLE,

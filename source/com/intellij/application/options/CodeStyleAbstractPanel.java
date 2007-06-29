@@ -251,7 +251,6 @@ public abstract class CodeStyleAbstractPanel {
 
   protected String readFromFile(@NonNls final String fileName) {
     try {
-      //noinspection HardCodedStringLiteral
       final InputStream stream = getClass().getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
       final InputStreamReader reader = new InputStreamReader(stream);
       final LineNumberReader lineNumberReader = new LineNumberReader(reader);

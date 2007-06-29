@@ -49,8 +49,7 @@ public class RepositoryHelper {
     ArrayList<IdeaPluginDescriptor> plugins = null;
     try {
       String buildNumber = RepositoryHelper.ExtractBuildNumber();
-      //noinspection HardCodedStringLiteral
-      String url = RepositoryHelper.REPOSITORY_LIST_URL + "?build=" + buildNumber;
+      @NonNls String url = RepositoryHelper.REPOSITORY_LIST_URL + "?build=" + buildNumber;
 
       label.setText(IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
       HttpConfigurable.getInstance().prepareURL(RepositoryHelper.REPOSITORY_HOST);
@@ -86,10 +85,9 @@ public class RepositoryHelper {
   {
     String buildNumber = ExtractBuildNumber();
 
-    //noinspection HardCodedStringLiteral
-    String url = DOWNLOAD_URL +
-                 URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
-                 "&build=" + buildNumber;
+    @NonNls String url = DOWNLOAD_URL +
+                         URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
+                         "&build=" + buildNumber;
     HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
     try
     {
@@ -103,7 +101,6 @@ public class RepositoryHelper {
       }
 
       pi.setText(IdeBundle.message("progress.downloading.plugin", pluginNode.getName()));
-      //noinspection HardCodedStringLiteral
       File file = File.createTempFile("plugin", "download",
                                       new File (PathManagerEx.getPluginTempPath()));
       OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
@@ -150,7 +147,6 @@ public class RepositoryHelper {
       }
 
       String fileName = null;
-      //noinspection HardCodedStringLiteral
       String contentDisposition = connection.getHeaderField("Content-Disposition");
       if (contentDisposition == null || contentDisposition.indexOf(FILENAME) < 0) {
         // try to find filename in URL

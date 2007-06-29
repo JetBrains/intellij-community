@@ -41,7 +41,6 @@ public class SnapShooter {
     for (int j = 3; j < args.length; j++) {
       parms[j - 3] = args[j];
     }
-    //noinspection HardCodedStringLiteral
     Method m = loader.loadClass(mainClass).getMethod("main", parms.getClass());
     try {
       ensureAccess(m);
@@ -56,7 +55,6 @@ public class SnapShooter {
     // calling setAccessible() via reflection because the method is missing from java version 1.1.x
     final Class aClass = reflectionObject.getClass();
     try {
-      //noinspection HardCodedStringLiteral
       final Method setAccessibleMethod = aClass.getMethod("setAccessible", boolean.class);
       setAccessibleMethod.invoke(reflectionObject, Boolean.TRUE);
     }

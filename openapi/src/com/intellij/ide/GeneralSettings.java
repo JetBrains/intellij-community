@@ -35,7 +35,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls public static final String PROP_INACTIVE_TIMEOUT = OPTION_INACTIVE_TIMEOUT;
   private static final int DEFAULT_INACTIVE_TIMEOUT = 15;
 
-  private String myBrowserPath;
+  @NonNls private String myBrowserPath;
   private boolean myShowTipsOnStartup = true;
   private int myLastTip = 0;
   private boolean myShowOccupiedMemory = false;
@@ -84,11 +84,9 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myCharsetName= CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
 
     if (SystemInfo.isWindows) {
-      //noinspection HardCodedStringLiteral
       myBrowserPath = "C:\\Program Files\\Internet Explorer\\IExplore.exe";
     }
     else if (SystemInfo.isMac) {
-      //noinspection HardCodedStringLiteral
       myBrowserPath = "open";
     }
     else {

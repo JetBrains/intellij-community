@@ -134,7 +134,6 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setAuthenticator() {
     if (USE_HTTP_PROXY) {
       System.setProperty("proxySet", "true");

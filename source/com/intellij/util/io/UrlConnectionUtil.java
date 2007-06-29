@@ -38,7 +38,6 @@ public class UrlConnectionUtil {
 
   public static InputStream getConnectionInputStreamWithException(URLConnection connection, ProgressIndicator pi) throws IOException {
     InputStreamGetter getter = new InputStreamGetter(connection);
-    //noinspection HardCodedStringLiteral
     final Future<?> getterFuture = ApplicationManager.getApplication().executeOnPooledThread(getter);
 
     while (true) {

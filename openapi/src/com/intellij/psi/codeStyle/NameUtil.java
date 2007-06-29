@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -71,7 +72,6 @@ public class NameUtil {
     return true;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
@@ -81,7 +81,7 @@ public class NameUtil {
       pattern = pattern.substring(0, 80);
     }
 
-    final StringBuffer buffer = new StringBuffer();
+    @NonNls final StringBuffer buffer = new StringBuffer();
     boolean lastIsUppercase = false;
     final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
     pattern = pattern.trim();

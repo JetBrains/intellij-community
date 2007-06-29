@@ -76,7 +76,6 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
       throw new CodeGenerationException(errors [0].getComponentId(), errors [0].getErrorMessage());
     }
 
-    //noinspection HardCodedStringLiteral
     FileOutputStream fos = new FileOutputStream(new File(myTempPath, generatedClassName + ".class"));
     try {
       fos.write(data);

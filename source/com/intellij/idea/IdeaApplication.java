@@ -37,7 +37,6 @@ public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IPR_SUFFIX = ".ipr";
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
     ourInstance = this;

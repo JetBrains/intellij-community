@@ -64,7 +64,6 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
       try {
         //noinspection HardCodedStringLiteral
         final Document document = new SAXBuilder().build(ClientPropertiesManager.class.getResource("/" + COMPONENT_NAME + ".xml"));
-        //noinspection HardCodedStringLiteral
         final Element child = document.getRootElement();
         ourDefaultManager.readExternal(child);
       }

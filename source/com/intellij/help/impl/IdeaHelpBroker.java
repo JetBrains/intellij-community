@@ -616,7 +616,6 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       // replace dialog.getOwner() with the following code
       Window owner=null;
       try{
-        //noinspection HardCodedStringLiteral
         Method m=Window.class.getMethod("getOwner",null);
 
         if(m!=null&&myDialog!=null){
