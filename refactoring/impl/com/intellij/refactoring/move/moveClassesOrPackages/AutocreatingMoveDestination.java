@@ -11,6 +11,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
@@ -32,6 +33,7 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
 
   public abstract PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException;
 
+  @Nullable
   protected String checkCanCreateInSourceRoot(final VirtualFile targetSourceRoot) {
     final String targetQName = myPackage.getQualifiedName();
     final String sourceRootPackage = myFileIndex.getPackageNameByDirectory(targetSourceRoot);

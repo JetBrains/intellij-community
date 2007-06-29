@@ -9,11 +9,11 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -46,6 +46,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
     return getDirectory();
   }
 
+  @Nullable
   public String verify(PsiFile source) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }

@@ -19,8 +19,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,8 +53,11 @@ public interface MoveDestination {
   PsiDirectory getTargetIfExists(PsiDirectory source);
   PsiDirectory getTargetIfExists(PsiFile source);
 
+  @Nullable
   String verify(PsiFile source);
+  @Nullable
   String verify(PsiDirectory source);
+  @Nullable
   String verify(PsiPackage source);
 
   void analyzeModuleConflicts(final Collection<PsiElement> elements, ArrayList<String> conflicts, final UsageInfo[] usages);
