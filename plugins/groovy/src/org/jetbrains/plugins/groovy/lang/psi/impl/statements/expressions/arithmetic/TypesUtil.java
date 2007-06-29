@@ -71,11 +71,9 @@ public class TypesUtil {
   static  {
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
