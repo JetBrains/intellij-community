@@ -9,9 +9,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -179,14 +176,17 @@ public class PropertiesBuilder extends AntElementVisitor {
     final PropertiesBuilder builder = new PropertiesBuilder(file);
     file.acceptAntElementVisitor(builder);
 
+    /*
     for (AntTarget target : builder.myVisitedTargets) {
       if (target instanceof AntTargetImpl) {
         definePseudoProperties((AntTargetImpl)target);
       }
     }
+    */
     return builder.myDependentFiles;
   }
 
+  /*
   private static void definePseudoProperties(final AntTargetImpl target) {
     final XmlTag se = target.getSourceElement();
     XmlAttribute propNameAttribute = se.getAttribute(AntFileImpl.IF_ATTR, null);
@@ -205,5 +205,6 @@ public class PropertiesBuilder extends AntElementVisitor {
       }
     }
   }
+  */
   
 }

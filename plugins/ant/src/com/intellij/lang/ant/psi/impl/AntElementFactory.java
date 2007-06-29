@@ -202,6 +202,7 @@ public class AntElementFactory {
             return new AntPropertyImpl(parent, tag, execDef, "addproperty");
           }
         });
+        /*
         ourAntTypeToKnownAntElementCreatorMap.put(Exit.class.getName(), new AntElementCreator() {
           public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
             final AntTypeDefinition failTaskDefinition = parent.getAntFile().getBaseTypeDefinition(Exit.class.getName());
@@ -211,6 +212,7 @@ public class AntElementFactory {
             return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.UNLESS_ATTR);
           }
         });
+        */
         for (final String clazz : PROPERTY_CLASSES) {
           addPropertyCreator(clazz);
         }

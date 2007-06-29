@@ -35,7 +35,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         final boolean isSet = "isset".equals(sourceElement.getName());
         for (final XmlAttribute attr : attributes) {
           @NonNls final String attName = attr.getName();
-          if (isTarget && (AntFileImpl.IF_ATTR.equals(attName) || AntFileImpl.UNLESS_ATTR.equals(attName))) {
+          if (/*isTarget && */(AntFileImpl.IF_ATTR.equals(attName) || AntFileImpl.UNLESS_ATTR.equals(attName))) {
             getAttributeReference(antElement, attr, refs);
           }
           else if (isSet && AntFileImpl.PROPERTY.equals(attName)) {

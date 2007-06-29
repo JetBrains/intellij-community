@@ -86,6 +86,9 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  /*
+  [jeka: behaviour changed - no property definitions in target's if/unless attributes anymore]
+  
   public void testTargetIfProperty() throws Exception {
     doTest();
   }
@@ -93,6 +96,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
   public void testTargetUnlessProperty() throws Exception {
     doTest();
   }
+  */
 
   public void testInputProperty() throws Exception {
     doTest();

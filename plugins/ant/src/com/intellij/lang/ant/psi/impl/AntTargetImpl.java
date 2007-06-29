@@ -1,15 +1,14 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.psi.*;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntElementVisitor;
+import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget, AntProperty {
+public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget {
 
   private AntTarget[] myDependsTargets;
-  private AntNameIdentifier myPropElement;
 
   public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
@@ -123,100 +121,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
       myDependsTargets = null;
-      if (myPropElement != null) {
-        getAntProject().clearCaches();
-        myPropElement = null;
-      }
     }
   }
 
-  /**
-   * Here comes AntProperty implementation for supporting properties defined directly
-   * on the "if" and "unless" attributes of the target.
-   */
-
-  @Nullable
-  public String getValue(final String propName) {
-    return null;
-  }
-
-  @Nullable
-  public String getFileName() {
-    return null;
-  }
-
-  @Nullable
-  public PropertiesFile getPropertiesFile() {
-    return null;
-  }
-
-  @Nullable
-  public String getPrefix() {
-    return null;
-  }
-
-  @Nullable
-  public String getEnvironment() {
-    return null;
-  }
-
-  @Nullable
-  public String[] getNames() {
-    return (myPropElement == null) ? null : new String[]{myPropElement.getIdentifierName()};
-  }
-
-  public boolean isMacroDefined() {
-    return false;
-  }
-
-  /**
-   * Navigation to a property (if, unless)
-   */
-  @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public AntElement getFormatElement() {
-    return myPropElement;
-  }
-
-  /* hack */
-  public void setPropertyDefinitionElement(final XmlAttributeValue sourceElement) {
-    myPropElement = new AntPropertyElement(this, sourceElement);
-  }
-
-  protected AntElement[] getChildrenInner() {
-    synchronized (PsiLock.LOCK) {
-      final AntElement[] baseChildren = super.getChildrenInner();
-      if (myPropElement == null) {
-        return baseChildren;
-      }
-      if (!myInGettingChildren) {
-        myInGettingChildren = true;
-        try {
-          final List<AntElement> children = new ArrayList<AntElement>(baseChildren.length + 1);
-          children.add(myPropElement);
-          for (final AntElement child : baseChildren) {
-            children.add(child);
-          }
-          return children.toArray(new AntElement[children.size()]);
-        }
-        finally {
-          myInGettingChildren = false;
-        }
-      }
-      return AntElement.EMPTY_ARRAY;
-    }
-  }
-
-  private static final class AntPropertyElement extends AntNameIdentifierImpl implements PsiNamedElement {
-    // since this element mirrors fake property, it must be PsiNamedElement in order for references to reference it.
-    //This will also enable element name update if rename of this 'fake' property was invoked from property reference  
-    public AntPropertyElement(final AntElement parent, final XmlAttributeValue sourceElement) {
-      super(parent, sourceElement);
-    }
-
-    public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
-      setIdentifierName(name);
-      return this;
-    }
-  }
 }
