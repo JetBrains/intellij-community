@@ -1,8 +1,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -61,7 +61,7 @@ public final class WindowWatcher implements PropertyChangeListener{
     }
     synchronized(myLock){
       final Window window=(Window)e.getNewValue();
-      if(window==null){
+      if(window==null || ApplicationManager.getApplication().isDisposed()){
         return;
       }
       if(!myWindow2Info.containsKey(window)){
