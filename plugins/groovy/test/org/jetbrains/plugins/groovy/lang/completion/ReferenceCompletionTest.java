@@ -17,8 +17,13 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author ven
@@ -45,4 +50,10 @@ public class ReferenceCompletionTest extends CompletionTestBase {
     return new ReferenceCompletionTest();
   }
 
+  protected IdeaProjectTestFixture createFixture() {
+    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
+    builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome());
+    return builder.getFixture();
+  }
 }
