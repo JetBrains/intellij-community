@@ -40,8 +40,8 @@ public class PsiImplUtil {
     return ((GrExpression) newNode.getPsi());
   }
 
-  public static void shortenReferences(GroovyPsiElement typeElement) {
-    doShorten(typeElement);
+  public static void shortenReferences(GroovyPsiElement element) {
+    doShorten(element);
   }
 
   private static void doShorten(PsiElement element) {
