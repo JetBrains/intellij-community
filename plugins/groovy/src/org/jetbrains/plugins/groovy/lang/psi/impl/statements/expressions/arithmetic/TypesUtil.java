@@ -40,16 +40,16 @@ public class TypesUtil {
       return binaryExpression.getManager().getElementFactory().createTypeByFQClassName(RANK_TO_TYPE.get(resultRank), binaryExpression.getResolveScope());
     }
 
-    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType}, ourBinaryOperationsToOperatorNames);
+    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
   }
 
   public static PsiType getOverloadedOperatorType(PsiType thisType, IElementType tokenType,
-                                                  GroovyPsiElement place, PsiType[] argumentTypes,
-                                                  Map<IElementType, String> map) {
+                                                  GroovyPsiElement place, PsiType[] argumentTypes
+  ) {
     if (thisType instanceof PsiClassType) {
       final PsiClass lClass = ((PsiClassType) thisType).resolve();
       if (lClass != null) {
-        final String operatorName = map.get(tokenType);
+        final String operatorName = ourOperationsToOperatorNames.get(tokenType);
         if (operatorName != null) {
           MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes);
           lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place);
@@ -66,25 +66,21 @@ public class TypesUtil {
     return null;
   }
 
-  private static final Map<IElementType, String> ourBinaryOperationsToOperatorNames = new HashMap<IElementType, String>();
+  private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static  {
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
-    ourBinaryOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
-  }
-
-  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
-  static  {
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
-    ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, "or");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, "xor");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, "div");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, "mod");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, "multiply");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDEC, "previous");
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mINC, "next");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
@@ -199,7 +195,7 @@ public class TypesUtil {
     if (op != null) {
       final PsiType opType = op.getType();
       if (opType != null) {
-        final PsiType overloaded = getOverloadedOperatorType(opType, expr.getOperationTokenType(), expr, PsiType.EMPTY_ARRAY, ourUnaryOperationsToOperatorNames);
+        final PsiType overloaded = getOverloadedOperatorType(opType, expr.getOperationTokenType(), expr, PsiType.EMPTY_ARRAY);
         if (overloaded != null) {
           return overloaded;
         }
