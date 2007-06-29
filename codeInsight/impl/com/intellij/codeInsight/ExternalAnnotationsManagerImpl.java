@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -88,7 +89,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     final PsiManager psiManager = listOwner.getManager();
     XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
     if (xmlFile != null) {
-      if (!CodeInsightUtil.prepareFileForWrite(xmlFile)) return;
+      if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
       annotateExternally(listOwner, annotationFQName, xmlFile);
     }
     else {
