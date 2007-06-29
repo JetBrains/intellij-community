@@ -130,11 +130,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-    for (OrderEntry entry : entries) {
-      final String[] urls = entry.getUrls(OrderRootType.ANNOTATIONS);
-      if (urls.length > 0) {
-        return true;
-      }
+    if (!entries.isEmpty() && entries.get(0).getUrls(OrderRootType.ANNOTATIONS).length > 0) {
+      return true;
     }
     final MyExternalPromptDialog dialog = new MyExternalPromptDialog(project);
     if (dialog.isToBeShown()) {
