@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -98,7 +99,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
             progress.setText2(SvnBundle.message("progress.text2.adding", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
+            @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
             VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
               @Nullable public VirtualFile compute() {
                 return VirtualFileManager.getInstance().findFileByUrl(filePath);
