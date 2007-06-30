@@ -21,6 +21,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -75,6 +76,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   };
   @NotNull private OverwriteHandler myOverwriteHandler = DEFAULT_OVERWRITE_HANDLER;
   private Set<String> myAllLookupStrings = new THashSet<String>();
+  private String myPresentable;
 
   public LookupItem(T o, @NotNull @NonNls String lookupString){
     setObject(o);
@@ -218,6 +220,17 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   public LookupItem<T> setIcon(Icon icon) {
     setAttribute(LookupItem.ICON_ATTR, icon);
     return this;
+  }
+
+  @NotNull
+  public LookupElement<T> setPresentableText(@NotNull final String displayText) {
+    myPresentable = displayText;
+    return this;
+  }
+
+  @Nullable
+  public String getPresentableText() {
+    return myPresentable;
   }
 
   @NotNull

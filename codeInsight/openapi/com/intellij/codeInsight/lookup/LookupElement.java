@@ -30,6 +30,9 @@ public interface LookupElement<T> {
   @NotNull
   LookupElement<T> setIcon(@Nullable Icon icon);
 
+  @NotNull
+  LookupElement<T> setPresentableText(@NotNull String presentableText);
+
   /*@NotNull
   LookupElement setTypeText(@Nullable String text);*/
 

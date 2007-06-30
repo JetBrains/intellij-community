@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.IconUtil;
@@ -382,10 +383,11 @@ class LookupCellRenderer implements ListCellRenderer {
 
   private static String getName(final LookupItem item){
     final Object o = item.getObject();
-    String name = item.getLookupString();
+    String name = item.getPresentableText();
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
+        name = PsiUtil.getName(element);
 
         if (element instanceof PsiAnonymousClass) {
           name = null;
@@ -399,7 +401,7 @@ class LookupCellRenderer implements ListCellRenderer {
             }
           }
           else {
-            name = formatTypeName((PsiClass)element, substitutor, name);
+            name = formatTypeName((PsiClass)element, substitutor);
           }
         }
         else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement){
@@ -434,6 +436,12 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     if (name == null){
       name = "";
+    }
+
+    if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){
+      if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
+        name = ((PsiMember)o).getContainingClass().getName() + "." + name;
+      }
     }
 
     return name;
@@ -562,8 +570,9 @@ class LookupCellRenderer implements ListCellRenderer {
     return buffer.toString();
   }
 
-  private static String formatTypeName(final PsiClass element, final PsiSubstitutor substitutor, String name) {
+  private static String formatTypeName(final PsiClass element, final PsiSubstitutor substitutor) {
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
+    String name = element.getName();
     if(substitutor != null){
       final PsiTypeParameter[] params = element.getTypeParameters();
       if(params.length > 0){
