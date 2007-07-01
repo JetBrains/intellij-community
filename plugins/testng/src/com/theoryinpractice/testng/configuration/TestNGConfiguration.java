@@ -215,6 +215,12 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
             PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), data.getScope().getSourceScope(this).getGlobalSearchScope());
             if (psiClass == null)
                 throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
+            if(data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
+                PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
+                if(methods.length == 0) {
+                    throw new RuntimeConfigurationException("Invalid method '" + data.getMethodName() + "'specified");                    
+                }
+            }
         } else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
             PsiPackage psiPackage = PsiManager.getInstance(project).findPackage(data.getPackageName());
             if (psiPackage == null)
