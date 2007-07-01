@@ -242,12 +242,17 @@ public class DuplicatesFinder {
         if (!type1.equals(type2)) return false;
       }
     } else if (pattern instanceof PsiNewExpression) {
+      final PsiType type1 = ((PsiNewExpression)pattern).getType();
+      final PsiType type2 = ((PsiNewExpression)candidate).getType();
+      if (type1 == null || type2 == null) return false;
+      if (!type1.equals(type2)) return false;
       final PsiJavaCodeReferenceElement classReference1 = ((PsiNewExpression)pattern).getClassReference();
       final PsiJavaCodeReferenceElement classReference2 = ((PsiNewExpression)candidate).getClassReference();
-      if (classReference1 == null || classReference2 == null) return false;
-      final PsiElement resolved1 = classReference1.resolve();
-      final PsiElement resolved2 = classReference2.resolve();
-      if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
+      if (classReference1 != null && classReference2 != null) {
+        final PsiElement resolved1 = classReference1.resolve();
+        final PsiElement resolved2 = classReference2.resolve();
+        if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
+      }
     } else if (pattern instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand1 = ((PsiClassObjectAccessExpression)pattern).getOperand();
       final PsiTypeElement operand2 = ((PsiClassObjectAccessExpression)candidate).getOperand();
