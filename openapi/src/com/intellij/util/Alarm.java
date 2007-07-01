@@ -138,15 +138,20 @@ public class Alarm implements Disposable {
     private ScheduledFuture<?> myFuture;
 
     public Request(final Runnable task, final ModalityState modalityState) {
-      myTask = task;
+      myTask = new Runnable() {
+        public void run() {
+          synchronized (LOCK) {
+             myRequests.remove(Request.this);
+          }
+
+          task.run();
+        }
+      };
+
       myModalityState = modalityState;
     }
 
     public void run() {
-      synchronized (LOCK) {
-         myRequests.remove(this);
-      }
-
       try {
         if (!myDisposed) {
           if (myModalityState != null) {
