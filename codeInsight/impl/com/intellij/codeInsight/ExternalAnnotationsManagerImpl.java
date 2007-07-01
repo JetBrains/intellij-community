@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -100,31 +102,35 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         LOG.assertTrue(virtualFile != null);
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
         if (!entries.isEmpty()) {
-          final OrderEntry entry = entries.get(0);
-          final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
-          if (virtualFiles.length > 0) {
-            annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, virtualFiles[0], packageName));
-          }
-          else {
-            if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-                descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
-                descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
-                final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
-                if (files.length > 0) {
-                  new WriteCommandAction(project, null) {
-                    protected void run(final Result result) throws Throwable {
-                      if (files[0] != null) {
-                        appendChosenAnnotationsRoot(entry, files[0]);
-                        annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
-                      }
-                    }
-                  }.execute();
-                }
+          for (final OrderEntry entry : entries) {
+            if (!(entry instanceof ModuleOrderEntry)) {
+              final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
+              if (virtualFiles.length > 0) {
+                annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, virtualFiles[0], packageName));
               }
-            });
+              else {
+                if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+                    descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
+                    descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
+                    final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
+                    if (files.length > 0) {
+                      new WriteCommandAction(project, null) {
+                        protected void run(final Result result) throws Throwable {
+                          if (files[0] != null) {
+                            appendChosenAnnotationsRoot(entry, files[0]);
+                            annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
+                          }
+                        }
+                      }.execute();
+                    }
+                  }
+                });
+              }
+              break;
+            }
           }
         }
       }
@@ -137,8 +143,15 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-    if (!entries.isEmpty() && entries.get(0).getUrls(OrderRootType.ANNOTATIONS).length > 0) {
-      return true;
+    if (!entries.isEmpty()) {
+      for (OrderEntry entry : entries) {
+        if (!(entry instanceof ModuleOrderEntry)) {
+          if (entry.getUrls(OrderRootType.ANNOTATIONS).length > 0) {
+            return true;
+          }
+          break;
+        }
+      }
     }
     final MyExternalPromptDialog dialog = new MyExternalPromptDialog(project);
     if (dialog.isToBeShown()) {
@@ -252,16 +265,20 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile != null) {
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-        if (!entries.isEmpty()) {
-          final VirtualFile[] externalFiles = entries.get(0).getFiles(OrderRootType.ANNOTATIONS);
-          for (VirtualFile file : externalFiles) {
-            final VirtualFile ext = file.getFileSystem().findFileByPath(file.getPath() + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
-            if (ext != null) {
-              final PsiFile psiFile = psiManager.findFile(ext);
-              if (psiFile instanceof XmlFile) {
-                return (XmlFile)psiFile;
+        for (OrderEntry entry : entries) {
+          if (!(entry instanceof ModuleOrderEntry)) {
+            final String[] externalUrls = entry.getUrls(OrderRootType.ANNOTATIONS);
+            for (String url : externalUrls) {
+              final VirtualFile ext = LocalFileSystem.getInstance().findFileByPath(
+                VfsUtil.urlToPath(url) + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
+              if (ext != null) {
+                final PsiFile psiFile = psiManager.findFile(ext);
+                if (psiFile instanceof XmlFile) {
+                  return (XmlFile)psiFile;
+                }
               }
             }
+            break;
           }
         }
       }

@@ -395,7 +395,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         return getFiles(OrderRootType.JAVADOC, processed);
       }
       else if (OrderRootType.ANNOTATIONS.equals(rootType)) {
-        return getFiles(OrderRootType.ANNOTATIONS, processed);
+        return VirtualFile.EMPTY_ARRAY;
       }
       else {
         LOG.error("Unknown root type: " + rootType);
