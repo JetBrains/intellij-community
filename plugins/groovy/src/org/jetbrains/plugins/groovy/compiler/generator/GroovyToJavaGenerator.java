@@ -279,7 +279,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     GrStatement[] statements = typeDefinition == null ? GrStatement.EMPTY_ARRAY : typeDefinition.getStatements();
 
     boolean isClassDef = typeDefinition instanceof GrClassDefinition;
-    boolean isInteraface = typeDefinition instanceof GrInterfaceDefinition;
+    boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
 
 
     if (typeDefinition != null) {
@@ -297,7 +297,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
 //    text.append(" ");
 
-    if (isInteraface) text.append("interface");
+    if (isInterface) text.append("interface");
     else text.append("class");
 
     text.append(" ");
@@ -351,7 +351,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           writeConstructor(text, method);
         }
 
-        writeMethod(text, method, isInteraface);
+        writeMethod(text, method);
 
         getDefinedGetters(gettersNames, method);
         getDefinedSetters(settersNames, method);
@@ -654,7 +654,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private void writeMethod(StringBuffer text, GrMethod method, boolean isIntefraceMethod) {
+  private void writeMethod(StringBuffer text, GrMethod method) {
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+
     /************* type and name **********/
     GrTypeElement typeElement = method.getReturnTypeElementGroovy();
     String qualifiedTypeName = getTypeText(typeElement);
@@ -697,7 +699,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(")");
     text.append(" ");
 
-    if (!isIntefraceMethod) {
+    if (!isAbstract) {
       /************* body **********/
       text.append("{\n");
       text.append("    return ");

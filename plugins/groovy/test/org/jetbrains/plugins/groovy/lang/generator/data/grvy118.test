@@ -1,0 +1,19 @@
+abstract class A {
+    public abstract myMethod()
+}
+
+class B extends A {
+    public myMethod() {
+        println "hello"
+    }
+}
+-----
+public abstract class A extends groovy.lang.GroovyObjectSupport {
+  public abstract java.lang.Object myMethod() ;
+}
+---
+public class B extends A {
+  public java.lang.Object myMethod() {
+    return null;
+  }
+}
