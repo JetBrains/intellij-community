@@ -583,11 +583,11 @@ public class FileUtil {
           continue;
         }
 
-        final boolean foundRecursivePattern = recursive && (asteriskCount == 2) && (ch == '/' || ch == '\\');
+        final boolean foundRecursivePattern = recursive && asteriskCount == 2 && (ch == '/' || ch == '\\');
         final boolean asterisksFound = asteriskCount > 0;
         
         asteriskCount = 0;
-        recursive = (ch == '/' || ch == '\\');
+        recursive = ch == '/' || ch == '\\';
         
         if (foundRecursivePattern) {
           builder.append("(?:[^/]+/)*?");
@@ -658,7 +658,7 @@ public class FileUtil {
   }
 
   public static String sanitizeFileName(String name) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     for (int i = 0; i < name.length(); i++) {
       final char ch = name.charAt(i);
@@ -692,7 +692,6 @@ public class FileUtil {
     }
     IO_FILE_SET_WRITABLE_METHOD = method;
   }
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {
     if (IO_FILE_SET_WRITABLE_METHOD != null) {
       try {
