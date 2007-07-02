@@ -35,7 +35,12 @@ public class InjectedManagerImpl extends InjectedManager implements ApplicationC
       public void projectClosing(final Project project) {
         VirtualFileDelegate[] delegates;
         synchronized (cachedFiles) {
-          delegates = cachedFiles.toArray(new VirtualFileDelegate[cachedFiles.size()]);
+          delegates = new VirtualFileDelegate[cachedFiles.size()];
+          Iterator<VirtualFileDelegate> iterator = cachedFiles.iterator();
+          int i =0;
+          while (iterator.hasNext()) {
+            delegates[i++] = iterator.next();
+          }
         }
         for (VirtualFileDelegate file : delegates) {
           if (file == null) continue;
