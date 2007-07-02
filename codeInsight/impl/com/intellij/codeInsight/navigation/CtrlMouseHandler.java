@@ -274,8 +274,8 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     public boolean isValid() {
       return  myTargetElement != myElementAtPointer &&
-              myTargetElement != myElementAtPointer.getParent() &&
-              targetNavigateable(myTargetElement);
+              myTargetElement != myElementAtPointer.getParent()/* &&
+              targetNavigateable(myTargetElement)*/;
     }
 
     private static boolean targetNavigateable(final PsiElement targetElement) {
