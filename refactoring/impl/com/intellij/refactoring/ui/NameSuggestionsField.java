@@ -78,9 +78,7 @@ public class NameSuggestionsField implements Focusable {
                 myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
               }
               else {
-                if (myOffset == 0 || myOffset == myEditor.getDocument().getTextLength()) {
-                  myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
-                }
+                myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
               }
               break;
             }
