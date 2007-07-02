@@ -16,38 +16,35 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GroovyPsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
@@ -242,19 +239,28 @@ public class GroovyPsiManager implements ProjectComponent {
 
   private void addSwingBuilderMethods() throws IncorrectOperationException {
     PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
 
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    StringBuilder classText = new StringBuilder();
+    classText.append("class SwingBuilder {\n");
     for (int i = 0; i < SWING_WIDGETS_METHODS.length / 2; i++) {
       String methodName = SWING_WIDGETS_METHODS[2 * i];
       String returnTypeText = SWING_WIDGETS_METHODS[2 * i + 1];
-      PsiClassType returnType = factory.createTypeByFQClassName(returnTypeText, scope);
-      PsiMethod method = factory.createMethod(methodName, returnType);
-      method.putUserData(GrMethod.BUILDER_METHOD, true);
-      methods.add(method);
+      classText.append("public ").append(returnTypeText).append(' ').append(methodName).append("() {} \n");
     }
 
-    myDefaultMethods.put(SWING_BUILDER_QNAME, methods);
+    classText.append('}');
+
+    final PsiJavaFile file = (PsiJavaFile) factory.createFileFromText("Dummy.java", classText.toString());
+    final PsiClass clazz = file.getClasses()[0];
+
+    final PsiMethod[] methods = clazz.getMethods();
+    List<PsiMethod> result = new ArrayList<PsiMethod>(methods.length);
+    for (PsiMethod method : methods) {
+      method.putUserData(GrMethod.BUILDER_METHOD, true);
+      result.add(method);
+    }
+
+    myDefaultMethods.put(SWING_BUILDER_QNAME, result);
   }
 
   private PsiMethod convertMethod(PsiMethod method, boolean isStatic) {
