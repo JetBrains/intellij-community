@@ -37,11 +37,13 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public String getText() {
-    String shortName = myFQN.substring(myFQN.lastIndexOf('.') + 1);
+    final String shortName = myFQN.substring(myFQN.lastIndexOf('.') + 1);
     if (myModifierListOwner instanceof PsiNamedElement) {
-      String name = ((PsiNamedElement)myModifierListOwner).getName();
-      FindUsagesProvider provider = myModifierListOwner.getLanguage().getFindUsagesProvider();
-      return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element.as", provider.getType(myModifierListOwner), name, shortName);
+      final String name = ((PsiNamedElement)myModifierListOwner).getName();
+      if (name != null) {
+        FindUsagesProvider provider = myModifierListOwner.getLanguage().getFindUsagesProvider();
+        return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element.as", provider.getType(myModifierListOwner), name, shortName);
+      }
     }
     return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
   }
