@@ -399,17 +399,13 @@ public class VcsUtil {
    * @param message information message
    * @param title   Dialog title
    */
-  public static void showErrorMessage(final Project project, final String message, final String title) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      Messages.showMessageDialog(project, message, title, Messages.getErrorIcon());
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showMessageDialog(project, message, title, Messages.getErrorIcon());
-        }
-      });
-    }
+  public static void showErrorMessage(final Project project, final String message, final String title)
+  {
+    Runnable task = new Runnable() {  public void run() {  Messages.showErrorDialog( project, message, title );  } };
+    if( ApplicationManager.getApplication().isDispatchThread() )
+      task.run();
+    else
+      ApplicationManager.getApplication().invokeLater( task );
   }
 
   /**
