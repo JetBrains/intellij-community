@@ -3,8 +3,7 @@ import groovy.swing.SwingBuilder
 
 SwingBuilder builder = new SwingBuilder()
 
-builder.button(name : "Click me")
+builder.frame(defaultCloseOperation : 0)
 
-JButton button = new JButton()
-
-button.<caret>name = "Drag me"
+JFrame frame = new JFrame()
+frame.<caret>defaultCloseOperation = 1
