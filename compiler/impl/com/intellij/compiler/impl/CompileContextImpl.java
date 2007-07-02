@@ -27,6 +27,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +48,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
+  private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
   private final VirtualFile[] myOutputDirectories;
   private final Set<VirtualFile> myTestOutputDirectories;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
@@ -169,7 +171,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myTask.getIndicator();
   }
 
-  public void assignModule(VirtualFile root, Module module) {
+  public void assignModule(VirtualFile root, Module module, final boolean isTestSource) {
     try {
       myRootToModuleMap.put(root, module);
       Set<VirtualFile> set = myModuleToRootsMap.get(module);
@@ -178,6 +180,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
         myModuleToRootsMap.put(module, set);
       }
       set.add(root);
+      if (isTestSource) {
+        myGeneratedTestRoots.add(root);
+      }
     }
     finally {
       myModuleToRootsCache.remove(module);
@@ -208,16 +213,16 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public Module getModuleByFile(VirtualFile file) {
-    Module module = myProjectFileIndex.getModuleForFile(file);
-    if (module == null) {
-      for (final VirtualFile root : myRootToModuleMap.keySet()) {
-        if (VfsUtil.isAncestor(root, file, false)) {
-          module = myRootToModuleMap.get(root);
-          break;
-        }
+    final Module module = myProjectFileIndex.getModuleForFile(file);
+    if (module != null) {
+      return module;
+    }
+    for (final VirtualFile root : myRootToModuleMap.keySet()) {
+      if (VfsUtil.isAncestor(root, file, false)) {
+        return myRootToModuleMap.get(root);
       }
     }
-    return module;
+    return null;
   }
 
 
@@ -282,5 +287,17 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   public void addScope(final CompileScope additionalScope) {
     myCompileScope = new CompositeScope(myCompileScope, additionalScope);
+  }
+
+  public boolean isInTestSourceContent(@NotNull final VirtualFile fileOrDir) {
+    if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
+      return true;
+    }
+    for (final VirtualFile root : myGeneratedTestRoots) {
+      if (VfsUtil.isAncestor(root, fileOrDir, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

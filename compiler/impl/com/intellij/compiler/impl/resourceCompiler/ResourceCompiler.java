@@ -11,6 +11,7 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -79,7 +80,7 @@ public class ResourceCompiler implements TranslatingCompiler {
           }
           final String sourcePath = file.getPath();
           final String relativePath = VfsUtil.getRelativePath(file, fileRoot, '/');
-          final String outputPath = CompilerPaths.getModuleOutputPath(module, fileIndex.isInTestSourceContent(file));
+          final String outputPath = CompilerPaths.getModuleOutputPath(module, ((CompileContextEx)context).isInTestSourceContent(file));
           if (outputPath == null) {
             continue;
           }

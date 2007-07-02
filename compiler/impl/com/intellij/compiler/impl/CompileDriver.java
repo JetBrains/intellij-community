@@ -66,7 +66,7 @@ public class CompileDriver {
 
   private final Project myProject;
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
-  private Map<Pair<Compiler, Module>, VirtualFile> myGenerationCompilerModuleToOutputDirMap;
+  private Map<Pair<GeneratingCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [Compiler, Module] -> [ProductionSources, TestSources]
   private String myCachesDirectoryPath;
   private boolean myShouldClearOutputDirectory;
 
@@ -89,7 +89,7 @@ public class CompileDriver {
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
     myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
 
-    myGenerationCompilerModuleToOutputDirMap = new com.intellij.util.containers.HashMap<Pair<Compiler, Module>, VirtualFile>();
+    myGenerationCompilerModuleToOutputDirMap = new com.intellij.util.containers.HashMap<Pair<GeneratingCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
     final GeneratingCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(GeneratingCompiler.class);
     if (generatingCompilers.length > 0) {
@@ -98,20 +98,27 @@ public class CompileDriver {
           final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
           for (GeneratingCompiler compiler : generatingCompilers) {
             for (final Module module : allModules) {
-              final String path = getGenerationOutputPath(compiler, module);
-              final File file = new File(path);
-              final VirtualFile vFile;
-              if (file.mkdirs()) {
-                vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-              }
-              else {
-                vFile = LocalFileSystem.getInstance().findFileByPath(path);
-              }
-              Pair<Compiler, Module> pair = new Pair<Compiler, Module>(compiler, module);
-              myGenerationCompilerModuleToOutputDirMap.put(pair, vFile);
+              final VirtualFile productionOutput = lookupVFile(compiler, module, false);
+              final VirtualFile testOutput = lookupVFile(compiler, module, true);
+              final Pair<GeneratingCompiler, Module> pair = new Pair<GeneratingCompiler, Module>(compiler, module);
+              final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
+              myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
             }
           }
         }
+        private VirtualFile lookupVFile(final GeneratingCompiler compiler, final Module module, final boolean forTestSources) {
+          final String path = getGenerationOutputPath(compiler, module, forTestSources);
+          final File file = new File(path);
+          final VirtualFile vFile;
+          if (file.mkdirs()) {
+            vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          }
+          else {
+            vFile = LocalFileSystem.getInstance().findFileByPath(path);
+          }
+          return vFile;
+        }
+        
       });
     }
 
@@ -162,8 +169,10 @@ public class CompileDriver {
       return false;
     }
 
-    for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-      compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
+    for (Pair<GeneratingCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      final Pair<VirtualFile, VirtualFile> outputs = myGenerationCompilerModuleToOutputDirMap.get(pair);
+      compileContext.assignModule(outputs.getFirst(), pair.getSecond(), false);
+      compileContext.assignModule(outputs.getSecond(), pair.getSecond(), true);
     }
 
     final Ref<ExitStatus> status = new Ref<ExitStatus>();
@@ -258,9 +267,9 @@ public class CompileDriver {
 
   private CompileScope addAdditionalRoots(CompileScope originalScope) {
     CompileScope scope = originalScope;
-    for (final Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-      final VirtualFile outputDir = myGenerationCompilerModuleToOutputDirMap.get(pair);
-      scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputDir}, new Module[]{pair.getSecond()}));
+    for (final Pair<GeneratingCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      final Pair<VirtualFile, VirtualFile> outputs = myGenerationCompilerModuleToOutputDirMap.get(pair);
+      scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputs.getFirst(), outputs.getSecond()}, new Module[]{pair.getSecond()}));
     }
 
     final AdditionalCompileScopeProvider[] scopeProviders = Extensions.getExtensions(AdditionalCompileScopeProvider.EXTENSION_POINT_NAME);
@@ -293,8 +302,10 @@ public class CompileDriver {
     final CompileContextImpl compileContext =
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, this, !isRebuild && !forceCompile);
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
-    for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-      compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
+    for (Pair<GeneratingCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      final Pair<VirtualFile, VirtualFile> outputs = myGenerationCompilerModuleToOutputDirMap.get(pair);
+      compileContext.assignModule(outputs.getFirst(), pair.getSecond(), false);
+      compileContext.assignModule(outputs.getSecond(), pair.getSecond(), true);
     }
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -483,10 +494,19 @@ public class CompileDriver {
       }
       
       // need this to make sure the VFS is built
+      final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
       for (VirtualFile output : context.getAllOutputDirectories()) {
         walkChildren(output);
+        outputsToRefresh.add(output);
       }
-      RefreshQueue.getInstance().refresh(false, true, null, context.getAllOutputDirectories());
+      for (Pair<GeneratingCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+        final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
+        walkChildren(generated.getFirst());
+        outputsToRefresh.add(generated.getFirst());
+        walkChildren(generated.getSecond());
+        outputsToRefresh.add(generated.getSecond());
+      }
+      RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
       
       boolean didSomething = false;
 
@@ -864,8 +884,13 @@ public class CompileDriver {
     return outputDirs;
   }
 
-  private static void clearOutputDirectories(final Set<File> outputDirectories) {
+  private void clearOutputDirectories(final Set<File> _outputDirectories) {
     // do not delete directories themselves, or we'll get rootsChanged() otherwise
+    final List<File> outputDirectories = new ArrayList<File>(_outputDirectories);
+    for (Pair<GeneratingCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      outputDirectories.add(new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)));
+      outputDirectories.add(new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true)));
+    }
     Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
     for (File outputDirectory : outputDirectories) {
       File[] files = outputDirectory.listFiles();
@@ -896,33 +921,36 @@ public class CompileDriver {
         }
       }
     }
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-          final VirtualFile dir = myGenerationCompilerModuleToOutputDirMap.get(pair);
-          final File[] files = VfsUtil.virtualToIoFile(dir).listFiles();
-          if (files != null) {
-            for (final File file : files) {
-              final boolean deleteOk = FileUtil.delete(file);
-              if (!deleteOk) {
-                context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.failed.to.delete", file.getPath()),
-                                   null, -1, -1);
-              }
+    for (Pair<GeneratingCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      final File[] outputs = {
+        new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)), 
+        new File(getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true))
+      };
+      for (File output : outputs) {
+        final File[] files = output.listFiles();
+        if (files != null) {
+          for (final File file : files) {
+            final boolean deleteOk = FileUtil.delete(file);
+            if (!deleteOk) {
+              context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.failed.to.delete", file.getPath()),
+                                 null, -1, -1);
             }
           }
         }
       }
-    });
+    }
   }
 
-  private VirtualFile getGenerationOutputDir(final GeneratingCompiler compiler, final Module module) {
-    return myGenerationCompilerModuleToOutputDirMap.get(new Pair<Compiler, Module>(compiler, module));
+  private VirtualFile getGenerationOutputDir(final GeneratingCompiler compiler, final Module module, final boolean forTestSources) {
+    final Pair<VirtualFile, VirtualFile> outputs =
+      myGenerationCompilerModuleToOutputDirMap.get(new Pair<GeneratingCompiler, Module>(compiler, module));
+    return forTestSources? outputs.getSecond() : outputs.getFirst();
   }
 
-  private static String getGenerationOutputPath(GeneratingCompiler compiler, Module module) {
+  private static @NonNls String getGenerationOutputPath(GeneratingCompiler compiler, Module module, final boolean forTestSources) {
     final String generatedCompilerDirectoryPath = CompilerPaths.getGeneratedDataDirectory(module.getProject(), compiler).getPath();
-    return generatedCompilerDirectoryPath.replace(File.separatorChar, '/') + "/" +
-           (module.getName().replace(' ', '_') + "." + Integer.toHexString(module.getModuleFilePath().hashCode()));
+    final String moduleDir = module.getName().replace(' ', '_') + "." + Integer.toHexString(module.getModuleFilePath().hashCode());
+    return generatedCompilerDirectoryPath.replace(File.separatorChar, '/') + "/" + moduleDir + "/" + (forTestSources? "test" : "production");
   }
 
   private boolean generateOutput(final CompileContextImpl context,
@@ -939,7 +967,7 @@ public class CompileDriver {
       public void run() {
         for (final GeneratingCompiler.GenerationItem item : allItems) {
           final Module itemModule = item.getModule();
-          final String outputDirPath = getGenerationOutputPath(compiler, itemModule);
+          final String outputDirPath = getGenerationOutputPath(compiler, itemModule, item.isTestSource());
           final String outputPath = outputDirPath + "/" + item.getPath();
           itemToOutputPathMap.put(item, outputPath);
 
@@ -1001,21 +1029,28 @@ public class CompileDriver {
         try {
           final Set<GeneratingCompiler.GenerationItem> items = moduleToItemMap.get(module);
           if (items != null && !items.isEmpty()) {
-            final VirtualFile outputDir = getGenerationOutputDir(compiler, module);
-            final GeneratingCompiler.GenerationItem[] successfullyGenerated =
-              compiler.generate(context, items.toArray(new GeneratingCompiler.GenerationItem[items.size()]), outputDir);
-            context.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
-
-            if (successfullyGenerated.length > 0) {
-              affectedModules.add(module);
+            final GeneratingCompiler.GenerationItem[][] productionAndTestItems = splitGenerationItems(items);
+            boolean moduleAffected = false;
+            for (GeneratingCompiler.GenerationItem[] _items : productionAndTestItems) {
+              if (_items.length > 0) {
+                final VirtualFile outputDir = getGenerationOutputDir(compiler, module, _items[0].isTestSource());
+                final GeneratingCompiler.GenerationItem[] successfullyGenerated = compiler.generate(context, _items, outputDir);
+                context.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
+                if (successfullyGenerated.length > 0) {
+                  moduleAffected = true;
+                }
+                for (final GeneratingCompiler.GenerationItem item : successfullyGenerated) {
+                  final String fullOutputPath = itemToOutputPathMap.get(item);
+                  cache.update(fullOutputPath, item.getValidityState());
+                  final File file = new File(fullOutputPath);
+                  filesToRefresh.add(file);
+                  generatedFiles.add(file);
+                }
+              }
             }
-
-            for (final GeneratingCompiler.GenerationItem item : successfullyGenerated) {
-              final String fullOutputPath = itemToOutputPathMap.get(item);
-              cache.update(fullOutputPath, item.getValidityState());
-              final File file = new File(fullOutputPath);
-              filesToRefresh.add(file);
-              generatedFiles.add(file);
+            
+            if (moduleAffected) {
+              affectedModules.add(module);
             }
           }
         }
@@ -1051,6 +1086,23 @@ public class CompileDriver {
       context.getProgressIndicator().popState();
     }
     return !toGenerate.isEmpty() || !filesToRefresh.isEmpty();
+  }
+
+  private static GeneratingCompiler.GenerationItem[][] splitGenerationItems(final Set<GeneratingCompiler.GenerationItem> items) {
+    final List<GeneratingCompiler.GenerationItem> production = new ArrayList<GeneratingCompiler.GenerationItem>();
+    final List<GeneratingCompiler.GenerationItem> tests = new ArrayList<GeneratingCompiler.GenerationItem>();
+    for (GeneratingCompiler.GenerationItem item : items) {
+      if (item.isTestSource()) {
+        tests.add(item);
+      }
+      else {
+        production.add(item);
+      }
+    }
+    return new GeneratingCompiler.GenerationItem[][]{
+      production.toArray(new GeneratingCompiler.GenerationItem[production.size()]),
+      tests.toArray(new GeneratingCompiler.GenerationItem[tests.size()])
+    };
   }
 
   private boolean compileSources(final CompileContextImpl context,

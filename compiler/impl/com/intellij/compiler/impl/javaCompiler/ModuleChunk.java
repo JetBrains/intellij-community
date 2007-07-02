@@ -66,9 +66,6 @@ public class ModuleChunk extends Chunk<Module> {
     }
     final Set<Module> modules = getNodes();
 
-    final Project project = modules.iterator().next().getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
     for (final Module module : modules) {
       final VirtualFile[] moduleCompilableFiles = getFilesToCompile(module);
@@ -78,12 +75,12 @@ public class ModuleChunk extends Chunk<Module> {
       else {
         for (final VirtualFile file : moduleCompilableFiles) {
           if (mySourcesFilter == TEST_SOURCES) {
-            if (fileIndex.isInTestSourceContent(file)) {
+            if (myContext.isInTestSourceContent(file)) {
               filesToCompile.add(file);
             }
           }
           else {
-            if (!fileIndex.isInTestSourceContent(file)) {
+            if (!myContext.isInTestSourceContent(file)) {
               filesToCompile.add(file);
             }
           }

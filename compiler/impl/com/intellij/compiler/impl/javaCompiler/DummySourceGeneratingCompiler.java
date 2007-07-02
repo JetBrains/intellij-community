@@ -38,9 +38,12 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
   public GenerationItem[] getGenerationItems(CompileContext context) {
     final Module module = findMyModule();
     return new GenerationItem[] {
-      new MyGenerationItem("aaa/p1.properties", module),
-      new MyGenerationItem("bbb/p2.properties", module),
-      new MyGenerationItem("bbb/ccc/p3.properties", module)
+      new MyGenerationItem("aaa/p1.properties", module, false),
+      new MyGenerationItem("bbb/p2.properties", module, false),
+      new MyGenerationItem("bbb/ccc/p3.properties", module, false),
+      new MyGenerationItem("aaa/p1.properties", module, true),
+      new MyGenerationItem("bbb/p2-t.properties", module, true),
+      new MyGenerationItem("bbb/ccc/p3.properties", module, true)
     };
   }
 
@@ -95,10 +98,12 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
   private static class MyGenerationItem implements GenerationItem {
     private final String myRelPath;
     private final Module myModule;
+    private boolean myIsTestSource;
 
-    public MyGenerationItem(String relPath, Module module) {
+    public MyGenerationItem(String relPath, Module module, final boolean isTestSource) {
       myRelPath = relPath;
       myModule = module;
+      myIsTestSource = isTestSource;
     }
 
     public String getPath() {
@@ -111,6 +116,10 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
 
     public Module getModule() {
       return myModule;
+    }
+
+    public boolean isTestSource() {
+      return myIsTestSource;
     }
   }
 }

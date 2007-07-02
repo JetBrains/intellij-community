@@ -48,6 +48,11 @@ public interface GeneratingCompiler extends Compiler, ValidityStateFactory {
      * @return the module to which the generated item belongs.
      */
     Module getModule();
+
+    /**
+     * @return true if the generated item is supposed to be located in test sources, false otherwise
+     */
+    boolean isTestSource();
   }
 
   /**

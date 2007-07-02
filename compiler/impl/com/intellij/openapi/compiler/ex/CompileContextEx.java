@@ -17,4 +17,10 @@ public interface CompileContextEx extends CompileContext {
 
   @NotNull
   Set<VirtualFile> getTestOutputDirectories();
+  
+  /**
+   * the same as FileIndex.isInTestSourceContent(), but takes into account generated output dirs
+   */
+  boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
+  
 }
