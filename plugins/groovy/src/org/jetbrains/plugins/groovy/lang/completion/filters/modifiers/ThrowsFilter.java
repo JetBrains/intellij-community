@@ -15,13 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
 /**
  * @author ilyas
@@ -29,22 +31,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrCo
 public class ThrowsFilter implements ElementFilter {
 
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() instanceof PsiErrorElement) {
-      PsiElement candidate = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
-      if ((candidate instanceof GrMethod || candidate instanceof GrConstructor) &&
-          candidate.getText().trim().endsWith(")")) {
-        return true;
+    PsiElement candidate = null;
+    if (GroovyCompletionUtil.isInTypeDefinitionBody(context)) {
+      PsiElement run = context;
+      while(!(run.getParent() instanceof GrTypeDefinitionBody)) {
+        run = run.getParent();
+        assert run != null;
       }
+      candidate = PsiTreeUtil.getPrevSiblingOfType(run, GrMember.class);
     }
-    if (context.getPrevSibling() instanceof PsiErrorElement) {
-      PsiElement candidate = GroovyCompletionUtil.nearestLeftSibling(context.getPrevSibling());
-      if ((candidate instanceof GrMethod || candidate instanceof GrConstructor) &&
-          candidate.getText().trim().endsWith(")")) {
-        return true;
-      }
+    else if (context.getParent() instanceof PsiErrorElement) {
+     candidate = context.getParent().getPrevSibling();
     }
-    
-    return false;
+
+    return candidate instanceof GrMethod && ((GrMethod) candidate).getBlock() == null;
   }
 
   public boolean isClassAcceptable(Class hintClass) {

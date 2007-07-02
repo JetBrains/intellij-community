@@ -99,7 +99,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerBuiltInTypeCompletion() {
     String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
-    registerStandardCompletion(new BuiltInTypeFilter(), builtInTypes);
+    registerStandardCompletion(new AndFilter (new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), builtInTypes);
   }
 
   private void registerSimpleExprsCompletion() {
@@ -112,7 +112,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerFinalCompletion() {
-    registerStandardCompletion(new FinalFilter(), "final");
+    registerStandardCompletion(new AndFilter (new FinalFilter(), new NotFilter(new ThrowsFilter())), "final");
   }
 
   private void registerSynchronizedCompletion() {
