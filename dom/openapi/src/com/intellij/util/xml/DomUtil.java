@@ -3,9 +3,15 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -203,6 +209,29 @@ public class DomUtil {
       if (requiredClass.isInstance(curElement)) {
         return (T)curElement;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static DomElement getContextElement(@Nullable final Editor editor) {
+    if(editor == null) return null;
+    
+    final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
+    if (!(file instanceof XmlFile)) {
+      return null;
+    }
+
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) return null;
+
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    while (tag != null) {
+      final DomElement domElement = DomManager.getDomManager(file.getProject()).getDomElement(tag);
+      if(domElement != null) return domElement;
+
+      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
     }
     return null;
   }
