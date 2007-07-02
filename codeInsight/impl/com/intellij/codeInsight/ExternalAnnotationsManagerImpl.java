@@ -22,10 +22,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -121,7 +121,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                         protected void run(final Result result) throws Throwable {
                           if (files[0] != null) {
                             appendChosenAnnotationsRoot(entry, files[0]);
-                            annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
+                            final XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
+                            if (xmlFile != null) { //file already exists under appeared content root
+                              if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
+                              annotateExternally(listOwner, annotationFQName, xmlFile);
+                            } else {
+                              annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
+                            }
                           }
                         }
                       }.execute();
