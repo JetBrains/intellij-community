@@ -338,10 +338,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.isModified();
   }
 
-  public void dispose() {
+  public void disposeUIResources() {
+    super.disposeUIResources();
     myContext.myModulesConfigurator.disposeUIResources();
     ModuleStructureConfigurable.super.disposeUIResources();
   }
+
+  public void dispose() {}
 
 
   public JComponent createComponent() {
