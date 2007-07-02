@@ -39,9 +39,6 @@ public class TypeArgument implements GroovyElementTypes {
         }
 
         ParserUtils.getToken(builder, mNLS);
-      } else {
-        taMarker.rollbackTo();
-        return WRONGWAY;
       }
 
       taMarker.done(TYPE_ARGUMENT);
