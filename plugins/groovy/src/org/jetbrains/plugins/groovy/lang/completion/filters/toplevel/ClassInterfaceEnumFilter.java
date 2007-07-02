@@ -40,20 +40,21 @@ public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTyp
         context.getParent().getParent() instanceof GroovyFile) {
       return true;
     }
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
-      PsiElement prev = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context);
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null) {
+      PsiElement prev = leaf;
       prev = GroovyCompletionUtil.realPrevious(prev);
       if (prev instanceof GrModifierList &&
           prev.getParent() != null &&
           prev.getParent().getParent() instanceof GroovyFile)
         return true;
-    }
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
-      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+
+      PsiElement parent = leaf.getParent();
       if (parent instanceof GroovyFile) {
         return GroovyCompletionUtil.isNewStatement(context, false);
       }
     }
+
     return false;
   }
 

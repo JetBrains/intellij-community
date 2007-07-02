@@ -37,18 +37,21 @@ import org.jetbrains.annotations.NonNls;
 
 public class ControlStructureFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null &&
-        GroovyCompletionUtil.isNewStatement(context, true)) {
-      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
-      if (parent instanceof GroovyFile ||
-          parent instanceof GrOpenBlock ||
-          parent instanceof  GrClosableBlock) {
-        return true;
-      }
-      if (parent instanceof GrCaseBlock &&
-          ((GrCaseBlock) parent).getCaseLabels().length != 0 &&
-          ((GrCaseBlock) parent).getCaseLabels()[0].getTextOffset() < context.getTextOffset()){
-        return true;
+    final int offset = context.getTextRange().getStartOffset();
+    if (GroovyCompletionUtil.isNewStatement(context, true)) {
+      final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(offset - 1, context);
+      if (leaf != null) {
+        PsiElement parent = leaf.getParent();
+        if (parent instanceof GroovyFile ||
+            parent instanceof GrOpenBlock ||
+            parent instanceof  GrClosableBlock) {
+          return true;
+        }
+        if (parent instanceof GrCaseBlock &&
+            ((GrCaseBlock) parent).getCaseLabels().length != 0 &&
+            ((GrCaseBlock) parent).getCaseLabels()[0].getTextRange().getStartOffset() < offset){
+          return true;
+        }
       }
     }
 

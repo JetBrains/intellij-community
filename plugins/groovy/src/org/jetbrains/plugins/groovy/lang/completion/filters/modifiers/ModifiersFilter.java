@@ -15,15 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
@@ -39,12 +37,13 @@ public class ModifiersFilter implements ElementFilter {
         GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }
-    if (context.getTextOffset() == 0) {
+    if (context.getTextRange().getStartOffset() == 0) {
       return true;
     }
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null &&
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null &&
         GroovyCompletionUtil.isNewStatement(context, false)) {
-      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+      PsiElement parent = leaf.getParent();
       if (parent instanceof GroovyFile) {
         return true;
       }

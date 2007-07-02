@@ -43,11 +43,13 @@ public class PackageFilter implements ElementFilter {
       }
       return false;
     }
-    if (context.getTextOffset() == 0) {
+    if (context.getTextRange().getStartOffset() == 0) {
       return true;
     }
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null){
-      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null){
+      PsiElement parent = leaf.getParent();
       if (parent instanceof GroovyFile) {
         GroovyFile groovyFile = (GroovyFile) parent;
         if (groovyFile.getPackageDefinition() == null) {

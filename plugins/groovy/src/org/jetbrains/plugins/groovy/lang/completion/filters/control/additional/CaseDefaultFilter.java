@@ -49,8 +49,9 @@ public class CaseDefaultFilter implements ElementFilter {
         return true;
       }
     }
-    if (GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context) != null) {
-      PsiElement parent = GroovyCompletionUtil.getLeafByOffset(context.getTextOffset() - 1, context).getParent();
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null) {
+      PsiElement parent = leaf.getParent();
       if (parent instanceof GrCaseBlock) {
         return true;
       }
