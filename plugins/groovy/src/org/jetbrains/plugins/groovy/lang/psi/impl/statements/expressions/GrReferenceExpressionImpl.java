@@ -445,13 +445,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           if (substitutor != null) {
             PsiType componentType = substitutor.substitute(listClass.getTypeParameters()[0]);
             if (componentType != null) {
-              getVaiantsFromQualifierType(processor, componentType, getProject());
+              getVariantsFromQualifierType(processor, componentType, getProject());
             }
           }
         }
       }
     } else if (qualifierType instanceof PsiArrayType) {
-      getVaiantsFromQualifierType(processor, ((PsiArrayType) qualifierType).getComponentType(), getProject());
+      getVariantsFromQualifierType(processor, ((PsiArrayType) qualifierType).getComponentType(), getProject());
     }
   }
 
@@ -484,10 +484,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       Project project = qualifier.getProject();
       if (qualifierType instanceof PsiIntersectionType) {
         for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
-          getVaiantsFromQualifierType(processor, conjunct, project);
+          getVariantsFromQualifierType(processor, conjunct, project);
         }
       } else {
-        getVaiantsFromQualifierType(processor, qualifierType, project);
+        getVariantsFromQualifierType(processor, qualifierType, project);
         if (qualifier instanceof GrReferenceExpression) {
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiClass) { ////omitted .class
@@ -506,7 +506,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return resolved.getManager().findClass("java.lang.Class", scope);
   }
 
-  private void getVaiantsFromQualifierType(ResolverProcessor processor, PsiType qualifierType, Project project) {
+  private void getVariantsFromQualifierType(ResolverProcessor processor, PsiType qualifierType, Project project) {
     if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
       if (qualifierClass != null) {
