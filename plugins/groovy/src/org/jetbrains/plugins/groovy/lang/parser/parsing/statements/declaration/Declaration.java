@@ -41,7 +41,7 @@ public class Declaration implements GroovyElementTypes {
   }
 
   public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation) {
-    PsiBuilder.Marker declmMarker = builder.mark();
+    PsiBuilder.Marker declMarker = builder.mark();
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
 
@@ -60,14 +60,14 @@ public class Declaration implements GroovyElementTypes {
 
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
-          declmMarker.rollbackTo();
+          declMarker.rollbackTo();
           return WRONGWAY;
         } else {
-          declmMarker.done(varDecl);
+          declMarker.done(varDecl);
           return varDecl;
         }
 
-      } else {  //type was recognezed
+      } else {  //type was recognized
         GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
@@ -81,15 +81,15 @@ public class Declaration implements GroovyElementTypes {
 
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
-            declmMarker.rollbackTo();
+            declMarker.rollbackTo();
             return WRONGWAY;
           } else {
-            declmMarker.done(varDecl);
+            declMarker.done(varDecl);
             return varDecl;
           }
         } else {
           checkMarker.drop();
-          declmMarker.done(varDeclarationTop);
+          declMarker.done(varDeclarationTop);
           return varDeclarationTop;
         }
       }
@@ -106,22 +106,27 @@ public class Declaration implements GroovyElementTypes {
         return WRONGWAY;
       }
 
+      GroovyElementType typeParseResult = null;
       if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
         //type specification starts with upper case letter
-        if (WRONGWAY.equals(TypeSpec.parse(builder, true))) {
+        typeParseResult = TypeSpec.parse(builder, true);
+        if (WRONGWAY.equals(typeParseResult)) {
           builder.error(GroovyBundle.message("type.specification.expected"));
-          declmMarker.rollbackTo();
+          declMarker.rollbackTo();
           return WRONGWAY;
         }
       }
 
       GroovyElementType varDef = VariableDefinitions.parse(builder, isInClass);
       if (varDef != WRONGWAY) {
-        declmMarker.done(varDef);
+        declMarker.done(varDef);
         return varDef;
+      } else if (isInClass && typeParseResult != null) {
+        declMarker.drop();
+        return typeParseResult;
       }
 
-      declmMarker.rollbackTo();
+      declMarker.rollbackTo();
       return WRONGWAY;
     }
   }
