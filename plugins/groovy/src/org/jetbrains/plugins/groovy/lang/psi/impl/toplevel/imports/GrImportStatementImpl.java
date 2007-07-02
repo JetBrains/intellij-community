@@ -123,6 +123,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   @Nullable
   public String getImportedName() {
+    if (isOnDemand()) return null;
+    
     PsiElement identifier = findChildByType(GroovyTokenTypes.mIDENT);
     //this was aliased import
     if (identifier != null) {
