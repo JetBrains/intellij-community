@@ -229,13 +229,9 @@ public abstract class GroovyRefactoringUtil {
   public static void sortOccurences(PsiElement[] occurences) {
     Arrays.sort(occurences, new Comparator<PsiElement>() {
       public int compare(PsiElement elem1, PsiElement elem2) {
-        if (elem1.getTextOffset() < elem2.getTextOffset()) {
-          return -1;
-        } else if (elem1.getTextOffset() > elem2.getTextOffset()) {
-          return 1;
-        } else {
-          return 0;
-        }
+        final int offset1 = elem1.getTextRange().getStartOffset();
+        final int offset2 = elem2.getTextRange().getStartOffset();
+        return offset1 - offset2;
       }
     });
   }
