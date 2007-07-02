@@ -28,11 +28,8 @@ import org.jetbrains.annotations.NonNls;
  */
 public class SynchronizedFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    if (context.getParent() instanceof GrTypeDefinitionBody &&
-        GroovyCompletionUtil.isNewStatement(context, true)) {
-      return true;
-    }
-    return false;
+    return GroovyCompletionUtil.isInTypeDefinitionBody(context) &&
+        GroovyCompletionUtil.isNewStatement(context, true);
   }
 
   public boolean isClassAcceptable(Class hintClass) {
