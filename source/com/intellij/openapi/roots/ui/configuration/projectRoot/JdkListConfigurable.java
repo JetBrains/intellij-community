@@ -171,7 +171,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        getProjectJdksModel().createAddActions(group, myTree, new Consumer<ProjectJdk>() {
+        myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
           public void consume(final ProjectJdk projectJdk) {
             addJdkNode(projectJdk, true);
           }
@@ -179,10 +179,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
         return group.getChildren(null);
       }
     };
-  }
-
-  public ProjectJdksModel getProjectJdksModel() {
-    return ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
   }
 
   protected void removeJdk(final ProjectJdk jdk) {
