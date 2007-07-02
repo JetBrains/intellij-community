@@ -1,5 +1,10 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -12,12 +17,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -147,8 +146,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    super.apply();
-
     boolean modifiedJdks = false;
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
@@ -160,7 +157,10 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
+  }
 
+  public boolean isModified() {
+    return super.isModified() || myJdksTreeModel.isModified();
   }
 
   public static JdkListConfigurable getInstance(Project project) {
