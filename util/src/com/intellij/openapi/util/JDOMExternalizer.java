@@ -67,7 +67,7 @@ public class JDOMExternalizer {
     return null;
   }
 
-  public static void writeMap(Element root, Map<String, String>map, @Nullable String rootName, String entryName) {
+  public static void writeMap(Element root, Map<String, String>map, @NonNls @Nullable String rootName, @NonNls String entryName) {
     Element mapRoot;
     if (StringUtil.isNotEmpty(rootName)) {
       mapRoot = new Element(rootName);
@@ -89,7 +89,7 @@ public class JDOMExternalizer {
     }
   }
 
-  public static void readMap(Element root, Map<String, String> map, @Nullable String rootName, String entryName) {
+  public static void readMap(Element root, Map<String, String> map, @NonNls @Nullable String rootName, @NonNls String entryName) {
     Element mapRoot;
     if (StringUtil.isNotEmpty(rootName)) {
       mapRoot = root.getChild(rootName);
