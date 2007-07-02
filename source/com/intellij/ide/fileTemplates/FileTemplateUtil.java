@@ -208,7 +208,6 @@ public class FileTemplateUtil{
   }
 
   public static PsiElement createFromTemplate(final FileTemplate template, @NonNls final String fileName, Properties props, final Project project, final @NotNull PsiDirectory directory) throws Exception{
-    final PsiElement[] result = new PsiElement[1];
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
     }
@@ -240,6 +239,7 @@ public class FileTemplateUtil{
     }
     final String templateText = StringUtil.convertLineSeparators(mergedText);
     final Exception[] commandException = new Exception[1];
+    final PsiElement[] result = new PsiElement[1];
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
       public void run(){
         final Runnable run = new Runnable(){
@@ -336,7 +336,6 @@ public class FileTemplateUtil{
       modifiedPatternsPath = new File(modifiedPatternsPath, INCLUDES_PATH);
 
       try{
-        //noinspection HardCodedStringLiteral
         Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
         pathsField.setAccessible(true);
         Vector<String> paths = (Vector<String>)pathsField.get(this);
@@ -344,7 +343,6 @@ public class FileTemplateUtil{
         paths.addElement(modifiedPatternsPath.getAbsolutePath());
         if(ApplicationManager.getApplication().isUnitTestMode()){
           File file1 = new File(PathManagerEx.getTestDataPath());
-          //noinspection HardCodedStringLiteral
           File testsDir = new File(new File(file1, "ide"), "fileTemplates");
           paths.add(testsDir.getAbsolutePath());
         }
