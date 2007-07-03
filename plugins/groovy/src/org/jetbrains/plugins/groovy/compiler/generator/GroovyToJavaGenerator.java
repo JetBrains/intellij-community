@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -79,6 +79,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private static final CharSequence PREFIX_SEPARATOR = "/";
   private CompileContext myContext;
+  private Project myProject;
+
+  public GroovyToJavaGenerator(Project project) {
+    myProject = project;
+  }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
     myContext = context;
@@ -87,6 +92,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     GenerationItem item;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
       final GroovyFile psiFile = findPsiFile(file);
+      boolean isInTestSources = ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(file);
 
       GrTopStatement[] statements = getTopStatementsInReadAction(psiFile);
 
@@ -97,13 +103,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         prefix = getJavaClassPackage((GrPackageDefinition) statements[0]);
       }
 
-      //top level class
-      VirtualFile virtualFile;
-      if (needCreateTopLevelClass) {
+      final Module module = getModuleByFile(context, file);
 
-        virtualFile = psiFile.getVirtualFile();
-        assert virtualFile != null;
-        generationItems.add(new GenerationItemImpl(prefix + virtualFile.getNameWithoutExtension() + "." + "java", getModuleByFile(context, virtualFile), new TimestampValidityState(file.getTimeStamp())));
+      //top level class
+      if (needCreateTopLevelClass) {
+        generationItems.add(new GenerationItemImpl(prefix + file.getNameWithoutExtension() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources));
       }
 
       GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
@@ -113,7 +117,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       });
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
-        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", getModuleByFile(context, file), new TimestampValidityState(file.getTimeStamp()));
+        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources);
         generationItems.add(item);
       }
     }
@@ -149,26 +153,20 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
     }
 
-    return generatedItems.toArray(new GenerationItem[0]);
+    return generatedItems.toArray(new GenerationItem[generatedItems.size()]);
   }
 
   private GroovyFile findPsiFile(final VirtualFile virtualFile) {
-    final Project project = getProject(virtualFile);
-    assert project != null;
     final GroovyFile[] myFindPsiFile = new GroovyFile[1];
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        myFindPsiFile[0] = (GroovyFile) PsiManager.getInstance(project).findFile(virtualFile);
+        myFindPsiFile[0] = (GroovyFile) PsiManager.getInstance(myProject).findFile(virtualFile);
       }
     });
 
     assert myFindPsiFile[0] != null;
     return myFindPsiFile[0];
-  }
-
-  protected Project getProject(VirtualFile virtualFile) {
-    return VfsUtil.guessProjectForFile(virtualFile);
   }
 
   //virtualFile -> PsiFile
@@ -836,12 +834,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   class GenerationItemImpl implements GenerationItem {
     ValidityState myState;
+    private boolean myInTestSources;
     final Module myModule;
     public int myHashCode;
 
-    public GenerationItemImpl(String path, Module module, ValidityState state) {
+    public GenerationItemImpl(String path, Module module, ValidityState state, boolean isInTestSources) {
       myModule = module;
       myState = state;
+      myInTestSources = isInTestSources;
       myHashCode = myTrie.getHashCode(path);
     }
 
@@ -855,6 +855,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     public Module getModule() {
       return myModule;
+    }
+
+    boolean isTestSource() {
+      return myInTestSources;
     }
   }
 }
