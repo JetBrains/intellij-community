@@ -857,7 +857,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       return myModule;
     }
 
-    boolean isTestSource() {
+    public boolean isTestSource() {
       return myInTestSources;
     }
   }
