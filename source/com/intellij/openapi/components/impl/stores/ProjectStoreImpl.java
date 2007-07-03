@@ -199,7 +199,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (file == null) return null;
 
     return LocalFileSystem.getInstance()
-      .findFileByIoFile(myScheme == StorageScheme.DEFAULT ? file.getParentFile() : file.getParentFile().getParentFile());
+      .refreshAndFindFileByIoFile(myScheme == StorageScheme.DEFAULT ? file.getParentFile() : file.getParentFile().getParentFile());
   }
 
   public void setStorageFormat(final StorageFormat storageFormat) {

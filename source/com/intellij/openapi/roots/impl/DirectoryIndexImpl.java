@@ -261,6 +261,22 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
+    //fill project base dir
+    final VirtualFile baseDir = myProject.getBaseDir();
+    final DirectoryInfo info = getOrCreateDirInfo(baseDir);
+    if (info.module == null) {
+      VirtualFile[] children = baseDir.getChildren();
+      for (VirtualFile child : children) {
+        if (child.isDirectory()) {
+          fillMapWithModuleContent(child, null, baseDir, excludeRootsMap.get(baseDir), forDir, fileTypeManager);
+        }
+      }
+
+      // important to change module AFTER processing children - to handle overlapping modules
+      info.module = null;
+      info.contentRoot = baseDir;
+    }
+
     // fill module sources
     for (Module module : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);

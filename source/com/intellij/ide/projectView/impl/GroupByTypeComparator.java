@@ -32,6 +32,12 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
         descriptor2.update();
       }
     }
+    if (descriptor1 instanceof ModuleGroupNode != descriptor2 instanceof ModuleGroupNode) {
+      return descriptor1 instanceof ModuleGroupNode ? -1 : 1;
+    }
+    if (descriptor1 instanceof ProjectViewModuleNode != descriptor2 instanceof ProjectViewModuleNode) {
+      return descriptor1 instanceof ProjectViewModuleNode ? -1 : 1;
+    }
     if (descriptor1 instanceof PsiDirectoryNode != descriptor2 instanceof PsiDirectoryNode) {
       return descriptor1 instanceof PsiDirectoryNode ? -1 : 1;
     }

@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -260,7 +263,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       final String packageName = javaFile.getPackageName();
       final PsiPackage psiPackage = psiManager.findPackage(packageName);
       if (psiPackage != null) {
-        final PsiDirectory[] dirsWithExternalAnnotations = psiPackage.getDirectories();
+        final Module module = ModuleUtil.findModuleForPsiElement(javaFile);
+        final PsiDirectory[] dirsWithExternalAnnotations = module != null
+                                                           ? psiPackage.getDirectories(GlobalSearchScope.moduleScope(module)) : psiPackage.getDirectories();
         for (final PsiDirectory directory : dirsWithExternalAnnotations) {
           final PsiFile psiFile = directory.findFile(ANNOTATIONS_XML);
           if (psiFile instanceof XmlFile) {

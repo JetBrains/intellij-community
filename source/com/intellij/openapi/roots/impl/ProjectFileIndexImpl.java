@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -10,9 +11,9 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,18 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       }
     }
 
+    final VirtualFile projectBaseDir = myProject.getBaseDir();
+    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(projectBaseDir);
+    if (info != null && info.module == null) {
+      VirtualFile parent = projectBaseDir.getParent();
+      if (parent != null) {
+        DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
+        if (parentInfo != null && parentInfo.module != null) return true;
+      }
+
+      boolean finished = FileIndexImplUtil.iterateRecursively(projectBaseDir, myContentFilter, iterator);
+      if (!finished) return false;
+    }
     return true;
   }
 
@@ -232,7 +245,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        return info != null && info.module != null;
+        return info != null && (info.module != null || VfsUtil.isAncestor(myProject.getBaseDir(), file, false));
       }
       else {
         return !myFileTypeManager.isFileIgnored(file.getName());
