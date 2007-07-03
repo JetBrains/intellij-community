@@ -10,6 +10,7 @@ import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 import java.util.Set;
@@ -28,13 +29,13 @@ public class Disposer {
   private Disposer() {
   }
 
-  private static Map<String, Disposable> ourKeyDisposables = new WeakHashMap<String, Disposable>();
+  private static final Map<String, Disposable> ourKeyDisposables = new WeakHashMap<String, Disposable>();
 
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     register(parent, child, null);
   }
 
-  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @Nullable final String key) {
+  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @Nullable final String key) {
     assert parent != child : " Cannot register to itself";
 
     synchronized (ourTree) {

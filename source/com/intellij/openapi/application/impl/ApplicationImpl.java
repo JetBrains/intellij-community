@@ -66,13 +66,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myTestModeFlag = false;
   private boolean myHeadlessMode = false;
 
-  private String myComponentsDescriptor;
+  private final String myComponentsDescriptor;
 
   private boolean myIsInternal = false;
   @NonNls private static final String APPLICATION_LAYER = "application-components";
-  private String myName;
+  private final String myName;
 
-  private ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
+  private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
   private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
 
   private Thread myExceptionalThreadWithReadAccess = null;
