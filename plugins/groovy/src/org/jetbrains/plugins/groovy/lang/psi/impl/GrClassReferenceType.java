@@ -106,7 +106,7 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   @NotNull
-    public PsiClassType rawType() {
+  public PsiClassType rawType() {
     return this;
   }
 
