@@ -228,4 +228,10 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
   }
+
+  public void testPartiallyDeclaredType() throws Exception {
+    PsiReference ref = configureByFile("partiallyDeclaredType/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
 }

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -60,17 +61,39 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   @Nullable
   public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement != null) return typeElement.getType();
+    PsiType declaredType = null;
+    if (typeElement != null) {
+      declaredType = typeElement.getType();
+      if (!(declaredType instanceof PsiClassType)) {
+        return declaredType;
+      }
+    }
 
     GrExpression initializer = getInitializerGroovy();
     if (initializer != null) {
       if (!(initializer instanceof GrReferenceExpression) || !initializer.getText().equals(getName())) { //prevent infinite recursion
         PsiType initializerType = initializer.getType();
-        if (initializerType != null) return initializerType;
+        if (initializerType != null) {
+          if (declaredType != null && initializerType instanceof PsiClassType) {
+            final PsiClass declaredClass = ((PsiClassType) declaredType).resolve();
+            if (declaredClass != null) {
+              final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType) initializerType).resolveGenerics();
+              final PsiClass initializerClass = initializerResult.getElement();
+              if (initializerClass != null) {
+                final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
+                if (superSubstitutor != null) {
+                  return getManager().getElementFactory().createType(declaredClass, superSubstitutor);
+                }
+              }
+            }
+          }
+
+          return initializerType;
+        }
       }
     }
 
-    return null;
+    return declaredType;
   }
 
   public void setType(@Nullable PsiType type) {
