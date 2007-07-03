@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -70,9 +71,11 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
     }
 
     GrExpression initializer = getInitializerGroovy();
-    if (initializer != null) {
+    if (initializer != null && initializer.getUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
       if (!(initializer instanceof GrReferenceExpression) || !initializer.getText().equals(getName())) { //prevent infinite recursion
+        initializer.putUserData(ResolveUtil.IS_BEING_RESOLVED, true);
         PsiType initializerType = initializer.getType();
+        initializer.putUserData(ResolveUtil.IS_BEING_RESOLVED, null);
         if (initializerType != null) {
           if (declaredType != null && initializerType instanceof PsiClassType) {
             final PsiClass declaredClass = ((PsiClassType) declaredType).resolve();
