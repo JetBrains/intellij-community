@@ -20,5 +20,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.types;
  * @author: Dmitry.Krasilschikov
  * @date: 28.03.2007
  */
-public interface GrTypeArgument extends GrTypeElement {
+public interface GrWildcardTypeArgument extends GrTypeElement {
+  GrTypeElement getBoundTypeElement();
 }

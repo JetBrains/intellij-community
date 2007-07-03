@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -43,7 +43,7 @@ public interface GrTypeDefinition extends GrNamedElement, GrTopStatement, Naviga
   @Nullable
   public String getQualifiedName();
 
-  GrTypeArgument[] getTypeParametersGroovy();
+  GrWildcardTypeArgument[] getTypeParametersGroovy();
 
   @NotNull
   PsiElement getNameIdentifierGroovy();

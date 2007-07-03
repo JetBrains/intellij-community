@@ -49,7 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
@@ -90,8 +90,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return null;
   }
 
-  public GrTypeArgument[] getTypeParametersGroovy() {
-    return findChildrenByClass(GrTypeArgument.class);
+  public GrWildcardTypeArgument[] getTypeParametersGroovy() {
+    return findChildrenByClass(GrWildcardTypeArgument.class);
   }
 
   public GrTypeDefinitionBody getBody() {
