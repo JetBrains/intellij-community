@@ -7,15 +7,13 @@ Groovy script
     PsiElement(.)('.')
     Type arguments
       PsiElement(<)('<')
-      Type argument
-        Type element
-          Reference element
-            PsiElement(identifier)('T')
+      Type element
+        Reference element
+          PsiElement(identifier)('T')
       PsiElement(,)(',')
-      Type argument
-        Type element
-          Reference element
-            PsiElement(identifier)('S')
+      Type element
+        Reference element
+          PsiElement(identifier)('S')
       PsiElement(>)('>')
     Property selector
       PsiElement(string)(''preved'')

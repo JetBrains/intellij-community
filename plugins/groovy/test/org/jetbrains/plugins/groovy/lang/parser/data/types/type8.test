@@ -20,15 +20,13 @@ Groovy script
             PsiElement(identifier)('Map')
             Type arguments
               PsiElement(<)('<')
-              Type argument
-                Type element
-                  Reference element
-                    PsiElement(identifier)('String')
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
               PsiElement(,)(',')
               PsiWhiteSpace(' ')
-              Type argument
-                Built in type
-                  PsiElement(int)('int')
+              Built in type
+                PsiElement(int)('int')
               PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('b')

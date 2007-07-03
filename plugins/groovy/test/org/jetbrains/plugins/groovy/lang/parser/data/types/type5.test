@@ -23,10 +23,9 @@ Groovy script
               PsiElement(identifier)('B')
               Type arguments
                 PsiElement(<)('<')
-                Type argument
-                  Type element
-                    Reference element
-                      PsiElement(identifier)('String')
+                Type element
+                  Reference element
+                    PsiElement(identifier)('String')
                 PsiElement(>)('>')
             PsiElement(.)('.')
             PsiElement(identifier)('C')

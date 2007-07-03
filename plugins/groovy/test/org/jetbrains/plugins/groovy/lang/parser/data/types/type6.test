@@ -23,18 +23,16 @@ Groovy script
               PsiElement(identifier)('B')
               Type arguments
                 PsiElement(<)('<')
-                Type argument
-                  Type element
-                    Reference element
-                      PsiElement(identifier)('String')
+                Type element
+                  Reference element
+                    PsiElement(identifier)('String')
                 PsiElement(>)('>')
             PsiElement(.)('.')
             PsiElement(identifier)('C')
             Type arguments
               PsiElement(<)('<')
-              Type argument
-                Built in type
-                  PsiElement(int)('int')
+              Built in type
+                PsiElement(int)('int')
               PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('f')

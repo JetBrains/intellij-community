@@ -16,10 +16,9 @@ Groovy script
           PsiElement(identifier)('List')
           Type arguments
             PsiElement(<)('<')
-            Type argument
-              Type element
-                Reference element
-                  PsiElement(identifier)('String')
+            Type element
+              Reference element
+                PsiElement(identifier)('String')
             PsiElement(>)('>')
     PsiElement())(')')
     PsiWhiteSpace(' ')

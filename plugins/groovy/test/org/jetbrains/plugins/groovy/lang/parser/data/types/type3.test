@@ -20,10 +20,9 @@ Groovy script
             PsiElement(identifier)('B')
             Type arguments
               PsiElement(<)('<')
-              Type argument
-                Type element
-                  Reference element
-                    PsiElement(identifier)('String')
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
               PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('s')

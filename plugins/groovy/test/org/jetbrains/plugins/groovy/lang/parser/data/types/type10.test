@@ -27,30 +27,26 @@ Groovy script
             PsiElement(identifier)('B')
             Type arguments
               PsiElement(<)('<')
-              Type argument
-                Built in type
-                  PsiElement(int)('int')
+              Built in type
+                PsiElement(int)('int')
               PsiElement(,)(',')
               PsiWhiteSpace(' ')
-              Type argument
-                Type element
-                  Reference element
-                    PsiElement(identifier)('String')
+              Type element
+                Reference element
+                  PsiElement(identifier)('String')
               PsiElement(,)(',')
               PsiWhiteSpace(' ')
-              Type argument
-                Type element
-                  Reference element
-                    PsiElement(identifier)('T')
-                    Type arguments
-                      PsiElement(<)('<')
-                      Type argument
-                        Array type
-                          Built in type
-                            PsiElement(boolean)('boolean')
-                          PsiElement([)('[')
-                          PsiElement(])(']')
-                      PsiElement(>)('>')
+              Type element
+                Reference element
+                  PsiElement(identifier)('T')
+                  Type arguments
+                    PsiElement(<)('<')
+                    Array type
+                      Built in type
+                        PsiElement(boolean)('boolean')
+                      PsiElement([)('[')
+                      PsiElement(])(']')
+                    PsiElement(>)('>')
               PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')

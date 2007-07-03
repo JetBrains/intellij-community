@@ -25,32 +25,28 @@ Groovy script
             PsiElement(identifier)('B')
             Type arguments
               PsiElement(<)('<')
-              Type argument
-                Array type
-                  Built in type
-                    PsiElement(int)('int')
-                  PsiElement([)('[')
-                  PsiElement(])(']')
+              Array type
+                Built in type
+                  PsiElement(int)('int')
+                PsiElement([)('[')
+                PsiElement(])(']')
               PsiElement(,)(',')
               PsiWhiteSpace(' ')
-              Type argument
-                Type element
-                  Reference element
-                    PsiElement(identifier)('B')
-                    Type arguments
-                      PsiElement(<)('<')
-                      Type argument
-                        Type element
-                          Reference element
-                            PsiElement(identifier)('String')
-                            Type arguments
-                              PsiElement(<)('<')
-                              Type argument
-                                Type element
-                                  Reference element
-                                    PsiElement(identifier)('T')
-                              PsiElement(>)('>')
-                      PsiElement(>)('>')
+              Type element
+                Reference element
+                  PsiElement(identifier)('B')
+                  Type arguments
+                    PsiElement(<)('<')
+                    Type element
+                      Reference element
+                        PsiElement(identifier)('String')
+                        Type arguments
+                          PsiElement(<)('<')
+                          Type element
+                            Reference element
+                              PsiElement(identifier)('T')
+                          PsiElement(>)('>')
+                    PsiElement(>)('>')
               PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
