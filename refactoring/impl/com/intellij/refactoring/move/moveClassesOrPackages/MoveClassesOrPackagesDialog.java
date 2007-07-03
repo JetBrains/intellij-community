@@ -46,12 +46,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JCheckBox myCbSearchTextOccurences;
   private JCheckBox myCbMoveToAnotherSourceFolder;
   private String myHelpID;
-  private final Project myProject;
   private final boolean mySearchTextOccurencesEnabled;
   private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
   private JPanel myMainPanel;
-  private JLabel myPromptTo;
   private JRadioButton myToPackageRadioButton;
   private JRadioButton myMakeInnerClassOfRadioButton;
   private ReferenceEditorComboWithBrowseButton myClassPackageChooser;
@@ -64,7 +62,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                                      PsiElement[] elementsToMove,
                                      MoveCallback moveCallback) {
     super(project, true);
-    myProject = project;
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
     myManager = PsiManager.getInstance(myProject);
@@ -181,8 +178,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       myClassPackageChooser.prependItem(targetPackageName);
     }
 
-    String nameFromCallback = (myMoveCallback instanceof MoveClassesOrPackagesCallback)
-                              ? ((MoveClassesOrPackagesCallback) myMoveCallback).getElementsToMoveName()
+    String nameFromCallback = myMoveCallback instanceof MoveClassesOrPackagesCallback
+                              ? ((MoveClassesOrPackagesCallback)myMoveCallback).getElementsToMoveName()
                               : null;
     if (nameFromCallback != null) {
       myNameLabel.setText(nameFromCallback);
@@ -195,9 +192,9 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                                                     UsageViewUtil.getType(firstElement), UsageViewUtil.getLongName(firstElement)));
     }
     else if (psiElements.length > 1) {
-      myNameLabel.setText((psiElements[0] instanceof PsiClass) ?
-                          RefactoringBundle.message("move.specified.classes") :
-                          RefactoringBundle.message("move.specified.packages"));
+      myNameLabel.setText(psiElements[0] instanceof PsiClass
+                          ? RefactoringBundle.message("move.specified.classes")
+                          : RefactoringBundle.message("move.specified.packages"));
     }
     selectInitialCard();
 
@@ -220,7 +217,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
-  public boolean isSearchInComments() {
+  private boolean isSearchInComments() {
     return myCbSearchInComments.isSelected();
   }
 
@@ -301,7 +298,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     try {
       for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
-          final PsiClass aClass = ((PsiClass)element);
+          final PsiClass aClass = (PsiClass)element;
           PsiElement toAdd;
           if (aClass.getContainingFile() instanceof PsiJavaFile && ((PsiJavaFile)aClass.getContainingFile()).getClasses().length > 1) {
             toAdd = aClass;
@@ -373,7 +370,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
   }
 
-  public boolean isSearchInNonJavaFiles() {
+  private boolean isSearchInNonJavaFiles() {
     return myCbSearchTextOccurences.isSelected();
   }
 
