@@ -214,6 +214,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
         toSelect = each;
       }
       each.reset();
+      if (each instanceof MasterDetailsComponent) {
+        ((MasterDetailsComponent)each).setHistory(myHistory);
+      }
     }
 
     myHistory.clear();
