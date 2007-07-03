@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.core.util;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,7 +13,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 
 import java.awt.event.InputEvent;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -49,5 +50,25 @@ public class IdeaAPIHelper {
         }
       }
     });
+  }
+
+  public static <E> void addElements(final ElementsChooser<E> chooser, final Collection<E> all, final Collection<E> selected) {
+    for (E element : all) {
+      chooser.addElement( element, selected.contains(element));
+    }
+  }
+
+  public static <E> void addElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator){
+    final Collection<E> sorted = new TreeSet<E>(comparator);
+    sorted.addAll(all);
+    addElements(chooser, sorted, selected);
+  }
+
+  public static <T> boolean equalAsSets(final Collection<T> collection1, final Collection<T> collection2) {
+    return setize(collection1).equals(setize(collection2));
+  }
+
+  private static <T> Collection<T> setize(final Collection<T> collection) {
+    return (collection instanceof Set ? collection : new HashSet<T>(collection));
   }
 }

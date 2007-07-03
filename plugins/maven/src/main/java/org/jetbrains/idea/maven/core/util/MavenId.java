@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.core.util;
 
 import org.apache.maven.artifact.Artifact;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
@@ -8,15 +10,15 @@ import java.text.MessageFormat;
  * @author Vladislav.Kaznacheev
  */
 public class MavenId {
-  public String groupId;
-  public String artifactId;
-  public String version;
+  @NonNls public String groupId;
+  @NonNls public String artifactId;
+  @NonNls public String version;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MavenId() {
   }
 
-  public MavenId(final String groupId, final String artifactId, final String version) {
+  public MavenId(@NonNls final String groupId, @NonNls final String artifactId, @NonNls final String version) {
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.version = version;
@@ -50,5 +52,10 @@ public class MavenId {
 
   public String toString() {
     return MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, version);
+  }
+
+  public boolean matches(@NotNull final MavenId that) {
+    return groupId.equals(that.groupId) && artifactId.equals(that.artifactId) &&
+           (version == null || that.version == null || version.equals(that.version));
   }
 }

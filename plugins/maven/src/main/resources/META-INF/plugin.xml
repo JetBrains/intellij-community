@@ -13,7 +13,6 @@
     <extensionPoint name="packagingConverter" interface="org.jetbrains.idea.maven.project.PackagingConverter"/>
   </extensionPoints>
   <extensions xmlns="com.intellij">
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.navigator.MavenProjectDomFileDescription"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
@@ -27,6 +26,10 @@
       <interface-class>org.jetbrains.idea.maven.core.MavenCore</interface-class>
       <implementation-class>org.jetbrains.idea.maven.core.MavenCoreImpl</implementation-class>
       <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.idea.maven.state.MavenProjectsState</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsStateComponent</implementation-class>
     </component>
     <component>
       <interface-class>org.jetbrains.idea.maven.builder.MavenBuilder</interface-class>
@@ -54,6 +57,10 @@
             class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="_Build"
             description="Execute Maven Build"
             icon="/actions/compile.png"/>
+
+    <action id="Maven.Ignore"
+            class="org.jetbrains.idea.maven.state.action.IgnoreProjectAction" text="_Ignore"
+            description="Toggle ignore flag for Maven project"/>
 
     <group id="Maven.OutputToolbar" description="Output toolbar">
       <action id="Maven.Rerun"
@@ -87,6 +94,11 @@
               text="Group by directories"
               description="Group by directories"
               icon="/nodes/folder.png"/>
+      <action id="Maven.ShowIgnored"
+              class="org.jetbrains.idea.maven.navigator.action.ShowIgnoredAction"
+              text="Show ignored"
+              description="Show ignored projects"
+              icon="/actions/showHiddens.png"/>
       <action id="Maven.FilterPhases"
               class="org.jetbrains.idea.maven.navigator.action.FilterPhasesAction" text="Filter standard goals"
               description="Filter standard goals"
@@ -109,11 +121,18 @@
       <reference ref="RunContextGroup"/>
       <reference id="EditSource"/>
       <reference id="Maven.AttachPlugin"/>
+      <reference id="Maven.Ignore"/>
     </group>
 
     <group id="Maven.GoalMenu" popup="true">
       <reference id="Maven.Run"/>
       <reference ref="RunContextGroup"/>
+    </group>
+
+    <group id="Maven.ProfileMenu" popup="true">
+      <action id="Maven.ToggleProfile"
+              class="org.jetbrains.idea.maven.state.action.ToggleProfileAction" text="Toggle profile"
+              description="Activate/deactivate profile"/>
     </group>
 
     <group id="Maven.PluginMenu" popup="true">

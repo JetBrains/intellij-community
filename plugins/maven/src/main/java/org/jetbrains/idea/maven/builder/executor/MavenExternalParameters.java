@@ -35,10 +35,7 @@ import org.jetbrains.idea.maven.core.util.MavenEnv;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Ralf Quebbemann
@@ -132,6 +129,8 @@ public class MavenExternalParameters {
     for (String goal : parameters.getGoals()) {
       list.add(goal);
     }
+
+    addOption(list, "P", encodeProfiles(parameters.getProfiles()));
 
     return list;
   }
@@ -239,5 +238,16 @@ public class MavenExternalParameters {
     }
 
     addOption(cmdList, "s", mavenCoreState.getMavenSettingsFile());
+  }
+
+  private static String encodeProfiles(final Collection<String> profiles) {
+    final StringBuilder stringBuilder = new StringBuilder();
+    for (String profile : profiles) {
+      if(stringBuilder.length()!=0){
+        stringBuilder.append(",");
+      }
+      stringBuilder.append(profile);
+    }
+    return stringBuilder.toString();
   }
 }

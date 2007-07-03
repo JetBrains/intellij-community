@@ -9,11 +9,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.core.util.Strings;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -22,6 +20,7 @@ public abstract class MavenRunConfigurable implements Configurable {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> pomComponent;
   protected LabeledComponent<JTextField> goalsComponent;
+  private LabeledComponent<JTextField> profilesComponent;
 
   public MavenRunConfigurable() {
     pomComponent.getComponent().addBrowseFolderListener(BuilderBundle.message("maven.select.maven.project.file"), "", null,
@@ -66,31 +65,14 @@ public abstract class MavenRunConfigurable implements Configurable {
 
   private void setData(final MavenBuildParameters data) {
     data.setPomPath(pomComponent.getComponent().getText());
-    data.setGoals(tokenize(goalsComponent.getComponent().getText()));
+    data.setGoals(Strings.tokenize(goalsComponent.getComponent().getText(), " "));
+    data.setProfiles(Strings.tokenize(profilesComponent.getComponent().getText(), " ,"));
   }
 
   private void getData(final MavenBuildParameters data) {
     pomComponent.getComponent().setText(data.getPomPath());
-    goalsComponent.getComponent().setText(detokenize(data.getGoals()));
-  }
-
-  private static List<String> tokenize(final String string) {
-    final List<String> tokens = new ArrayList<String>();
-    for ( StringTokenizer tokenizer = new StringTokenizer(string); tokenizer.hasMoreTokens();) {
-      tokens.add(tokenizer.nextToken());
-    }
-    return tokens;
-  }
-
-  private static String detokenize(final List<String> list) {
-    final StringBuffer stringBuffer = new StringBuffer();
-    for ( String goal : list) {
-      if(stringBuffer.length()!=0){
-        stringBuffer.append(" ");
-      }
-      stringBuffer.append(goal);
-    }
-    return stringBuffer.toString();
+    goalsComponent.getComponent().setText(Strings.detokenize(data.getGoals(), ' '));
+    profilesComponent.getComponent().setText(Strings.detokenize(data.getProfiles(), ','));
   }
 
   protected abstract MavenBuildParameters getParameters();

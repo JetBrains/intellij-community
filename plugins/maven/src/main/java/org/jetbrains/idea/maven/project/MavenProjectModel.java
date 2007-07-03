@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Tree;
 
 import java.util.*;
@@ -24,6 +25,7 @@ public class MavenProjectModel {
 
   public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
                            final Collection<VirtualFile> importRoots,
+                           final Collection<String> profiles,
                            final MavenProjectReader projectReader) {
 
     Map<VirtualFile, Module> fileToModule = new HashMap<VirtualFile, Module>();
@@ -42,7 +44,8 @@ public class MavenProjectModel {
       if (indicator != null && indicator.isCanceled()) {
         break;
       }
-      final MavenProjectModel.Node node = createMavenTree(projectReader, fileToModule.keySet().iterator().next(), fileToModule, false);
+      final MavenProjectModel.Node node =
+        createMavenTree(projectReader, fileToModule.keySet().iterator().next(), profiles, fileToModule, false);
       if (node != null) {
         rootProjects.add(node);
       }
@@ -56,6 +59,7 @@ public class MavenProjectModel {
   @Nullable
   private Node createMavenTree(final MavenProjectReader projectReader,
                                @NotNull VirtualFile pomFile,
+                               final Collection<String> profiles,
                                final Map<VirtualFile, Module> unprocessedFiles,
                                boolean imported) {
     final Module linkedModule = unprocessedFiles.get(pomFile);
@@ -87,11 +91,11 @@ public class MavenProjectModel {
 
     final Node node = new Node(pomFile, mavenProject, imported ? null : linkedModule);
 
-    for (Object moduleName : mavenProject.getModules()) {
+    for (String modulePath : ProjectUtil.collectModuleNames(mavenProject, profiles, new HashSet<String>())) {
       if (indicator != null && indicator.isCanceled()) {
         return null;
       }
-      VirtualFile childFile = getMavenModuleFile(pomFile, (String)moduleName);
+      VirtualFile childFile = getMavenModuleFile(pomFile, modulePath);
       if (childFile != null) {
         final Node existingRoot = findExistingRoot(childFile);
         if (existingRoot != null) {
@@ -99,20 +103,20 @@ public class MavenProjectModel {
           node.mavenModules.add(existingRoot);
         }
         else if (imported || unprocessedFiles.containsKey(childFile)) {
-          Node module = createMavenTree(projectReader, childFile, unprocessedFiles, imported);
+          Node module = createMavenTree(projectReader, childFile, profiles, unprocessedFiles, imported);
           if (module != null) {
             node.mavenModules.add(module);
           }
         }
       }
       else {
-        LOG.warn("Cannot find maven module " + moduleName);
+        LOG.warn("Cannot find maven module " + modulePath);
       }
     }
     return node;
   }
 
-  public void resolve(final MavenProjectReader projectReader) {
+  public void resolve(final MavenProjectReader projectReader, final List<String> profiles) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     visit(new MavenProjectVisitorPlain() {
       public void visit(final Node node) {
@@ -123,16 +127,21 @@ public class MavenProjectModel {
           }
           progressIndicator.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
         }
-        node.resolve(projectReader);
+        node.resolve(projectReader, profiles);
       }
     });
   }
 
   @Nullable
-  private static VirtualFile getMavenModuleFile(VirtualFile parent, String name) {
-    //noinspection ConstantConditions
-    VirtualFile moduleDir = parent.getParent().findChild(name);
-    return moduleDir != null ? moduleDir.findChild(MavenEnv.POM_FILE) : null;
+  private static VirtualFile getMavenModuleFile(VirtualFile parentPom, String moduleRelPath) {
+    final VirtualFile parentDir = parentPom.getParent();
+    if (parentDir != null) {
+      VirtualFile moduleDir = parentDir.findFileByRelativePath(moduleRelPath);
+      if (moduleDir != null) {
+        return moduleDir.findChild(MavenEnv.POM_FILE);
+      }
+    }
+    return null;
   }
 
   private Node findExistingRoot(final VirtualFile childFile) {
@@ -236,8 +245,8 @@ public class MavenProjectModel {
       linkedModule = null;
     }
 
-    public void resolve(final MavenProjectReader projectReader) {
-      final MavenProject resolved = projectReader.readResolved(getPath());
+    public void resolve(final MavenProjectReader projectReader, final List<String> profiles) {
+      final MavenProject resolved = projectReader.readResolved(getPath(), profiles);
       if (resolved != null) {
         mavenProject = resolved;
       }
@@ -251,6 +260,10 @@ public class MavenProjectModel {
         stringBuilder.append(element);
       }
       return FileUtil.toSystemIndependentName(stringBuilder.toString());
+    }
+
+    public void applyProfiles(final List<String> profiles) {
+      mavenProject.setActiveProfiles(profiles);
     }
   }
 }

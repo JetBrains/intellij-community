@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.repo;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.util.MavenId;
 
 import java.util.Collection;
 
@@ -9,7 +10,7 @@ import java.util.Collection;
  */
 public interface MavenRepository {
   @Nullable
-  PluginDocument loadPlugin(String groupId, String artifactId, String version);
+  PluginDocument loadPlugin(final MavenId mavenId);
 
   Collection<PluginDocument> choosePlugins();
 }

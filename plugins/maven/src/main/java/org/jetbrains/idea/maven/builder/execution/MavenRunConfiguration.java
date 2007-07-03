@@ -144,6 +144,6 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   private String getGeneratedName() {
-    return MavenRunConfigurationType.generateName(myMavenSettings.buildParameters);
+    return MavenRunConfigurationType.generateName(getProject(), myMavenSettings.buildParameters);
   }
 }
