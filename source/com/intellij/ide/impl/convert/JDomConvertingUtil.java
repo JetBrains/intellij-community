@@ -4,21 +4,23 @@
 
 package com.intellij.ide.impl.convert;
 
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -50,9 +52,13 @@ public class JDomConvertingUtil {
   }
 
   public static Condition<Element> createAttributeValueFilter(final @NonNls String name, final @NonNls String value) {
+    return createAttributeValueFilter(name, Collections.singleton(value));
+  }
+
+  public static Condition<Element> createAttributeValueFilter(final @NonNls String name, final @NonNls Collection<String> value) {
     return new Condition<Element>() {
       public boolean value(final Element element) {
-        return value.equals(element.getAttributeValue(name));
+        return value.contains(element.getAttributeValue(name));
       }
     };
   }
@@ -101,7 +107,7 @@ public class JDomConvertingUtil {
     };
   }
 
-  public static void removeChildren(final Element element, final Condition<Element> filter) {
+  public static List<Element> removeChildren(final Element element, final Condition<Element> filter) {
     List<Element> toRemove = new ArrayList<Element>();
     final List<Element> list = element.getChildren();
     for (Element e : list) {
@@ -112,6 +118,7 @@ public class JDomConvertingUtil {
     for (Element e : toRemove) {
       element.removeContent(e);
     }
+    return toRemove;
   }
 
   public static Element createOptionElement(String name, String value) {
