@@ -6,6 +6,8 @@ import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.commander.ProjectListBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
@@ -147,7 +149,11 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel = new MyCommanderPanel(myProject);
 
     AbstractTreeStructure treeStructure = new MyStructureTreeStructure();
-    ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, null, false) {
+
+    PsiFile psiFile = getPsiFile(myProject);
+    StructureViewBuilder viewBuilder = psiFile.getLanguage().getStructureViewBuilder(psiFile);
+    boolean showRoot = viewBuilder instanceof TreeBasedStructureViewBuilder && ((TreeBasedStructureViewBuilder)viewBuilder).isRootNodeShown();
+    ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, null, showRoot) {
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
