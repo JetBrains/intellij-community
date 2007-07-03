@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
@@ -78,6 +79,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         getNode().replaceChild(qualifier.getNode(), newQualifier.getNode());
       }
     }
+  }
+
+  public GrTypeArgument[] getTypeArguments() {
+    return findChildrenByClass(GrTypeArgument.class);
   }
 
   enum ReferenceKind {
@@ -353,7 +358,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   @NotNull
-  public ResolveResult[] multiResolve(boolean b) {
-    return getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+  public GroovyResolveResult[] multiResolve(boolean b) {
+    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
   }
 }

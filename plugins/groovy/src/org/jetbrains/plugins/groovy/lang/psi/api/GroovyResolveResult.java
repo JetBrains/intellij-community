@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
@@ -13,6 +14,11 @@ public interface GroovyResolveResult extends ResolveResult {
 
   boolean isAccessible();
 
+  @Nullable
+  GrImportStatement getImportStatementContext();
+
+  PsiSubstitutor getSubstitutor();
+
   public static final GroovyResolveResult EMPTY_RESULT = new GroovyResolveResult() {
     public boolean isAccessible() {
       return false;
@@ -20,6 +26,10 @@ public interface GroovyResolveResult extends ResolveResult {
 
     public GrImportStatement getImportStatementContext() {
       return null;
+    }
+
+    public PsiSubstitutor getSubstitutor() {
+      return PsiSubstitutor.EMPTY;
     }
 
     @Nullable
@@ -31,7 +41,4 @@ public interface GroovyResolveResult extends ResolveResult {
       return false;
     }
   };
-
-  @Nullable
-  GrImportStatement getImportStatementContext();
 }

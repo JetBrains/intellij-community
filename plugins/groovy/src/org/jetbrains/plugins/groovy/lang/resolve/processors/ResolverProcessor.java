@@ -63,7 +63,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       if (namedElement instanceof PsiMethod && ((PsiMethod) namedElement).isConstructor()) return true; //constructors are not interesting
 
       boolean isAccessible = isAccessible(namedElement);
-      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myImportStatementContext));
+      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myImportStatementContext, substitutor));
       return myForCompletion || !isAccessible;
     }
 

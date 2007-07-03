@@ -55,10 +55,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (!isAccessible((PsiNamedElement) element)) return true;
 
       if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method)) {
-        myCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext));
+        myCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
       }
       else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext));
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
       }
 
       return true;

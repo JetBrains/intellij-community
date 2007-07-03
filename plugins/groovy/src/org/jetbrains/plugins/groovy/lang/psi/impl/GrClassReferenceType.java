@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -36,7 +37,7 @@ public class GrClassReferenceType extends PsiClassType {
 
   @Nullable
   public PsiClass resolve() {
-    ResolveResult[] results = myReferenceElement.multiResolve(false);
+    ResolveResult[] results = multiResolve();
     if (results.length == 0) return null;
     if (results.length == 1) {
       PsiElement only = results[0].getElement();
@@ -50,12 +51,18 @@ public class GrClassReferenceType extends PsiClassType {
               ((PsiMethod) first).getContainingClass() : null;
   }
 
+  //reference resolve is cached
+  private GroovyResolveResult[] multiResolve() {
+    return myReferenceElement.multiResolve(false);
+  }
+
   public String getClassName() {
     return myReferenceElement.getReferenceName();
   }
 
   @NotNull
   public PsiType[] getParameters() {
+    //todo
     return PsiType.EMPTY_ARRAY;
   }
 
@@ -67,7 +74,9 @@ public class GrClassReferenceType extends PsiClassType {
       }
 
       public PsiSubstitutor getSubstitutor() {
-        return PsiSubstitutor.EMPTY;
+        final GroovyResolveResult[] results = multiResolve();
+        if (results.length != 1) return PsiSubstitutor.UNKNOWN;
+        return results[0].getSubstitutor();
       }
 
       public boolean isPackagePrefixPackageReference() {
@@ -75,7 +84,11 @@ public class GrClassReferenceType extends PsiClassType {
       }
 
       public boolean isAccessible() {
-        return true; //TODO
+        final GroovyResolveResult[] results = multiResolve();
+        for (GroovyResolveResult result : results) {
+          if (result.isAccessible()) return true;
+        }
+        return false;
       }
 
       public boolean isStaticsScopeCorrect() {

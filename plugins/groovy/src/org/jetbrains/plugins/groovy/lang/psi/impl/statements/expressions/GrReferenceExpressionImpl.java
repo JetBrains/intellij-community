@@ -540,8 +540,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @NotNull
-  public ResolveResult[] multiResolve(boolean b) {
-    return ((PsiManagerEx) getManager()).getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+  public GroovyResolveResult[] multiResolve(boolean b) {
+    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
   }
 
 }
