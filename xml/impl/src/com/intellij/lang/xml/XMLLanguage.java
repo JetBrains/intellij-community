@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.xml.XmlStructureViewBuilderProvider;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.*;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -13,6 +14,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,10 +118,18 @@ public class XMLLanguage extends CompositeLanguage {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
-      StructureViewBuilder builder = getStructureViewBuilderForExtensions( psiFile );
-      if ( builder != null ) {
+      StructureViewBuilder builder = getStructureViewBuilderForExtensions(psiFile);
+      if (builder != null) {
         return builder;
       }
+
+      for (XmlStructureViewBuilderProvider xmlStructureViewBuilderProvider : getStructureViewBuilderProviders()) {
+        final StructureViewBuilder structureViewBuilder = xmlStructureViewBuilderProvider.createStructureViewBuilder((XmlFile)psiFile);
+        if (structureViewBuilder != null) {
+          return structureViewBuilder;
+        }
+      }
+
       return new TreeBasedStructureViewBuilder() {
         @NotNull
         public StructureViewModel createStructureViewModel() {
@@ -132,11 +142,15 @@ public class XMLLanguage extends CompositeLanguage {
     }
   }
 
+  private static XmlStructureViewBuilderProvider[] getStructureViewBuilderProviders() {
+    return (XmlStructureViewBuilderProvider[])Extensions.getExtensions(XmlStructureViewBuilderProvider.EXTENSION_POINT_NAME);
+  }
+
   private StructureViewBuilder getStructureViewBuilderForExtensions(final PsiFile psiFile) {
-    for ( Language language : getLanguageExtensionsForFile ( psiFile ) ) {
+    for (Language language : getLanguageExtensionsForFile(psiFile)) {
       final StructureViewBuilder builder = language.getStructureViewBuilder(psiFile);
-      if ( builder != null ) {
-        return builder; 
+      if (builder != null) {
+        return builder;
       }
     }
     return null;

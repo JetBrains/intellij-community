@@ -42,10 +42,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
   private static final Class[] myClasses = new Class[]{XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
@@ -63,11 +59,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
 
   @NotNull
   public Grouper[] getGroupers() {
-    List<Grouper> groupers = new ArrayList<Grouper>();
-    for (XmlStructureViewElementProvider provider : getProviders()) {
-      groupers.addAll(Arrays.asList(provider.getGroupers(myFile)));
-    }
-    return groupers.toArray(new Grouper[groupers.size()]);
+    return Grouper.EMPTY_ARRAY;
   }
 
   private static XmlStructureViewElementProvider[] getProviders() {
@@ -76,20 +68,12 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
 
   @NotNull
   public Sorter[] getSorters() {
-    List<Sorter> sorters = new ArrayList<Sorter>();
-    for (XmlStructureViewElementProvider provider : getProviders()) {
-      sorters.addAll(Arrays.asList(provider.getSorters(myFile)));
-    }
-    return sorters.toArray(new Sorter[sorters.size()]);
+    return Sorter.EMPTY_ARRAY;
   }
 
   @NotNull
   public Filter[] getFilters() {
-    List<Filter> filters = new ArrayList<Filter>();
-    for (XmlStructureViewElementProvider provider : getProviders()) {
-      filters.addAll(Arrays.asList(provider.getFilters(myFile)));
-    }
-    return filters.toArray(new Filter[filters.size()]);
+    return Filter.EMPTY_ARRAY;
   }
 
   protected PsiFile getPsiFile() {

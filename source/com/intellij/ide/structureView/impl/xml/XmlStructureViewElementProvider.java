@@ -4,10 +4,6 @@
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +17,4 @@ public interface XmlStructureViewElementProvider {
 
   @Nullable
   StructureViewTreeElement createCustomXmlTagTreeElement(@NotNull XmlTag tag);
-
-  Sorter[] getSorters(@NotNull final XmlFile file);
-
-  Grouper[] getGroupers(@NotNull final XmlFile file);
-
-  Filter[] getFilters(@NotNull final XmlFile file);
 }
