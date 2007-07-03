@@ -134,6 +134,10 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("operatorOverload/A.groovy");
   }
 
+  public void testStackOverflow() throws Exception {
+    doTest("stackOverflow/A.groovy");
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
