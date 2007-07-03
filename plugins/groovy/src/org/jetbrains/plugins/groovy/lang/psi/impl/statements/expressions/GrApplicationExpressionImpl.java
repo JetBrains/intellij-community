@@ -54,9 +54,8 @@ public class GrApplicationExpressionImpl extends GrExpressionImpl implements GrA
   public PsiType getType() {
     GrExpression invoked = getFunExpression();
     if (invoked instanceof GrReferenceExpression) {
-      PsiElement resolved = ((GrReferenceExpression) invoked).resolve();
-      if (resolved instanceof PsiMethod) {
-        PsiType type = ((PsiMethod) resolved).getReturnType();
+      PsiType type = invoked.getType();
+      if (type != null) {
         return TypesUtil.boxPrimitiveType(type, getManager(), getResolveScope());
       }
     }
