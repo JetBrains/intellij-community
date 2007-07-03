@@ -60,7 +60,7 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   @NotNull
-    public ClassResolveResult resolveGenerics() {
+  public ClassResolveResult resolveGenerics() {
     return new ClassResolveResult() {
       public PsiClass getElement() {
         return resolve();
