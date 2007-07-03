@@ -268,15 +268,16 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     Place.queryFurther(mySelectedConfigurable, place);
   }
 
-  public ActionCallback select(final String moduleToSelect, final String tabNameToSelect) {
-    final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
-    assert module != null;
-
-    return navigateTo(new Place()
-      .putPath(CATEGORY, myModulesConfig)
-      .putPath(ModuleStructureConfigurable.MODULE_TREE_OBJECT, module)
-      .putPath(ModuleEditor.MODULE_VIEW_KEY, ModuleEditor.GENERAL_VIEW)
-      .putPath(ModuleEditor.MODULE_VIEW_GENERAL_TAB, tabNameToSelect));
+  public ActionCallback select(@Nullable final String moduleToSelect, @Nullable final String tabNameToSelect) {
+    Place place = new Place().putPath(CATEGORY, myModulesConfig);
+    if (moduleToSelect != null) {
+      final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
+      assert module != null;
+      place = place.putPath(ModuleStructureConfigurable.MODULE_TREE_OBJECT, module)
+        .putPath(ModuleEditor.MODULE_VIEW_KEY, ModuleEditor.GENERAL_VIEW)
+        .putPath(ModuleEditor.MODULE_VIEW_GENERAL_TAB, tabNameToSelect);
+    }
+    return navigateTo(place);
   }
 
 
