@@ -32,7 +32,7 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     for (final GrVariableImpl variable : findChildrenByClass(GrVariableImpl.class)) {
-      if (!ResolveUtil.processElement(processor, variable)) return false;
+      if (lastParent != variable && !ResolveUtil.processElement(processor, variable)) return false;
     }
 
     return true;

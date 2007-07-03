@@ -71,28 +71,24 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
     }
 
     GrExpression initializer = getInitializerGroovy();
-    if (initializer != null && initializer.getUserData(ResolveUtil.IS_BEING_RESOLVED) == null) {
-      if (!(initializer instanceof GrReferenceExpression) || !initializer.getText().equals(getName())) { //prevent infinite recursion
-        initializer.putUserData(ResolveUtil.IS_BEING_RESOLVED, true);
-        PsiType initializerType = initializer.getType();
-        initializer.putUserData(ResolveUtil.IS_BEING_RESOLVED, null);
-        if (initializerType != null) {
-          if (declaredType != null && initializerType instanceof PsiClassType) {
-            final PsiClass declaredClass = ((PsiClassType) declaredType).resolve();
-            if (declaredClass != null) {
-              final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType) initializerType).resolveGenerics();
-              final PsiClass initializerClass = initializerResult.getElement();
-              if (initializerClass != null) {
-                final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
-                if (superSubstitutor != null) {
-                  return getManager().getElementFactory().createType(declaredClass, superSubstitutor);
-                }
+    if (initializer != null) {
+      PsiType initializerType = initializer.getType();
+      if (initializerType != null) {
+        if (declaredType != null && initializerType instanceof PsiClassType) {
+          final PsiClass declaredClass = ((PsiClassType) declaredType).resolve();
+          if (declaredClass != null) {
+            final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType) initializerType).resolveGenerics();
+            final PsiClass initializerClass = initializerResult.getElement();
+            if (initializerClass != null) {
+              final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
+              if (superSubstitutor != null) {
+                return getManager().getElementFactory().createType(declaredClass, superSubstitutor);
               }
             }
           }
-
-          if (declaredType == null) declaredType = initializerType;
         }
+
+        if (declaredType == null) declaredType = initializerType;
       }
     }
 
