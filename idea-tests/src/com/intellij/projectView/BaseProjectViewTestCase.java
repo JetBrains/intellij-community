@@ -173,7 +173,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected void assertStructureEqual(String expected, Comparator comparator) {
-    assertStructureEqual(myStructure.getRootElement(), expected, 27, comparator);
+    assertStructureEqual(myStructure.getRootElement(), expected, 17, comparator);
   }
 
 

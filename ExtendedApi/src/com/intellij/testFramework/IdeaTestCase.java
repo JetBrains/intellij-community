@@ -552,7 +552,7 @@ import java.util.HashSet;
   protected static VirtualFile getVirtualFile(final File file) {
     VirtualFile virtualFile;
     try {
-      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+      virtualFile = LocalFileSystem.getInstance().findFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
     }
     catch (IOException e) {
       assertTrue(false);

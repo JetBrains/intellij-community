@@ -179,7 +179,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
         new File(dir, n).createNewFile();
       }
 
-      VirtualFile root = fs.refreshAndFindFileByIoFile(dir);
+      VirtualFile root = fs.findFileByIoFile(dir);
       PsiTestUtil.addContentRoot(module, root);
       return root;
     }
