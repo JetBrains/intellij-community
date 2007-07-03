@@ -208,7 +208,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       GroovyResolveResult[] propertyCandidates = processor.getCandidates();
       if (propertyCandidates.length > 0) return propertyCandidates;
       if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
-        ResolverProcessor classProcessor = new ResolverProcessor(refExpr.getReferenceName(), EnumSet.of(ResolveKind.CLASS_OR_PACKAGE), refExpr, false);
+        ResolverProcessor classProcessor = new ResolverProcessor(refExpr.getReferenceName(), EnumSet.of(ResolveKind.CLASS_OR_PACKAGE), refExpr, false, PsiType.EMPTY_ARRAY);
         resolveImpl(refExpr, classProcessor);
         return classProcessor.getCandidates();
       }
@@ -401,7 +401,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
 
     if (getKind() == Kind.TYPE_OR_PROPERTY) {
-      ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ResolveKind.CLASS_OR_PACKAGE), this, true);
+      ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ResolveKind.CLASS_OR_PACKAGE), this, true, PsiType.EMPTY_ARRAY);
       getVariantsImpl(classVariantsCollector);
       GroovyResolveResult[] classVariants = classVariantsCollector.getCandidates();
       return ArrayUtil.mergeArrays(propertyVariants, ResolveUtil.mapToElements(classVariants), Object.class);

@@ -16,18 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
-
-import java.util.*;
-
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -37,6 +39,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   private EnumSet<ResolveKind> myResolveTargetKinds;
   protected GroovyPsiElement myPlace;
   protected boolean myForCompletion;
+  private @NotNull PsiType[] myTypeArguments;
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
 
@@ -50,17 +53,24 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected GrImportStatement myImportStatementContext;
 
-  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets, GroovyPsiElement place, boolean forCompletion) {
+  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
+                           GroovyPsiElement place, boolean forCompletion,
+                           @NotNull PsiType[] typeArguments) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
     myPlace = place;
     myForCompletion = forCompletion;
+    myTypeArguments = typeArguments;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (myResolveTargetKinds.contains(ResolveUtil.getResolveKind(element))) {
       PsiNamedElement namedElement = (PsiNamedElement) element;
       if (namedElement instanceof PsiMethod && ((PsiMethod) namedElement).isConstructor()) return true; //constructors are not interesting
+
+      if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
+        substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
+      }
 
       boolean isAccessible = isAccessible(namedElement);
       myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myImportStatementContext, substitutor));

@@ -17,8 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.EnumSet;
 
@@ -34,7 +32,7 @@ public class PropertyResolverProcessor extends ResolverProcessor {
   private static Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor");
 
   public PropertyResolverProcessor(String name, EnumSet<ResolveKind> resolveKinds, GroovyPsiElement place, boolean forCompletion) {
-    super(name, resolveKinds, place, forCompletion);
+    super(name, resolveKinds, place, forCompletion, PsiType.EMPTY_ARRAY);
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {

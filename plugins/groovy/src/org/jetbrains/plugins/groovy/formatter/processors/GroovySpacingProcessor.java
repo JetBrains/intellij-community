@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameters;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
@@ -68,11 +68,11 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     // For type parameters
     if ((mLT.equals(leftNode.getElementType()) || mGT.equals(rightNode.getElementType())) &&
             leftNode.getPsi().getParent() != null &&
-            leftNode.getPsi().getParent() instanceof GrTypeParameters) {
+            leftNode.getPsi().getParent() instanceof GrTypeArgumentList) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
-    if (rightNode.getPsi() != null && rightNode.getPsi() instanceof GrTypeParameters) {
+    if (rightNode.getPsi() != null && rightNode.getPsi() instanceof GrTypeArgumentList) {
       return NO_SPACING_WITH_NEWLINE;
     }
 

@@ -15,6 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
@@ -25,9 +27,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 public interface GrCodeReferenceElement extends GrReferenceElement {
   GrCodeReferenceElement[] EMPTY_ARRAY = new GrCodeReferenceElement[0];
 
+  @Nullable
   GrCodeReferenceElement getQualifier();
 
-  void setQualifier(@Nullable GrCodeReferenceElement newQualifier);
+  @NotNull
+  PsiType[] getTypeArguments();
 
-  GrTypeElement[] getTypeArguments(); 
+  @Nullable
+  GrTypeArgumentList getTypeArgumentList();
+
+  void setQualifier(@Nullable GrCodeReferenceElement newQualifier);
 }

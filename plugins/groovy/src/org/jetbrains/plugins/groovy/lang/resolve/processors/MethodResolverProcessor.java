@@ -38,7 +38,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean myIsConstructor;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, PsiType[] argumentTypes) {
-    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion);
+    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myArgumentTypes = argumentTypes;
   }

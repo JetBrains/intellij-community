@@ -175,7 +175,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     //type parameters
     if (elem.equals(TYPE_ARGUMENT)) return new GrWildcardTypeArgumentImpl(node);
-    if (elem.equals(TYPE_ARGUMENTS)) return new GrTypeArgumentsImpl(node);
+    if (elem.equals(TYPE_ARGUMENTS)) return new GrTypeArgumentListImpl(node);
 
     //Branch statements
     if (elem.equals(RETURN_STATEMENT)) return new GrReturnStmtImpl(node);

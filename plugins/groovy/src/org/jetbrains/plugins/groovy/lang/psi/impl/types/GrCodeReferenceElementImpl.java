@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
@@ -80,8 +81,24 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     }
   }
 
-  public GrTypeElement[] getTypeArguments() {
-    return findChildrenByClass(GrTypeElement.class);
+  @NotNull
+  public PsiType[] getTypeArguments() {
+    final GrTypeArgumentList typeArgsList = getTypeArgumentList();
+    if (typeArgsList == null) return PsiType.EMPTY_ARRAY;
+
+    final GrTypeElement[] args = typeArgsList.getTypeArgumentElements();
+    if (args.length == 0) return PsiType.EMPTY_ARRAY;
+    PsiType[] result = new PsiType[args.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = args[i].getType();
+    }
+
+    return result;
+  }
+
+  @Nullable
+  public GrTypeArgumentList getTypeArgumentList() {
+    return findChildByClass(GrTypeArgumentList.class);
   }
 
   enum ReferenceKind {
@@ -228,7 +245,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), this, true);
+          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), this, true, PsiType.EMPTY_ARRAY);
           ResolveUtil.treeWalkUp(this, processor);
           return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
         }
@@ -287,7 +304,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               }
             }
           } else {
-            ResolverProcessor processor = new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), ref, false);
+            ResolverProcessor processor =
+                new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), ref, false, ref.getTypeArguments());
             ResolveUtil.treeWalkUp(ref, processor);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;
