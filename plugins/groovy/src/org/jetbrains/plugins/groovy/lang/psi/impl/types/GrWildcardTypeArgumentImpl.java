@@ -25,8 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * @author: Dmitry.Krasilschikov
  * @date: 28.03.2007
  */
-public class GrTypeArgumentImpl extends GroovyPsiElementImpl implements GrTypeArgument {
-  public GrTypeArgumentImpl(@NotNull ASTNode node) {
+public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements GrTypeArgument {
+  public GrWildcardTypeArgumentImpl(@NotNull ASTNode node) {
     super(node);
   }
 
