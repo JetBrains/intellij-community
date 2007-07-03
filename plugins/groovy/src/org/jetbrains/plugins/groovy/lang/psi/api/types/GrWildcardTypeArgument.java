@@ -25,4 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public interface GrWildcardTypeArgument extends GrTypeElement {
   @Nullable
   GrTypeElement getBoundTypeElement();
+
+  boolean isExtends();
+  boolean isSuper();
 }
