@@ -29,5 +29,5 @@ public interface GrCodeReferenceElement extends GrReferenceElement {
 
   void setQualifier(@Nullable GrCodeReferenceElement newQualifier);
 
-  GrTypeArgument[] getTypeArguments(); 
+  GrTypeElement[] getTypeArguments(); 
 }

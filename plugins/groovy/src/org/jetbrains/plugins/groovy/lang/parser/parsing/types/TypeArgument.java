@@ -26,9 +26,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class TypeArgument implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder) {
-    PsiBuilder.Marker taMarker = builder.mark();
-    //wildcard
-    if (ParserUtils.getToken(builder, mQUESTION)) {
+    if (builder.getTokenType() == mQUESTION) {
+      //wildcard
+      PsiBuilder.Marker taMarker = builder.mark();
+      ParserUtils.getToken(builder, mQUESTION);
       if (ParserUtils.getToken(builder, kSUPER) || ParserUtils.getToken(builder, kEXTENDS)) {
         ParserUtils.getToken(builder, mNLS);
 
@@ -45,15 +46,6 @@ public class TypeArgument implements GroovyElementTypes {
       return TYPE_ARGUMENT;
     }
 
-    //typeSpec
-    //todo: check for upper case type specification
-    if (WRONGWAY.equals(TypeSpec.parse(builder))) {
-//    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
-      taMarker.rollbackTo();
-      return WRONGWAY;
-    } else {
-      taMarker.done(TYPE_ARGUMENT);
-      return TYPE_ARGUMENT;
-    }
+    return TypeSpec.parse(builder);
   }
 }
