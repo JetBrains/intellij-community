@@ -21,10 +21,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -42,6 +41,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -429,7 +429,7 @@ public class LibraryTableEditor implements Disposable {
     public void actionPerformed(ActionEvent e) {
       final String initial = suggestNewLibraryName(myTableModifiableModel);
       final String prompt = ProjectBundle.message("library.name.prompt");
-      final String title = myAddLibraryButton.getText();
+      final String title = myAddLibraryButton.getText().replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
       final Icon icon = Messages.getQuestionIcon();
       final String libraryName = Messages.showInputDialog(myProject, prompt, title, icon, initial, new InputValidator() {
         public boolean checkInput(final String inputString) {

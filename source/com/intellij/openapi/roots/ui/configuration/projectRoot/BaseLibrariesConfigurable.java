@@ -1,18 +1,17 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +108,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   protected AbstractAddGroup createAddAction() {
-    return new AbstractAddGroup(ProjectBundle.message(getAddText())) {
+    return new AbstractAddGroup(getAddText()) {
+      {
+        setPopup(false);
+      }
+
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         return new AnAction[]{new AnAction(getAddText()) {
           public void actionPerformed(AnActionEvent e) {
