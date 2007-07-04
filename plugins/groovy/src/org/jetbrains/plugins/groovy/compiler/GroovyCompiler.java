@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -33,6 +34,7 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -50,8 +52,8 @@ import java.util.*;
  * @date: 16.04.2007
  */
 
-public class GroovyCompilerProcess implements TranslatingCompiler {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess");
+public class GroovyCompiler implements TranslatingCompiler {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovyCompiler");
 
   private static final String GROOVYC_RUNNER_QUALIFIED_NAME = "org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner";
   private static final String JAVA_EXE = "java";
@@ -60,6 +62,11 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
   private static final String GROOVY_LIB = "lib";
   private static final String CLASS_PATH_LIST_SEPARATOR = File.pathSeparator;
   private static final String antlrLibName = "antlr.jar";
+  private Project myProject;
+
+  public GroovyCompiler(Project project) {
+    myProject = project;
+  }
 
   @Nullable
   public TranslatingCompiler.ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
@@ -346,6 +353,12 @@ public class GroovyCompilerProcess implements TranslatingCompiler {
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {
+    final String groovyInstallPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
+    if (groovyInstallPath == null || groovyInstallPath.length() == 0) {
+      Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files"), GroovyBundle.message("cannot.compile"));
+      return false;
+    }
+
     return true;
   }
 

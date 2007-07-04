@@ -32,7 +32,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.compiler.GroovyCompilerProcess;
+import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
@@ -109,7 +109,7 @@ public class GroovyLoader implements ApplicationComponent {
         compilerManager.addCompiler(generator);
         compilerManager.addCompilationStatusListener(generator);
 
-        compilerManager.addCompiler(new GroovyCompilerProcess());
+        compilerManager.addCompiler(new GroovyCompiler(project));
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
         DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
