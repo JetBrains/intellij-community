@@ -2,9 +2,12 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.WrapType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 
 public class XmlPolicy extends XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
@@ -32,6 +35,8 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
+    final PsiElement element = tag.getNextSibling();
+    if (element instanceof XmlText && !(element.getFirstChild() instanceof PsiWhiteSpace) && tag.getSubTags().length == 0) return WrapType.NORMAL;
     return WrapType.ALWAYS;
   }
 
