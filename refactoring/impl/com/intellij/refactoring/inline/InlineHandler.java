@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -53,6 +54,8 @@ public class InlineHandler implements RefactoringActionHandler {
       }
     }
 
+    JspFile jspFile;
+
     if (element instanceof PsiLocalVariable) {
       final PsiReference psiReference = TargetElementUtil.findReference(editor);
       final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
@@ -71,8 +74,8 @@ public class InlineHandler implements RefactoringActionHandler {
     else if (element instanceof PsiClass) {
       InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) element);
     }
-    else if (PsiUtil.isInJspFile(file)) {
-      InlineIncludeFileHandler.invoke(project, editor, PsiUtil.getJspFile(file));
+    else if (PsiUtil.isInJspFile(file) && (jspFile = PsiUtil.getJspFile(file)) != null) {
+      InlineIncludeFileHandler.invoke(project, editor, jspFile);
     }
     else {
       String message =
