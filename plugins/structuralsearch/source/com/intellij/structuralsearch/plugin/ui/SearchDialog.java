@@ -454,7 +454,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     context.getUsageView().addButtonToLowerPane(
       new Runnable() {
         public void run() {
-          context.getUsageView().close();
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               UIUtil.invokeAction(context.getConfiguration(), searchContext);
