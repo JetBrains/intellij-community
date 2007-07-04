@@ -3,13 +3,12 @@ package com.intellij.execution.impl;
 import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.*;
-import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
@@ -129,14 +129,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void createStepsBeforeRun(final RunnerAndConfigurationSettingsImpl template, final RunConfiguration configuration) {
     final RunConfiguration templateConfiguration = template.getConfiguration();
-    final Boolean antTargetSet = getStepsBeforeLaunch(templateConfiguration).get(AntConfiguration.ANT);
-    if (antTargetSet != null && antTargetSet.booleanValue()) {
-      AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-      if (antConfiguration != null) {
-        final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(templateConfiguration.getType(), templateConfiguration.getName());
-        if (antBuildTarget != null){
-          antConfiguration.setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), templateConfiguration.getType(), configuration.getName());
-        }
+    for (final StepsBeforeRunProvider provider : Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {
+      final Boolean enabled = getStepsBeforeLaunch(templateConfiguration).get(provider.getStepName());
+      if (enabled != null && enabled.booleanValue()) {
+        provider.copyTaskData(templateConfiguration, configuration);
       }
     }
   }

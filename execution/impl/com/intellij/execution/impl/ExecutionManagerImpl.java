@@ -12,7 +12,6 @@ import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
-import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -88,21 +89,29 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                             final RunProfileState state) {
     final Runnable antAwareRunnable = new Runnable() {
       public void run() {
-        final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
         if (configuration instanceof RunConfiguration) {
           final RunConfiguration runConfiguration = (RunConfiguration)configuration;
           final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
           final Map<String, Boolean> beforeRun = runManager.getStepsBeforeLaunch(runConfiguration);
-          final Boolean enabled = beforeRun.get(AntConfiguration.ANT);
 
-          if (enabled != null && enabled.booleanValue() && antConfiguration != null &&
-              antConfiguration.hasTasksToExecuteBeforeRun(runConfiguration)) {
+          final Collection<StepsBeforeRunProvider> activeProviders = new ArrayList<StepsBeforeRunProvider>();
+          for (final StepsBeforeRunProvider provider : Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {
+            final Boolean enabled = beforeRun.get(provider.getStepName());
+            if (enabled != null && enabled.booleanValue() && provider.hasTask(runConfiguration)) {
+              activeProviders.add(provider);
+            }
+          }
+
+          if (!activeProviders.isEmpty()) {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               public void run() {
                 final DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
-                if (antConfiguration.executeTaskBeforeRun(dataContext, runConfiguration)) {
-                  ApplicationManager.getApplication().invokeLater(startRunnable);
+                for (StepsBeforeRunProvider provider : activeProviders) {
+                  if(!provider.executeTask(dataContext, runConfiguration)) {
+                    return;
+                  }
                 }
+                ApplicationManager.getApplication().invokeLater(startRunnable);
               }
             });
           }
