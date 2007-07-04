@@ -68,7 +68,12 @@ public class PathUtilEx {
   }
 
   public static String getJunit3JarPath() {
-    return PathUtil.getJarPathForClass(junit.framework.Test.class);
+    try {
+      return PathUtil.getJarPathForClass(Class.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static String getIdeaRtJarPath() {
