@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -77,15 +78,11 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
       final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       if (element != null) {
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethod) {
-          return true;
+        PsiModifierListOwner owner = null;
+        if (parent instanceof PsiMethod || parent instanceof PsiField || parent instanceof PsiParameter) {
+          owner = (PsiModifierListOwner)parent;
         }
-        if (parent instanceof PsiField) {
-          return true;
-        }
-        if (parent instanceof PsiParameter) {
-          return true;
-        }
+        return owner != null && !AnnotationUtil.isAnnotated(owner, myFQN, false);
       }
     }
     return false;
