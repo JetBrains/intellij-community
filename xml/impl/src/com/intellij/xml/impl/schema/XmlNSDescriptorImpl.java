@@ -297,7 +297,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return context.getName().startsWith(XSD_PREFIX + ":");
   }
 
-  private static XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {
+  private static @NotNull XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {
     if (name == null) return defaultNSDescriptor;
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
 
@@ -624,15 +624,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return schemaName.equals(tag.getLocalName()) && checkSchemaNamespace(tag);
   }
 
-  private static XmlTag findSpecialTag(@NonNls String name, @NonNls String specialName, XmlTag rootTag, XmlNSDescriptorImpl descriptor,
+  private static @Nullable XmlTag findSpecialTag(@NonNls String name, @NonNls String specialName, XmlTag rootTag, XmlNSDescriptorImpl descriptor,
                                        HashSet<XmlTag> visited) {
     XmlNSDescriptorImpl nsDescriptor = getNSDescriptorToSearchIn(rootTag, name, descriptor);
 
     if (nsDescriptor != descriptor) {
+      final XmlDocument document = nsDescriptor.getDescriptorFile() != null ? nsDescriptor.getDescriptorFile().getDocument():null;
+      if (document == null) return null;
+
       return findSpecialTag(
         XmlUtil.findLocalNameByQualifiedName(name),
         specialName,
-        nsDescriptor.getDescriptorFile().getDocument().getRootTag(),
+        document.getRootTag(),
         nsDescriptor,
         visited
       );
