@@ -63,6 +63,14 @@ public class PathUtilEx {
     return PathUtil.getJarPathForClass(JUnit4Util.class);
   }
 
+  public static String getJunit4JarPath() {
+    return PathUtil.getJarPathForClass(org.junit.Test.class);
+  }
+
+  public static String getJunit3JarPath() {
+    return PathUtil.getJarPathForClass(junit.framework.Test.class);
+  }
+
   public static String getIdeaRtJarPath() {
     return PathUtil.getJarPathForClass(JavacRunner.class);
   }

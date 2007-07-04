@@ -29,7 +29,7 @@ public class LocateLibraryDialog extends DialogWrapper {
   private JRadioButton myCopyToRadioButton;
   private TextFieldWithBrowseButton myCopyToDir;
 
-  private Project myProject;
+  private final Project myProject;
   private String myResultingLibraryPath;
 
   public String getResultingLibraryPath() {

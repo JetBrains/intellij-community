@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -75,9 +76,10 @@ public abstract class OrderEntryFix implements IntentionAction {
 
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
           boolean isJunit4 = ! referenceName.equals("TestCase");
+          String jarPath = isJunit4 ? PathUtilEx.getJunit4JarPath() : PathUtilEx.getJunit3JarPath();
           addBundledJarToRoots(project, editor, currentModule, reference,
                                isJunit4 ? "org.junit." + referenceName : "junit.framework.TestCase",
-                               PathManager.getLibPath() + "/" + (isJunit4 ? "junit-4.0" : "junit") + ".jar");
+                               jarPath);
         }
       });
       return;

@@ -14,17 +14,16 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 
 public class PathManagerEx {
-  @NonNls private static final String TESTDATA_DIRECTORY = "testData";
-  @NonNls private static final String RT_DIRECTORY = "rt";
-
   private PathManagerEx() {
   }
 
+  @NonNls
   public static String getTestDataPath() {
-    return PathManager.getHomePath() + File.separatorChar + TESTDATA_DIRECTORY;
+    return PathManager.getHomePath() + File.separatorChar + "testData";
   }
+  @NonNls
   public static String getLibRtPath() {
-    return PathManager.getLibPath() + File.separatorChar + RT_DIRECTORY;
+    return PathManager.getLibPath() + File.separatorChar + "rt";
   }
 
   public static String getPluginTempPath () {
@@ -32,5 +31,4 @@ public class PathManagerEx {
 
     return systemPath + File.separator + PathManager.PLUGINS_DIRECTORY;
   }
-
 }
