@@ -1,19 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClass;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.GroovyLoader;
 
 /**
  * @author ven
