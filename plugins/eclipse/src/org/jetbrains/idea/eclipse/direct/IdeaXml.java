@@ -28,8 +28,6 @@ public interface IdeaXml {
   @NonNls String LEVEL_ATTR = "level";
   @NonNls String APPLICATION_LEVEL = "application";
   @NonNls String PROJECT_LEVEL = "project";
-  @NonNls String JUNIT_JAR = "junit.jar";
-  @NonNls String JUNIT4_JAR = "junit-4.0.jar";
   @NonNls String ECLIPSE_LIBRARY = "ECLIPSE";
   @NonNls String MODULE_TYPE = "module";
   @NonNls String MODULE_NAME_ATTR = "module-name";
@@ -67,6 +65,5 @@ public interface IdeaXml {
   @NonNls String CLASSPATH_CONTEXT = "classpath";
   @NonNls String TEMPLATE_CONTEXT = "template";
   @NonNls String EXCLUDE_OUTPUT = "exclude-output";
-  @NonNls
-  String IML_EXT = ".iml";
+  @NonNls String IML_EXT = ".iml";
 }
