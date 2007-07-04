@@ -53,7 +53,7 @@ public class StringUtil {
     }
   }
 
-  public static String replace(final @NotNull String text, final @NotNull String oldS, final @Nullable String newS, boolean ignoreCase) {
+  public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
     final String text1 = ignoreCase ? text.toLowerCase() : text;
@@ -894,7 +894,7 @@ public class StringUtil {
     }
   }
 
-  @NotNull public static String join(@NotNull Collection<String> strings, final @NotNull String separator) {
+  @NotNull public static String join(@NotNull Collection<String> strings, @NotNull final String separator) {
     final StringBuilder result = StringBuilderSpinAllocator.alloc();
     try {
       for (String string : strings) {
@@ -910,7 +910,7 @@ public class StringUtil {
     }
   }
 
-  @NotNull public static String join(@NotNull final int[] strings, final @NotNull String separator) {
+  @NotNull public static String join(@NotNull final int[] strings, @NotNull final String separator) {
     final StringBuilder result = StringBuilderSpinAllocator.alloc();
     try {
       for (int i = 0; i < strings.length; i++) {
@@ -966,7 +966,7 @@ public class StringUtil {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static String unpluralize(final @NotNull String name) {
+  public static String unpluralize(@NotNull final String name) {
     if (name.endsWith("sses") || name.endsWith("shes") || name.endsWith("ches") || name.endsWith("xes")) { //?
       return name.substring(0, name.length() - 2);
     }
@@ -1014,7 +1014,7 @@ public class StringUtil {
   }
 
   /**
-   * Strip out all charachters not accepted by given filter
+   * Strip out all characters not accepted by given filter
    * @param s e.g. "/n    my string "
    * @param filter e.g. {@link CharFilter#NOT_WHITESPACE_FILTER}
    * @return stripped string e.g. "mystring"
@@ -1076,11 +1076,10 @@ public class StringUtil {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
   }
 
-  public static String escapeQuotes( @NotNull String str)
-  {
+  public static String escapeQuotes( @NotNull String str) {
     int idx = str.indexOf('"');
     if (idx < 0) return str;
-    StringBuffer buf = new StringBuffer(str);
+    StringBuilder buf = new StringBuilder(str);
     while (idx < buf.length()) {
       if (buf.charAt(idx) == '"') {
         buf.replace(idx, idx + 1, "\\\"");
