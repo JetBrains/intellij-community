@@ -459,8 +459,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return myRegisteredSteps.get(actionName);
   }
 
+  @Nullable
   public String getStepBeforeRunDescription(String actionName, RunConfiguration runConfiguration) {
-    return myRegisteredDescriptions.get(actionName).fun(runConfiguration);
+    final Boolean enabled = getStepsBeforeLaunch(runConfiguration).get(actionName);
+    if (enabled != null && enabled.booleanValue()) {
+      return myRegisteredDescriptions.get(actionName).fun(runConfiguration);
+    }
+    return null;
   }
 
 

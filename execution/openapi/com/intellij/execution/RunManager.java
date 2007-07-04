@@ -56,5 +56,6 @@ public abstract class RunManager {
 
   public abstract Function<RunConfiguration, String> getStepBeforeRun(String actionName);
 
+  @Nullable
   public abstract String getStepBeforeRunDescription(String actionName, RunConfiguration runConfiguration);
 }
