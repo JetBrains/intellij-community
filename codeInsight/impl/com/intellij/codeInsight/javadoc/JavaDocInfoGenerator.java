@@ -2,6 +2,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -449,7 +450,11 @@ class JavaDocInfoGenerator {
   private void generateAnnotations (@NonNls StringBuffer buffer, PsiDocCommentOwner owner) {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
-    final PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
+    PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
+    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance().findExternalAnnotations(owner);
+    if (externalAnnotations != null) {
+      annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.class);
+    }
     PsiManager manager = owner.getManager();
     for (PsiAnnotation annotation : annotations) {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();

@@ -21,6 +21,9 @@ public abstract class ExternalAnnotationsManager {
   @Nullable
   public abstract PsiAnnotation findExternalAnnotation(final PsiModifierListOwner listOwner, final String annotationFQN);
 
+  @Nullable
+  public abstract PsiAnnotation[] findExternalAnnotations(final PsiModifierListOwner listOwner);
+
   public abstract void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName);
 
   public abstract boolean useExternalAnnotations(final PsiElement element);

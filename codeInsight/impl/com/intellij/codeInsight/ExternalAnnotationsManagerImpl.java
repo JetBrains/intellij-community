@@ -13,6 +13,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectRootType;
@@ -26,8 +28,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -43,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
@@ -52,6 +54,17 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   @Nullable
   public PsiAnnotation findExternalAnnotation(final PsiModifierListOwner listOwner, final String annotationFQN) {
+    return collectExternalAnnotations(listOwner).get(annotationFQN);
+  }
+
+  @Nullable
+  public PsiAnnotation[] findExternalAnnotations(final PsiModifierListOwner listOwner) {
+    final Map<String, PsiAnnotation> result = collectExternalAnnotations(listOwner);
+    return result.isEmpty() ? null : result.values().toArray(new PsiAnnotation[result.size()]);
+  }
+
+  private static Map<String, PsiAnnotation> collectExternalAnnotations(final PsiModifierListOwner listOwner) {
+    final Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
     final XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
     if (xmlFile != null) {
       final XmlDocument document = xmlFile.getDocument();
@@ -63,29 +76,27 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             final String className = tag.getAttributeValue("name");
             if (Comparing.strEqual(className, externalName)) {
               for (XmlTag annotationTag : tag.getSubTags()) {
-                if (Comparing.strEqual(annotationTag.getAttributeValue("name"), annotationFQN)) {
-                  StringBuffer buf = new StringBuffer();
-                  for (XmlTag annotationaParameter : annotationTag.getSubTags()) {
-                    buf.append(",").append(annotationaParameter.getAttributeValue("name")).append("=")
-                      .append(annotationaParameter.getAttributeValue("value"));
-                  }
-                  final String annotationText =
-                    "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
-                  try {
-                    return listOwner.getManager().getElementFactory().createAnnotationFromText(annotationText, null);
-                  }
-                  catch (IncorrectOperationException e) {
-                    LOG.error(e);
-                  }
+                final String annotationFQN = annotationTag.getAttributeValue("name");
+                final StringBuffer buf = new StringBuffer();
+                for (XmlTag annotationaParameter : annotationTag.getSubTags()) {
+                  buf.append(",").append(annotationaParameter.getAttributeValue("name")).append("=")
+                    .append(annotationaParameter.getAttributeValue("value"));
+                }
+                final String annotationText =
+                  "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
+                try {
+                  result.put(annotationFQN, listOwner.getManager().getElementFactory().createAnnotationFromText(annotationText, null));
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
                 }
               }
-              break;
             }
           }
         }
       }
     }
-    return null;
+    return result;
   }
 
 
