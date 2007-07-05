@@ -55,8 +55,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
   GroovyElementType ENUM_CONSTANT = new GroovyElementType("Enumeration constant");
   GroovyElementType ENUM_CONSTANT_ERROR = new GroovyElementType("Enumeration constant error");
-  GroovyElementType ENUM_CONSTANT_BODY = new GroovyElementType("Enumeration constant block");
-  GroovyElementType ENUM_CONSTANT_MEMBER = new GroovyElementType("Enumeration constant member");
 
   // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");

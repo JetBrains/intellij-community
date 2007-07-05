@@ -2,16 +2,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.java.PomField;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -55,5 +54,10 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
   public boolean isProperty() {
     final GrModifierList modifierList = getModifierList();
     return modifierList != null && !modifierList.hasExplicitVisibilityModifiers();
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getUseScope(this);
   }
 }

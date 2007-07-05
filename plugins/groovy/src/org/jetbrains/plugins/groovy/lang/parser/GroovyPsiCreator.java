@@ -58,7 +58,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstan
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrDefaultAnnotationMemberImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.enumConstantMember.GrEnumConstantMemberImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportReferenceImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
@@ -156,15 +155,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //enum
     if (elem.equals(ENUM_CONSTANTS)) return new GrEnumConstantsImpl(node);
     if (elem.equals(ENUM_CONSTANT)) return new GrEnumConstantImpl(node);
-    if (elem.equals(ENUM_CONSTANT_BODY)) return new GrEnumConstantBodyImpl(node);
-    if (elem.equals(ENUM_CONSTANT_MEMBER)) return new GrEnumConstantMemberImpl(node);
 
     //members
-//    if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);
-//    if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceMemberImpl(node);
-//    if (elem.equals(ENUM_FIELD)) return new GrEnumMemberImpl(node);
-//    if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
-
     if (elem.equals(CONSTRUCTOR_DEFINITION)) return new GrConstructorDefinitionImpl(node);
     if (elem.equals(METHOD_DEFINITION)) return new GrMethodDefinitionImpl(node);
 

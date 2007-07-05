@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
@@ -259,5 +261,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public boolean isDeprecated() {
     return false;
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getUseScope(this);
   }
 }
