@@ -5,6 +5,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -50,22 +51,24 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     }
   }
 
-  public RunnerAndConfigurationSettingsImpl cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettingsImpl cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
     if (context != null) {
-      final RunnerAndConfigurationSettingsImpl original = context.getOriginalConfiguration(myConfigurationFactory.getType());
-      if (original != null) return original.clone();
+      final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
+      if (original != null){
+        return RunManagerEx.getInstanceEx(project).createConfiguration(original.clone(), myConfigurationFactory);
+      }
     }
     return RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
   }
 
-  public static PsiMethod getContainingMethod(PsiElement element) {
+  protected static PsiMethod getContainingMethod(PsiElement element) {
     while (element != null)
       if (element instanceof PsiMethod) break;
       else element = element.getParent();
     return (PsiMethod) element;
   }
 
-  public ConfigurationFactory getConfigurationFactory() {
+  protected ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
 

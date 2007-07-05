@@ -115,14 +115,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public RunnerAndConfigurationSettingsImpl createConfiguration(final String name, final ConfigurationFactory factory) {
-    LOG.assertTrue(name != null);
-    LOG.assertTrue(factory != null);
+     return createConfiguration(factory.createConfiguration(name, getConfigurationTemplate(factory).getConfiguration()), factory);
+  }
+
+  public RunnerAndConfigurationSettingsImpl createConfiguration(final RunConfiguration runConfiguration, final ConfigurationFactory factory) {
     RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(factory);
-    RunConfiguration configuration = factory.createConfiguration(name, template.getConfiguration());
-    setCompileMethodBeforeRun(configuration, getStepsBeforeLaunch(template.getConfiguration()));
-    shareConfiguration(configuration, isConfigurationShared(template));
-    createStepsBeforeRun(template, configuration);
-    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, configuration, false);
+    setCompileMethodBeforeRun(runConfiguration, getStepsBeforeLaunch(template.getConfiguration()));
+    shareConfiguration(runConfiguration, isConfigurationShared(template));
+    createStepsBeforeRun(template, runConfiguration);
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
     settings.importRunnerAndConfigurationSettings(template);
     return settings;
   }

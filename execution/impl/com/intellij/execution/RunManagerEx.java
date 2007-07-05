@@ -39,6 +39,8 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunnerAndConfigurationSettingsImpl createConfiguration(String name, ConfigurationFactory type);
 
+  public abstract RunnerAndConfigurationSettingsImpl createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
+
   public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);
 
   public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, Map<String,Boolean> method);

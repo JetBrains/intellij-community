@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,7 @@ public class TestsUIUtil {
       return location != null ? location.getPsiElement() : null;
     }
     if (Location.LOCATION.equals(dataId)) return testProxy.getLocation(project);
+    if (DataConstantsEx.RUNTIME_CONFIGURATION.equals(dataId)) return model.getProperties().getConfiguration();
     return null;
   }
 

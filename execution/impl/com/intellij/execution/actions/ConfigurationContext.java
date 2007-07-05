@@ -5,6 +5,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
 
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
@@ -105,8 +107,9 @@ public class ConfigurationContext {
     return myDataContext;
   }
 
-  public RunnerAndConfigurationSettingsImpl getOriginalConfiguration(final ConfigurationType type) {
-    final RunnerAndConfigurationSettingsImpl config = (RunnerAndConfigurationSettingsImpl)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
-    return config != null && type.equals(config.getType()) ? config : null ;
+  @Nullable
+  public RuntimeConfiguration getOriginalConfiguration(final ConfigurationType type) {
+    final RuntimeConfiguration config = (RuntimeConfiguration)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
+    return config != null && type.equals(config.getType()) ? config : null;
   }
 }
