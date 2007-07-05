@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -86,7 +85,10 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   public void addFacetInfos(final Module module) {
     final Facet[] facets = getFacetModel(module).getSortedFacets();
     for (Facet facet : facets) {
-      addFacetInfo(facet);
+      //todo[nik] added because ModuleEditor.init may be called several times
+      if (!myFacet2Info.containsKey(facet)) {
+        addFacetInfo(facet);
+      }
     }
   }
 
