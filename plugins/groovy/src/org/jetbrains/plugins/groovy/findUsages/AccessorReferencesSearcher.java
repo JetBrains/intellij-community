@@ -21,12 +21,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -36,35 +38,38 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
 
   public boolean execute(final MethodReferencesSearch.SearchParameters searchParameters, final Processor<PsiReference> consumer) {
     final PsiMethod method = searchParameters.getMethod();
-    if (PropertyUtil.isSimplePropertyAccessor(method)) {
-      final String propertyName = PropertyUtil.getPropertyName(method);
-      assert propertyName != null;
-      SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(searchParameters.getScope());
+    final String propertyName = getPropertyName(method);
+    if (propertyName == null) return true;
 
-      final PsiSearchHelper helper = PsiManager.getInstance(method.getProject()).getSearchHelper();
-      final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-        public boolean execute(PsiElement element, int offsetInElement) {
-          final PsiReference[] refs = element.getReferences();
-          for (PsiReference ref : refs) {
-            if (ref.getRangeInElement().contains(offsetInElement)) {
-              if (ref.isReferenceTo(method)) {
-                return consumer.process(ref);
-              }
+    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(searchParameters.getScope());
+
+    final PsiSearchHelper helper = PsiManager.getInstance(method.getProject()).getSearchHelper();
+    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
+      public boolean execute(PsiElement element, int offsetInElement) {
+        final PsiReference[] refs = element.getReferences();
+        for (PsiReference ref : refs) {
+          if (ref.getRangeInElement().contains(offsetInElement)) {
+            if (ref.isReferenceTo(method)) {
+              return consumer.process(ref);
             }
           }
-          return true;
         }
-      };
-
-      if (!helper.processElementsWithWord(processor,
-          searchScope,
-          propertyName,
-          UsageSearchContext.IN_CODE,
-          false)) {
-        return false;
+        return true;
       }
-    }
+    };
 
-    return true;
+    return helper.processElementsWithWord(processor,
+        searchScope,
+        propertyName,
+        UsageSearchContext.IN_CODE,
+        false);
+  }
+
+  private String getPropertyName(final PsiMethod method) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>(){
+      public String compute() {
+        return PropertyUtil.getPropertyName(method);
+      }
+    });
   }
 }
