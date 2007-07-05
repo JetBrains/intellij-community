@@ -46,7 +46,9 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element.as", provider.getType(myModifierListOwner), name, shortName);
       }
     }
-    return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
+    return myModifierListOwner != null ?
+           CodeInsightBundle.message("inspection.i18n.quickfix.annotate.as", shortName) :
+           CodeInsightBundle.message("add.external.annotation.test", shortName);
   }
 
   @NotNull
