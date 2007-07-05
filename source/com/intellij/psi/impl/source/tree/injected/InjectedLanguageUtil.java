@@ -320,11 +320,7 @@ public class InjectedLanguageUtil {
     for (Pair<PsiElement, TextRange> pair : injectedPsi) {
       TextRange range = pair.getSecond();
       if (hostRange.cutOut(range).grown(1).contains(offset)) {
-        PsiFile file = pair.getFirst().getContainingFile();
-        if (file.getContext() == null) {
-          int i = 0;
-        }
-        return file;
+        return pair.getFirst().getContainingFile();
       }
     }
     return null;
@@ -487,11 +483,11 @@ public class InjectedLanguageUtil {
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentRange oldDocument = injected.get(i);
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
-      if (oldFile == null) {
+      if (oldFile == null || !(oldFile.getViewProvider() instanceof MyFileViewProvider)) {
         injected.remove(i);
         continue;
       }       
-      assert oldFile.getViewProvider() instanceof MyFileViewProvider : oldFile.getViewProvider();
+
       RangeMarker oldRangeMarker = oldDocument.getTextRange();
       TextRange oldTextRange = new TextRange(oldRangeMarker.getStartOffset(), oldRangeMarker.getEndOffset());
       ASTNode injectedNode = injectedPsi.getNode();
