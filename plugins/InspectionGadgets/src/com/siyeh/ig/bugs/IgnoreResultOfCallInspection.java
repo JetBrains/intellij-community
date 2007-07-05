@@ -86,7 +86,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatString(classNames, methodNamePatterns);
+        callCheckString = formatString(classNames, methodNamePatterns);
         super.writeSettings(element);
     }
 
