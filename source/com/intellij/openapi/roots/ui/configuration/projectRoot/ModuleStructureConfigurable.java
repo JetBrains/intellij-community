@@ -8,6 +8,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -93,6 +95,34 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
+    return result;
+  }
+
+  @NotNull
+  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+    final ArrayList<AnAction> result = super.createActions(fromPopup);
+    result.add(Separator.getInstance());
+    result.add(new MyGroupAction());
+    final TreeExpander expander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myTree);
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 0);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    result.add(actionsManager.createExpandAllAction(expander, myTree));
+    result.add(actionsManager.createCollapseAllAction(expander, myTree));
     return result;
   }
 

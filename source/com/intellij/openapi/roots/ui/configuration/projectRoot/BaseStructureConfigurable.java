@@ -2,8 +2,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.find.FindBundle;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
@@ -33,7 +31,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -222,6 +220,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     super.reset();
   }
 
+  @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(createAddAction());
@@ -230,29 +229,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.add(Separator.getInstance());
 
     result.add(new MyFindUsagesAction());
-    final TreeExpander expander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
 
-      public boolean canExpand() {
-        return true;
-      }
 
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
-
-    result.add(Separator.getInstance());
-
-    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    result.add(actionsManager.createExpandAllAction(expander, myTree));
-    result.add(actionsManager.createCollapseAllAction(expander, myTree));
     return result;
   }
 
