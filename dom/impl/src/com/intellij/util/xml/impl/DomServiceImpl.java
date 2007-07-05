@@ -4,9 +4,13 @@
 
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.util.Function;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.ModelMerger;
 import com.intellij.util.xml.ModelMergerImpl;
+import com.intellij.util.xml.structure.DomStructureViewBuilder;
 
 /**
  * @author Gregory.Shrago
@@ -15,6 +19,11 @@ public class DomServiceImpl extends DomService {
 
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
+  }
+
+
+  public StructureViewBuilder createSimpleStructureViewBuilder(final DomElement element, final Function<DomElement, StructureViewMode> modeProvider) {
+    return new DomStructureViewBuilder(element, modeProvider);
   }
 
 }

@@ -4,7 +4,9 @@
 
 package com.intellij.util.xml;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.Function;
 
 /**
  * @author Gregory.Shrago
@@ -16,4 +18,9 @@ public abstract class DomService {
   }
 
   public abstract ModelMerger createModelMerger();
+
+  public enum StructureViewMode {
+    SHOW, SHOW_CHILDREN, SKIP
+  }
+  public abstract StructureViewBuilder createSimpleStructureViewBuilder(final DomElement element, final Function<DomElement, StructureViewMode> modeProvider);
 }
