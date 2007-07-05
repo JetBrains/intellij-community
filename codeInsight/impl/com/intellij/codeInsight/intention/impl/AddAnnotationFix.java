@@ -79,10 +79,20 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
       if (element != null) {
         final PsiElement parent = element.getParent();
         PsiModifierListOwner owner = null;
-        if (parent instanceof PsiMethod || parent instanceof PsiField || parent instanceof PsiParameter) {
-          owner = (PsiModifierListOwner)parent;
+        PsiType checkedType = null;
+        if (parent instanceof PsiModifierListOwner) {
+          if (parent instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod)parent;
+            checkedType = method.getReturnType();
+            owner = method;
+          }
+          else if (parent instanceof PsiVariable) {
+            final PsiVariable variable = (PsiVariable)parent;
+            checkedType = variable.getType();
+            owner = variable;
+          }
         }
-        return owner != null && !AnnotationUtil.isAnnotated(owner, myFQN, false);
+        return owner != null && !(checkedType instanceof PsiPrimitiveType) && !AnnotationUtil.isAnnotated(owner, myFQN, false);
       }
     }
     return false;
