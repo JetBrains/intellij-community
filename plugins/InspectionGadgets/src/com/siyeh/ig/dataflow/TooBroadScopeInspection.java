@@ -171,7 +171,7 @@ public class TooBroadScopeInspection extends BaseInspection
             newDeclaration = (PsiDeclarationStatement)
                     codeStyleManager.reformat(newDeclaration);
             removeOldVariable(variable);
-            highlightElement(newDeclaration);
+            highlightElement(newDeclaration, project);
         }
 
         private static void removeOldVariable(@NotNull PsiVariable variable)
@@ -223,12 +223,14 @@ public class TooBroadScopeInspection extends BaseInspection
             return newDeclaration;
         }
 
-        private static void highlightElement(@NotNull final PsiElement element)
+        private static void highlightElement(@NotNull final PsiElement element,
+                                             @NotNull final Project project)
         {
             final Application application = ApplicationManager.getApplication();
-            application.invokeLater(new Runnable() {
-                public void run() {
-                    final Project project = element.getProject();
+            application.invokeLater(new Runnable()
+            {
+                public void run()
+                {
                     final FileEditorManager editorManager =
                             FileEditorManager.getInstance(project);
                     final HighlightManager highlightManager =
@@ -342,7 +344,8 @@ public class TooBroadScopeInspection extends BaseInspection
         return new TooBroadScopeVisitor();
     }
 
-    private class TooBroadScopeVisitor extends BaseInspectionVisitor {
+    private class TooBroadScopeVisitor extends BaseInspectionVisitor
+    {
 
         public void visitVariable(@NotNull PsiVariable variable)
         {
