@@ -66,6 +66,7 @@ public class HtmlLexer extends BaseHtmlLexer {
 
   private boolean isStartOfEmbeddmentTagContent(final IElementType tokenType) {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
+            tokenType == XmlTokenType.XML_CDATA_START ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
             tokenType == XmlTokenType.XML_REAL_WHITE_SPACE ||
             tokenType == ElementType.WHITE_SPACE
