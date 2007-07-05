@@ -353,6 +353,8 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {
+    if (compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, false).length == 0) return true;
+
     final String groovyInstallPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
     if (groovyInstallPath == null || groovyInstallPath.length() == 0) {
       Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files"), GroovyBundle.message("cannot.compile"));
