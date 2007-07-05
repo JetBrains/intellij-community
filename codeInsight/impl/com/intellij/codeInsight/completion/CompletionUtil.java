@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
@@ -472,5 +473,11 @@ public class CompletionUtil {
          )
         )
      );
+  }
+
+  static boolean isOverwrite(final LookupItem item, final char completionChar) {
+    return completionChar != 0
+      ? completionChar == Lookup.REPLACE_SELECT_CHAR
+      : item.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
   }
 }

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 
 /**
@@ -17,10 +16,7 @@ public class BasicInsertHandler implements InsertHandler {
     //context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - (context.selectionEndOffset - context.startOffset));
 
     if (context.identifierEndOffset != context.selectionEndOffset){
-      boolean overwrite = completionChar != 0
-        ? completionChar == Lookup.REPLACE_SELECT_CHAR
-        : item.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
-      if (!overwrite){
+      if (!CompletionUtil.isOverwrite(item, completionChar)){
         context.lparenthOffset = -1;
         context.rparenthOffset = -1;
         context.argListEndOffset = -1;

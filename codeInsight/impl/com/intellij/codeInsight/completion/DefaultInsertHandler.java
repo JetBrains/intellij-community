@@ -7,7 +7,6 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -132,15 +131,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     //adjustContextAfterLookupStringInsertion();
     myState = new InsertHandlerState(myContext.selectionEndOffset, myContext.selectionEndOffset);
 
-    final boolean overwrite = completionChar != 0
-                              ? completionChar == Lookup.REPLACE_SELECT_CHAR
-                              : myLookupItem.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
-
-
     final boolean needLeftParenth = isToInsertParenth(tailType);
     final boolean hasParams = needLeftParenth && hasParams();
 
-    if (overwrite)
+    if (CompletionUtil.isOverwrite(item, completionChar))
       removeEndOfIdentifier(needLeftParenth && hasParams);
     else if(myContext.identifierEndOffset != myContext.selectionEndOffset)
       context.resetParensInfo();

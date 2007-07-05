@@ -222,8 +222,12 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     context.shiftOffsets(startOffset - (context.startOffset - context.getPrefix().length()));
     insertLookupString(context, context.editor.getCaretModel().getOffset(), item.getLookupString(), startOffset);
     final int caretOffset = context.editor.getCaretModel().getOffset();
+    final int previousSelectionEndOffset = context.selectionEndOffset;
+
     context.selectionEndOffset = caretOffset;
-    context.identifierEndOffset = Math.max(caretOffset, context.identifierEndOffset);
+    context.identifierEndOffset =
+      CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset == context.identifierEndOffset ?
+      caretOffset:Math.max(caretOffset, context.identifierEndOffset);
     lookupItemSelected(context, startOffset, data, item, signatureSelected, completionChar);
   }
 
