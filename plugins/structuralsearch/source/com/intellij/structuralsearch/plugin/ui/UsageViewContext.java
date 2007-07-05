@@ -1,16 +1,17 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
@@ -23,9 +24,9 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class UsageViewContext {
-  protected SearchContext mySearchContext;
+  protected final SearchContext mySearchContext;
   private UsageView myUsageView;
-  protected Configuration myConfiguration;
+  protected final Configuration myConfiguration;
   private Set<Usage> myExcludedSet;
   private SearchCommand myCommand;
 
@@ -70,7 +71,7 @@ public class UsageViewContext {
 
   public UsageTarget getTarget() {
     return new UsageTarget() {
-      ItemPresentation presentation = new ItemPresentation() {
+      final ItemPresentation presentation = new ItemPresentation() {
         public String getPresentableText() {
           return _getPresentableText();
         }
@@ -93,7 +94,7 @@ public class UsageViewContext {
         throw new UnsupportedOperationException();
       }
 
-      public void findUsagesInEditor(FileEditor editor) {
+      public void findUsagesInEditor(@NotNull FileEditor editor) {
         throw new UnsupportedOperationException();
       }
 
