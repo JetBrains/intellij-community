@@ -396,7 +396,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
 
-  public void selectFacetTab(@NotNull Facet facet, @Nullable final String tabName) {
+  public void selectFacetTab(@NotNull final Facet facet, @Nullable final String tabName) {
+    NamedConfigurable confugurable = getSelectedConfugurable();
+    if (confugurable instanceof ModuleConfigurable) {
+      final ModuleEditor moduleEditor = ((ModuleConfigurable)confugurable).getModuleEditor();
+      moduleEditor.navigateTo(
+        new Place().putPath(ModuleEditor.MODULE_VIEW_KEY, facet.getName())
+      ).doWhenDone(new Runnable() {
+        public void run() {
+          if (tabName != null) {
+            moduleEditor.getOrCreateFacetEditor(facet).setSelectedTabName(tabName);
+          }
+        }
+      });
+    }
+
     final MyNode node = findNodeByObject(myRoot, facet);
     if (node != null) {
       selectNodeInTree(node);

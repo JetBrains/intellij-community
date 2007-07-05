@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.navigation.Place;
 import com.intellij.util.Chunk;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -222,19 +221,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               models.add(model);
             }
           }
-          //myFacetsConfigurator.applyEditors();
+          myFacetsConfigurator.applyEditors();
 
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
-          //myFacetsConfigurator.commitFacets();
+          myFacetsConfigurator.commitFacets();
 
         }
         catch (ConfigurationException e) {
           ex[0] = e;
         }
         finally {
-          //myFacetsConfigurator.disposeEditors();
-          //myFacetsConfigurator = createFacetsConfigurator();
+          myFacetsConfigurator.disposeEditors();
+          myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           for (Module module : myModuleModel.getModules()) {
             if (!module.isDisposed()) {
@@ -401,18 +400,23 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
-    return myModified /*|| myFacetsConfigurator.isModified()*/;
+    return myModified || myFacetsConfigurator.isModified();
   }
 
 
   public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
                                                 final @Nullable String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
-    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, moduleStructureConfigurable, new Runnable() {
+    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
+    return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
-        moduleStructureConfigurable.selectFacetTab(facet, tabNameToSelect);
-        moduleStructureConfigurable.setStartModuleWizard(false);
+        final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
+        config.select(facet.getModule().getName(), ManageFacetsEditor.DISPLAY_NAME).doWhenDone(new Runnable() {
+          public void run() {
+            modulesConfig.setStartModuleWizard(false);
+            modulesConfig.selectFacetTab(facet, tabNameToSelect);
+          }
+        });
       }
     });
   }

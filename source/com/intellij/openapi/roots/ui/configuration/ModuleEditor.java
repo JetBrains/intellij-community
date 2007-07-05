@@ -2,6 +2,8 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
+import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -102,6 +104,7 @@ public class ModuleEditor implements Place.Navigator {
 
   public void init(final String selectedTab, final ChooseView chooseView, final FacetEditorFacadeImpl facetEditorFacade, History history) {
     myHistory = history;
+    facetEditorFacade.getFacetConfigurator().addFacetInfos(getModule());
 
     for (ModuleConfigurationEditor each : myEditors) {
       if (each instanceof ModuleElementsEditor) {
@@ -119,7 +122,7 @@ public class ModuleEditor implements Place.Navigator {
     updateViewChooser();
 
 
-    myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).addListener(new FacetModel.Listener() {
+    myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).addListener(new ModifiableFacetModel.Listener() {
       public void onChanged() {
         updateViewChooser();
       }
@@ -582,6 +585,10 @@ public class ModuleEditor implements Place.Navigator {
     return unwrappedParams;
   }
 
+  public FacetEditor getOrCreateFacetEditor(final Facet facet) {
+    return myFacetEditorFacade.getFacetConfigurator().getOrCreateEditor(facet);
+  }
+
   public String getHelpTopic() {
     if (myTabbedPane == null || myEditors.isEmpty()) {
       return null;
@@ -738,7 +745,7 @@ public class ModuleEditor implements Place.Navigator {
     }
 
     private JComponent getEditorComponent() {
-      return myFacetEditorFacade.getFacetConfigurator().getOrCreateEditor(myFacet).getComponent();
+      return getOrCreateFacetEditor(myFacet).getComponent();
     }
   }
 
