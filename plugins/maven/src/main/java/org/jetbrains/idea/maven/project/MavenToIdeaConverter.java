@@ -154,7 +154,7 @@ public class MavenToIdeaConverter {
     if (!packaging.equals("jar")) {
       for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
         if (converter.isApplicable(packaging)) {
-          converter.convert(module, node, mavenToIdeaMapping);
+          converter.convert(module, node, mavenToIdeaMapping, modifiableModuleModel);
         }
       }
     }

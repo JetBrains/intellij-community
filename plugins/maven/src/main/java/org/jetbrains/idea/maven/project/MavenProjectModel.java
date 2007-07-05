@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
@@ -250,20 +249,6 @@ public class MavenProjectModel {
       if (resolved != null) {
         mavenProject = resolved;
       }
-    }
-
-    @NonNls
-    public String createPath(@NonNls final String... elements) {
-      final StringBuilder stringBuilder = new StringBuilder(getDirectory());
-      for (String element : elements) {
-        stringBuilder.append("/");
-        stringBuilder.append(element);
-      }
-      return FileUtil.toSystemIndependentName(stringBuilder.toString());
-    }
-
-    public void applyProfiles(final List<String> profiles) {
-      mavenProject.setActiveProfiles(profiles);
     }
   }
 }
