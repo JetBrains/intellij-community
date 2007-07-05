@@ -166,7 +166,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
-      editor.init(selectedTab, getDetailsComponent().getChooseView(), myFacetEditorFacade, myHistory);
+      editor.init(selectedTab, getDetailsComponent().getChooseView(), myHistory);
     } else {
       getDetailsComponent().getChooseView().clear();
     }

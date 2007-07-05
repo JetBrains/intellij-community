@@ -169,7 +169,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder, final @Nullable ConfigureFacetsStep facetsStep) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder);
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, myFacetsConfigurator, module, moduleBuilder);
     if (facetsStep != null) {
       myFacetsConfigurator.registerEditors(module, facetsStep);
     }

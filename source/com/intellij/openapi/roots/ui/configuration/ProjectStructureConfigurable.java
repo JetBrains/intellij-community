@@ -252,6 +252,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
       each.disposeUIResources();
     }
 
+    myModuleConfigurator.getFacetsConfigurator().clearMaps();
     myWasIntialized = false;
   }
 

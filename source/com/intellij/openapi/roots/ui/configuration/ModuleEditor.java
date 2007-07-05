@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
@@ -17,7 +18,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
 import com.intellij.openapi.ui.ChooseView;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -77,7 +77,6 @@ public class ModuleEditor implements Place.Navigator {
   private Wrapper myComponent = new Wrapper();
   private ChooseView myChooseView;
 
-  private FacetEditorFacadeImpl myFacetEditorFacade;
   private ModuleEditor.GeneralView myGeneralView;
 
   private ModuleEditor.ManageFacets myManageFacets;
@@ -90,21 +89,29 @@ public class ModuleEditor implements Place.Navigator {
   private SwitchView myCurrentView;
   private Map<String, ViewItem> myKey2Item = new HashMap<String, ViewItem>();
   @NonNls public static final String MODULE_VIEW_GENERAL_TAB = "module.view.general.tab";
+  private ProjectFacetsConfigurator myFacetsConfigurator;
+
+  public ModuleEditor(Project project, ModulesProvider modulesProvider, ProjectFacetsConfigurator facetsConfigurator,
+                      @NotNull Module module, @Nullable ModuleBuilder moduleBuilder) {
+    myProject = project;
+    myModulesProvider = modulesProvider;
+    myFacetsConfigurator = facetsConfigurator;
+    myFacetsConfigurator.addFacetInfos(module);
+    myName = module.getName();
+    myModuleBuilder = moduleBuilder;
+  }
 
   @Nullable
   public ModuleBuilder getModuleBuilder() {
     return myModuleBuilder;
   }
 
-
-
   public void setHistoryFacade(ModuleConfigurable configurable) {
     myConfigurable = configurable;
   }
 
-  public void init(final String selectedTab, final ChooseView chooseView, final FacetEditorFacadeImpl facetEditorFacade, History history) {
+  public void init(final String selectedTab, final ChooseView chooseView, History history) {
     myHistory = history;
-    facetEditorFacade.getFacetConfigurator().addFacetInfos(getModule());
 
     for (ModuleConfigurationEditor each : myEditors) {
       if (each instanceof ModuleElementsEditor) {
@@ -114,7 +121,6 @@ public class ModuleEditor implements Place.Navigator {
 
     setSelectedTabName(selectedTab);
     myChooseView = chooseView;
-    myFacetEditorFacade = facetEditorFacade;
 
     myGeneralView = new GeneralView();
     myManageFacets = new ManageFacets();
@@ -122,7 +128,7 @@ public class ModuleEditor implements Place.Navigator {
     updateViewChooser();
 
 
-    myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).addListener(new ModifiableFacetModel.Listener() {
+    myFacetsConfigurator.getOrCreateModifiableModel(getModule()).addListener(new ModifiableFacetModel.Listener() {
       public void onChanged() {
         updateViewChooser();
       }
@@ -132,7 +138,7 @@ public class ModuleEditor implements Place.Navigator {
   private void updateViewChooser() {
     myChooseView.clear();
 
-    final FacetModel facetModel = myFacetEditorFacade.getFacetConfigurator().getFacetModel(getModule());
+    final FacetModel facetModel = myFacetsConfigurator.getFacetModel(getModule());
     final Facet[] facets = facetModel.getSortedFacets();
 
     addView(myGeneralView);
@@ -175,13 +181,6 @@ public class ModuleEditor implements Place.Navigator {
 
   public static interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
-  }
-
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, @Nullable ModuleBuilder moduleBuilder) {
-    myProject = project;
-    myModulesProvider = modulesProvider;
-    myName = moduleName;
-    myModuleBuilder = moduleBuilder;
   }
 
   public void addChangeListener(ChangeListener listener) {
@@ -586,7 +585,7 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   public FacetEditor getOrCreateFacetEditor(final Facet facet) {
-    return myFacetEditorFacade.getFacetConfigurator().getOrCreateEditor(facet);
+    return myFacetsConfigurator.getOrCreateEditor(facet);
   }
 
   public String getHelpTopic() {
@@ -718,7 +717,7 @@ public class ModuleEditor implements Place.Navigator {
 
 
   private String getFacetName(final Facet facet) {
-    return myFacetEditorFacade.getFacetConfigurator().getOrCreateModifiableModel(getModule()).getFacetName(facet);
+    return myFacetsConfigurator.getOrCreateModifiableModel(getModule()).getFacetName(facet);
   }
 
   class FacetView extends SwitchView {

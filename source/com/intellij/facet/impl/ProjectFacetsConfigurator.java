@@ -85,11 +85,18 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   public void addFacetInfos(final Module module) {
     final Facet[] facets = getFacetModel(module).getSortedFacets();
     for (Facet facet : facets) {
-      //todo[nik] added because ModuleEditor.init may be called several times
-      if (!myFacet2Info.containsKey(facet)) {
-        addFacetInfo(facet);
-      }
+      addFacetInfo(facet);
     }
+  }
+
+  public void clearMaps() {
+    myModels.clear();
+    myEditors.clear();
+    myTreeModels.clear();
+    myInfo2Facet.clear();
+    myFacet2Info.clear();
+    myChangedFacets.clear();
+    mySharedModuleData.clear();
   }
 
   private static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, String name, final @Nullable Facet underlyingFacet) {
