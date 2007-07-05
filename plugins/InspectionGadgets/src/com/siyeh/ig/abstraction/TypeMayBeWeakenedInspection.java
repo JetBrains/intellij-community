@@ -206,7 +206,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         Set<PsiClass> weakestTypeClasses = new HashSet();
         final PsiClass javaLangObjectClass =
                 manager.findClass("java.lang.Object", scope);
-        if (variableClass.equals(javaLangObjectClass)) {
+        if (javaLangObjectClass == null ||
+                variableClass.equals(javaLangObjectClass)) {
             return Collections.EMPTY_LIST;
         }
         weakestTypeClasses.add(javaLangObjectClass);
