@@ -26,6 +26,10 @@
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
 
+  <property name="build.vcs.number.1" value="unknown"/>
+  <property name="plugin.revision" value="${build.vcs.number.1}"/>
+  <property name="plugin.version" value="${groovy.plugin.version}.${plugin.revision}"/>
+
   <property name="output" value="${basedir}/dist"/>
 
   <path id="base.path">
@@ -118,6 +122,11 @@
 
       <fileset dir="${project.dir}/tempjar">
       </fileset>
+
+      <manifest>
+        <attribute name="Revision" value="${plugin.revision}"/>
+        <attribute name="Build" value="${plugin.version}"/>
+      </manifest>
     </jar>
 
     <copy todir="${project.dir}/tempzip/Groovy/lib">

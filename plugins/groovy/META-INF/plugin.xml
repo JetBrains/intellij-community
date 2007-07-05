@@ -17,6 +17,11 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <id>org.intellij.groovy</id>
+
+  <extensions xmlns="com.intellij">
+        <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
+  </extensions>
+
   <project-components>
     <component>
       <interface-class>org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager</interface-class>
@@ -125,6 +130,10 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider
       </implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</implementation-class>
+      <interface-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</interface-class>
     </component>
   </application-components>
 
