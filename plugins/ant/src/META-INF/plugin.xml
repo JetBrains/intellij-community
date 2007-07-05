@@ -15,6 +15,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntStepsBeforeRunProvider"/>
+    <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
   </extensions>
 
   <application-components>

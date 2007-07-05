@@ -3,15 +3,16 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.ex.KeymapExtension;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -37,8 +38,6 @@ public class ActionsTreeUtil {
   private static final Icon MAIN_MENU_ICON = IconLoader.getIcon("/nodes/keymapMainMenu.png");
   private static final Icon EDITOR_ICON = IconLoader.getIcon("/nodes/keymapEditor.png");
   private static final Icon EDITOR_OPEN_ICON = IconLoader.getIcon("/nodes/keymapEditorOpen.png");
-  private static final Icon ANT_ICON = IconLoader.getIcon("/nodes/keymapAnt.png");
-  private static final Icon ANT_OPEN_ICON = IconLoader.getIcon("/nodes/keymapAntOpen.png");
   private static final Icon TOOLS_ICON = IconLoader.getIcon("/nodes/keymapTools.png");
   private static final Icon TOOLS_OPEN_ICON = IconLoader.getIcon("/nodes/keymapToolsOpen.png");
   private static final Icon OTHER_ICON = IconLoader.getIcon("/nodes/keymapOther.png");
@@ -214,33 +213,17 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createAntGroup(Condition<AnAction> filtered, final Project project) {
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);
-    Arrays.sort(ids);
-    Group group = new Group(KeyMapBundle.message("ant.targets.group.title"), ANT_ICON, ANT_OPEN_ICON);
+  private static Group createExtensionGroup(Condition<AnAction> filtered, final Project project, KeymapExtension provider) {
+    Group group = new Group(provider.getGroupName(), provider.getIcon(), provider.getOpenIcon());
 
-    if (project != null) {
-      final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-      if (antConfiguration != null) {
-        final Map<AntBuildFile, Group> buildFileToGroup = new HashMap<AntBuildFile, Group>();
-        for (final String id : ids) {
-          if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
-          final AntBuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
-          if (buildFile == null) {
-            LOG.info("no buildfile found for actionId=" + id);
-            continue;
-          }
-          Group subGroup = buildFileToGroup.get(buildFile);
-          if (subGroup == null) {
-            subGroup = new Group(buildFile.getPresentableName(), null, null);
-            buildFileToGroup.put(buildFile, subGroup);
-            group.addGroup(subGroup);
-          }
-          subGroup.addActionId(id);
-        }
+    for (Map.Entry<Object, List<String>> entry : provider.createSubGroups(filtered, project).entrySet()) {
+      final Group subGroup = new Group(provider.getSubgroupName(entry.getKey()), null, null);
+      for (String id : entry.getValue()) {
+        subGroup.addActionId(id);
       }
+      group.addGroup(subGroup);
     }
+
     return group;
   }
 
@@ -435,7 +418,9 @@ public class ActionsTreeUtil {
     mainGroup.addGroup(createEditorActionsGroup(filtered));
     mainGroup.addGroup(createMainMenuGroup(filtered));
     mainGroup.addGroup(createVcsGroup(filtered));
-    mainGroup.addGroup(createAntGroup(filtered, project));
+    for (KeymapExtension extension : Extensions.getExtensions(KeymapExtension.EXTENSION_POINT_NAME)) {
+      mainGroup.addGroup(createExtensionGroup(filtered, project, extension));
+    }
     mainGroup.addGroup(createDebuggerActionsGroup(filtered));
     mainGroup.addGroup(createBookmarksActionsGroup(filtered));
     mainGroup.addGroup(createExternalToolsGroup(filtered));
