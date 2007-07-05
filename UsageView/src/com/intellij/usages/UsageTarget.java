@@ -19,6 +19,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -33,7 +34,7 @@ public interface UsageTarget extends NavigationItem {
    * Should look for usages in one specific editor. This typicaly shows other kind of dialog and doesn't
    * result in usage view display.
    */
-  void findUsagesInEditor(FileEditor editor);
+  void findUsagesInEditor(@NotNull FileEditor editor);
 
   boolean isValid();
   boolean isReadOnly();

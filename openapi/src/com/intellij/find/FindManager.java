@@ -135,7 +135,7 @@ public abstract class FindManager {
    * @return true if Find Usages is available, false otherwise.
    * @see com.intellij.lang.findUsages.FindUsagesProvider#canFindUsagesFor(com.intellij.psi.PsiElement)
    */
-  public abstract boolean canFindUsages(PsiElement element);
+  public abstract boolean canFindUsages(@NotNull PsiElement element);
 
   /**
    * Shows the Find Usages dialog and performs the Find Usages operation for the
@@ -143,7 +143,7 @@ public abstract class FindManager {
    *
    * @param element the element to find the usages for.
    */
-  public abstract void findUsages(PsiElement element);
+  public abstract void findUsages(@NotNull PsiElement element);
 
   /**
    * Performs a "Find Usages in File" operation for the specified element.
@@ -151,7 +151,7 @@ public abstract class FindManager {
    * @param element the element for which the find is performed.
    * @param editor  the editor in which the find is performed.
    */
-  public abstract void findUsagesInEditor(PsiElement element, FileEditor editor);
+  public abstract void findUsagesInEditor(@NotNull PsiElement element, FileEditor editor);
 
   /**
    * Performs a "Find Next" operation after "Find Usages in File" or

@@ -365,15 +365,15 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     return buffer.toString();
   }
 
-  public boolean canFindUsages(PsiElement element) {
+  public boolean canFindUsages(@NotNull PsiElement element) {
     return myFindUsagesManager.canFindUsages(element);
   }
 
-  public void findUsages(PsiElement element) {
+  public void findUsages(@NotNull PsiElement element) {
     myFindUsagesManager.findUsages(element, null, null);
   }
 
-  public void findUsagesInEditor(PsiElement element, FileEditor fileEditor) {
+  public void findUsagesInEditor(@NotNull PsiElement element, FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
@@ -410,10 +410,10 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
       int start = highlighter.getStartOffset();
       int end = highlighter.getEndOffset();
       if (highlighter.isValid() && start < end) {
-        if (isForward && (start > offset || (start == offset && secondPass))) {
+        if (isForward && (start > offset || start == offset && secondPass)) {
           if (highlighterToSelect == null || highlighterToSelect.getStartOffset() > start) highlighterToSelect = highlighter;
         }
-        if (!isForward && (end < offset || (end == offset && secondPass))) {
+        if (!isForward && (end < offset || end == offset && secondPass)) {
           if (highlighterToSelect == null || highlighterToSelect.getEndOffset() < end) highlighterToSelect = highlighter;
         }
       }

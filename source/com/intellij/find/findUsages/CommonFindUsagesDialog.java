@@ -14,15 +14,12 @@ import javax.swing.*;
  */
 public class CommonFindUsagesDialog extends FindUsagesDialog {
   public CommonFindUsagesDialog(PsiElement element,
-                 Project project,
-                 FindUsagesOptions findUsagesOptions,
-                 boolean toShowInNewTab,
-                                     boolean mustOpenInNewTab,
-                 boolean isSingleFile) {
+                                Project project,
+                                FindUsagesOptions findUsagesOptions,
+                                boolean toShowInNewTab,
+                                boolean mustOpenInNewTab,
+                                boolean isSingleFile) {
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
-  }
-
-  protected void update() {
   }
 
   protected JPanel createFindWhatPanel() {

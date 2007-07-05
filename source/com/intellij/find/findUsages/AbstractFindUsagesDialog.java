@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewManager;
@@ -25,12 +24,12 @@ import java.awt.event.ActionListener;
  * @author peter
  */
 public abstract class AbstractFindUsagesDialog extends DialogWrapper {
-  protected final Project myProject;
+  private final Project myProject;
   protected final FindUsagesOptions myFindUsagesOptions;
 
   private final boolean myToShowInNewTab;
   private final boolean myIsShowInNewTabEnabled;
-  protected final boolean myIsShowInNewTabVisible;
+  private final boolean myIsShowInNewTabVisible;
 
   private final boolean mySearchForTextOccurencesAvailable;
 
@@ -41,7 +40,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected StateRestoringCheckBox myCbToSearchForTextOccurences;
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
 
-  private ActionListener myUpdateAction;
+  private final ActionListener myUpdateAction;
 
   private ScopeChooserCombo myScopeCombo;
 
@@ -256,7 +255,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   @Nullable
-  protected JComponent createSearchScopePanel() {
+  private JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
     JLabel label = new JLabel(FindBundle.message("find.scope.label"));
@@ -265,10 +264,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
     label.setLabelFor(myScopeCombo.getComboBox());
     return optionsPanel;
-  }
-
-  public final SearchScope getScope() {
-    return myScopeCombo.getSelectedScope();
   }
 
   @Nullable

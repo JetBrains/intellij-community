@@ -15,7 +15,7 @@ import javax.swing.*;
 
 public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
   protected final PsiElement myPsiElement;
-  protected StateRestoringCheckBox myCbIncludeOverloadedMethods;
+  private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable = false;
 
   protected FindUsagesDialog(PsiElement element,
@@ -24,8 +24,8 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
                              boolean toShowInNewTab,
                              boolean mustOpenInNewTab,
                              boolean isSingleFile) {
-    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isSearchForTextOccurencesAvailable(element, isSingleFile),
-          !isSingleFile && !element.getManager().isInProject(element));
+    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
+          isSearchForTextOccurencesAvailable(element, isSingleFile), !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     myIncludeOverloadedMethodsAvailable = element instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)element);
     init();
@@ -67,7 +67,7 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
     return false;
   }
 
-  protected PsiManager getPsiManager() {
+  private PsiManager getPsiManager() {
     return myPsiElement.getManager();
   }
 

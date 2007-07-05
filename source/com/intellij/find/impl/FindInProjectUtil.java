@@ -369,7 +369,7 @@ public class FindInProjectUtil {
       if (filesForFastWordSearch != null && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
 
       class EnumContentIterator implements ContentIterator {
-        List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch == null ? Collections.<PsiFile>emptyList() : filesForFastWordSearch);
+        final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch == null ? Collections.<PsiFile>emptyList() : filesForFastWordSearch);
         final PsiManager psiManager = PsiManager.getInstance(project);
 
         public boolean processFile(VirtualFile virtualFile) {
@@ -624,9 +624,9 @@ public class FindInProjectUtil {
   }
 
   public static class StringUsageTarget implements UsageTarget {
-    private String myStringToFind;
+    private final String myStringToFind;
 
-    private ItemPresentation myItemPresentation = new ItemPresentation() {
+    private final ItemPresentation myItemPresentation = new ItemPresentation() {
       public String getPresentableText() {
         return FindBundle.message("find.usage.target.string.text", myStringToFind);
       }
@@ -649,7 +649,7 @@ public class FindInProjectUtil {
     }
 
     public void findUsages() {}
-    public void findUsagesInEditor(FileEditor editor) {}
+    public void findUsagesInEditor(@NotNull FileEditor editor) {}
 
     public boolean isValid() {
       return true;

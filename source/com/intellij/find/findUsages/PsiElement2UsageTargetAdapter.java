@@ -21,6 +21,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -83,7 +84,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
     return myPointer.getElement();
   }
 
-  public void findUsagesInEditor(FileEditor editor) {
+  public void findUsagesInEditor(@NotNull FileEditor editor) {
     PsiElement element = getElement();
     FindManager.getInstance(element.getProject()).findUsagesInEditor(element, editor);
   }

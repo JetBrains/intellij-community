@@ -29,7 +29,10 @@ public class FindUsagesInFileAction extends AnAction {
 
     UsageTarget[] usageTargets = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
     if (usageTargets != null) {
-      usageTargets[0].findUsagesInEditor((FileEditor)dataContext.getData(DataConstants.FILE_EDITOR));
+      FileEditor fileEditor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
+      if (fileEditor != null) {
+        usageTargets[0].findUsagesInEditor(fileEditor);
+      }
     }
     else {
       Messages.showMessageDialog(
@@ -45,7 +48,7 @@ public class FindUsagesInFileAction extends AnAction {
     updateFindUsagesAction(event);
   }
 
-  public static boolean isEnabled(DataContext dataContext) {
+  private static boolean isEnabled(DataContext dataContext) {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
       return false;

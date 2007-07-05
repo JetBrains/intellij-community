@@ -27,7 +27,7 @@ public abstract class SearchScope {
   private static int hashcode_counter = 0;
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  private int _hashcode = hashcode_counter++;
+  private final int _hashcode = hashcode_counter++;
 
   /**
    * Overriden for performance reason. Object.hashCode() is native method and becomes a bottleneck when called often.

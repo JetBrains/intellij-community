@@ -17,13 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FindSettingsImpl extends FindSettings implements ApplicationComponent, JDOMExternalizable{
-  @NonNls public static final String FIND_DIRECTION_FORWARD = "forward";
-  @NonNls public static final String FIND_DIRECTION_BACKWARD = "backward";
-  @NonNls public static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
-  @NonNls public static final String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
-  @NonNls public static final String FIND_SCOPE_GLOBAL = "global";
-  @NonNls public static final String FIND_SCOPE_SELECTED = "selected";
-  public static final String DEFAULT_SEARCH_SCOPE = FindBundle.message("find.scope.all.project.classes");
+  @NonNls private static final String FIND_DIRECTION_FORWARD = "forward";
+  @NonNls private static final String FIND_DIRECTION_BACKWARD = "backward";
+  @NonNls private static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
+  @NonNls private static final String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
+  @NonNls private static final String FIND_SCOPE_GLOBAL = "global";
+  @NonNls private static final String FIND_SCOPE_SELECTED = "selected";
+  private static final String DEFAULT_SEARCH_SCOPE = FindBundle.message("find.scope.all.project.classes");
   
   private static final int MAX_RECENT_SIZE = 30;
 
@@ -36,29 +36,29 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     SEARCH_OVERLOADED_METHODS = search;
   }
 
-  public boolean SEARCH_OVERLOADED_METHODS = false;
-  public boolean SEARCH_IN_LIBRARIES = false;
-  public boolean SEARCH_FOR_TEXT_OCCURENCES = true;
-  public boolean SKIP_RESULTS_WHEN_ONE_USAGE = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_OVERLOADED_METHODS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_IN_LIBRARIES = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_FOR_TEXT_OCCURENCES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean SKIP_RESULTS_WHEN_ONE_USAGE = false;
 
-  public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
-  public String FIND_ORIGIN = FIND_ORIGIN_FROM_CURSOR;
-  public String FIND_SCOPE = FIND_SCOPE_GLOBAL;
-  public String FIND_CUSTOM_SCOPE = null;
+  @SuppressWarnings({"WeakerAccess"}) public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
+  @SuppressWarnings({"WeakerAccess"}) public String FIND_ORIGIN = FIND_ORIGIN_FROM_CURSOR;
+  @SuppressWarnings({"WeakerAccess"}) public String FIND_SCOPE = FIND_SCOPE_GLOBAL;
+  @SuppressWarnings({"WeakerAccess"}) public String FIND_CUSTOM_SCOPE = null;
 
-  public boolean CASE_SENSITIVE_SEARCH = false;
-  public boolean PRESERVE_CASE_REPLACE = false;
-  public boolean WHOLE_WORDS_ONLY = false;
-  public boolean REGULAR_EXPRESSIONS = false;
-  public boolean WITH_SUBDIRECTORIES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean CASE_SENSITIVE_SEARCH = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean PRESERVE_CASE_REPLACE = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean WHOLE_WORDS_ONLY = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean WITH_SUBDIRECTORIES = true;
 
-  public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
-  public String FILE_MASK;
+  @SuppressWarnings({"WeakerAccess"}) public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
+  @SuppressWarnings({"WeakerAccess"}) public String FILE_MASK;
 
-  public JDOMExternalizableStringList RECENT_FIND_STRINGS = new JDOMExternalizableStringList();
-  public JDOMExternalizableStringList RECENT_REPLACE_STRINGS = new JDOMExternalizableStringList();
-  public JDOMExternalizableStringList RECENT_DIR_STRINGS = new JDOMExternalizableStringList();
-  @NonNls public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
+  @SuppressWarnings({"WeakerAccess"}) public JDOMExternalizableStringList RECENT_FIND_STRINGS = new JDOMExternalizableStringList();
+  @SuppressWarnings({"WeakerAccess"}) public JDOMExternalizableStringList RECENT_REPLACE_STRINGS = new JDOMExternalizableStringList();
+  @SuppressWarnings({"WeakerAccess"}) public JDOMExternalizableStringList RECENT_DIR_STRINGS = new JDOMExternalizableStringList();
+  @SuppressWarnings({"WeakerAccess"}) @NonNls public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
 
   @NotNull
   public String getComponentName(){
@@ -169,7 +169,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     WITH_SUBDIRECTORIES = b;
   }
 
-  public boolean isWithSubdirectories(){
+  private boolean isWithSubdirectories(){
     return WITH_SUBDIRECTORIES;
   }
 
