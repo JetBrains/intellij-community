@@ -175,14 +175,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
 
         if(noNamespaceDeclaration != null) {
-          map = initializeSchema(XmlUtil.EMPTY_URI, noNamespaceDeclaration, map);
+          map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, map);
         }
         if(schemaLocationDeclaration != null) {
           final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
           while(tokenizer.hasMoreTokens()){
             final String uri = tokenizer.nextToken();
             if(tokenizer.hasMoreTokens()){
-              map = initializeSchema(uri, tokenizer.nextToken(), map);
+              map = initializeSchema(uri, null, tokenizer.nextToken(), map);
             }
           }
         }
@@ -195,7 +195,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
               if (ns == null) ns = XmlUtil.EMPTY_URI;
 
               if (map == null || !map.containsKey(ns)) {
-                map = initializeSchema(ns, ns, map);
+                map = initializeSchema(ns, getNSVersion(ns, this),ns,map);
               }
             }
           }
@@ -216,11 +216,22 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return map;
   }
 
-  private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final String namespace, final String fileLocation, Map<String, CachedValue<XmlNSDescriptor>> map) {
+  private static @Nullable String getNSVersion(String ns, final XmlTagImpl xmlTag) {
+    String versionValue = xmlTag.getAttributeValue("version");
+    if (versionValue != null && xmlTag.getNamespace().equals(ns)) {
+      return versionValue;
+    }
+    return null;
+  }
+
+  private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final String namespace,
+                                                                     final String version,
+                                                                     final String fileLocation,
+                                                                     Map<String, CachedValue<XmlNSDescriptor>> map) {
     if(map == null) map = new HashMap<String, CachedValue<XmlNSDescriptor>>();
     final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
 
-    if (retrieveOwner(retrieveFile(fileLocation), namespace) != null || externalResourceManager.getImplicitNamespaceDescriptor(fileLocation) != null) {
+    if (retrieveOwner(retrieveFile(fileLocation, version), namespace) != null || externalResourceManager.getImplicitNamespaceDescriptor(fileLocation) != null) {
       map.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
         public Result<XmlNSDescriptor> compute() {
           XmlNSDescriptor descriptor = externalResourceManager.getImplicitNamespaceDescriptor(fileLocation);
@@ -228,7 +239,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
             return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
           }
 
-          XmlFile currentFile = retrieveFile(fileLocation);
+          XmlFile currentFile = retrieveFile(fileLocation, version);
           PsiMetaBaseOwner currentOwner = retrieveOwner(currentFile, namespace);
           if (currentOwner != null) {
             descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
@@ -243,9 +254,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return map;
   }
 
-  private XmlFile retrieveFile(final String fileLocation) {
+  private XmlFile retrieveFile(final String fileLocation, String version) {
     final String targetNs = XmlUtil.getTargetSchemaNsFromTag(this);
-    return fileLocation.equals(targetNs) ? null : XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
+    return fileLocation.equals(targetNs) ? null : XmlUtil.findXmlFile(
+      XmlUtil.getContainingFile(this),ExternalResourceManager.getInstance().getResourceLocation(fileLocation, version));
   }
 
   @Nullable

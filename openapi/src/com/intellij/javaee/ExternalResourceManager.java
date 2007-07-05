@@ -28,11 +28,16 @@ public abstract class ExternalResourceManager {
   }
 
   public abstract void addResource(@NonNls String url, @NonNls String location);
+  public abstract void addResource(@NonNls String url, @NonNls String version, @NonNls String location);
   public abstract void removeResource(String url);
+  public abstract void removeResource(String url, String version);
 
   public abstract void addStdResource(@NonNls String resource, @NonNls String fileName);
   public abstract void addStdResource(@NonNls String resource, @NonNls String fileName, Class klass);
+  public abstract void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass);
 
   public abstract String getResourceLocation(@NonNls String url);
+  public abstract String getResourceLocation(@NonNls String url, String version);
   public abstract String[] getResourceUrls(FileType fileType, final boolean includeStandard);
+  public abstract String[] getResourceUrls(FileType fileType, @NonNls String version, final boolean includeStandard);
 }

@@ -40,10 +40,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
 
 
-  private final Map<String, String> myResources = new HashMap<String, String>();
+  private final Map<String, Map<String,String>> myResources = new HashMap<String, Map<String, String>>();
   private final Map<String, XmlNSDescriptorImpl> myImplicitNamespaces = new THashMap<String, XmlNSDescriptorImpl>();
   private final Set<String> myIgnoredResources = new HashSet<String>();
-  private final Map<String, String> myStdResources = new HashMap<String, String>();
+  private final Map<String, Map<String,String>> myStdResources = new HashMap<String, Map<String,String>>();
+
   private final List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
   private long myModificationCount = 0;
   private final PathMacrosImpl myPathMacros;
@@ -51,9 +52,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
+  private static final String DEFAULT_VERSION = null;
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
+    addInternalResource(XmlUtil.XSLT_URI,"2.0", "xslt-2_0.xsd");
     addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");
     addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
     addInternalResource("http://www.w3.org/2001/XMLSchema.dtd", "XMLSchema.dtd");
@@ -109,26 +112,56 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addStdResource(resource, "/standardSchemas/" + fileName);
   }
 
+  public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
+    addStdResource(resource, version, "/standardSchemas/" + fileName, getClass());
+  }
+
   public void addStdResource(@NonNls String resource, @NonNls String fileName){
     addStdResource(resource, fileName, getClass());
   }
 
   public void addStdResource(String resource, String fileName, Class klass) {
+    addStdResource(resource, DEFAULT_VERSION, fileName, klass);
+  }
+
+  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
     final String file = getFile(fileName, klass);
     if (file != null) {
-      myStdResources.put(resource, file);
+      getMap(myStdResources, version,true).put(resource, file);
     }
     else {
       LOG.info("Cannot find standard resource. filename:" + fileName + " klass=" + klass);
     }
   }
 
+  private static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources, @Nullable final String version,
+                                            final boolean create) {
+    Map<String, String> map = resources.get(version);
+    if (map == null) {
+      if (create) {
+        map = new HashMap<String, String>();
+        resources.put(version,map);
+      } else if (version != DEFAULT_VERSION) {
+        map = resources.get(DEFAULT_VERSION);
+      }
+    }
+
+    return map;
+  }
+
   public String getResourceLocation(String url) {
-    String result = myResources.get(url);
+    return getResourceLocation(url, DEFAULT_VERSION);
+  }
+
+  public String getResourceLocation(@NonNls String url, String version) {
+    Map<String, String> map = getMap(myResources, version, false);
+    String result = map != null ? map.get(url):null;
 
     if (result == null) {
-      result = myStdResources.get(url);
+      map = getMap(myStdResources, version, false);
+      result = map != null ? map.get(url):null;
     }
+
     if (result == null) {
       result = url;
     }
@@ -137,17 +170,23 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public String[] getResourceUrls(FileType fileType, final boolean includeStandard) {
+    return getResourceUrls(fileType, DEFAULT_VERSION, includeStandard);
+  }
+
+  public String[] getResourceUrls(final FileType fileType, @NonNls final String version, final boolean includeStandard) {
     final List<String> result = new LinkedList<String>();
-    addResourcesFromMap(fileType, result,myResources);
+    addResourcesFromMap(fileType, result,version, myResources);
 
     if (includeStandard) {
-      addResourcesFromMap(fileType, result,myStdResources);
+      addResourcesFromMap(fileType, result,version, myStdResources);
     }
 
     return result.toArray(new String[result.size()]);
   }
 
-  private static void addResourcesFromMap(final FileType fileType, final List<String> result, Map<String, String> resources) {
+  private static void addResourcesFromMap(final FileType fileType, final List<String> result, String version, Map<String, Map<String, String>> resourcesMap) {
+    Map<String, String> resources = getMap(resourcesMap, version, false);
+    if (resources == null) return;
     final Set<String> keySet = resources.keySet();
 
     for (String key : keySet) {
@@ -170,15 +209,26 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addResource(String url, String location) {
-    myResources.put(url, location);
+    addResource(url, DEFAULT_VERSION, location);
+  }
+
+  public void addResource(@NonNls String url, @NonNls String version, @NonNls String location) {
+    getMap(myResources, version, true).put(url, location);
     myModificationCount++;
     fireExternalResourceChanged();
   }
 
   public void removeResource(String url) {
-    myResources.remove(url);
-    myModificationCount++;
-    fireExternalResourceChanged();
+    removeResource(url, DEFAULT_VERSION);
+  }
+
+  public void removeResource(String url, String version) {
+    Map<String, String> map = getMap(myResources, version, false);
+    if (map != null) {
+      map.remove(url);
+      myModificationCount++;
+      fireExternalResourceChanged();
+    }
   }
 
   public String[] getAvailableUrls() {
