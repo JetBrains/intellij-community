@@ -206,7 +206,6 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
 
   public void reset() {
     myProjectJdksModel.reset(myProject);
-    myContext.reset();
 
     Configurable toSelect = null;
     for (Configurable each : myName2Config.values()) {

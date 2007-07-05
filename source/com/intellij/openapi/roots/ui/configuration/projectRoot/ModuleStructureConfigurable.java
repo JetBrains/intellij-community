@@ -313,6 +313,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     reloadTree();
 
     super.reset();
+
+    myContext.reset();
   }
 
 
