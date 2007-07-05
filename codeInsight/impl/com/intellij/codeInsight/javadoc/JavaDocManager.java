@@ -42,6 +42,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
+import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -236,14 +237,7 @@ public class JavaDocManager implements ProjectComponent {
     }
 
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
-    try {
-      element.putUserData(
-        ORIGINAL_ELEMENT_KEY,
-        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(originalElement)
-      );
-    } catch (RuntimeException ex) {
-      // PsiPackage does not allow putUserData
-    }
+    storeOriginalElement(project, originalElement, element);
 
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
@@ -294,6 +288,17 @@ public class JavaDocManager implements ProjectComponent {
     return hint;
   }
 
+  private static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
+    try {
+      element.putUserData(
+        ORIGINAL_ELEMENT_KEY,
+        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(originalElement)
+      );
+    } catch (RuntimeException ex) {
+      // PsiPackage does not allow putUserData
+    }
+  }
+
   @Nullable
   public static PsiElement findTargetElement(final Editor editor, final PsiFile file, PsiElement contextElement) {
     PsiElement element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements);
@@ -342,6 +347,8 @@ public class JavaDocManager implements ProjectComponent {
         }
       }
     }
+
+    storeOriginalElement(file.getProject(), contextElement, element);
 
     return element;
   }
@@ -685,7 +692,11 @@ public class JavaDocManager implements ProjectComponent {
 
     DocumentationProvider originalProvider = containingFile != null ? containingFile.getLanguage().getDocumentationProvider() : null;
     DocumentationProvider elementProvider = element == null ? null : element.getLanguage().getDocumentationProvider();
-    if (elementProvider == null) return originalProvider;
+    
+    if (elementProvider == null ||
+        (elementProvider instanceof XmlDocumentationProvider && originalProvider != null)) {
+      return originalProvider;
+    }
 
     return elementProvider; //give priority to the real element
   }

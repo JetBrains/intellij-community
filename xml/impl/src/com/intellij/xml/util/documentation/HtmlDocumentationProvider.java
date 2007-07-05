@@ -90,10 +90,22 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       key = ((XmlAttribute)element.getParent().getParent()).getName();
     } else if (element instanceof XmlAttributeValue) {
       isTag = false;
-      key = ((XmlAttribute)element.getParent()).getName();
+      final XmlAttribute xmlAttribute = (XmlAttribute)element.getParent();
+
+      if (xmlAttribute.getDescriptor() instanceof TldAttributeDescriptor) {
+        key = null;
+      } else {
+        key = xmlAttribute.getName();
+      }
     } else if (element instanceof XmlAttribute) {
+      final XmlAttribute xmlAttribute = (XmlAttribute)element;
       isTag = false;
-      key = ((XmlAttribute)element).getName();
+
+      if (xmlAttribute.getDescriptor() instanceof TldAttributeDescriptor) {
+        key = null;
+      } else {
+        key = xmlAttribute.getName();
+      }
     } else {
       nameElement = element;
       isTag = !(element.getParent() instanceof XmlAttribute);
