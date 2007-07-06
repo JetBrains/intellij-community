@@ -33,18 +33,6 @@ public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
     super(project);
   }
 
-  public void projectOpened() {
-    final MyFileEditorManagerListener listener = new MyFileEditorManagerListener(this);
-    Disposer.register(myProject, listener);
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(listener, listener);
-
-    registerInfoProvider(new XmlLanguageBreadcrumbsInfoProvider());
-  }
-
-  public void projectClosed() {
-    myProviders.clear();
-  }
-
   @Nullable
   BreadcrumbsInfoProvider getInfoProvider(@NotNull final Language language) {
     return myProviders.get(language);
@@ -69,9 +57,15 @@ public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
   }
 
   public void initComponent() {
+    final MyFileEditorManagerListener listener = new MyFileEditorManagerListener(this);
+    Disposer.register(myProject, listener);
+    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(listener, listener);
+
+    registerInfoProvider(new XmlLanguageBreadcrumbsInfoProvider());
   }
 
   public void disposeComponent() {
+    myProviders.clear();
   }
 
   private static class MyFileEditorManagerListener implements FileEditorManagerListener, Disposable {

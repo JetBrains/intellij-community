@@ -129,7 +129,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
     public void run() {
       final PsiElement element = myManager.getPsiElementAt(myPoint);
-      if (element != null) {
+      if (element != null && element.isValid()) {
         final LightweightHint hint = ImageOrColorPreviewManager.getHint(element);
         myManager.setCurrentHint(hint);
         if (hint != null) {
