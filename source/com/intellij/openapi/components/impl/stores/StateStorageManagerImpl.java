@@ -173,8 +173,6 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   }
 
   public ExternalizationSession startExternalization() {
-    assert mySession == null;
-
     ExternalizationSession session = new MyExternalizationSession();
 
     mySession = session;
