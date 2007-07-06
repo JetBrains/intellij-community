@@ -7,12 +7,9 @@
 package com.intellij.find.actions;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
@@ -21,6 +18,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
+import com.intellij.usages.rules.UsageInFile;
 
 import javax.swing.*;
 
@@ -57,11 +55,6 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
   }
 
   public static VirtualFile getVirtualFile(final Usage usage, Project project) {
-    FileEditorLocation location = usage.getLocation();
-    if (location != null) {
-      FileEditor fileEditor = location.getEditor();
-      return FileEditorManagerEx.getInstanceEx(project).getFile(fileEditor);
-    }
-    return null;
+    return usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
   }
 }
