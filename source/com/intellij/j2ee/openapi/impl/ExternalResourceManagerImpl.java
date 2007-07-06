@@ -232,8 +232,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public String[] getAvailableUrls() {
-    final Set<String> set = myResources.keySet();
-    return set.toArray(new String[set.size()]);
+    Set<String> urls = new HashSet<String>();
+    for (Map<String, String> map : myResources.values()) {
+      urls.addAll(map.keySet());
+    }
+    return urls.toArray(new String[urls.size()]);
   }
 
   public void clearAllResources() {
