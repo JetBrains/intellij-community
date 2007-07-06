@@ -203,7 +203,7 @@ public class RedundantCastUtil {
         final PsiMethod newTargetMethod = (PsiMethod)newResult.getElement();
         final PsiType newReturnType = newResult.getSubstitutor().substitute(newTargetMethod.getReturnType());
         final PsiType oldReturnType = resolveResult.getSubstitutor().substitute(targetMethod.getReturnType());
-        if (newReturnType.equals(oldReturnType)) {
+        if (Comparing.equal(newReturnType, oldReturnType)) {
           if (newTargetMethod.equals(targetMethod)) {
             addToResults(typeCast);
           }
@@ -257,7 +257,7 @@ public class RedundantCastUtil {
         for (int i = 0; i < args.length; i++) {
           final PsiExpression arg = deparenthesizeExpression(args[i]);
           if (arg instanceof PsiTypeCastExpression) {
-            PsiTypeCastExpression cast = ((PsiTypeCastExpression) arg);
+            PsiTypeCastExpression cast = (PsiTypeCastExpression)arg;
             if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs()) {
               //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
