@@ -71,8 +71,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
   public SaveSession startSave() throws IOException {
     try {
       assert mySession == null;
-      mySession = createSaveSession();
-      mySession.commit();
+      final ComponentStoreImpl.SaveSessionImpl session = createSaveSession();
+      session.commit();
+      mySession = session;
       return mySession;
     }
     catch (StateStorage.StateStorageException e) {
