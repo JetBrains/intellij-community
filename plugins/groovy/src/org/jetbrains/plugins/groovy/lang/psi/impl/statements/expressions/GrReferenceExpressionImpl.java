@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -201,7 +202,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
       String name = refExpr.getReferenceName();
       if (name == null) return null;
-      ResolverProcessor processor = getMethodOrPropertyResolveProcessor(refExpr, name, false);
+      ResolverProcessor processor = getMethodOrPropertyResolveProcessor(refExpr, name, false, !incompleteCode);
 
       resolveImpl(refExpr, processor);
 
@@ -326,11 +327,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return qualifier;
   }
 
-  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpressionImpl refExpr, String name, boolean forCompletion) {
+  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpressionImpl refExpr, String name, boolean forCompletion, boolean checkArguments) {
     Kind kind = refExpr.getKind();
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
-      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false);
+      final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false) : null;
+      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes);
     } else {
       processor = new PropertyResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr, forCompletion);
     }
@@ -372,7 +374,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public Object[] getVariants() {
 
-    Object[] propertyVariants = getVariantsImpl(getMethodOrPropertyResolveProcessor(this, null, true));
+    Object[] propertyVariants = getVariantsImpl(getMethodOrPropertyResolveProcessor(this, null, true, true));
     PsiElement parent = getParent();
     if (parent instanceof GrArgumentList) {
       GrExpression call = (GrExpression) parent.getParent(); //add named argument label variants
@@ -540,8 +542,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @NotNull
-  public GroovyResolveResult[] multiResolve(boolean b) {
-    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+  public GroovyResolveResult[] multiResolve(boolean incomplete) {  //incomplete means we do not take arguments into consideration
+    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incomplete);
   }
 
 }

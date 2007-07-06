@@ -263,10 +263,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
     public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return null;
-      return _resolve(reference, reference.getManager(), reference.getKind());
+      return _resolve(reference, reference.getManager(), reference.getKind(), !incompleteCode);
     }
 
-    private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager, ReferenceKind kind) {
+    private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,
+                                           ReferenceKind kind, boolean checkArguments) {
       final String refName=ref.getReferenceName();
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ: {
@@ -324,10 +325,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           break;
         }
         case CONSTRUCTOR:
-          final GroovyResolveResult[] classResults = _resolve(ref, manager, CLASS);
+          final GroovyResolveResult[] classResults = _resolve(ref, manager, CLASS, true);
           if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
-          final MethodResolverProcessor processor = new MethodResolverProcessor(refName, ref, false, true);
+          final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(ref, false) : null;
+          final MethodResolverProcessor processor = new MethodResolverProcessor(refName, ref, false, true, argTypes);
           for (GroovyResolveResult classResult : classResults) {
             final PsiElement element = classResult.getElement();
             if (element instanceof PsiClass) {
@@ -375,7 +377,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   @NotNull
-  public GroovyResolveResult[] multiResolve(boolean b) {
-    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incompleteCode);
   }
 }

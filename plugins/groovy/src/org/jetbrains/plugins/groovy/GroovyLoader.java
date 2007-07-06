@@ -17,6 +17,9 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.editorActions.TypedHandler;
+import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.ParameterInfoProvider;
+import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
@@ -41,6 +44,7 @@ import org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher
 import org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
+import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
 
 import java.util.HashSet;
@@ -93,6 +97,8 @@ public class GroovyLoader implements ApplicationComponent {
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
         new GroovyCompletionData());
+
+    ShowParameterInfoHandler.register(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), GroovyParameterInfoProvider.INSTANCE);
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());

@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -37,4 +39,7 @@ public interface GrCallExpression {
 
   @Nullable
   PsiMethod resolveMethod();
+
+  @NotNull
+  PsiNamedElement[] getMethodVariants(); 
 }

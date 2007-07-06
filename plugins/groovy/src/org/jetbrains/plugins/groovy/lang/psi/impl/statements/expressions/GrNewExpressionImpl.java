@@ -16,15 +16,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 
 /**
@@ -74,5 +76,12 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
     final PsiElement resolved = referenceElement.resolve();
     return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
+  }
+
+  @NotNull
+  public PsiNamedElement[] getMethodVariants() {
+    final GrCodeReferenceElement referenceElement = getReferenceElement();
+    if (referenceElement == null) return PsiMethod.EMPTY_ARRAY;
+    return PsiImplUtil.getMethodVariants(referenceElement);
   }
 }

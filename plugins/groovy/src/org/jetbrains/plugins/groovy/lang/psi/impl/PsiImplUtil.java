@@ -6,9 +6,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -19,6 +17,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  *
@@ -77,5 +79,16 @@ public class PsiImplUtil {
     }
 
     return member.getManager().getSearchHelper().getUseScope(member);
+  }
+
+  public static PsiNamedElement[] getMethodVariants(GrReferenceElement methodReference) {
+    final GroovyResolveResult[] results = methodReference.multiResolve(true); //will ignore argument types
+    List<PsiNamedElement> elements = new ArrayList<PsiNamedElement>();
+    for (GroovyResolveResult result : results) {
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiNamedElement) elements.add((PsiNamedElement) element);
+    }
+
+    return elements.toArray(new PsiNamedElement[elements.size()]);
   }
 }
