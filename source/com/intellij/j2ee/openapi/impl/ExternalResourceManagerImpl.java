@@ -288,8 +288,9 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public void writeExternal(Element element) throws WriteExternalException {
     final String[] urls = getAvailableUrls();
     for (String url : urls) {
+      if (url == null) continue;
       String location = getResourceLocation(url);
-
+      if (location == null) continue;
       final Element e = new Element(RESOURCE_ELEMENT);
 
       e.setAttribute(URL_ATTR, url);
