@@ -241,4 +241,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
   }
 
+  public void testNotAField() throws Exception {
+    PsiReference ref = configureByFile("notAField/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
 }

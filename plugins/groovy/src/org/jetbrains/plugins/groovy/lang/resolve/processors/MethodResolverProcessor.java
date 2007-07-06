@@ -62,8 +62,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
 
       return true;
-    } else if (myForCompletion || myCandidates.isEmpty()) {
-      return super.execute(element, substitutor);
+    } else if (element instanceof PsiVariable) {
+      final PsiType type = ((PsiVariable) element).getType();
+      if (type.equalsToText("groovy.lang.Closure")) {
+        return super.execute(element, substitutor);
+      }
     }
 
     return true;
