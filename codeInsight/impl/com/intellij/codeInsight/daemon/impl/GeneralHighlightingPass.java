@@ -10,8 +10,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -216,7 +214,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
     List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
     if (injected == null) return;
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
       final DocumentRange documentRange = ((VirtualFileDelegate)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentRange();
@@ -301,7 +298,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes attributes = globalScheme.getAttributes(keys[0]);
         final TextAttributes defaultAttrs = globalScheme.getAttributes(HighlighterColors.TEXT);
-        if (attributes.isEmpty() || attributes.equals(defaultAttrs)) {
+        if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
           annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
         }
         else {

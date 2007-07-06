@@ -436,7 +436,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return SourceTreeToPsiMap.treeElementToPsi(ref);
     }
     else {
-      throw new IncorrectOperationException();
+      throw new IncorrectOperationException(element.toString());
     }
   }
 
