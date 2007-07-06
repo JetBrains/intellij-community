@@ -8,7 +8,6 @@ package com.intellij.find.actions;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -25,11 +24,6 @@ import javax.swing.*;
 public class UsageListCellRenderer extends ColoredListCellRenderer {
   private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
   private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
-  private final Project myProject;
-
-  public UsageListCellRenderer(Project project) {
-    myProject = project;
-  }
 
   protected void customizeCellRenderer(final JList list,
                                        final Object value,
@@ -39,7 +33,7 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
     Usage usage = (Usage)value;
     UsagePresentation presentation = usage.getPresentation();
     setIcon(presentation.getIcon());
-    VirtualFile virtualFile = getVirtualFile(usage, myProject);
+    VirtualFile virtualFile = getVirtualFile(usage);
     if (virtualFile != null) {
       append(virtualFile.getName() + ": ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFile(virtualFile).getIcon());
@@ -54,7 +48,7 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
     }
   }
 
-  public static VirtualFile getVirtualFile(final Usage usage, Project project) {
+  public static VirtualFile getVirtualFile(final Usage usage) {
     return usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
   }
 }

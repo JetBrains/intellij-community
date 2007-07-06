@@ -86,8 +86,8 @@ public class ShowUsagesAction extends AnAction {
   private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor, final Project project) {
     Collections.sort(usages, new Comparator<Usage>() {
       public int compare(final Usage o1, final Usage o2) {
-        VirtualFile file1 = UsageListCellRenderer.getVirtualFile(o1, project);
-        VirtualFile file2 = UsageListCellRenderer.getVirtualFile(o2, project);
+        VirtualFile file1 = UsageListCellRenderer.getVirtualFile(o1);
+        VirtualFile file2 = UsageListCellRenderer.getVirtualFile(o2);
         String name1 = file1 == null ? "" : file1.getName();
         String name2 = file2 == null ? "" : file2.getName();
         String s1 = name1 + o1;
@@ -96,7 +96,7 @@ public class ShowUsagesAction extends AnAction {
       }
     });
     final JList list = new JList(new Vector<Usage>(usages));
-    list.setCellRenderer(new UsageListCellRenderer(project));
+    list.setCellRenderer(new UsageListCellRenderer());
 
     final Runnable runnable = new Runnable() {
       public void run() {
