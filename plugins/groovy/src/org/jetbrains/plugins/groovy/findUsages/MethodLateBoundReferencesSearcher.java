@@ -27,6 +27,8 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -46,12 +48,20 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
       final Project project = element.getProject();
       if (!processTextOccurrences(searchScope, name, consumer, project)) return false;
 
-      if (PropertyUtil.isSimplePropertyAccessor(method)) {
-        final String propName = PropertyUtil.getPropertyName(method);
+      final String propName = getPropertyName(method);
+      if (propName != null) {
         if (!processTextOccurrences(searchScope, propName, consumer, project)) return false;
       }
     }
     return true;
+  }
+
+  private String getPropertyName(final PsiMethod method) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>(){
+      public String compute() {
+        return PropertyUtil.getPropertyName(method);
+      }
+    });
   }
 
   private boolean processTextOccurrences(SearchScope searchScope, final String name, final Processor<PsiReference> consumer, Project project) {
