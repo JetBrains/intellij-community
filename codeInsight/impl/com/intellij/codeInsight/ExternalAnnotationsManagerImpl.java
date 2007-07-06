@@ -31,11 +31,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +73,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       if (document != null) {
         final XmlTag rootTag = document.getRootTag();
         if (rootTag != null) {
-          final String externalName = PsiFormatUtil.getExternalName(listOwner);
+          final String externalName = getNormalizedExternalName(listOwner);
           for (final XmlTag tag : rootTag.getSubTags()) {
             final String className = tag.getAttributeValue("name");
             if (Comparing.strEqual(className, externalName)) {
@@ -213,7 +215,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag rootTag = document.getRootTag();
-        final String externalName = PsiFormatUtil.getExternalName(listOwner);
+        final String externalName = getNormalizedExternalName(listOwner);
         if (rootTag != null) {
           for (XmlTag tag : rootTag.getSubTags()) {
             if (Comparing.strEqual(tag.getAttributeValue("name"), externalName)) {
@@ -317,6 +319,37 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }*/
 
     return null;
+  }
+
+  @Nullable
+  private static String getNormalizedExternalName(PsiModifierListOwner owner) {
+    String externalName = PsiFormatUtil.getExternalName(owner);
+    if (externalName != null) {
+      if (owner instanceof PsiParameter) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
+        if (method != null) {
+          externalName = externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
+        }
+      }
+      final int idx = externalName.indexOf('(');
+      if (idx == -1) return externalName;
+      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      try {
+        final int rightIdx = externalName.indexOf(')');
+        final String[] params = externalName.substring(idx + 1, rightIdx).split(",");
+        buf.append(externalName.substring(0, idx + 1));
+        for (String param : params) {
+          param = param.trim();
+          final int spaceIdx = param.indexOf(' ');
+          buf.append(spaceIdx > -1 ? param.substring(0, spaceIdx) : param).append(", ");
+        }
+        return StringUtil.trimEnd(buf.toString(), ", ") + externalName.substring(rightIdx);
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(buf);
+      }
+    }
+    return externalName;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {

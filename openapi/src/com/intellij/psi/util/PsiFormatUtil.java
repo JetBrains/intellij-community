@@ -417,23 +417,19 @@ public class PsiFormatUtil {
       assert psiClass != null;
       ClassUtil.formatClassName(psiClass, builder);
       if (owner instanceof PsiMethod) {
-        return builder.toString() + " " +
-               PsiFormatUtil.formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil
-                 .SHOW_FQ_NAME | PsiFormatUtil
-                 .SHOW_TYPE | PsiFormatUtil
-                 .SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+        return builder.toString() + " " + formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY,
+                                                       SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
+                                                       SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES);
       }
       else if (owner instanceof PsiField) {
         return builder.toString() + " " + ((PsiField)owner).getName();
       }
       else if (owner instanceof PsiParameter) {
         final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-        return builder.toString() + " " +
-               PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil
-                 .SHOW_FQ_NAME | PsiFormatUtil
-                 .SHOW_TYPE | PsiFormatUtil
-                 .SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE) + " " + PsiFormatUtil
-          .formatVariable((PsiVariable)owner, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+        return builder.toString() + " " + formatMethod(psiMethod, PsiSubstitutor.EMPTY,
+                                                       SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
+                                                       SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) + " " + formatVariable(
+          (PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY);
       }
     }
     finally {

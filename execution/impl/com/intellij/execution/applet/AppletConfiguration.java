@@ -287,7 +287,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
   }
 
   private AppletHtmlFile generateAppletTempPage() throws IOException {
-    //noinspection HardCodedStringLiteral
     final File tempFile = File.createTempFile("AppletPage", ".html");
     @NonNls final FileWriter writer = new FileWriter(tempFile);
     try {

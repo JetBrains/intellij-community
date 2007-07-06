@@ -131,7 +131,6 @@ public class JikesCompiler extends ExternalCompiler {
 
   private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, final String outputPath) throws IOException {
 
-    //noinspection HardCodedStringLiteral
     myTempFile = File.createTempFile("jikes", ".tmp");
     myTempFile.deleteOnExit();
 
