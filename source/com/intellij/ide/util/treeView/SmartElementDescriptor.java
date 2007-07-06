@@ -6,16 +6,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class SmartElementDescriptor extends NodeDescriptor{
   protected PsiElement myElement;
-  private SmartPsiElementPointer mySmartPointer;
+  private final SmartPsiElementPointer mySmartPointer;
 
   public SmartElementDescriptor(Project project, NodeDescriptor parentDescriptor, PsiElement element) {
     super(project, parentDescriptor);
@@ -47,7 +49,10 @@ public class SmartElementDescriptor extends NodeDescriptor{
     Color color = null;
 
     if (isMarkModified() ){
-      color = FileStatusManager.getInstance(myProject).getStatus(myElement.getContainingFile().getVirtualFile()).getColor();
+      VirtualFile virtualFile = PsiUtil.getVirtualFile(myElement);
+      if (virtualFile != null) {
+        color = FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor();
+      }
     }
     if (CopyPasteManager.getInstance().isCutElement(myElement)) {
       color = CopyPasteManager.CUT_COLOR;
