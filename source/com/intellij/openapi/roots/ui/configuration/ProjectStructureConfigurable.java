@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @State(
   name = "ProjectStructureConfigurable.UI",
@@ -80,7 +80,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
 
   private boolean myWasIntialized;
 
-  private Map<String, Configurable> myName2Config = new HashMap<String, Configurable>();
+  private List<Configurable> myName2Config = new ArrayList<Configurable>();
   private StructureConfigrableContext myContext;
   private ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
@@ -189,7 +189,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
   }
 
   public boolean isModified() {
-    for (Configurable each : myName2Config.values()) {
+    for (Configurable each : myName2Config) {
       if (each.isModified()) return true;
     }
 
@@ -197,7 +197,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
   }
 
   public void apply() throws ConfigurationException {
-    for (Configurable each : myName2Config.values()) {
+    for (Configurable each : myName2Config) {
       if (each.isModified()) {
         each.apply();
       }
@@ -208,7 +208,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     myProjectJdksModel.reset(myProject);
 
     Configurable toSelect = null;
-    for (Configurable each : myName2Config.values()) {
+    for (Configurable each : myName2Config) {
       if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
         toSelect = each;
       }
@@ -221,7 +221,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     myHistory.clear();
 
     if (toSelect == null && myName2Config.size() > 0) {
-      toSelect = myName2Config.values().iterator().next();
+      toSelect = myName2Config.iterator().next();
     }
 
     removeSelected();
@@ -247,7 +247,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     myUiState.proportion = mySplitter.getProportion();
     saveSideProportion();
 
-    for (Configurable each : myName2Config.values()) {
+    for (Configurable each : myName2Config) {
       each.disposeUIResources();
     }
 
@@ -381,7 +381,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
       ((BaseStructureConfigurable)configurable).init(myContext);
     }
 
-    myName2Config.put(configurable.getDisplayName(), configurable);
+    myName2Config.add(configurable);
 
     mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));
   }
