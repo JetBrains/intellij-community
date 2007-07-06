@@ -51,4 +51,8 @@ public abstract class FindUsagesHandler {
     findUsagesOptions.isSearchForTextOccurences = true;
     return findUsagesOptions;
   }
+
+  public FindUsagesOptions getFindUsagesOptions() {
+    return createFindUsagesOptions(getProject());
+  }
 }

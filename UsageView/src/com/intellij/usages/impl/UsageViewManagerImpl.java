@@ -146,7 +146,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return null;
   }
 
-  static String getProgressTitle(UsageViewPresentation presentation) {
+  public static String getProgressTitle(UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
     if (scopeText == null) {
       return UsageViewBundle.message("progress.searching.for", StringUtil.capitalize(presentation.getUsagesString()));

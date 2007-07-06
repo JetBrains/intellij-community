@@ -278,6 +278,7 @@
         <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
         <separator/>
         <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
+        <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>
         <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
         <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
         <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>

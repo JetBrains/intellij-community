@@ -8,6 +8,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,13 +16,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.ui.LightweightHint;
@@ -30,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,9 +44,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FindUsagesManager implements JDOMExternalizable {
@@ -276,6 +280,26 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
+  public UsageViewPresentation processUsages(@NotNull PsiElement element, final Processor<Usage> processor) {
+    final FindUsagesHandler handler = findHandler(element);
+    if (handler == null) return null;
+
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
+
+    LOG.assertTrue(handler.getPsiElement().isValid());
+    final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
+      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
+
+    UsageViewPresentation presentation = createPresentation(element, findUsagesOptions, myToOpenInNewTab);
+    final UsageSearcher usageSearcher = createUsageSearcher(descriptor, findUsagesOptions, null);
+    Task task = new Task.Modal(myProject, UsageViewManagerImpl.getProgressTitle(presentation), true) {
+      public void run(final ProgressIndicator indicator) {
+        usageSearcher.generate(processor);
+      }
+    };
+    ProgressManager.getInstance().run(task);
+    return presentation;
+  }
 
   private void setOpenInNewTab(final boolean toOpenInNewTab) {
     if (!mustOpenInNewTab()) {

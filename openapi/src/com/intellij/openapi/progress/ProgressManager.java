@@ -65,7 +65,7 @@ public abstract class ProgressManager {
                                                               Project project);
 
   /**
-   * Runs a scpecified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
    * background button. Upon successfull termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
    * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
@@ -83,7 +83,7 @@ public abstract class ProgressManager {
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
   /**
-   * Runs a scpecified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
    * background button. Upon successfull termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
    * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
@@ -104,7 +104,7 @@ public abstract class ProgressManager {
                                                             @NotNull PerformInBackgroundOption option);
 
   /**
-   * Runs a scpecified <code>task</code> in either background/foreground thread and shows a progress dialog.
+   * Runs a specified <code>task</code> in either background/foreground thread and shows a progress dialog.
    * @param task          task to run (either {@link com.intellij.openapi.progress.Task.Modal} or {@link com.intellij.openapi.progress.Task.Backgroundable}).
    */
   public abstract void run(@NotNull Task task);

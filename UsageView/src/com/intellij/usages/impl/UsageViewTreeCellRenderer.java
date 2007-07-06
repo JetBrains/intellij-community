@@ -35,13 +35,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
  */
 class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsageViewTreeCellRenderer");
-  private static EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+  private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
   private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
   private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
 
-  private SimpleTextAttributes myNumberOfUsagesAttribute;
-  private UsageViewPresentation myPresentation;
-  private UsageView myView;
+  private final SimpleTextAttributes myNumberOfUsagesAttribute;
+  private final UsageViewPresentation myPresentation;
+  private final UsageView myView;
 
   public UsageViewTreeCellRenderer(UsageView view) {
     myView = view;

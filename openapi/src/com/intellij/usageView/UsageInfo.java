@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
-  private SmartPsiElementPointer mySmartPointer;
+  private final SmartPsiElementPointer mySmartPointer;
   public final int startOffset; // in navigation element
   public final int endOffset; // in navigation element
 

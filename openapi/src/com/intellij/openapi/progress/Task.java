@@ -37,9 +37,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class Task implements TaskInfo {
 
-  protected Project myProject;
+  protected final Project myProject;
   protected String myTitle;
-  private boolean myCanBeCancelled;
+  private final boolean myCanBeCancelled;
 
   private String myCancelText = CommonBundle.getCancelButtonText();
   private String myCancelTooltipText = CommonBundle.getCancelButtonText();
@@ -120,7 +120,7 @@ public abstract class Task implements TaskInfo {
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
 
-    protected PerformInBackgroundOption myBackgroundOption;
+    protected final PerformInBackgroundOption myBackgroundOption;
 
     public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
@@ -136,7 +136,7 @@ public abstract class Task implements TaskInfo {
     }
 
     public boolean shouldStartInBackground() {
-      return myBackgroundOption != null ? myBackgroundOption.shouldStartInBackground() : true;
+      return myBackgroundOption == null || myBackgroundOption.shouldStartInBackground();
     }
 
     public void processSentToBackground() {

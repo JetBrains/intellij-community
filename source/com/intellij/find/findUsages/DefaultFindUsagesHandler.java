@@ -164,4 +164,23 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
     return super.getSecondaryElements();
   }
 
+  public FindUsagesOptions getFindUsagesOptions() {
+    PsiElement element = getPsiElement();
+    if (element instanceof PsiPackage) {
+      return myFindPackageOptions;
+    }
+    if (element instanceof PsiClass) {
+      return myFindClassOptions;
+    }
+    if (element instanceof PsiMethod) {
+      return myFindMethodOptions;
+    }
+    if (element instanceof PsiVariable) {
+      return myFindVariableOptions;
+    }
+    if (ThrowSearchUtil.isSearchable(element)) {
+      return myFindPointcutOptions;
+    }
+    return super.getFindUsagesOptions();
+  }
 }

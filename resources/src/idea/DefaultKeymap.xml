@@ -68,6 +68,9 @@
     <action id="FindUsages">
       <keyboard-shortcut first-keystroke="alt F7"/>
     </action>
+    <action id="ShowUsages">
+      <keyboard-shortcut first-keystroke="control alt F7"/>
+    </action>
     <action id="UsageView.Include">
       <keyboard-shortcut first-keystroke="INSERT"/>
     </action>
