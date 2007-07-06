@@ -6,13 +6,16 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
@@ -79,16 +82,41 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
-    context.setCurrentParameter(getCurrentParameterIndex(place, context.getEditor().getCaretModel().getOffset()));
+    final int currIndex = getCurrentParameterIndex(place, context.getEditor().getCaretModel().getOffset());
+    context.setCurrentParameter(currIndex);
     final Object[] objects = context.getObjectsToView();
+
+    Outer:
     for (int i = 0; i < objects.length; i++) {
       Object object = objects[i];
       final PsiNamedElement namedElement = (PsiNamedElement) object;
       if (!namedElement.isValid()) {
         context.setUIComponentEnabled(i, false);
-        continue;
       } else {
+        final PsiType[] constructorTypes = PsiUtil.getArgumentTypes(place, true);
+        final PsiType[] methodTypes = PsiUtil.getArgumentTypes(place, false);
+        if (namedElement instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod) namedElement;
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          PsiType[] argTypes = method.isConstructor() ? constructorTypes : methodTypes;
+          if (argTypes == null) continue;
 
+          if (parameters.length < currIndex) {
+            context.setUIComponentEnabled(i, false);
+            continue;
+          } else {
+            for (int j = 0; j < currIndex; j++) {
+              PsiType argType = argTypes[j];
+              final PsiType paramType = TypeConversionUtil.erasure(parameters[j].getType());
+              if (!TypesUtil.isAssignable(paramType, argType, place.getManager(), place.getResolveScope())) {
+                context.setUIComponentEnabled(i, false);
+                break Outer;
+              }
+            }
+          }
+
+          context.setUIComponentEnabled(i, true);
+        }
       }
     }
   }
@@ -154,6 +182,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO) {
         if (!method.isConstructor()) {
           PsiType returnType = method.getReturnType();
+          assert returnType != null;
           buffer.append(returnType.getPresentableText());
           buffer.append(" ");
         }
