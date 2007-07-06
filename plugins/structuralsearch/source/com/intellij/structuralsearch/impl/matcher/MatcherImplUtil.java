@@ -39,14 +39,15 @@ public class MatcherImplUtil {
     if (fileType != StdFileTypes.JAVA) {
       final PsiFile fileFromText = elementFactory.createFileFromText(
         "dummy." + fileType.getDefaultExtension(),
-        context == TreeContext.File ? text:"<QQQ>\n" + text + "\n</QQQ>"
+        context == TreeContext.File ? text:"<QQQ>" + text + "</QQQ>"
       );
 
       final XmlDocument document = HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument());
       if (context == TreeContext.File) {
         return new PsiElement[] {document};
       }
-      return document.getRootTag().getSubTags();
+
+      return document.getRootTag().getValue().getChildren();
     } else if (fileType == StdFileTypes.JAVA) {
       PsiElement[] result;
 

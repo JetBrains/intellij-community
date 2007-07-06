@@ -83,32 +83,31 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testHtmlReplacement1() throws IOException {
-    xmlOptions.getMatchOptions().setFileType(StdFileTypes.HTML);
-    
-    String content = TestUtils.loadFile("in1.html");
-    String pattern = TestUtils.loadFile("pattern1_2.html");
-    String replacement = TestUtils.loadFile("replacement1_2.html");
-    String expectedResult = TestUtils.loadFile("out1.html");
-
-    actualResult = replacer.testReplace(content,pattern,replacement,xmlOptions);
-    assertEquals("Large html replacement",
-                 expectedResult,
-                 actualResult
-    );
-    
-    xmlOptions.getMatchOptions().setFileType(StdFileTypes.XML);
+    doHtmlReplacementFromTestDataFiles("in1.html", "pattern1_2.html", "replacement1_2.html", "out1.html", "Large html replacement", false);
   }
 
   public void testHtmlReplacement2() throws IOException {
+    doHtmlReplacementFromTestDataFiles("in2.html", "pattern2.html", "replacement2.html", "out2.html", "Large html replacement 2",true);
+  }
+
+  public void testHtmlReplacement3() throws IOException {
+    doHtmlReplacementFromTestDataFiles("in3.html", "pattern3.html", "replacement3.html", "out3.html", "Html replacement 3",true);
+  }
+
+  private void doHtmlReplacementFromTestDataFiles(final String inFileName,
+                                                  final String patternFileName,
+                                                  final String replacementFileName,
+                                                  final String outFileName,
+                                                  final String message, boolean filepattern) throws IOException {
     xmlOptions.getMatchOptions().setFileType(StdFileTypes.HTML);
 
-    String content = TestUtils.loadFile("in2.html");
-    String pattern = TestUtils.loadFile("pattern2.html");
-    String replacement = TestUtils.loadFile("replacement2.html");
-    String expectedResult = TestUtils.loadFile("out2.html");
+    String content = TestUtils.loadFile(inFileName);
+    String pattern = TestUtils.loadFile(patternFileName);
+    String replacement = TestUtils.loadFile(replacementFileName);
+    String expectedResult = TestUtils.loadFile(outFileName);
 
-    actualResult = replacer.testReplace(content,pattern,replacement,xmlOptions,true);
-    assertEquals("Large html replacement 2",
+    actualResult = replacer.testReplace(content,pattern,replacement,xmlOptions,filepattern);
+    assertEquals(message,
                  expectedResult,
                  actualResult
     );
