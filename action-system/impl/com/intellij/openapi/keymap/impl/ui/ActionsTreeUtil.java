@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.ex.KeymapExtension;
+import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -217,7 +217,7 @@ public class ActionsTreeUtil {
     Group group = new Group(provider.getGroupName(), provider.getIcon(), provider.getOpenIcon());
 
     for (Map.Entry<Object, List<String>> entry : provider.createSubGroups(filtered, project).entrySet()) {
-      final Group subGroup = new Group(provider.getSubgroupName(entry.getKey()), null, null);
+      final Group subGroup = new Group(provider.getSubgroupName(entry.getKey(), project), null, null);
       for (String id : entry.getValue()) {
         subGroup.addActionId(id);
       }

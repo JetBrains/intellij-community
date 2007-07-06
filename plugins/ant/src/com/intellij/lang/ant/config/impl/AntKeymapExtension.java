@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.keymap.ex.KeymapExtension;
+import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -39,7 +39,7 @@ class AntKeymapExtension implements KeymapExtension {
     return ANT_OPEN_ICON;
   }
 
-  public String getSubgroupName(final Object key) {
+  public String getSubgroupName(final Object key, Project project) {
     return ((AntBuildFile)key).getPresentableName();
   }
 

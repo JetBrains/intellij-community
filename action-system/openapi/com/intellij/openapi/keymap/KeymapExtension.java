@@ -4,7 +4,7 @@
  * Date: Jul 4, 2007
  * Time: 3:59:52 PM
  */
-package com.intellij.openapi.keymap.ex;
+package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,7 +25,7 @@ public interface KeymapExtension {
 
   Icon getOpenIcon ();
 
-  String getSubgroupName(Object key);
+  String getSubgroupName(Object key, Project project);
 
   Map<Object, List<String>> createSubGroups(Condition<AnAction> filtered, Project project);
 }
