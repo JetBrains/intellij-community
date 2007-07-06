@@ -15,17 +15,17 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.UIBundle;
+import com.intellij.ide.DataManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -96,7 +96,19 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
   public void addBrowseFolderListener(String title, String description, Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor) {
-    addActionListener(new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor));
+    final BrowseFolderActionListener<Comp> actionListener =
+      new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor);
+    if (project == null) {
+      project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    }
+    if (project != null) {
+      Disposer.register(project, new Disposable(){
+        public void dispose() {
+          removeActionListener(actionListener);
+        }
+      });
+    }
+    addActionListener(actionListener);
   }
 
   public FixedSizeButton getButton() {

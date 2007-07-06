@@ -186,6 +186,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         updateTreeFromPath(newValue);
       }
     };
+    myDisposables.add(myPathTextField);
     myPathTextFieldWrapper.add(myPathTextField.getField(), BorderLayout.CENTER);
 
     myNorthPanel = new JPanel(new BorderLayout());
@@ -216,7 +217,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   public final void dispose() {
     for (Disposable disposable : myDisposables) {
-      disposable.dispose();
+      Disposer.dispose(disposable);
     }
     myDisposables.clear();
     myFileSystemTree.dispose();
