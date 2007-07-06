@@ -546,4 +546,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incomplete);
   }
 
+  @NotNull
+  public GroovyResolveResult[] getSameNameVariants() {
+    return RESOLVER.resolve(this, true);
+  }
 }

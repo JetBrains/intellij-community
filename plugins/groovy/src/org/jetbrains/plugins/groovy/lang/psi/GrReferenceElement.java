@@ -33,6 +33,10 @@ public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantRefe
   GroovyResolveResult advancedResolve();
 
   @NotNull
-  //incompleteCode will ignore argument types for calls
   GroovyResolveResult[] multiResolve(boolean incompleteCode);
+
+
+  //not caching!
+  @NotNull
+  GroovyResolveResult[] getSameNameVariants();
 }

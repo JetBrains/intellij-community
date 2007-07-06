@@ -82,7 +82,7 @@ public class PsiImplUtil {
   }
 
   public static PsiNamedElement[] getMethodVariants(GrReferenceElement methodReference) {
-    final GroovyResolveResult[] results = methodReference.multiResolve(true); //will ignore argument types
+    final GroovyResolveResult[] results = methodReference.getSameNameVariants(); //will ignore argument types
     List<PsiNamedElement> elements = new ArrayList<PsiNamedElement>();
     for (GroovyResolveResult result : results) {
       final PsiElement element = result.getElement();
