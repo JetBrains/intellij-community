@@ -241,13 +241,22 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   public Set<String> getUsedMacros() {
-    throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
+    if (myPathMacroSubstitutor != null) {
+      return myPathMacroSubstitutor.getUsedMacros();
+    }
+    else {
+      return Collections.EMPTY_SET;
+    }
   }
 
   @NotNull
   public ExternalizationSession startExternalization() {
     assert mySession == null;
     final ExternalizationSession session = new ExternalizationSession() {
+      {
+        myPathMacroSubstitutor.reset();
+      }
+
       public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
         assert mySession == this;
         DirectoryBasedStorage.this.setState(componentName, state, storageSpec);
@@ -262,27 +271,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
-    return new SaveSession() {
-      public boolean needsSave() throws StateStorageException {
-        assert mySession == this;
-        return DirectoryBasedStorage.this.needsSave();
-      }
-
-      public void save() throws StateStorageException {
-        assert mySession == this;
-        DirectoryBasedStorage.this.save();
-      }
-
-      public Set<String> getUsedMacros() {
-        assert mySession == this;
-        return DirectoryBasedStorage.this.getUsedMacros();
-      }
-
-      @Nullable
-      public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
-        return null;
-      }
-    };
+    final MySaveSession session = new MySaveSession();
+    mySession = session;
+    return session;
   }
 
   public void finishSave(final SaveSession saveSession) {
@@ -295,5 +286,27 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   public void dispose() {
+  }
+
+  private class MySaveSession implements SaveSession {
+    public boolean needsSave() throws StateStorageException {
+      assert mySession == this;
+      return DirectoryBasedStorage.this.needsSave();
+    }
+
+    public void save() throws StateStorageException {
+      assert mySession == this;
+      DirectoryBasedStorage.this.save();
+    }
+
+    public Set<String> getUsedMacros() {
+      assert mySession == this : "Wrong session in progress: " + mySession;
+      return DirectoryBasedStorage.this.getUsedMacros();
+    }
+
+    @Nullable
+      public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+      return null;
+    }
   }
 }

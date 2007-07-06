@@ -112,7 +112,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     try {
       session.setStateInOldStorage(component, componentName, component);
     }
-    catch (StateStorage.StateStorageException e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
   }

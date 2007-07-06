@@ -118,8 +118,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       throw new StateStorage.StateStorageException(e);
     }
 
-    throw new UnsupportedOperationException();
-    //return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this);
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this);
   }
 
   @Nullable
