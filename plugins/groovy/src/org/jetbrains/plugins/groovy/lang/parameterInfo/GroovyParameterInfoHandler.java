@@ -101,7 +101,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           PsiType[] argTypes = method.isConstructor() ? constructorTypes : methodTypes;
           if (argTypes == null) continue;
 
-          if (parameters.length < currIndex) {
+          if (parameters.length <= currIndex) {
             context.setUIComponentEnabled(i, false);
             continue;
           } else {
