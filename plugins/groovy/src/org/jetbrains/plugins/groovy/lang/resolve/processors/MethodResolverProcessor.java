@@ -75,7 +75,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   public GroovyResolveResult[] getCandidates() {
     if (myCandidates.size() > 0) {
-      if (myForCompletion) {
+      if (myForCompletion ||
+          myArgumentTypes == null) { //should not filter
         return myCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
       }
 
