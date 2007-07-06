@@ -8,11 +8,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GroovyParameterInfoHandler implements ParameterInfoHandler<GrArgumentList, PsiNamedElement> {
+public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPsiElement, PsiNamedElement> {
   public boolean couldShowInLookup() {
     return true;
   }
@@ -49,30 +50,36 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GrArgume
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  public GrArgumentList findElementForParameterInfo(CreateParameterInfoContext context) {
+  public GroovyPsiElement findElementForParameterInfo(CreateParameterInfoContext context) {
     return getArgumentList(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  public GrArgumentList findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+  public GroovyPsiElement findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
     return getArgumentList(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  private GrArgumentList getArgumentList(int offset, PsiFile file) {
+  private GroovyPsiElement getArgumentList(int offset, PsiFile file) {
     final PsiElement element = file.findElementAt(offset);
-    return PsiTreeUtil.getParentOfType(element, GrArgumentList.class);
+    return PsiTreeUtil.getParentOfType(element, GrArgumentList.class, GrCommandArgumentList.class);
   }
 
-  public void showParameterInfo(@NotNull GrArgumentList list, CreateParameterInfoContext context) {
-    final PsiElement parent = list.getParent();
+  public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
+    final PsiElement parent = place.getParent();
+    PsiElement[] variants = PsiNamedElement.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      final PsiNamedElement[] variants = ((GrCallExpression) parent).getMethodVariants();
-      context.setItemsToShow(variants);
-      context.showHint(list, list.getTextRange().getStartOffset(), this);
+      variants = ((GrCallExpression) parent).getMethodVariants();
+    } else if (parent instanceof GrApplicationExpression) {
+      final GrExpression funExpr = ((GrApplicationExpression) parent).getFunExpression();
+      if (funExpr instanceof GrReferenceExpression) {
+        variants = ResolveUtil.mapToElements(((GrReferenceExpression) funExpr).getSameNameVariants());
+      }
     }
+    context.setItemsToShow(variants);
+    context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  public void updateParameterInfo(@NotNull GrArgumentList list, UpdateParameterInfoContext context) {
-    context.setCurrentParameter(getCurrentParameterIndex(list, context.getEditor().getCaretModel().getOffset()));
+  public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
+    context.setCurrentParameter(getCurrentParameterIndex(place, context.getEditor().getCaretModel().getOffset()));
     final Object[] objects = context.getObjectsToView();
     for (int i = 0; i < objects.length; i++) {
       Object object = objects[i];
@@ -86,18 +93,35 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GrArgume
     }
   }
 
-  private int getCurrentParameterIndex(GrArgumentList list, int offset) {
-    final GrNamedArgument[] namedArguments = list.getNamedArguments();
-    for (GrNamedArgument namedArgument : namedArguments) {
-      if (namedArgument.getTextRange().contains(offset)) return 0; //first Map parameter
-    }
+  private int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
+    if (place instanceof GrArgumentList) {
+      GrArgumentList list = (GrArgumentList) place;
+      final GrNamedArgument[] namedArguments = list.getNamedArguments();
+      for (GrNamedArgument namedArgument : namedArguments) {
+        if (namedArgument.getTextRange().contains(offset)) return 0; //first Map parameter
+      }
 
-    int idx = namedArguments.length > 0 ? 1 : 0;
+      int idx = namedArguments.length > 0 ? 1 : 0;
 
-    final GrExpression[] exprs = list.getExpressionArguments();
-    for (GrExpression expr : exprs) {
-      if (expr.getTextRange().contains(offset)) return idx;
-      idx++;
+      final GrExpression[] exprs = list.getExpressionArguments();
+      for (GrExpression expr : exprs) {
+        if (expr.getTextRange().contains(offset)) return idx;
+        idx++;
+      }
+    } else if (place instanceof GrCommandArgumentList) {
+      final GrCommandArgumentList list = (GrCommandArgumentList) place;
+      final GrCommandArgument[] labeledArguments = list.getLabeledArguments();
+      for (GrCommandArgument labeledArgument : labeledArguments) {
+        if (labeledArgument.getTextRange().contains(offset)) return 0; //first Map parameter
+      }
+
+      int idx = labeledArguments.length > 0 ? 1 : 0;
+
+      final GrExpression[] exprs = list.getArguments();
+      for (GrExpression expr : exprs) {
+        if (expr.getTextRange().contains(offset)) return idx;
+        idx++;
+      }
     }
 
     return -1;
