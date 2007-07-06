@@ -328,7 +328,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           final GroovyResolveResult[] classResults = _resolve(ref, manager, CLASS, true);
           if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
-          final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(ref, false) : null;
+          final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(ref, true) : null;
           final MethodResolverProcessor processor = new MethodResolverProcessor(refName, ref, false, true, argTypes);
           for (GroovyResolveResult classResult : classResults) {
             final PsiElement element = classResult.getElement();
