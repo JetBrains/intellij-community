@@ -134,10 +134,11 @@ public class InjectedLanguageUtil {
     FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
     synchronized (PsiLock.LOCK) {
       psiFile = registerDocumentRange(documentRange, psiFile);
+      MyFileViewProvider myFileViewProvider = (MyFileViewProvider)psiFile.getViewProvider();
+      myFileViewProvider.setVirtualFile(virtualFile);
+      myFileViewProvider.forceCachedPsi(psiFile);
     }
 
-    ((MyFileViewProvider)psiFile.getViewProvider()).setVirtualFile(virtualFile);
-    ((SingleRootFileViewProvider)psiFile.getViewProvider()).forceCachedPsi(psiFile);
     psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
 
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentRange);
