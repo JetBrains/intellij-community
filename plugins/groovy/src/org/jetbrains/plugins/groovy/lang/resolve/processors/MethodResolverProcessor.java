@@ -20,6 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -63,8 +64,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       return true;
     } else if (element instanceof PsiVariable) {
-      final PsiType type = ((PsiVariable) element).getType();
-      if (type.equalsToText("groovy.lang.Closure")) {
+      if (element instanceof GrField && ((GrField)element).isProperty() ||
+          ((PsiVariable) element).getType().equalsToText("groovy.lang.Closure")) {
         return super.execute(element, substitutor);
       }
     }
