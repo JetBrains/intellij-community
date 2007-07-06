@@ -26,6 +26,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -268,36 +269,40 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void findPublicClassConflicts(PsiClass aClass, MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
+  private static void findPublicClassConflicts(PsiClass aClass, final MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
+    //noinspection MismatchedQueryAndUpdateOfCollection
     NonPublicClassMemberWrappersSet members = new NonPublicClassMemberWrappersSet();
 
     members.addElements(aClass.getFields());
     members.addElements(aClass.getMethods());
     members.addElements(aClass.getInnerClasses());
 
-    RefactoringUtil.IsDescendantOf isDescendantOf = new RefactoringUtil.IsDescendantOf(aClass);
+    final RefactoringUtil.IsDescendantOf isDescendantOf = new RefactoringUtil.IsDescendantOf(aClass);
     final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
-    final GlobalSearchScope packageScope = GlobalSearchScope.packageScopeWithoutLibraries(aPackage, false);
-    for (ClassMemberWrapper memberWrapper : members) {
-      for (PsiReference reference : ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).findAll()) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression expression = ((PsiReferenceExpression)element);
-          final PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression != null) {
-            final PsiType type = qualifierExpression.getType();
-            if (type != null) {
-              final PsiClass resolvedTypeClass = PsiUtil.resolveClassInType(type);
-              if (isDescendantOf.value(resolvedTypeClass)) {
-                instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
+    final GlobalSearchScope packageScope = aPackage == null ? aClass.getResolveScope() : GlobalSearchScope.packageScopeWithoutLibraries(aPackage, false);
+    for (final ClassMemberWrapper memberWrapper : members) {
+      ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference reference) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression expression = (PsiReferenceExpression)element;
+            final PsiExpression qualifierExpression = expression.getQualifierExpression();
+            if (qualifierExpression != null) {
+              final PsiType type = qualifierExpression.getType();
+              if (type != null) {
+                final PsiClass resolvedTypeClass = PsiUtil.resolveClassInType(type);
+                if (isDescendantOf.value(resolvedTypeClass)) {
+                  instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
+                }
               }
             }
+            else {
+              instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
+            }
           }
-          else {
-            instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
-          }
+          return true;
         }
-      }
+      });
     }
   }
 
@@ -309,7 +314,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         ArrayList<PsiReference> result = new ArrayList<PsiReference>();
         for (UsageInfo usage : usages) {
           if (usage instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usage).getReferencedElement() == aClass) {
-            final PsiReference reference = ((MoveRenameUsageInfo)usage).getReference();
+            final PsiReference reference = usage.getReference();
             if (reference != null) {
               result.add(reference);
             }
@@ -434,11 +439,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     private final ArrayList<String> myConflicts;
     private final HashMap<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<PsiModifierListOwner, HashSet<PsiElement>>();
     private final HashMap<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<PsiClass,RefactoringUtil.IsDescendantOf>();
-    private PackageWrapper myTargetPackage;
 
     public MyClassInstanceReferenceVisitor(ArrayList<String> conflicts) {
       myConflicts = conflicts;
-      myTargetPackage = MoveClassesOrPackagesProcessor.this.myTargetPackage;
     }
 
     public void visitQualifier(PsiReferenceExpression qualified,

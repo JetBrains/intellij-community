@@ -536,7 +536,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       return myOriginal.compare(file1, file2);
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 

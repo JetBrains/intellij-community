@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
@@ -107,7 +109,7 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
     return 0;
   }
 
-  public boolean isSearchInModuleContent(Module aModule) {
+  public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 

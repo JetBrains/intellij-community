@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -69,7 +70,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     return 0;
   }
 
-  public boolean isSearchInModuleContent(Module aModule) {
+  public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return myModules.contains(aModule);
   }
 

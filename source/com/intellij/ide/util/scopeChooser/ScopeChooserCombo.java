@@ -28,6 +28,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -216,7 +217,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
               return 0;
             }
 
-            public boolean isSearchInModuleContent(Module aModule) {
+            public boolean isSearchInModuleContent(@NotNull Module aModule) {
               return true;
             }
 
@@ -270,7 +271,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           return 0;
         }
 
-        public boolean isSearchInModuleContent(Module aModule) {
+        public boolean isSearchInModuleContent(@NotNull Module aModule) {
           return true;
         }
 

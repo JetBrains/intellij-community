@@ -51,7 +51,7 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   // optimization methods:
 
-  public abstract boolean isSearchInModuleContent(Module aModule);
+  public abstract boolean isSearchInModuleContent(@NotNull Module aModule);
 
   public abstract boolean isSearchInLibraries();
 
@@ -62,43 +62,43 @@ public abstract class GlobalSearchScope extends SearchScope {
     return intersection(this, scope);
   }
 
-  private static GlobalSearchScope intersection(final GlobalSearchScope scope1, final GlobalSearchScope scope2) {
+  private static GlobalSearchScope intersection(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
     return new IntersectionScope(scope1, scope2, null);
   }
 
-  private static GlobalSearchScope union(final GlobalSearchScope scope1, final GlobalSearchScope scope2) {
+  private static GlobalSearchScope union(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
     return new UnionScope(scope1, scope2, null);
   }
-  public GlobalSearchScope uniteWith(final GlobalSearchScope scope) {
+  public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     if (ALL_SCOPE_NAME.equals(scope.getDisplayName())) return scope;
     return union(this, scope);
   }
 
-  public static GlobalSearchScope allScope(final Project project) {
+  public static GlobalSearchScope allScope(@NotNull Project project) {
     return project.getAllScope();
   }
 
-  public static GlobalSearchScope projectScope(Project project) {
+  public static GlobalSearchScope projectScope(@NotNull Project project) {
     return project.getProjectScope();
   }
 
-  public static GlobalSearchScope projectProductionScope(Project project, final boolean includeNonJavaFiles) {
+  public static GlobalSearchScope projectProductionScope(@NotNull Project project, final boolean includeNonJavaFiles) {
     return new IntersectionScope(projectScope(project),
                                  new ProductionScopeFilter(project, includeNonJavaFiles),
                                  PsiBundle.message("psi.search.scope.production.files"));
   }
 
-  public static GlobalSearchScope projectTestScope(Project project, final boolean includeNonJavaFiles) {
+  public static GlobalSearchScope projectTestScope(@NotNull Project project, final boolean includeNonJavaFiles) {
     return new IntersectionScope(projectScope(project),
                                  new TestScopeFilter(project, includeNonJavaFiles),
                                  PsiBundle.message("psi.search.scope.test.files"));
   }
 
-  public static GlobalSearchScope filterScope(Project project, NamedScope set) {
+  public static GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
     return new FilterScopeAdapter(project, set);
   }
 
-  public static GlobalSearchScope notScope(final GlobalSearchScope scope) {
+  public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
     return new GlobalSearchScope() {
       public boolean contains(final VirtualFile file) {
         return !scope.contains(file);
@@ -108,7 +108,7 @@ public abstract class GlobalSearchScope extends SearchScope {
         return scope.compare(file1, file2);
       }
 
-      public boolean isSearchInModuleContent(final Module aModule) {
+      public boolean isSearchInModuleContent(@NotNull final Module aModule) {
         return scope.isSearchInLibraries();
       }
 
@@ -124,7 +124,7 @@ public abstract class GlobalSearchScope extends SearchScope {
    * @param module the module to get the scope.
    * @return scope including sources and tests, excluding libraries and dependencies.
    */
-  public static GlobalSearchScope moduleScope(Module module) {
+  public static GlobalSearchScope moduleScope(@NotNull Module module) {
     return module.getModuleScope();
   }
 
@@ -134,7 +134,7 @@ public abstract class GlobalSearchScope extends SearchScope {
    * @param module the module to get the scope.
    * @return scope including sources, tests, and libraries, excluding dependencies.
    */
-  public static GlobalSearchScope moduleWithLibrariesScope(Module module) {
+  public static GlobalSearchScope moduleWithLibrariesScope(@NotNull Module module) {
     return module.getModuleWithLibrariesScope();
   }
 
@@ -148,7 +148,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     return module.getModuleWithDependenciesScope();
   }
 
-  public static GlobalSearchScope moduleRuntimeScope(Module module, final boolean includeTests) {
+  public static GlobalSearchScope moduleRuntimeScope(@NotNull Module module, final boolean includeTests) {
     return module.getModuleRuntimeScope(includeTests);
   }
 
@@ -156,27 +156,27 @@ public abstract class GlobalSearchScope extends SearchScope {
     return moduleWithDependenciesAndLibrariesScope(module, true);
   }
 
-  public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(Module module, boolean includeTests) {
+  public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(@NotNull Module module, boolean includeTests) {
     return module.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
-  public static GlobalSearchScope moduleWithDependentsScope(Module module) {
+  public static GlobalSearchScope moduleWithDependentsScope(@NotNull Module module) {
     return module.getModuleWithDependentsScope();
   }
 
-  public static GlobalSearchScope moduleTestsWithDependentsScope(Module module) {
+  public static GlobalSearchScope moduleTestsWithDependentsScope(@NotNull Module module) {
     return module.getModuleWithDependentsScope();
   }
 
-  public static GlobalSearchScope packageScope(PsiPackage aPackage, boolean includeSubpackages) {
+  public static GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, true);
   }
 
-  public static GlobalSearchScope directoryScope(PsiDirectory directory, final boolean withSubdirectories) {
+  public static GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
     return new DirectoryScope(directory, withSubdirectories);
   }
 
-  public static GlobalSearchScope packageScopeWithoutLibraries(PsiPackage aPackage, boolean includeSubpackages) {
+  public static GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, false);
   }
 
@@ -222,7 +222,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope1.isSearchInModuleContent(aModule) && myScope2.isSearchInModuleContent(aModule);
     }
 
@@ -268,7 +268,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope1.isSearchInModuleContent(aModule) || myScope2.isSearchInModuleContent(aModule);
     }
 
@@ -295,7 +295,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
@@ -322,7 +322,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
@@ -337,7 +337,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final boolean myIncludeSubpackages;
     private final boolean myIncludeLibraries;
 
-    public PackageScope(PsiPackage aPackage, boolean includeSubpackages, final boolean includeLibraries) {
+    public PackageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages, final boolean includeLibraries) {
       myPackage = aPackage;
       myIncludeSubpackages = includeSubpackages;
 
@@ -361,7 +361,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
@@ -397,7 +397,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
@@ -430,7 +430,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return aModule == myModule;
     }
 
@@ -467,7 +467,7 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true; //TODO (optimization?)
     }
 
@@ -509,7 +509,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return myScope.isSearchInLibraries();
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope.isSearchInModuleContent(aModule);
     }
   }
@@ -523,7 +523,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 
@@ -536,7 +536,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       return this;
     }
 
-    public GlobalSearchScope uniteWith(final GlobalSearchScope scope) {
+    public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
       return scope;
     }
   }

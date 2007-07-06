@@ -6,6 +6,7 @@ package com.intellij.mock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -19,7 +20,7 @@ public class MockGlobalSearchScope extends GlobalSearchScope {
     throw new UnsupportedOperationException("Method compare is not yet implemented in " + getClass().getName());
   }
 
-  public boolean isSearchInModuleContent(final Module aModule) {
+  public boolean isSearchInModuleContent(@NotNull final Module aModule) {
     throw new UnsupportedOperationException("Method isSearchInModuleContent is not yet implemented in " + getClass().getName());
   }
 

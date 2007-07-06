@@ -16,6 +16,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
@@ -66,7 +68,7 @@ public class JdkScope extends GlobalSearchScope {
     return 0;
   }
 
-  public boolean isSearchInModuleContent(Module aModule) {
+  public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return false;
   }
 

@@ -56,6 +56,8 @@ import com.intellij.ui.LayeredIcon;
 import javax.swing.*;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PackageUtil {
   static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode");
 
@@ -538,7 +540,7 @@ public class PackageUtil {
       return Comparing.compare(fileIndex.getOrderEntryForFile(file2), fileIndex.getOrderEntryForFile(file1));
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 
@@ -585,7 +587,7 @@ public class PackageUtil {
       return 0;
     }
 
-    public boolean isSearchInModuleContent(Module aModule) {
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 

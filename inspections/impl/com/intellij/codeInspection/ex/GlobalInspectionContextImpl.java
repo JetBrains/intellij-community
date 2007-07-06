@@ -434,7 +434,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         return 0;
       }
 
-      public boolean isSearchInModuleContent(Module aModule) {
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return true;
       }
 

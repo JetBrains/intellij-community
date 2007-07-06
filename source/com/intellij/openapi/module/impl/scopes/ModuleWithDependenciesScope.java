@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -102,7 +103,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     return orderEntry2.compareTo(orderEntry1);
   }
 
-  public boolean isSearchInModuleContent(Module aModule) {
+  public boolean isSearchInModuleContent(@NotNull Module aModule) {
     if (myIncludeOtherModules) {
       return myModules.contains(aModule);
     }

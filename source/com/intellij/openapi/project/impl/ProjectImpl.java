@@ -199,7 +199,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           return res;
         }
 
-        public boolean isSearchInModuleContent(Module aModule) {
+        public boolean isSearchInModuleContent(@NotNull Module aModule) {
           return true;
         }
 
@@ -216,7 +216,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           return scope;
         }
 
-        public GlobalSearchScope uniteWith(final GlobalSearchScope scope) {
+        public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
           return this;
         }
 
@@ -242,7 +242,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           return 0;
         }
 
-        public boolean isSearchInModuleContent(Module aModule) {
+        public boolean isSearchInModuleContent(@NotNull Module aModule) {
           return true;
         }
 

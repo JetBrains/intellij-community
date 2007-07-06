@@ -12,6 +12,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
@@ -103,7 +105,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return 0;
   }
 
-  public boolean isSearchInModuleContent(Module aModule) {
+  public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return false;
   }
 

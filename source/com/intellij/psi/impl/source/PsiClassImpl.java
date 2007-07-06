@@ -176,7 +176,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
         return false;
       }
 
-      public boolean isSearchInModuleContent(Module aModule) {
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return false;
       }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiSearchScopeUtil {
   //TODO: move to SearchScope itself
@@ -52,7 +53,7 @@ public class PsiSearchScopeUtil {
           return 0; //TODO?
         }
 
-        public boolean isSearchInModuleContent(Module aModule) {
+        public boolean isSearchInModuleContent(@NotNull Module aModule) {
           return _scope1.isSearchInModuleContent(aModule) || _scope2.isSearchInModuleContent(aModule);
         }
 
