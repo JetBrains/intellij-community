@@ -199,7 +199,8 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
     if (name.equals(PsiModifier.ABSTRACT)) {
-      if (getContainingClass().isInterface()) return true;
+      final PsiClass containingClass = getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) return true;
     }
 
     return getModifierList().hasModifierProperty(name);
