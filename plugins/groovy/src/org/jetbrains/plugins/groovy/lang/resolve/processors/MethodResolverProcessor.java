@@ -94,10 +94,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiManager manager = myPlace.getManager();
     GlobalSearchScope scope = myPlace.getResolveScope();
     
+    boolean methodsPresent = array[0].getElement() instanceof PsiMethod;
+    boolean propertiesPresent = !methodsPresent;
     Outer:
     for (int i = 1; i < array.length; i++) {
       PsiElement currentElement = array[i].getElement();
       if (currentElement instanceof PsiMethod) {
+        methodsPresent = true;
         PsiMethod currentMethod = (PsiMethod) currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
           PsiElement element = iterator.next().getElement();
@@ -110,9 +113,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
             }
           }
         }
+      } else {
+        propertiesPresent = true;
       }
 
       result.add(array[i]);
+    }
+
+    if (methodsPresent && propertiesPresent) {
+      for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
+        GroovyResolveResult resolveResult =  iterator.next();
+        if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
+      }
     }
 
     return result.toArray(new GroovyResolveResult[result.size()]);
