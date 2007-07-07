@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -290,7 +291,8 @@ public class MatcherImpl {
       HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
       final VirtualFileFilter filter = new VirtualFileFilter() {
         public boolean accept(VirtualFile file) {
-          return file.isDirectory() || scope.contains(file);
+          return (file.isDirectory() && !FileTypeManager.getInstance().isFileIgnored(file.getName())) ||
+                 scope.contains(file);
         }
       };
 
