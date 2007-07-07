@@ -331,6 +331,17 @@ public interface PsiSearchHelper {
   void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively);
 
   /**
+   * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT code}
+   * context to the specified processor.
+   *
+   * @param word      the word to search.
+   * @param scope     the scope in which occurrences are searched.
+   * @param processor the processor which accepts the references.
+   * @param caseSensitively if words differing in the case only should not be considered equal
+   */
+  void processAllFilesWithWordInText(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively);
+
+  /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_COMMENTS comments}
    * context to the specified processor.
    *
