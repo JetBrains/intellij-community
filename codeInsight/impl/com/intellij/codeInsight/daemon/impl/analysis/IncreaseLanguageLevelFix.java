@@ -3,18 +3,19 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -64,9 +65,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     }
   }
 
-  private static ProjectJdk getRelevantJdk(final Project project, final Module module) {
+  private static ProjectJdk getRelevantJdk(final Project project, @Nullable Module module) {
     ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    ProjectJdk moduleJdk = ModuleRootManager.getInstance(module).getJdk();
+    ProjectJdk moduleJdk = module == null ? null : ModuleRootManager.getInstance(module).getJdk();
     return moduleJdk == null ? projectJdk : moduleJdk;
   }
 
