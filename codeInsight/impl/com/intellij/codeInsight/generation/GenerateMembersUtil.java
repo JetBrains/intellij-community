@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -56,19 +57,17 @@ public class GenerateMembersUtil {
     }
 
     // Q: shouldn't it be somewhere in PSI?
-    {
-      PsiElement element = anchor;
-      while (true) {
-        if (element == null) break;
-        if (element instanceof PsiField || element instanceof PsiMethod || element instanceof PsiClassInitializer) break;
-        element = element.getNextSibling();
-      }
-      if (element instanceof PsiField) {
-        PsiField field = (PsiField) element;
-        if (!field.getTypeElement().getParent().equals(field)) {
-          field.normalizeDeclaration();
-          anchor = field;
-        }
+    PsiElement element = anchor;
+    while (true) {
+      if (element == null) break;
+      if (element instanceof PsiField || element instanceof PsiMethod || element instanceof PsiClassInitializer) break;
+      element = element.getNextSibling();
+    }
+    if (element instanceof PsiField) {
+      PsiField field = (PsiField) element;
+      if (!field.getTypeElement().getParent().equals(field)) {
+        field.normalizeDeclaration();
+        anchor = field;
       }
     }
 
@@ -96,18 +95,20 @@ public class GenerateMembersUtil {
     return memberPrototypes;
   }
 
-  public static void positionCaret(Editor editor, PsiElement firstMember, boolean toEditBody) {
+  public static void positionCaret(@NotNull Editor editor, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
     LOG.assertTrue(firstMember.isValid());
 
-    if (toEditBody) {
+    if (toEditMethodBody) {
       PsiMethod method = (PsiMethod) firstMember;
       PsiCodeBlock body = method.getBody();
       if (body != null) {
         PsiElement l = body.getFirstBodyElement();
         while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
+        if (l == null) l = body;
         PsiElement r = body.getLastBodyElement();
         while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
-        LOG.assertTrue(l != null && r != null);
+        if (r == null) r = body;
+
         int start = l.getTextRange().getStartOffset();
         int end = r.getTextRange().getEndOffset();
 
@@ -196,13 +197,13 @@ public class GenerateMembersUtil {
   public static PsiMethod substituteGenericMethod(PsiMethod method, PsiSubstitutor substitutor) {
     Project project = method.getProject();
     PsiElementFactory factory = method.getManager().getElementFactory();
-    PsiMethod newMethod;
     boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
 
     PsiTypeParameter[] typeParams = method.getTypeParameters();
     try {
       PsiType returnType = method.getReturnType();
 
+      PsiMethod newMethod;
       if (method.isConstructor()) {
         newMethod = factory.createConstructor();
         newMethod.getNameIdentifier().replace(factory.createIdentifier(method.getName()));

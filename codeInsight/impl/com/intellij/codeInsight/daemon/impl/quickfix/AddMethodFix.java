@@ -25,29 +25,30 @@ import java.util.Arrays;
 public class AddMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
 
-  private PsiClass myClass;
-  private PsiMethod myMethod;
+  private final PsiClass myClass;
+  private final PsiMethod myMethod;
   private String myText;
-  private List<String> myExceptions = new ArrayList<String>();
+  private final List<String> myExceptions = new ArrayList<String>();
 
   public AddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass implClass) {
-    init(method, implClass);
-  }
-
-  public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, String... exceptions) {
-    try {
-      init(implClass.getManager().getElementFactory().createMethodFromText(methodText, implClass), implClass);
-      myExceptions.addAll(Arrays.asList(exceptions));
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  private void init(PsiMethod method, PsiClass implClass) {
-    if (method == null || implClass == null) return;
     myMethod = method;
     myClass = implClass;
     setText(QuickFixBundle.message("add.method.text", method.getName(), implClass.getName()));
+  }
+
+  public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, @NotNull String... exceptions) {
+    this(createMethod(methodText, implClass), implClass);
+    myExceptions.addAll(Arrays.asList(exceptions));
+  }
+
+  private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
+    try {
+      return implClass.getManager().getElementFactory().createMethodFromText(methodText, implClass);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {
@@ -57,7 +58,7 @@ public class AddMethodFix implements IntentionAction {
     return result;
   }
 
-  protected void setText(String text) {
+  protected void setText(@NotNull String text) {
     myText = text;
   }
 
@@ -71,7 +72,7 @@ public class AddMethodFix implements IntentionAction {
     return QuickFixBundle.message("add.method.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
            && myMethod.isValid()
            && myClass != null
@@ -82,20 +83,16 @@ public class AddMethodFix implements IntentionAction {
         ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
-    try {
-      PsiCodeBlock body;
-      if (myClass.isInterface() && (body = myMethod.getBody()) != null) body.delete();
-      myMethod = (PsiMethod) myClass.add(myMethod);
-      for (String exception : myExceptions) {
-        PsiUtil.addException(myMethod, exception);
-      }
-      myMethod = (PsiMethod)myMethod.replace(reformat(project, myMethod));
-      GenerateMembersUtil.positionCaret(editor, myMethod, true);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
+    PsiCodeBlock body;
+    if (myClass.isInterface() && (body = myMethod.getBody()) != null) body.delete();
+    PsiMethod method = (PsiMethod)myClass.add(myMethod);
+    for (String exception : myExceptions) {
+      PsiUtil.addException(myMethod, exception);
     }
+    method = (PsiMethod)method.replace(reformat(project, method));
+    GenerateMembersUtil.positionCaret(editor, method, true);
   }
 
   public boolean startInWriteAction() {
