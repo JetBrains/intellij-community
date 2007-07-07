@@ -324,7 +324,7 @@ public class SystemBuilder {
       return evaluateType(((PsiAssignmentExpression)expr).getLExpression(), system);
     }
     else if (expr instanceof PsiCallExpression) {
-      final PsiCallExpression call = ((PsiCallExpression)expr);
+      final PsiCallExpression call = (PsiCallExpression)expr;
       final PsiMethod method = call.resolveMethod();
 
       if (method != null) {
@@ -347,12 +347,14 @@ public class SystemBuilder {
           if (expr instanceof PsiNewExpression) {
             aType = isCooked(expr) ? getType(expr) : expr.getType();
             qualifierSubstitutor = Util.resolveType(aType).getSubstitutor();
-          } else {
+          }
+          else {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
-            if (PsiKeyword.THIS.equals(methodExpression.getText())){
+            if (PsiKeyword.THIS.equals(methodExpression.getText())) {
               aType = myManager.getElementFactory().createType(aClass);
-            } else {
+            }
+            else {
               LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
               PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
               qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
@@ -411,7 +413,7 @@ public class SystemBuilder {
 
                 if (aClass != null) {
                   if (aClass instanceof PsiTypeParameter) {
-                    final PsiTypeParameter tp = ((PsiTypeParameter)aClass);
+                    final PsiTypeParameter tp = (PsiTypeParameter)aClass;
                     final PsiClassType[] extypes = tp.getExtendsListTypes();
 
                     PsiType pv = mapping.get(tp);
@@ -473,7 +475,7 @@ public class SystemBuilder {
                     final PsiType pType = substitutionMap.get(p);
 
                     if (pType instanceof PsiWildcardType) {
-                      final PsiWildcardType wildcard = ((PsiWildcardType)pType);
+                      final PsiWildcardType wildcard = (PsiWildcardType)pType;
                       final PsiType theBound = wildcard.getBound();
 
                       if (theBound != null) {
@@ -522,7 +524,7 @@ public class SystemBuilder {
                         }
                       }
                     }
-                    else {
+                    else if (pType != null) {
                       theSubst = theSubst.put(p, introduceAdditionalTypeVariables(pType, qualifier, supertype));
                     }
                   }
@@ -561,7 +563,7 @@ public class SystemBuilder {
       return evaluateType(((PsiConditionalExpression)expr).getThenExpression(), system);
     }
     else if (expr instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression ref = ((PsiReferenceExpression)expr);
+      final PsiReferenceExpression ref = (PsiReferenceExpression)expr;
       final PsiExpression qualifier = ref.getQualifierExpression();
 
       if (qualifier == null) {
@@ -641,7 +643,7 @@ public class SystemBuilder {
         PsiParameter parameter = (PsiParameter)element;
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
-          final PsiMethod method = ((PsiMethod)declarationScope);
+          final PsiMethod method = (PsiMethod)declarationScope;
           final PsiSearchHelper helper = myManager.getSearchHelper();
           SearchScope scope = getScope(helper, method);
 
@@ -797,14 +799,14 @@ public class SystemBuilder {
   private static SearchScope getScope(final PsiSearchHelper helper, final PsiElement element) {
     SearchScope scope = helper.getUseScope(element);
     if (scope instanceof GlobalSearchScope) {
-      scope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)scope), StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
+      scope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
     }
     return scope;
   }
 
   PsiType replaceWildCards(final PsiType type, final ReductionSystem system, final PsiSubstitutor definedSubst) {
     if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wildcard = ((PsiWildcardType)type);
+      final PsiWildcardType wildcard = (PsiWildcardType)type;
       final PsiType var = myTypeVariableFactory.create();
       final PsiType bound = wildcard.getBound();
 
@@ -902,9 +904,8 @@ public class SystemBuilder {
       }
     }
 
-    PsiType definedType;
-
     for (final PsiElement element : victims) {
+      PsiType definedType;
       if (element instanceof PsiParameter) {
         final PsiParameter p = myParameters.get(element);
 
