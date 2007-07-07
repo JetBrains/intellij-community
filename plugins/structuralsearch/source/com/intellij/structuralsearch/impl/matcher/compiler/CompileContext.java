@@ -6,6 +6,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.lexer.JavaLexer;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -31,6 +32,7 @@ class CompileContext {
   CompiledPattern pattern;
   MatchOptions options;
   Project project;
+  JavaLexer javaLexer;
 
   public boolean isScannedSomething() {
     return scanned.size() > 0 || scannedComments.size() > 0 || scannedLiterals.size() > 0;

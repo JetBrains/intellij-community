@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import com.intellij.lexer.JavaLexer;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -22,6 +24,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import com.intellij.util.Processor;
+import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -479,9 +482,21 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     boolean addedSomething = false;
 
     if (kind == OccurenceKind.CODE && context.scanned.get(refname)==null) {
-      context.helper.processAllFilesWithWord(refname,
-                                             (GlobalSearchScope)context.options.getScope(),
-                                             new MyFileProcessor(), true);
+      boolean isJavaReservedWord = false;
+
+      if (context.options.getFileType() == StdFileTypes.JAVA) {
+        if (context.javaLexer == null) context.javaLexer = new JavaLexer(LanguageLevel.HIGHEST);
+        context.javaLexer.start(refname,0,refname.length(),0);
+        isJavaReservedWord = JavaTokenType.KEYWORD_BIT_SET.contains(context.javaLexer.getTokenType());
+      }
+
+      final GlobalSearchScope searchScope = (GlobalSearchScope)context.options.getScope();
+      final MyFileProcessor fileProcessor = new MyFileProcessor();
+      if (isJavaReservedWord) {
+        context.helper.processAllFilesWithWordInText(refname, searchScope, fileProcessor, true);
+      } else {
+        context.helper.processAllFilesWithWord(refname, searchScope, fileProcessor, true);
+      }
 
       context.scanned.put( refname, refname );
       addedSomething  = true;
