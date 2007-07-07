@@ -13,7 +13,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
@@ -37,9 +36,6 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
     if (virtualFile != null) {
       append(virtualFile.getName() + ": ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFile(virtualFile).getIcon());
-    }
-    if (usage.isReadOnly()) {
-      append(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
     }
 
     TextChunk[] text = presentation.getText();
