@@ -17,9 +17,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
-import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -249,6 +248,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
                 Set<String> linksToProcess = new HashSet<String>();
                 Set<String> processedLinks = new HashSet<String>();
+                Map<String,String> baseUrls = new HashMap<String, String>();
                 VirtualFile contextFile = virtualFile;
                 linksToProcess.addAll( extractEmbeddedFileReferences(virtualFile, null, psiManager) );
 
@@ -257,15 +257,21 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                   linksToProcess.remove(s);
                   processedLinks.add(s);
 
-                  if (s.startsWith(HTTP_PROTOCOL)) {
-                    // do not support absolute references
-                    continue;
+                  final boolean absoluteUrl = s.startsWith(HTTP_PROTOCOL);
+                  String resourceUrl;
+                  if (absoluteUrl) {
+                    resourceUrl = s;
+                  } else {
+                    String baseUrl = baseUrls.get(s);
+                    if (baseUrl == null) baseUrl = url;
+
+                    resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
                   }
-                  String resourceUrl = url.substring(0, url.lastIndexOf('/') + 1) + s;
+
                   String resourcePath;
 
                   try {
-                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, s);
+                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, s.substring(s.lastIndexOf('/') + 1));
                   }
                   catch (IOException e) {
                     nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
@@ -275,8 +281,14 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                   virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcePath.replace(File.separatorChar, '/'));
                   downloadedResources.add(resourcePath);
 
+                  if (absoluteUrl) {
+                    ExternalResourceManagerImpl.getInstance().addResource(s, resourcePath);
+                    resourceUrls.add(s);
+                  }
+
                   final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
                   for(String u:newLinks) {
+                    baseUrls.put(u, resourceUrl);
                     if (!processedLinks.contains(u)) linksToProcess.add(u);
                   }
                 }
@@ -300,34 +312,33 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return PathManager.getSystemPath() + File.separator + EXT_RESOURCES_FOLDER;
   }
 
-  private void cleanup(List<String> resourceUrls, List<String> downloadedResources) {
-    for (Iterator<String> iterator = resourceUrls.iterator(), iterator2 = downloadedResources.iterator();
-         iterator.hasNext() && iterator2.hasNext();) {
-      final String resourcesUrl = iterator.next();
-      final String downloadedResource = iterator2.next();
-
-      try {
-        SwingUtilities.invokeAndWait( new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(
-              new Runnable() {
-                public void run() {
+  private void cleanup(final List<String> resourceUrls, final List<String> downloadedResources) {
+    try {
+      SwingUtilities.invokeAndWait( new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(
+            new Runnable() {
+              public void run() {
+                for(String resourcesUrl:resourceUrls) {
                   ExternalResourceManagerImpl.getInstance().removeResource(resourcesUrl);
+                }
+
+                for(String downloadedResource:downloadedResources) {
                   try {
                     LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource)).delete(this);
                   } catch(IOException ex) {}
                 }
               }
-            );
-          }
-        });
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
+            }
+          );
+        }
+      });
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
     }
   }
 
