@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TargetElementUtil {
@@ -56,7 +57,7 @@ public class TargetElementUtil {
     offset = adjustOffset(document, offset);
 
     if (file instanceof PsiCompiledElement) {
-      return ((PsiCompiledElement) file).getMirror().findReferenceAt(offset);
+      return ((PsiCompiledElement)file).getMirror().findReferenceAt(offset);
     }
 
     return file.findReferenceAt(offset);
@@ -88,7 +89,7 @@ public class TargetElementUtil {
       //}
       if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return referenceOrReferencedElement;
     }
-    
+
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
@@ -97,13 +98,13 @@ public class TargetElementUtil {
 
       PsiElement parent = element.getParent();
       if (element instanceof PsiIdentifier) {
-        if (parent instanceof PsiClass && element.equals(((PsiClass) parent).getNameIdentifier())) {
+        if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier())) {
           return parent;
         }
-        else if (parent instanceof PsiVariable && element.equals(((PsiVariable) parent).getNameIdentifier())) {
+        else if (parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier())) {
           return parent;
         }
-        else if (parent instanceof PsiMethod && element.equals(((PsiMethod) parent).getNameIdentifier())) {
+        else if (parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier())) {
           return parent;
         }
         else if (parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
@@ -111,8 +112,7 @@ public class TargetElementUtil {
         }
       }
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overridden
-        if (parent.getTextOffset() == element.getTextRange().getStartOffset() &&
-            !(parent instanceof XmlAttribute)) {
+        if (parent.getTextOffset() == element.getTextRange().getStartOffset() && !(parent instanceof XmlAttribute)) {
           return parent;
         }
       }
@@ -121,16 +121,16 @@ public class TargetElementUtil {
     if (element instanceof PsiKeyword) {
       if (element.getParent() instanceof PsiThisExpression) {
         if ((flags & THIS_ACCEPTED) == 0) return null;
-        PsiType type = ((PsiThisExpression) element.getParent()).getType();
+        PsiType type = ((PsiThisExpression)element.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
-        return ((PsiClassType) type).resolve();
+        return ((PsiClassType)type).resolve();
       }
 
       if (element.getParent() instanceof PsiSuperExpression) {
         if ((flags & SUPER_ACCEPTED) == 0) return null;
-        PsiType type = ((PsiSuperExpression) element.getParent()).getType();
+        PsiType type = ((PsiSuperExpression)element.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
-        return ((PsiClassType) type).resolve();
+        return ((PsiClassType)type).resolve();
       }
 
       if (PsiKeyword.TRY.equals(element.getText())) {
@@ -192,10 +192,10 @@ public class TargetElementUtil {
 
     final PsiElement referenceElement = ref.getElement();
     PsiElement refElement;
-    if(ref instanceof PsiJavaReference){
+    if (ref instanceof PsiJavaReference) {
       refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     }
-    else{
+    else {
       refElement = ref.resolve();
     }
 
@@ -210,7 +210,7 @@ public class TargetElementUtil {
           parent = parent.getParent();
         }
         if (parent instanceof PsiNewExpression) {
-          PsiMethod constructor = ((PsiNewExpression) parent).resolveConstructor();
+          PsiMethod constructor = ((PsiNewExpression)parent).resolveConstructor();
           if (constructor != null) {
             refElement = constructor;
           }
@@ -230,13 +230,8 @@ public class TargetElementUtil {
     if (item == null) return null;
     Object o = item.getObject();
 
-    if (o instanceof PsiClass
-        || o instanceof PsiPackage
-        || o instanceof PsiMethod
-        || o instanceof PsiVariable
-        || o instanceof PsiFile
-      ) {
-      PsiElement element = (PsiElement) o;
+    if (o instanceof PsiClass || o instanceof PsiPackage || o instanceof PsiMethod || o instanceof PsiVariable || o instanceof PsiFile) {
+      PsiElement element = (PsiElement)o;
       if (!(element instanceof PsiPackage)) {
         if (!isValidElement(element)) return null;
       }
@@ -244,14 +239,12 @@ public class TargetElementUtil {
     }
     else if (o instanceof LookupValueWithPsiElement) {
       final PsiElement element = ((LookupValueWithPsiElement)o).getElement();
-      if (isValidElement(element)) return element;
-      return null;
-    } else {
-      return null;
+      if (element != null && isValidElement(element)) return element;
     }
+    return null;
   }
 
-  private static boolean isValidElement(PsiElement element) {
+  private static boolean isValidElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return false;
     if (file.getOriginalFile() != null) file = file.getOriginalFile();
