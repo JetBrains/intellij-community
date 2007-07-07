@@ -66,6 +66,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     final TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) return true;
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
           if (ref.getRangeInElement().contains(offsetInElement)) {
@@ -78,7 +79,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
               if (refElement instanceof PsiMethod) {
                 PsiMethod refMethod = (PsiMethod)refElement;
                 PsiClass refMethodClass = refMethod.getContainingClass();
-                if (refMethodClass == null) return true;
+                if (refMethodClass == null) continue;
 
                 if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
                   PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(aClass, refMethodClass, PsiSubstitutor.EMPTY);
