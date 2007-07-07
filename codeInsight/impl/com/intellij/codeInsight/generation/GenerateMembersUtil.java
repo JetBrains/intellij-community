@@ -84,8 +84,7 @@ public class GenerateMembersUtil {
     }
   }
 
-  public static <T extends GenerationInfo> T[] insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, T[] memberPrototypes)
-      throws IncorrectOperationException {
+  public static <T extends GenerationInfo> T[] insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, T[] memberPrototypes) throws IncorrectOperationException {
     boolean before = true;
     for (T memberPrototype : memberPrototypes) {
       memberPrototype.insert(aClass, anchor, before);
@@ -142,8 +141,7 @@ public class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before)
-      throws IncorrectOperationException {
+  static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before) throws IncorrectOperationException {
     if (member instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
       final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;
