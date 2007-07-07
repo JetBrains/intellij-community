@@ -327,6 +327,17 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public PsiClass[] getInterfaces() {
+    GrImplementsClause implementsClause = findChildByClass(GrImplementsClause.class);
+    if (implementsClause != null) {
+      final GrCodeReferenceElement[] refs = implementsClause.getReferenceElements();
+      List<PsiClass> result = new ArrayList<PsiClass>(refs.length);
+      for (GrCodeReferenceElement ref : refs) {
+        final PsiElement resolved = ref.resolve();
+        if (resolved instanceof PsiClass) result.add((PsiClass) resolved);
+      }
+
+      return result.toArray(new PsiClass[result.size()]);
+    }
     return PsiClass.EMPTY_ARRAY;
   }
 
