@@ -40,8 +40,8 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     FileHighlighingSetting[] fileHighlighingSettings = myHighlightSettings.get(virtualFile);
     final int index = PsiUtil.getRootIndex(root);
 
-    if(fileHighlighingSettings == null || fileHighlighingSettings.length <= index){
-      fileHighlighingSettings = getDefaults(containingFile);
+    if(fileHighlighingSettings == null || fileHighlighingSettings.length <= index) {
+      return FileHighlighingSetting.FORCE_HIGHLIGHTING;
     }
     return fileHighlighingSettings[index];
   }
@@ -55,19 +55,23 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     return fileHighlighingSettings;
   }
 
-  public void setHighlightingSettingForRoot(PsiElement root, FileHighlighingSetting setting){
+  public void setHighlightingSettingForRoot(PsiElement root, FileHighlighingSetting setting) {
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
     FileHighlighingSetting[] defaults = myHighlightSettings.get(virtualFile);
-    if(defaults == null) defaults = getDefaults(containingFile).clone();
+    if (defaults == null) defaults = getDefaults(containingFile);
     defaults[PsiUtil.getRootIndex(root)] = setting;
     boolean toRemove = true;
     for (FileHighlighingSetting aDefault : defaults) {
       if (aDefault != FileHighlighingSetting.NONE) toRemove = false;
     }
-    if(!toRemove) myHighlightSettings.put(virtualFile, defaults);
-    else myHighlightSettings.remove(virtualFile);
+    if (!toRemove) {
+      myHighlightSettings.put(virtualFile, defaults);
+    }
+    else {
+      myHighlightSettings.remove(virtualFile);
+    }
   }
 
   public void projectOpened() {}
