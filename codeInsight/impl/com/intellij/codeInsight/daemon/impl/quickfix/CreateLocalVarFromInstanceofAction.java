@@ -36,7 +36,7 @@ import java.util.Set;
 public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction");
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     if (instanceOfExpression != null) {
       PsiTypeElement checkType = instanceOfExpression.getCheckType();
@@ -132,7 +132,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return editor.offsetToLogicalPosition(condition.getTextOffset()).line == line;
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
@@ -270,9 +270,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     while (element instanceof PsiParenthesizedExpression) {
       element = element.getParent();
     }
-    boolean negated = element instanceof PsiPrefixExpression &&
-                      ((PsiPrefixExpression)element).getOperationSign().getTokenType() == JavaTokenType.EXCL;
-    return negated;
+    return element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationSign().getTokenType() == JavaTokenType.EXCL;
   }
 
   private static Template generateTemplate(Project project, PsiExpression initializer, PsiType type) {
@@ -288,7 +286,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         uniqueNames.add(name);
       }
     }
-    if (uniqueNames.size() == 0 && suggestedNameInfo.names.length != 0) {
+    if (uniqueNames.isEmpty() && suggestedNameInfo.names.length != 0) {
       String baseName = suggestedNameInfo.names[0];
       String name = CodeStyleManager.getInstance(project).suggestUniqueVariableName(baseName, initializer, true);
       uniqueNames.add(name);
@@ -299,7 +297,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       LookupItemUtil.addLookupItem(itemSet, name, "");
     }
     final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
-    final Result result = uniqueNames.size() == 0 ? null : new TextResult(uniqueNames.get(0));
+    final Result result = uniqueNames.isEmpty() ? null : new TextResult(uniqueNames.get(0));
 
     Expression expr = new Expression() {
       public LookupItem[] calculateLookupItems(ExpressionContext context) {
@@ -318,9 +316,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     template.addEndVariable();
 
     return template;
-  }
-
-  protected void invokeImpl(PsiClass targetClass) {
   }
 
   @NotNull

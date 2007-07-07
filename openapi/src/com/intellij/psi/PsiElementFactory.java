@@ -323,7 +323,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
    *                                     <code>type</code> is not a valid type.
    */
-  @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NotNull String name, @NotNull PsiType type, PsiExpression initializer)
+  @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name, @NotNull PsiType type, PsiExpression initializer)
     throws IncorrectOperationException;
 
   /**

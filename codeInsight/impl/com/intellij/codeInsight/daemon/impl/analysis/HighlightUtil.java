@@ -309,11 +309,14 @@ public class HighlightUtil {
   @Nullable
   static HighlightInfo checkInstanceOfApplicable(PsiInstanceOfExpression expression) {
     PsiExpression operand = expression.getOperand();
-    PsiType checkType = expression.getCheckType().getType();
+    PsiTypeElement typeElement = expression.getCheckType();
+    if (typeElement == null) return null;
+    PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
     if (operandType == null) return null;
-    if (TypeConversionUtil.isPrimitiveAndNotNull(operandType) || TypeConversionUtil.isPrimitiveAndNotNull(checkType) ||
-        !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
+    if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
+        || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
+        || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
       String message = JavaErrorMessages.message("inconvertible.type.cast", formatType(operandType), formatType(checkType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
     }
