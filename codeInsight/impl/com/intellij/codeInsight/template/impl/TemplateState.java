@@ -168,7 +168,7 @@ public class TemplateState implements Disposable {
   }
 
   public boolean isFinished() {
-    return (myCurrentVariableNumber < 0);
+    return myCurrentVariableNumber < 0;
   }
 
   private void releaseAll() {
@@ -197,7 +197,7 @@ public class TemplateState implements Disposable {
 
     UndoManager.getInstance(myProject).undoableActionPerformed(
       new UndoableAction() {
-        public void undo() throws UnexpectedUndoException {
+        public void undo() {
           if (myDocument != null) {
             fireTemplateCancelled();
             //hack to close lookup if any: TODO lookup API for closing active lookup
@@ -213,7 +213,7 @@ public class TemplateState implements Disposable {
           }
         }
 
-        public void redo() throws UnexpectedUndoException {
+        public void redo() {
           //TODO:
           // throw new UnexpectedUndoException("Not implemented");
         }
@@ -257,7 +257,7 @@ public class TemplateState implements Disposable {
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
-    if (file.getLanguage().equals(StdLanguages.JSPX)) {
+    if (file.getLanguage().equals(StdLanguages.JSPX) && file instanceof JspFile) {
       if (XmlUtil.toCode(textToInsert)) {
         try {
           caretOffset += JspSpiUtil.escapeCharsInJspContext((JspFile)file, caretOffset, myTemplate.getTemplateText());
@@ -441,7 +441,7 @@ public class TemplateState implements Disposable {
 
                   Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
                   if (bracketCount != null) {
-                    StringBuffer tail = new StringBuffer();
+                    StringBuilder tail = new StringBuilder();
                     for (int i = 0; i < bracketCount.intValue(); i++) {
                       tail.append("[]");
                     }
@@ -497,7 +497,7 @@ public class TemplateState implements Disposable {
       aClass = (PsiClass)item;
     }
     else if (item instanceof PsiType) {
-      aClass = PsiUtil.resolveClassInType(((PsiType)item));
+      aClass = PsiUtil.resolveClassInType((PsiType)item);
     }
 
     if (aClass != null) {
@@ -622,7 +622,7 @@ public class TemplateState implements Disposable {
       if (expressionNode instanceof ConstantNode) {
         if (result instanceof TextResult) {
           TextResult text = (TextResult)result;
-          if (text.getText().equals("") && defaultValue != null) {
+          if (text.getText().length() == 0 && defaultValue != null) {
             result = defaultValue.calculateResult(context);
           }
         }
@@ -926,11 +926,10 @@ public class TemplateState implements Disposable {
         try {
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          PsiElement marker;
           RangeMarker rangeMarker = null;
           if (endSegmentNumber >= 0) {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
-            marker = codeStyleManager.insertNewLineIndentMarker(file, endVarOffset);
+            PsiElement marker = codeStyleManager.insertNewLineIndentMarker(file, endVarOffset);
             if(marker != null) rangeMarker = myDocument.createRangeMarker(marker.getTextRange());
           }
           codeStyleManager.reformatText(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
@@ -974,7 +973,7 @@ public class TemplateState implements Disposable {
     if (indentLineNum < 0) {
       return;
     }
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     CharSequence text = myDocument.getCharsSequence();
     for (int i = 0; i < lineLength; i++) {
       char ch = text.charAt(myDocument.getLineStartOffset(indentLineNum) + i);
