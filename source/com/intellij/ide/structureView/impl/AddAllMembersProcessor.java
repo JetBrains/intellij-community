@@ -6,23 +6,23 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
- * @deprecated use conflict-filter processor with dublicates resolver {@link com.intellij.psi.scope.processor.ConflictFilterProcessor}
+ * @deprecated use conflict-filter processor with duplicates resolver {@link com.intellij.psi.scope.processor.ConflictFilterProcessor}
  */
 public class AddAllMembersProcessor extends BaseScopeProcessor {
-  private List<PsiElement> myAllMembers;
-  private PsiClass myPsiClass;
-  private Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<MethodSignature, PsiMethod>();
-  private MemberFilter myFilter;
+  private final Collection<PsiElement> myAllMembers;
+  private final PsiClass myPsiClass;
+  private final Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<MethodSignature, PsiMethod>();
+  private final MemberFilter myFilter;
 
-  public AddAllMembersProcessor(List<PsiElement> allMembers, PsiClass psiClass) {
+  public AddAllMembersProcessor(Collection<PsiElement> allMembers, PsiClass psiClass) {
     this(allMembers, psiClass, ALL_ACCESSIBLE);
   }
 
-  public AddAllMembersProcessor(List<PsiElement> allMembers, PsiClass psiClass, MemberFilter filter) {
+  public AddAllMembersProcessor(Collection<PsiElement> allMembers, PsiClass psiClass, MemberFilter filter) {
     for (PsiElement psiElement : allMembers) {
       if (psiElement instanceof PsiMethod) mapMethodBySignature((PsiMethod)psiElement);
     }

@@ -4,12 +4,10 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   public JavaClassTreeElement(PsiClass aClass, boolean inherited) {
@@ -26,9 +24,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
 
     final PsiClass aClass = getElement();
     if (aClass == null) return array;
-    
-    List<PsiElement> ownChildren = Arrays.asList(aClass.getChildren());
-    List<PsiElement> inherited = new ArrayList<PsiElement>(ownChildren);
+
+    List<PsiElement> children = Arrays.asList(aClass.getChildren());
+    Collection<PsiElement> ownChildren = new THashSet<PsiElement>(children);
+    Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
     
     PsiScopesUtil.processScope(aClass, new AddAllMembersProcessor(inherited, aClass), PsiSubstitutor.UNKNOWN, null, aClass);
 
@@ -36,7 +35,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
       if (!child.isValid()) continue;
       boolean isInherited = !ownChildren.contains(child);
       if (child instanceof PsiClass) {
-        array.add(new JavaClassTreeElement((PsiClass)child, !ownChildren.contains(child)));
+        array.add(new JavaClassTreeElement((PsiClass)child, isInherited));
       }
       else if (child instanceof PsiField) {
         array.add(new PsiFieldTreeElement((PsiField)child, isInherited));
