@@ -41,10 +41,7 @@ import org.apache.oro.text.regex.Perl5Compiler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CompletionUtil {
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
@@ -392,7 +389,7 @@ public class CompletionUtil {
 
   public static String[] getOverides(final PsiClass parent, final PsiType typeByPsiElement) {
     final List<String> overides = new ArrayList<String>();
-    final CandidateInfo[] methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
+    final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
     for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
       final PsiElement element = candidateInfo.getElement();
       if (typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) {
@@ -405,7 +402,7 @@ public class CompletionUtil {
 
   public static String[] getImplements(final PsiClass parent, final PsiType typeByPsiElement) {
     final List<String> overides = new ArrayList<String>();
-    final CandidateInfo[] methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
+    final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
     for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
       final PsiElement element = candidateInfo.getElement();
       if (typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) {

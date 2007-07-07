@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.DefaultInsertHandler");
@@ -507,8 +508,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
             }
             final PsiAnonymousClass aClass = (PsiAnonymousClass)element.getParent();
 
-            final CandidateInfo[] candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
-            boolean invokeOverride = candidatesToImplement.length == 0;
+            final Collection<CandidateInfo> candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
+            boolean invokeOverride = candidatesToImplement.isEmpty();
             if (invokeOverride){
               chooseAndOverrideMethodsInAdapter(myProject, myEditor, aClass);
             }
@@ -559,8 +560,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
 
     try{
-      PsiMethodMember[] selectedArray = selected.toArray(new PsiMethodMember[selected.size()]);
-      final PsiGenerationInfo<PsiMethod>[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedArray, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+      final PsiGenerationInfo<PsiMethod>[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selected, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
       final int offset = editor.getCaretModel().getOffset();
 

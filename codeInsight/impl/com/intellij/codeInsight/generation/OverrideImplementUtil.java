@@ -45,14 +45,8 @@ public class OverrideImplementUtil {
   }
 
   @NotNull
-  public static CandidateInfo[] getMethodsToOverrideImplement(PsiClass aClass, boolean toImplement) {
-    Collection<CandidateInfo> infos = getMapToOverrideImplement(aClass, toImplement).values();
-    CandidateInfo[] result = new CandidateInfo[infos.size()];
-    int i = 0;
-    for (final CandidateInfo info : infos) {
-      result[i++] = info;
-    }
-    return result;
+  public static Collection<CandidateInfo> getMethodsToOverrideImplement(PsiClass aClass, boolean toImplement) {
+    return getMapToOverrideImplement(aClass, toImplement).values();
   }
 
   @NotNull
@@ -267,16 +261,16 @@ public class OverrideImplementUtil {
 
   @NotNull
   public static PsiGenerationInfo<PsiMethod>[] overrideOrImplementMethods(PsiClass aClass,
-                                                       PsiMethodMember[] candidates,
+                                                       Collection<PsiMethodMember> candidates,
                                                        boolean toCopyJavaDoc,
                                                        boolean toInsertAtOverride) throws IncorrectOperationException {
-    final PsiMethod[] methods = overrideOrImplementMethods(aClass, ContainerUtil.map2Array(candidates, CandidateInfo.class,
-                                                                                           new Function<PsiMethodMember, CandidateInfo>() {
-                                                                                             public CandidateInfo fun(final PsiMethodMember s) {
-                                                                                               return new CandidateInfo(s.getElement(),
-                                                                                                                        s.getSubstitutor());
-                                                                                             }
-                                                                                           }), toCopyJavaDoc, toInsertAtOverride);
+    List<CandidateInfo> candidateInfos =
+      ContainerUtil.map2List(candidates, new Function<PsiMethodMember, CandidateInfo>() {
+        public CandidateInfo fun(final PsiMethodMember s) {
+          return new CandidateInfo(s.getElement(), s.getSubstitutor());
+        }
+      });
+    final PsiMethod[] methods = overrideOrImplementMethods(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
     return convert2GenerationInfos(methods);
   }
 
@@ -290,7 +284,7 @@ public class OverrideImplementUtil {
 
   @NotNull
   public static PsiMethod[] overrideOrImplementMethods(PsiClass aClass,
-                                                       CandidateInfo[] candidates,
+                                                       Collection<CandidateInfo> candidates,
                                                        boolean toCopyJavaDoc,
                                                        boolean toInsertAtOverride) throws IncorrectOperationException {
     List<PsiMethod> result = new ArrayList<PsiMethod>();
@@ -303,7 +297,7 @@ public class OverrideImplementUtil {
 
   @NotNull
   private static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
       buffer.append("return ");
     }
@@ -396,9 +390,9 @@ public class OverrideImplementUtil {
     LOG.assertTrue(aClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    CandidateInfo[] candidates = getMethodsToOverrideImplement(aClass, toImplement);
+    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
 
-    if (candidates.length == 0) return;
+    if (candidates.isEmpty()) return;
 
     boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0;
     final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
@@ -412,24 +406,19 @@ public class OverrideImplementUtil {
     chooser.setCopyJavadocVisible(true);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
-    List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.size() == 0) return;
-
-    final PsiMethodMember[] selectedCandidates = new PsiMethodMember[selectedElements.size()];
-    for (int i = 0; i < selectedCandidates.length; i++) {
-      selectedCandidates[i] = selectedElements.get(i);
-    }
+    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+    if (selectedElements == null || selectedElements.isEmpty()) return;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedCandidates, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
     });
   }
 
   public static void overrideOrImplementMethodsInRightPlace(Editor editor,
                                                             PsiClass aClass,
-                                                            PsiMethodMember[] candidates,
+                                                            Collection<PsiMethodMember> candidates,
                                                             boolean copyJavadoc,
                                                             boolean insertAtOverride) {
     try{
@@ -443,9 +432,8 @@ public class OverrideImplementUtil {
           PsiMethod[] prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
                                                              copyJavadoc, insertAtOverride);
           for (PsiMethod prototype : prototypes) {
-            PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(),
-                                                                      candidate.getSubstitutor());
-            PsiElement result = anchor != null ? aClass.addBefore(prototype, anchor) : aClass.add(prototype);
+            PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
+            PsiElement result = GenerateMembersUtil.insert(aClass, prototype, anchor, true);
             list.add(new PsiGenerationInfo((PsiMethod)result));
           }
         }

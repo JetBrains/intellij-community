@@ -23,6 +23,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 public class ChangeParameterClassFix extends ExtendsListFix {
   private ChangeParameterClassFix(PsiClass aClassToExtend, PsiClassType parameterClass) {
     super(aClassToExtend, parameterClass, true);
@@ -57,18 +59,19 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     );
     final Editor editor1 = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass);
     if (editor1 == null) return;
-    final CandidateInfo[] toImplement = OverrideImplementUtil.getMethodsToOverrideImplement(myClass, true);
-    if (toImplement.length != 0 ) {
+    final Collection<CandidateInfo> toImplement = OverrideImplementUtil.getMethodsToOverrideImplement(myClass, true);
+    if (!toImplement.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, ContainerUtil.map2Array(toImplement,
-                                                                                                                     PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
-                public PsiMethodMember fun(final CandidateInfo s) {
-                  return new PsiMethodMember(s);
-                }
-              }), false, false);
+              Collection<PsiMethodMember> members =
+                ContainerUtil.map2List(toImplement, new Function<CandidateInfo, PsiMethodMember>() {
+                  public PsiMethodMember fun(final CandidateInfo s) {
+                    return new PsiMethodMember(s);
+                  }
+                });
+              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false, false);
             }
           });
       }
