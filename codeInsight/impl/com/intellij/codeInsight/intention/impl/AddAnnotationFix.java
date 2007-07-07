@@ -110,7 +110,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         annotationsManager.annotateExternally(myModifierListOwner, myFQN);
       }
       else {
-        if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+        if (!CodeInsightUtil.preparePsiElementForWrite(modifierList)) return;
         PsiManager manager = file.getManager();
         PsiElementFactory factory = manager.getElementFactory();
         PsiAnnotation annotation = factory.createAnnotationFromText("@" + myFQN, myModifierListOwner);
