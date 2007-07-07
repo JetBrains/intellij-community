@@ -97,7 +97,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
-  private Map<PsiMethodCallExpression,PsiMethod> myOverloadsResolveMap;
 
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
@@ -128,12 +127,12 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static PsiElement[] processCodeBlockChildren(PsiElement[] codeBlockChildren) {
-    int resultStart = 0;
     int resultLast = codeBlockChildren.length;
 
     if (codeBlockChildren.length == 0) return PsiElement.EMPTY_ARRAY;
 
     final PsiElement first = codeBlockChildren[0];
+    int resultStart = 0;
     if (first instanceof PsiJavaToken && ((PsiJavaToken)first).getTokenType() == JavaTokenType.LBRACE) {
       resultStart++;
     }
@@ -160,7 +159,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean areExitStatementsTheSame() {
-    if (myExitStatements.size() == 0) return false;
+    if (myExitStatements.isEmpty()) return false;
     PsiStatement firstExitStatement = myExitStatements.get(0);
     for (int i = 1; i < myExitStatements.size(); i++) {
       PsiStatement statement = myExitStatements.get(i);
@@ -218,7 +217,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         LOG.debug("  " + exitStatement);
       }
     }
-    if (exitPoints.size() == 0) {
+    if (exitPoints.isEmpty()) {
       // if the fragment never exits assume as if it exits in the end
       exitPoints.add(myControlFlow.getEndOffset(myElements[myElements.length - 1]));
     }
@@ -280,8 +279,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     //varargs variables go last, otherwise order is induced by original ordering
     Arrays.sort(myInputVariables, new Comparator<PsiVariable>() {
       public int compare(final PsiVariable v1, final PsiVariable v2) {
-        return v1.getType() instanceof PsiEllipsisType ? 1 : v2.getType() instanceof PsiEllipsisType ? -1 :
-                                                             v1.getTextRange().getStartOffset() - v2.getTextRange().getStartOffset();
+        if (v1.getType() instanceof PsiEllipsisType) {
+          return 1;
+        }
+        if (v2.getType() instanceof PsiEllipsisType) {
+          return -1;
+        }
+        return v1.getTextOffset() - v2.getTextOffset();
       }
     });
 
@@ -449,10 +453,11 @@ public class ExtractMethodProcessor implements MatchProvider {
                                         new LocalSearchScope(myTargetClass) :
                                         GlobalSearchScope.projectScope(myProject);
 
-    myOverloadsResolveMap = ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
+    final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap =
+      ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
 
     PsiMethodCallExpression methodCall = doExtract();
-    ExtractMethodUtil.decodeOverloadTargets(myOverloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
+    ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
 
     LogicalPosition pos1 = new LogicalPosition(line, col);
     myEditor.getCaretModel().moveToLogicalPosition(pos1);
@@ -604,8 +609,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     else {
       if (myHasExpressionOutput) {
         PsiReturnStatement returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return x;", null);
-        final PsiExpression returnValue;
-        returnValue = RefactoringUtil.convertInitializerToNormalExpression(myExpression, myForcedReturnType);
+        final PsiExpression returnValue = RefactoringUtil.convertInitializerToNormalExpression(myExpression, myForcedReturnType);
         returnStatement.getReturnValue().replace(returnValue);
         body.add(returnStatement);
       }
@@ -744,8 +748,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
 
   private void calculateFlowStartAndEnd() {
-    int index = 0;
     myFlowStart = -1;
+    int index = 0;
     while (index < myElements.length) {
       myFlowStart = myControlFlow.getStartOffset(myElements[index]);
       if (myFlowStart >= 0) break;
@@ -806,7 +810,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         list.add(parm);
       }
       else {
-        @NonNls StringBuffer buffer = new StringBuffer();
+        @NonNls StringBuilder buffer = new StringBuilder();
         if (isFinal) {
           buffer.append("final ");
         }
@@ -819,7 +823,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         declaration = (PsiDeclarationStatement)myStyleManager.reformat(declaration);
         final PsiTypeElement typeElement = myElementFactory.createTypeElement(data.type);
         ((PsiVariable)declaration.getDeclaredElements()[0]).getTypeElement().replace(typeElement);
-        declaration = (PsiDeclarationStatement)body.add(declaration);
+        body.add(declaration);
       }
     }
 
@@ -832,7 +836,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
 
     final boolean skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
     if (skipInstanceQualifier) {
@@ -997,7 +1001,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void showMultipleOutputMessage(PsiType expressionType) {
     if (myShowErrorDialogs) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append(RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
       buffer.append("\n");
