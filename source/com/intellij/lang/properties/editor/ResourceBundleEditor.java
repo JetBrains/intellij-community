@@ -7,7 +7,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -429,13 +428,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }, 300, ModalityState.stateForComponent(getComponent()));
   }
 
-  private @Nullable String getSelectedPropertyName() {
+  @Nullable
+  private String getSelectedPropertyName() {
     JTree tree = myStructureViewComponent.getTree();
     if (tree == null) return null;
     TreePath selected = tree.getSelectionModel().getSelectionPath();
     if (selected == null) return null;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)selected.getLastPathComponent();
-    Object value = ((AbstractTreeNode)node.getUserObject()).getValue();
+    Object userObject = node.getUserObject();
+    if (!(userObject instanceof AbstractTreeNode)) return null;
+    Object value = ((AbstractTreeNode)userObject).getValue();
     return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue() : null;
   }
 
