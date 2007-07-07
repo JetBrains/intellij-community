@@ -45,5 +45,9 @@ public class StringUtilTest extends TestCase {
     assertEquals("\"ddd\"", strings.get(3));
     assertEquals("\"e\\\"e\\\"e\"", strings.get(4));
   }
-  
+
+  public void testUnpluralize() {
+    assertEquals("s", StringUtil.unpluralize("s"));
+    assertEquals("z", StringUtil.unpluralize("zs"));
+  }
 }

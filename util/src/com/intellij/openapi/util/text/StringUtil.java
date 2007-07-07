@@ -979,8 +979,9 @@ public class StringUtil {
       return name.substring(0, name.length() - 3) + "y";
     }
 
-    if (endsWithChar(name, 's')) {
-      return name.substring(0, name.length() - 1);
+    String result = stripEnding(name, "s");
+    if (result != null) {
+      return result;
     }
 
     if (name.endsWith("children")) {
@@ -991,6 +992,14 @@ public class StringUtil {
       return name.substring(0, name.length() - "Children".length()) + "Child";
     }
 
+    return null;
+  }
+
+  private static String stripEnding(String name, String ending) {
+    if (name.endsWith(ending)) {
+      if (name.equals(ending)) return name; // do not return empty string
+      return name.substring(0, name.length() - 1);
+    }
     return null;
   }
 
