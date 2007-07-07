@@ -51,7 +51,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
     return true;
   }
 
-  public @Nullable PsiExpressionList findElementForParameterInfo(final CreateParameterInfoContext context) {
+  @Nullable
+  public PsiExpressionList findElementForParameterInfo(final CreateParameterInfoContext context) {
     final PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
     if (argumentList != null) {
       CandidateInfo[] candidates = getMethods(argumentList);
@@ -72,7 +73,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
     return findArgumentList(context.getFile(), context.getOffset(), context.getParameterStart());
   }
 
-  public void updateParameterInfo(final PsiExpressionList o, final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull final PsiExpressionList o, final UpdateParameterInfoContext context) {
     updateMethodInfo(o, context);
   }
 
@@ -167,9 +168,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
     PsiResolveHelper helper = argList.getManager().getResolveHelper();
 
     if (call instanceof PsiCallExpression) {
-      ArrayList<CandidateInfo> result;
       CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);
-      result = new ArrayList<CandidateInfo>();
+      ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
 
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
         for (CandidateInfo candidate : candidates) {
@@ -179,7 +179,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
       else {
         PsiClass aClass = (PsiAnonymousClass)argList.getParent();
         for (CandidateInfo candidate : candidates) {
-          if (candidate.isStaticsScopeCorrect() && helper.isAccessible(((PsiMethod)candidate.getElement()), argList, aClass)) {
+          if (candidate.isStaticsScopeCorrect() && helper.isAccessible((PsiMethod)candidate.getElement(), argList, aClass)) {
             result.add(candidate);
           }
         }
@@ -206,7 +206,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
     Object[] candidates = context.getObjectsToView();
     PsiExpression[] args = list.getExpressions();
     for(int i = 0; i < candidates.length; i++) {
-      boolean enabled = true;
       CandidateInfo candidate = (CandidateInfo) candidates[i];
       PsiMethod method = (PsiMethod) candidate.getElement();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
@@ -218,6 +217,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
       }
 
       PsiParameter[] parms = method.getParameterList().getParameters();
+      boolean enabled = true;
       if (parms.length <= index){
         if (parms.length > 0){
           if (method.isVarArgs()) {
@@ -242,7 +242,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
                 }
               }
               else {
-                for (int j = parms.length; j <= index; j++) {
+                for (int j = parms.length; j <= index && j<args.length; j++) {
                   PsiExpression arg = args[j];
                   PsiType argType = arg.getType();
                   if (argType != null && !componentType.isAssignableFrom(argType)) {
@@ -287,16 +287,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
       return;
     }
 
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
-
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO){
       if (!method.isConstructor()){
         PsiType returnType = method.getReturnType();
         if (substitutor != null) {
-          returnType = substitutor.substitute((returnType));
+          returnType = substitutor.substitute(returnType);
         }
         buffer.append(returnType.getPresentableText());
         buffer.append(" ");
@@ -309,6 +306,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
 
     PsiParameter[] parms = method.getParameterList().getParameters();
     int numParams = parms.length;
+    int highlightStartOffset = -1;
+    int highlightEndOffset = -1;
     if (numParams > 0){
       for(int j = 0; j < numParams; j++) {
         PsiParameter parm = parms[j];
