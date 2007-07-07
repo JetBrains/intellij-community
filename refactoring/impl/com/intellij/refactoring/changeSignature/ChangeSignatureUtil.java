@@ -1,11 +1,11 @@
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.List;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dsl
@@ -14,8 +14,7 @@ public class ChangeSignatureUtil {
   private ChangeSignatureUtil() {}
 
   public static <Parent extends PsiElement, Child extends PsiElement>
-    void synchronizeList(Parent list,
-                         final List<Child> newElements, ChildrenGenerator<Parent, Child> generator, final boolean[] shouldRemoveChild)
+  void synchronizeList(Parent list, final List<Child> newElements, ChildrenGenerator<Parent, Child> generator, final boolean[] shouldRemoveChild)
     throws IncorrectOperationException {
 
     ArrayList<Child> elementsToRemove = null;
@@ -41,7 +40,9 @@ public class ChangeSignatureUtil {
         if (oldElement != null && elementsToRemove.contains(oldElement)) {
           oldElement.delete();
           index--;
-        } else {
+        }
+        else {
+          assert list.isWritable() : PsiUtil.getVirtualFile(list);
           list.addBefore(newElement, oldElement);
           if (list.equals(newElement.getParent())) {
             newElement.delete();

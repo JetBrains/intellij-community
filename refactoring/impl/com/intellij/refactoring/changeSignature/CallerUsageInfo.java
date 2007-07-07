@@ -7,13 +7,11 @@ import com.intellij.usageView.UsageInfo;
  * @author ven
  */
 public class CallerUsageInfo extends UsageInfo {
-  private PsiMethod myMethod;
   private final boolean myToInsertParameter;
   private final boolean myToInsertException;
 
   public CallerUsageInfo(final PsiMethod method, boolean isToInsertParameter, boolean isToInsertException) {
     super(method);
-    myMethod = method;
     myToInsertParameter = isToInsertParameter;
     myToInsertException = isToInsertException;
   }
@@ -27,6 +25,6 @@ public class CallerUsageInfo extends UsageInfo {
   }
 
   public PsiMethod getMethod() {
-    return myMethod;
+    return (PsiMethod)getElement();
   }
 }

@@ -306,32 +306,30 @@ public abstract class BaseRefactoringProcessor {
       }
     }
 
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction action = LocalHistory.startAction(myProject, getCommandName());
 
-    final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
+    final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
-      Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
-      performRefactoring(usages);
+      Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(writableUsageInfos);
+      performRefactoring(writableUsageInfos);
       removeRedundantImports(touchedJavaFiles);
       myTransaction.commit();
       performPsiSpoilingRefactoring();
     }
     finally {
-      a.finish();
+      action.finish();
     }
 
-    if (usages != null) {
-      int count = usages.length;
-      if (count > 0) {
-        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
-      }
-      else {
-        if (!isPreviewUsages(usages)) {
-          WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.noUsages"));
-        }
+    int count = writableUsageInfos.length;
+    if (count > 0) {
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
+    }
+    else {
+      if (!isPreviewUsages(writableUsageInfos)) {
+        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.noUsages"));
       }
     }
   }
