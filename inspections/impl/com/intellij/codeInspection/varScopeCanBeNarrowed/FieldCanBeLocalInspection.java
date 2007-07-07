@@ -47,7 +47,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     return SHORT_NAME;
   }
 
-  public ProblemDescriptor[] checkClass(final PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (aClass.isInterface()) return null;
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
     if (topLevelClass == null) return null;
@@ -88,7 +88,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     topLevelClass.accept(new PsiRecursiveElementVisitor() {
 
       public void visitElement(PsiElement element) {
-        if (candidates.size() > 0) super.visitElement(element);
+        if (!candidates.isEmpty()) super.visitElement(element);
       }
 
       public void visitMethod(PsiMethod method) {
@@ -164,7 +164,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       PsiManager manager = PsiManager.getInstance(project);
       final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
-      LOG.assertTrue(refs.size() > 0);
+      LOG.assertTrue(!refs.isEmpty());
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
       PsiCodeBlock anchorBlock = findAnchorBlock(refs);
       if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
@@ -284,7 +284,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       for (PsiReference psiReference : refs) {
         final PsiElement element = psiReference.getElement();
         PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-        if (result == null) {
+        if (result == null || block == null) {
           result = block;
         }
         else {
