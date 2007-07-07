@@ -27,7 +27,8 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
               if (javaReference.getParent() instanceof PsiAnnotation) {
                 PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
                 if (members.length == 1 && members[0].getNameIdentifier() == null) {
-                  if (!consumer.process(members[0].getReference())) return false;
+                  PsiReference t = members[0].getReference();
+                  if (t != null && !consumer.process(t)) return false;
                 }
               }
             }

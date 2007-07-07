@@ -5,29 +5,29 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 
-import java.util.Set;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -74,9 +74,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                    GlobalSearchScope scope, final LocalSearchScope filterScope) {
     PsiManagerImpl manager = (PsiManagerImpl)aClass.getManager();
     String className = aClass.getQualifiedName();
-    if (className == null) return true;
-
-    return processReferencesInUIFormsInner(className, aClass, processor, scope, manager, filterScope);
+    return className == null || processReferencesInUIFormsInner(className, aClass, processor, scope, manager, filterScope);
   }
 
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
@@ -84,9 +82,8 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                    GlobalSearchScope scope, final LocalSearchScope filterScope) {
     PsiManagerImpl manager = (PsiManagerImpl)enumConstant.getManager();
     String className = enumConstant.getName();
-    if (className == null) return true;
+    return className == null || processReferencesInUIFormsInner(className, enumConstant, processor, scope, manager, filterScope);
 
-    return processReferencesInUIFormsInner(className, enumConstant, processor, scope, manager, filterScope);
   }
 
   public static boolean processReferencesInUIForms(Processor<PsiReference> processor,
@@ -204,13 +201,13 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     manager.startBatchFilesProcessingMode();
 
     try {
-      String[] words = StringUtil.getWordsIn(name).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-      if(words.length == 0) return true;
+      List<String> words = StringUtil.getWordsIn(name);
+      if(words.isEmpty()) return true;
 
       Set<PsiFile> fileSet = new HashSet<PsiFile>();
-      fileSet.addAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words[0], UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
-      for (int i = 1; i < words.length; i++) {
-        fileSet.retainAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words[i], UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+      fileSet.addAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+      for (int i = 1; i < words.size(); i++) {
+        fileSet.retainAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(i), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
       }
       PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
