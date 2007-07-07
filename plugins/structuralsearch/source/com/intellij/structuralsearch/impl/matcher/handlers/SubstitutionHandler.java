@@ -38,6 +38,11 @@ public class SubstitutionHandler extends Handler {
     this.greedy = greedy;
   }
 
+  public SubstitutionHandler(final SubstitutionHandler substitutionHandler) {
+    this(substitutionHandler.getName(),substitutionHandler.isTarget(), substitutionHandler.getMinOccurs(),
+         substitutionHandler.getMaxOccurs(), substitutionHandler.greedy);
+  }
+
   public boolean isSubtype() {
     return subtype;
   }

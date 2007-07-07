@@ -352,6 +352,18 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return predicate==null || handler.getMinOccurs() == 0 || !predicate.couldBeOptimized();
   }
 
+  public void visitClassInitializer(final PsiClassInitializer initializer) {
+    super.visitClassInitializer(initializer);
+    PsiStatement[] psiStatements = initializer.getBody().getStatements();
+    if (psiStatements.length == 1 && psiStatements[0] instanceof PsiExpressionStatement) {
+      Handler handler = context.pattern.getHandler(psiStatements[0]);
+
+      if (handler instanceof SubstitutionHandler) {
+        context.pattern.setHandler(initializer, new SubstitutionHandler((SubstitutionHandler)handler));
+      }
+    }
+  }
+
   public void visitField(PsiField psiField) {
     super.visitField(psiField);
     final Handler handler = context.pattern.getHandler(psiField);

@@ -2431,4 +2431,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "    '_RetType createDefaultTemplate() { '_Statements*; }\n" + "\t'_Content*\n" + "}";
     assertEquals("Bug in class matching", 1, findMatchesCount(s1,s2));
   }
+
+  public void testStaticInstanceInitializers() {
+    String s1 = "public class DiallingNumber {\n static { int a = 1; } static { int b = 1; } { int c = 2; }}";
+    String s2 = "class '_Class {\n" + "    static { 't*; } }";
+    String s2_2 = "class '_Class {\n" + "    { 't*; } }";
+    String s2_3 = "class '_Class {\n" + "    @Modifier(\"Instance\") { 't*; } }";
+    assertEquals("Static / instance initializers", 2, findMatchesCount(s1,s2));
+    assertEquals("Static / instance initializers", 1, findMatchesCount(s1,s2_3));
+    assertEquals("Static / instance initializers", 3, findMatchesCount(s1,s2_2));
+  }
 }

@@ -163,6 +163,21 @@ public class PredefinedConfiguration extends Configuration {
         "class 'A implements '_Interface1:[regex( *java\\.lang\\.Cloneable )], '_Interface2:*java\\.io\\.Serializable {\n" +"}",
         CLASS_TYPE
       ),
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.class.static.blocks"),
+        "class '_A {\n  static {\n    'Statement*;\n  }\n}",
+        CLASS_TYPE
+      ),
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.class.instance.initialization.blocks"),
+        "class '_A {\n  @Modifier(\"Instance\") {\n    'Statement*;\n  }\n}",
+        CLASS_TYPE
+      ),
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.class.any.initialization.blocks"),
+        "class '_A {\n  {\n    'Statement*;\n  }\n}",
+        CLASS_TYPE
+      ),
 
       // Generics
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"),"class 'GenericClass<'_TypeParameter+> {} ", GENERICS_TYPE),
@@ -298,7 +313,7 @@ public class PredefinedConfiguration extends Configuration {
       createSearchTemplateInfo("xml tag", "<'a/>",HTML_XML, StdFileTypes.XML),
       createSearchTemplateInfo("xml attribute", "<'_tag 'attribute='_value/>",HTML_XML, StdFileTypes.XML),
       createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute='value/>",HTML_XML, StdFileTypes.XML),
-      createSearchTemplateInfo("html tables", "<table>'_content*</table>",HTML_XML, StdFileTypes.HTML),
+      createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>",HTML_XML, StdFileTypes.HTML),
     };
   }
 
