@@ -55,18 +55,18 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   private final ControlFlowFactory myControlFlowFactory;
   private final Map<PsiElement, ControlFlowSubRange> mySubRanges = new THashMap<PsiElement, ControlFlowSubRange>();
 
-  ControlFlowAnalyzer(PsiElement codeFragment,
-                             ControlFlowPolicy policy,
-                             boolean enabledShortCircuit,
-                             boolean evaluateConstantIfConfition) {
-    this (codeFragment, policy, enabledShortCircuit, evaluateConstantIfConfition, false);
+  ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
+                      @NotNull ControlFlowPolicy policy,
+                      boolean enabledShortCircuit,
+                      boolean evaluateConstantIfConfition) {
+    this(codeFragment, policy, enabledShortCircuit, evaluateConstantIfConfition, false);
   }
 
-  private ControlFlowAnalyzer(PsiElement codeFragment,
-                             ControlFlowPolicy policy,
-                             boolean enabledShortCircuit,
-                             boolean evaluateConstantIfConfition,
-                             boolean assignmentTargetsAreElements) {
+  private ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
+                              @NotNull ControlFlowPolicy policy,
+                              boolean enabledShortCircuit,
+                              boolean evaluateConstantIfConfition,
+                              boolean assignmentTargetsAreElements) {
     myCodeFragment = codeFragment;
     myPolicy = policy;
     myEnabledShortCircuit = enabledShortCircuit;
@@ -1022,7 +1022,9 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       if (myPolicy.isParameterAccepted(catchBlockParameters[i])) {
         generateWriteInstruction(catchBlockParameters[i]);
       }
-      catchBlocks[i].accept(this);
+      PsiCodeBlock catchBlock = catchBlocks[i];
+      assert catchBlock != null : statement.getText();
+      catchBlock.accept(this);
 
       myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
       if (finallyBlock == null) {
@@ -1107,7 +1109,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       // just in case
       myCurrentFlow.addInstruction(new ThrowToInstruction(0));
       addElementOffsetLater(myCodeFragment, false);
-
     }
 
     finishElement(statement);
