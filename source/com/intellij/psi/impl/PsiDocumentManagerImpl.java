@@ -453,6 +453,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
 
         textBlock.documentChanged(event);
+        assert file instanceof PsiFileImpl : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
         myUncommittedDocuments.add(document);
         commitNecessary = true;
       }
