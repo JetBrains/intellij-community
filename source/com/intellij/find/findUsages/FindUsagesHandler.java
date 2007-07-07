@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class FindUsagesHandler {
   private final PsiElement myPsiElement;
 
-  protected FindUsagesHandler(final PsiElement psiElement) {
+  protected FindUsagesHandler(@NotNull PsiElement psiElement) {
     myPsiElement = psiElement;
   }
 
@@ -27,7 +27,7 @@ public abstract class FindUsagesHandler {
   }
 
   protected final Project getProject() {
-    return myPsiElement.getManager().getProject();
+    return myPsiElement.getProject();
   }
 
   @NotNull

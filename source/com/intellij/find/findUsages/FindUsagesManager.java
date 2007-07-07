@@ -123,8 +123,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           return new Factory<FindUsagesHandler>() {
             @Nullable
             public FindUsagesHandler create() {
-              final PsiMethod[] methods =
-                SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, DefaultFindUsagesHandler.ACTION_STRING);
+              final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, DefaultFindUsagesHandler.ACTION_STRING);
               if (methods.length > 1) {
                 return new DefaultFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions,
                                                     findPointcutOptions, findVariableOptions);

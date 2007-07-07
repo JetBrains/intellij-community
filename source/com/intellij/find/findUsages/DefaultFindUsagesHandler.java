@@ -37,22 +37,23 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
   private final FindUsagesOptions myFindVariableOptions;
   private final FindUsagesOptions myFindPointcutOptions;
 
-  public DefaultFindUsagesHandler(final PsiElement psiElement,
-                                final FindUsagesOptions findClassOptions,
-                                final FindUsagesOptions findMethodOptions,
-                                final FindUsagesOptions findPackageOptions,
-                                final FindUsagesOptions findPointcutOptions,
-                                final FindUsagesOptions findVariableOptions) {
-    this(psiElement, null, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
+  public DefaultFindUsagesHandler(@NotNull PsiElement psiElement,
+                                @NotNull FindUsagesOptions findClassOptions,
+                                @NotNull FindUsagesOptions findMethodOptions,
+                                @NotNull FindUsagesOptions findPackageOptions,
+                                @NotNull FindUsagesOptions findPointcutOptions,
+                                @NotNull FindUsagesOptions findVariableOptions) {
+    this(psiElement, PsiElement.EMPTY_ARRAY, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
   }
 
 
-  public DefaultFindUsagesHandler(final PsiElement psiElement, final PsiElement[] elementsToSearch,
-                                  final FindUsagesOptions findClassOptions,
-                                  final FindUsagesOptions findMethodOptions,
-                                  final FindUsagesOptions findPackageOptions,
-                                  final FindUsagesOptions findPointcutOptions,
-                                  final FindUsagesOptions findVariableOptions) {
+  public DefaultFindUsagesHandler(@NotNull PsiElement psiElement, 
+                                  @NotNull PsiElement[] elementsToSearch,
+                                  @NotNull FindUsagesOptions findClassOptions,
+                                  @NotNull FindUsagesOptions findMethodOptions,
+                                  @NotNull FindUsagesOptions findPackageOptions,
+                                  @NotNull FindUsagesOptions findPointcutOptions,
+                                  @NotNull FindUsagesOptions findVariableOptions) {
     super(psiElement);
     myElementsToSearch = elementsToSearch;
     myFindClassOptions = findClassOptions;
@@ -120,14 +121,15 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
         if (PsiUtil.canBeOverriden(method)) {
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
-          if (aClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-              shouldSearchForParameterInOverridingMethods(element, parameter)) {
+          if (aClass.isInterface()
+              || method.hasModifierProperty(PsiModifier.ABSTRACT)
+              || shouldSearchForParameterInOverridingMethods(element, parameter)) {
             return getParameterElementsToSearch(parameter);
           }
         }
       }
     }
-    return myElementsToSearch == null ? new PsiElement[]{element} : myElementsToSearch;
+    return myElementsToSearch.length == 0 ? new PsiElement[]{element} : myElementsToSearch;
   }
 
   @NotNull
