@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
@@ -50,10 +50,8 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
   public boolean hasModifierProperty(@NotNull String name) {
     int flag = ourModifierNameToFlagMap.get(name);
     if (flag == 0) {
-      if (PsiModifier.PACKAGE_LOCAL.equals(name)) {
-        return (myFlags & (ClsUtil.ACC_PUBLIC | ClsUtil.ACC_PROTECTED | ClsUtil.ACC_PRIVATE)) == 0;
-      }
-      return false;
+      return PsiModifier.PACKAGE_LOCAL.equals(name) &&
+             (myFlags & (ClsUtil.ACC_PUBLIC | ClsUtil.ACC_PROTECTED | ClsUtil.ACC_PRIVATE)) == 0;
     }
     return (myFlags & flag) != 0;
   }
@@ -91,10 +89,9 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
 
     //TODO : filtering & ordering modifiers can go to CodeStyleManager
     boolean isInterface = myParent instanceof PsiClass && ((PsiClass)myParent).isInterface();
-    boolean isInterfaceMethod = myParent instanceof PsiMethod && ((PsiClass)myParent.getParent()).isInterface();
-    boolean isInterfaceField = myParent instanceof PsiField && ((PsiClass)myParent.getParent()).isInterface();
-    boolean isInterfaceClass =
-      myParent instanceof PsiClass && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
+    boolean isInterfaceMethod = myParent instanceof PsiMethod && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
+    boolean isInterfaceField = myParent instanceof PsiField && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
+    boolean isInterfaceClass = myParent instanceof PsiClass && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
     if (hasModifierProperty(PsiModifier.PUBLIC)) {
       if (!isInterfaceMethod && !isInterfaceField && !isInterfaceClass) {
         buffer.append(PsiModifier.PUBLIC);
@@ -147,7 +144,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
 
   public void setMirror(TreeElement element) {
     LOG.assertTrue(myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.MODIFIER_LIST);
+    LOG.assertTrue(element.getElementType() == JavaElementType.MODIFIER_LIST);
     myMirror = element;
     PsiElement[] mirrorAnnotations = ((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(element)).getAnnotations();
     PsiAnnotation[] annotations = getAnnotations();
