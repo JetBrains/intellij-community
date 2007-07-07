@@ -270,8 +270,10 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
                   String resourcePath;
 
+                  String refname = s.substring(s.lastIndexOf('/') + 1);
+                  if (absoluteUrl) refname = Integer.toHexString(s.hashCode()) + "_" + refname;
                   try {
-                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, s.substring(s.lastIndexOf('/') + 1));
+                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refname);
                   }
                   catch (IOException e) {
                     nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
