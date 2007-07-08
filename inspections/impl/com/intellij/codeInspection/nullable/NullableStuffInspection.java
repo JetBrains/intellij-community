@@ -108,19 +108,20 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     PsiAnnotation isDeclaredNotNull = AnnotationUtil.findAnnotation(parameter, AnnotationUtil.NOT_NULL);
     PsiAnnotation isDeclaredNullable = AnnotationUtil.findAnnotation(parameter, AnnotationUtil.NULLABLE);
     if (isDeclaredNullable != null && isDeclaredNotNull != null) {
-      reportNullableNotNullConflict(holder, isDeclaredNullable,  isDeclaredNotNull);
+      reportNullableNotNullConflict(holder, parameter, isDeclaredNullable,  isDeclaredNotNull);
     }
     if ((isDeclaredNotNull != null || isDeclaredNullable != null) && type != null && TypeConversionUtil.isPrimitive(type.getCanonicalText())) {
       PsiAnnotation annotation = isDeclaredNotNull == null ? isDeclaredNullable : isDeclaredNotNull;
-      reportPrimitiveType(holder, annotation, annotation);
+      reportPrimitiveType(holder, annotation, annotation, parameter);
     }
     return new Annotated(isDeclaredNotNull != null,isDeclaredNullable != null);
   }
 
-  private static void reportPrimitiveType(final ProblemsHolder holder, final PsiElement psiElement, final PsiAnnotation annotation) {
-    holder.registerProblem(psiElement,
+  private static void reportPrimitiveType(final ProblemsHolder holder, final PsiElement psiElement, final PsiAnnotation annotation,
+                                          final PsiModifierListOwner listOwner) {
+    holder.registerProblem(psiElement.isPhysical() ? psiElement : listOwner.getNavigationElement(),
                            InspectionsBundle.message("inspection.nullable.problems.primitive.type.annotation"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation));
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner));
   }
 
   @NotNull
@@ -251,14 +252,14 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     return new AnnotateMethodFix(AnnotationUtil.NOT_NULL).annotateBaseMethod(method, superMethod, project);
   }
 
-  private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiAnnotation declaredNullable,
+  private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,
                                                     final PsiAnnotation declaredNotNull) {
-    holder.registerProblem(declaredNotNull,
+    holder.registerProblem(declaredNotNull.isPhysical() ? declaredNotNull : listOwner.getNavigationElement(),
                            InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNotNull));
-    holder.registerProblem(declaredNullable,
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNotNull, listOwner));
+    holder.registerProblem(declaredNullable.isPhysical() ? declaredNullable : listOwner.getNavigationElement(),
                            InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNullable));
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNullable, listOwner));
   }
 
   public JComponent createOptionsPanel() {

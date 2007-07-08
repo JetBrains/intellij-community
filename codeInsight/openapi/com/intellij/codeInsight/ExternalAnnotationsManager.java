@@ -26,6 +26,8 @@ public abstract class ExternalAnnotationsManager {
 
   public abstract void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName);
 
+  public abstract boolean deannotate(final PsiModifierListOwner listOwner, final String annotationFQN);
+
   public abstract boolean useExternalAnnotations(final PsiElement element);
 
 }

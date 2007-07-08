@@ -159,6 +159,42 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
   }
 
+  public boolean deannotate(final PsiModifierListOwner listOwner, final String annotationFQN) {
+    final XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
+    if (xmlFile != null) {
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag rootTag = document.getRootTag();
+        if (rootTag != null) {
+          final String externalName = getNormalizedExternalName(listOwner);
+          for (final XmlTag tag : rootTag.getSubTags()) {
+            final String className = tag.getAttributeValue("name");
+            if (Comparing.strEqual(className, externalName)) {
+              for (XmlTag annotationTag : tag.getSubTags()) {
+                if (Comparing.strEqual(annotationTag.getAttributeValue("name"), annotationFQN)) {
+                  if (ReadonlyStatusHandler.getInstance(xmlFile.getProject())
+                    .ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return false;
+                  try {
+                    annotationTag.delete();
+                    if (tag.getSubTags().length == 0) {
+                      tag.delete();
+                    }
+                  }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
+                  }
+                  return true;
+                }
+              }
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return false; 
+  }
+
   public boolean useExternalAnnotations(@NotNull final PsiElement element) {
     if (!element.getManager().isInProject(element)) return true;
     final Project project = element.getProject();

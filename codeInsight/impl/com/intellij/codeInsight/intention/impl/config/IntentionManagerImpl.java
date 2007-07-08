@@ -16,11 +16,15 @@ import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +50,9 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);
     registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CATEGORY);
     registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new AddAnnotationFix(AnnotationUtil.NOT_NULL), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new AddAnnotationFix(AnnotationUtil.NULLABLE), CONTROL_FLOW_CATEGORY);
+    registerIntentionAndMetaData(new AddNotNullAnnotationFix(), CONTROL_FLOW_CATEGORY, "AddAnnotationFix");
+    registerIntentionAndMetaData(new AddNullableAnnotationFix(), CONTROL_FLOW_CATEGORY, "AddAnnotationFix");
+    registerIntentionAndMetaData(new DeannotateIntentionAction(), CONTROL_FLOW_CATEGORY);
 
     String[] DECLARATION_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
     registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CATEGORY);
@@ -122,7 +127,7 @@ public class IntentionManagerImpl extends IntentionManager {
     return fqn.substring(fqn.lastIndexOf('.') + 1);
   }
 
-  public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
+  public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
@@ -147,5 +152,27 @@ public class IntentionManagerImpl extends IntentionManager {
 
   public IntentionAction[] getIntentionActions() {
     return myActions.toArray(new IntentionAction[myActions.size()]);
+  }
+
+  public static class AddNotNullAnnotationFix extends AddAnnotationFix {
+    public AddNotNullAnnotationFix() {
+      super(AnnotationUtil.NOT_NULL);
+    }
+
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+      return super.isAvailable(project, editor, file) &&
+             !AnnotationUtil.isAnnotated(getContainer(editor, file), AnnotationUtil.NULLABLE, false);
+    }
+  }
+
+  public static class AddNullableAnnotationFix extends AddAnnotationFix {
+    public AddNullableAnnotationFix() {
+      super(AnnotationUtil.NULLABLE);
+    }
+
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+      return super.isAvailable(project, editor, file) &&
+             !AnnotationUtil.isAnnotated(getContainer(editor, file), AnnotationUtil.NOT_NULL, false);
+    }
   }
 }

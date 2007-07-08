@@ -174,14 +174,14 @@ public class AnnotationUtil {
           return true;
         }
       }
-      return false;
+    } else {
+      final PsiModifierList modifierList = listOwner.getModifierList();
+      if (modifierList == null) {
+        return false;
+      }
+      PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
+      if (annotation != null) return true;
     }
-    final PsiModifierList modifierList = listOwner.getModifierList();
-    if (modifierList == null) {
-      return false;
-    }
-    PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
-    if (annotation != null) return true;
     if (ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationFQN) != null) return true;
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;

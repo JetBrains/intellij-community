@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -70,6 +71,19 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Nullable
+  protected static PsiModifierListOwner getContainer(final Editor editor, final PsiFile file) {
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
+    if (listOwner == null) {
+      final PsiIdentifier psiIdentifier = PsiTreeUtil.getParentOfType(element, PsiIdentifier.class, false);
+      if (psiIdentifier != null && psiIdentifier.getParent() instanceof PsiModifierListOwner) {
+        listOwner = (PsiModifierListOwner)psiIdentifier.getParent();
+      }
+    }
+    return listOwner;
+  }
+
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myModifierListOwner != null) {
       return myModifierListOwner.isValid()
@@ -77,25 +91,17 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
              && myModifierListOwner.getModifierList() != null;
     }
     if (!file.getManager().isInProject(file)) {
-      final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      if (element != null) {
-        final PsiElement parent = element.getParent();
-        PsiModifierListOwner owner = null;
-        PsiType checkedType = null;
-        if (parent instanceof PsiModifierListOwner) {
-          if (parent instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)parent;
-            checkedType = method.getReturnType();
-            owner = method;
-          }
-          else if (parent instanceof PsiVariable) {
-            final PsiVariable variable = (PsiVariable)parent;
-            checkedType = variable.getType();
-            owner = variable;
-          }
-        }
-        return owner != null && !(checkedType instanceof PsiPrimitiveType) && !AnnotationUtil.isAnnotated(owner, myFQN, false);
+      final PsiModifierListOwner owner = getContainer(editor, file);
+      PsiType checkedType = null;
+      if (owner instanceof PsiMethod) {
+        checkedType = ((PsiMethod)owner).getReturnType();
+
       }
+      else if (owner instanceof PsiVariable) {
+        checkedType = ((PsiVariable)owner).getType();
+
+      }
+      return owner != null && !(checkedType instanceof PsiPrimitiveType) && !AnnotationUtil.isAnnotated(owner, myFQN, false);
     }
     return false;
   }
