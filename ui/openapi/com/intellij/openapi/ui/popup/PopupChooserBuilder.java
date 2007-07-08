@@ -19,7 +19,6 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ui.tree.TreeUtil;

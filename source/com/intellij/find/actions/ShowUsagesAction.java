@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.usages.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -79,11 +81,11 @@ public class ShowUsagesAction extends AnAction {
     }
     else {
       final String title = presentation.getTabText();
-      getUsagePopup(usages, title, processor, project).showInBestPositionFor(editor);
+      getUsagePopup(usages, title, processor).showInBestPositionFor(editor);
     }
   }
 
-  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor, final Project project) {
+  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor) {
     Collections.sort(usages, new Comparator<Usage>() {
       public int compare(final Usage o1, final Usage o2) {
         VirtualFile file1 = UsageListCellRenderer.getVirtualFile(o1);
@@ -108,6 +110,30 @@ public class ShowUsagesAction extends AnAction {
       }
     };
 
+    ListSpeedSearch speedSearch = new ListSpeedSearch(list) {
+
+      protected String getElementText(final Object element) {
+        StringBuilder text = new StringBuilder();
+        Usage usage = (Usage)element;
+        VirtualFile virtualFile = UsageListCellRenderer.getVirtualFile(usage);
+        if (virtualFile != null) {
+          text.append(virtualFile.getName());
+        }
+        TextChunk[] chunks = usage.getPresentation().getText();
+        for (TextChunk chunk : chunks) {
+          text.append(chunk.getText());
+        }
+        return text.toString();
+      }
+    };
+    speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator() {
+      public void translatePattern(final StringBuilder buf, final String pattern) {
+        final int len = pattern.length();
+        for (int i = 0; i < len; ++i) {
+          translateCharacter(buf, pattern.charAt(i));
+        }
+      }
+    });
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
     if (title != null) {
       builder.setTitle(title);

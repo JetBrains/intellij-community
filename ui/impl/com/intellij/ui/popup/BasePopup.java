@@ -61,7 +61,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   private Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
 
-  private SpeedSearch mySpeedSearch = new SpeedSearch() {
+  private final SpeedSearch mySpeedSearch = new SpeedSearch() {
     protected void update() {
       onSpeedSearchPatternChanged();
       mySpeedSearchPane.update();
@@ -143,7 +143,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
     myMnemonicsSearch = new MnemonicsSearch(this) {
       protected void select(Object value) {
-        BasePopup.this.onSelectByMnemonic(value);
+        onSelectByMnemonic(value);
       }
     };
 
