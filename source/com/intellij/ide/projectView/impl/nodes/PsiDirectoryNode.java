@@ -53,7 +53,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     final Project project = value.getManager().getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(value.getVirtualFile());
-    if (module == null) return true;
+    if (module == null) {
+      return fileIndex.getModuleForFile(file) == null;
+    }
     final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
     
     return moduleFileIndex.isInContent(file);

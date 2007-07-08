@@ -41,6 +41,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import gnu.trove.THashMap;
@@ -99,6 +100,6 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
 
   public boolean contains(@NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
+    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file) || VfsUtil.isAncestor(getProject().getBaseDir(), file, false);
   }
   }

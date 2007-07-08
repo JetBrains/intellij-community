@@ -170,14 +170,15 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testDeletingBigFiles() throws Exception {
-    File tempDir = createTempDirectory();
+    File tempDir = createTempDir("temp");
     File tempFile = new File(tempDir, "bigFile.java");
     OutputStream s = new FileOutputStream(tempFile);
     s.write(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
     s.close();
 
-    VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
-
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+    assertNotNull(f);
+    
     f.move(null, root);
     assertTrue(hasVcsEntry(f));
 

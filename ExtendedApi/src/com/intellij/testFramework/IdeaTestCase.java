@@ -142,6 +142,7 @@ import java.util.HashSet;
 
     File projectFile = File.createTempFile("temp", ".ipr");
     myFilesToDelete.add(projectFile);
+    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = myProjectManager.newProject(projectFile.getPath(), false, false);
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
@@ -550,15 +551,7 @@ import java.util.HashSet;
   }
 
   protected static VirtualFile getVirtualFile(final File file) {
-    VirtualFile virtualFile;
-    try {
-      virtualFile = LocalFileSystem.getInstance().findFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
-    }
-    catch (IOException e) {
-      assertTrue(false);
-      virtualFile = null;
-    }
-    return virtualFile;
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
   protected File createTempDirectory() throws IOException {

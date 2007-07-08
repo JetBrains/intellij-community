@@ -261,6 +261,22 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
+    //fill project base dir
+    final VirtualFile baseDir = myProject.getBaseDir();
+    final DirectoryInfo info = getOrCreateDirInfo(baseDir);
+    if (info.module == null) {
+      VirtualFile[] children = baseDir.getChildren();
+      for (VirtualFile child : children) {
+        if (child.isDirectory()) {
+          fillMapWithModuleContent(child, null, baseDir, excludeRootsMap.get(baseDir), forDir, fileTypeManager);
+        }
+      }
+
+      // important to change module AFTER processing children - to handle overlapping modules
+      info.module = null;
+      info.contentRoot = baseDir;
+    }
+
     // fill module sources
     for (Module module : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
@@ -834,9 +850,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (parentInfo == null) return;
 
       if (!LAZY_MODE) {
-        if (parentInfo.module != null) {
-          fillMapWithModuleContent(file, parentInfo.module, parentInfo.contentRoot, null, null, fileTypeManager);
+        fillMapWithModuleContent(file, parentInfo.module, parentInfo.contentRoot, null, null, fileTypeManager);
 
+        if (parentInfo.module != null) {
           if (parentInfo.isInModuleSource) {
             String newDirPackageName = getPackageNameForSubdir(parentInfo.packageName, file.getName());
             fillMapWithModuleSource(file, parentInfo.module, newDirPackageName, parentInfo.sourceRoot,

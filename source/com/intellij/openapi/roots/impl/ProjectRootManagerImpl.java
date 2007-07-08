@@ -243,6 +243,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       result.addAll(Arrays.asList(contentRoots));
     }
+    result.add(myProject.getBaseDir());
     return result.toArray(new VirtualFile[result.size()]);
   }
 
@@ -311,6 +312,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       result.addAll(Arrays.asList(files));
     }
+    result.add(myProject.getBaseDir());
     return result.toArray(new VirtualFile[result.size()]);
   }
 
@@ -623,6 +625,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     final String projectFile = myProject.getStateStore().getProjectFilePath();
     rootPaths.add(projectFile);
+    rootPaths.add(myProject.getBaseDir().getPath());
     // No need to add workspace file separately since they're definetely on same directory with ipr.
 
     for (Module module : modules) {

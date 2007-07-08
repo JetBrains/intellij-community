@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -119,6 +120,14 @@ public class TodoPackageUtil {
     }
     roots.removeAll(sourceRoots);
     for (VirtualFile dir : roots) {
+      boolean isKid = false;
+      for (VirtualFile root : roots) {
+        if (VfsUtil.isAncestor(root, dir, true)){
+          isKid= true;
+          break;
+        }
+      }
+      if (isKid) continue;
       final PsiDirectory directory = psiManager.findDirectory(dir);
       if (directory == null) {
         continue;

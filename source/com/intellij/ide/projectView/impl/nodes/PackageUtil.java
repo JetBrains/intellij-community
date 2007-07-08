@@ -186,7 +186,7 @@ public class PackageUtil {
   private static boolean isModuleContentRoot(VirtualFile directoryFile, Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
-    return directoryFile.equals(contentRootForFile);
+    return directoryFile.equals(contentRootForFile) || directoryFile.getParent() == project.getBaseDir();
   }
 
 
@@ -285,9 +285,7 @@ public class PackageUtil {
       parentPackage = null;
     }
 
-      final String name = parentValue instanceof Project ?
-      psiDirectory.getVirtualFile().getPresentableUrl() :
-      getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
+    final String name = getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
 
     final String packagePrefix = isSourceRoot(psiDirectory) && aPackage != null ? aPackage.getQualifiedName() : "";
 
@@ -484,6 +482,10 @@ public class PackageUtil {
     }
     if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && projectFileIndex.isJavaSourceFile(vFile)) {
       return; // skip java sources in classpath
+    }
+
+    if (moduleFileIndex == null && projectFileIndex.isInContent(vFile)) {
+      return;
     }
 
     try {
