@@ -18,6 +18,7 @@ import java.util.List;
 public class MavenEnv {
   @NonNls public static final String POM_FILE = "pom.xml";
 
+  @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
   @NonNls private static final String PROP_USER_HOME = "user.home";
   @NonNls private static final String ENV_M2_HOME = "M2_HOME";
 
@@ -169,6 +170,8 @@ public class MavenEnv {
     if (!validationResult.isValid()) {
       throw new MavenEmbedderException(getErrorString(validationResult, globalSettingsFile, userSettingsFile));
     }
+
+    System.setProperty(PROP_MAVEN_HOME, mavenHome);
 
     return new MavenEmbedder(configuration);
   }
