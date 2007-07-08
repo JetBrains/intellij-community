@@ -11,8 +11,15 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.ui.UIUtil;
 
-import java.awt.event.InputEvent;
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.*;
 
 /**
@@ -70,5 +77,77 @@ public class IdeaAPIHelper {
 
   private static <T> Collection<T> setize(final Collection<T> collection) {
     return (collection instanceof Set ? collection : new HashSet<T>(collection));
+  }
+
+  public static void installCheckboxRenderer(final SimpleTree tree, final CheckboxHandler handler) {
+    final JCheckBox checkbox = new JCheckBox();
+
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(checkbox, BorderLayout.WEST);
+
+    final TreeCellRenderer baseRenderer = tree.getCellRenderer();
+    tree.setCellRenderer(new TreeCellRenderer() {
+      public Component getTreeCellRendererComponent(final JTree tree,
+                                                    final Object value,
+                                                    final boolean selected,
+                                                    final boolean expanded,
+                                                    final boolean leaf,
+                                                    final int row,
+                                                    final boolean hasFocus) {
+        final Component baseComponent = baseRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+
+        final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+        if (!handler.isVisible(userObject)) {
+          return baseComponent;
+        }
+
+        final Color foreground = selected ? UIUtil.getTreeSelectonForeground() : UIUtil.getTreeTextForeground();
+
+        panel.add(baseComponent, BorderLayout.CENTER);
+        panel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
+        panel.setForeground(foreground);
+
+        checkbox.setSelected(handler.isSelected(userObject));
+        checkbox.setBackground(UIUtil.getTreeTextBackground());
+        checkbox.setForeground(foreground);
+
+        return panel;
+      }
+    });
+
+    tree.addMouseListener(new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        int row = tree.getRowForLocation(e.getX(), e.getY());
+        if (row >= 0) {
+          Rectangle checkBounds = checkbox.getBounds();
+          checkBounds.setLocation(tree.getRowBounds(row).getLocation());
+          if (checkBounds.contains(e.getPoint())) {
+            handler.toggle(tree.getPathForRow(row), e);
+            e.consume();
+            tree.setSelectionRow(row);
+          }
+        }
+      }
+    });
+
+    tree.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+          TreePath[] treePaths = tree.getSelectionPaths();
+          for (TreePath treePath : treePaths) {
+            handler.toggle(treePath, e);
+          }
+          e.consume();
+        }
+      }
+    });
+  }
+
+  public interface CheckboxHandler {
+    void toggle(TreePath treePath, final InputEvent e);
+
+    boolean isVisible(Object userObject);
+
+    boolean isSelected(Object userObject);
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.state.MavenIgnoreConfigurable;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 import org.jetbrains.idea.maven.state.StateBundle;
 

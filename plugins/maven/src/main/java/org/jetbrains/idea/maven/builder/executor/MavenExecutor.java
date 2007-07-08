@@ -91,17 +91,20 @@ public abstract class MavenExecutor extends ConsoleAdapter {
     }
   }
 
-  protected void printExitSummary() {
+  protected boolean printExitSummary() {
     if (isCancelled()) {
       systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("maven.execution.aborted"), null);
+      return false;
     }
     else if (exitCode == 0) {
       systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("maven.execution.finished"), null);
+      return true;
     }
     else {
       systemMessage(MavenLogUtil.LEVEL_ERROR, BuilderBundle.message("maven.execution.terminated.abnormally", exitCode), null);
+      return false;
     }
   }
 
-  public abstract void run();
+  public abstract boolean execute();
 }

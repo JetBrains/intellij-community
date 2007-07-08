@@ -1,21 +1,18 @@
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
@@ -24,7 +21,10 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
@@ -33,12 +33,14 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.awt.event.InputEvent;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenProjectNavigator extends PomTreeStructure implements ProjectComponent, MavenProjectsState.Listener, PersistentStateComponent<MavenNavigatorState> {
+public class MavenProjectNavigator extends PomTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.navigator.MavenProjectNavigator");
 
   public static MavenProjectNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectNavigator.class);
@@ -48,89 +50,168 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
   private final Icon myIcon = IconLoader.getIcon("/images/mavenEmblem.png");
 
-  private MavenNavigatorState settings = new MavenNavigatorState();
+  private PomTreeViewSettings settings = new PomTreeViewSettings();
 
   private final SimpleTreeBuilder treeBuilder;
   final SimpleTree tree;
 
   private Map<VirtualFile, PomNode> fileToNode = new HashMap<VirtualFile, PomNode>();
 
-  public MavenProjectNavigator(Project project, MavenProjectsState projectsState, MavenRepository repository) {
-    super(project, projectsState, repository);
+  public MavenProjectNavigator(Project project, MavenProjectsState projectsState, MavenRepository repository, MavenEventsHandler eventsHandler) {
+    super(project, projectsState, repository, eventsHandler);
 
     tree = new SimpleTree();
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    tree.addMouseListener(new PomTreePopupHandler());
-
     treeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
     treeBuilder.initRoot();
     Disposer.register(project, treeBuilder);
 
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        createToolWindow();
+    myProjectsState.addListener(new MavenProjectsState.Listener() {
+      public void activate() {
+        MavenProjectNavigator.LOG.assertTrue(fileToNode.isEmpty());
+
+        for (VirtualFile file : myProjectsState.getFiles()) {
+          fileToNode.put(file, new PomNode(file));
+        }
+
+        updateFromRoot(true, true);
+      }
+
+      public void createFile(final VirtualFile file) {
+        final PomNode newNode = new PomNode(file);
+        fileToNode.put(file, newNode);
+        root.addToStructure(newNode);
+      }
+
+      public void updateFile(VirtualFile file) {
+        final PomNode pomNode = fileToNode.get(file);
+        if (pomNode != null) {
+          pomNode.onFileUpdate();
+        }
+        else {
+          createFile(file);
+        }
+      }
+
+      public void removeFile(VirtualFile file) {
+        final PomNode pomNode = fileToNode.get(file);
+        if (pomNode != null) {
+          fileToNode.remove(file);
+          pomNode.removeFromParent();
+        }
+      }
+
+      public void setIgnored(VirtualFile file, boolean on) {
+        final PomNode pomNode = fileToNode.get(file);
+        if (pomNode != null) {
+          pomNode.setIgnored(on);
+        }
+      }
+
+      public void setProfiles(VirtualFile file, @NotNull Collection<String> profiles) {
+        final PomNode pomNode = fileToNode.get(file);
+        if (pomNode != null) {
+          pomNode.setProfiles(profiles);
+        }
+      }
+
+      public void attachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
+        final PomNode pomNode = fileToNode.get(file);
+        if (pomNode != null) {
+          pomNode.attachPlugins(plugins);
+        }
+      }
+
+      public void detachPlugins(final VirtualFile file, @NotNull final Collection<MavenId> plugins) {
+        final PomNode pomNode = fileToNode.get(file);
+        if (pomNode != null) {
+          pomNode.detachPlugins(plugins);
+        }
+      }
+    });
+
+    myEventsHandler.addListener( new MavenEventsHandler.Listener() {
+      public void updateShortcuts(@Nullable String actionId) {
+        for (PomNode pomNode : fileToNode.values()) {
+          pomNode.updateShortcuts(actionId);
+        }
+      }
+    });
+
+    myEventsHandler.installTaskSelector(new MavenEventsHandler.TaskSelector() {
+
+      SelectMavenGoalDialog dialog;
+
+      public boolean select(final Project project, @Nullable final String pomPath, @Nullable final String goal, @NotNull final String title) {
+        dialog = new SelectMavenGoalDialog(project, pomPath, goal, title);
+        dialog.show();
+        return dialog.isOK();
+      }
+
+      public String getSelectedPomPath() {
+        return dialog.getSelectedPomPath();
+      }
+
+      public String getSelectedGoal() {
+        return dialog.getSelectedGoal();
+      }
+    });
+
+    IdeaAPIHelper.installCheckboxRenderer(tree, new IdeaAPIHelper.CheckboxHandler() {
+      public void toggle(final TreePath treePath, final InputEvent e) {
+        final SimpleNode node = tree.getNodeFor(treePath);
+        if (node != null) {
+          node.handleDoubleClickOrEnter(tree, e);
+        }
+      }
+
+      public boolean isVisible(final Object userObject) {
+        return userObject instanceof ProfileNode;
+      }
+
+      public boolean isSelected(final Object userObject) {
+        return ((ProfileNode)userObject).isActive();
       }
     });
   }
 
-  public void createFile(final VirtualFile file) {
-    final PomNode newNode = new PomNode(file);
-    fileToNode.put(file, newNode);
-    root.addToStructure(newNode);
+  public PomTreeViewSettings getTreeViewSettings() {
+    return settings;
   }
 
-  public void updateFile(VirtualFile file) {
-    final PomNode pomNode = fileToNode.get(file);
-    if (pomNode != null) {
-      pomNode.onFileUpdate();
-    }
-    else {
-      createFile(file);
-    }
+  public PomTreeViewSettings getState() {
+    return settings;
   }
 
-  public void removeFile(VirtualFile file) {
-    final PomNode pomNode = fileToNode.get(file);
-    if (pomNode != null) {
-      fileToNode.remove(file);
-      pomNode.removeFromParent();
-    }
+  public void loadState(PomTreeViewSettings state) {
+    settings = state;
   }
 
-  public void setIgnored(VirtualFile file, boolean on) {
-    final PomNode pomNode = fileToNode.get(file);
-    if(pomNode!=null){
-      pomNode.setIgnored(on);
-    }
-  }
-
-  public void setProfiles(VirtualFile file, @NotNull Collection<String> profiles) {
-    final PomNode pomNode = fileToNode.get(file);
-    if(pomNode!=null){
-      pomNode.setProfiles(profiles);
-    }
-  }
-
-  private void initTree() {
-    final Map<VirtualFile, PomNode> oldFileToNode = fileToNode;
-    fileToNode = new HashMap<VirtualFile, PomNode>();
-    for (VirtualFile pomFile : myProjectsState.getFiles()) {
-      PomNode pomNode = oldFileToNode.get(pomFile);
-      if (pomNode == null) {
-        pomNode = new PomNode(pomFile);
+  protected void updateTreeFrom(@Nullable SimpleNode node) {
+    if (node != null) {
+      final DefaultMutableTreeNode mutableTreeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), node);
+      if (mutableTreeNode != null) {
+        treeBuilder.addSubtreeToUpdate(mutableTreeNode);
+        return;
       }
-      fileToNode.put(pomFile, pomNode);
     }
-
-    updateFromRoot(true, true);
-
-    myProjectsState.addListener(this);
+    updateFromRoot(node == root, false);
   }
 
-  private void createToolWindow() {
-    final JPanel navigatorPanel = new MavenNavigatorPanel(this);
+  public void updateFromRoot(boolean rebuild, boolean restructure) {
+    if (restructure) {
+      root.rebuild(fileToNode.values());
+    }
+    treeBuilder.updateFromRoot(rebuild);
+    if (rebuild) {
+      tree.expandPath(new TreePath(tree.getModel().getRoot()));
+    }
+  }
+
+  public void projectOpened() {
+    final JPanel navigatorPanel = new MavenNavigatorPanel(project, myProjectsState, tree);
 
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)
       .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, project);
@@ -140,9 +221,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
       public void showNotify() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            if (project.isOpen()) {
-              initTree();
-            }
+            myProjectsState.activate();
           }
         });
       }
@@ -150,112 +229,6 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
       public void hideNotify() {
       }
     });
-  }
-
-  public PomTreeViewSettings getTreeViewSettings() {
-    return settings;
-  }
-
-  public Map<String, Set<MavenId>> getExtraPluginState() {
-    return settings.extraPlugins;
-  }
-
-  public MavenNavigatorState getState() {
-    return settings;
-  }
-
-  public void loadState(MavenNavigatorState state) {
-    settings = state;
-  }
-
-  protected Collection<PomNode> getAllPomNodes() {
-    return fileToNode.values();
-  }
-
-  protected void updateTreeFrom(SimpleNode node) {
-    final DefaultMutableTreeNode mutableTreeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), node);
-    if (mutableTreeNode != null) {
-      treeBuilder.addSubtreeToUpdate(mutableTreeNode);
-    }
-    else {
-      updateFromRoot(false, false);
-    }
-  }
-
-  public void updateFromRoot(boolean rebuild, boolean restructure) {
-    if (restructure) {
-      final Collection<PomNode> allPomNodes = getAllPomNodes();
-      for (PomNode node : allPomNodes) {
-        node.unlinkNested();
-      }
-      root.rebuild(allPomNodes);
-    }
-    treeBuilder.updateFromRoot(rebuild);
-    if (rebuild) {
-      tree.expandPath(new TreePath(tree.getModel().getRoot()));
-    }
-  }
-
-  public static PomNode getCommonParent(Collection<? extends CustomNode> goalNodes) {
-    PomNode parent = null;
-    for (CustomNode node : goalNodes) {
-      PomNode nextParent = node.getParent(PomNode.class);
-      if (parent == null) {
-        parent = nextParent;
-      }
-      else if (parent != nextParent) {
-        return null;
-      }
-    }
-    return parent;
-  }
-
-  List<SimpleNode> getSelectedNodes() {
-    List<SimpleNode> nodes = new ArrayList<SimpleNode>();
-    TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths != null) {
-      for (TreePath treePath : treePaths) {
-        nodes.add(tree.getNodeFor(treePath));
-      }
-    }
-    return nodes;
-  }
-
-  public <T extends SimpleNode> List<T> getSelectedNodes(Class<T> aClass, boolean strict) {
-    return filterNodes(getSelectedNodes(), aClass, strict);
-  }
-
-  <T extends SimpleNode> List<T> filterNodes(Collection<SimpleNode> nodes, Class<T> aClass, boolean strict) {
-    List<T> filtered = new ArrayList<T>();
-    for (SimpleNode node : nodes) {
-      if ((aClass != null) && (!aClass.isInstance(node) || (strict && aClass != node.getClass()))) {
-        filtered.clear();
-        break;
-      }
-      //noinspection unchecked
-      filtered.add((T)node);
-    }
-    return filtered;
-  }
-
-  String getMenuId(Collection<? extends PomTreeStructure.CustomNode> nodes) {
-    String id = null;
-    for (PomTreeStructure.CustomNode node : nodes) {
-      String menuId = node.getMenuId();
-      if (menuId == null) {
-        return null;
-      }
-      if (id == null) {
-        id = menuId;
-      }
-      else if (!id.equals(menuId)) {
-        return null;
-      }
-    }
-    return id;
-  }
-
-  public void projectOpened() {
   }
 
   public void projectClosed() {
@@ -271,18 +244,5 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
   }
 
   public void disposeComponent() {
-  }
-
-  public class PomTreePopupHandler extends PopupHandler {
-
-    public void invokePopup(final Component comp, final int x, final int y) {
-      final String id = getMenuId(getSelectedNodes(CustomNode.class, false));
-      if (id != null) {
-        final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
-        if (actionGroup != null) {
-          ActionManager.getInstance().createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
-        }
-      }
-    }
   }
 }

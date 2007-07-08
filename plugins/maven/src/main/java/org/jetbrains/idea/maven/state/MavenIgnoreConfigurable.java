@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.state.action;
+package org.jetbrains.idea.maven.state;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.options.Configurable;
@@ -10,8 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
-import org.jetbrains.idea.maven.state.StateBundle;
 
 import javax.swing.*;
 import java.util.Collection;

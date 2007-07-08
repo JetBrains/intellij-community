@@ -14,6 +14,8 @@
   </extensionPoints>
   <extensions xmlns="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>
+    <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
+    <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
   <application-components>
@@ -40,6 +42,10 @@
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectNavigator</implementation-class>
     </component>
     <component>
+      <interface-class>org.jetbrains.idea.maven.events.MavenEventsHandler</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsComponent</implementation-class>
+    </component>
+    <component>
       <interface-class>org.jetbrains.idea.maven.project.MavenImporter</interface-class>
       <implementation-class>org.jetbrains.idea.maven.project.MavenImporterComponent</implementation-class>
     </component>
@@ -52,15 +58,30 @@
       <implementation-class>org.jetbrains.idea.maven.repo.MavenRepositoryViewer</implementation-class>
     </component>
   </project-components>
+  <!--
+  <module-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenModuleConfigurationProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenDependenciesEditor</implementation-class>
+    </component>
+  </module-components>
+  -->
   <actions>
-    <action id="Maven.Run"
-            class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="_Build"
-            description="Execute Maven Build"
-            icon="/actions/compile.png"/>
+    <group id="Maven.Core">
+      <action id="Maven.ShowSettings"
+              class="org.jetbrains.idea.maven.core.action.ShowSettingsAction" text="Edit Maven settings"
+              description="Edit Maven integration settings"
+              icon="/images/mavenSettings.png">
+      </action>
 
-    <action id="Maven.Ignore"
-            class="org.jetbrains.idea.maven.state.action.IgnoreProjectAction" text="_Ignore"
-            description="Toggle ignore flag for Maven project"/>
+      <action id="Maven.ToggleOffline"
+              class="org.jetbrains.idea.maven.core.action.ToggleOfflineAction" text="Toggle Offline mode"
+              description="Toggles Offline more for Maven"
+              icon="/images/offlineMode.png">
+      </action>
+    </group>
 
     <group id="Maven.OutputToolbar" description="Output toolbar">
       <action id="Maven.Rerun"
@@ -84,7 +105,8 @@
               description="Closes the output window"
               icon="/actions/cancel.png"/>
     </group>
-    <group id="Maven.PomTreeToolbar" description="Pom Tree toolbar">
+
+    <group id="Maven.PomTreeView">
       <action id="Maven.GroupByModules"
               class="org.jetbrains.idea.maven.navigator.action.GroupByModulesAction" text="Group by modules"
               description="Group by modules"
@@ -103,58 +125,98 @@
               class="org.jetbrains.idea.maven.navigator.action.FilterPhasesAction" text="Filter standard goals"
               description="Filter standard goals"
               icon="/images/filterPhases.png"/>
+    </group>
+
+    <action id="Maven.Run"
+            class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="_Build"
+            description="Execute Maven Build"
+            icon="/actions/compile.png">
+    </action>
+
+    <group id="Maven.State">
+      <action id="Maven.AttachPlugin"
+              class="org.jetbrains.idea.maven.state.action.AttachPluginAction" text="Attach plugin"
+              description="Attach plugin"
+              icon="/images/attachPlugin.png">
+      </action>
+      <action id="Maven.DetachPlugin"
+              class="org.jetbrains.idea.maven.state.action.DetachPluginAction" text="Detach plugin"
+              description="Detach plugin"
+              icon="/images/detachPlugin.png">
+      </action>
+      <action id="Maven.Ignore"
+              class="org.jetbrains.idea.maven.state.action.IgnoreProjectAction" text="_Ignore"
+              description="Toggle ignore flag for Maven project">
+      </action>
+      <action id="Maven.ToggleProfile"
+              class="org.jetbrains.idea.maven.state.action.ToggleProfileAction" text="Toggle profile"
+              description="Activate/deactivate profile">
+      </action>
+    </group>
+
+    <group id="Maven.Project">
+      <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeWithMavenAction"
+              text="Synchronize with Maven projects" description="Synchronize project structure with Maven projects"
+              icon="/actions/sync.png">
+      </action>
+    </group>
+
+    <group id="Maven.EventsGroup">
+      <action id="Maven.BeforeCompile"
+              class="org.jetbrains.idea.maven.events.actions.BeforeCompileAction" text="Execute before Make"
+              description="Execute this goal before IntelliJ IDEA Make">
+      </action>
+      <action id="Maven.AfterCompile"
+              class="org.jetbrains.idea.maven.events.actions.AfterCompileAction" text="Execute after Make"
+              description="Execute this goal after IntelliJ IDEA Make">
+      </action>
+      <action id="Maven.BeforeRun"
+              class="org.jetbrains.idea.maven.events.actions.BeforeRunAction" text="Execute before Run/debug..."
+              description="Execute this goal before launching Run/Debug configuration">
+      </action>
+      <separator/>
+      <action id="Maven.AssignShortcut"
+              class="org.jetbrains.idea.maven.events.actions.AssignShortcutAction" text="Assign shortcut..."
+              description="Assign shortcut to this goal">
+      </action>
+    </group>
+
+    <group id="Maven.PomTreeToolbar" description="Pom Tree toolbar">
+      <reference id="Maven.PomTreeView"/>
       <separator/>
       <reference id="Maven.Run"/>
-      <action id="Maven.AttachPlugin"
-              class="org.jetbrains.idea.maven.navigator.action.AttachPluginAction" text="Attach plugin"
-              description="Attach plugin"
-              icon="/images/attachPlugin.png"/>
-      <action id="Maven.DetachPlugin"
-              class="org.jetbrains.idea.maven.navigator.action.DetachPluginAction" text="Detach plugin"
-              description="Detach plugin"
-              icon="/images/detachPlugin.png"/>
+      <reference id="Maven.AttachPlugin"/>
+      <reference id="Maven.DetachPlugin"/>
       <separator/>
+      <reference id="Maven.ShowSettings"/>
+      <reference id="Maven.ToggleOffline"/>
+      <separator/>
+      <reference id="Maven.Synchronize"/>
     </group>
 
     <group id="Maven.PomMenu" popup="true">
       <reference id="Maven.Run"/>
       <reference ref="RunContextGroup"/>
+      <separator/>
       <reference id="EditSource"/>
       <reference id="Maven.AttachPlugin"/>
       <reference id="Maven.Ignore"/>
-    </group>
-
-    <group id="Maven.GoalMenu" popup="true">
-      <reference id="Maven.Run"/>
-      <reference ref="RunContextGroup"/>
-    </group>
-
-    <group id="Maven.ProfileMenu" popup="true">
-      <action id="Maven.ToggleProfile"
-              class="org.jetbrains.idea.maven.state.action.ToggleProfileAction" text="Toggle profile"
-              description="Activate/deactivate profile"/>
     </group>
 
     <group id="Maven.PluginMenu" popup="true">
       <reference id="Maven.DetachPlugin"/>
     </group>
 
-    <action id="Maven.ShowSettings"
-            class="org.jetbrains.idea.maven.core.action.ShowSettingsAction" text="Edit Maven settings"
-            description="Edit Maven integration settings"
-            icon="/images/mavenSettings.png">
-      <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
-    </action>
-    <action id="Maven.ToggleOffline"
-            class="org.jetbrains.idea.maven.core.action.ToggleOfflineAction" text="Toggle Offline mode"
-            description="Toggles Offline more for Maven"
-            icon="/images/offlineMode.png">
-      <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
-    </action>
-    <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeWithMavenAction"
-            text="Synchronize with Maven projects" description="Synchronize project structure with Maven projects"
-            icon="/actions/sync.png">
-      <add-to-group group-id="Maven.PomTreeToolbar" anchor="last"/>
-    </action>
+    <group id="Maven.GoalMenu" popup="true">
+      <reference id="Maven.Run"/>
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="Maven.EventsGroup"/>
+    </group>
+
+    <group id="Maven.ProfileMenu" popup="true">
+      <reference id="Maven.ToggleProfile"/>
+    </group>
+
   </actions>
 </idea-plugin>

@@ -4,15 +4,22 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
+import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +30,10 @@ import java.util.List;
  * @author Vladislav.Kaznacheev
  */
 class MavenNavigatorPanel extends JPanel implements DataProvider {
-  private MavenProjectNavigator myNavigator;
+
+  private final Project myProject;
+  private final MavenProjectsState myProjectsState;
+  private final SimpleTree myTree;
 
   private Map<String, Integer> standardGoalOrder;
 
@@ -33,8 +43,11 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     }
   };
 
-  public MavenNavigatorPanel(final MavenProjectNavigator mavenProjectNavigator) {
-    myNavigator = mavenProjectNavigator;
+  public MavenNavigatorPanel(Project project, MavenProjectsState projectsState, SimpleTree tree) {
+    myProject = project;
+    myProjectsState = projectsState;
+    myTree = tree;
+
     setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
 
     add(ActionManager.getInstance().createActionToolbar("New Maven Toolbar", (ActionGroup)ActionManager.getInstance()
@@ -43,21 +56,54 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
           .SIZEPOLICY_CAN_SHRINK | GridConstraints
           .SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 20), null));
 
-    add(new JScrollPane(myNavigator.tree), new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_BOTH,
+    add(new JScrollPane(myTree), new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_BOTH,
                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                                null, null, null));
+
+    myTree.addMouseListener(new PopupHandler() {
+      public void invokePopup(final Component comp, final int x, final int y) {
+        final String id = getMenuId(getSelectedNodes(PomTreeStructure.CustomNode.class));
+        if (id != null) {
+          final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
+          if (actionGroup != null) {
+            ActionManager.getInstance().createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+          }
+        }
+      }
+
+      @Nullable
+      private String getMenuId(Collection<? extends PomTreeStructure.CustomNode> nodes) {
+        String id = null;
+        for (PomTreeStructure.CustomNode node : nodes) {
+          String menuId = node.getMenuId();
+          if (menuId == null) {
+            return null;
+          }
+          if (id == null) {
+            id = menuId;
+          }
+          else if (!id.equals(menuId)) {
+            return null;
+          }
+        }
+        return id;
+      }
+    });
   }
 
   @Nullable
   public Object getData(@NonNls String dataId) {
     if (dataId.equals(DataKeys.PROJECT.getName())) {
-      return myNavigator.project;
+      return myProject;
     }
     if (dataId.equals(DataKeys.NAVIGATABLE_ARRAY.getName())) {
       final List<Navigatable> navigatables = new ArrayList<Navigatable>();
       for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
-        navigatables.add(pomNode.getNavigatable());
+        final Navigatable navigatable = pomNode.getNavigatable();
+        if(navigatable!=null){
+          navigatables.add(navigatable);
+        }
       }
       return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
     }
@@ -75,7 +121,7 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) {
       final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
       if (pomNode != null) {
-        final MavenProject mavenProject = myNavigator.myProjectsState.getMavenProject(pomNode.getFile());
+        final MavenProject mavenProject = myProjectsState.getMavenProject(pomNode.getFile());
         if (mavenProject != null) {
           final String goal = mavenProject.getBuild().getDefaultGoal();
           if (!StringUtil.isEmptyOrSpaces(goal)) {
@@ -84,8 +130,8 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
         }
       }
       else {
-        final List<PomTreeStructure.GoalNode> nodes = myNavigator.getSelectedNodes(PomTreeStructure.GoalNode.class, false);
-        if(MavenProjectNavigator.getCommonParent(nodes)==null) {
+        final List<PomTreeStructure.GoalNode> nodes = getSelectedNodes(PomTreeStructure.GoalNode.class);
+        if(PomTreeStructure.getCommonParent(nodes)==null) {
           return null;
         }
         final List<String> goals = new ArrayList<String>();
@@ -97,8 +143,8 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
     }
     if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) {
-      final List<PomTreeStructure.ProfileNode> nodes = myNavigator.getSelectedNodes(PomTreeStructure.ProfileNode.class, false);
-      if(MavenProjectNavigator.getCommonParent(nodes)==null) {
+      final List<PomTreeStructure.ProfileNode> nodes = getSelectedNodes(PomTreeStructure.ProfileNode.class);
+      if(PomTreeStructure.getCommonParent(nodes)==null) {
         return null;
       }
       final List<String> profiles = new ArrayList<String>();
@@ -107,25 +153,42 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
       return profiles;
     }
+    if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) {
+      final List<PomTreeStructure.ExtraPluginNode> nodes = getSelectedNodes(PomTreeStructure.ExtraPluginNode.class);
+      if(PomTreeStructure.getCommonParent(nodes)==null) {
+        return null;
+      }
+      final List<MavenId> ids = new ArrayList<MavenId>();
+      for (PomTreeStructure.ExtraPluginNode node : nodes) {
+        ids.add(node.getId());
+      }
+      return ids;
+    }
     return null;
   }
 
-  private List<PomTreeStructure.PomNode> getSelectedPomNodes() {
-    return myNavigator.getSelectedNodes(PomTreeStructure.PomNode.class, true);
+  private <T extends SimpleNode> List<T> getSelectedNodes(final Class<T> aClass) {
+    return PomTreeStructure.getSelectedNodes(myTree, aClass);
   }
 
+  private List<PomTreeStructure.PomNode> getSelectedPomNodes() {
+    return getSelectedNodes(PomTreeStructure.PomNode.class);
+  }
+
+  @Nullable
   private PomTreeStructure.PomNode getSelectedPomNode() {
     final List<PomTreeStructure.PomNode> pomNodes = getSelectedPomNodes();
     return pomNodes.size() == 1 ? pomNodes.get(0) : null;
   }
 
+  @Nullable
   private PomTreeStructure.PomNode getContextPomNode() {
     final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
       return pomNode;
     }
     else {
-      return MavenProjectNavigator.getCommonParent(myNavigator.getSelectedNodes(PomTreeStructure.CustomNode.class, false));
+      return PomTreeStructure.getCommonParent(getSelectedNodes(PomTreeStructure.CustomNode.class));
     }
   }
 
@@ -133,11 +196,11 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (standardGoalOrder == null) {
       standardGoalOrder = new HashMap<String, Integer>();
       int i = 0;
-      for (String aGoal : myNavigator.standardGoals) {
+      for (String aGoal : MavenEnv.getStandardGoalsList()) {
         standardGoalOrder.put(aGoal, i++);
       }
     }
     Integer order = standardGoalOrder.get(goal);
-    return order != null ? order : standardGoalOrder.size();
+    return order != null ? order.intValue() : standardGoalOrder.size();
   }
 }

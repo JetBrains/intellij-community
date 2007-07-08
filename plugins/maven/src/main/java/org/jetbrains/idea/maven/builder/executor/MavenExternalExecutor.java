@@ -42,7 +42,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     super(parameters, mavenCoreState, builderState, BuilderBundle.message("external.executor.caption"));
   }
 
-  public void run() {
+  public boolean execute() {
     displayProgress();
 
     try {
@@ -62,13 +62,13 @@ public class MavenExternalExecutor extends MavenExecutor {
     }
     catch (ExecutionException e) {
       systemMessage(MavenLogUtil.LEVEL_FATAL, BuilderBundle.message("external.startup.failed", e.getMessage()), null);
-      return;
+      return false;
     }
 
     start();
     readProcessOutput();
     stop();
-    printExitSummary();
+    return printExitSummary();
   }
 
   void stop() {

@@ -42,7 +42,8 @@ import java.util.*;
  */
 public class MavenExternalParameters {
   public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
-  private static final String JAVA_HOME = System.getenv("JAVA_HOME");
+  @NonNls private static final String JAVA_HOME = "JAVA_HOME";
+  @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   public static JavaParameters createJavaParameters(final MavenBuildParameters parameters,
                                                     final MavenCoreState coreState,
@@ -79,10 +80,11 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenBuilderState.USE_JAVA_HOME)) {
-      if (StringUtil.isEmptyOrSpaces(JAVA_HOME)) {
+      final String javaHome = System.getenv(JAVA_HOME);
+      if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.undefined"), name));
       }
-      final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", JAVA_HOME);
+      final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
       if (jdk == null) {
         throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.invalid"), name));
       }
@@ -101,7 +103,7 @@ public class MavenExternalParameters {
   public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenBuilderState builderState) {
     addParameters(list, builderState.getVmOptions());
 
-    addParameters(list, StringUtil.notNullize(System.getenv("MAVEN_OPTS")));
+    addParameters(list, StringUtil.notNullize(System.getenv(MAVEN_OPTS)));
 
     addProperty(list, "classworlds.conf", MavenEnv.getMavenConfFile(new File(mavenHome)).getPath());
 
