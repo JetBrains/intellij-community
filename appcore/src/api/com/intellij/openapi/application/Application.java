@@ -66,8 +66,8 @@ public interface Application extends ComponentManager {
 
   /**
    * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
-   * The action is executed immediately if no read actions are currently running, or blocked until all
-   * read actions complete.
+   * The action is executed immediately if no read actions or write actions are currently running,
+   * or blocked until all read actions and write actions complete.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
