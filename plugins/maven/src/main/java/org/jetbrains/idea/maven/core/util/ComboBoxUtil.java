@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven.core.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 public class ComboBoxUtil {
@@ -50,9 +52,14 @@ public class ComboBoxUtil {
         return;
       }
     }
+    if (model.getSize() != 0) {
+      model.setSelectedItem(model.getElementAt(0));
+    }
   }
 
+  @Nullable
   public static String getSelectedString(DefaultComboBoxModel model) {
-    return ((Item)model.getSelectedItem()).getValue();
+    final Object item = model.getSelectedItem();
+    return item != null ? ((Item)item).getValue() : null;
   }
 }

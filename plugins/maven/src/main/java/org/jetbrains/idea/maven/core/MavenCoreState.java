@@ -79,10 +79,12 @@ public class MavenCoreState implements Cloneable {
   }
 
   public void setOutputLevelString(String outputLevel) {
-    try {
-      setOutputLevel(Integer.parseInt(outputLevel));
-    }
-    catch (NumberFormatException ignore) {
+    if (outputLevel != null) {
+      try {
+        setOutputLevel(Integer.parseInt(outputLevel));
+      }
+      catch (NumberFormatException ignore) {
+      }
     }
   }
 
