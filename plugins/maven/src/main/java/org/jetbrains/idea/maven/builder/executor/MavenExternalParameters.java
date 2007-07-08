@@ -82,11 +82,11 @@ public class MavenExternalParameters {
     if (name.equals(MavenBuilderState.USE_JAVA_HOME)) {
       final String javaHome = System.getenv(JAVA_HOME);
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
-        throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.undefined"), name));
+        throw new ExecutionException(BuilderBundle.message("maven.java.home.undefined"));
       }
       final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
       if (jdk == null) {
-        throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.home.invalid"), name));
+        throw new ExecutionException(BuilderBundle.message("maven.java.home.invalid", javaHome));
       }
       return jdk;
     }
@@ -97,7 +97,7 @@ public class MavenExternalParameters {
       }
     }
 
-    throw new ExecutionException(MessageFormat.format(BuilderBundle.message("maven.java.not.found"), name));
+    throw new ExecutionException(BuilderBundle.message("maven.java.not.found", name));
   }
 
   public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenBuilderState builderState) {
