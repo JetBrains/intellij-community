@@ -87,6 +87,15 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @Nullable
+  public GrExpression getDefaultInitializer() {
+    return findChildByClass(GrExpression.class);
+  }
+
+  public boolean isOptional() {
+    return getDefaultInitializer() != null;
+  }
+
   @NotNull
   public String getName() {
     return getNameIdentifierGroovy().getText();

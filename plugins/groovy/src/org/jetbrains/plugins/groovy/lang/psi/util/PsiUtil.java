@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -72,32 +73,33 @@ public class PsiUtil {
     if (argumentTypes == null) return true;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
-    if (parameters.length == 0 && argumentTypes.length > 0) return false;
+    PsiType[] parameterTypes = skipOptionalParameters(argumentTypes.length, parameters);
+    if (parameterTypes.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
+    if (parameterTypes.length == 0 && argumentTypes.length > 0) return false;
 
     final PsiManager manager = method.getManager();
     final GlobalSearchScope scope = method.getResolveScope();
 
-    if (parameters.length - 1 == argumentTypes.length) {
-      final PsiType firstType = parameters[0].getType();
+    if (parameterTypes.length - 1 == argumentTypes.length) {
+      final PsiType firstType = parameterTypes[0];
       final PsiClassType mapType = getMapType(manager, scope);
       if (mapType.isAssignableFrom(firstType)) {
-        final PsiParameter[] trimmed = new PsiParameter[parameters.length - 1];
-        System.arraycopy(parameters, 1, trimmed, 0, trimmed.length);
-        parameters = trimmed;
+        final PsiType[] trimmed = new PsiType[parameterTypes.length - 1];
+        System.arraycopy(parameterTypes, 1, trimmed, 0, trimmed.length);
+        parameterTypes = trimmed;
       } else return false;
     }
 
     for (int i = 0; i < argumentTypes.length; i++) {
       PsiType argType = argumentTypes[i];
       PsiType parameterTypeToCheck;
-      if (i < parameters.length - 1) {
-        parameterTypeToCheck = parameters[i].getType();
+      if (i < parameterTypes.length - 1) {
+        parameterTypeToCheck = parameterTypes[i];
       } else {
-        PsiType lastParameterType = parameters[parameters.length - 1].getType();
+        PsiType lastParameterType = parameterTypes[parameterTypes.length - 1];
         if (lastParameterType instanceof PsiArrayType && !(argType instanceof PsiArrayType)) {
           parameterTypeToCheck = ((PsiArrayType) lastParameterType).getComponentType();
-        } else if (parameters.length == argumentTypes.length) {
+        } else if (parameterTypes.length == argumentTypes.length) {
           parameterTypeToCheck = lastParameterType;
         } else {
           return false;
@@ -108,6 +110,21 @@ public class PsiUtil {
     }
 
     return true;
+  }
+
+  private static PsiType[] skipOptionalParameters(int argNum, PsiParameter[] parameters) {
+    int diff = parameters.length - argNum;
+    List<PsiType> result = new ArrayList<PsiType>(argNum);
+    for (PsiParameter parameter : parameters) {
+      if (diff > 0 && parameter instanceof GrParameter && ((GrParameter) parameter).isOptional()) {
+        diff--;
+        continue;
+      }
+
+      result.add(parameter.getType());
+    }
+
+    return result.toArray(new PsiType[result.size()]);
   }
 
   public static PsiClassType getMapType(PsiManager manager, GlobalSearchScope scope) {
