@@ -26,6 +26,6 @@ public interface PluginDescriptorConstants {
   };
 
   ConfigFileMetaData META_DATA =
-    new ConfigFileMetaData(DevKitBundle.message("plugin.descriptor"), "plugin.xml", "META-INF", VERSIONS, false);
+    new ConfigFileMetaData(DevKitBundle.message("plugin.descriptor"), "plugin.xml", "META-INF", VERSIONS, null, false, true, true);
 
 }
