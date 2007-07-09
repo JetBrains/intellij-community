@@ -53,6 +53,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     synchronized(PsiLock.LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
       final String name = decl.getName();
+      if (cachingMap.containsKey(name)) return;
       cachingMap.put(
         name,
         file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
@@ -84,11 +85,11 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       if (value == null) {
         final PsiManager manager = element.getManager();
         if(manager == null){
-          return resolveEntity(targetElement, entityName).getValue();
+          return resolveEntity(targetElement, entityName, element).getValue();
         }
         value = manager.getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
           public Result<XmlEntityDecl> compute() {
-            return resolveEntity(targetElement, entityName);
+            return resolveEntity(targetElement, entityName, element);
           }
         });
 
@@ -108,7 +109,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return map;
   }
 
-  private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName) {
+  private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName, PsiElement context) {
     if (targetElement.getUserData(EVALUATION_IN_PROCESS) != null) {
       return new CachedValueProvider.Result<XmlEntityDecl>(null,targetElement);
     }
@@ -151,6 +152,12 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       deps.add(targetElement);
 
       boolean notfound = PsiTreeUtil.processElements(targetElement, processor);
+      if (notfound) {
+        final PsiFile containingFile = context.getContainingFile();
+        if (containingFile != targetElement) {
+          notfound = PsiTreeUtil.processElements(containingFile, processor);
+        }
+      }
 
       if (notfound &&       // no dtd ref at all
           targetElement instanceof XmlFile &&
