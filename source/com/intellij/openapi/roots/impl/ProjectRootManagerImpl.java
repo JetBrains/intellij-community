@@ -419,7 +419,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myLanguageLevel = LanguageLevel.JDK_1_4;
     }
     else {
-      // keep the default
+      myLanguageLevel = LanguageLevel.JDK_1_3;
     }
     myOriginalLanguageLevel = myLanguageLevel;
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
