@@ -4,9 +4,9 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +58,7 @@ public class MoveClassesOrPackagesImpl {
       searchTextOccurences = RefactoringUtil.isSearchTextOccurencesEnabled(psiElement);
     }
     final MoveClassesOrPackagesDialog moveDialog =
-      new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, moveCallback);
+      new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, initialTargetElement, moveCallback);
     boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchForTextOccurences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
     moveDialog.setData(psiElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, searchInComments,

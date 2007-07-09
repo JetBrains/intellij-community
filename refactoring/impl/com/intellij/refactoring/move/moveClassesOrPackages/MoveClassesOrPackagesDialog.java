@@ -1,6 +1,8 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -36,8 +38,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private final PsiElement[] myElementsToMove;
   private final MoveCallback myMoveCallback;
 
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog");
 
 
   private JLabel myNameLabel;
@@ -60,6 +61,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   public MoveClassesOrPackagesDialog(Project project,
                                      boolean searchTextOccurences,
                                      PsiElement[] elementsToMove,
+                                     final PsiElement initialTargetElement,
                                      MoveCallback moveCallback) {
     super(project, true);
     myElementsToMove = elementsToMove;
@@ -71,6 +73,22 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     selectInitialCard();
 
     init();
+
+    if (initialTargetElement instanceof PsiClass) {
+      myMakeInnerClassOfRadioButton.setSelected(true);
+
+      myInnerClassChooser.setText(((PsiClass)initialTargetElement).getQualifiedName());
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          myInnerClassChooser.requestFocus();
+        }
+      }, ModalityState.stateForComponent(myMainPanel));
+    }
+    else if (initialTargetElement instanceof PsiPackage) {
+      myClassPackageChooser.setText(((PsiPackage)initialTargetElement).getQualifiedName());
+    }
+
     updateControlsEnabled();
     myToPackageRadioButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -101,7 +119,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         break;
       }
     }
-    CardLayout cardLayout = (CardLayout) myCardPanel.getLayout();
+    CardLayout cardLayout = (CardLayout)myCardPanel.getLayout();
     cardLayout.show(myCardPanel, myHavePackages ? "Package" : "Class");
   }
 
@@ -128,20 +146,18 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
     final ReferenceEditorComboWithBrowseButton packageChooser =
       new ReferenceEditorComboWithBrowseButton(null, "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
-    packageChooser.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
-          chooser.selectPackage(packageChooser.getText());
-          chooser.show();
-          PsiPackage aPackage = chooser.getSelectedPackage();
-          if (aPackage != null) {
-            packageChooser.setText(aPackage.getQualifiedName());
-            validateButtons();
-          }
+    packageChooser.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
+        chooser.selectPackage(packageChooser.getText());
+        chooser.show();
+        PsiPackage aPackage = chooser.getSelectedPackage();
+        if (aPackage != null) {
+          packageChooser.setText(aPackage.getQualifiedName());
+          validateButtons();
         }
       }
-    );
+    });
     packageChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();
@@ -188,8 +204,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       PsiElement firstElement = psiElements[0];
       PsiElement parent = firstElement.getParent();
       LOG.assertTrue(parent != null);
-      myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label",
-                                                    UsageViewUtil.getType(firstElement), UsageViewUtil.getLongName(firstElement)));
+      myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
+                                                    UsageViewUtil.getLongName(firstElement)));
     }
     else if (psiElements.length > 1) {
       myNameLabel.setText(psiElements[0] instanceof PsiClass
@@ -314,13 +330,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         }
       }
 
-      invokeRefactoring(new MoveClassesOrPackagesProcessor(
-        myProject,
-        myElementsToMove,
-        destination,
-        isSearchInComments(),
-        isSearchInNonJavaFiles(),
-        myMoveCallback));
+      invokeRefactoring(new MoveClassesOrPackagesProcessor(myProject, myElementsToMove, destination, isSearchInComments(),
+                                                           isSearchInNonJavaFiles(), myMoveCallback));
     }
     catch (IncorrectOperationException e) {
       String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
@@ -342,19 +353,19 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     PsiClass targetClass = findTargetClass();
     if (targetClass == null) return null;
 
-    for(PsiElement element: myElementsToMove) {
+    for (PsiElement element : myElementsToMove) {
       if (PsiTreeUtil.isAncestor(element, targetClass, false)) {
         return RefactoringBundle.message("move.class.to.inner.move.to.self.error");
       }
     }
 
-    while(targetClass != null) {
+    while (targetClass != null) {
       if (targetClass.getContainingClass() != null && !targetClass.hasModifierProperty(PsiModifier.STATIC)) {
         return RefactoringBundle.message("move.class.to.inner.nonstatic.error");
       }
       targetClass = targetClass.getContainingClass();
     }
-    
+
     return null;
   }
 
@@ -362,11 +373,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     saveRefactoringSettings();
     PsiClass targetClass = findTargetClass();
     for (int i = 0; i < myElementsToMove.length; i++) {
-      PsiClass psiClass = (PsiClass) myElementsToMove[i];
+      PsiClass psiClass = (PsiClass)myElementsToMove[i];
       // fire callback after last element has been processed
-      invokeRefactoring(new MoveClassToInnerProcessor(myProject, psiClass, targetClass,
-                                                      isSearchInComments(), isSearchInNonJavaFiles(),
-                                                      i == myElementsToMove.length-1 ? myMoveCallback : null));
+      invokeRefactoring(new MoveClassToInnerProcessor(myProject, psiClass, targetClass, isSearchInComments(), isSearchInNonJavaFiles(),
+                                                      i == myElementsToMove.length - 1 ? myMoveCallback : null));
     }
   }
 
@@ -377,18 +387,15 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !myManager.getNameHelper().isQualifiedName(packageName)) {
-      Messages.showErrorDialog(myProject,
-                               RefactoringBundle.message("please.enter.a.valid.target.package.name"),
+      Messages.showErrorDialog(myProject, RefactoringBundle.message("please.enter.a.valid.target.package.name"),
                                RefactoringBundle.message("move.tltle"));
       return null;
     }
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
-      final int ret = Messages.showYesNoDialog(myProject,
-                                               RefactoringBundle.message("package.does.not.exist", packageName),
-                                               RefactoringBundle.message("move.tltle"),
-                                               Messages.getQuestionIcon());
+      final int ret = Messages.showYesNoDialog(myProject, RefactoringBundle.message("package.does.not.exist", packageName),
+                                               RefactoringBundle.message("move.tltle"), Messages.getQuestionIcon());
       if (ret != 0) return null;
     }
 
@@ -400,7 +407,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (contentSourceRoots.length == 1) {
       return new AutocreatingSingleSourceRootMoveDestination(targetPackage, contentSourceRoots[0]);
     }
-    final VirtualFile sourceRootForFile = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, myInitialTargetDirectory);
+    final VirtualFile sourceRootForFile =
+      MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, myInitialTargetDirectory);
     if (sourceRootForFile == null) return null;
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, sourceRootForFile);
   }
