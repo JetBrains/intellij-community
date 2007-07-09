@@ -8,10 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -90,7 +87,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
   public void disposeComponent() {
     for (Library library : getLibraries()) {
-      library.dispose();
+      Disposer.dispose(library);
     }
   }
 

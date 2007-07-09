@@ -12,10 +12,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -42,6 +40,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final LibraryTable myLibraryTable;
   private Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
+  private VirtualFileListener myVfsListener;
   private List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
   private LibraryImpl mySource;
 
@@ -381,9 +380,24 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         myWatchRequests.add(request);
       }
     }
+    if (myJarDirectories.size() > 0) {
+      if (myVfsListener == null) {
+        final VirtualFileAdapter listener = new VFSChangesListsner();
+        myVfsListener = listener;
+        VirtualFileManager.getInstance().addVirtualFileListener(listener, this);
+      }
+    }
+    else {
+      final VirtualFileListener listener = myVfsListener;
+      if (listener != null) {
+        myVfsListener = null;
+        VirtualFileManager.getInstance().removeVirtualFileListener(listener);
+      }
+    }
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
+    
     public String[] getUrls(OrderRootType rootType) {
       final VirtualFile[] files = getFiles(rootType);
       if (files.length == 0) {
@@ -403,5 +417,42 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   public LibraryTable getTable() {
     return myLibraryTable;
+  }
+
+  private class VFSChangesListsner extends VirtualFileAdapter {
+    public void fileMoved(final VirtualFileMoveEvent event) {
+      final VirtualFile file = event.getFile();
+      if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(event.getOldParent().getUrl() + "/" + file.getName())) {
+        myRootProvider.fireRootSetChanged();
+      }
+    }
+
+    public void fileCopied(final VirtualFileCopyEvent event) {
+      final VirtualFile file = event.getFile();
+      if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(event.getOriginalFile().getUrl())) {
+        myRootProvider.fireRootSetChanged();
+      }
+    }
+
+    public void fileDeleted(final VirtualFileEvent event) {
+      if (isUnderJarDirectory(event.getFile().getUrl())) {
+        myRootProvider.fireRootSetChanged();
+      }
+    }
+
+    public void fileCreated(final VirtualFileEvent event) {
+      if (isUnderJarDirectory(event.getFile().getUrl())) {
+        myRootProvider.fireRootSetChanged();
+      }
+    }
+
+    private boolean isUnderJarDirectory(String url) {
+      for (String rootUrl : myJarDirectories.keySet()) {
+        if (FileUtil.startsWith(url, rootUrl)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }
