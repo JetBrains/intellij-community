@@ -22,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.List;
 
 // Class to show the user the request for search
 
@@ -109,12 +110,12 @@ public class ReplaceDialog extends SearchDialog {
     final Runnable replaceRunnable = new Runnable() {
       public void run() {
         Project p = searchContext.getProject();
-        LocalHistoryAction a = LocalHistory.startAction(p, getDefaultTitle());
+        LocalHistoryAction labelAction = LocalHistory.startAction(p, getDefaultTitle());
 
         doReplace(replaceContext);
         replaceContext.getUsageView().close();
 
-        a.finish();
+        labelAction.finish();
       }
     };
 
@@ -127,7 +128,7 @@ public class ReplaceDialog extends SearchDialog {
         final Set<Usage> infos = replaceContext.getUsageView().getSelectedUsages();
         if (infos == null || infos.isEmpty()) return;
 
-        LocalHistoryAction a = LocalHistory.startAction(searchContext.getProject(), getDefaultTitle());
+        LocalHistoryAction labelAction = LocalHistory.startAction(searchContext.getProject(), getDefaultTitle());
 
         for (final Usage info : infos) {
           final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
@@ -137,7 +138,7 @@ public class ReplaceDialog extends SearchDialog {
           }
         }
 
-        a.finish();
+        labelAction.finish();
 
         if (replaceContext.getUsageView().getUsagesCount() > 0) {
           for (Usage usage : replaceContext.getUsageView().getSortedUsages()) {
@@ -205,8 +206,8 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   private static void doReplace(ReplaceUsageViewContext context) {
-    java.util.List<Usage> infos = context.getUsageView().getSortedUsages();
-    java.util.List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(context.getResults().size());
+    List<Usage> infos = context.getUsageView().getSortedUsages();
+    List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(context.getResults().size());
 
     for (final Usage info : infos) {
       UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
