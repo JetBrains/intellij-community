@@ -46,7 +46,7 @@ public class MavenIgnoreConfigurable implements Configurable {
   private void createUIComponents() {
     myFileChooser = new ElementsChooser<VirtualFile>(true) {
       protected String getItemText(final VirtualFile virtualFile) {
-        return virtualFile.getPath();
+        return virtualFile != null ? virtualFile.getPath() : "";
       }
     };
   }
