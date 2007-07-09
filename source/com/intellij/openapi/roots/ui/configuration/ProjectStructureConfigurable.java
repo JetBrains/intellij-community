@@ -87,13 +87,22 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
 
   private JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
 
-  public ProjectStructureConfigurable(final Project project, final ModuleManager moduleManager) {
+  public ProjectStructureConfigurable(final Project project, final ModuleManager moduleManager, final ProjectLibrariesConfigurable projectLibrariesConfigurable,
+                                      final GlobalLibrariesConfigurable globalLibrariesConfigurable,
+                                      final ModuleStructureConfigurable moduleStructureConfigurable) {
     myProject = project;
     myModuleManager = moduleManager;
 
     myModuleConfigurator = new ModulesConfigurator(myProject, myProjectJdksModel);
     myContext = new StructureConfigrableContext(myProject, myModuleManager, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
+
+    myProjectLibrariesConfig = projectLibrariesConfigurable;
+    myGlobalLibrariesConfig = globalLibrariesConfigurable;
+    myModulesConfig = moduleStructureConfigurable;
+    myProjectLibrariesConfig.init(myContext);
+    myGlobalLibrariesConfig.init(myContext);
+    myModulesConfig.init(myContext);
   }
 
   @NonNls
@@ -165,27 +174,26 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
 
   private void addJdkListConfig() {
     myJdkListConfig = JdkListConfigurable.getInstance(myProject);
-    init(myJdkListConfig);
+    myJdkListConfig.init(myContext);
+    addConfigurable(myJdkListConfig);
   }
 
   private void addProjectConfig() {
     myProjectConfig = new ProjectConfigurable(myProject, myModuleConfigurator, myProjectJdksModel);
-    init(myProjectConfig);
+    addConfigurable(myProjectConfig);
   }
 
   private void addProjectLibrariesConfig() {
-    myProjectLibrariesConfig = ProjectLibrariesConfigurable.getInstance(myProject);
-    init(myProjectLibrariesConfig);
+    addConfigurable(myProjectLibrariesConfig);
   }
 
   private void addGlobalLibrariesConfig() {
-    myGlobalLibrariesConfig = GlobalLibrariesConfigurable.getInstance(myProject);
-    init(myGlobalLibrariesConfig);
+    addConfigurable(myGlobalLibrariesConfig);
   }
 
   private void addModulesConfig() {
     myModulesConfig = ModuleStructureConfigurable.getInstance(myProject);
-    init(myModulesConfig);
+    addConfigurable(myModulesConfig);
   }
 
   public boolean isModified() {
@@ -378,11 +386,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     return myProjectConfig;
   }
 
-  private void init(Configurable configurable) {
-    if (configurable instanceof BaseStructureConfigurable) {
-      ((BaseStructureConfigurable)configurable).init(myContext);
-    }
-
+  private void addConfigurable(Configurable configurable) {
     myName2Config.add(configurable);
 
     mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));

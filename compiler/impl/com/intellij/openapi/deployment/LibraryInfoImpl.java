@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,14 +43,12 @@ class LibraryInfoImpl implements LibraryInfo {
   }
 
   @Nullable
-  public Library findLibrary(final Module module, final @Nullable ModulesProvider provider) {
-    if (module == null) return null;
-
+  public Library findLibrary(final Project project, final Module module, final @Nullable ModulesProvider provider) {
     if (LibraryLink.MODULE_LEVEL.equals(myLevel)) {
       String url = myUrls.size() == 1 ? myUrls.get(0) : null;
-      return LibraryLinkUtil.findModuleLibrary(module, provider, myName, url);
+      return module == null? null : LibraryLinkUtil.findModuleLibrary(module, provider, myName, url);
     }
-    return LibraryLink.findLibrary(myName, myLevel, module.getProject());
+    return LibraryLink.findLibrary(myName, myLevel, project);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

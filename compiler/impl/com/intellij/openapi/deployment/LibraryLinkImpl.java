@@ -108,7 +108,7 @@ public class LibraryLinkImpl extends LibraryLink {
 
     LOG.assertTrue(myLibraryInfo instanceof LibraryInfoImpl);
     final LibraryInfoImpl info = ((LibraryInfoImpl)myLibraryInfo);
-    final Library library = info.findLibrary(getParentModule(), provider);
+    final Library library = info.findLibrary(myProject, getParentModule(), provider);
     if (library != null) {
       myLibraryInfo = new LibraryInfoBasedOnLibrary(library);
     }
