@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -224,11 +225,18 @@ public class DomUtil {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
+
+    return getDomElement(element);
+  }
+
+  @Nullable
+  public static DomElement getDomElement(@Nullable final PsiElement element) {
     if (element == null) return null;
 
+    final Project project = element.getProject();
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     while (tag != null) {
-      final DomElement domElement = DomManager.getDomManager(file.getProject()).getDomElement(tag);
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
       if(domElement != null) return domElement;
 
       tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);

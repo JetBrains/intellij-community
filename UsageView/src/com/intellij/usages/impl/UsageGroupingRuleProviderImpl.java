@@ -18,10 +18,11 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.usages.UsageView;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
@@ -30,8 +31,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +62,14 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
       rules.add(new ClassGroupingRule());
       rules.add(new MethodGroupingRule());
       rules.add(new NonJavaFileGroupingRule(project));
+
+      FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
+      for (FileStructureGroupRuleProvider ruleProvider : providers) {
+        final UsageGroupingRule rule = ruleProvider.getUsageGroupingRule();
+        if(rule != null) {
+          rules.add(rule);
+        }
+      }
     }
     else {
       rules.add(new FileGroupingRule(project));
