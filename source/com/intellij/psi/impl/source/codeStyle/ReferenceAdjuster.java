@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -9,13 +10,11 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,8 +143,7 @@ public class ReferenceAdjuster implements Constants {
       final JspFile jspFile = (PsiUtil.getJspFile(parent.getPsi()));
       JspClass jspClass = (JspClass) jspFile.getJavaClass();
       addReferencesInRange(array, (TreeElement)jspClass.getNode(), startOffset, endOffset);
-      JspHolderMethod holderMethod = jspClass.getHolderMethod();
-      addReferencesInRange(array, (TreeElement)holderMethod.getNode(), startOffset, endOffset);
+      return;
     }
 
     if (parent instanceof CompositeElement) {
@@ -154,9 +152,6 @@ public class ReferenceAdjuster implements Constants {
       for (TreeElement child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         int length = child.getTextLength();
         if (startOffset <= offset + length && offset <= endOffset) {
-          if (startOffset <= offset && offset + length <= endOffset) {
-            array.add(child);
-          }
           addReferencesInRange(array, child, startOffset - offset, endOffset - offset);
         }
         offset += length;
@@ -164,7 +159,7 @@ public class ReferenceAdjuster implements Constants {
     }
   }
 
-  private ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
+  private static ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
     @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
     final PsiQualifiedReference reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
     if (reference1 != null) replaceReferenceWithShort(reference1);
