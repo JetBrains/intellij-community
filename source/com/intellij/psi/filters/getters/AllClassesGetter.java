@@ -75,11 +75,14 @@ public class AllClassesGetter implements ContextGetter{
           insertFqn = false;
         } else {
           try {
-            final PsiElement psiElement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(psiReference.bindToElement(psiClass));
-            if (psiElement != null) {
-              endOffset = psiElement.getTextRange().getEndOffset();
+            final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
+            if (newUnderlying != null) {
+              final PsiElement psiElement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newUnderlying);
+              if (psiElement != null) {
+                endOffset = psiElement.getTextRange().getEndOffset();
+              }
+              insertFqn = false;
             }
-            insertFqn = false;
           } catch (IncorrectOperationException e) {
             //if it's empty we just insert fqn below
           }
