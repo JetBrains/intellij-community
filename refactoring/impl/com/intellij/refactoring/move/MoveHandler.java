@@ -271,6 +271,9 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
       if (targetContainer instanceof PsiDirectory) {
         return ((PsiDirectory)targetContainer).getPackage() != null;
       }
+      if (targetContainer instanceof PsiClass) {
+        return moveType == MoveType.CLASSES;
+      }
       return false;
     }
     else if (moveType == MoveType.FILES || moveType == MoveType.DIRECTORIES) {

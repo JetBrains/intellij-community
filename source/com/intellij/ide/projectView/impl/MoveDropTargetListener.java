@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -190,7 +191,7 @@ class MoveDropTargetListener implements DropTargetListener {
 
     public boolean shouldDelegateToParent(@NotNull final TreeNode targetNode) {
       final PsiElement psiElement = getPsiElement(targetNode);
-      return psiElement == null || (!(psiElement instanceof PsiPackage) && !(psiElement instanceof PsiDirectory));
+      return psiElement == null || (!(psiElement instanceof PsiClass) && !(psiElement instanceof PsiPackage) && !(psiElement instanceof PsiDirectory));
     }
 
     protected abstract boolean canDrop(@NotNull TreeNode[] sourceNodes, @Nullable TreeNode targetNode);
