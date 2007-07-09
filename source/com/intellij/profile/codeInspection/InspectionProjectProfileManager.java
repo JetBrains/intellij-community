@@ -15,17 +15,20 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +41,17 @@ import java.util.Set;
  * User: anna
  * Date: 30-Nov-2005
  */
-public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent{
+@State(
+  name = "InspectionProjectProfileManager",
+  storages = {
+    @Storage(
+      id ="default",
+      file = "$PROJECT_FILE$"
+    )
+    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManager.ProfileStateSplitter.class)
+    }
+)
+public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent, PersistentStateComponent<Element> {
   private Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
   private Project myProject;
 
@@ -53,6 +66,27 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public String getProfileName(PsiFile psiFile) {
     return getInspectionProfile(psiFile).getName();
+  }
+
+  public Element getState() {
+    try {
+      final Element e = new Element("settings");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public @NotNull InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
