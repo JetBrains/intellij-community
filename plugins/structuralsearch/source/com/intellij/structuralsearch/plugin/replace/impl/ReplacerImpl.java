@@ -130,17 +130,31 @@ public class ReplacerImpl {
   }
 
   protected void replaceAll(final List<ReplacementInfo> resultPtrList) {
+    PsiElement lastAffectedElement = null;
+    PsiElement currentAffectedElement = null;
+
     for (final ReplacementInfo aResultPtrList : resultPtrList) {
-      replace(aResultPtrList);
+      currentAffectedElement = doReplace(aResultPtrList);
+
+      if (currentAffectedElement != lastAffectedElement) {
+        if (lastAffectedElement != null) reformatAndShortenRefs(lastAffectedElement);
+        lastAffectedElement = currentAffectedElement;
+      }
     }
+
+    reformatAndShortenRefs(lastAffectedElement);
   }
 
   protected void replace(ReplacementInfo info) {
+    reformatAndShortenRefs(doReplace(info));
+  }
+
+  private PsiElement doReplace(final ReplacementInfo info) {
     final ReplacementInfoImpl replacementInfo = (ReplacementInfoImpl)info;
     final PsiElement element = replacementInfo.matchesPtrList.get(0).getElement();
     final String replacement = replacementInfo.result;
 
-    if (element==null || !element.isWritable() || !element.isValid()) return;
+    if (element==null || !element.isWritable() || !element.isValid()) return null;
 
     final PsiElement elementParent = element.getParent();
 
@@ -162,6 +176,56 @@ public class ReplacerImpl {
       "ssreplace",
       "test"
     );
+
+    return elementParent;
+  }
+
+  private void reformatAndShortenRefs(final PsiElement elementParent) {
+    if (elementParent == null) return;
+    ApplicationManager.getApplication().runWriteAction(
+      new Runnable() {
+        public void run() {
+          try {
+            CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
+            final PsiFile containingFile = elementParent.getContainingFile();
+
+            if (containingFile !=null) {
+
+              if (options.isToShortenFQN()) {
+                if (containingFile.getVirtualFile() != null) {
+                  PsiDocumentManager.getInstance(project).commitDocument(
+                    FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+                  );
+                }
+
+                codeStyleManager.shortenClassReferences(
+                  elementParent, 0, elementParent.getTextLength()
+                );
+              }
+
+              if (options.isToReformatAccordingToStyle()) {
+                if (containingFile.getVirtualFile() != null) {
+                  PsiDocumentManager.getInstance(project).commitDocument(
+                    FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+                  );
+                }
+
+                final int paretOffset = elementParent.getTextRange().getStartOffset();
+
+                codeStyleManager.reformatRange(
+                  containingFile,
+                  paretOffset,
+                  paretOffset + elementParent.getTextLength(),
+                  true
+                );
+              }
+            }
+          } catch(IncorrectOperationException ex) {
+            ex.printStackTrace();
+          }
+        }
+      }
+    );
   }
 
   private void doReplace(final PsiElement elementToReplace,
@@ -175,49 +239,6 @@ public class ReplacerImpl {
         }
       }
     );
-
-    try {
-
-      CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
-      final PsiFile containingFile = elementParent.getContainingFile();
-
-      if (containingFile !=null) {
-
-        if (options.isToShortenFQN()) {
-          if (containingFile.getVirtualFile() != null) {
-            PsiDocumentManager.getInstance(project).commitDocument(
-              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-            );
-          }
-
-          final int paretOffset = elementParent.getTextRange().getStartOffset();
-
-          codeStyleManager.shortenClassReferences(
-            containingFile,
-            paretOffset,
-            paretOffset + elementParent.getTextLength()
-          );
-        }
-
-        if (options.isToReformatAccordingToStyle()) {
-          if (containingFile.getVirtualFile() != null) {
-            PsiDocumentManager.getInstance(project).commitDocument(
-              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-            );
-          }
-
-          final int paretOffset = elementParent.getTextRange().getStartOffset();
-          codeStyleManager.reformatRange(
-            containingFile,
-            paretOffset,
-            paretOffset + elementParent.getTextLength(),
-            true
-          );
-        }
-      }
-    } catch(IncorrectOperationException ex) {
-      ex.printStackTrace();
-    }
   }
 
   private void doReplacement(final ReplacementInfoImpl info,

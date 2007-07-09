@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.IdeaTestUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -1750,5 +1751,47 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       expectedResult,
       actualResult
     );
+  }
+
+  public void testReformatAndShortenClassRefPerformance() throws IOException {
+    final String testName = getTestName(false);
+    final String ext = "java";
+    final String message = "Reformat And Shorten Class Ref Performance";
+
+    options.setToReformatAccordingToStyle(true);
+    options.setToShortenFQN(true);
+
+    IdeaTestUtil.assertTiming(
+      "SSR should work fast",
+      3500,
+      new Runnable() {
+        public void run() {
+          doTest(testName, ext, message);
+        }
+      }
+    );
+
+    options.setToReformatAccordingToStyle(false);
+    options.setToShortenFQN(false);
+  }
+
+  private void doTest(final String testName, final String ext, final String message) {
+    try {
+      String source = TestUtils.loadFile(testName + "_source." + ext);
+      String pattern = TestUtils.loadFile(testName + "_pattern." + ext);
+      String replacement = TestUtils.loadFile(testName + "_replacement." + ext);
+      String expected = TestUtils.loadFile(testName + "_result." + ext);
+
+      actualResult = replacer.testReplace(source,pattern,replacement,options);
+
+      assertEquals(
+        message,
+        expected,
+        actualResult
+      );
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
