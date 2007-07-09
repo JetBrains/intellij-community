@@ -9,6 +9,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.util.*;
+import java.util.Collection;
 
 /**
  * @author mike
@@ -175,11 +176,11 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest(
       "<BeanWithList>\n" +
       "  <option name=\"VALUES\">\n" +
-      "    <collection>\n" +
+      "    <list>\n" +
       "      <option value=\"a\" />\n" +
       "      <option value=\"b\" />\n" +
       "      <option value=\"c\" />\n" +
-      "    </collection>\n" +
+      "    </list>\n" +
       "  </option>\n" +
       "</BeanWithList>",
       bean);
@@ -189,11 +190,11 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest(
       "<BeanWithList>\n" +
       "  <option name=\"VALUES\">\n" +
-      "    <collection>\n" +
+      "    <list>\n" +
       "      <option value=\"1\" />\n" +
       "      <option value=\"2\" />\n" +
       "      <option value=\"3\" />\n" +
-      "    </collection>\n" +
+      "    </list>\n" +
       "  </option>\n" +
       "</BeanWithList>",
       bean);
@@ -208,11 +209,11 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest(
       "<BeanWithSet>\n" +
       "  <option name=\"VALUES\">\n" +
-      "    <collection>\n" +
+      "    <set>\n" +
       "      <option value=\"a\" />\n" +
       "      <option value=\"b\" />\n" +
       "      <option value=\"w\" />\n" +
-      "    </collection>\n" +
+      "    </set>\n" +
       "  </option>\n" +
       "</BeanWithSet>",
       bean);
@@ -221,11 +222,11 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest(
       "<BeanWithSet>\n" +
       "  <option name=\"VALUES\">\n" +
-      "    <collection>\n" +
+      "    <set>\n" +
       "      <option value=\"1\" />\n" +
       "      <option value=\"2\" />\n" +
       "      <option value=\"3\" />\n" +
-      "    </collection>\n" +
+      "    </set>\n" +
       "  </option>\n" +
       "</BeanWithSet>",
       bean);
@@ -843,6 +844,48 @@ public class XmlSerializerTest extends TestCase {
   }
 
 
+  public static class BeanWithSetKeysInMap {
+    public Map<Collection<String>, String> myMap = new HashMap<Collection<String>, String>();
+  }
+
+  public void testSetKeysInMap() throws Exception {
+    final BeanWithSetKeysInMap bean = new BeanWithSetKeysInMap();
+    bean.myMap.put(new HashSet<String>(Arrays.asList("1", "2", "3")), "numbers");
+    bean.myMap.put(new HashSet<String>(Arrays.asList("a", "b", "c")), "letters");
+
+    BeanWithSetKeysInMap bb = (BeanWithSetKeysInMap)doSerializerTest(
+      "<BeanWithSetKeysInMap>\n" +
+      "  <option name=\"myMap\">\n" +
+      "    <map>\n" +
+      "      <entry value=\"letters\">\n" +
+      "        <key>\n" +
+      "          <set>\n" +
+      "            <option value=\"a\" />\n" +
+      "            <option value=\"b\" />\n" +
+      "            <option value=\"c\" />\n" +
+      "          </set>\n" +
+      "        </key>\n" +
+      "      </entry>\n" +
+      "      <entry value=\"numbers\">\n" +
+      "        <key>\n" +
+      "          <set>\n" +
+      "            <option value=\"1\" />\n" +
+      "            <option value=\"2\" />\n" +
+      "            <option value=\"3\" />\n" +
+      "          </set>\n" +
+      "        </key>\n" +
+      "      </entry>\n" +
+      "    </map>\n" +
+      "  </option>\n" +
+      "</BeanWithSetKeysInMap>",
+      bean);
+
+    for (Collection<String> collection : bb.myMap.keySet()) {
+      assertTrue(collection instanceof Set);
+    }
+  }
+
+
   public void testDeserializeInto() throws Exception {
     BeanWithPublicFields bean = new BeanWithPublicFields();
     bean.STRING_V = "zzz";
@@ -911,7 +954,7 @@ public class XmlSerializerTest extends TestCase {
     assertSerializer(bean, expected, "Serialization failure", filter);
   }
 
-  private void doSerializerTest(String expectedText, Object bean)
+  private Object doSerializerTest(String expectedText, Object bean)
     throws ParserConfigurationException, TransformerException, XmlSerializationException, IOException {
     Element element = assertSerializer(bean, expectedText, "Serialization failure", null);
 
@@ -919,6 +962,7 @@ public class XmlSerializerTest extends TestCase {
 
     Object o = XmlSerializer.deserialize(element, bean.getClass());
     assertSerializer(o, expectedText, "Deserialization failure", null);
+    return o;
   }
 
   private Element assertSerializer(Object bean, String expectedText, String message, SerializationFilter filter)

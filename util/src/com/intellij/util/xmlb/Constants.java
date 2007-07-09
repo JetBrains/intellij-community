@@ -11,4 +11,6 @@ public interface Constants {
   @NonNls String KEY = "key";
   @NonNls String NAME = "name";
   @NonNls String ARRAY = "array";
+  @NonNls String SET = "set";
+  @NonNls String LIST = "list";
 }

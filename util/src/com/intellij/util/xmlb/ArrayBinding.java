@@ -2,7 +2,7 @@ package com.intellij.util.xmlb;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 class ArrayBinding extends AbstractCollectionBinding  {
 
@@ -13,7 +13,7 @@ class ArrayBinding extends AbstractCollectionBinding  {
 
 
   @SuppressWarnings({"unchecked"})
-  Object processResult(List result, Object target) {
+  Object processResult(Collection result, Object target) {
     return result.toArray((Object[])Array.newInstance(getElementType(), result.size()));
   }
 

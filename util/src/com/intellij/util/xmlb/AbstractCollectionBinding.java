@@ -6,10 +6,7 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 abstract class AbstractCollectionBinding implements Binding {
   private Map<Class, Binding> myElementBindings;
@@ -102,15 +99,16 @@ abstract class AbstractCollectionBinding implements Binding {
                                  myAnnotation.elementValueAttribute() != null ? myAnnotation.elementValueAttribute() : Constants.VALUE);
   }
 
-  abstract Object processResult(List result, Object target);
+  abstract Object processResult(Collection result, Object target);
   abstract Iterable getIterable(Object o);
 
   public Object serialize(Object o, Object context) {
     Iterable iterable = getIterable(o);
     if (iterable == null) return context;
 
-    if (getTagName() != null) {
-      Element result = new Element(getTagName());
+    final String tagName = getTagName(o);
+    if (tagName != null) {
+      Element result = new Element(tagName);
       for (Object e : iterable) {
         final Binding binding = getElementBinding(e.getClass());
         result.addContent((Content)binding.serialize(e, result));
@@ -130,11 +128,13 @@ abstract class AbstractCollectionBinding implements Binding {
   }
 
   public Object deserialize(Object o, Object... nodes) {
-    List result = new ArrayList();
+    Collection result;
 
-    if (getTagName() != null) {
+    if (getTagName(o) != null) {
       assert nodes.length == 1;
       Element e = (Element)nodes[0];
+
+      result = createCollection(e.getName());
       final Content[] childElements = JDOMUtil.getContent(e);
       for (final Content n : childElements) {
         if (XmlSerializerImpl.isIgnoredNode(n)) continue;
@@ -145,6 +145,7 @@ abstract class AbstractCollectionBinding implements Binding {
       }
     }
     else {
+      result = new ArrayList();
       for (Object node : nodes) {
         if (XmlSerializerImpl.isIgnoredNode(node)) continue;
         final Binding elementBinding = getElementBinding(node);
@@ -158,10 +159,14 @@ abstract class AbstractCollectionBinding implements Binding {
     return processResult(result, o);
   }
 
+  protected Collection createCollection(final String tagName) {
+    return new ArrayList();
+  }
+
   public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
 
-    final String tagName = getTagName();
+    final String tagName = getTagName(node);
     if (tagName == null) {
       for (Binding binding : getElementBindings().values()) {
         if (binding.isBoundTo(node)) return true;
@@ -180,8 +185,12 @@ abstract class AbstractCollectionBinding implements Binding {
   }
 
   @Nullable
-  public String getTagName() {
-    if (myAnnotation == null || myAnnotation.surroundWithTag()) return myTagName;
+  private String getTagName(final Object target) {
+    if (myAnnotation == null || myAnnotation.surroundWithTag()) return getCollectionTagName(target);
     return null;
+  }
+
+  protected String getCollectionTagName(final Object target) {
+    return myTagName;
   }
 }
