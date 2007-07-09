@@ -55,6 +55,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   private final Collection<String> standardPhases = MavenEnv.getStandardPhasesList();
   final Collection<String> standardGoals = MavenEnv.getStandardGoalsList();
 
+  private static final Icon iconProjectRoot = IconLoader.getIcon("/general/ijLogo.png");
   private static final Icon iconPom = IconLoader.getIcon("/images/mavenProject.png");
   private static final Icon iconPhase = IconLoader.getIcon("/images/phase.png");
   private static final Icon iconPhasesOpen = IconLoader.getIcon("/images/phasesOpen.png");
@@ -92,7 +93,11 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   private static final Comparator<SimpleNode> nodeComparator = new Comparator<SimpleNode>() {
     public int compare(SimpleNode o1, SimpleNode o2) {
-      return o1.getName().compareToIgnoreCase(o2.getName());
+      return getRepr(o1).compareToIgnoreCase(getRepr(o2));
+    }
+
+    private String getRepr(SimpleNode node) {
+      return ((node instanceof ModuleNode) && ((ModuleNode)node).getModule() == null )? "" : node.getName();
     }
   };
 
@@ -115,7 +120,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   public static <T extends SimpleNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> aClass) {
     final List<T> filtered = new ArrayList<T>();
     for (SimpleNode node : getSelectedNodes(tree)) {
-      if ((aClass != null) && (!aClass.isInstance(node) )) {
+      if ((aClass != null) && (!aClass.isInstance(node))) {
         filtered.clear();
         break;
       }
@@ -425,6 +430,11 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
         addPlainText(module.getName());
         ModuleType moduleType = module.getModuleType();
         setIcons(moduleType.getNodeIcon(false), moduleType.getNodeIcon(true));
+      }
+      else {
+        addPlainText(NavigatorBundle.message("node.project.root"));
+        addColoredFragment(" " + NavigatorBundle.message("node.project.root.descr"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        setUniformIcon(iconProjectRoot);
       }
     }
 
@@ -753,7 +763,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public void updateShortcuts(@Nullable String actionId) {
-      if (actionId == null || actionId.startsWith(actionIdPrefix)){
+      if (actionId == null || actionId.startsWith(actionIdPrefix)) {
         boolean update = false;
         for (GoalNode goalNode : collectGoalNodes()) {
           update = goalNode.updateShortcut(actionId) || update;
@@ -873,7 +883,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       addPlainText(goal);
 
       actionId = pomNode.actionIdPrefix + goal;
-      if(!isMinimalView()){
+      if (!isMinimalView()) {
         String shortcut = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
         if (shortcut != null) {
           addColoredFragment(" (" + shortcut + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
