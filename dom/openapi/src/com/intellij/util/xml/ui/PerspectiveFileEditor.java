@@ -190,8 +190,12 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   public void selectNotify() {
     ensureInitialized();
-    myUndoHelper.setShowing(true);
+    setShowing(true);
     reset();
+  }
+
+  protected final void setShowing(final boolean b) {
+    myUndoHelper.setShowing(b);
   }
 
   protected final void ensureInitialized() {
@@ -203,7 +207,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   public void deselectNotify() {
     if (myInvalidated) return;
-    myUndoHelper.setShowing(false);
+    setShowing(false);
     commit();
   }
 
