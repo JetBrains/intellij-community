@@ -143,7 +143,7 @@ public class StringUtil {
     return indexOfIgnoreCase(where, what, 0) >= 0;
   }
 
-  public static boolean endsWithIgnoreCase(String str, String suffix) {
+  public static boolean endsWithIgnoreCase(@NonNls String str, @NonNls String suffix) {
     final int stringLength = str.length();
     final int suffixLength = suffix.length();
     return stringLength >= suffixLength && str.regionMatches(true, stringLength - suffixLength, suffix, 0, suffixLength);

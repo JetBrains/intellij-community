@@ -14,7 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,12 +112,12 @@ public class JavaUtil {
 
 
   private static Pair<File,String> suggestRootForJavaFile(File javaFile) {
-    if (!javaFile.isFile()) return null;
+    if (!javaFile.isFile()) {
+      return null;
+    }
 
-    Reader reader = null;
     try{
-      reader = new BufferedReader(new FileReader(javaFile));
-      char[] chars = FileUtil.loadFileText(javaFile);
+      final char[] chars = FileUtil.loadFileText(javaFile);
 
       String packageName = getPackageStatement(chars);
       if (packageName != null){
@@ -142,16 +143,6 @@ public class JavaUtil {
     }
     catch(IOException e){
       return null;
-    }
-    finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        }
-        catch (IOException e) {
-          //ignore
-        }
-      }
     }
 
     return null;
