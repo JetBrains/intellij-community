@@ -363,6 +363,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       nextSibling instanceof OuterLanguageElement || nextSibling instanceof JspExpression || nextSibling instanceof ELExpressionHolder;
     if (nextIsOuterLanguageElement && psiElement != null && !(psiElement instanceof PsiFile) // error is not inside jsp text
        ) {
+      if (nextSibling.getPrevSibling() instanceof XmlTag) return false;
       return true;
     }
 
