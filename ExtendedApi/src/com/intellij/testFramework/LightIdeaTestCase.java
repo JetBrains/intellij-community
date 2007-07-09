@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -184,6 +185,7 @@ import java.util.Map;
           cleanPersistedVFSContent();
         }
 
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
         ourProject = ProjectManagerEx.getInstanceEx().newProject(projectFile.getPath(), false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
