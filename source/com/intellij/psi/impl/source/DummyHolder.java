@@ -96,7 +96,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
       return true;
     }
     else {
-      return false;
+      return true;
     }
   }
 

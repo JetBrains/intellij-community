@@ -147,15 +147,29 @@ public class ReferenceAdjuster implements Constants {
     }
 
     if (parent instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(parent);
-      int offset = 0;
-      for (TreeElement child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        int length = child.getTextLength();
-        if (startOffset <= offset + length && offset <= endOffset) {
-          addReferencesInRange(array, child, startOffset - offset, endOffset - offset);
+      addReferencesInRangeForComposite(array, (CompositeElement)parent, startOffset, endOffset);
+    }
+  }
+
+  private static void addReferencesInRangeForComposite(final ArrayList<ASTNode> array, final CompositeElement parent,
+                                                       final int startOffset,
+                                                       final int endOffset) {
+    ChameleonTransforming.transformChildren(parent);
+
+    int offset = 0;
+    for (TreeElement child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      int length = child.getTextLength();
+
+      if (startOffset <= offset + length && offset <= endOffset) {
+        final IElementType type = child.getElementType();
+
+        if (type == ElementType.JAVA_CODE_REFERENCE || type == ElementType.REFERENCE_EXPRESSION) {
+          array.add(child);
+        } else if (child instanceof CompositeElement) {
+          addReferencesInRangeForComposite(array, (CompositeElement)child, startOffset - offset, endOffset - offset);
         }
-        offset += length;
       }
+      offset += length;
     }
   }
 
