@@ -21,9 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SoftFactoryMap;
 import gnu.trove.THashMap;
@@ -65,22 +63,13 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
               }
             }
           });
-          return new Result<Map<String, DomElement>>(map, getPsiFiles(scope));
+          return new Result<Map<String, DomElement>>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       }, false);
     }
   };
 
   private final Class<T> myClass;
-
-  private static XmlFile[] getPsiFiles(DomElement element) {
-    final Collection<DomElement> collection = ModelMergerUtil.getImplementations(element, DomElement.class);
-    return ContainerUtil.map2Array(collection, XmlFile.class, new Function<DomElement, XmlFile>() {
-      public XmlFile fun(final DomElement s) {
-        return s.getRoot().getFile();
-      }
-    });
-  }
 
   public DomResolveConverter(final Class<T> aClass) {
     myClass = aClass;
