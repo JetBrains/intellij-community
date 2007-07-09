@@ -335,14 +335,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Nullable
   public Project loadAndOpenProject(final String filePath, final boolean convert) throws IOException, JDOMException, InvalidDataException {
     try {
-      final IOException[] io = new IOException[]{null};
-      final JDOMException[] jdom = new JDOMException[]{null};
-      final InvalidDataException[] invalidData = new InvalidDataException[]{null};
-      final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
 
       final ProjectConversionHelper conversionHelper;
-      if (convert) {
-        final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(canonicalize(filePath));
+      final String fp = canonicalize(filePath);
+
+      final File f = new File(fp);
+      if (convert && f.exists() && f.isFile()) {
+        final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(fp);
         if (result.isOpeningCancelled()) {
           return null;
         }
@@ -353,6 +352,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
 
       final Project[] project = new Project[1];
+
+      final IOException[] io = new IOException[]{null};
+      final JDOMException[] jdom = new JDOMException[]{null};
+      final InvalidDataException[] invalidData = new InvalidDataException[]{null};
+      final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
 
       boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {

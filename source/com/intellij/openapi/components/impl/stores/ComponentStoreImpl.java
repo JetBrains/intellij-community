@@ -56,11 +56,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        if (component instanceof JDOMExternalizable) {
-          initJdomExternalizable((JDOMExternalizable)component);
-        }
-        else if (component instanceof PersistentStateComponent) {
+        if (component instanceof PersistentStateComponent) {
           initPersistentComponent((PersistentStateComponent<?>)component);
+        }
+        else if (component instanceof JDOMExternalizable) {
+          initJdomExternalizable((JDOMExternalizable)component);
         }
       }
     });
@@ -364,11 +364,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
       for (String name : names) {
         Object component = myComponents.get(name);
-        if (component instanceof JDOMExternalizable) {
-          commitJdomExternalizable((JDOMExternalizable)component, session);
-        }
-        else if (component instanceof PersistentStateComponent) {
+        if (component instanceof PersistentStateComponent) {
           commitPersistentComponent((PersistentStateComponent<?>)component, session);
+        }
+        else if (component instanceof JDOMExternalizable) {
+          commitJdomExternalizable((JDOMExternalizable)component, session);
         }
       }
       myStorageManagerSaveSession = storageManager.startSave(session);
