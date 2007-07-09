@@ -1,12 +1,13 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.table.DefaultTableCellRenderer;
@@ -167,7 +168,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
         if (myEnabled.get(ideaPluginDescriptor.getPluginId()).booleanValue()) {
           for (PluginId pluginId : ideaPluginDescriptor.getDependentPluginIds()) {
-            if (!myEnabled.get(pluginId).booleanValue()) {
+            if (ArrayUtil.find(ideaPluginDescriptor.getOptionalDependentPluginIds(), pluginId) == -1 &&
+                !myEnabled.get(pluginId).booleanValue()) {
               cellRenderer.setForeground(Color.red);
               final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
               if (plugin != null) {
