@@ -35,13 +35,24 @@ public class ConfigFileMetaData {
   private ConfigFileVersion[] myVersions;
   private ConfigFileVersion myDefaultVersion;
   private boolean myOptional;
+  private final boolean myFileNameFixed;
+  private final boolean myUnique;
 
-  public ConfigFileMetaData(final String title, final @NonNls String id, final @NonNls String fileName, final @NonNls String directoryPath,
-                                    final ConfigFileVersion[] versions, @Nullable ConfigFileVersion defaultVersion, boolean optional) {
+  public ConfigFileMetaData(final String title,
+                            final @NonNls String id,
+                            final @NonNls String fileName,
+                            final @NonNls String directoryPath,
+                            final ConfigFileVersion[] versions,
+                            final @Nullable ConfigFileVersion defaultVersion,
+                            final boolean optional,
+                            final boolean fileNameFixed,
+                            final boolean unique) {
     myTitle = title;
     myId = id;
     myFileName = fileName;
     myDirectoryPath = directoryPath;
+    myFileNameFixed = fileNameFixed;
+    myUnique = unique;
     LOG.assertTrue(versions.length > 0);
     myVersions = versions;
     myOptional = optional;
@@ -49,19 +60,15 @@ public class ConfigFileMetaData {
     LOG.assertTrue(Arrays.asList(myVersions).contains(myDefaultVersion));
   }
 
-  public ConfigFileMetaData(final String title, final @NonNls String id, final @NonNls String fileName, final @NonNls String directoryPath,
-                                    final ConfigFileVersion[] versions) {
-    this(title, id, fileName, directoryPath, versions, null, false);
-  }
-
-  public ConfigFileMetaData(final String title, final @NonNls String fileName, final @NonNls String directoryPath,
-                                    final ConfigFileVersion[] versions, boolean optional) {
-    this(title, fileName, fileName, directoryPath, versions, null, optional);
-  }
-
-  public ConfigFileMetaData(final String title, final @NonNls String fileName, final @NonNls String directoryPath,
-                                    final ConfigFileVersion[] versions, ConfigFileVersion defaultVersion, boolean optional) {
-    this(title, fileName, fileName, directoryPath, versions, defaultVersion, optional);
+  public ConfigFileMetaData(final String title,
+                            final @NonNls String fileName,
+                            final @NonNls String directoryPath,
+                            final ConfigFileVersion[] versions,
+                            ConfigFileVersion defaultVersion,
+                            boolean optional,
+                            final boolean fileNameFixed,
+                            final boolean unique) {
+    this(title, fileName, fileName, directoryPath, versions, defaultVersion, optional, fileNameFixed, unique);
   }
 
   public String getTitle() {
@@ -95,5 +102,13 @@ public class ConfigFileMetaData {
 
   public ConfigFileVersion getDefaultVersion() {
     return myDefaultVersion;
+  }
+
+  public boolean isFileNameFixed() {
+    return myFileNameFixed;
+  }
+
+  public boolean isUnique() {
+    return myUnique;
   }
 }
