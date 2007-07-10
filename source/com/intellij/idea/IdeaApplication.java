@@ -45,7 +45,8 @@ public class IdeaApplication {
     if (Main.isHeadless(args)) {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
       new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
-    } else {
+    }
+    else {
       ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
     }
 
@@ -136,7 +137,7 @@ public class IdeaApplication {
 
       app.invokeLater(new Runnable() {
         public void run() {
-          if (mySplash!=null) {
+          if (mySplash != null) {
             mySplash.dispose();
             mySplash = null; // Allow GC collect the splash window
           }
@@ -151,8 +152,7 @@ public class IdeaApplication {
 
       app.invokeLater(new Runnable() {
         public void run() {
-          if (UpdateChecker.isMyVeryFirstOpening() &&
-              UpdateChecker.checkNeeded()) {
+          if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
             try {
               UpdateChecker.setMyVeryFirstOpening(false);
               final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
@@ -172,42 +172,18 @@ public class IdeaApplication {
   private void loadProject() {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
-    String projectFile = null;
-    if (myArgs != null && myArgs.length > 0) {
-      if (myArgs[0] != null && myArgs[0].endsWith(IPR_SUFFIX)) {
-        projectFile = myArgs[0];
+    if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
+      if (ProjectUtil.openOrImport(myArgs[0], false)) {
+        return;
       }
     }
 
-    if (projectFile != null) {
-      ProjectUtil.openProject(projectFile, null, false);
-    }else if (generalSettings.isReopenLastProject()) {
+    if (generalSettings.isReopenLastProject()) {
       String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
       if (lastProjectPath != null) {
         ProjectUtil.openProject(lastProjectPath, null, false);
       }
-/* The below part is commented since instead of New Project Wizard the Welcome Screen will appear (appropriate code is added in IdeRootPane.java)
-      else{
-        // This is VERY BAD code. IONA wants to open their project wizard
-        // on startup. They replace NEW_PROJECT action and we have to invoke
-        // this action by ID. PLEASE, DO NOT COPY THIS CODE, DO NOT INVOKE
-        // ACTION BY THIS WAY!!!!!!!!!!!
-        AnAction newProjectAction=ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_PROJECT);
-        AnActionEvent event=new AnActionEvent(
-          null,
-          DataManager.getInstance().getDataContext(),
-          ActionPlaces.MAIN_MENU,
-          newProjectAction.getTemplatePresentation(),
-          ActionManager.getInstance(),
-          0
-        );
-        newProjectAction.update(event);
-        if(newProjectAction.getTemplatePresentation().isEnabled()){
-          newProjectAction.actionPerformed(event);
-        }
-      }
-*/
-      }
+    }
   }
 
   public String[] getCommandLineArguments() {

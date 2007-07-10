@@ -13,4 +13,6 @@ public interface ProjectImportProvider {
   String getName();
 
   void doImport(Project currentProject);
+
+  boolean quickImport(String path);
 }
