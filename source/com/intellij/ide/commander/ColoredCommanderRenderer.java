@@ -37,7 +37,8 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
         color = elementColor;
       }
     }
-    append(value.toString(), new SimpleTextAttributes(Font.PLAIN, color));
+    final String text = value.toString();
+    append(text != null? text : "", new SimpleTextAttributes(Font.PLAIN, color));
     if (value instanceof AbstractTreeNode) {
       String locationString = ((AbstractTreeNode)value).getPresentation().getLocationString();
       if (locationString != null && locationString.length() > 0) {
