@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -31,9 +34,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
@@ -43,6 +46,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
@@ -491,8 +496,9 @@ public class ClasspathPanel extends JPanel {
   private void initPopupActions() {
     if (myPopupActions == null) {
       final StructureConfigrableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
+      int actionIndex = 1;
       final List<PopupAction> actions = new ArrayList<PopupAction>(Arrays.<PopupAction>asList(
-        new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
+        new ChooseAndAddAction<Library>(actionIndex++, ProjectBundle.message("classpath.add.simple.module.library.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
             final OrderEntry[] entries = myRootModel.getOrderEntries();
             for (OrderEntry entry : entries) {
@@ -508,18 +514,36 @@ public class ClasspathPanel extends JPanel {
           }
 
           protected ChooserDialog<Library> createChooserDialog() {
-            return new CreateModuleLibraryDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), myProject);
+            return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), null);
           }
         },
-        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), context.getProjectLibrariesProvider(true)),
-        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), context.getGlobalLibrariesProvider(true))));
+        new ChooseAndAddAction<Library>(actionIndex++, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
+          protected TableItem createTableItem(final Library item) {
+            final OrderEntry[] entries = myRootModel.getOrderEntries();
+            for (OrderEntry entry : entries) {
+              if (entry instanceof LibraryOrderEntry) {
+                final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+                if (item.equals(libraryOrderEntry.getLibrary())) {
+                  return new LibItem(libraryOrderEntry);
+                }
+              }
+            }
+            LOG.assertTrue(false, "Unknown library " + item);
+            return null;
+          }
 
-      int index = 4;
+          protected ChooserDialog<Library> createChooserDialog() {
+            return new CreateModuleLibraryDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable());
+          }
+        },
+        new ChooseNamedLibraryAction(actionIndex++, ProjectBundle.message("classpath.add.project.library.action"), context.getProjectLibrariesProvider(true)),
+        new ChooseNamedLibraryAction(actionIndex++, ProjectBundle.message("classpath.add.global.library.action"), context.getGlobalLibrariesProvider(true))));
+
       for (final LibraryTableModifiableModelProvider provider : context.getCustomLibrariesProviders(true)) {
-        actions.add(new ChooseNamedLibraryAction(index++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
+        actions.add(new ChooseNamedLibraryAction(actionIndex++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
       }
 
-      actions.add(new ChooseAndAddAction<Module>(index, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
+      actions.add(new ChooseAndAddAction<Module>(actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }
@@ -917,13 +941,11 @@ public class ClasspathPanel extends JPanel {
     private boolean myIsOk;
     private final Component myParent;
     private final LibraryTable myLibraryTable;
-    private final Project myProject;
     private Library myChosenLibrary;
 
-    public CreateModuleLibraryDialog(Component parent, final LibraryTable libraryTable, final Project project) {
+    public CreateModuleLibraryDialog(Component parent, final LibraryTable libraryTable) {
       myParent = parent;
       myLibraryTable = libraryTable;
-      myProject = project;
     }
 
     public List<Library> getChosenElements() {
@@ -969,6 +991,63 @@ public class ClasspathPanel extends JPanel {
     }
   }
   
+  private static class ChooseModuleLibrariesDialog extends LibraryFileChooser implements ChooserDialog<Library> {
+    private Pair<String, VirtualFile[]> myLastChosen;
+    private final LibraryTable myLibraryTable;
+    private final @Nullable VirtualFile myFileToSelect;
+
+    public ChooseModuleLibrariesDialog(Component parent, final LibraryTable libraryTable, final VirtualFile fileToSelect) {
+      super(createFileChooserDescriptor(parent), parent, false, null);
+      myLibraryTable = libraryTable;
+      myFileToSelect = fileToSelect;
+    }
+
+    private static FileChooserDescriptor createFileChooserDescriptor(Component parent) {
+      final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, false, true);
+      final Module contextModule = (Module)DataManager.getInstance().getDataContext(parent).getData(DataConstantsEx.MODULE_CONTEXT);
+      descriptor.setContextModule(contextModule);
+      return descriptor;
+    }
+
+    public List<Library> getChosenElements() {
+      if (myLastChosen == null) {
+        return Collections.emptyList();
+      }
+      final VirtualFile[] files = filterAlreadyAdded(myLastChosen.getSecond());
+      if (files.length == 0) {
+        return Collections.emptyList();
+      }
+      final LibraryTable.ModifiableModel modifiableModel = myLibraryTable.getModifiableModel();
+      final List<Library> addedLibraries = new ArrayList<Library>(files.length);
+      for (VirtualFile file : files) {
+        final Library library = modifiableModel.createLibrary(null);
+        final Library.ModifiableModel libModel = library.getModifiableModel();
+        libModel.addRoot(file, OrderRootType.CLASSES);
+        libModel.commit();
+        addedLibraries.add(library);
+      }      
+      return addedLibraries;
+    }
+
+    private VirtualFile[] filterAlreadyAdded(final VirtualFile[] files) {
+      if (files == null || files.length == 0) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      final Set<VirtualFile> chosenFilesSet = new HashSet<VirtualFile>(Arrays.asList(files));
+      final Set<VirtualFile> alreadyAdded = new HashSet<VirtualFile>();
+      final Library[] libraries = myLibraryTable.getLibraries();
+      for (Library library : libraries) {
+        alreadyAdded.addAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+      }
+      chosenFilesSet.removeAll(alreadyAdded);
+      return chosenFilesSet.toArray(new VirtualFile[chosenFilesSet.size()]);
+    }
+
+    public void doChoose() {
+      myLastChosen = chooseNameAndFiles(myFileToSelect);
+    }
+  }
+
   private class ChooseNamedLibraryAction extends ChooseAndAddAction<Library> {
     private LibraryTableModifiableModelProvider myLibraryTableModelProvider;
 
