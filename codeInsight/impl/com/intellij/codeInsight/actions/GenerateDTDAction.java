@@ -73,16 +73,16 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
 
-    final boolean visible;
+    final boolean enabled;
     if (editor != null && project != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      visible = file instanceof XmlFile;
+      enabled = file instanceof XmlFile;
     }
     else {
-      visible = false;
+      enabled = false;
     }
 
-    presentation.setVisible(visible);
+    presentation.setEnabled(enabled);
   }
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file){
