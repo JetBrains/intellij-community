@@ -5,7 +5,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.CollectionElementRemovedEvent;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +22,9 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   public CollectionElementInvocationHandler(final Type type,
                                             final EvaluatedXmlName name,
                                             @NotNull final XmlTag tag,
+                                            final CollectionChildDescriptionImpl childDescription,
                                             final DomInvocationHandler parent) {
-    super(type, tag, parent, name, parent.getManager());
+    super(type, tag, parent, name, childDescription, parent.getManager());
     myNamespace = tag.getNamespace();
   }
 
@@ -57,11 +57,6 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     detach(true);
     deleteTag(tag);
     getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getXmlElementName(), namespace));
-  }
-
-  @Nullable
-  protected AnnotatedElement getChildDescription() {
-    return getParentHandler().getGenericInfo().getCollectionChildDescription(getXmlName().getXmlName());
   }
 
   public <T extends DomElement> T createStableCopy() {

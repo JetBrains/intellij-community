@@ -10,7 +10,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +27,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
                                   final DomFileElementImpl fileElement,
                                   @NotNull final EvaluatedXmlName tagName
   ) {
-    super(aClass, tag, null, tagName, fileElement.getManager());
+    super(aClass, tag, null, tagName, null, fileElement.getManager());
     myParent = fileElement;
   }
 
@@ -92,10 +91,6 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
       }
     });
     return result[0];
-  }
-
-  protected AnnotatedElement getChildDescription() {
-    return null;
   }
 
 }

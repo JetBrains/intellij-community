@@ -3,15 +3,14 @@
  */
 package com.intellij.util.xml.reflect;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * @author peter
@@ -42,6 +41,4 @@ public interface DomChildrenDescription extends AnnotatedElement {
   @NotNull
   DomNameStrategy getDomNameStrategy(@NotNull DomElement parent);
 
-  @NotNull
-  DomGenericInfo getChildGenericInfo(Project project);
 }

@@ -33,10 +33,6 @@ public interface DomGenericInfo {
   @NotNull
   List<? extends DomAttributeChildDescription> getAttributeChildrenDescriptions();
 
-  @Nullable
-  @Deprecated
-  DomChildrenDescription getChildDescription(@NonNls String tagName);
-
   @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName);
 
   @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespaceKey);

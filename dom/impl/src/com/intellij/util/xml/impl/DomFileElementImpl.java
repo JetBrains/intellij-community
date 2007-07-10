@@ -85,11 +85,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return Collections.emptyList();
     }
 
-    @Nullable
-    public DomChildrenDescription getChildDescription(String tagName) {
-      return null;
-    }
-
     public boolean isTagValueElement() {
       return false;
     }

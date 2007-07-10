@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,9 +21,14 @@ import java.util.List;
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
   private final JavaMethod myGetterMethod;
 
-  protected AttributeChildDescriptionImpl(final XmlName attributeName, final JavaMethod getter) {
+  protected AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull final JavaMethod getter) {
     super(attributeName, getter.getGenericReturnType());
     myGetterMethod = getter;
+  }
+
+  protected AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull Type type) {
+    super(attributeName, type);
+    myGetterMethod = null;
   }
 
   @NotNull
@@ -37,8 +43,9 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @Nullable
-  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getGetterMethod().getAnnotation(annotationClass);
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    final JavaMethod method = getGetterMethod();
+    return method == null ? super.getAnnotation(annotationClass) : method.getAnnotation(annotationClass);
   }
 
   @NotNull
@@ -60,7 +67,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   public GenericAttributeValue getDomAttributeValue(final DomInvocationHandler handler) {
-    return (GenericAttributeValue)handler.getAttributeChild(myGetterMethod.getSignature()).getProxy();
+    return (GenericAttributeValue)handler.getAttributeChild(this).getProxy();
   }
 
   public boolean equals(final Object o) {

@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
@@ -11,19 +10,23 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
  */
-public abstract class DomChildDescriptionImpl implements DomChildrenDescription {
+public abstract class DomChildDescriptionImpl implements DomChildrenDescription, Comparable<DomChildDescriptionImpl> {
   private final XmlName myTagName;
   private final Type myType;
+  private Map<Class, Annotation> myCustomAnnotations;
 
   protected DomChildDescriptionImpl(final XmlName tagName, @NotNull final Type type) {
     myTagName = tagName;
@@ -38,6 +41,16 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
   @NotNull
   public final XmlName getXmlName() {
     return myTagName;
+  }
+
+  public final void addCustomAnnotation(@NotNull Annotation annotation) {
+    if (myCustomAnnotations == null) myCustomAnnotations = new THashMap<Class, Annotation>();
+    myCustomAnnotations.put(annotation.annotationType(), annotation);
+  }
+
+  @Nullable
+  public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+    return myCustomAnnotations == null ? null : (T)myCustomAnnotations.get(annotationClass);
   }
 
   @NotNull
@@ -76,11 +89,6 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 
-  @NotNull
-  public final GenericInfoImpl getChildGenericInfo(Project project) {
-    return DomManagerImpl.getDomManager(project).getGenericInfo(myType);
-  }
-
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -98,5 +106,9 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     result = (myTagName != null ? myTagName.hashCode() : 0);
     result = 31 * result + (myType != null ? myType.hashCode() : 0);
     return result;
+  }
+
+  public int compareTo(final DomChildDescriptionImpl o) {
+    return myTagName.compareTo(o.myTagName);
   }
 }

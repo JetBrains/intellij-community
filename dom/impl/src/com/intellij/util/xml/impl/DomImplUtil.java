@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.List;
 import java.util.Set;
 
@@ -133,10 +133,10 @@ public class DomImplUtil {
     return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(handler, namespace);
   }
 
-  public static boolean containsTagName(final Set<XmlName> qnames1, final XmlTag subTag, final DomInvocationHandler handler) {
-    return ContainerUtil.find(qnames1, new Condition<XmlName>() {
-      public boolean value(XmlName name) {
-        return isNameSuitable(name, subTag, handler);
+  public static boolean containsTagName(final Set<CollectionChildDescriptionImpl> descriptions, final XmlTag subTag, final DomInvocationHandler handler) {
+    return ContainerUtil.find(descriptions, new Condition<CollectionChildDescriptionImpl>() {
+      public boolean value(CollectionChildDescriptionImpl description) {
+        return isNameSuitable(description.getXmlName(), subTag, handler);
       }
     }) != null;
   }
@@ -160,4 +160,58 @@ public class DomImplUtil {
     return builder.getResult();
   }
 
+  @Nullable
+  public static XmlName createXmlName(@NotNull String name, Type type, @Nullable JavaMethod javaMethod) {
+    final Class<?> aClass = getErasure(type);
+    if (aClass == null) return null;
+    String key = getNamespaceKey(aClass);
+    if (key == null && javaMethod != null) {
+      for (final Method method : javaMethod.getSignature().getAllMethods(javaMethod.getDeclaringClass())) {
+        final String key1 = getNamespaceKey(method.getDeclaringClass());
+        if (key1 != null) {
+          key = key1;
+        }
+      }
+    }
+    return new XmlName(name, key);
+  }
+
+  @Nullable
+  private static Class<?> getErasure(Type type) {
+    if (type instanceof Class) {
+      return (Class)type;
+    }
+    if (type instanceof ParameterizedType) {
+      return getErasure(((ParameterizedType)type).getRawType());
+    }
+    if (type instanceof TypeVariable) {
+      for (final Type bound : ((TypeVariable)type).getBounds()) {
+        final Class<?> aClass = getErasure(bound);
+        if (aClass != null) {
+          return aClass;
+        }
+      }
+    }
+    if (type instanceof WildcardType) {
+      final WildcardType wildcardType = (WildcardType)type;
+      for (final Type bound : wildcardType.getUpperBounds()) {
+        final Class<?> aClass = getErasure(bound);
+        if (aClass != null) {
+          return aClass;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getNamespaceKey(@NotNull Class<?> type) {
+    final Namespace namespace = DomReflectionUtil.findAnnotationDFS(type, Namespace.class);
+    return namespace != null ? namespace.value() : null;
+  }
+
+  @Nullable
+  public static XmlName createXmlName(@NotNull final String name, final JavaMethod method) {
+    return createXmlName(name, method.getGenericReturnType(), method);
+  }
 }

@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -165,6 +166,18 @@ public class DomUtil {
       }
     }
     return Collections.emptyList();
+  }
+
+  public static <T> List<T> getChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
+    final List<T> result = new SmartList<T>();
+    parent.acceptChildren(new DomElementVisitor() {
+      public void visitDomElement(final DomElement element) {
+        if (type.isInstance(element)) {
+          result.add((T)element);
+        }
+      }
+    });
+    return result;
   }
 
   @Nullable

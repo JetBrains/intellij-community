@@ -75,12 +75,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   };
 
-  private final FactoryMap<Type, GenericInfoImpl> myGenericInfos = new FactoryMap<Type, GenericInfoImpl>() {
+  private final FactoryMap<Type, StaticGenericInfo> myGenericInfos = new FactoryMap<Type, StaticGenericInfo>() {
     @NotNull
-    protected GenericInfoImpl create(final Type type) {
+    protected StaticGenericInfo create(final Type type) {
       final Class<?> rawType = ReflectionUtil.getRawType(type);
       assert rawType != null : "Type not supported: " + type;
-      return new GenericInfoImpl(rawType, DomManagerImpl.this);
+      return new StaticGenericInfo(rawType, DomManagerImpl.this);
     }
   };
   private final FactoryMap<Pair<Type, Type>, InvocationCache> myInvocationCaches = new FactoryMap<Pair<Type, Type>, InvocationCache>() {
@@ -144,6 +144,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
     myReferenceProvidersRegistry = registry;
+    final GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
+    registry.registerReferenceProvider(XmlTag.class, provider);
+    registry.registerReferenceProvider(XmlAttributeValue.class, provider);
 
     myElementFactory = psiManager.getElementFactory();
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
@@ -280,7 +283,11 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     myModificationCount++;
   }
 
-  public final GenericInfoImpl getGenericInfo(final Type type) {
+  public final DynamicGenericInfo getGenericInfo(final Type type) {
+    return new DynamicGenericInfo(null, getStaticGenericInfo(type), myProject);
+  }
+
+  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
     synchronized (myGenericInfos) {
       return myGenericInfos.get(type);
     }
@@ -484,7 +491,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     DomInvocationHandler parent = _getDomElement(parentTag);
     if (parent == null) return null;
 
-    final GenericInfoImpl info = parent.getGenericInfo();
+    final DynamicGenericInfo info = parent.getGenericInfo();
     final DomChildrenDescription childDescription = info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
     if (childDescription == null) return null;
 
@@ -582,40 +589,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (description.acceptsOtherRootTagNames()) {
       myAcceptingOtherRootTagNamesDescriptions.add(description);
     }
-
-    registerReferenceProviders(description);
-  }
-
-  private void registerReferenceProviders(final DomFileDescription description) {
-    final FileDescriptionElementFilter fileDescriptionFilter = new FileDescriptionElementFilter(this, description);
-    regiserLazyReferenceProvider(XmlTag.class, new DomLazyReferenceProvider(DomManagerImpl.this, description, myGenericValueReferenceProvider) {
-      protected void registerTrueReferenceProvider(final String[] names) {
-        myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, fileDescriptionFilter, true, myGenericValueReferenceProvider);
-      }
-
-      protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
-        return info.getReferenceTagNames();
-      }
-    });
-
-    regiserLazyReferenceProvider(XmlAttributeValue.class, new DomLazyReferenceProvider(DomManagerImpl.this, description, myGenericValueReferenceProvider) {
-      protected void registerTrueReferenceProvider(final String[] names) {
-        myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, fileDescriptionFilter, true, myGenericValueReferenceProvider);
-      }
-
-      protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
-        return info.getReferenceAttributeNames();
-      }
-    });
-  }
-
-  private void regiserLazyReferenceProvider(final Class aClass, final DomLazyReferenceProvider tagReferenceProvider) {
-    final FileDescriptionElementFilter filter = new FileDescriptionElementFilter(this, tagReferenceProvider.getDescription()) {
-      protected boolean isInitialized() {
-        return tagReferenceProvider.isInitialized();
-      }
-    };
-    myReferenceProvidersRegistry.registerReferenceProvider(filter, aClass, tagReferenceProvider);
   }
 
   @Nullable

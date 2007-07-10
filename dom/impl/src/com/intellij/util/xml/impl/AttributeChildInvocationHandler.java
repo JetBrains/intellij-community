@@ -13,7 +13,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
                                             final XmlTag tag,
                                             final DomInvocationHandler parent,
                                             final EvaluatedXmlName attributeName,
+                                            final AttributeChildDescriptionImpl description,
                                             final DomManagerImpl manager) {
-    super(type, tag, parent, attributeName, manager);
+    super(type, tag, parent, attributeName, description, manager);
     myWasDefined = getXmlElement() != null;
   }
 
@@ -79,16 +79,11 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
 
   public <T extends DomElement> T createStableCopy() {
     final DomElement parentCopy = getParent().createStableCopy();
-    final DomAttributeChildDescription description = getChildDescription();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
-        return parentCopy.isValid() ? (T) description.getValues(parentCopy).get(0) : null;
+        return parentCopy.isValid() ? (T) getChildDescription().getValues(parentCopy).get(0) : null;
       }
     });
-  }
-
-  protected AttributeChildDescriptionImpl getChildDescription() {
-    return getParentHandler().getGenericInfo().getAttributeChildDescription(getXmlName().getXmlName());
   }
 
   protected final void cacheInTag(final XmlTag tag) {

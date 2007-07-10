@@ -6,7 +6,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.XmlName;
 
 import java.lang.reflect.Type;
 
@@ -14,24 +13,24 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class AddChildInvocation implements Invocation{
-  private final XmlName myTagName;
+  private final CollectionChildDescriptionImpl myDescription;
   private final Type myType;
   private final Function<Object[],Integer> myIndexGetter;
   private final Function<Object[], Type> myClassGetter;
 
   public AddChildInvocation(final Function<Object[], Type> classGetter,
                             final Function<Object[], Integer> indexGetter,
-                            final XmlName tagName,
+                            final CollectionChildDescriptionImpl tagName,
                             final Type type) {
     myClassGetter = classGetter;
     myIndexGetter = indexGetter;
-    myTagName = tagName;
+    myDescription = tagName;
     myType = type;
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     final Type type = myClassGetter.fun(args);
-    final DomElement domElement = handler.addChild(handler.createEvaluatedXmlName(myTagName), type, myIndexGetter.fun(args));
+    final DomElement domElement = handler.addChild(myDescription, type, myIndexGetter.fun(args));
     final DomManagerImpl manager = handler.getManager();
     final boolean b = manager.setChanging(true);
     try {

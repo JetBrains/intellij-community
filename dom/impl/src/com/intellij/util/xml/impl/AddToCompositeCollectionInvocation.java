@@ -7,7 +7,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.XmlName;
 
 import java.util.Set;
 import java.lang.reflect.Type;
@@ -16,12 +15,12 @@ import java.lang.reflect.Type;
  * @author peter
 */
 class AddToCompositeCollectionInvocation implements Invocation {
-  private final XmlName myTagName;
-  private final Set<XmlName> myQnames;
+  private final CollectionChildDescriptionImpl myMainDescription;
+  private final Set<CollectionChildDescriptionImpl> myQnames;
   private final Type myType;
 
-  public AddToCompositeCollectionInvocation(final XmlName tagName, final Set<XmlName> qnames, final Type type) {
-    myTagName = tagName;
+  public AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<CollectionChildDescriptionImpl> qnames, final Type type) {
+    myMainDescription = tagName;
     myQnames = qnames;
     myType = type;
   }
@@ -33,8 +32,8 @@ class AddToCompositeCollectionInvocation implements Invocation {
       return null;
     }
 
-    for (final XmlName qname : myQnames) {
-      handler.checkInitialized(handler.createEvaluatedXmlName(qname));
+    for (final CollectionChildDescriptionImpl qname : myQnames) {
+      handler.checkInitialized(qname);
     }
 
     final XmlTag tag = handler.ensureTagExists();
@@ -56,7 +55,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
     final DomManagerImpl manager = handler.getManager();
     final boolean b = manager.setChanging(true);
     try {
-      final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(myTagName);
+      final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(myMainDescription.getXmlName());
       final XmlTag emptyTag = handler.createChildTag(evaluatedXmlName);
       final XmlTag newTag;
       if (lastTag == null) {
@@ -71,7 +70,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
         newTag = (XmlTag)tag.addAfter(emptyTag, lastTag);
       }
 
-      return new CollectionElementInvocationHandler(myType, evaluatedXmlName, newTag, handler).getProxy();
+      return new CollectionElementInvocationHandler(myType, evaluatedXmlName, newTag, myMainDescription, handler).getProxy();
     }
     finally {
       manager.setChanging(b);

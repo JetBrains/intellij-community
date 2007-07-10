@@ -92,4 +92,8 @@ public class MultiValuesMap<Key, Value>{
   public boolean isEmpty() {
     return myBaseMap.isEmpty();
   }
+
+  public boolean containsKey(final Key key) {
+    return myBaseMap.containsKey(key);
+  }
 }

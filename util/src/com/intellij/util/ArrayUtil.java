@@ -37,6 +37,7 @@ public class ArrayUtil {
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
   public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
   public static final long[] EMPTY_LONG_ARRAY = new long[0];
+  public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
 
   public static byte[] realloc (final byte [] array, final int newSize) {
