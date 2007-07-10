@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -204,10 +205,23 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     if (text == null || "".equals(text)) return;
 
     FileType registeredFileType = addNewPattern(type, text);
-    if (registeredFileType != null) {
-      Messages.showMessageDialog(myPatterns.myAddButton,
-                                 FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
-                                 FileTypesBundle.message("filetype.edit.add.pattern.exists.title"), Messages.getErrorIcon());
+    if(registeredFileType!=null) {
+      if (registeredFileType.isReadOnly()) {
+        Messages.showMessageDialog(myPatterns.myAddButton,
+                                   FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
+                                   FileTypesBundle.message("filetype.edit.add.pattern.exists.title"), Messages.getErrorIcon());
+      }
+      else {
+        if (0 == Messages.showDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
+                                                                                     registeredFileType.getDescription()),
+                                                             FileTypesBundle.message("filetype.edit.add.pattern.exists.title"),
+                                                             new String[]{
+                                                               FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
+                                                               CommonBundle.getCancelButtonText()}, 0, Messages.getQuestionIcon())) {
+          myTempPatternsTable.removeAssociation(FileTypeManager.parseFromString(text), registeredFileType);
+          addNewPattern(type, text);
+        }
+      }
     }
   }
 
