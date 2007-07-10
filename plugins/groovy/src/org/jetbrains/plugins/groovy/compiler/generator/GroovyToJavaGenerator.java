@@ -2,14 +2,16 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -31,10 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrC
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -107,7 +106,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       //top level class
       if (needCreateTopLevelClass) {
-        generationItems.add(new GenerationItemImpl(prefix + file.getNameWithoutExtension() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources));
+        generationItems.add(new GenerationItemImpl(prefix + file.getNameWithoutExtension() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file));
       }
 
       GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
@@ -117,7 +116,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       });
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
-        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources);
+        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file);
         generationItems.add(item);
       }
     }
@@ -133,21 +132,24 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   public GenerationItem[] generate(CompileContext context, GenerationItem[] itemsToGenerate, VirtualFile outputRootDirectory) {
-    VirtualFile[] files = getGroovyFilesToGenerate(context);
-
     List<GenerationItem> generatedItems = new ArrayList<GenerationItem>();
-    Map<String, GenerationItem> myPathsToItemsMap = new HashMap<String, GenerationItem>();
+    Map<String, GenerationItem> pathsToItemsMap = new HashMap<String, GenerationItem>();
 
     //puts items witch can be generated
     for (GenerationItem item : itemsToGenerate) {
-      myPathsToItemsMap.put(item.getPath(), item);
+      pathsToItemsMap.put(item.getPath(), item);
     }
 
-    for (VirtualFile groovyFile : files) {
+    Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
+    for (GenerationItem item : itemsToGenerate) {
+      vFiles.add(((GenerationItemImpl) item).getVFile());
+    }
+
+    for (VirtualFile vFile : vFiles) {
       //generate java classes form groovy source files
-      List<String> generatedJavaFilesRelPaths = generateItems(groovyFile, outputRootDirectory);
+      List<String> generatedJavaFilesRelPaths = generateItems(vFile, outputRootDirectory);
       for (String relPath : generatedJavaFilesRelPaths) {
-        GenerationItem generationItem = myPathsToItemsMap.get(relPath);
+        GenerationItem generationItem = pathsToItemsMap.get(relPath);
         if (generationItem != null)
           generatedItems.add(generationItem);
       }
@@ -837,8 +839,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     private boolean myInTestSources;
     final Module myModule;
     public int myHashCode;
+    private VirtualFile myVFile;
 
-    public GenerationItemImpl(String path, Module module, ValidityState state, boolean isInTestSources) {
+    public GenerationItemImpl(String path, Module module, ValidityState state, boolean isInTestSources, VirtualFile vFile) {
+      myVFile = vFile;
       myModule = module;
       myState = state;
       myInTestSources = isInTestSources;
@@ -859,6 +863,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     public boolean isTestSource() {
       return myInTestSources;
+    }
+
+    public VirtualFile getVFile() {
+      return myVFile;
     }
   }
 }
