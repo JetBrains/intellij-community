@@ -859,11 +859,11 @@
 <!ATTLIST map
   %i18n;
   %events;
-  id          ID             #REQUIRED
+  id          ID             #IMPLIED
   class       CDATA          #IMPLIED
   style       %StyleSheet;   #IMPLIED
   title       %Text;         #IMPLIED
-  name        CDATA          #IMPLIED
+  name        CDATA          #REQUIRED
   >
 
 <!ELEMENT area EMPTY>
