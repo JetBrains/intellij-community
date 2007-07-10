@@ -24,10 +24,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,12 +78,12 @@ public class ResolveUtil {
   }
 
   public static ClassHint.ResolveKind getResolveKind(PsiElement element) {
-    if (element instanceof PsiVariable) return ClassHint.ResolveKind.PROPERTY;
-    if (element instanceof GrReferenceExpression) return ClassHint.ResolveKind.PROPERTY;
+    if (element instanceof PsiVariable) return PROPERTY;
+    if (element instanceof GrReferenceExpression) return PROPERTY;
 
-    else if (element instanceof PsiMethod) return  ClassHint.ResolveKind.METHOD;
+    else if (element instanceof PsiMethod) return  METHOD;
 
-    else return ClassHint.ResolveKind.CLASS_OR_PACKAGE;
+    else return CLASS_OR_PACKAGE;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
@@ -155,5 +161,18 @@ public class ResolveUtil {
 
   public static PsiClass findListClass(PsiManager manager, GlobalSearchScope resolveScope) {
       return manager.findClass("java.util.List", resolveScope);
+  }
+
+  public static GrVariable resolveDuplicateLocalVariable(GrVariable variable) {
+    ResolverProcessor processor = new ResolverProcessor(variable.getName(), EnumSet.of(PROPERTY, METHOD), variable, false, PsiType.EMPTY_ARRAY);
+    treeWalkUp(variable, processor);
+    final GroovyResolveResult[] candidates = processor.getCandidates();
+    for (GroovyResolveResult candidate : candidates) {
+      final PsiElement element = candidate.getElement();
+      if (element == variable) continue;
+      if (element instanceof GrVariable) return (GrVariable) element;
+    }
+
+    return null;
   }
 }

@@ -44,9 +44,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.awt.*;
 
@@ -72,7 +72,7 @@ public class GroovyAnnotator implements Annotator {
       checkVariable(holder, (GrVariable) element);
     } else if (element instanceof GrAssignmentExpression) {
       checkAssignmentExpression((GrAssignmentExpression) element, holder);
-    }  else if (element instanceof GrNamedArgument) {
+    } else if (element instanceof GrNamedArgument) {
       checkCommandArgument((GrNamedArgument)element, holder);
     }
   }
@@ -109,6 +109,17 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkVariable(AnnotationHolder holder, GrVariable variable) {
+    if (!(variable instanceof GrField)) {
+      final GrVariable duplicate = ResolveUtil.resolveDuplicateLocalVariable(variable);
+      if (duplicate != null) {
+        if (duplicate instanceof GrField) {
+          holder.createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));
+        } else {
+          holder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("variable.already.defined", variable.getName()));
+        }
+      }
+    }
+
     PsiType varType = variable.getType();
     GrExpression initializer = variable.getInitializerGroovy();
     if (initializer != null) {
