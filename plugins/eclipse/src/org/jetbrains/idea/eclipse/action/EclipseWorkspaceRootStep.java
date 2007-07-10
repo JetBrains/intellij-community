@@ -3,35 +3,32 @@ package org.jetbrains.idea.eclipse.action;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.EclipseProjectModel;
-import org.jetbrains.idea.eclipse.EclipseProjectReader;
-import org.jetbrains.idea.eclipse.EclipseWorkspace;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collections;
-import java.util.Comparator;
 
-public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
+public class EclipseWorkspaceRootStep extends ProjectImportWizardStep{
+
   private JPanel myPanel;
   private NamePathComponent myWorkspacePathComponent;
   private ModuleDirComponent myModuleDirComponent;
   private WizardContext myWizardContext;
+  private EclipseProjectWizardContext myContext;
   private EclipseImportWizard.Parameters myParameters;
-  private EclipseProjectReader.Options myReaderOptions = new EclipseProjectReader.Options();
   private JCheckBox myLinkCheckBox;
 
-  public EclipseWorkspaceRootStep(final WizardContext context, final EclipseImportWizard.Parameters parameters) {
+  public EclipseWorkspaceRootStep(final WizardContext context, EclipseProjectWizardContext eclipseContext, EclipseImportWizard.Parameters parameters) {
     super(parameters.updateCurrent);
     myWizardContext = context;
     myParameters = parameters;
+    myContext = eclipseContext;
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
@@ -56,39 +53,23 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
-    final String newRoot = myWorkspacePathComponent.getPath();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        myParameters.workspace = EclipseWorkspace.load(newRoot, myReaderOptions);
-        Collections.sort(myParameters.workspace.getProjects(), new Comparator<EclipseProjectModel>() {
-          public int compare(EclipseProjectModel o1, EclipseProjectModel o2) {
-            return o1.getName().compareToIgnoreCase(o2.getName());
-          }
-        });
-      }
-    }, EclipseBundle.message("eclipse.import.scanning"), false, null);
+    myContext.setRootDirectory(myWorkspacePathComponent.getPath());
     myParameters.converterOptions.commonModulesDirectory = myModuleDirComponent.getPath();
     myParameters.linkConverted = myLinkCheckBox.isSelected();
   }
 
   public void updateStep() {
     if (!myWorkspacePathComponent.isPathChangedByUser()) {
-      final String projectFilePath = myWizardContext.getProjectFileDirectory();
-      if (projectFilePath != null) {
-        String path = getRoot();
-        if (path == null) {
-          path = projectFilePath;
-        }
+      String path = myContext.getRootDirectory();
+      if (path == null) {
+        path = myWizardContext.getProjectFileDirectory();
+      }
+      if(path!=null){
         myWorkspacePathComponent.setPath(path.replace('/', File.separatorChar));
         myWorkspacePathComponent.getPathComponent().selectAll();
       }
     }
     myLinkCheckBox.setSelected(myParameters.linkConverted);
-  }
-
-  @Nullable
-  private String getRoot() {
-    return myParameters.workspace == null ? null : myParameters.workspace.getRoot();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -125,7 +106,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
           final boolean dedicated = rbModulesDedicated.isSelected();
           myDirComponent.setEnabled(dedicated);
           if (dedicated && myDirComponent.getText().length() == 0) {
-            myDirComponent.setText(new File(myWorkspacePathComponent.getPath()).getPath()); // OS specific slashes
+            myDirComponent.setText(FileUtil.toSystemDependentName(myWorkspacePathComponent.getPath()));
           }
         }
       };

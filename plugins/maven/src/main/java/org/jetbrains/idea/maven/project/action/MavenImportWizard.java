@@ -42,17 +42,22 @@ public class MavenImportWizard extends ProjectImportWizard
     return ProjectBundle.message("maven.name");
   }
 
-  public AddModuleWizard.ModuleWizardStepFactory getStepsFactory(final Project currentProject, final boolean updateCurrent) {
+  protected void initImport(final Project currentProject, final boolean updateCurrent) {
+    super.initImport(currentProject, updateCurrent);
 
-    if ((updateCurrent)) {
+    if (updateCurrent) {
       projectToUpdate = currentProject;
       preferences = MavenImporterPreferencesComponent.getInstance(currentProject).getState().clone();
+      importRoot = currentProject.getBaseDir();
     }
     else {
       projectToUpdate = null;
       preferences = new MavenImporterPreferences();
+      importRoot = null;
     }
+  }
 
+  public AddModuleWizard.ModuleWizardStepFactory getStepsFactory(final Project currentProject, final boolean updateCurrent) {
     return new AddModuleWizard.ModuleWizardStepFactory() {
       public ModuleWizardStep[] createSteps(final WizardContext wizardContext) {
         return new ModuleWizardStep[]{new MavenImportRootStep(wizardContext, MavenImportWizard.this, preferences),
@@ -76,7 +81,7 @@ public class MavenImportWizard extends ProjectImportWizard
     myImportProcessor = null;
   }
 
-  public void commitImport(final Project project) {
+  public void afterProjectOpen(final Project project) {
 
     myImportProcessor.resolve(project, myProfiles);
 
@@ -200,5 +205,32 @@ public class MavenImportWizard extends ProjectImportWizard
 
   public void setOpenProjectSettingsAfter(boolean on) {
     openModulesConfigurator = on;
+  }
+
+  protected boolean canQuickImport(VirtualFile file) {
+    return file.getName().equals(MavenEnv.POM_FILE);
+  }
+
+  public boolean doQuickImport(VirtualFile file) {
+    myFiles = Arrays.asList(file);
+
+    if(!setProfiles(new ArrayList<String>())){
+      return false;
+    }
+
+    final List<MavenProjectModel.Node> projects = getList();
+    try {
+      setList(projects);
+    }
+    catch (ValidationException e) {
+      return false;
+    }
+
+    if(projects.size()!=1){
+      return false;
+    }
+
+    myNewProjectName = projects.get(0).getMavenProject().getArtifactId();
+    return true;
   }
 }
