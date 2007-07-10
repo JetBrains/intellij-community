@@ -67,12 +67,15 @@ public class DeannotateIntentionAction implements IntentionAction {
               }
             }
 
-            if (idx != -1) {
+            if (idx > -1) {
               PsiElement grParent = parent.getParent();
               if (grParent instanceof PsiCall) {
                 PsiMethod method = ((PsiCall)grParent).resolveMethod();
                 if (method != null) {
-                  return method.getParameterList().getParameters()[idx];
+                  final PsiParameter[] parameters = method.getParameterList().getParameters();
+                  if (parameters.length > idx) {
+                    return parameters[idx];
+                  }
                 }
               }
             }
