@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -168,7 +169,7 @@ public class TypedHandler implements TypedActionHandler {
     AutoPopupController autoPopupController = AutoPopupController.getInstance(project);
 
     if (charTyped == '.') {
-      autoPopupController.autoPopupMemberLookup(editor);
+      autoPopupController.autoPopupMemberLookup(InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file));
     }
 
     if (charTyped == '#') {
