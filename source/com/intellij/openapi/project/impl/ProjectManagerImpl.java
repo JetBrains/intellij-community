@@ -5,7 +5,10 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -598,7 +601,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         LOG.info("Reloading project.");
         ProjectImpl projectImpl = (ProjectImpl)project[0];
         IProjectStore projectStore = projectImpl.getStateStore();
-        final String path = projectStore.getProjectFilePath();
+        final String location = projectImpl.getLocation();
         final List<VirtualFile> original = projectStore.getAllStorageFiles(true);
 
         if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
@@ -613,11 +616,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           project[0] = null; // Let it go.
 
           if (takeMemorySnapshot) {
-            String outputFileName = ProfilingUtil.createDumpFileName(ApplicationInfo.getInstance().getBuildNumber());
             ProfilingUtil.forceCaptureMemorySnapshot();
           }
 
-          ProjectUtil.openProject(path, null, true);
+          ProjectUtil.openProject(location, null, true);
         }
       }
     }, ModalityState.NON_MODAL);
