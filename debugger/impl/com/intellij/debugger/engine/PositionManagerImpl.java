@@ -260,13 +260,30 @@ public class PositionManagerImpl implements PositionManager {
         if (fromClass.locationsOfLine(lineNumber).size() > 0) {
           return fromClass;
         }
-        //noinspection LoopStatementThatDoesntLoop
+        // choose the second line to make sure that only this class' code exists on the line chosen
+        // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
+        // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
+        // Example of such line:
+        // list.add(new Runnable(){......
+        // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
+        int line = -1;
         for (Location location : fromClass.allLineLocations()) {
-          final SourcePosition candidateFirstPosition = SourcePosition.createFromLine(classToFind.getContainingFile(), location.lineNumber() - 1);
-          if (classToFind.equals(JVMNameUtil.getClassAt(candidateFirstPosition))) {
+          final int locationLine = location.lineNumber() - 1;
+          if (line < 0) {
+            line = locationLine;
+          }
+          else {
+            if (locationLine != line) {
+              line = locationLine;
+              break;
+            }
+          }
+        }
+        if (line >= 0) {
+          final SourcePosition candidatePosition = SourcePosition.createFromLine(classToFind.getContainingFile(), line);
+          if (classToFind.equals(JVMNameUtil.getClassAt(candidatePosition))) {
             return fromClass;
           }
-          break; // check only the first location
         }
       }
       catch (AbsentInformationException ignored) {
