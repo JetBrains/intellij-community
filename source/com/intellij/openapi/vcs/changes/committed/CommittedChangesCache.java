@@ -455,10 +455,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   @Nullable
   public List<CommittedChangeList> getCachedIncomingChanges() {
-    if (myCachedIncomingChangeLists == null) {
+    final Map<CommittedChangeList, Change[]> incomingChangeLists = myCachedIncomingChangeLists;
+    if (incomingChangeLists == null) {
       return null;
     }
-    return new ArrayList<CommittedChangeList>(myCachedIncomingChangeLists.keySet());
+    return new ArrayList<CommittedChangeList>(incomingChangeLists.keySet());
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
