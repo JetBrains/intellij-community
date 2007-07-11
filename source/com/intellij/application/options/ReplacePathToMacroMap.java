@@ -50,7 +50,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
         if (occurrenceOfPath >= 0) {
           int endOfOccurence = occurrenceOfPath + path.length();
-          if (!isWindowsRoot && endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/') {
+          if (!isWindowsRoot && endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/' && !text.substring(endOfOccurence).startsWith("!/")) {
             i = endOfOccurence;
             continue;
           }

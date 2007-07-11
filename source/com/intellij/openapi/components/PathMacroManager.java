@@ -11,6 +11,9 @@ public abstract class PathMacroManager implements PathMacroSubstitutor {
     return component;
   }
 
+  /**
+   * @deprecated user expandPaths & collapsePaths instead
+   */
   public abstract ReplacePathToMacroMap getReplacePathMap();
 
   public abstract void expandPaths(Element element);
