@@ -19,7 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
- * Interface, that contains all tokens, retruned by GroovyLexer
+ * Interface that contains all tokens returned by GroovyLexer
  *
  * @author ilyas
  */
