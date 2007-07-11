@@ -145,7 +145,9 @@ public class ApplyPatchDialog extends DialogWrapper {
     myVerifyPatchAlarm.addRequest(new Runnable() {
       public void run() {
         try {
-          verifyPatchPaths();
+          if (myPatches != null) {
+            verifyPatchPaths();
+          }
         }
         catch(Exception ex) {
           LOG.error(ex);
