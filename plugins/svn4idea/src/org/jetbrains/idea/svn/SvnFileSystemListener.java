@@ -103,7 +103,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
       return null;
     }
-    final SVNStatus fileStatus = getFileStatus(srcFile);
+    final SVNStatus fileStatus = getFileStatus(vcs, srcFile);
     if (fileStatus != null && fileStatus.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
       return null;
@@ -152,7 +152,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       }
       else {
         // if src is not under version control, do usual move.
-        SVNStatus srcStatus = getFileStatus(src);
+        SVNStatus srcStatus = getFileStatus(vcs, src);
         if (srcStatus == null || srcStatus.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                 srcStatus.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL ||
                 srcStatus.getContentsStatus() == SVNStatusType.STATUS_MISSING ||
@@ -263,7 +263,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
     SVNWCClient wcClient = vcs.createWCClient();
     File targetFile = new File(ioDir, name);
-    SVNStatus status = getFileStatus(targetFile);
+    SVNStatus status = getFileStatus(vcs, targetFile);
 
     if (status == null || status.getContentsStatus() == SVNStatusType.STATUS_NONE) {
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name));
@@ -316,7 +316,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     for(AddedFileInfo addedFileInfo: myAddedFiles) {
       VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
       if (addedFile != null) {
-        final SVNStatus fileStatus = getFileStatus(new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName));
+        SvnVcs vcs = SvnVcs.getInstance(addedFileInfo.myProject);
+        final SVNStatus fileStatus = getFileStatus(vcs, new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName));
         if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
           if (!addedFileInfo.myProject.isDisposed()) {
             boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
@@ -435,15 +436,30 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
   @Nullable
   private static SVNStatus getFileStatus(File file) {
-    SVNStatusClient stClient = SVNClientManager.newInstance().getStatusClient();
-    SVNStatus status;
+    final SVNClientManager clientManager = SVNClientManager.newInstance();
     try {
-      status = stClient.doStatus(file, false);
+      SVNStatusClient stClient = clientManager.getStatusClient();
+      return getFileStatus(file, stClient);
+    }
+    finally {
+      clientManager.dispose();
+    }
+  }
+
+  @Nullable
+  private static SVNStatus getFileStatus(SvnVcs vcs, File file) {
+    SVNStatusClient stClient = vcs.createStatusClient();
+    return getFileStatus(file, stClient);
+  }
+
+  @Nullable
+  private static SVNStatus getFileStatus(final File file, final SVNStatusClient stClient) {
+    try {
+      return stClient.doStatus(file, false);
     }
     catch (SVNException e) {
-      status = null;
+      return null;
     }
-    return status;
   }
 
   private static boolean isUndo(SvnVcs vcs) {

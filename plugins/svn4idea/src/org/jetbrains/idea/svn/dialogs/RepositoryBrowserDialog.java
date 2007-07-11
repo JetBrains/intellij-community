@@ -449,7 +449,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      SVNURL sourceURL = getRepositoryBrowser().getSelectedNode().getURL();
+      SVNURL sourceURL = getNotNullSelectedNode().getURL();
       DiffOptionsDialog dialog = new DiffOptionsDialog(myProject, root, sourceURL);
       dialog.show();
       if (dialog.isOK()) {
@@ -501,7 +501,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog("Branch or Tag", myProject, root, getRepositoryBrowser().getSelectedNode().getURL());
+      CopyOptionsDialog dialog = new CopyOptionsDialog("Branch or Tag", myProject, root, getNotNullSelectedNode().getURL());
       dialog.show();
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
@@ -585,12 +585,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
     }
     public void actionPerformed(AnActionEvent e) {
-      SVNURL url = getRepositoryBrowser().getSelectedNode().getURL();
+      SVNURL url = getNotNullSelectedNode().getURL();
       final File dir = selectFile("Destination directory", "Select export destination directory");
       if (dir == null) {
         return;
       }
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       ExportOptionsDialog dialog = new ExportOptionsDialog(p, url, dir);
       dialog.show();
       if (dialog.isOK()) {
@@ -655,7 +655,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       SVNDirEntry entry = node.getSVNDirEntry();
       SVNURL url = node.getURL();
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       SVNRevision rev = SVNRevision.create(entry.getRevision());
       final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, rev, url.toString(),
               entry.getAuthor(), entry.getDate(), null, null);
@@ -687,6 +687,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
+  @Nullable
   private File selectFile(String title, String description) {
     FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
     fcd.setShowFileSystemRoots(true);
@@ -694,7 +695,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     fcd.setDescription(description);
     fcd.setHideIgnored(false);
     VirtualFile[] files = FileChooser.chooseFiles(getRepositoryBrowser(), fcd, null);
-    if (files == null || files.length != 1 || files[0] == null) {
+    if (files.length != 1 || files[0] == null) {
       return null;
     }
     return new File(files[0].getPath());
@@ -775,7 +776,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
 
   protected void doCheckout(@Nullable final CheckoutProvider.Listener listener) {
-    SVNURL url = getRepositoryBrowser().getSelectedNode().getURL();
+    SVNURL url = getNotNullSelectedNode().getURL();
     File dir = selectFile("Destination directory", "Select checkout destination directory");
     if (dir == null) {
       return;
@@ -795,7 +796,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
 
-    SVNURL url = getRepositoryBrowser().getSelectedNode().getURL();
+    SVNURL url = getNotNullSelectedNode().getURL();
     ImportOptionsDialog dialog = new ImportOptionsDialog(myProject, url, dir);
     dialog.show();
     if (dialog.isOK()) {
@@ -804,8 +805,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       boolean ignored = dialog.isIncludeIgnored();
       String message = dialog.getCommitMessage();
       SvnCheckoutProvider.doImport(myProject, src, url, recursive, ignored, message);
-      getRepositoryBrowser().getSelectedNode().reload();
-
+      getNotNullSelectedNode().reload();
     }
   }
 
@@ -831,16 +831,22 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
     SVNRepository repository = myVCS.createRepository(sourceURL.toString());
-    final long rev = repository.getLatestRevision();
-    // generate Map of path->Change
-    SvnDiffEditor diffEditor = new SvnDiffEditor(myVCS.createRepository(sourceURL.toString()),
-            myVCS.createRepository(targetURL.toString()));
-    repository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
-      public void report(ISVNReporter reporter) throws SVNException {
-        reporter.setPath("", null, rev, false);
-        reporter.finishReport();
-      }
-    }, diffEditor);
+    SvnDiffEditor diffEditor;
+    try {
+      final long rev = repository.getLatestRevision();
+      // generate Map of path->Change
+      diffEditor = new SvnDiffEditor(myVCS.createRepository(sourceURL.toString()),
+              myVCS.createRepository(targetURL.toString()));
+      repository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
+        public void report(ISVNReporter reporter) throws SVNException {
+          reporter.setPath("", null, rev, false);
+          reporter.finishReport();
+        }
+      }, diffEditor);
+    }
+    finally {
+      repository.closeSession();
+    }
     Map<String, Change> changes = diffEditor.getChangesMap();
     if (changes.isEmpty()) {
       // display no changes dialog.
