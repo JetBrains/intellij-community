@@ -190,7 +190,9 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performPsiSpoilingRefactoring() {
-    RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    if (myNonCodeUsages != null) {
+      RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    }
     if (myMoveCallback != null) {
       if (myMoveCallback instanceof MoveClassesOrPackagesCallback) {
         ((MoveClassesOrPackagesCallback) myMoveCallback).classesMovedToInner(myTargetClass);
