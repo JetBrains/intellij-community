@@ -119,8 +119,8 @@ public final class MainProcessor extends EventProcessor{
         myCurrentProcessor = processor;
       }
       else {
-        componentAt.processMouseEvent(new MouseEvent(
-          deepestComponentAt,
+        final Component source = deepestComponentAt != null ? deepestComponentAt : componentAt.getDelegee();
+        componentAt.processMouseEvent(new MouseEvent(source,
           id,
           e.getWhen(),
           e.getModifiers(),
