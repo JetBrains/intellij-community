@@ -58,7 +58,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new ImplementAbstractClassAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new CreateSubclassAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new MoveInitializerToConstructorAction(), DECLARATION_CATEGORY);

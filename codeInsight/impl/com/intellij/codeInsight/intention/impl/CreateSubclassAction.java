@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-public class ImplementAbstractClassAction extends PsiElementBaseIntentionAction {
+public class CreateSubclassAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
   private static final @NonNls String IMPL_SUFFIX = "Impl";
@@ -44,22 +44,23 @@ public class ImplementAbstractClassAction extends PsiElementBaseIntentionAction 
     return CodeInsightBundle.message("intention.implement.abstract.class.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum()) return false;
     PsiJavaToken lBrace = psiClass.getLBrace();
     if (lBrace == null) return false;
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
-    if (!psiClass.isInterface() && !psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
 
     myText = psiClass.isInterface() ?
              CodeInsightBundle.message("intention.implement.abstract.class.interface.text") :
-             CodeInsightBundle.message("intention.implement.abstract.class.default.text");
+             (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)
+               ? CodeInsightBundle.message("intention.implement.abstract.class.default.text")
+               : CodeInsightBundle.message("intention.implement.abstract.class.subclass.text"));
     return true;
   }
 
-  public void invoke(final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
