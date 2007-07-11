@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -28,7 +29,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     super(userObject);
   }
 
-  public static ChangesBrowserNode create(final Project project, Object userObject) {
+  public static ChangesBrowserNode create(final Project project, @NotNull Object userObject) {
     if (userObject instanceof Change) {
       return new ChangesBrowserChangeNode(project, (Change) userObject);
     }
