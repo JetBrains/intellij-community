@@ -152,8 +152,10 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor();
-    String modifier = aClass.hasModifierProperty(PsiModifier.ABSTRACT) ? PsiModifier.PROTECTED : PsiModifier.PUBLIC;
-    constructor.getModifierList().setModifierProperty(modifier, true);
+    String modifier = getConstructorModifier(aClass);
+    if (modifier != null) {
+      constructor.getModifierList().setModifierProperty(modifier, true);
+    }
 
     if (baseConstructor != null){
       PsiJavaCodeReferenceElement[] throwRefs = baseConstructor.getThrowsList().getReferenceElements();
@@ -225,6 +227,23 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     constructor.getBody().replace(body);
     constructor = (PsiMethod)codeStyleManager.reformat(constructor);
     return constructor;
+  }
+
+  @Nullable
+  private static String getConstructorModifier(final PsiClass aClass) {
+    String modifier = PsiModifier.PUBLIC;
+
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      modifier =  PsiModifier.PROTECTED;
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      modifier = PsiModifier.PACKAGE_LOCAL;
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      modifier = PsiModifier.PRIVATE;
+    }
+
+    return modifier;
   }
 
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
