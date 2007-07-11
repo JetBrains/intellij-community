@@ -24,6 +24,7 @@ import java.util.*;
  */
 public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
+  public static final String PROJECT_ROOT_TAG = "<Project Root>";
 
   private Project myProject;
   private boolean showFlatten;
@@ -308,7 +309,12 @@ public class TreeModelBuilder {
                                               ChangesBrowserNode root) {
     ChangesBrowserNode node = moduleNodesCache.get(module);
     if (node == null) {
-      node = ChangesBrowserNode.create(myProject, module);
+      if (module == null) {
+        node = ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG);
+      }
+      else {
+        node = ChangesBrowserNode.create(myProject, module);
+      }
       model.insertNodeInto(node, root, root.getChildCount());
       moduleNodesCache.put(module, node);
     }
