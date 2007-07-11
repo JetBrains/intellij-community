@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +79,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     }
     final PsiElement parent = element.getParent();
     
-    return parent instanceof PsiJavaFile && !PsiUtil.isInJspFile(element);
+    return parent instanceof PsiFile && !PsiUtil.isInJspFile(element);
   }
 
   public final String getToolWindowId() {
