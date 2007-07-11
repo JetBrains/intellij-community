@@ -157,7 +157,6 @@ public class TreeModelBuilder {
   private void insertChangeNode(final Object change, final HashMap<FilePath, ChangesBrowserNode> foldersCache, final HashMap<Module, ChangesBrowserNode> moduleCache,
                                 final ChangesBrowserNode listNode) {
     final FilePath nodePath = getPathForObject(change);
-    nodePath.refresh();
     ChangesBrowserNode oldNode = foldersCache.get(nodePath);
     if (oldNode != null) {
       ChangesBrowserNode node = ChangesBrowserNode.create(myProject, change);
