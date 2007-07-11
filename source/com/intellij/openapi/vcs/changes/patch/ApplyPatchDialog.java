@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -328,15 +329,7 @@ public class ApplyPatchDialog extends DialogWrapper {
 
   private void updatePatchTableModel() {
     if (myPatches != null) {
-      myPatchContentsList.setModel(new AbstractListModel() {
-        public int getSize() {
-          return myPatches.size();
-        }
-
-        public Object getElementAt(int index) {
-          return myPatches.get(index);
-        }
-      });
+      myPatchContentsList.setModel(new CollectionListModel(myPatches));
     }
     else {
       myPatchContentsList.setModel(new DefaultListModel());
@@ -522,4 +515,5 @@ public class ApplyPatchDialog extends DialogWrapper {
       }
     }
   }
+
 }
