@@ -1,28 +1,33 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.navigation.NavigationItem;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author ven
@@ -69,25 +74,32 @@ public class CompleteReferenceExpression {
   }
 
   private static Object[] getVariantsImpl(GrReferenceExpression refExpr, ResolverProcessor processor) {
+    String[] sameQualifier = ArrayUtil.EMPTY_STRING_ARRAY;
     GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor);
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
-      if (qualifier != null) getVariantsFromQualifier(refExpr, processor, qualifier);
+      if (qualifier != null) {
+        getVariantsFromQualifier(refExpr, processor, qualifier);
+      }
     } else {
       if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
+        if (qualifier.getType() == null) {
+          sameQualifier = getVariantsWithSameQualifier(qualifier);
+        }
       } else {
         getVariantsFromQualifierForSpreadOperator(refExpr, processor, qualifier);
       }
     }
 
     GroovyResolveResult[] candidates = processor.getCandidates();
-    if (candidates.length == 0) return PsiNamedElement.EMPTY_ARRAY;
+    if (candidates.length == 0 && sameQualifier.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     String[] properties = addPretendedProperties(elements);
-    final Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
-    return ArrayUtil.mergeArrays(variants, properties, Object.class);
+    Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
+    variants = ArrayUtil.mergeArrays(variants, properties, Object.class);
+    return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
   }
 
   private static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
@@ -155,6 +167,31 @@ public class CompleteReferenceExpression {
           }
         }
       }
+    }
+  }
+
+  private static String[] getVariantsWithSameQualifier(GrExpression qualifier) {
+    final PsiElement scope = PsiTreeUtil.getParentOfType(qualifier, GrMember.class, GroovyFile.class);
+    List<String> result = new ArrayList<String>();
+    addVariantsWithSameQualifier(scope, qualifier, result);
+    return result.toArray(new String[result.size()]);
+  }
+
+  private static void addVariantsWithSameQualifier(PsiElement element, GrExpression pattern, List<String> result) {
+    if (element instanceof GrReferenceExpression) {
+      final GrReferenceExpression refExpr = (GrReferenceExpression) element;
+      final String refName = refExpr.getReferenceName();
+      if (refName != null) {
+        final GrExpression hisQualifier = refExpr.getQualifierExpression();
+        if (hisQualifier == null || hisQualifier == pattern) return;
+        if (PsiEquivalenceUtil.areElementsEquivalent(hisQualifier, pattern)) {
+          result.add(refName);
+        }
+      }
+    }
+
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      addVariantsWithSameQualifier(child, pattern, result);
     }
   }
 
