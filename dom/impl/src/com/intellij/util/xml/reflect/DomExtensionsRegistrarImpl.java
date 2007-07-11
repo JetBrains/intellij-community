@@ -4,6 +4,7 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import gnu.trove.THashSet;
@@ -52,8 +53,14 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   }
 
   @NotNull
-  public DomExtension registerAttributeChildExtension(@NotNull final XmlName name, final Type parameterType) {
+  public DomExtension registerGenericAttributeValueChildExtension(@NotNull final XmlName name, final Type parameterType) {
     return addExtension(myAttributes, name, ParameterizedTypeImpl.make(GenericAttributeValue.class, new Type[]{parameterType}, null));
+  }
+
+  @NotNull
+  public DomExtension registerAttributeChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
+    assert GenericAttributeValue.class.isAssignableFrom(ReflectionUtil.getRawType(type));
+    return addExtension(myAttributes, name, type);
   }
 
   private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, final XmlName name, final Type type) {

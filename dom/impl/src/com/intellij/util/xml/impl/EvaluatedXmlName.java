@@ -68,7 +68,7 @@ public class EvaluatedXmlName {
   }
 
   public String toString() {
-    return (myNamespaceKey == null ? "" : myNamespaceKey + ":") + myXmlName.getLocalName();
+    return (myNamespaceKey == null ? "" : myNamespaceKey + " : ") + myXmlName.getLocalName();
   }
 
   public boolean equals(final Object o) {

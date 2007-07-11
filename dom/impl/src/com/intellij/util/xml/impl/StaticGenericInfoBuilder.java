@@ -199,14 +199,14 @@ public class StaticGenericInfoBuilder {
     }
 
     final Class returnType = method.getReturnType();
-    final boolean isAttributeValueMethod = returnType.equals(GenericAttributeValue.class);
+    final boolean isAttributeValueMethod = GenericAttributeValue.class.isAssignableFrom(returnType);
     final JavaMethodSignature signature = method.getSignature();
     final Attribute annotation = signature.findAnnotation(Attribute.class, myClass);
     final boolean isAttributeMethod = annotation != null || isAttributeValueMethod;
     if (annotation != null) {
       assert
-        isAttributeValueMethod || returnType.isAssignableFrom(GenericAttributeValue.class) :
-        method + " should return " + GenericAttributeValue.class;
+        isAttributeValueMethod || GenericAttributeValue.class.isAssignableFrom(returnType) :
+        method + " should return GenericAttributeValue";
     }
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();

@@ -16,9 +16,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DomExtender<T extends DomElement> {
 
   /**
-   * @param element DOM element where new children may be added to
+   * @param t DOM element where new children may be added to
    * @param registrar a place to register your own DOM children descriptions
    * @return dependency items, whose change should trigger dynamic DOM rebuild for this element   
    */
-  public abstract Object[] registerExtensions(@NotNull T element, @NotNull final DomExtensionsRegistrar registrar);
+  public abstract Object[] registerExtensions(@NotNull T t, @NotNull final DomExtensionsRegistrar registrar);
 }

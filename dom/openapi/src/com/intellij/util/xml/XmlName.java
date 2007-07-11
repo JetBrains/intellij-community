@@ -67,6 +67,6 @@ public class XmlName implements Comparable<XmlName> {
   }
 
   public String toString() {
-    return myNamespaceKey + ":" + myLocalName;
+    return myNamespaceKey + " : " + myLocalName;
   }
 }

@@ -17,6 +17,13 @@ public interface DomExtensionsRegistrar {
 
   @NotNull DomExtension registerCollectionChildrenExtension(@NotNull XmlName name, @NotNull Type type);
 
-  @NotNull DomExtension registerAttributeChildExtension(@NotNull XmlName name, final Type parameterType);
+  @NotNull DomExtension registerGenericAttributeValueChildExtension(@NotNull XmlName name, final Type parameterType);
+
+  /**
+   * @param name attribute qualified name
+   * @param type should extend GenericAttributeValue
+   * @return dom extension object
+   */
+  @NotNull DomExtension registerAttributeChildExtension(@NotNull XmlName name, @NotNull final Type type);
 
 }

@@ -132,7 +132,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   protected String getValue() {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
-      final String s = tag.getAttributeValue(getXmlElementName(), tag.getNamespace());
+      final String s = tag.getAttributeValue(getXmlElementName(), getXmlElementNamespace());
       if (s != null) {
         return XmlUtil.unescape(s);
       }
