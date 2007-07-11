@@ -68,7 +68,7 @@ public class CompleteReferenceExpression {
     return propertyVariants;
   }
 
-  static Object[] getVariantsImpl(GrReferenceExpression refExpr, ResolverProcessor processor) {
+  private static Object[] getVariantsImpl(GrReferenceExpression refExpr, ResolverProcessor processor) {
     GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor);
@@ -90,7 +90,7 @@ public class CompleteReferenceExpression {
     return ArrayUtil.mergeArrays(variants, properties, Object.class);
   }
 
-  static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
+  private static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
     PsiType qualifierType = qualifier.getType();
     if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
@@ -112,7 +112,7 @@ public class CompleteReferenceExpression {
     }
   }
 
-  static String[] addPretendedProperties(PsiElement[] elements) {
+  private static String[] addPretendedProperties(PsiElement[] elements) {
     List<String> result = new ArrayList<String>();
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod) {
@@ -127,7 +127,7 @@ public class CompleteReferenceExpression {
     return result.toArray(new String[result.size()]);
   }
 
-  static void getVariantsFromQualifier(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
+  private static void getVariantsFromQualifier(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
     PsiType qualifierType = qualifier.getType();
     if (qualifierType == null) {
       if (qualifier instanceof GrReferenceExpression) {
@@ -158,7 +158,7 @@ public class CompleteReferenceExpression {
     }
   }
 
-  static void getVariantsFromQualifierType(GrReferenceExpression refExpr, ResolverProcessor processor, PsiType qualifierType, Project project) {
+  private static void getVariantsFromQualifierType(GrReferenceExpression refExpr, ResolverProcessor processor, PsiType qualifierType, Project project) {
     if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
       if (qualifierClass != null) {
