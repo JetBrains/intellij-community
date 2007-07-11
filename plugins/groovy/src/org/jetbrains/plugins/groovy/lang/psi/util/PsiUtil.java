@@ -220,4 +220,8 @@ public class PsiUtil {
       }
     });
   }
+
+  public static PsiClass getJavaLangObject(PsiElement resolved, GlobalSearchScope scope) {
+    return resolved.getManager().findClass("java.lang.Class", scope);
+  }
 }
