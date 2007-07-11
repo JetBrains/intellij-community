@@ -251,14 +251,22 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   private class ProjectRootContentFilter implements VirtualFileFilter {
+    private VirtualFile myBaseDir;
+
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        return info != null && info.module == null && VfsUtil.isAncestor(myProject.getBaseDir(), file, false);
+        return info != null && info.module == null && VfsUtil.isAncestor(getBaseDir(), file, false);
       }
       else {
         return !myFileTypeManager.isFileIgnored(file.getName());
       }
+    }
+
+    private VirtualFile getBaseDir() {
+      if (myBaseDir != null) return myBaseDir;
+      myBaseDir =  myProject.getBaseDir();
+      return myBaseDir;
     }
   }
 }
