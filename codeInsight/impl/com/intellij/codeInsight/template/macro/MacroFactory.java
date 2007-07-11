@@ -60,6 +60,10 @@ public class MacroFactory {
     register(new DescendantClassesEnumMacro());
     register(new SubtypesMacro());
     register(new TypeOfVariableMacro());
+
+    register(new CurrentDateMacro());
+    register(new CurrentTimeMacro());
+    register(new CurrentUserMacro());
   }
 
   public static void register(Macro macro) {
