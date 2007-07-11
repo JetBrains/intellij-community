@@ -368,7 +368,11 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
   }
 
-  public boolean fileIsUnderProject(VirtualFile file) {
+  public boolean fileIsUnderProject(final VirtualFile file) {
+    return true;
+  }
+
+  public boolean fileIsUnderProject(File file) {
     return true;
   }
 
