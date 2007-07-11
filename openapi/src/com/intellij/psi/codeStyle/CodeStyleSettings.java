@@ -1118,10 +1118,18 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       settings.writeExternal(element, parentCustomSettings);
     }
 
-    for(Map.Entry<FileType,IndentOptions> entry:ourAdditionalIndentOptions.entrySet()) {
+    final FileType[] fileTypes = ourAdditionalIndentOptions.keySet().toArray(new FileType[ourAdditionalIndentOptions.keySet().size()]);
+    Arrays.sort(fileTypes, new Comparator<FileType>() {
+      public int compare(final FileType o1, final FileType o2) {
+        return o1.getDefaultExtension().compareTo(o2.getDefaultExtension());
+      }
+    });
+
+    for (FileType fileType : fileTypes) {
+      final IndentOptions indentOptions = ourAdditionalIndentOptions.get(fileType);
       Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
-      entry.getValue().writeExternal(additionalIndentOptions);
-      additionalIndentOptions.setAttribute(FILETYPE,entry.getKey().getDefaultExtension());
+      indentOptions.writeExternal(additionalIndentOptions);
+      additionalIndentOptions.setAttribute(FILETYPE,fileType.getDefaultExtension());
       element.addContent(additionalIndentOptions);
     }
   }
