@@ -81,12 +81,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   public GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal) {
     StringBuffer text = new StringBuffer();
-    if (type == null) text.append("def ");
     if (isFinal) text.append("final ");
 
     if (type != null) {
       type = TypesUtil.unboxPrimitiveType(type);
       text.append(type.getCanonicalText()).append(" ");
+    } else {
+      text.append("def ");
     }
 
     text.append(identifier);
