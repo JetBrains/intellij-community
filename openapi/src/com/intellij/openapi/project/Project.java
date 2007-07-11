@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
  * Project interface class.
  */
 public interface Project extends ComponentManager, AreaInstance, Disposable {
+  @NonNls String DIRECTORY_STORE_FOLDER = ".idea";
+
   /**
    * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
    * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.

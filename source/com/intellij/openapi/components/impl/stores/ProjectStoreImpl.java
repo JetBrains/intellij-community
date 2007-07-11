@@ -47,7 +47,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
-  @NonNls public static final String DIRECTORY_STORE_FOLDER = ".idea";
 
   private ProjectEx myProject;
 
@@ -162,7 +161,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (filePath != null) {
       final IFile iFile = FileSystem.FILE_SYSTEM.createFile(filePath);
       final IFile dir_store =
-        iFile.isDirectory() ? iFile.getChild(DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(DIRECTORY_STORE_FOLDER);
+        iFile.isDirectory() ? iFile.getChild(Project.DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(Project.DIRECTORY_STORE_FOLDER);
 
       final StateStorageManager stateStorageManager = getStateStorageManager();
       if (dir_store.exists()) {
