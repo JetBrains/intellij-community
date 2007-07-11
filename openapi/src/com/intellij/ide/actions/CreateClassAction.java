@@ -39,9 +39,6 @@ public class CreateClassAction extends CreateElementActionBase {
     return IdeBundle.message("command.create.class");
   }
 
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateClass(newName);
-  }
 
   protected String getErrorTitle() {
     return IdeBundle.message("title.cannot.create.class");
@@ -72,8 +69,65 @@ public class CreateClassAction extends CreateElementActionBase {
     return IdeBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
   }
 
+  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
+    PsiDirectory dir = directory;
+    String className = newName;
+
+    if (newName.indexOf(".") != -1) {
+      dir = getTopLevelDir(dir);
+
+      String[] names = newName.split("\\.");
+
+      for (int i = 0; i < names.length - 1; i++) {
+        String name = names[i];
+        PsiDirectory subDir = dir.findSubdirectory(name);
+
+        if (subDir == null) {
+          dir.checkCreateSubdirectory(name);
+          return;
+        }
+
+        dir = subDir;
+      }
+
+      className = names[names.length - 1];
+    }
+
+    dir.checkCreateClass(className);
+  }
+
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    return new PsiElement[]{directory.createClass(newName)};
+    PsiDirectory dir = directory;
+    String className = newName;
+
+    if (newName.indexOf(".") != -1) {
+      dir = getTopLevelDir(dir);
+
+      String[] names = newName.split("\\.");
+
+      for (int i = 0; i < names.length - 1; i++) {
+        String name = names[i];
+        PsiDirectory subDir = dir.findSubdirectory(name);
+
+        if (subDir == null) {
+          subDir = dir.createSubdirectory(name);
+        }
+
+        dir = subDir;
+      }
+
+      className = names[names.length - 1];
+    }
+
+    return new PsiElement[]{dir.createClass(className)};
+  }
+
+  private static PsiDirectory getTopLevelDir(PsiDirectory dir) {
+    while (dir.getPackage().getParentPackage() != null) {
+      dir = dir.getParentDirectory();
+    }
+
+    return dir;
   }
 }
