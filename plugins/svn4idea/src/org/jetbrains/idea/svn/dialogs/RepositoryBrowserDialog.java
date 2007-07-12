@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
@@ -149,21 +151,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(action);
     if (!horizontal) {
       group.addSeparator();
-      group.add(new AnAction() {
-
-
-        public void update(AnActionEvent e) {
-          e.getPresentation().setText("Close");
-          e.getPresentation().setDescription("Close this tool window");
-          e.getPresentation().setIcon(IconLoader.findIcon("/actions/cancel.png"));
-        }
-
-        public void actionPerformed(AnActionEvent e) {
-          Project p = e.getData(DataKeys.PROJECT);
-          ToolWindowManager.getInstance(p).unregisterToolWindow("SVN Repositories");
-
-        }
-      });
+      group.add(new CloseToolWindowAction());
     }
     return ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, horizontal).getComponent();
   }
@@ -872,4 +860,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     });
   }
 
+  private class CloseToolWindowAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+      Disposer.dispose(getRepositoryBrowser());
+      Project p = e.getData(DataKeys.PROJECT);
+      ToolWindowManager.getInstance(p).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
+
+    }
+    public void update(AnActionEvent e) {
+      e.getPresentation().setText("Close");
+      e.getPresentation().setDescription("Close this tool window");
+      e.getPresentation().setIcon(IconLoader.findIcon("/actions/cancel.png"));
+    }
+  }
 }

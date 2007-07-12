@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -9,7 +11,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
-public class RepositoryTreeModel extends DefaultTreeModel {
+public class RepositoryTreeModel extends DefaultTreeModel implements Disposable {
 
   private SvnVcs myVCS;
   private boolean myIsShowFiles;
@@ -29,12 +31,16 @@ public class RepositoryTreeModel extends DefaultTreeModel {
   }
 
   public void setRoots(SVNURL[] urls) {
-    setRoot(new RepositoryTreeRootNode(this, urls));
+    final RepositoryTreeRootNode rootNode = new RepositoryTreeRootNode(this, urls);
+    Disposer.register(this, rootNode);
+    setRoot(rootNode);
   }
 
   public void setSingleRoot(SVNURL url) {
     SVNRepository repos = createRepository(url);
-    setRoot(new RepositoryTreeNode(this, null, repos, url, url));
+    final RepositoryTreeNode rootNode = new RepositoryTreeNode(this, null, repos, url, url);
+    Disposer.register(this, rootNode);
+    setRoot(rootNode);
   }
 
   public boolean hasRoot(SVNURL url) {
@@ -88,4 +94,6 @@ public class RepositoryTreeModel extends DefaultTreeModel {
     return null;
   }
 
+  public void dispose() {
+  }
 }

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -35,7 +37,7 @@ import java.awt.*;
  * Time: 19:13:10
  * To change this template use File | Settings | File Templates.
  */
-public class RepositoryBrowserComponent extends JPanel {
+public class RepositoryBrowserComponent extends JPanel implements Disposable {
 
   private JTree myRepositoryTree;
   private SvnVcs myVCS;
@@ -52,12 +54,14 @@ public class RepositoryBrowserComponent extends JPanel {
   public void setRepositoryURLs(SVNURL[] urls, boolean showFiles) {
     RepositoryTreeModel model = new RepositoryTreeModel(myVCS, true);
     model.setRoots(urls);
+    Disposer.register(this, model);
     myRepositoryTree.setModel(model);
   }
 
   public void setRepositoryURL(SVNURL url, boolean showFiles) {
     RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles);
     model.setSingleRoot(url);
+    Disposer.register(this, model);
     myRepositoryTree.setModel(model);
     myRepositoryTree.setRootVisible(true);
     myRepositoryTree.setSelectionRow(0);
@@ -153,4 +157,6 @@ public class RepositoryBrowserComponent extends JPanel {
     return null;
   }
 
+  public void dispose() {
+  }
 }

@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class BrowseRepositoryAction extends AnAction {
+  public static final String REPOSITORY_BROWSER_TOOLWINDOW = "SVN Repositories";
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
@@ -40,10 +41,10 @@ public class BrowseRepositoryAction extends AnAction {
       ToolWindowManager manager = ToolWindowManager.getInstance(project);
 
 
-      ToolWindow w = manager.getToolWindow("SVN Repositories");
+      ToolWindow w = manager.getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);
       if (w == null) {
         JComponent component = createToolWindowComponent(project);
-        w = manager.registerToolWindow("SVN Repositories", component, ToolWindowAnchor.BOTTOM);
+        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, component, ToolWindowAnchor.BOTTOM);
       }
       w.show(null);
       w.activate(null);

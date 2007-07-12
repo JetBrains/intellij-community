@@ -81,6 +81,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     try {
       SVNLogClient logger = SvnVcs.getInstance(myProject).createLogClient();
       final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(svnLocation.getURL());
+      final String repositoryRoot = repository.getRepositoryRoot(true).toString();
+      repository.closeSession();
 
       final String author = settings.getUserFilter();
       final Date dateFrom = settings.getDateAfterFilter();
@@ -109,7 +111,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionAfter = SVNRevision.create(1);
       }
 
-      final String repositoryRoot = repository.getRepositoryRoot(true).toString();
       logger.doLog(SVNURL.parseURIEncoded(svnLocation.getURL()), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, maxCount,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {

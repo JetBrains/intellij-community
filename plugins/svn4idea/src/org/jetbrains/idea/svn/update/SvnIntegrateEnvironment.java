@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -113,6 +114,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     }
   }
 
+  @Nullable
   private String getLastMergedRevision(final SVNRevision rev2, final SVNURL svnURL2) {
     if (!rev2.isValid() || rev2.isLocal()) {
       return null;
@@ -126,7 +128,9 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
 
         try {
           SVNRepository repos = myVcs.createRepository(svnURL2.toString());
-          return String.valueOf(repos.getLatestRevision());
+          final long latestRev = repos.getLatestRevision();
+          repos.closeSession();
+          return String.valueOf(latestRev);
         }
         catch (SVNException e) {
           return null;

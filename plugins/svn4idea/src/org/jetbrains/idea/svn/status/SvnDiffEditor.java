@@ -141,6 +141,7 @@ public class SvnDiffEditor implements ISVNEditor {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
         try {
           myRepository.getFile(myPath, -1, null, bos);
+          myRepository.closeSession();
         } catch (SVNException e) {
           throw new VcsException(e);
         }

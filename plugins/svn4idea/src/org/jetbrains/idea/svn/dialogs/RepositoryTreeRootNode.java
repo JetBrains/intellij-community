@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -7,7 +9,7 @@ import javax.swing.tree.TreeNode;
 import java.text.Collator;
 import java.util.*;
 
-public class RepositoryTreeRootNode implements TreeNode {
+public class RepositoryTreeRootNode implements TreeNode, Disposable {
   private List<TreeNode> myChildren;
   private RepositoryTreeModel myModel;
 
@@ -18,6 +20,7 @@ public class RepositoryTreeRootNode implements TreeNode {
     for (SVNURL url : urls) {
       SVNRepository repos = model.createRepository(url);
       RepositoryTreeNode rootNode = new RepositoryTreeNode(model, this, repos, url, url);
+      Disposer.register(this, rootNode);
       myChildren.add(rootNode);
     }
     Collections.sort(myChildren, new Comparator<TreeNode>() {
@@ -30,6 +33,7 @@ public class RepositoryTreeRootNode implements TreeNode {
   public void addRoot(SVNURL url) {
     SVNRepository repos = myModel.createRepository(url);
     RepositoryTreeNode rootNode = new RepositoryTreeNode(myModel, this, repos, url, url);
+    Disposer.register(this, rootNode);
     myChildren.add(rootNode);
     Collections.sort(myChildren, new Comparator<TreeNode>() {
       public int compare(TreeNode o1, TreeNode o2) {
@@ -73,4 +77,6 @@ public class RepositoryTreeRootNode implements TreeNode {
     return false;
   }
 
+  public void dispose() {
+  }
 }

@@ -89,6 +89,7 @@ public class SelectLocationDialog extends DialogWrapper {
     try {
       SVNRepository repos = SvnVcs.getInstance(myProject).createRepository(myURL.toString());
       myURL = repos.getRepositoryRoot(true);
+      repos.closeSession();
     } catch (SVNException e) {
       // show error dialog.
     }

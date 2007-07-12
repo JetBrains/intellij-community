@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -10,7 +11,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
-public class RepositoryTreeNode implements TreeNode {
+public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private TreeNode myParentNode;
   private SVNRepository myRepository;
@@ -149,5 +150,9 @@ public class RepositoryTreeNode implements TreeNode {
 
   public SVNRepository getRepository() {
     return myRepository;
+  }
+
+  public void dispose() {
+    myRepository.closeSession();
   }
 }
