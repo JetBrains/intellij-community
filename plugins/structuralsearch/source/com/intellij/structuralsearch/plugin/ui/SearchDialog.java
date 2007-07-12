@@ -760,6 +760,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     myDoingOkAction = false;
     if (!result) return;
 
+    myAlarm.cancelAllRequests();
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
 
