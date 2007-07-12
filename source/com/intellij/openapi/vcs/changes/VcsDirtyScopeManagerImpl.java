@@ -132,11 +132,16 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
+    final FilePathImpl path = new FilePathImpl(dir);
+    dirDirtyRecursively(path);
+  }
+
+  private void dirDirtyRecursively(final FilePathImpl path) {
     if (!myIsInitialized || myIsDisposed) return;
 
-    final AbstractVcs vcs = myVcsManager.getVcsFor(dir);
+    final AbstractVcs vcs = myVcsManager.getVcsFor(path);
     if (vcs != null) {
-      getScope(vcs).addDirtyDirRecursively(new FilePathImpl(dir));
+      getScope(vcs).addDirtyDirRecursively(path);
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -192,7 +197,14 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     @Override
     public void beforeFileDeletion(VirtualFileEvent event) {
       // need to keep track of whether the deleted file was a directory
-      fileDirty(new FilePathImpl(new File(event.getFile().getPath()), event.getFile().isDirectory()));
+      final boolean directory = event.getFile().isDirectory();
+      final FilePathImpl path = new FilePathImpl(new File(event.getFile().getPath()), directory);
+      if (directory) {
+        dirDirtyRecursively(path);   // IDEADEV-12752
+      }
+      else {
+        fileDirty(path);
+      }
     }
 
     @Override
