@@ -70,6 +70,8 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         myImplicitFacetManager.initUI();
