@@ -117,15 +117,35 @@ public class AbstractVcsTestCase {
   }
 
   protected VirtualFile createFileInCommand(final String name, @Nullable final String content) {
+    return createFileInCommand(myWorkingCopyDir, name, content);
+  }
+
+  protected VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          VirtualFile file = myWorkingCopyDir.createChildData(this, name);
+          VirtualFile file = parent.createChildData(this, name);
           if (content != null) {
             file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
           }
           result.set(file);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }, "", null);
+    return result.get();
+  }
+
+  protected VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
+    final Ref<VirtualFile> result = new Ref<VirtualFile>();
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          VirtualFile dir = parent.createChildDirectory(this, name);
+          result.set(dir);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -196,7 +216,20 @@ public class AbstractVcsTestCase {
     }, "", null);
   }
 
-  protected class RunResult {
+  protected void deleteFileInCommand(final VirtualFile file) {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          file.delete(this);
+        }
+        catch(IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }, "", this);
+  }
+
+  protected static class RunResult {
     public int exitCode = -1;
     public String stdOut = "";
     public String stdErr = "";
