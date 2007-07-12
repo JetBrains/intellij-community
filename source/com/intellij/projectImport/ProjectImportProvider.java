@@ -2,7 +2,11 @@ package com.intellij.projectImport;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -12,7 +16,13 @@ public interface ProjectImportProvider {
 
   String getName();
 
-  void doImport(Project currentProject);
+  @Nullable
+  Icon getIcon(VirtualFile file, boolean open);
 
-  boolean quickImport(String path);
+  void doImport(Project currentProject, boolean forceOpenInNewFrame);
+
+  boolean canOpenProject(VirtualFile file);
+
+  @Nullable
+  Project doOpenProject(VirtualFile file, Project projectToClose, boolean forceOpenInNewFrame);
 }

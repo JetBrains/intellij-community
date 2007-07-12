@@ -10,7 +10,9 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,11 +27,28 @@ public class OpenProjectAction extends AnAction {
 
       public Icon getOpenIcon(final VirtualFile virtualFile) {
         if (isProjectDirectory(virtualFile)) return Icons.PROJECT_ICON;
+        final Icon icon = getImporterIcon(virtualFile, true);
+        if(icon!=null){
+          return icon;
+        }
         return super.getOpenIcon(virtualFile);
       }
       public Icon getClosedIcon(final VirtualFile virtualFile) {
         if (isProjectDirectory(virtualFile)) return Icons.PROJECT_ICON;
+        final Icon icon = getImporterIcon(virtualFile, false);
+        if(icon!=null){
+          return icon;
+        }
         return super.getClosedIcon(virtualFile);
+      }
+
+      @Nullable
+      public Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
+        final ProjectImportProvider provider = ProjectUtil.getImportProvider(virtualFile);
+        if(provider!=null) {
+          return provider.getIcon(virtualFile, open);
+        }
+        return null;
       }
 
       public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
@@ -42,11 +61,12 @@ public class OpenProjectAction extends AnAction {
 
     if (files.length == 0 || files[0] == null) return;
 
-    ProjectUtil.openProject(files[0].getPath(), project, false);
+    ProjectUtil.openOrImport(files[0].getPath(), project, false);
   }
 
   private static boolean isProjectFile(final VirtualFile file) {
-    return !file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION);
+    return (!file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) ||
+           (ProjectUtil.getImportProvider(file) != null);
   }
 
   private static boolean isProjectDirectory(final VirtualFile virtualFile) {

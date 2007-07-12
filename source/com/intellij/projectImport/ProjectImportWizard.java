@@ -14,10 +14,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +35,7 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
 
   @NonNls private static final String DEFAULT_OUTPUT = "classes";
 
-  public void doImport(final Project currentProject) {
+  public void doImport(final Project currentProject, boolean forceOpenInNewFrame) {
     final String title = getTitle();
 
     final String[] options = new String[]{IdeBundle.message("project.import.into.new.project"),
@@ -63,7 +63,7 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
       myNewProjectJdk = dialog.getNewProjectJdk();
       myNewCompileOutput = dialog.getNewCompileOutput();
 
-      final Project projectToUpdate = performImport(currentProject, updateCurrent);
+      final Project projectToUpdate = performImport(currentProject, updateCurrent, forceOpenInNewFrame);
 
       if (projectToUpdate == null) {
         return;
@@ -83,7 +83,7 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
   }
 
   @Nullable
-  private Project performImport(final Project currentProject, final boolean updateCurrent) {
+  private Project performImport(final Project currentProject, final boolean updateCurrent, final boolean forceOpenInNewFrame) {
     final Project projectToUpdate =
       updateCurrent ? currentProject : ProjectManagerEx.getInstanceEx().newProject(myNewProjectFilePath, true, false);
 
@@ -93,7 +93,9 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
 
     if (!updateCurrent) {
       setProjectParameters(projectToUpdate);
-      ProjectUtil.closePreviousProject(currentProject);
+      if(!forceOpenInNewFrame){
+        ProjectUtil.closePreviousProject(currentProject);
+      }
       ProjectUtil.updateLastProjectLocation(myNewProjectFilePath);
       ProjectManagerEx.getInstanceEx().openProject(projectToUpdate);
     }
@@ -137,40 +139,42 @@ public abstract class ProjectImportWizard implements ProjectImportProvider {
     return IdeBundle.message("project.import.wizard.title", getName());
   }
 
-  public boolean quickImport(String path) {
+  @Nullable
+  public Icon getIcon(final VirtualFile file, final boolean open) {
+    return null;
+  }
 
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (virtualFile != null && canQuickImport(virtualFile)) {
-      initImport(null, false);
-      if (doQuickImport(virtualFile)) {
-        if (myNewProjectFilePath == null) {
-          if(myNewProjectName==null){
-            myNewProjectName = IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION;
-          }
-          myNewProjectFilePath = getSiblingPath(path, myNewProjectName );
-        }
-        if (myNewProjectJdk == null) {
-          for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-            if (myNewProjectJdk == null || myNewProjectJdk.getVersionString().compareTo(projectJdk.getVersionString()) < 0) {
-              myNewProjectJdk = projectJdk;
-            }
-          }
-        }
-        if (myNewCompileOutput != null) {
-          myNewCompileOutput = getUrl(getSiblingPath(myNewProjectFilePath, DEFAULT_OUTPUT));
-        }
-        return performImport(null, false) != null;
-      }
-    }
+  public boolean canOpenProject(final VirtualFile file) {
     return false;
+  }
+
+  @Nullable
+  public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
+    initImport(null, false);
+    if (doQuickImport(virtualFile)) {
+      if (myNewProjectFilePath == null) {
+        if (myNewProjectName == null) {
+          myNewProjectName = IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION;
+        }
+        myNewProjectFilePath = getSiblingPath(virtualFile.getPath(), myNewProjectName);
+      }
+      if (myNewProjectJdk == null) {
+        for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+          if (myNewProjectJdk == null || myNewProjectJdk.getVersionString().compareTo(projectJdk.getVersionString()) < 0) {
+            myNewProjectJdk = projectJdk;
+          }
+        }
+      }
+      if (myNewCompileOutput != null) {
+        myNewCompileOutput = getUrl(getSiblingPath(myNewProjectFilePath, DEFAULT_OUTPUT));
+      }
+      return performImport(projectToClose, false, forceOpenInNewFrame);
+    }
+    return null;
   }
 
   private static String getSiblingPath(final String path, final String relPath) {
     return new File(new File(path).getParent(), relPath).getPath();
-  }
-
-  protected boolean canQuickImport(VirtualFile file) {
-    return false;
   }
 
   protected boolean doQuickImport(VirtualFile file) {

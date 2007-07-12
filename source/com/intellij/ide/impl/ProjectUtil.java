@@ -30,7 +30,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -213,23 +215,37 @@ public class ProjectUtil {
 
   /**
    * @param path                project file path
-   * @param forceOpenInNewFrame forces opening in new frame
+   * @param projectToClose      currently active project
+   *@param forceOpenInNewFrame forces opening in new frame
    * @return true if the path was recognized as IDEA project file or one of the project formats supported by
    * installed importers (regardless of opening/import result)
    */
-  public static boolean openOrImport(@NotNull final String path, boolean forceOpenInNewFrame) {
+  public static boolean openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      openProject(path, null, forceOpenInNewFrame);
+      openProject(path, projectToClose, forceOpenInNewFrame);
       return true;
     }
     else {
-      for (ProjectImportProvider provider : Extensions.getExtensions(ProjectImportProvider.EXTENSION_POINT_NAME)) {
-        if (provider.quickImport(path)) {
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (virtualFile != null) {
+        ProjectImportProvider provider = getImportProvider(virtualFile);
+        if (provider != null) {
+          provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
           return true;
         }
       }
       return false;
     }
+  }
+
+  @Nullable
+  public static ProjectImportProvider getImportProvider(VirtualFile file) {
+    for (ProjectImportProvider provider : Extensions.getExtensions(ProjectImportProvider.EXTENSION_POINT_NAME)) {
+      if (provider.canOpenProject(file)) {
+        return provider;
+      }
+    }
+    return null;
   }
 
   public static Project openProject(final String path, Project projectToClose, boolean forceOpenInNewFrame) {

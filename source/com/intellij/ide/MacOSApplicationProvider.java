@@ -77,7 +77,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
           if (filename == null) return;
 
           File file = new File(filename);
-          if (ProjectUtil.openOrImport(file.getAbsolutePath(), false)) {
+          if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, false)) {
             return;
           }
           if (project != null && file.exists()) {

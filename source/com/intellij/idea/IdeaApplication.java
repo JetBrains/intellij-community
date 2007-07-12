@@ -173,7 +173,7 @@ public class IdeaApplication {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      if (ProjectUtil.openOrImport(myArgs[0], false)) {
+      if (ProjectUtil.openOrImport(myArgs[0], null, false)) {
         return;
       }
     }
