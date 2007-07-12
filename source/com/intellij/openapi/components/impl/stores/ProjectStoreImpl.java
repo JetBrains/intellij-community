@@ -38,8 +38,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -278,7 +280,22 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     // there are undefined macros, need to define them before loading components
-    return ProjectManagerImpl.showMacrosConfigurationDialog(project, usedMacros);
+    final boolean[] result = new boolean[1];
+
+    try {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        public void run() {
+          result[0] = ProjectManagerImpl.showMacrosConfigurationDialog(project, usedMacros);
+        }
+      });
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+    return result[0];
   }
 
   private static Set<String> getDefinedMacros() {

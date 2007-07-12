@@ -45,8 +45,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -174,16 +176,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       project.getStateStore().load();
     }
     catch (IOException e) {
-      LOG.info(e);
-      Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+      reportError(e);
     }
-    catch (StateStorage.StateStorageException e) {
-      LOG.info(e);
-      Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+    catch (final StateStorage.StateStorageException e) {
+      reportError(e);
     }
 
     project.loadProjectComponents();
     return project;
+  }
+
+  private static void reportError(final Exception e) {
+    try {
+      LOG.info(e);
+
+      SwingUtilities.invokeAndWait(new Runnable() {
+        public void run() {
+          Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+        }
+      });
+    }
+    catch (InterruptedException e1) {
+      LOG.error(e1);
+    }
+    catch (InvocationTargetException e1) {
+      LOG.error(e1);
+    }
   }
 
   @Nullable
