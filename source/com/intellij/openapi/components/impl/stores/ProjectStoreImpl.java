@@ -195,7 +195,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  private void useOldWsContent(final String filePath, final IFile ws) {
+  private static void useOldWsContent(final String filePath, final IFile ws) {
     int lastDot = filePath.lastIndexOf(".");
     final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
     String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
