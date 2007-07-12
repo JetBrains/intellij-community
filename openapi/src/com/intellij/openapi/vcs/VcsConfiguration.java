@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
@@ -24,6 +27,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -223,6 +227,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
     }
   }
 
+  @NotNull
   public ArrayList<String> getRecentMessages() {
     return new ArrayList<String>(myLastCommitMessages);
   }
