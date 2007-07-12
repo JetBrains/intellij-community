@@ -119,8 +119,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
     }
     catch (IncorrectOperationException e) {
-      final @NonNls String message = e.getMessage();
-      final int index = (message != null) ? message.indexOf("java.io.IOException") : -1;
+      @NonNls final String message = e.getMessage();
+      final int index = message != null ? message.indexOf("java.io.IOException") : -1;
       if (index >= 0) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
@@ -138,10 +138,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected String getCommandName() {
     return RefactoringBundle.message("move.tltle"); //TODO!!
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return true;
   }
 
   static class MyUsageInfo extends UsageInfo {
