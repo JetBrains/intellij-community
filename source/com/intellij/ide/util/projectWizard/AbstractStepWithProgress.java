@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.SwingWorker;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +22,12 @@ import java.awt.event.ActionListener;
 /**
  * @author nik
  */
-public abstract class AbstractStepWithProgress<Param, Result> extends ModuleWizardStep {
+public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep {
+  
+  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
+  @NonNls private static final String RESULTS_PANEL = "results_panel";
+  private JPanel myPanel;
+  
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
   private ProgressIndicator myProgressIndicator = null;
@@ -32,19 +37,28 @@ public abstract class AbstractStepWithProgress<Param, Result> extends ModuleWiza
     myPromptStopSearch = promptStopSearching;
   }
 
-  protected abstract String getProgressText();
+  public final JComponent getComponent() {
+    if (myPanel == null) {
+      myPanel = new JPanel(new CardLayout());
+      myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-  protected void showProgress() {
+      myPanel.add(createProgressPanel(), PROGRESS_PANEL);
+      myPanel.add(createResultsPanel(), RESULTS_PANEL);
+    }
+    return myPanel;
   }
+
+  protected abstract JComponent createResultsPanel();
+  
+  protected abstract String getProgressText();
+  
+  protected abstract boolean shouldRunProgress();
+  
+  protected abstract Result calculate();
 
   protected abstract void onFinished(Result result, boolean canceled);
 
-  @Nullable
-  protected abstract Param getParameter();
-
-  protected abstract Result calculate(Param parameter);
-
-  protected JPanel createProgressPanel() {
+  private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
     myProgressLabel = new JLabel();
     //myProgressLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
@@ -73,19 +87,28 @@ public abstract class AbstractStepWithProgress<Param, Result> extends ModuleWiza
   private synchronized boolean isProgressRunning() {
     return myProgressIndicator != null && myProgressIndicator.isRunning();
   }
+  
+  
+  public void updateStep() {
+    if (shouldRunProgress()) {
+      runProgress();
+    }
+    else {
+      showCard(RESULTS_PANEL);
+    }
+  }
 
   protected void runProgress() {
-    final Param param = getParameter();
     final MyProgressIndicator progress = new MyProgressIndicator();
     progress.setText(getProgressText());
-    showProgress();
+    showCard(PROGRESS_PANEL);
     myProgressIndicator = progress;
     new SwingWorker() {
       public Object construct() {
         final Ref<Result> result = Ref.create(null);
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
-            result.set(calculate(param));
+            result.set(calculate());
           }
         }, progress);
         return result.get();
@@ -97,10 +120,16 @@ public abstract class AbstractStepWithProgress<Param, Result> extends ModuleWiza
           public void run() {
             final Result result = (Result)get();
             onFinished(result, progress.isCanceled());
+            showCard(RESULTS_PANEL);
           }
         });
       }
     }.start();
+  }
+
+  private void showCard(final String id) {
+    ((CardLayout)myPanel.getLayout()).show(myPanel, id);
+    myPanel.revalidate();
   }
 
   public boolean validate() {

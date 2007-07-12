@@ -39,25 +39,25 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 6, 2004
  */
-public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<String, String>>> {
+public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, String>>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.SourcePathsStep");
-  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
+
+  private String myCurrentMode;
   @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
   @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
+
   private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
   private final NameLocationStep myNameLocationStep;
   private final JavaModuleBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
-  private JPanel myPanel;
-  private JPanel myContentPanel;
-  private String myCurrentMode;
   private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
   private String myCurrentContentEntryPath = null;
   private JRadioButton myRbCreateSource;
   private JRadioButton myRbNoSource;
   private JTextField myTfSourceDirectoryName;
   private JTextField myTfFullPath;
+  private JPanel myResultPanel;
 
   public SourcePathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId) {
     super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
@@ -65,17 +65,13 @@ public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<
     myBuilder = builder;
     myIcon = icon;
     myHelpId = helpId;
-    myPanel = new JPanel(new GridBagLayout());
-    myPanel.setBorder(BorderFactory.createEtchedBorder());
+  }
 
-    myContentPanel = new JPanel(new CardLayout());
-    myPanel.add(myContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    myContentPanel.add(createComponentForEmptyRootCase(), CREATE_SOURCE_PANEL);
-    myContentPanel.add(createComponentForChooseSources(), CHOOSE_SOURCE_PANEL);
-
-    final JPanel progressPanel = createProgressPanel();
-
-    myContentPanel.add(progressPanel, PROGRESS_PANEL);
+  protected JComponent createResultsPanel() {
+    myResultPanel = new JPanel(new CardLayout());
+    myResultPanel.add(createComponentForEmptyRootCase(), CREATE_SOURCE_PANEL);
+    myResultPanel.add(createComponentForChooseSources(), CHOOSE_SOURCE_PANEL);
+    return myResultPanel;
   }
 
   private JComponent createComponentForEmptyRootCase() {
@@ -181,10 +177,6 @@ public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<
     return panel;
   }
 
-  public JComponent getComponent() {
-    return myPanel;
-  }
-
   public JComponent getPreferredFocusedComponent() {
     return myRbCreateSource.isSelected()? myTfSourceDirectoryName : mySourcePathsChooser.getComponent();
   }
@@ -268,19 +260,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<
     return null;
   }
 
-  public void updateStep() {
-    final String contentEntryPath = myBuilder.getContentEntryPath();
-    if (isContentEntryChanged()) {
-      runProgress();
-    }
-    else {
-      updateStepUI(contentEntryPath);
-    }
-  }
-
-  protected void showProgress() {
-    ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, PROGRESS_PANEL);
-    myContentPanel.revalidate();
+  protected boolean shouldRunProgress() {
+    return isContentEntryChanged();
   }
 
   protected void onFinished(final List<Pair<String, String>> foundPaths, final boolean canceled) {
@@ -303,8 +284,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<
 
   private void updateStepUI(final String contentEntryPath) {
     myCurrentContentEntryPath = contentEntryPath;
-    ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, myCurrentMode);
-    myContentPanel.revalidate();
+    ((CardLayout)myResultPanel.getLayout()).show(myResultPanel, myCurrentMode);
+    myResultPanel.revalidate();
   }
 
   protected boolean isContentEntryChanged() {
@@ -312,11 +293,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<
     return myCurrentContentEntryPath == null? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
   }
 
-  protected String getParameter() {
-    return myBuilder.getContentEntryPath();
-  }
-
-  protected List<Pair<String,String>> calculate(String contentEntryPath) {
+  protected List<Pair<String,String>> calculate() {
+    String contentEntryPath = myBuilder.getContentEntryPath();
     if (contentEntryPath == null) {
       return EMPTY_STRING_STRING_ARRAY;
     }
