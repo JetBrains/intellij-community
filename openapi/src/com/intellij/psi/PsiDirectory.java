@@ -93,7 +93,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the subdirectory instance, or null if no subdirectory with such a name is found.
    */
   @Nullable
-  PsiDirectory findSubdirectory(String name);
+  PsiDirectory findSubdirectory(@NotNull String name);
 
   /**
    * Finds a file with the specified name in this directory.
@@ -102,7 +102,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the file instance, or null if no file with such a name is found.
    */
   @Nullable
-  PsiFile findFile(@NonNls String name);
+  PsiFile findFile(@NotNull @NonNls String name);
 
   /**
    * Creates a class with the specified name in the directory.
@@ -111,7 +111,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiClass createClass(String name) throws IncorrectOperationException;
+  @NotNull PsiClass createClass(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates a class with the specified name in the directory.
@@ -122,7 +122,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @throws IncorrectOperationException if the operation failed for some reason.
    * @since 5.1
    */
-  @NotNull PsiClass createClass(String name, String templateName) throws IncorrectOperationException;
+  @NotNull PsiClass createClass(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a class with the specified name in the directory,
@@ -132,7 +132,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @param name the name of the class to check creation possibility (not including the file extension).
    * @throws IncorrectOperationException if the creation is not possible.
    */
-  void checkCreateClass(String name) throws IncorrectOperationException;
+  void checkCreateClass(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates an interface class with the specified name in the directory.
@@ -141,7 +141,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created interface instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiClass createInterface(String name) throws IncorrectOperationException;
+  @NotNull PsiClass createInterface(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create an interface with the specified name in the directory,
@@ -151,7 +151,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @param name the name of the interface to check creation possibility (not including the file extension).
    * @throws IncorrectOperationException if the creation is not possible.
    */
-  void checkCreateInterface(String name) throws IncorrectOperationException;
+  void checkCreateInterface(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates an enumeration class with the specified name in the directory.
@@ -160,7 +160,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiClass createEnum(String name) throws IncorrectOperationException;
+  @NotNull PsiClass createEnum(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates an annotation class with the specified name in the directory.
@@ -169,7 +169,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiClass createAnnotationType(String name) throws IncorrectOperationException;
+  @NotNull PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates a subdirectory with the specified name in the directory.
@@ -178,7 +178,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created directory instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiDirectory createSubdirectory(String name) throws IncorrectOperationException;
+  @NotNull PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a subdirectory with the specified name in the directory,
@@ -188,7 +188,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @param name the name of the subdirectory to check creation possibility.
    * @throws IncorrectOperationException if the creation is not possible.
    */
-  void checkCreateSubdirectory(String name) throws IncorrectOperationException;
+  void checkCreateSubdirectory(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates a file with the specified name in the directory.
@@ -197,7 +197,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created file instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiFile createFile(@NonNls String name) throws IncorrectOperationException;
+  @NotNull PsiFile createFile(@NotNull @NonNls String name) throws IncorrectOperationException;
 
   @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException;
 

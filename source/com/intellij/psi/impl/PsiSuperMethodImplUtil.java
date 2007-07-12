@@ -19,34 +19,40 @@ public class PsiSuperMethodImplUtil {
   private PsiSuperMethodImplUtil() {
   }
 
-  public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method) {
+  @NotNull
+  public static PsiMethod[] findSuperMethods(PsiMethod method) {
     return findSuperMethods(method, null);
   }
 
-  public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method, boolean checkAccess) {
+  @NotNull
+  public static PsiMethod[] findSuperMethods(PsiMethod method, boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, null);
   }
 
-  public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method, PsiClass parentClass) {
+  @NotNull
+  public static PsiMethod[] findSuperMethods(PsiMethod method, PsiClass parentClass) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, parentClass);
   }
 
 
-  private static @NotNull PsiMethod[] findSuperMethodsInternal(PsiMethod method, PsiClass parentClass) {
+  @NotNull
+  private static PsiMethod[] findSuperMethodsInternal(PsiMethod method, PsiClass parentClass) {
     List<MethodSignatureBackedByPsiMethod> outputMethods = findSuperMethodSignatures(method, parentClass, false);
 
     return MethodSignatureUtil.convertMethodSignaturesToMethods(outputMethods);
   }
 
-  public static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
+  @NotNull
+  public static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
                                                                                                          boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, true)) return Collections.emptyList();
     return findSuperMethodSignatures(method, null, true);
   }
 
-  private static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
+  @NotNull
+  private static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
                                                                                            PsiClass parentClass,
                                                                                            boolean allowStaticMethod) {
 
@@ -58,9 +64,7 @@ public class PsiSuperMethodImplUtil {
     if (!allowStaticMethod && method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (checkAccess && method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     PsiClass parentClass = method.getContainingClass();
-    if (parentClass == null) return false;
-    if ("java.lang.Object".equals(parentClass.getQualifiedName())) return false;
-    return true;
+    return parentClass != null && !"java.lang.Object".equals(parentClass.getQualifiedName());
   }
 
   public static PsiMethod findDeepestSuperMethod(PsiMethod method) {

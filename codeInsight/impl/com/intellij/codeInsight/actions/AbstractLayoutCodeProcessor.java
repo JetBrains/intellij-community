@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,14 +20,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,7 +130,7 @@ public abstract class AbstractLayoutCodeProcessor {
     if (!file.isWritable()){
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, myProject)) {
-        Messages.showMessageDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.file.message"),
+        Messages.showMessageDialog(myProject, PsiBundle.message("cannot.modify.a.read.only.file", file.getName()),
         CodeInsightBundle.message("error.dialog.readonly.file.title"),
         Messages.getErrorIcon()
       );

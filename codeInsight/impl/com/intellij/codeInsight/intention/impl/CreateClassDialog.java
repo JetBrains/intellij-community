@@ -21,12 +21,14 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class CreateClassDialog extends DialogWrapper {
@@ -41,11 +43,11 @@ public class CreateClassDialog extends DialogWrapper {
   private final boolean myClassNameEditable;
   private final Module myModule;
 
-  public CreateClassDialog(Project project,
-                           String title,
+  public CreateClassDialog(@NotNull Project project,
+                           @NotNull String title,
                            String targetClassName,
                            String targetPackageName,
-                           CreateClassKind kind,
+                           @NotNull CreateClassKind kind,
                            boolean classNameEditable,
                            Module defaultModule) {
     super(project, true);
@@ -68,7 +70,6 @@ public class CreateClassDialog extends DialogWrapper {
     myTfPackage.setText(targetPackageName != null ? targetPackageName : "");
   }
 
-
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
@@ -78,8 +79,7 @@ public class CreateClassDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    return panel;
+    return new JPanel(new BorderLayout());
   }
 
   protected JComponent createNorthPanel() {
@@ -125,7 +125,7 @@ public class CreateClassDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         myPackageChooseButton.doClick();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK)), myTfPackage);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myTfPackage);
 
     myPackageChooseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -155,7 +155,7 @@ public class CreateClassDialog extends DialogWrapper {
     return name != null ? name.trim() : "";
   }
 
-  private class MyTextField extends JTextField {
+  private static class MyTextField extends JTextField {
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       FontMetrics fontMetrics = getFontMetrics(getFont());

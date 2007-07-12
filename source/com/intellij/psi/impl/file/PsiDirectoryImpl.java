@@ -19,15 +19,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -48,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
@@ -142,11 +145,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     CheckUtil.checkWritable(this);
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) {
-      throw new IncorrectOperationException("Cannot rename root directory.");
+      throw new IncorrectOperationException(VfsBundle.message("cannot.rename.root.directory"));
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {
-      throw new IncorrectOperationException("File " + child.getPresentableUrl() + " already exists.");
+      throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", child.getPresentableUrl()));
     }
   }
 
@@ -190,13 +193,13 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return psiFiles.toArray(new PsiFile[psiFiles.size()]);
   }
 
-  public PsiDirectory findSubdirectory(String name) {
+  public PsiDirectory findSubdirectory(@NotNull String name) {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findDirectory(childVFile);
   }
 
-  public PsiFile findFile(String name) {
+  public PsiFile findFile(@NotNull String name) {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findFile(childVFile);
@@ -212,9 +215,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       PsiFile file = myManager.findFile(vFile);
       if (file instanceof PsiJavaFile && !PsiUtil.isInJspFile(file)) {
         PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
-        for (PsiClass fileClass : fileClasses) {
-          classes.add(fileClass);
-        }
+        classes.addAll(Arrays.asList(fileClasses));
       }
     }
     return classes.toArray(new PsiClass[classes.size()]);
@@ -253,7 +254,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       }
     });
 
-    return children.toArray(PsiElement.EMPTY_ARRAY);
+    return children.toArray(new PsiElement[children.size()]);
   }
 
   public PsiDirectory getParent() {
@@ -318,17 +319,17 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   @NotNull
-  public PsiClass createClass(String name) throws IncorrectOperationException {
+  public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
     return createSomeClass(name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
   @NotNull
-  public PsiClass createClass(String name, String templateName) throws IncorrectOperationException {
+  public PsiClass createClass(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
     return createSomeClass(name, templateName);
   }
 
   @NotNull
-  public PsiClass createInterface(String name) throws IncorrectOperationException {
+  public PsiClass createInterface(@NotNull String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);
     if (!someClass.isInterface()) {
@@ -338,7 +339,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   @NotNull
-  public PsiClass createEnum(String name) throws IncorrectOperationException {
+  public PsiClass createEnum(@NotNull String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_ENUM_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);
     if (!someClass.isEnum()) {
@@ -348,7 +349,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   @NotNull
-  public PsiClass createAnnotationType(String name) throws IncorrectOperationException {
+  public PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);
     if (!someClass.isAnnotationType()) {
@@ -398,11 +399,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
                              FileTemplateManager.getInstance().internalTemplateToSubject(templateName), templateName);
   }
 
-  public void checkCreateClass(String name) throws IncorrectOperationException {
+  public void checkCreateClass(@NotNull String name) throws IncorrectOperationException {
     checkCreateClassOrInterface(name);
   }
 
-  public void checkCreateInterface(String name) throws IncorrectOperationException {
+  public void checkCreateInterface(@NotNull String name) throws IncorrectOperationException {
     checkCreateClassOrInterface(name);
   }
 
@@ -417,7 +418,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   @NotNull
-  public PsiDirectory createSubdirectory(String name) throws IncorrectOperationException {
+  public PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
     checkCreateSubdirectory(name);
 
     try {
@@ -429,19 +430,18 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
   }
 
-  public void checkCreateSubdirectory(String name) throws IncorrectOperationException {
+  public void checkCreateSubdirectory(@NotNull String name) throws IncorrectOperationException {
     // TODO : another check?
     //CheckUtil.checkIsIdentifier(name);
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
-      throw new IncorrectOperationException(
-        "Cannot create package - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
+      throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
     }
     CheckUtil.checkWritable(this);
   }
 
   @NotNull
-  public PsiFile createFile(String name) throws IncorrectOperationException {
+  public PsiFile createFile(@NotNull String name) throws IncorrectOperationException {
     checkCreateFile(name);
 
     try {
@@ -504,8 +504,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
-      throw new IncorrectOperationException(
-        "Cannot create file - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
+      throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
     }
     CheckUtil.checkWritable(this);
   }
@@ -618,9 +617,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       String name = ((PsiDirectory)element).getName();
       PsiDirectory[] subpackages = getSubdirectories();
       for (PsiDirectory dir : subpackages) {
-        if (dir.getName().equals(name)) {
-          throw new IncorrectOperationException(
-            "File " + dir.getVirtualFile().getPresentableUrl() + " already exists.");
+        if (Comparing.strEqual(dir.getName(),name)) {
+          throw new IncorrectOperationException(VfsBundle.message("dir.already.exists.error", dir.getVirtualFile().getPresentableUrl()));
         }
       }
     }
@@ -628,9 +626,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       String name = ((PsiFile)element).getName();
       PsiFile[] files = getFiles();
       for (PsiFile file : files) {
-        if (file.getName().equals(name)) {
-          throw new IncorrectOperationException(
-            "File " + file.getVirtualFile().getPresentableUrl() + " already exists.");
+        if (Comparing.strEqual(file.getName(),name)) {
+          throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", file.getVirtualFile().getPresentableUrl()));
         }
       }
     }
