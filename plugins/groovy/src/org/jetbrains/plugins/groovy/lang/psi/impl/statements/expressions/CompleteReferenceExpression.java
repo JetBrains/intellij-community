@@ -8,7 +8,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.navigation.NavigationItem;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -74,8 +73,8 @@ public class CompleteReferenceExpression {
   }
 
   private static Object[] getVariantsImpl(GrReferenceExpression refExpr, ResolverProcessor processor) {
-    String[] sameQualifier = ArrayUtil.EMPTY_STRING_ARRAY;
     GrExpression qualifier = refExpr.getQualifierExpression();
+    String[] sameQualifier = getVariantsWithSameQualifier(qualifier, refExpr);
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor);
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
@@ -85,9 +84,6 @@ public class CompleteReferenceExpression {
     } else {
       if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
-        if (qualifier.getType() == null) {
-          sameQualifier = getVariantsWithSameQualifier(qualifier);
-        }
       } else {
         getVariantsFromQualifierForSpreadOperator(refExpr, processor, qualifier);
       }
@@ -170,28 +166,34 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static String[] getVariantsWithSameQualifier(GrExpression qualifier) {
-    final PsiElement scope = PsiTreeUtil.getParentOfType(qualifier, GrMember.class, GroovyFile.class);
+  private static String[] getVariantsWithSameQualifier(GrExpression qualifier, GrReferenceExpression refExpr) {
+    final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFile.class);
     List<String> result = new ArrayList<String>();
-    addVariantsWithSameQualifier(scope, qualifier, result);
+    addVariantsWithSameQualifier(scope, refExpr, qualifier, result);
     return result.toArray(new String[result.size()]);
   }
 
-  private static void addVariantsWithSameQualifier(PsiElement element, GrExpression pattern, List<String> result) {
-    if (element instanceof GrReferenceExpression) {
+  private static void addVariantsWithSameQualifier(PsiElement element,
+                                                   GrReferenceExpression patternExpression,
+                                                   GrExpression patternQualifier,
+                                                   List<String> result) {
+    if (element instanceof GrReferenceExpression && element != patternExpression) {
       final GrReferenceExpression refExpr = (GrReferenceExpression) element;
       final String refName = refExpr.getReferenceName();
-      if (refName != null) {
+      if (refName != null && refExpr.resolve() == null) {
         final GrExpression hisQualifier = refExpr.getQualifierExpression();
-        if (hisQualifier == null || hisQualifier == pattern) return;
-        if (PsiEquivalenceUtil.areElementsEquivalent(hisQualifier, pattern)) {
+        if (hisQualifier != null && patternQualifier != null) {
+          if (PsiEquivalenceUtil.areElementsEquivalent(hisQualifier, patternQualifier)) {
+            result.add(refName);
+          }
+        } else if (hisQualifier == null && patternQualifier == null) {
           result.add(refName);
         }
       }
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      addVariantsWithSameQualifier(child, pattern, result);
+      addVariantsWithSameQualifier(child, patternExpression, patternQualifier, result);
     }
   }
 
