@@ -70,9 +70,15 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     final List<DomElement> result = new SmartList<DomElement>();
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
-      handler.checkInitialized(this);
-      for (int i = 0; i < myCount; i++) {
-        result.add(handler.getFixedChild(Pair.create(this, i)).getProxy());
+      DomInvocationHandler.r.lock();
+      try {
+        handler._checkInitialized(this);
+        for (int i = 0; i < myCount; i++) {
+          result.add(handler.getFixedChild(Pair.create(this, i)).getProxy());
+        }
+      }
+      finally {
+        DomInvocationHandler.r.unlock();
       }
     } else {
       for (Collection<JavaMethod> methods : myGetterMethods) {

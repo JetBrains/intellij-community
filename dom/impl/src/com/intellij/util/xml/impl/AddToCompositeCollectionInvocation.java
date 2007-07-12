@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.xml.XmlTag;
 
-import java.util.Set;
 import java.lang.reflect.Type;
+import java.util.Set;
 
 /**
  * @author peter

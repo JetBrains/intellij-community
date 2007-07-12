@@ -81,7 +81,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     try {
       final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
       assert handler != null;
-      return handler.addChild(this, type, index);
+      return handler.addCollectionChild(this, type, index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);

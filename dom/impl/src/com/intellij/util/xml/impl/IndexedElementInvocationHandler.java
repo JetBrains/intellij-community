@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.SubTag;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.annotation.Annotation;
@@ -34,11 +33,6 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
 
   public boolean isValid() {
     return super.isValid() && getParentHandler().isValid();
-  }
-
-  final boolean isIndicator() {
-    final SubTag annotation = getAnnotation(SubTag.class);
-    return annotation != null && annotation.indicator();
   }
 
   protected XmlTag setEmptyXmlTag() {

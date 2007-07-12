@@ -30,7 +30,7 @@ public class AddChildInvocation implements Invocation{
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     final Type type = myClassGetter.fun(args);
-    final DomElement domElement = handler.addChild(myDescription, type, myIndexGetter.fun(args));
+    final DomElement domElement = handler.addCollectionChild(myDescription, type, myIndexGetter.fun(args));
     final DomManagerImpl manager = handler.getManager();
     final boolean b = manager.setChanging(true);
     try {

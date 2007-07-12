@@ -23,21 +23,27 @@ class GetCompositeCollectionInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    for (final CollectionChildDescriptionImpl qname : myQnames) {
-      handler.checkInitialized(qname);
-    }
-    final XmlTag tag = handler.getXmlTag();
-    if (tag == null) return Collections.emptyList();
+    DomInvocationHandler.r.lock();
+    try {
+      for (final CollectionChildDescriptionImpl qname : myQnames) {
+        handler._checkInitialized(qname);
+      }
+      final XmlTag tag = handler.getXmlTag();
+      if (tag == null) return Collections.emptyList();
 
-    final List<DomElement> list = new ArrayList<DomElement>();
-    for (final XmlTag subTag : tag.getSubTags()) {
-      if (DomImplUtil.containsTagName(myQnames, subTag, handler)) {
-        final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
-        if (element != null) {
-          list.add(element.getProxy());
+      final List<DomElement> list = new ArrayList<DomElement>();
+      for (final XmlTag subTag : tag.getSubTags()) {
+        if (DomImplUtil.containsTagName(myQnames, subTag, handler)) {
+          final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
+          if (element != null) {
+            list.add(element.getProxy());
+          }
         }
       }
+      return list;
     }
-    return list;
+    finally {
+      DomInvocationHandler.r.unlock();
+    }
   }
 }

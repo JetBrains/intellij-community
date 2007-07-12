@@ -16,7 +16,13 @@ public class GetFixedChildInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    handler.checkInitialized(myPair.first);
-    return handler.getFixedChild(myPair).getProxy();
+    DomInvocationHandler.r.lock();
+    try {
+      handler._checkInitialized(myPair.first);
+      return handler.getFixedChild(myPair).getProxy();
+    }
+    finally {
+      DomInvocationHandler.r.unlock();
+    }
   }
 }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DomRootInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomRootInvocationHandler");
-  private DomFileElementImpl<?> myParent;
+  private final DomFileElementImpl<?> myParent;
 
   public DomRootInvocationHandler(final Class aClass,
                                   final XmlTag tag,

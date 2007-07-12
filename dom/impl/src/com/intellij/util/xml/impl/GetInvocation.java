@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,7 +50,8 @@ public class GetInvocation implements Invocation {
   private static Object getValueInner(final DomInvocationHandler handler, Converter converter) {
     final XmlTag tag = handler.getXmlTag();
     final boolean tagNotNull = tag != null;
-    if (handler.isIndicator()) {
+    final SubTag annotation = handler.getAnnotation(SubTag.class);
+    if (annotation != null && annotation.indicator()) {
       if (converter == Converter.EMPTY_CONVERTER) {
         return tagNotNull ? "" : null;
       }
