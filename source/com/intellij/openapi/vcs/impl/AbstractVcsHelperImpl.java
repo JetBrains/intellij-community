@@ -190,7 +190,18 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt, confirmationOption);
     dlg.setTitle(title);
     dlg.show();
-    return dlg.isOK() ? dlg.getSelectedFiles() : null;
+    if (dlg.isOK()) {
+      final Collection<VirtualFile> selection = dlg.getSelectedFiles();
+      // return items in the same order as they were passed to us
+      final List<VirtualFile> result = new ArrayList<VirtualFile>();
+      for(VirtualFile file: files) {
+        if (selection.contains(file)) {
+          result.add(file);
+        }
+      }
+      return result;
+    }
+    return null;
   }
 
   @Nullable
