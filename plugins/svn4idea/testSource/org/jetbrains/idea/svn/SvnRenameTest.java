@@ -2,8 +2,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.AbstractVcsTestCase;
 import org.junit.Test;
+import org.junit.Ignore;
+
+import java.io.IOException;
 
 /**
  * @author yole
@@ -13,11 +15,26 @@ public class SvnRenameTest extends SvnTestCase {
   public void simpleRename() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "test");
-    AbstractVcsTestCase.RunResult result = runSvn("ci", "-m", "test");
-    verify(result, "Adding\\s+a\\.txt");
+    checkin();
 
     renameFileInCommand(a, "b.txt");
-    result = runSvn("status");
-    verify(result, "A\\s+\\+\\s+b.txt", "D\\s+a.txt");
+    verify(runSvn("status"), "A + b.txt", "D a.txt");
+  }
+
+  private void checkin() throws IOException {
+    verify(runSvn("ci", "-m", "test"));
+  }
+
+  @Test
+  @Ignore
+  public void renameReplace() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile a = createFileInCommand("a.txt", "old");
+    final VirtualFile aNew = createFileInCommand("aNew.txt", "new");
+    checkin();
+
+    renameFileInCommand(a, "aOld.txt");
+    renameFileInCommand(aNew, "a.txt");
+    verify(runSvn("status"), "R + a.txt", "D aNew.txt", "A + aOld.txt");
   }
 }
