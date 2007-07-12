@@ -76,6 +76,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
 
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
   }
 
 
@@ -85,6 +86,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
   }
 
   public void tearDown() throws Exception {
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
     FileDocumentManager.getInstance().saveAllDocuments();
 

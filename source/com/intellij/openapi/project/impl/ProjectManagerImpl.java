@@ -273,6 +273,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @NotNull
   public Project[] getOpenProjects() {
+    if (ApplicationManager.getApplication().isUnitTestMode() && myOpenProjects.size() == 0 && myCurrentTestProject != null) {
+      return new Project[] { myCurrentTestProject };
+    }
     return myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
