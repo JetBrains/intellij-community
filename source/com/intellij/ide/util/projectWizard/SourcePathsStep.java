@@ -9,21 +9,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.util.concurrency.SwingWorker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,31 +39,28 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 6, 2004
  */
-public class SourcePathsStep extends ModuleWizardStep {
+public class SourcePathsStep extends AbstractStepWithProgress<String, List<Pair<String, String>>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.SourcePathsStep");
-
+  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
+  @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
+  @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
+  private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
   private final NameLocationStep myNameLocationStep;
   private final JavaModuleBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
   private JPanel myPanel;
   private JPanel myContentPanel;
-  @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
-  @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
   private String myCurrentMode;
   private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
-  private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
   private String myCurrentContentEntryPath = null;
   private JRadioButton myRbCreateSource;
   private JRadioButton myRbNoSource;
   private JTextField myTfSourceDirectoryName;
   private JTextField myTfFullPath;
-  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
-  private JLabel myProgressLabel;
-  private JLabel myProgressLabel2;
-  private ProgressIndicator myProgressIndicator = null;
 
   public SourcePathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId) {
+    super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
     myNameLocationStep = nameLocationStep;
     myBuilder = builder;
     myIcon = icon;
@@ -81,22 +73,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     myContentPanel.add(createComponentForEmptyRootCase(), CREATE_SOURCE_PANEL);
     myContentPanel.add(createComponentForChooseSources(), CHOOSE_SOURCE_PANEL);
 
-    final JPanel progressPanel = new JPanel(new GridBagLayout());
-    myProgressLabel = new JLabel();
-    //myProgressLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
-    progressPanel.add(myProgressLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
-
-    myProgressLabel2 = new JLabel();
-    //myProgressLabel2.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
-    progressPanel.add(myProgressLabel2, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
-
-    JButton stopButton = new JButton(IdeBundle.message("button.stop.searching"));
-    stopButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        cancelSourcesSearch();
-      }
-    });
-    progressPanel.add(stopButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 2, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 0, 0, 10), 0, 0));
+    final JPanel progressPanel = createProgressPanel();
 
     myContentPanel.add(progressPanel, PROGRESS_PANEL);
   }
@@ -212,12 +189,6 @@ public class SourcePathsStep extends ModuleWizardStep {
     return myRbCreateSource.isSelected()? myTfSourceDirectoryName : mySourcePathsChooser.getComponent();
   }
 
-  public void onStepLeaving() {
-    if (isSourcesSearchInProgress()) {
-      cancelSourcesSearch();
-    }
-  }
-
   public void updateDataModel() {
     List<Pair<String,String>> paths = null;
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
@@ -247,22 +218,17 @@ public class SourcePathsStep extends ModuleWizardStep {
   }
 
   public boolean validate() {
-    if (isSourcesSearchInProgress()) {
-      final int answer = Messages.showDialog(myPanel, IdeBundle.message("prompt.stop.searching.for.sources",
-                                                                        ApplicationNamesInfo.getInstance().getProductName()),
-                                             IdeBundle.message("title.question"), new String[] {IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching")}, 0, Messages.getWarningIcon());
-      if (answer == 1) { // terminate
-        cancelSourcesSearch();
-      }
+    if (!super.validate()) {
       return false;
     }
+
     if (CREATE_SOURCE_PANEL.equals(myCurrentMode) && myRbCreateSource.isSelected()) {
       final String sourceDirectoryPath = getSourceDirectoryPath();
       final String relativePath = myTfSourceDirectoryName.getText().trim();
       if (relativePath.length() == 0) {
         String text = IdeBundle.message("prompt.relative.path.to.sources.empty", sourceDirectoryPath);
         final int answer = Messages.showDialog(myTfSourceDirectoryName, text, IdeBundle.message("title.mark.source.directory"),
-                                               new String[] {IdeBundle.message("action.mark"), IdeBundle.message("action.do.not.mark"),
+                                               new String[]{IdeBundle.message("action.mark"), IdeBundle.message("action.do.not.mark"),
                                                  CommonBundle.getCancelButtonText()}, 0, Messages.getQuestionIcon());
         if (answer == 2) {
           return false; // cancel
@@ -276,7 +242,8 @@ public class SourcePathsStep extends ModuleWizardStep {
         final File srcDir = new File(sourceDirectoryPath);
         try {
           if (!FileUtil.isAncestor(rootDir, srcDir, false)) {
-            Messages.showErrorDialog(myTfSourceDirectoryName, IdeBundle.message("error.source.directory.should.be.under.module.content.root.directory"),
+            Messages.showErrorDialog(myTfSourceDirectoryName,
+                                     IdeBundle.message("error.source.directory.should.be.under.module.content.root.directory"),
                                      CommonBundle.getErrorTitle());
             return false;
           }
@@ -291,16 +258,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     return true;
   }
 
-  private void cancelSourcesSearch() {
-    if (myProgressIndicator != null) {
-      myProgressIndicator.cancel();
-    }
-  }
-
-  public synchronized boolean isSourcesSearchInProgress() {
-    return myProgressIndicator != null && myProgressIndicator.isRunning();
-  }
-
+  @Nullable
   private String getSourceDirectoryPath() {
     final String contentEntryPath = myBuilder.getContentEntryPath();
     final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
@@ -313,49 +271,33 @@ public class SourcePathsStep extends ModuleWizardStep {
   public void updateStep() {
     final String contentEntryPath = myBuilder.getContentEntryPath();
     if (isContentEntryChanged()) {
-      final MyProgressIndicator progress = new MyProgressIndicator();
-      progress.setText(IdeBundle.message("progress.searching.for.sources", myBuilder.getContentEntryPath().replace('/', File.separatorChar)));
-      ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, PROGRESS_PANEL);
-      myContentPanel.revalidate();
-      myProgressIndicator = progress;
-      new SwingWorker() {
-        public Object construct() {
-          final Ref<List<Pair<String,String>>> foundPaths = Ref.create(null);
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            public void run() {
-              foundPaths.set(calcSourcePaths(contentEntryPath));
-            }
-          }, progress);
-          return foundPaths.get();
-        }
-
-        public void finished() {
-          myProgressIndicator = null;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              final List<Pair<String,String>> foundPaths = (List<Pair<String,String>>)get();
-              if (foundPaths.size() > 0) {
-                myCurrentMode = CHOOSE_SOURCE_PANEL;
-                mySourcePathsChooser.setElements(foundPaths, true);
-              }
-              else {
-                myCurrentMode = CREATE_SOURCE_PANEL;
-                updateFullPathField();
-              }
-              updateStepUI(progress.isCanceled()? null : myBuilder.getContentEntryPath());
-              if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
-                mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
-              }
-              else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
-                myTfSourceDirectoryName.selectAll();
-              }
-            }
-          });
-        }
-      }.start();
+      runProgress();
     }
     else {
       updateStepUI(contentEntryPath);
+    }
+  }
+
+  protected void showProgress() {
+    ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, PROGRESS_PANEL);
+    myContentPanel.revalidate();
+  }
+
+  protected void onFinished(final List<Pair<String, String>> foundPaths, final boolean canceled) {
+    if (foundPaths.size() > 0) {
+      myCurrentMode = CHOOSE_SOURCE_PANEL;
+      mySourcePathsChooser.setElements(foundPaths, true);
+    }
+    else {
+      myCurrentMode = CREATE_SOURCE_PANEL;
+      updateFullPathField();
+    }
+    updateStepUI(canceled ? null : myBuilder.getContentEntryPath());
+    if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
+      mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
+    }
+    else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
+      myTfSourceDirectoryName.selectAll();
     }
   }
 
@@ -370,7 +312,11 @@ public class SourcePathsStep extends ModuleWizardStep {
     return myCurrentContentEntryPath == null? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
   }
 
-  private static List<Pair<String,String>> calcSourcePaths(String contentEntryPath) {
+  protected String getParameter() {
+    return myBuilder.getContentEntryPath();
+  }
+
+  protected List<Pair<String,String>> calculate(String contentEntryPath) {
     if (contentEntryPath == null) {
       return EMPTY_STRING_STRING_ARRAY;
     }
@@ -401,6 +347,10 @@ public class SourcePathsStep extends ModuleWizardStep {
   protected void setSourceDirectoryName(String name) {
     name = name == null? "" : name.trim();
     myTfSourceDirectoryName.setText(name);
+  }
+
+  protected String getProgressText() {
+    return IdeBundle.message("progress.searching.for.sources", myBuilder.getContentEntryPath().replace('/', File.separatorChar));
   }
 
   private class BrowsePathListener extends BrowseFilesListener {
@@ -439,18 +389,6 @@ public class SourcePathsStep extends ModuleWizardStep {
           myField.setText(VfsUtil.getRelativePath(fileByPath, contentEntryDir, File.separatorChar));
         }
       }
-    }
-  }
-
-  private class MyProgressIndicator extends ProgressIndicatorBase {
-    public void setText(String text) {
-      super.setText(text);
-      myProgressLabel.setText(text);
-    }
-
-    public void setText2(String text) {
-      super.setText2(text);
-      myProgressLabel2.setText(text);
     }
   }
 

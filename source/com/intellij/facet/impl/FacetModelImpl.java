@@ -8,6 +8,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.FacetManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   private List<Facet> myFacets = new ArrayList<Facet>();
   private Map<Facet, String> myFacet2NewName = new HashMap<Facet, String>();
   private FacetManagerImpl myManager;
+  private Set<Listener> myListeners = new HashSet<Listener>();
 
   public FacetModelImpl(final FacetManagerImpl manager) {
     myManager = manager;
@@ -76,5 +79,22 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   public String getFacetName(final Facet facet) {
     return myFacet2NewName.containsKey(facet) ? myFacet2NewName.get(facet) : facet.getName();
+  }
+
+  public void addListener(final Listener listener, Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
+  }
+
+  protected void facetsChanged() {
+    super.facetsChanged();
+    final Listener[] all = myListeners.toArray(new Listener[myListeners.size()]);
+    for (Listener each : all) {
+      each.onChanged();
+    }
   }
 }

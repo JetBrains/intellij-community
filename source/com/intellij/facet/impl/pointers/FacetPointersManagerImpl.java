@@ -9,6 +9,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.facet.FacetManagerListener;
+import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointerListener;
 import com.intellij.facet.pointers.FacetPointersManager;
@@ -48,6 +49,9 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     //noinspection unchecked
     FacetPointerImpl<F> pointer = myPointers.get(id);
     if (pointer == null) {
+      if (!FacetUtil.isRegistered(facet)) {
+        return create(id);
+      }
       pointer = new FacetPointerImpl<F>(this, facet);
       myPointers.put(id, pointer);
     }
@@ -55,6 +59,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
   }
 
   public <F extends Facet> FacetPointer<F> create(final String id) {
+    //noinspection unchecked
     FacetPointerImpl<F> pointer = myPointers.get(id);
     if (pointer == null) {
       pointer = new FacetPointerImpl<F>(this, id);

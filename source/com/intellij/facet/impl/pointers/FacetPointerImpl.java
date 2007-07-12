@@ -124,6 +124,11 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     return FacetPointersManager.constructId(myModuleName, myFacetTypeId, myFacetName);
   }
 
+  @NotNull
+  public String getFacetTypeId() {
+    return myFacetTypeId;
+  }
+
   @Nullable
   public FacetType<F, ?> getFacetType() {
     //noinspection unchecked

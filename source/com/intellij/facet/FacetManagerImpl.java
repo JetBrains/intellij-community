@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +26,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
   @NonNls public static final String FACET_ELEMENT = "facet";
   @NonNls public static final String TYPE_ATTRIBUTE = "type";
+  @NonNls private static final String IMPLICIT_ATTRIBUTE = "implicit";
   @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
@@ -66,6 +66,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     if (facet == null) {
       final FacetInfo underlyingFacetInfo = info.getUnderlyingFacet();
       final Facet underlyingFacet = underlyingFacetInfo != null ? getOrCreateFacet(info2Facet, underlyingFacetInfo) : null;
+      //noinspection unchecked
       facet = createFacet(info.getFacetType(), myModule, info.getName(), info.getConfiguration(), underlyingFacet);
       info2Facet.put(info, facet);
     }
@@ -141,10 +142,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     String name = element.getAttributeValue(NAME_ATTRIBUTE);
     if (name == null) {
       //todo[nik] remove later. This code is written only for compatibility with first Selena EAPs
-      name = type.getPresentableName();
+      name = type.getDefaultFacetName();
     }
     final Facet facet = createFacet(type, myModule, name, configuration, underlyingFacet);
-
+    facet.setImplicit(Boolean.parseBoolean(element.getAttributeValue(IMPLICIT_ATTRIBUTE)));
     if (facet instanceof JDOMExternalizable) {
       //todo[nik] remove 
       ((JDOMExternalizable)facet).readExternal(config);
@@ -186,6 +187,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       Element child = new Element(FACET_ELEMENT);
       child.setAttribute(TYPE_ATTRIBUTE, facet.getType().getStringId());
       child.setAttribute(NAME_ATTRIBUTE, facet.getName());
+      if (facet.isImplicit()) {
+        child.setAttribute(IMPLICIT_ATTRIBUTE, String.valueOf(facet.isImplicit()));
+      }
       final Element config = new Element(CONFIGURATION_ELEMENT);
       try {
         facet.getConfiguration().writeExternal(config);
@@ -304,10 +308,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     for (Facet facet : getAllFacets()) {
       Disposer.dispose(facet);
     }
-  }
-
-  public void addListener(final Listener listener, final Disposable parent) {
-    throw new UnsupportedOperationException();
   }
 
   private static class FacetManagerModel extends FacetModelBase {

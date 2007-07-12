@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 
 import javax.swing.*;
 
@@ -60,6 +61,8 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myUnderlyingFacetType;
   }
 
+  public void registerDetectors(FacetDetectorRegistry<C> registry) {
+  }
 
   public abstract C createDefaultConfiguration();
 

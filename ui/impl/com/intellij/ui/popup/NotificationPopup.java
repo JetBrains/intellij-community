@@ -67,6 +67,10 @@ public class NotificationPopup {
     myFadeInTimer.start();
   }
 
+  public JBPopup getPopup() {
+    return myPopup;
+  }
+
   private class ContentComponent extends JPanel {
     private MouseAdapter myEntranceListener;
 

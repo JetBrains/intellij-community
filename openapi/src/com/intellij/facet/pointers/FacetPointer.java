@@ -50,4 +50,7 @@ public interface FacetPointer<F extends Facet> {
 
   @Nullable
   F findFacet(ModulesProvider modulesProvider, FacetsProvider facetsProvider);
+
+  @NotNull
+  String getFacetTypeId();
 }

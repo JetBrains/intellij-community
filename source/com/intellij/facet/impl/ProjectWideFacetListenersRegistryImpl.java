@@ -38,6 +38,13 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
         onModuleAdded(module);
       }
 
+      public void beforeModuleRemoved(final Project project, final Module module) {
+        Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
+        for (Facet facet : allFacets) {
+          onFacetRemoved(facet, true);
+        }
+      }
+
       public void moduleRemoved(Project project, Module module) {
         onModuleRemoved(module);
       }
@@ -53,7 +60,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     final FacetManager facetManager = FacetManager.getInstance(module);
     final Facet[] facets = facetManager.getAllFacets();
     for (Facet facet : facets) {
-      onFacetRemoved(facet);
+      onFacetRemoved(facet, false);
     }
   }
 
@@ -68,7 +75,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
   }
 
-  private void onFacetRemoved(final Facet facet) {
+  private void onFacetRemoved(final Facet facet, final boolean before) {
     final FacetTypeId typeId = facet.getTypeId();
     WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
     boolean lastFacet;
@@ -84,10 +91,16 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     }
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
-      //noinspection unchecked
-      dispatcher.getMulticaster().facetRemoved(facet);
-      if (lastFacet) {
-        dispatcher.getMulticaster().allFacetsRemoved();
+      if (before) {
+        //noinspection unchecked
+        dispatcher.getMulticaster().beforeFacetRemoved(facet);
+      }
+      else {
+        //noinspection unchecked
+        dispatcher.getMulticaster().facetRemoved(facet);
+        if (lastFacet) {
+          dispatcher.getMulticaster().allFacetsRemoved();
+        }
       }
     }
   }
@@ -149,8 +162,12 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
       onFacetAdded(facet);
     }
 
+    public void beforeFacetRemoved(@NotNull final Facet facet) {
+      onFacetRemoved(facet, true);
+    }
+
     public void facetRemoved(@NotNull Facet facet) {
-      onFacetRemoved(facet);
+      onFacetRemoved(facet, false);
     }
 
     public void facetConfigurationChanged(@NotNull final Facet facet) {

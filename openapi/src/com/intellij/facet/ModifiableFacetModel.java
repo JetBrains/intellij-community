@@ -5,6 +5,7 @@
 package com.intellij.facet;
 
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable;
 
 /**
  * @author nik
@@ -27,4 +28,9 @@ public interface ModifiableFacetModel extends FacetModel {
   
   String getFacetName(Facet facet);
 
+  void addListener(Listener listener, Disposable parent);
+
+  interface Listener {
+    void onChanged();
+  }
 }

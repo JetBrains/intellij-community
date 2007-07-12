@@ -4,7 +4,6 @@
 
 package com.intellij.facet;
 
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +34,4 @@ public interface FacetModel {
 
   @NotNull
   <F extends Facet> Collection<F> getFacetsByType(@NotNull Facet underlyingFacet, FacetTypeId<F> typeId);
-
-  void addListener(Listener listener, Disposable parent);
-  
-  interface Listener {
-    void onChanged();
-  }
 }

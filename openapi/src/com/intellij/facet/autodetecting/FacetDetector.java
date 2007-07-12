@@ -15,27 +15,19 @@
  *
  */
 
-package com.intellij.facet;
+package com.intellij.facet.autodetecting;
+
+import com.intellij.facet.FacetConfiguration;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author nik
  */
-public abstract class ProjectWideFacetAdapter<F extends Facet> implements ProjectWideFacetListener<F> {
-  public void firstFacetAdded() {
-  }
+public abstract class FacetDetector<T, C extends FacetConfiguration> {
 
-  public void facetAdded(final F facet) {
-  }
+  @Nullable
+  public abstract C detectFacet(T source, Collection<C> existentFacetConfigurations);
 
-  public void facetConfigurationChanged(final F facet) {
-  }
-
-  public void beforeFacetRemoved(final F facet) {
-  }
-
-  public void facetRemoved(final F facet) {
-  }
-
-  public void allFacetsRemoved() {
-  }
 }

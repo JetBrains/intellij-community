@@ -15,6 +15,8 @@ public interface ProjectWideFacetListener<F extends Facet> extends EventListener
 
   void facetAdded(F facet);
 
+  void beforeFacetRemoved(F facet);
+
   void facetRemoved(F facet);
 
   void allFacetsRemoved();
