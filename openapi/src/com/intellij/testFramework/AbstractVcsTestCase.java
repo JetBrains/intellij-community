@@ -229,6 +229,19 @@ public class AbstractVcsTestCase {
     }, "", this);
   }
 
+  protected void copyFileInCommand(final VirtualFile file, final String toName) {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          file.copy(this, file.getParent(), toName);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }, "", null);
+  }
+
   protected static class RunResult {
     public int exitCode = -1;
     public String stdOut = "";
