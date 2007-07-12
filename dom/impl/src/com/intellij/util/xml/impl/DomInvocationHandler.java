@@ -591,13 +591,13 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   final void _checkInitialized(final DomChildDescriptionImpl description) {
+    if (myInitializedChildren.contains(description)) return;
+
+    r.unlock();
     if (!isValid()) {
       throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
     }
 
-    if (myInitializedChildren.contains(description)) return;
-
-    r.unlock();
     w.lock();
     try {
       if (myInitializedChildren.contains(description)) return;
