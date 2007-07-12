@@ -39,11 +39,8 @@ public class DotAutoLookupHandler extends CodeCompletionHandler{
       return LookupData.EMPTY;
     }
     else{
-      final PsiElement element = context.file.findElementAt(context.startOffset);
-      if(element == null){
-        return LookupData.EMPTY;
-      }
-      if("#".equals(lastElement.getText())
+      final PsiElement element = file.findElementAt(offset);
+      if(element != null && "#".equals(lastElement.getText())
         && !new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())){
         return LookupData.EMPTY;
       }
