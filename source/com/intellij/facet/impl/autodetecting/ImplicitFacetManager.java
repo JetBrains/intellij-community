@@ -7,6 +7,7 @@ package com.intellij.facet.impl.autodetecting;
 import com.intellij.facet.*;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -59,15 +60,17 @@ public class ImplicitFacetManager implements Disposable {
     if (!Comparing.haveEqualElements(myImplicitFacets, implicitFacets)) {
       Set<Facet> newFacets = new HashSet<Facet>(implicitFacets);
       newFacets.removeAll(myImplicitFacets);
-      if (!newFacets.isEmpty()) {
-        fireNotificationPopup(newFacets);
-      }
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        if (!newFacets.isEmpty()) {
+          fireNotificationPopup(newFacets);
+        }
 
-      if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
-        myAttentionComponent.stopBlinking();
-      }
-      if (myImplicitFacets.isEmpty() && !implicitFacets.isEmpty()) {
-        myAttentionComponent.startBlinking();
+        if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
+          myAttentionComponent.stopBlinking();
+        }
+        if (myImplicitFacets.isEmpty() && !implicitFacets.isEmpty()) {
+          myAttentionComponent.startBlinking();
+        }
       }
       myImplicitFacets = implicitFacets;
     }
