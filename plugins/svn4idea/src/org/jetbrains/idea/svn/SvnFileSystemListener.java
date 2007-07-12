@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -52,21 +53,20 @@ import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class SvnFileSystemListener implements LocalFileOperationsHandler, CommandListener {
   private static class AddedFileInfo {
     private final Project myProject;
     private final VirtualFile myDir;
     private final String myName;
+    @Nullable private final File myCopyFrom;
 
-    public AddedFileInfo(final Project project, final VirtualFile dir, final String name) {
+    public AddedFileInfo(final Project project, final VirtualFile dir, final String name, @Nullable final File copyFrom) {
       myProject = project;
       myDir = dir;
       myName = name;
+      myCopyFrom = copyFrom;
     }
   }
 
@@ -100,23 +100,17 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
 
     if (!SVNWCUtil.isVersionedDirectory(srcFile.getParentFile())) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
       return null;
     }
     final SVNStatus fileStatus = getFileStatus(vcs, srcFile);
     if (fileStatus != null && fileStatus.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
       return null;
     }
 
-    SVNCopyClient client = vcs.createCopyClient();
-    try {
-      client.doCopy(srcFile, SVNRevision.WORKING, destFile, false, false);
-    }
-    catch (SVNException e) {
-      return null;
-    }
-    return destFile;
+    myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile));
+    return null;
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
@@ -266,7 +260,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SVNStatus status = getFileStatus(vcs, targetFile);
 
     if (status == null || status.getContentsStatus() == SVNStatusType.STATUS_NONE) {
-      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name));
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name, null));
       return false;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
@@ -283,7 +277,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
           wcClient.doRevert(targetFile, false);
           return true;
         }
-        myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name));
+        myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name, null));
         return false;
       }
       catch (SVNException e) {
@@ -312,6 +306,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private void processAddedFiles(Project project) {
     SvnVcs vcs = SvnVcs.getInstance(project);
     List<VirtualFile> addedVFiles = new ArrayList<VirtualFile>();
+    Map<VirtualFile, File> copyFromMap = new HashMap<VirtualFile, File>();
     for (Iterator<AddedFileInfo> it = myAddedFiles.iterator(); it.hasNext();) {
       AddedFileInfo addedFileInfo = it.next();
       if (addedFileInfo.myProject == project) {
@@ -323,6 +318,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
             boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
             if (!isIgnored) {
               addedVFiles.add(addedFile);
+              copyFromMap.put(addedFile, addedFileInfo.myCopyFrom);
             }
           }
         }
@@ -343,12 +339,33 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
                                                         vcs.getAddConfirmation());
       }
       if (filesToProcess != null) {
-        List<VcsException> exceptions = new ArrayList<VcsException>();
+        final List<VcsException> exceptions = new ArrayList<VcsException>();
         SVNWCClient wcClient = vcs.createWCClient();
+        final SVNCopyClient copyClient = vcs.createCopyClient();
         for(VirtualFile file: filesToProcess) {
-          File ioFile = new File(file.getPath());
+          final File ioFile = new File(file.getPath());
           try {
-            wcClient.doAdd(ioFile, false, false, false, false);
+            final File copyFrom = copyFromMap.get(file);
+            if (copyFrom != null) {
+              try {
+                new ActionWithTempFile(ioFile) {
+                  protected void executeInternal() throws VcsException {
+                    try {
+                      copyClient.doCopy(copyFrom, SVNRevision.WORKING, ioFile, false, false);
+                    }
+                    catch (SVNException e) {
+                      throw new VcsException(e);
+                    }
+                  }
+                }.execute();
+              }
+              catch (VcsException e) {
+                exceptions.add(e);
+              }
+            }
+            else {
+              wcClient.doAdd(ioFile, false, false, false, false);
+            }
             VcsDirtyScopeManager.getInstance(project).fileDirty(file);
           }
           catch (SVNException e) {
