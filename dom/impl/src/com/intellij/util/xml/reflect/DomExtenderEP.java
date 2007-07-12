@@ -5,6 +5,7 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.DomElement;
@@ -16,7 +17,7 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 /**
  * @author peter
  */
-public class DomExtenderEP {
+public class DomExtenderEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.reflect.DomExtenderEP");
   public static final ExtensionPointName<DomExtenderEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.extender");
 
