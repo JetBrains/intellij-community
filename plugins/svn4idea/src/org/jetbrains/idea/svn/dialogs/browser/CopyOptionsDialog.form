@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog">
+  <grid id="34b47" binding="myMainPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="10" y="10" width="339" height="548"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="1c11f" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Source URL:"/>
+        </properties>
+      </component>
+      <component id="8021c" class="javax.swing.JLabel" binding="myURLLabel">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <font style="1"/>
+        </properties>
+      </component>
+      <component id="90249" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Target Location:"/>
+        </properties>
+      </component>
+      <component id="437a6" class="org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent" binding="myBrowser" custom-create="true">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.5"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="b920e" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Target Name:"/>
+        </properties>
+      </component>
+      <component id="40298" class="javax.swing.JTextField" binding="myNameField">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="f875a" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Target URL: "/>
+        </properties>
+      </component>
+      <component id="fe529" class="javax.swing.JLabel" binding="myTargetURL">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <font style="1"/>
+        </properties>
+      </component>
+      <component id="7afdb" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Commit Message:"/>
+        </properties>
+      </component>
+      <scrollpane id="7ec04">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.5"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="2a8b0" class="javax.swing.JTextArea" binding="myCommitMessage">
+            <constraints/>
+            <properties>
+              <rows value="5"/>
+              <text value=""/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="4170e" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Recent Messages: "/>
+        </properties>
+      </component>
+      <component id="e5ce4" class="javax.swing.JComboBox" binding="myMessagesBox">
+        <constraints>
+          <grid row="8" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties/>
+      </component>
+    </children>
+  </grid>
+</form>
