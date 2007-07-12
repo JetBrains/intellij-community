@@ -1,23 +1,23 @@
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.Collection;
 
 public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvider {
   private final String myPropertyName;
@@ -36,14 +36,14 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   private final Project myProject;
   private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
 
-  private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, Project project) {
+  private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, @NotNull Project project) {
     myPropertyName = propertyName;
     myPropertyType = propertyType;
     myIsStatic = isStatic;
     myProject = project;
   }
 
-  public static final PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
+  public static PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
     if (object instanceof PsiField) {
       PsiField field = (PsiField)object;
       PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field.getProject(), field), field.getType(),
@@ -85,17 +85,22 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     if (isStatic()) {
       if (getGetter() != null && getSetter() != null) {
         return PROPERTY_READ_WRITE_STATIC_ICON;
-      } else if (getGetter() != null) {
+      }
+      else if (getGetter() != null) {
         return PROPERTY_READ_STATIC_ICON;
-      } else {
+      }
+      else {
         return PROPERTY_WRITE_STATIC_ICON;
       }
-    } else {
+    }
+    else {
       if (getGetter() != null && getSetter() != null) {
         return PROPERTY_READ_WRITE_ICON;
-      } else if (getGetter() != null) {
+      }
+      else if (getGetter() != null) {
         return PROPERTY_READ_ICON;
-      } else {
+      }
+      else {
         return PROPERTY_WRITE_ICON;
       }
     }

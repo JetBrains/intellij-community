@@ -37,7 +37,7 @@ public interface Sorter extends TreeAction {
    */
   Comparator getComparator();
 
-@NonNls String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
+  @NonNls String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
 
   /**
    * The default sorter which sorts the tree nodes alphabetically.
@@ -61,6 +61,10 @@ public interface Sorter extends TreeAction {
           }
         }
       };
+    }
+
+    public String toString() {
+      return getName();
     }
 
     @NotNull

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,16 @@ public class SuperTypesGrouper implements Grouper{
           PsiMethod[] superMethods = method.findSuperMethods();
 
           if (superMethods.length > 0) {
+            //prefer interface, if there are any
+            for (int i = 1; i < superMethods.length; i++) {
+              PsiMethod superMethod = superMethods[i];
+              PsiClass containingClass = superMethod.getContainingClass();
+              if (containingClass != null && containingClass.isInterface()) {
+                ArrayUtil.swap(superMethods, 0, i);
+                break;
+              }
+            }
+            
             PsiMethod superMethod = superMethods[0];
             method.putUserData(SUPER_METHOD_KEY, new WeakReference<PsiMethod>(superMethod));
             PsiClass groupClass = superMethod.getContainingClass();

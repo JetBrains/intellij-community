@@ -2,14 +2,15 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Comparator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,6 +22,29 @@ import org.jetbrains.annotations.NotNull;
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
   private PropertiesFile myPropertiesFile;
   private final GroupByWordPrefixes myGroupByWordPrefixes;
+  @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
+  private static final Sorter KIND_SORTER = new Sorter() {
+    public Comparator getComparator() {
+      return new Comparator() {
+        public int compare(final Object o1, final Object o2) {
+          int weight1 = o1 instanceof PropertiesPrefixGroup ? 1 : 0;
+          int weight2 = o2 instanceof PropertiesPrefixGroup ? 1 : 0;
+          return weight1 - weight2;
+        }
+      };
+    }
+
+    @NotNull
+    public ActionPresentation getPresentation() {
+      String name = "Sort by kind";
+      return new ActionPresentationData(name, name, null);
+    }
+
+    @NotNull
+    public String getName() {
+      return KIND_SORTER_ID;
+    }
+  };
 
   public PropertiesFileStructureViewModel(final PropertiesFile root) {
     super(root);
@@ -50,7 +74,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
 
   @NotNull
   public Sorter[] getSorters() {
-    return new Sorter[] {Sorter.ALPHA_SORTER};
+    return new Sorter[] {Sorter.ALPHA_SORTER, KIND_SORTER};
   }
 
   @NotNull

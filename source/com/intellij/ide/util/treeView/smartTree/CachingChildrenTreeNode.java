@@ -108,7 +108,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       }
     }
 
-    if (ungrouped.size() != 0) {
+    if (!ungrouped.isEmpty()) {
       processUngrouped(ungrouped, grouper);
     }
 
@@ -143,7 +143,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  private Map<TreeElement, AbstractTreeNode> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
+  private static Map<TreeElement, AbstractTreeNode> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
     Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<TreeElement, AbstractTreeNode>();
     for (final AbstractTreeNode<TreeElement> node : ungrouped) {
       objects.put(node.getValue(), node);

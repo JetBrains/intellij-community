@@ -52,11 +52,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement, ItemPresentation,
-                                                                               NodeDescriptorProvidingKey {
-  private final Value myValue;
+public abstract class PsiTreeElementBase <T extends PsiElement> implements StructureViewTreeElement, ItemPresentation, NodeDescriptorProvidingKey {
+  private final T myValue;
 
-  protected PsiTreeElementBase(Value psiElement) {
+  protected PsiTreeElementBase(T psiElement) {
     myValue = psiElement;
   }
 
@@ -76,7 +75,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   @Nullable
-  public final Value getElement() {
+  public final T getElement() {
     return myValue.isValid() ? myValue : null;
   }
 
@@ -92,7 +91,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     }
   }
 
-  public Value getValue() {
+  public T getValue() {
     return getElement();
   }
 
@@ -101,7 +100,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public String toString() {
-    final Value element = getElement();
+    final T element = getElement();
     return element != null ? element.toString() : "";
   }
 
@@ -110,13 +109,13 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   private boolean isDeprecated(){
-    final Value element = getElement();
+    final T element = getElement();
     return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
 
   }
 
   public final StructureViewTreeElement[] getChildren() {
-    final Value element = getElement();
+    final T element = getElement();
     if (element == null) return StructureViewTreeElement.EMPTY_ARRAY;
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
@@ -133,14 +132,14 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public void navigate(boolean requestFocus) {
-    final Value element = getElement();
+    final T element = getElement();
     if (element != null) {
       ((Navigatable)element).navigate(requestFocus);
     }
   }
 
   public boolean canNavigate() {
-    final Value element = getElement();
+    final T element = getElement();
     return element instanceof Navigatable && ((Navigatable)element).canNavigate();
   }
 
@@ -156,12 +155,12 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
 
     final PsiTreeElementBase that = (PsiTreeElementBase)o;
 
-    Value value = getValue();
+    T value = getValue();
     return value == null ? that.getValue() == null : value.equals(that.getValue());
   }
 
   public int hashCode() {
-    Value value = getValue();
+    T value = getValue();
     return value == null ? 0 : value.hashCode();
   }
 }

@@ -58,7 +58,12 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     }
 
     final Type elemType = getType();
-    return elemType instanceof AnnotatedElement ? ((AnnotatedElement)elemType).getAnnotation(annotationClass) : super.getAnnotation(annotationClass);
+    if (elemType instanceof AnnotatedElement) {
+      return ((AnnotatedElement)elemType).getAnnotation(annotationClass);
+    }
+    else {
+      return super.getAnnotation(annotationClass);
+    }
   }
 
   public int getCount() {

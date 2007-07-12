@@ -16,9 +16,11 @@
 
 package com.intellij.util;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,29 +46,32 @@ public class UniqueResultsQuery<T> implements Query<T> {
     return myOriginal.findFirst();
   }
 
-  public boolean forEach(@NotNull final Processor<T> consumer) {
+  private boolean doForEach(@NotNull final Processor<T> consumer, @Nullable Ref<Set<T>> outProcessed) {
     final Set<T> processedElements = new ConcurrentHashSet<T>(myHashingStrategy);
+    if (outProcessed != null) {
+      outProcessed.set(processedElements);
+    }
     return myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
-        if (processedElements.add(t)) {
-          if (!consumer.process(t)) return false;
-        }
-        return true;
+        return !processedElements.add(t) || consumer.process(t);
       }
     });
   }
 
+  public boolean forEach(@NotNull final Processor<T> consumer) {
+    return doForEach(consumer, null);
+  }
+
   @NotNull
   public Collection<T> findAll() {
-    final List<T> result = new ArrayList<T>();
-    forEach(new Processor<T>() {
+    Ref<Set<T>> refProcessed = new Ref<Set<T>>();
+    doForEach(new Processor<T>() {
       public boolean process(final T t) {
-        result.add(t);
         return true;
       }
-    });
+    }, refProcessed);
 
-    return result;
+    return refProcessed.get();
   }
 
   public T[] toArray(final T[] a) {
