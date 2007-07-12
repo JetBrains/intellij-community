@@ -177,7 +177,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         stateStorageManager.addMacro(WS_FILE_MACRO, ws.getPath());
 
         if (!ws.exists() && !iFile.isDirectory()) {
-          useOldWsContent(filePath, ws, bytes);
+          useOldWsContent(filePath, ws);
         }
 
         stateStorageManager.addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
@@ -195,7 +195,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  private void useOldWsContent(final String filePath, final IFile ws, final byte[] bytes) {
+  private void useOldWsContent(final String filePath, final IFile ws) {
     int lastDot = filePath.lastIndexOf(".");
     final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
     String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
