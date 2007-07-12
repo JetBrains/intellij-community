@@ -21,5 +21,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public interface GrEnumConstants extends GroovyPsiElement {
+public interface GrEnumConstantList extends GroovyPsiElement {
 }
