@@ -35,8 +35,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -164,11 +162,17 @@ public class AbstractVcsTestCase {
   protected void verify(final RunResult runResult, final String... stdoutLines) {
     verify(runResult);
     final String[] lines = new LineTokenizer(runResult.stdOut).execute();
+    Assert.assertEquals(stdoutLines.length, lines.length); 
     for(int i=0; i<stdoutLines.length; i++) {
-      final Pattern pattern = Pattern.compile(stdoutLines [i]);
-      final Matcher matcher = pattern.matcher(lines [i].trim());
-      Assert.assertTrue(lines [i], matcher.find());
+      Assert.assertEquals(stdoutLines [i], compressWhitespace(lines [i]));
     }
+  }
+
+  private String compressWhitespace(String line) {
+    while(line.indexOf("  ") > 0) {
+      line = line.replace("  ", " ");
+    }
+    return line.trim();
   }
 
   protected VcsDirtyScope getAllDirtyScope() {
