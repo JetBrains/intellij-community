@@ -24,6 +24,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternalizable{
   private EditorColorsScheme myColorsScheme;
@@ -38,6 +39,7 @@ public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternal
     return ApplicationManager.getApplication().getComponent(UsageTreeColorsScheme.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "FindViewColorsScheme";
   }

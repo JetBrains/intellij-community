@@ -44,9 +44,6 @@ public class UsageViewPresentation {
   private List<Action> myNotFoundActions;
 
 
-  public UsageViewPresentation() {
-  }
-
   public String getTabText() {
     return myTabText;
   }

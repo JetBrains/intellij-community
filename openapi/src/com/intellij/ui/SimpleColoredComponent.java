@@ -39,7 +39,7 @@ public class SimpleColoredComponent extends JComponent {
 
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
-  private ArrayList myFragmentTags = null;
+  private ArrayList<Object> myFragmentTags = null;
 
   /**
    * Component's icon. It can be <code>null</code>.
@@ -107,7 +107,7 @@ public class SimpleColoredComponent extends JComponent {
   public synchronized void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, Object tag) {
     append(fragment, attributes);
     if (myFragmentTags == null) {
-      myFragmentTags = new ArrayList();
+      myFragmentTags = new ArrayList<Object>();
     }
     while(myFragmentTags.size() < myFragments.size()-1) {
       myFragmentTags.add(null);
@@ -213,7 +213,7 @@ public class SimpleColoredComponent extends JComponent {
     return null;
   }
 
-  public synchronized final Dimension computePreferredSize(final boolean mainTextOnly) {
+  public final synchronized Dimension computePreferredSize(final boolean mainTextOnly) {
     // Calculate width
     int width = myIpad.left;
 
@@ -363,7 +363,7 @@ public class SimpleColoredComponent extends JComponent {
       final Color bgColor = attributes.getBgColor();
       if (isOpaque() && bgColor != null) {
         g.setColor(bgColor);
-        g.fillRect(xOffset, 0, xOffset + fragmentWidth, getHeight());
+        g.fillRect(xOffset, 0, fragmentWidth, getHeight());
       }
 
       Color color = attributes.getFgColor();
