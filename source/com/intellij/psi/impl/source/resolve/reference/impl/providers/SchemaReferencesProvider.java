@@ -276,7 +276,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       String canonicalText = getCanonicalText();
       XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag,canonicalText);
 
-      if (myType != null && nsDescriptor != null) {
+      if (myType != null && nsDescriptor != null && nsDescriptor.getTag() != null) {
 
         switch(myType) {
           case GroupReference: return nsDescriptor.findGroup(canonicalText);
@@ -291,7 +291,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             return descriptor != null ? descriptor.getDeclaration(): PsiUtil.NULL_PSI_ELEMENT;
           }
           case AttributeReference: {
-            final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(canonicalText);
+            //final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(canonicalText);
             final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(canonicalText);
             XmlAttributeDescriptor descriptor = nsDescriptor.getAttribute(
               localNameByQualifiedName,
