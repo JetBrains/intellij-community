@@ -23,10 +23,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerRunnerSettings> {
-  private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
+  private static final Icon DISABLED_ICON = IconLoader.getIcon("/process/disabledDebug.png");
+
   private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
 
-  public static final Icon RERUN_ICON = ICON;
+  public static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
   private static final @NonNls String HELP_ID = "debugging.debugWindow";
   private static final RunnerInfo DEBUGGER_INFO = new RunnerInfo(ToolWindowId.DEBUG,
                                                                  DebuggerBundle.message("string.debugger.runner.description"), ICON,
@@ -39,8 +40,12 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
       return DebuggerBundle.message("debugger.runner.start.action.text");
     }
 
+    public Icon getEnabledIcon() {
+      return TOOLWINDOW_ICON;
+    }
+
     public Icon getDisabledIcon() {
-      return ICON;
+      return DISABLED_ICON;
     }
   };
 

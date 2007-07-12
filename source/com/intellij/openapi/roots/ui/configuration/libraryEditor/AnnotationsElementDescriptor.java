@@ -8,7 +8,7 @@ import javax.swing.*;
 
 class AnnotationsElementDescriptor extends NodeDescriptor<AnnotationElement> {
     private final AnnotationElement myElement;
-    public static final Icon ICON = IconLoader.getIcon("/nodes/javaDocFolder.png");
+    public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
 
     public AnnotationsElementDescriptor(NodeDescriptor parentDescriptor, AnnotationElement element) {
       super(null, parentDescriptor);

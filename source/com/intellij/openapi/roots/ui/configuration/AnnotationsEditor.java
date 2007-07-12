@@ -39,7 +39,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   private JButton myRemoveButton;
 
   public static final String NAME = ProjectBundle.message("project.roots.external.annotations.tab.title");
-  public static final Icon ICON = IconLoader.getIcon("/modules/javadoc.png"); //todo special icon
+  public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
 
   public AnnotationsEditor(Project project, ModifiableRootModel model) {
     super(project, model);
