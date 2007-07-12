@@ -32,4 +32,15 @@ public class SvnRenameTest extends SvnTestCase {
     renameFileInCommand(aNew, "a.txt");
     verify(runSvn("status"), "R + a.txt", "D aNew.txt", "A + aOld.txt");
   }
+
+  // IDEADEV-16251
+  @Test
+  @Ignore
+  public void testRenameAddedPackage() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
+    final VirtualFile file = createFileInCommand(dir, "a.txt", "content");
+    renameFileInCommand(dir, "newchild");
+    verify(runSvn("status"), "A newchild", "A newchild\\a.txt");
+  }
 }
