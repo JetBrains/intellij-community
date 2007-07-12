@@ -5,27 +5,27 @@ package com.intellij.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
-import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -160,7 +160,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   @NotNull
-  private AbstractQualifiedReference shortenReferences() {
+  public AbstractQualifiedReference shortenReferences() {
     final PsiElement refElement = resolve();
     if (refElement instanceof PsiClass) {
       final PsiQualifiedReference reference = ReferenceAdjuster.getClassReferenceToShorten((PsiClass)refElement, false, this);

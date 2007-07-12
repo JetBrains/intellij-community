@@ -67,11 +67,8 @@ public class AllClassesGetter implements ContextGetter{
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
       if (psiReference != null) {
-        final PsiElement refElement = psiReference.getElement();
         final PsiManager psiManager = file.getManager();
-        final String refText = psiReference.getRangeInElement().substring(refElement.getText());
-        final PsiClass referencedClass = psiManager.getResolveHelper().resolveReferencedClass(refText, refElement);
-        if (psiManager.areElementsEquivalent(psiClass, referencedClass)) {
+        if (psiManager.areElementsEquivalent(psiClass, resolveReference(psiReference))) {
           insertFqn = false;
         } else {
           try {
@@ -141,6 +138,14 @@ public class AllClassesGetter implements ContextGetter{
     }
 
   };
+
+  private static PsiElement resolveReference(final PsiReference psiReference) {
+    if (psiReference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(true);
+      if (results.length == 1) return results[0].getElement();
+    }
+    return psiReference.resolve();
+  }
 
   public AllClassesGetter(final ElementFilter filter) {
     myFilter = filter;
