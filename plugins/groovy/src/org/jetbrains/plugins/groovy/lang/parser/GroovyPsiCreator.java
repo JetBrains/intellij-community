@@ -100,8 +100,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     // Imports
     if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatementImpl(node);
-    if (elem.equals(IMPORT_SELECTOR)) return new GrImportSelectorImpl(node);
-    if (elem.equals(IMPORT_REFERENCE)) return new GrImportReferenceImpl(node);
 
     // Packaging
     if (elem.equals(PACKAGE_DEFINITION)) return new GrPackageDefinitionImpl(node);

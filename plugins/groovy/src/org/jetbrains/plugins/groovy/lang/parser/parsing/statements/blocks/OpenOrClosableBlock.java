@@ -84,7 +84,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     return WRONGWAY;
   }
 
-  public static GroovyElementType parseBlockBody(PsiBuilder builder) {
+  public static void parseBlockBody(PsiBuilder builder) {
     if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
       Separators.parse(builder);
     }
@@ -97,7 +97,6 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       cleanAfterError(builder);
     }
     Separators.parse(builder);
-    return BLOCK_BODY;
   }
 
   /**

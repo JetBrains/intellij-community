@@ -17,10 +17,9 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * Import identifier
@@ -29,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
  */
 public class ImportReference implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     if (!mIDENT.equals(builder.getTokenType())) {
-      return WRONGWAY;
+      return false;
     }
 
     ReferenceElement.parseForImport(builder);
@@ -49,10 +48,8 @@ public class ImportReference implements GroovyElementTypes {
       if (!ParserUtils.getToken(builder, mIDENT)) {
         builder.error(GroovyBundle.message("identifier.expected"));
       }
-
-      return IMPORT_REFERENCE;
     }
 
-    return IMPORT_REFERENCE;
+    return true;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -26,6 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 public class GrContinueStmtImpl extends GroovyPsiElementImpl implements GrContinueStatement {
   public GrContinueStmtImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitContinueStatement(this);
   }
 
   public String toString() {

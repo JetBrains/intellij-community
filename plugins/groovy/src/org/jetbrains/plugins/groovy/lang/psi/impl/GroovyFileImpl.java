@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -270,6 +271,10 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     myScriptClass = null;
     myScriptClassInitialized = false;
     mySyntheticArgsParameter = null;
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitFile(this);
   }
 }
 

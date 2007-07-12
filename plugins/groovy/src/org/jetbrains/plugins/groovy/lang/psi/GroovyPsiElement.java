@@ -25,4 +25,6 @@ import org.jetbrains.annotations.NotNull;
 public interface GroovyPsiElement extends PsiElement {
   @NotNull
   ASTNode getNode();
+
+  void accept(GroovyElementVisitor visitor);
 }

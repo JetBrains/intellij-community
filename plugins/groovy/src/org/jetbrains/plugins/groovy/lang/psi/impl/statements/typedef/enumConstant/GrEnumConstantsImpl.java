@@ -17,9 +17,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstants;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -28,6 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 public class GrEnumConstantsImpl extends GroovyPsiElementImpl implements GrEnumConstants {
   public GrEnumConstantsImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitEnumConstants(this);
   }
 
   public String toString() {

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -26,6 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 public class GrThrowStmtImpl extends GroovyPsiElementImpl implements GrThrowStatement {
   public GrThrowStmtImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitThrowStatement(this);
   }
 
   public String toString() {

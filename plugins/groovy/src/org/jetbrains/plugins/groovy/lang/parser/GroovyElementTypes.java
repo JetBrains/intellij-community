@@ -40,8 +40,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Top-level elements
   IFileElementType FILE = new IFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
 
-  GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
-
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
@@ -49,17 +47,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
   GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
   GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
-  GroovyElementType BLOCK_BODY = new GroovyElementType("Closable block");
 
   // Enum
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
   GroovyElementType ENUM_CONSTANT = new GroovyElementType("Enumeration constant");
   GroovyElementType ENUM_CONSTANT_ERROR = new GroovyElementType("Enumeration constant error");
 
-  // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
-  GroovyElementType IMPORT_REFERENCE = new GroovyElementType("Import identifier");
-  GroovyElementType IMPORT_SELECTOR = new GroovyElementType("Import selector");
 
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");

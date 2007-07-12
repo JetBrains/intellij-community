@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CompilationUnit implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static void parse(PsiBuilder builder) {
 
     ParserUtils.getToken(builder, mSH_COMMENT);
     ParserUtils.getToken(builder, mNLS);
@@ -49,8 +49,6 @@ public class CompilationUnit implements GroovyElementTypes {
       cleanAfterError(builder);
       sepResult = Separators.parse(builder);
     }
-
-    return GroovyElementTypes.COMPILATION_UNIT;
   }
 
   /**
