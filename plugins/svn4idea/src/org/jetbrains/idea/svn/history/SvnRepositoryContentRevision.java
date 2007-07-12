@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -42,15 +43,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
 public class SvnRepositoryContentRevision implements ContentRevision {
-  private SVNRepository myRepository;
+  private String myRepositoryRoot;
+  private final SvnVcs myVcs;
   private String myPath;
   @Nullable private FilePath myLocalPath;
   private long myRevision;
   private String myContent;
 
-  public SvnRepositoryContentRevision(final SVNRepository repository, final String path, @Nullable final FilePath localPath, final long revision) {
+  public SvnRepositoryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path, @Nullable final FilePath localPath,
+                                      final long revision) {
+    myVcs = vcs;
     myPath = path;
-    myRepository = repository;
+    myRepositoryRoot = repositoryRoot;
     myLocalPath = localPath;
     myRevision = revision;
   }
@@ -112,7 +116,13 @@ public class SvnRepositoryContentRevision implements ContentRevision {
         progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
       try {
-        myRepository.getFile(myPath, myRevision, null, myDst);
+        SVNRepository repository = myVcs.createRepository(myRepositoryRoot);
+        try {
+          repository.getFile(myPath, myRevision, null, myDst);
+        }
+        finally {
+          repository.closeSession();
+        }
       }
       catch (SVNException e) {
         myException = e;

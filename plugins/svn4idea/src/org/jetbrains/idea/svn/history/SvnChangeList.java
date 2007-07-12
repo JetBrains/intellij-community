@@ -32,10 +32,8 @@ import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -105,27 +103,18 @@ public class SvnChangeList implements CommittedChangeList {
 
   private void loadChanges() {
     myChanges = new ArrayList<Change>();
-    SVNRepository repository;
-    try {
-      repository = myVcs.createRepository(myRepositoryRoot);
-    }
-    catch (SVNException e) {
-      // should never happen - we got the URL from a real live existing repository
-      LOG.error(e);
-      return;
-    }
     for(String path: myAddedPaths) {
       myChanges.add(new Change(null,
-                               new SvnRepositoryContentRevision(repository, path, getLocalPath(path), myRevision)));
+                               new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision)));
     }
     for(String path: myDeletedPaths) {
-      myChanges.add(new Change(new SvnRepositoryContentRevision(repository, path, getLocalPath(path), myRevision-1),
+      myChanges.add(new Change(new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision-1),
                                null));
 
     }
     for(String path: myChangedPaths) {
-      SvnRepositoryContentRevision beforeRevision = new SvnRepositoryContentRevision(repository, path, getLocalPath(path),  myRevision-1);
-      SvnRepositoryContentRevision afterRevision = new SvnRepositoryContentRevision(repository, path, getLocalPath(path), myRevision);
+      SvnRepositoryContentRevision beforeRevision = new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision-1);
+      SvnRepositoryContentRevision afterRevision = new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision);
       myChanges.add(new Change(beforeRevision, afterRevision));
     }
   }
