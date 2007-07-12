@@ -33,16 +33,12 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Icons;
+import com.intellij.xml.impl.dtd.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,38 +101,18 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
       return Icons.XML_TAG_ICON;
     }
 
-    private static final Key<CachedValue<List<XmlAttlistDecl>>> MY_CACHED_ATTLISTS = Key.create("Dtd.CachedAttLists");
-
-    private static UserDataCache<CachedValue<List<XmlAttlistDecl>>, PsiFile, Object> ourCachedAttListDefsCache = new UserDataCache<CachedValue<List<XmlAttlistDecl>>, PsiFile, Object>() {
-      protected CachedValue<List<XmlAttlistDecl>> compute(final PsiFile psiFile, final Object p) {
-        return psiFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<List<XmlAttlistDecl>>() {
-          public Result<List<XmlAttlistDecl>> compute() {
-            final List<XmlAttlistDecl> attLists=new ArrayList<XmlAttlistDecl>(1);
-
-            XmlUtil.processXmlElements((XmlFile)psiFile, new PsiElementProcessor() {
-              public boolean execute(final PsiElement element) {
-                if (element instanceof XmlAttlistDecl) {
-                  attLists.add((XmlAttlistDecl)element);
-                }
-                return true;
-              }
-            }, true, false);
-            return new Result<List<XmlAttlistDecl>>(attLists);
-          }
-        }, false);
-      }
-    };
-
     public String getLocationString() {
-      final List<XmlAttlistDecl> attLists= ourCachedAttListDefsCache.get(MY_CACHED_ATTLISTS, XmlUtil.getContainingFile(getElement()), null).getValue();
+      final XmlElement owner = (XmlElement)getElement();
 
-      if (!attLists.isEmpty()) {
+      final XmlAttlistDecl[] attLists= owner instanceof XmlElementDecl ? XmlElementDescriptorImpl.getCachedAttDecls(owner): XmlAttlistDecl.EMPTY;
+
+      if (attLists.length > 0) {
         Map<String,XmlAttributeDecl> attrMap = null;
 
         final String name = getElement().getName();
         for(XmlAttlistDecl a:attLists) {
-          final XmlElement element = a.getNameElement();
-          if (!name.equals(element != null ? element.getText():null)) continue;
+          final String aname = a.getName();
+          if (!name.equals(aname)) continue;
           if (attrMap == null) attrMap = new LinkedHashMap<String, XmlAttributeDecl>();
 
           for(XmlAttributeDecl d : a.getAttributeDecls()) {

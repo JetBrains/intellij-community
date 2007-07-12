@@ -4,6 +4,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
@@ -148,39 +150,44 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     final XmlFile containingFile = XmlUtil.getContainingFile(this);
     final XmlProlog prolog = getProlog();
     final XmlDoctype doctype = (prolog != null) ? prolog.getDoctype() : null;
-    //
-    //if (XmlUtil.ANT_URI.equals(namespace)){
-    //  final AntDOMNSDescriptor antDOMNSDescriptor = new AntDOMNSDescriptor();
-    //  antDOMNSDescriptor.init(this);
-    //  return antDOMNSDescriptor;
-    //}
-    //else
+    boolean dtdUriFromDocTypeIsNamespace = false;
+
     if (XmlUtil.HTML_URI.equals(namespace)) {
       XmlNSDescriptor nsDescriptor = (doctype != null) ? getNsDescriptorFormDocType(doctype, containingFile) : null;
       if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
-      final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(nsDescriptor);
-      return htmlDescriptor;
+      return new HtmlNSDescriptorImpl(nsDescriptor);
     }
-    else if (namespace != null && namespace != XmlUtil.EMPTY_URI && (doctype == null || !namespace.equals(doctype.getDtdUri()))) {
-      boolean documentIsSchemaThatDefinesNs = namespace.equals(XmlUtil.getTargetSchemaNsFromTag(getRootTag()));
+    else if (namespace != null && namespace != XmlUtil.EMPTY_URI) {
+      if (doctype == null || !namespace.equals(doctype.getDtdUri())) {
+        boolean documentIsSchemaThatDefinesNs = namespace.equals(XmlUtil.getTargetSchemaNsFromTag(getRootTag()));
 
-      final XmlFile xmlFile = documentIsSchemaThatDefinesNs
-                              ? containingFile
-                              : XmlUtil.findXmlFile(containingFile, ExternalResourceManager.getInstance().getResourceLocation(namespace));
-      if (xmlFile != null) {
-        final XmlNSDescriptor descriptor = (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-        return descriptor;
+        final XmlFile xmlFile = documentIsSchemaThatDefinesNs
+                                ? containingFile
+                                : XmlUtil.findXmlFile(containingFile, ExternalResourceManager.getInstance().getResourceLocation(namespace));
+        if (xmlFile != null) {
+          return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+        }
+      } else {
+        dtdUriFromDocTypeIsNamespace = true;
       }
     }
-    if (strict) return null;
+
+    if (strict && !dtdUriFromDocTypeIsNamespace) return null;
 
     if (doctype != null) {
-      final XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile);
+      XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile);
 
       if (descr != null) {
+        final String prefix = containingFile.getDocument().getRootTag().getPrefixByNamespace(XmlUtil.FACELETS_URI);
+
+        if (containingFile instanceof JspFile || prefix != null) {
+          descr = new HtmlNSDescriptorImpl(descr, true, containingFile.getFileType() == StdFileTypes.JSP);
+        }
         return descr;
       }
     }
+
+    if (strict) return null;
 
     try {
       final PsiFile fileFromText =

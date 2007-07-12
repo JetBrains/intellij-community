@@ -1,30 +1,22 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 2, 2004
- * Time: 4:20:32 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl");
   private XmlAttributeDescriptor delegate;
+  private boolean myCaseSensitive;
 
-  public HtmlAttributeDescriptorImpl() {
-    LOG.error("should not be called");
-  }
-
-  public HtmlAttributeDescriptorImpl(XmlAttributeDescriptor _delegate) {
+  public HtmlAttributeDescriptorImpl(XmlAttributeDescriptor _delegate, boolean caseSensitive) {
     delegate = _delegate;
+    myCaseSensitive = caseSensitive;
   }
 
   public boolean isRequired() {
@@ -57,7 +49,7 @@ public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
   }
 
   public String validateValue(XmlElement context, String value) {
-    value = value.toLowerCase();
+    if (!myCaseSensitive) value = value.toLowerCase();
     return delegate.validateValue(context, value);
   }
 

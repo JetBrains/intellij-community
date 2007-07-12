@@ -11,16 +11,12 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: May 14, 2005
- * Time: 10:24:35 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
-public class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
+public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptorImpl {
   @NonNls private static final String JSFC_ATTR_NAME = "jsfc";
 
-  RelaxedNsXmlElementDescriptor(XmlTag tag) {
+  RelaxedHtmlFromSchemaElementDescriptor(XmlTag tag) {
     super(tag);
   }
 
@@ -28,14 +24,19 @@ public class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(childTag);
 
     if (elementDescriptor == null) {
-      final String namespace = childTag.getNamespace();
-
-      if(!XmlUtil.XHTML_URI.equals(namespace)) {
-        return new AnyXmlElementDescriptor(this,childTag.getNSDescriptor(childTag.getNamespace(),true));
-      }
+      return getRelaxedDescriptor(this, childTag);
     }
 
     return elementDescriptor;
+  }
+
+  public static XmlElementDescriptor getRelaxedDescriptor(XmlElementDescriptor base, final XmlTag childTag) {
+    final String namespace = childTag.getNamespace();
+
+    if(!XmlUtil.XHTML_URI.equals(namespace)) {
+      return new AnyXmlElementDescriptor(base,childTag.getNSDescriptor(childTag.getNamespace(),true));
+    }
+    return null;
   }
 
   private static final XmlElementDescriptor findElementDescriptorFromString(String str, XmlTag context) {
@@ -48,7 +49,11 @@ public class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
-    final XmlAttributeDescriptor[] attributeDescriptors = super.getAttributesDescriptors(context);
+    return addAttrDescriptorsForFacelets(context, super.getAttributesDescriptors(context));
+  }
+
+  public static XmlAttributeDescriptor[] addAttrDescriptorsForFacelets(final XmlTag context,
+                                                                       final XmlAttributeDescriptor[] attributeDescriptors) {
     final String jsfc = context != null ? context.getAttributeValue(JSFC_ATTR_NAME):null;
     if (jsfc == null) return attributeDescriptors;
     final XmlElementDescriptor descriptor = findElementDescriptorFromString(jsfc, context);
@@ -60,12 +65,16 @@ public class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
+    final XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    if (descriptor != null) return descriptor;
+
+    return getAttributeDescriptorFromFacelets(attributeName, context);
+  }
+
+  public static XmlAttributeDescriptor getAttributeDescriptorFromFacelets(final String attributeName, final XmlTag context) {
     final String jsfc = context != null ? context.getAttributeValue(JSFC_ATTR_NAME):null;
 
-    final XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName.toLowerCase(), context);
-    if (jsfc == null || descriptor != null) return descriptor;
-
-    final XmlElementDescriptor xmlElementDescriptor = findElementDescriptorFromString(jsfc, context);
+    final XmlElementDescriptor xmlElementDescriptor = jsfc != null ? findElementDescriptorFromString(jsfc, context):null;
     if (xmlElementDescriptor != null) return xmlElementDescriptor.getAttributeDescriptor(attributeName, context);
 
     return null;

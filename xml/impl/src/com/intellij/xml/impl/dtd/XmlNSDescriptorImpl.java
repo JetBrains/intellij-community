@@ -63,8 +63,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     }
   };
 
-  public XmlNSDescriptorImpl() {
-  }
+  public XmlNSDescriptorImpl() {}
 
   public XmlNSDescriptorImpl(XmlElement element) {
     init(element);
@@ -98,12 +97,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
         myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
         final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
+
         for (final XmlElementDecl xmlElementDecl : result) {
-          final XmlElement nameElement = xmlElementDecl.getNameElement();
-          if (nameElement != null) {
-            String text = nameElement.getText();
-            if (!ret.containsKey(text)) {
-              ret.put(text, new XmlElementDescriptorImpl(xmlElementDecl));
+          final String name = xmlElementDecl.getName();
+          if (name != null) {
+            if (!ret.containsKey(name)) {
+              ret.put(name, new XmlElementDescriptorImpl(xmlElementDecl));
             }
           }
         }

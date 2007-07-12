@@ -558,12 +558,12 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     CompositeElement spec = Factory.createCompositeElement(XML_ELEMENT_CONTENT_SPEC);
     TreeUtil.addChildren(parent, spec);
 
-    parseElementContentSpecInner(lexer, spec);
+    parseElementContentSpecInner(lexer, spec, topLevel);
 
     return spec;
   }
 
-  private boolean parseElementContentSpecInner(final Lexer lexer, final CompositeElement spec) {
+  private boolean parseElementContentSpecInner(final Lexer lexer, final CompositeElement spec, boolean topLevel) {
     IElementType tokenType = lexer.getTokenType();
     boolean endedWithDelimiter = false;
 
@@ -574,6 +574,11 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       tokenType != XML_ELEMENT_DECL_START &&
       tokenType != XML_RIGHT_PAREN
     ) {
+      if (tokenType == XML_BAR && topLevel) {
+        addToken(spec, lexer);
+        tokenType = lexer.getTokenType();
+        continue;
+      } else
       if (tokenType == XML_LEFT_PAREN) {
         if (!parseGroup(spec, lexer)) return false;
         endedWithDelimiter = false;
@@ -623,7 +628,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
 
   private boolean parseGroup(final CompositeElement spec, final Lexer lexer) {
     addToken(spec, lexer);
-    boolean b = parseElementContentSpecInner(lexer, spec);
+    boolean b = parseElementContentSpecInner(lexer, spec, false);
     if (b && lexer.getTokenType() == XML_RIGHT_PAREN) {
       addToken(spec, lexer);
       return true;
@@ -643,16 +648,14 @@ public class OldXmlParsing implements ElementType, XmlElementType {
 
     addToken(decl, lexer);
 
-    final IElementType tokenType = lexer.getTokenType();
-    if (tokenType != XML_NAME && tokenType != XML_ENTITY_REF_TOKEN) {
+    if (!parseName(decl, lexer)) {
+      final IElementType tokenType = lexer.getTokenType();
       if (tokenType == XML_LEFT_PAREN) {
         parseGroup(decl, lexer);
       } else {
         TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
         return decl;
       }
-    } else {
-      addToken(decl, lexer);
     }
 
     parseAttlistContent(decl, lexer);

@@ -111,7 +111,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public XmlNSDescriptor getNSDescriptor() {
     XmlNSDescriptor nsDescriptor = NSDescriptor;
-    if (nsDescriptor ==null) {
+    if (nsDescriptor == null || !NSDescriptor.getDeclaration().isValid()) {
       final XmlFile file = XmlUtil.getContainingFile(getDeclaration());
       if(file == null) return null;
       final XmlDocument document = file.getDocument();
@@ -145,6 +145,14 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
+    final XmlTag parentTag = context != null ? context.getParentTag():null;
+    if (parentTag != null) {
+      final XmlElementDescriptor parentDescriptorByType = XmlUtil.findXmlDescriptorByType(parentTag);
+      if (parentDescriptorByType != null) {
+        return parentDescriptorByType.getElementsDescriptors(parentTag);
+      }
+    }
+
     XmlElementDescriptor[] elementsDescriptors = getElementsDescriptors();
 
     final TypeDescriptor type = getType();
@@ -338,16 +346,22 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
+    final XmlElement context = (XmlElement)element.getParent();
+
     XmlElementDescriptor elementDescriptor = getElementDescriptor(
       element.getLocalName(),
-      element.getNamespace(),
-      (XmlElement)element.getParent(),
+      element.getNamespace(), context,
       element.getName()
     );
 
     if(elementDescriptor == null || element.getAttributeValue("xsi:type") != null){
       final XmlElementDescriptor xmlDescriptorByType = XmlUtil.findXmlDescriptorByType(element);
+
       if (xmlDescriptorByType != null) elementDescriptor = xmlDescriptorByType;
+      else if (context instanceof XmlTag && ((XmlTag)context).getAttributeValue("xsi:type") != null) {
+        final XmlElementDescriptor parentXmlDescriptorByType = XmlUtil.findXmlDescriptorByType(((XmlTag)context));
+        if (parentXmlDescriptorByType != null) elementDescriptor = parentXmlDescriptorByType.getElementDescriptor(element);
+      }
     }
     return elementDescriptor;
   }

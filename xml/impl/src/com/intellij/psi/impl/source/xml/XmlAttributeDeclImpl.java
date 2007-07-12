@@ -2,7 +2,10 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -10,6 +13,8 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
+import com.intellij.ide.util.EditSourceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -121,5 +126,30 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   public String getName() {
     XmlElement name = getNameElement();
     return (name != null) ? name.getText() : null;
+  }
+
+  public boolean canNavigate() {
+    if (isPhysical()) return super.canNavigate();
+    final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this);
+    return psiNamedElement != null && psiNamedElement != this && ((Navigatable)psiNamedElement).canNavigate();
+  }
+
+  public void navigate(final boolean requestFocus) {
+    if (isPhysical()) {
+      super.navigate(requestFocus);
+      return;
+    }
+    final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this);
+    Navigatable navigatable = EditSourceUtil.getDescriptor(psiNamedElement);
+
+    if (psiNamedElement instanceof XmlEntityDecl) {
+      final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
+      navigatable = new OpenFileDescriptor(
+        fileDescriptor.getProject(),
+        fileDescriptor.getFile(),
+        psiNamedElement.getTextRange().getStartOffset() + psiNamedElement.getText().indexOf(getName())
+      );
+    }
+    navigatable.navigate(requestFocus);
   }
 }

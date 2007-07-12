@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -42,12 +43,29 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
 
   public XmlAttributeDecl[] getAttributeDecls() {
     final List<XmlAttributeDecl> result = new ArrayList<XmlAttributeDecl>();
-    processElements(new FilterElementProcessor(new ClassFilter(XmlAttributeDecl.class), result), this);
+    processElements(new FilterElementProcessor(new ClassFilter(XmlAttributeDecl.class), result) {
+      public boolean execute(final PsiElement element) {
+        if (element instanceof XmlAttributeDecl) {
+          if (element.getNextSibling() == null && element.getChildren().length == 1) {
+            return true;
+          }
+          return super.execute(element);
+        }
+        return true;
+      }
+    }, this);
     return result.toArray(new XmlAttributeDecl[result.size()]);
   }
 
   @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this,XmlAttlistDecl.class);
+  }
+
+  public String getName() {
+    XmlElement xmlElement = getNameElement();
+    if (xmlElement != null) return xmlElement.getText();
+
+    return getNameFromEntityRef(this, XmlElementType.XML_ATTLIST_DECL_START);
   }
 }

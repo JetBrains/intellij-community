@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.jsp.impl.RelaxedNsXmlElementDescriptor;
+import com.intellij.jsp.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -18,10 +18,12 @@ import java.util.HashMap;
 public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   private XmlElementDescriptor myDelegate;
   private boolean myRelaxed;
+  private boolean myCaseSensitive;
 
-  public HtmlElementDescriptorImpl(XmlElementDescriptor _delegate) {
+  public HtmlElementDescriptorImpl(XmlElementDescriptor _delegate, boolean relaxed, boolean caseSensitive) {
     myDelegate = _delegate;
-    myRelaxed = myDelegate instanceof RelaxedNsXmlElementDescriptor;
+    myRelaxed = relaxed;
+    myCaseSensitive = caseSensitive;
   }
 
   public String getQualifiedName() {
@@ -38,18 +40,18 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     XmlElementDescriptor[] temp = new XmlElementDescriptor[elementsDescriptors.length];
 
     for (int i = 0; i < elementsDescriptors.length; i++) {
-      temp[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i] );
+      temp[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i], myRelaxed, myCaseSensitive );
     }
     return temp;
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element) {
     String name = element.getName();
-    name = name.toLowerCase();
+    if (!myCaseSensitive) name = name.toLowerCase();
 
     XmlElementDescriptor xmlElementDescriptor = getElementDescriptor(name, element);
     if (xmlElementDescriptor == null && myRelaxed) {
-      xmlElementDescriptor = myDelegate.getElementDescriptor(element);
+      xmlElementDescriptor = RelaxedHtmlFromSchemaElementDescriptor.getRelaxedDescriptor(this, element);
     }
 
     return xmlElementDescriptor;
@@ -61,7 +63,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     final XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(element);
 
     for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
-      hashMap.put(elementDescriptor.getName(), new HtmlElementDescriptorImpl(elementDescriptor));
+      hashMap.put(elementDescriptor.getName(), new HtmlElementDescriptorImpl(elementDescriptor, myRelaxed, myCaseSensitive));
     }
     return hashMap;
   }
@@ -72,13 +74,16 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     XmlAttributeDescriptor[] temp = new XmlAttributeDescriptor[attributesDescriptors.length];
 
     for (int i = 0; i < attributesDescriptors.length; i++) {
-      temp[i] = new HtmlAttributeDescriptorImpl(attributesDescriptors[i]);
+      temp[i] = new HtmlAttributeDescriptorImpl(attributesDescriptors[i], myCaseSensitive);
     }
     return temp;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    return super.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    if (!myCaseSensitive) attributeName = attributeName.toLowerCase();
+    XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName, context);
+    if (descriptor == null) descriptor = RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
+    return descriptor;
   }
 
   // Read-only calculation
@@ -89,7 +94,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {
       hashMap.put(
         attributeDescriptor.getName(),
-        new HtmlAttributeDescriptorImpl(attributeDescriptor)
+        new HtmlAttributeDescriptorImpl(attributeDescriptor, myCaseSensitive)
       );
     }
     return hashMap;
@@ -129,5 +134,13 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   public Object[] getDependences() {
     return myDelegate.getDependences();
+  }
+
+  public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
+    return RelaxedHtmlFromSchemaElementDescriptor.addAttrDescriptorsForFacelets(context, super.getAttributesDescriptors(context));
+  }
+
+  public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
+    return true;
   }
 }

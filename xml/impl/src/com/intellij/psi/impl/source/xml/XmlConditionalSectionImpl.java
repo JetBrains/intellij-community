@@ -51,12 +51,15 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
             if(decl.isInternalReference()) {
               for (ASTNode e = decl.getNode().getFirstChildNode(); e != null; e = e.getTreeNext()) {
                 if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
-                  return StringUtil.stripQuotesAroundValue(e.getText()).equals("INCLUDE");
+                  final boolean b = StringUtil.stripQuotesAroundValue(e.getText()).equals("INCLUDE");
+                  //if (!b) System.out.println("Skipped:"+text);
+                  return b;
                 }
               }
             }
           }
         }
+        ///System.out.println("Skipped:"+child.getText());
       }
     }
     return false;

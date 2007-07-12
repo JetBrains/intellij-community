@@ -17,6 +17,7 @@ package com.intellij.psi.xml;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaOwner;
+import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -24,5 +25,6 @@ import com.intellij.psi.meta.PsiMetaOwner;
  */
 public interface XmlElementDecl extends XmlElement, PsiMetaOwner, PsiNamedElement {
   XmlElement getNameElement();
+  @Nullable String getName();
   XmlElementContentSpec getContentSpecElement();
 }

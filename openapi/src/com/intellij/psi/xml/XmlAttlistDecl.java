@@ -15,10 +15,15 @@
  */
 package com.intellij.psi.xml;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Mike
  */
 public interface XmlAttlistDecl extends XmlElement {
+  XmlAttlistDecl[] EMPTY = new XmlAttlistDecl[0];
+
   XmlElement getNameElement();
+  @Nullable String getName();
   XmlAttributeDecl[] getAttributeDecls();
 }

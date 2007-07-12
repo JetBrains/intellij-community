@@ -15,11 +15,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,5 +70,27 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
   public Language getLanguage() {
     final FileType fileType = getContainingFile().getFileType();
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : StdLanguages.XML;
+  }
+
+  protected static String getNameFromEntityRef(final CompositeElement compositeElement, final IElementType xmlEntityDeclStart) {
+    final ASTNode node = compositeElement.findChildByType(xmlEntityDeclStart);
+    ASTNode name = node.getTreeNext();
+
+    if (name != null && name.getElementType() == WHITE_SPACE) {
+      name = name.getTreeNext();
+    }
+
+    if (name != null && name.getElementType() == XmlElementType.XML_ENTITY_REF) {
+      final StringBuilder builder = new StringBuilder();
+
+      ((XmlElement)name.getPsi()).processElements(new PsiElementProcessor() {
+        public boolean execute(final PsiElement element) {
+          builder.append(element.getText());
+          return true;
+        }
+      }, name.getPsi());
+      if (builder.length() > 0) return builder.toString();
+    }
+    return null;
   }
 }

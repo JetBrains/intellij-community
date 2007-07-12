@@ -1,7 +1,8 @@
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.util.SimpleFieldCache;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
@@ -12,7 +13,9 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -20,6 +23,8 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,8 +37,9 @@ import java.util.List;
 public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl implements PsiWritableMetaData {
   protected XmlElementDecl myElementDecl;
   private String myName;
-  private volatile XmlAttlistDecl[] myAttlistDecl;
+
   private static Class[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
+  private static Key<CachedValue<XmlAttlistDecl[]>> ourCachedAttlistKeys = Key.create("cached_decls");
 
   public XmlElementDescriptorImpl(XmlElementDecl elementDecl) {
     init(elementDecl);
@@ -41,17 +47,13 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   public XmlElementDescriptorImpl() {}
 
-  private static final SimpleFieldCache<XmlAttlistDecl[],XmlElementDescriptorImpl> myAttlistDeclCache = new SimpleFieldCache<XmlAttlistDecl[], XmlElementDescriptorImpl>() {
-    protected final XmlAttlistDecl[] compute(final XmlElementDescriptorImpl xmlElementDescriptor) {
-      return xmlElementDescriptor.doCollectAttlistDecls();
-    }
-
-    protected final XmlAttlistDecl[] getValue(final XmlElementDescriptorImpl xmlElementDescriptor) {
-      return xmlElementDescriptor.myAttlistDecl;
-    }
-
-    protected final void putValue(final XmlAttlistDecl[] xmlAttlistDecls, final XmlElementDescriptorImpl xmlElementDescriptor) {
-      xmlElementDescriptor.myAttlistDecl = xmlAttlistDecls;
+  private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object>() {
+    protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
+      return owner.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlAttlistDecl[]>() {
+        public Result<XmlAttlistDecl[]> compute() {
+          return new Result<XmlAttlistDecl[]>(doCollectAttlistDecls(owner),owner);
+        }
+      });
     }
   };
 
@@ -68,8 +70,11 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     }
     if(hint == null || hint.shouldProcess(XmlAttributeDecl.class)){
       final XmlAttlistDecl[] decls = getAttlistDecls();
+
       for (XmlAttlistDecl decl : decls) {
-        if (decl.getNameElement() != null && decl.getNameElement().getText().equals(meta.getName())) {
+        final String name = decl.getName();
+
+        if (name != null && name.equals(meta.getName())) {
           final XmlAttributeDecl[] attributes = decl.getAttributeDecls();
           for (XmlAttributeDecl attribute : attributes) {
             if (!processor.execute(attribute, substitutor)) return false;
@@ -93,7 +98,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   public String getName() {
     if (myName!=null) return myName;
-    return myName = myElementDecl.getNameElement().getText();
+    return myName = myElementDecl.getName();
   }
 
   public void init(PsiElement element){
@@ -123,8 +128,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
     final XmlNSDescriptor nsDescriptor = getNSDescriptor();
     final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
-
-    contentSpecElement.processElements(new PsiElementProcessor(){
+    
+    XmlUtil.processXmlElements(contentSpecElement, new PsiElementProcessor(){
       public boolean execute(PsiElement child){
         if (child instanceof XmlToken) {
           final XmlToken token = (XmlToken)child;
@@ -152,7 +157,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
         }
         return true;
       }
-    }, getDeclaration());
+    }, false, false, XmlUtil.getContainingFile(getDeclaration()));
 
     return result.toArray(new XmlElementDescriptor[result.size()]);
   }
@@ -181,6 +186,9 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   protected final XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
     final XmlAttributeDescriptor[] attrDescrs;
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    if (getName().equals("td")) {
+      int a = 1;
+    }
     for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
       for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
         result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
@@ -209,8 +217,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     final XmlAttlistDecl[] decls = getAttlistDecls();
 
     for (final XmlAttlistDecl decl : decls) {
-      final XmlElement nameElement = decl.getNameElement();
-      if (nameElement != null && nameElement.textMatches(elementName)) {
+      final String name = decl.getName();
+      if (name != null && name.equals(elementName)) {
         result.add(decl);
       }
     }
@@ -219,14 +227,22 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   private XmlAttlistDecl[] getAttlistDecls() {
-    return myAttlistDeclCache.get(this);
+    return getCachedAttDecls((XmlElement)getDeclaration());
   }
 
-  private final XmlAttlistDecl[] doCollectAttlistDecls() {
-    final List result = new ArrayList();
-    final XmlElement xmlElement = (XmlElement)PsiTreeUtil.getParentOfType(getDeclaration(), ourParentClassesToScanAttributes);
-    xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
-    return (XmlAttlistDecl[])result.toArray(new XmlAttlistDecl[result.size()]);
+  public static @NotNull XmlAttlistDecl[] getCachedAttDecls(@Nullable XmlElement owner) {
+    if (owner == null) return XmlAttlistDecl.EMPTY;
+    owner = (XmlElement)PsiTreeUtil.getParentOfType(owner, ourParentClassesToScanAttributes);
+    if (owner == null) return XmlAttlistDecl.EMPTY;
+    return myAttlistDeclCache.get(ourCachedAttlistKeys, owner, null).getValue();
+  }
+
+  private static final XmlAttlistDecl[] doCollectAttlistDecls(XmlElement xmlElement) {
+    final List<XmlAttlistDecl> result = new ArrayList<XmlAttlistDecl>();
+
+    XmlUtil.processXmlElements(xmlElement, new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), false, false, XmlUtil.getContainingFile(xmlElement));
+
+    return result.toArray(new XmlAttlistDecl[result.size()]);
   }
 
   public int getContentType() {

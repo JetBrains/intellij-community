@@ -107,12 +107,27 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
+    final XmlTag parentTag = getParentTag();
+
+    if (parentTag == null) {
+      final XmlDocument document = ((XmlFile)getContainingFile()).getDocument();
+      final XmlProlog prolog = document.getProlog();
+
+      if(prolog != null && prolog.getDoctype() != null &&
+         namespace.equals(XmlUtil.XHTML_URI)
+        ) {
+        final String url = prolog.getDoctype().getDtdUri();
+        XmlNSDescriptor nsDescriptor = url != null ? document.getDefaultNSDescriptor(url, true):null;
+        
+        if (nsDescriptor != null) return nsDescriptor;
+      }
+    }
+
     Map<String, CachedValue<XmlNSDescriptor>> map = initNSDescriptorsMap();
 
     final CachedValue<XmlNSDescriptor> descriptor = map.get(namespace);
     if(descriptor != null) return descriptor.getValue();
 
-    final XmlTag parentTag = getParentTag();
     if(parentTag == null){
       final XmlDocument parentOfType = PsiTreeUtil.getParentOfType(this, XmlDocument.class);
       if(parentOfType == null) return null;

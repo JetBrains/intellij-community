@@ -193,7 +193,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return element;
   }
 
-  private Lexer getLexer(int context, CharSequence buffer) {
+  public static Lexer getLexer(int context, CharSequence buffer) {
     Lexer lexer = new XmlPsiLexer();
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(OldXmlParsing.XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     short state = 0;
@@ -260,13 +260,13 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
   public boolean canNavigate() {
     if (isPhysical()) return super.canNavigate();
-    final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this, this);
+    final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this);
     return psiNamedElement != null;
   }
 
   public void navigate(final boolean requestFocus) {
     if (!isPhysical()) {
-      ((Navigatable)XmlUtil.findRealNamedElement(this, this)).navigate(requestFocus);
+      ((Navigatable)XmlUtil.findRealNamedElement(this)).navigate(requestFocus);
       return;
     }
     super.navigate(requestFocus);

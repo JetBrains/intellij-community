@@ -67,11 +67,6 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     return null;
   }
 
-  public String getName() {
-    XmlElement name = getNameElement();
-    return (name != null )? name.getText():null;
-  }
-
   @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this,XmlElementDecl.class);
@@ -80,11 +75,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   public PsiElement getOriginalElement() {
     if (isPhysical()) return super.getOriginalElement();
 
-    return getOriginalElement(getResponsibleElement());
-  }
-
-  private PsiElement getOriginalElement(PsiElement responsibleElement) {
-    final PsiNamedElement element = XmlUtil.findRealNamedElement(this,responsibleElement);
+    final PsiNamedElement element = XmlUtil.findRealNamedElement(this);
 
     if (element != null) {
       return element;
@@ -95,22 +86,10 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
   public boolean canNavigate() {
     if (!isPhysical()) {
-      PsiElement responsibleElement = getResponsibleElement();
-      final PsiElement userData = responsibleElement.getUserData(DEPENDING_ELEMENT);
-      if (userData instanceof XmlFile) return true;
+      return getOriginalElement() != this;
     }
 
     return super.canNavigate();
-  }
-
-  private PsiElement getResponsibleElement() {
-    PsiElement responsibleElement  = this;
-    PsiElement parent = getParent();
-    while(parent instanceof XmlConditionalSection) {
-      responsibleElement = parent;
-      parent = parent.getParent();
-    }
-    return responsibleElement;
   }
 
   public void navigate(boolean requestFocus) {
@@ -124,5 +103,12 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     }
 
     super.navigate(requestFocus);
+  }
+
+  public String getName() {
+    XmlElement xmlElement = getNameElement();
+    if (xmlElement != null) return xmlElement.getText();
+
+    return getNameFromEntityRef(this, XmlElementType.XML_ELEMENT_DECL_START);
   }
 }

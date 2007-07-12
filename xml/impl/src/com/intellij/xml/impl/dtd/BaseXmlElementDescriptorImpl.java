@@ -57,7 +57,7 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
     }
   };
 
-  public final XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
+  public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return myAttributeDescriptorsCache.get(this);
   }
 

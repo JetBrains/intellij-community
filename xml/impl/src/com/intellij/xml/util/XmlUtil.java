@@ -286,6 +286,13 @@ public class XmlUtil {
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag, boolean wideFlag) {
     if (element == null) return true;
     PsiFile baseFile = element.isValid() ? element.getContainingFile() : null;
+    return processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
+  }
+
+  public static boolean processXmlElements(final XmlElement element, final PsiElementProcessor processor,
+                                            final boolean deepFlag,
+                                            final boolean wideFlag,
+                                            final PsiFile baseFile) {
     return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag);
   }
 
@@ -412,8 +419,14 @@ public class XmlUtil {
       if (element instanceof XmlEntityRef) {
         XmlEntityRef ref = (XmlEntityRef)element;
 
+        //if ("Number.datatype".equals(ref.getText().substring(1, ref.getTextLength() - 1))) {
+        //  int a = 1;
+        //}
         PsiElement newElement = parseEntityRef(targetFile, ref, true);
-        if (newElement == null) return true;
+        //if (newElement == null) {
+        //  System.out.println("No image for :" + ref.getText());
+        //  return true;
+        //}
 
         while (newElement != null) {
           if (!processElement(newElement, deepFlag, wideFlag)) return false;
@@ -970,29 +983,42 @@ public class XmlUtil {
     return "<&>\u00a0".indexOf(ch) >= 0;
   }
 
-  public static PsiNamedElement findRealNamedElement(final PsiNamedElement _element) {
-    return findRealNamedElement(_element, _element);
-  }
+  public static PsiNamedElement findRealNamedElement(final @NotNull PsiNamedElement _element) {
+    PsiElement currentElement = _element;
+    final XmlEntityRef lastEntityRef = PsiTreeUtil.getParentOfType(currentElement, XmlEntityRef.class);
 
-  public static PsiNamedElement findRealNamedElement(final PsiNamedElement _element, PsiElement responsibleElement) {
-    final PsiElement userData = responsibleElement.getUserData(XmlElement.DEPENDING_ELEMENT);
+    while(!(currentElement instanceof XmlFile)) {
+      PsiElement dependingElement = currentElement.getUserData(XmlElement.DEPENDING_ELEMENT);
+      if (dependingElement == null) dependingElement = currentElement.getContext();
+      currentElement = dependingElement;
+      if (dependingElement == null) break;
+    }
 
-    if (userData instanceof XmlFile) {
+    if (currentElement instanceof XmlFile) {
       final String name = _element.getName();
       if (_element instanceof XmlEntityDecl) {
-        final XmlEntityDecl cachedEntity = XmlEntityRefImpl.getCachedEntity((PsiFile)userData, name);
+        final XmlEntityDecl cachedEntity = XmlEntityRefImpl.getCachedEntity((PsiFile)currentElement, name);
         if (cachedEntity != null) return cachedEntity;
       }
 
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
-      processXmlElements((XmlFile)userData, new PsiElementProcessor() {
+      processXmlElements((XmlFile)currentElement, new PsiElementProcessor() {
         public boolean execute(final PsiElement element) {
-          if (element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName()) &&
-              _element.getClass().isInstance(element)) {
-            result[0] = (PsiNamedElement)element;
-            return false;
+          if (element instanceof PsiNamedElement) {
+            final String elementName = ((PsiNamedElement)element).getName();
+
+            if (elementName.equals(name) && _element.getClass().isInstance(element)) {
+              result[0] = (PsiNamedElement)element;
+              return false;
+            } else if (lastEntityRef != null &&
+                       element instanceof XmlEntityDecl &&
+                       elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
+              result[0] = (PsiNamedElement)element;
+              return false;
+            }
           }
+
           return true;
         }
       }, true);

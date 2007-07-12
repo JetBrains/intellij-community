@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.meta;
 
-import com.intellij.jsp.impl.RelaxedNsXmlNSDescriptor;
+import com.intellij.jsp.impl.RelaxedHtmlFromSchemaNSDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -117,7 +117,7 @@ public class MetaRegistry extends MetaDataRegistrar {
               new ClassFilter(XmlDocument.class),
               new TargetNamespaceFilter(XmlUtil.XHTML_URI),
               new NamespaceFilter(SCHEMA_URIS)),
-          RelaxedNsXmlNSDescriptor.class
+          RelaxedHtmlFromSchemaNSDescriptor.class
       );
     }
 

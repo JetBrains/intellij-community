@@ -11,10 +11,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Class to support any xml element descriptor from other namespace
- */
-public class RelaxedNsXmlNSDescriptor extends XmlNSDescriptorImpl {
+public class RelaxedHtmlFromSchemaNSDescriptor extends XmlNSDescriptorImpl {
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
 
@@ -28,7 +25,7 @@ public class RelaxedNsXmlNSDescriptor extends XmlNSDescriptorImpl {
   }
 
   protected XmlElementDescriptor createElementDescriptor(final XmlTag tag) {
-    return new RelaxedNsXmlElementDescriptor(tag);
+    return new RelaxedHtmlFromSchemaElementDescriptor(tag);
   }
 
   @NotNull
