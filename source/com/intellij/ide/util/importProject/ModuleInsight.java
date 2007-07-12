@@ -8,6 +8,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -16,6 +17,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -30,9 +32,9 @@ import java.util.zip.ZipFile;
  */
 public class ModuleInsight {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");
-  @Nullable private final ProgressIndicatorWrapper myProgress;
+  @NotNull private final ProgressIndicatorWrapper myProgress;
   private final List<File> myContentRoots;
-  private final List<File> mySourceRoots;
+  private final List<Pair<File, String>> mySourceRoots; // list of Pair: [sourceRoot-> package prefix]
   private final Set<File> myIgnoredRoots;
 
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<File, Set<String>>();
@@ -44,7 +46,7 @@ public class ModuleInsight {
   private final StringInterner myInterner = new StringInterner();
   private final JavaLexer myLexer;
 
-  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> contentRoots, List<File> sourceRoots, final Set<File> ignoredRoots) {
+  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> contentRoots, List<Pair<File,String>> sourceRoots, final Set<File> ignoredRoots) {
     myProgress = new ProgressIndicatorWrapper(progress);
     myContentRoots = contentRoots;
     mySourceRoots = sourceRoots;
@@ -68,7 +70,8 @@ public class ModuleInsight {
       myProgress.popState();
       
       myProgress.pushState();
-      for (File sourceRoot : mySourceRoots) {
+      for (Pair<File, String> pair : mySourceRoots) {
+        final File sourceRoot = pair.getFirst();
         if (myIgnoredRoots.contains(sourceRoot)) {
           continue;
         }
@@ -80,7 +83,7 @@ public class ModuleInsight {
         final HashSet<String> selfPackages = new HashSet<String>();
         mySourceRootToPackagesMap.put(sourceRoot, selfPackages);
         
-        scanSources(sourceRoot, "", usedPackages, selfPackages) ;
+        scanSources(sourceRoot, pair.getSecond(), usedPackages, selfPackages) ;
         usedPackages.removeAll(selfPackages); 
       }
       myProgress.popState();
@@ -154,6 +157,7 @@ public class ModuleInsight {
     }
     final File[] files = fromRoot.listFiles();
     if (files != null) {
+      myProgress.checkCanceled();
       boolean includeParentName = false;
       for (File file : files) {
         if (file.isDirectory()) {
@@ -202,6 +206,7 @@ public class ModuleInsight {
     }
     final File[] files = fromRoot.listFiles();
     if (files != null) {
+      myProgress.checkCanceled();
       for (File file : files) {
         if (file.isDirectory()) {
           scanLibraries(file);

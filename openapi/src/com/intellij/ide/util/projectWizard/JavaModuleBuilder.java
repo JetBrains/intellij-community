@@ -72,7 +72,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
     myCompilerOutputPath = acceptParameter(compilerOutputPath);
   }
 
-  private List<Pair<String,String>> getSourcePaths() {
+  public List<Pair<String,String>> getSourcePaths() {
     return mySourcePaths;
   }
 

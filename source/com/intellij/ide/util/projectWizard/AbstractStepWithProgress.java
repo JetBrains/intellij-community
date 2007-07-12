@@ -28,6 +28,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   @NonNls private static final String RESULTS_PANEL = "results_panel";
   private JPanel myPanel;
   
+  private JLabel myTitleLabel;
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
   private ProgressIndicator myProgressIndicator = null;
@@ -60,12 +61,14 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
+    myTitleLabel = new JLabel();
+    myTitleLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    progressPanel.add(myTitleLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 5, 10), 0, 0));
+
     myProgressLabel = new JLabel();
-    //myProgressLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
     progressPanel.add(myProgressLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
 
     myProgressLabel2 = new JLabel();
-    //myProgressLabel2.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
     progressPanel.add(myProgressLabel2, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
 
     JButton stopButton = new JButton(IdeBundle.message("button.stop.searching"));
@@ -100,7 +103,10 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected void runProgress() {
     final MyProgressIndicator progress = new MyProgressIndicator();
-    progress.setText(getProgressText());
+    final String title = getProgressText();
+    if (title != null) {
+      myTitleLabel.setText(title);
+    }
     showCard(PROGRESS_PANEL);
     myProgressIndicator = progress;
     new SwingWorker() {
@@ -152,13 +158,13 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected class MyProgressIndicator extends ProgressIndicatorBase {
     public void setText(String text) {
-      super.setText(text);
       myProgressLabel.setText(text);
+      super.setText(text);
     }
 
     public void setText2(String text) {
-      super.setText2(text);
       myProgressLabel2.setText(text);
+      super.setText2(text);
     }
   }
 }
