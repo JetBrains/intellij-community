@@ -13,48 +13,28 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
+package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @date: 04.04.2007
  */
-public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParameterList {
-  public GrParameterListImpl(@NotNull ASTNode node) {
+public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implements GrAnnotationNameValuePair {
+  public GrAnnotationNameValuePairImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitParameterList(this);
+    visitor.visitAnnotationNameValuePair(this);
   }
 
   public String toString() {
-    return "Parameter list";
-  }
-
-  @NotNull
-  public GrParameter[] getParameters() {
-    return findChildrenByClass(GrParameter.class);
-  }
-
-  public int getParameterIndex(PsiParameter parameter) {
-    PsiParameter[] parameters = getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      if (parameters[i].equals(parameter)) return i;
-    }
-
-    return -1;
-  }
-
-  public int getParametersCount() {
-    return getParameters().length;
+    return "Annotation member value pair";
   }
 }

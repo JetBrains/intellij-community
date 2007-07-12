@@ -19,17 +19,19 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationMemberValuePairsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationNameValuePairImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationNameValuePairsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifiersImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
@@ -43,7 +45,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
@@ -51,15 +56,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.enumConstantBody.GrEnumConstantBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrDefaultAnnotationMemberImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportReferenceImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
@@ -89,14 +91,14 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     if (elem.equals(MODIFIERS)) return new GrModifierListImpl(node);
     if (elem.equals(ANNOTATION)) return new GrAnnotationImpl(node);
-    if (elem.equals(ANNOTATION_ARGUMENTS)) return new GrAnnotationArgumentsImpl(node);
-    if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIR)) return new GrAnnotationMemberValuePairImpl(node);
-    if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIRS)) return new GrAnnotationMemberValuePairsImpl(node);
+    if (elem.equals(ANNOTATION_ARGUMENTS)) return new GrAnnotationArgumentListImpl(node);
+    if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIR)) return new GrAnnotationNameValuePairImpl(node);
+    if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIRS)) return new GrAnnotationNameValuePairsImpl(node);
 
     if (elem.equals(DEFAULT_ANNOTATION_VALUE)) return new GrDefaultAnnotationValueImpl(node);
     
     //throws
-    if (elem.equals(THROW_CLAUSE)) return new GrThrowClauseImpl(node);
+    if (elem.equals(THROW_CLAUSE)) return new GrThrowsClauseImpl(node);
 
     // Imports
     if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatementImpl(node);
@@ -142,10 +144,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(EXTENDS_CLAUSE)) return new GrExtendsClauseImpl(node);
 
     //bodies
-    if (elem.equals(CLASS_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
-    if (elem.equals(INTERFACE_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
-    if (elem.equals(ENUM_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
-    if (elem.equals(ANNOTATION_BLOCK)) return new GrTypeDefinitionBodyImpl(node);
+    if (elem.equals(CLASS_BODY)) return new GrTypeDefinitionBodyImpl(node);
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
     if (elem.equals(OPEN_BLOCK)) return new GrOpenBlockImpl(node);
     if (elem.equals(EXPLICIT_CONSTRUCTOR)) return new GrConstructorInvocationImpl(node);
@@ -161,7 +160,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //parameters
     if (elem.equals(PARAMETERS_LIST)) return new GrParameterListImpl(node);
     if (elem.equals(PARAMETER)) return new GrParameterImpl(node);
-    if (elem.equals(PARAMETER_MODIFIERS)) return new GrParameterModifiersImpl(node);
+    if (elem.equals(PARAMETER_MODIFIERS)) return new GrParameterModifierListImpl(node);
 
     //type parameters
     if (elem.equals(TYPE_ARGUMENT)) return new GrWildcardTypeArgumentImpl(node);

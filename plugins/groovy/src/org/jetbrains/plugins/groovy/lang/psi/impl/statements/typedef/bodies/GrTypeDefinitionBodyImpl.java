@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -21,6 +22,10 @@ import java.util.List;
 public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements GrTypeDefinitionBody {
   public GrTypeDefinitionBodyImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitTypeDefinitionBody(this);
   }
 
   public String toString() {

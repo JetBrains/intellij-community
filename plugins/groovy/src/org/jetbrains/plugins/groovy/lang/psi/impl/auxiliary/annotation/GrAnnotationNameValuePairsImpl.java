@@ -17,19 +17,24 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArguments;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePairs;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public class GrAnnotationArgumentsImpl extends GroovyPsiElementImpl implements GrAnnotationArguments {
-  public GrAnnotationArgumentsImpl(@NotNull ASTNode node) {
+public class GrAnnotationNameValuePairsImpl extends GroovyPsiElementImpl implements GrAnnotationNameValuePairs {
+  public GrAnnotationNameValuePairsImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitAnnotationNameValuePairs(this);
+  }
+
   public String toString() {
-    return "Annotation arguments";
+    return "Annotation member value pairs";
   }
 }

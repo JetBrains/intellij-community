@@ -58,7 +58,7 @@ public class AnnotationBlock implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    abMarker.done(ANNOTATION_BLOCK);
-    return ANNOTATION_BLOCK;
+    abMarker.done(CLASS_BODY);
+    return CLASS_BODY;
   }
 }

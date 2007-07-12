@@ -60,7 +60,7 @@ public class ClassBlock implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    cbMarker.done(CLASS_BLOCK);
-    return CLASS_BLOCK;
+    cbMarker.done(CLASS_BODY);
+    return CLASS_BODY;
   }
 }

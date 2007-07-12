@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
+package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @date: 26.03.2007
  */
-public interface GrAnnotationMemberValuePair extends GroovyPsiElement {
+public interface GrParameterModifierList extends GroovyPsiElement {
 }

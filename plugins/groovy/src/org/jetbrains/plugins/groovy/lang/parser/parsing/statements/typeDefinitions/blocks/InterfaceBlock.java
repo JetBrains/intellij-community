@@ -56,7 +56,7 @@ public class InterfaceBlock implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    ibMarker.done(INTERFACE_BLOCK);
-    return INTERFACE_BLOCK;
+    ibMarker.done(CLASS_BODY);
+    return CLASS_BODY;
   }
 }

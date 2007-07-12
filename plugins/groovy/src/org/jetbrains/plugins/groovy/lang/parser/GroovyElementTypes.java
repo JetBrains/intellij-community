@@ -15,11 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -133,11 +133,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition");
 
   //types
-  //  GroovyElementType TYPE_ELEMENT = new GroovyElementType("type usage");
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
   GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
-  GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause");
   GroovyElementType EXTENDS_CLAUSE = new GroovyElementType("super class clause");
 
   GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
@@ -171,11 +169,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
   GroovyElementType PARAMETER_MODIFIERS = new GroovyElementType("parameter modifiers");
 
-  //bodies
-  GroovyElementType CLASS_BLOCK = new GroovyElementType("class block");
-  GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block");
-  GroovyElementType ENUM_BLOCK = new GroovyElementType("enumeration block");
-  GroovyElementType ANNOTATION_BLOCK = new GroovyElementType("annotation block");
+  GroovyElementType CLASS_BODY = new GroovyElementType("class block");
 
   //statements
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
@@ -225,10 +219,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
       OPEN_BLOCK,
-      CLASS_BLOCK,
-      INTERFACE_BLOCK,
-      ANNOTATION_BLOCK,
-      ENUM_BLOCK,
-      CASE_BLOCK/*,
-          CONSTRUCTOR_BODY*/);
+      CLASS_BODY,
+      CASE_BLOCK);
 }

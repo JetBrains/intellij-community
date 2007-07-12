@@ -68,8 +68,8 @@ public class EnumBlock implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    ebMarker.done(ENUM_BLOCK);
-    return ENUM_BLOCK;
+    ebMarker.done(CLASS_BODY);
+    return CLASS_BODY;
   }
 
   private static boolean parseEnumConstantStart(PsiBuilder builder) {

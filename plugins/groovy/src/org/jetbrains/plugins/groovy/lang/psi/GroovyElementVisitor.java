@@ -2,6 +2,14 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrParameterModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePairs;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -15,14 +23,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrDefaultAnnotationMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstants;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 
 /**
  * @author ven
@@ -100,6 +113,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitNewExpression(GrNewExpression newExpression) {
     visitCallExpression(newExpression);
+  }
+
+  public void visitArrayDeclaration(GrArrayDeclaration arrayDeclaration) {
+    visitElement(arrayDeclaration);
   }
 
   public void visitCommandArguments(GrCommandArgumentList argumentList) {
@@ -206,7 +223,79 @@ public abstract class GroovyElementVisitor {
     visitElement(typeElement);
   }
 
+  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+    visitElement(refElement);
+  }
+
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     visitElement(typeDefinition);
+  }
+
+  public void visitExtendsClause(GrExtendsClause extendsClause) {
+    visitElement(extendsClause);
+  }
+
+  public void visitImplementsClause(GrImplementsClause implementsClause) {
+    visitElement(implementsClause);
+  }
+
+  public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
+    visitElement(typeArgumentList);
+  }
+
+  public void visitWildcardTypeArgument(GrWildcardTypeArgument wildcardTypeArgument) {
+    visitElement(wildcardTypeArgument);
+  }
+
+  public void visitDefaultAnnotationMember(GrDefaultAnnotationMember defaultAnnotationMember) {
+    visitElement(defaultAnnotationMember);
+  }
+
+  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
+    visitElement(defaultAnnotationValue);
+  }
+
+  public void visitMethod(GrMethod method) {
+    visitElement(method);
+  }
+
+  public void visitConstructorInvocation(GrConstructorInvocation invocation) {
+    visitElement(invocation);
+  }
+
+  public void visitThrowsClause(GrThrowsClause throwsClause) {
+    visitElement(throwsClause);
+  }
+
+  public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
+    visitElement(annotationArgumentList);
+  }
+
+  public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+    visitElement(nameValuePair);
+  }
+
+  public void visitAnnotationNameValuePairs(GrAnnotationNameValuePairs nameValuePair) {
+    visitElement(nameValuePair);
+  }
+
+  public void visitAnnotation(GrAnnotation annotation) {
+    visitElement(annotation);
+  }
+
+  public void visitParameterModifierList(GrParameterModifierList parameterModifierList) {
+    visitElement(parameterModifierList);
+  }
+
+  public void visitParameterList(GrParameterList parameterList) {
+    visitElement(parameterList);
+  }
+
+  public void visitParameter(GrParameter parameter) {
+    visitElement(parameter);
+  }
+
+  public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
+    visitElement(typeDefinitionBody);
   }
 }

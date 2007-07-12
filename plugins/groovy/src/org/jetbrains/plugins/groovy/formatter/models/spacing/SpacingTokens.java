@@ -15,8 +15,8 @@
 
 package org.jetbrains.plugins.groovy.formatter.models.spacing;
 
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author ilyas
@@ -49,10 +49,6 @@ public abstract class SpacingTokens implements GroovyElementTypes {
 
   protected final static TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
 
-  protected final static TokenSet BLOCKS = TokenSet.create(OPEN_BLOCK,
-          CLASS_BLOCK,
-          ENUM_BLOCK,
-          INTERFACE_BLOCK,
-          ANNOTATION_BLOCK);
+  protected final static TokenSet BLOCKS = TokenSet.create(OPEN_BLOCK, CLASS_BODY);
 
 }

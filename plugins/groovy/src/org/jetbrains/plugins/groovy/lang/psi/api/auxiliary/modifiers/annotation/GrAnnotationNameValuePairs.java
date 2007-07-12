@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
+package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import com.intellij.psi.PsiReferenceList;
 
 /**
  * @author: Dmitry.Krasilschikov
- * @date: 03.04.2007
+ * @date: 04.04.2007
  */
-public interface GrThrowClause extends GroovyPsiElement, PsiReferenceList {
+public interface GrAnnotationNameValuePairs extends GroovyPsiElement {
 }

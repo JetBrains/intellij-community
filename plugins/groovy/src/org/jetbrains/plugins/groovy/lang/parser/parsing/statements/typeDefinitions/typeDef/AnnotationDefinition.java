@@ -42,7 +42,7 @@ public class AnnotationDefinition implements GroovyElementTypes {
     }
 
     if (WRONGWAY.equals(AnnotationBlock.parse(builder))) {
-      return ANNOTATION_BLOCK;
+      return CLASS_BODY;
     }
 
     return ANNOTATION_DEFINITION;
