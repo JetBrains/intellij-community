@@ -342,10 +342,16 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         filesToProcess = addedVFiles;
       }
       else {
+        final String singleFilePrompt;
+        if (addedVFiles.size() == 1 && addedVFiles.get(0).isDirectory()) {
+          singleFilePrompt = SvnBundle.message("confirmation.text.add.dir");
+        }
+        else {
+          singleFilePrompt = SvnBundle.message("confirmation.text.add.file");
+        }
         filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
                                                         null,
-                                                        SvnBundle.message("confirmation.title.add.file"),
-                                                        SvnBundle.message("confirmation.text.add.file"),
+                                                        SvnBundle.message("confirmation.title.add.file"), singleFilePrompt,
                                                         vcs.getAddConfirmation());
       }
       if (filesToProcess != null) {
