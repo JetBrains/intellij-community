@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -360,32 +359,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
 
   @Nullable
   public static RefClass classFromExternalName(RefManager manager, String externalName) {
-    return (RefClass) manager.getReference(findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
-  }
-
-  @Nullable
-  public static PsiClass findPsiClass(final PsiManager psiManager, String externalName){
-    return findPsiClass(psiManager, externalName, null);
-  } 
-
-  @Nullable
-  private static PsiClass findPsiClass(final PsiManager psiManager, String externalName, PsiClass psiClass) {
-    final int topIdx = externalName.indexOf('$');
-    if (topIdx > -1) {
-      if (psiClass == null) {
-        psiClass = psiManager.findClass(externalName.substring(0, topIdx), GlobalSearchScope.allScope(psiManager.getProject()));
-      }
-      if (psiClass == null) return null;
-      externalName = externalName.substring(topIdx + 1);
-      final int nextIdx = externalName.indexOf("$");
-      if (nextIdx > -1) {
-        return findPsiClass(psiManager, externalName.substring(nextIdx), ClassUtil.findNonQualifiedClassByIndex(externalName.substring(0, nextIdx), psiClass));
-      } else {
-        return ClassUtil.findNonQualifiedClassByIndex(externalName, psiClass);
-      }
-    } else {
-      return psiManager.findClass(externalName, GlobalSearchScope.allScope(psiManager.getProject()));
-    }
+    return (RefClass) manager.getReference(ClassUtil.findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
   public void referenceRemoved() {

@@ -16,12 +16,11 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ClassUtil {
   private ClassUtil() {}
@@ -147,4 +146,35 @@ public class ClassUtil {
     }
   }
 
+
+  /**
+   * Finds anonymous classes. Uses javac notation.
+   * @param psiManager project to search
+   * @param externalName class qualified name
+   * @return found psiClass
+   */
+  @Nullable
+  public static PsiClass findPsiClass(final PsiManager psiManager, String externalName){
+    return findPsiClass(psiManager, externalName, null);
+  }
+
+  @Nullable
+  private static PsiClass findPsiClass(final PsiManager psiManager, String externalName, PsiClass psiClass) {
+    final int topIdx = externalName.indexOf('$');
+    if (topIdx > -1) {
+      if (psiClass == null) {
+        psiClass = psiManager.findClass(externalName.substring(0, topIdx), GlobalSearchScope.allScope(psiManager.getProject()));
+      }
+      if (psiClass == null) return null;
+      externalName = externalName.substring(topIdx + 1);
+      final int nextIdx = externalName.indexOf("$");
+      if (nextIdx > -1) {
+        return findPsiClass(psiManager, externalName.substring(nextIdx), findNonQualifiedClassByIndex(externalName.substring(0, nextIdx), psiClass));
+      } else {
+        return findNonQualifiedClassByIndex(externalName, psiClass);
+      }
+    } else {
+      return psiManager.findClass(externalName, GlobalSearchScope.allScope(psiManager.getProject()));
+    }
+  }
 }

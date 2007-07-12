@@ -13,10 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -437,7 +434,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   public static PsiMethod findPsiMethod(PsiManager manager, String externalName) {
     final int spaceIdx = externalName.indexOf(' ');
     final String className = externalName.substring(0, spaceIdx);
-    final PsiClass psiClass = RefClassImpl.findPsiClass(manager, className);
+    final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
     if (psiClass == null) return null;
     try {
       PsiElementFactory factory = psiClass.getManager().getElementFactory();

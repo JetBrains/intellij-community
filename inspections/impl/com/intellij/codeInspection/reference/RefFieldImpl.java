@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class RefFieldImpl extends RefElementImpl implements RefField {
@@ -161,7 +162,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     if (classNameDelimeter > 0 && classNameDelimeter < externalName.length() - 2) {
       final String className = externalName.substring(0, classNameDelimeter);
       final String fieldName = externalName.substring(classNameDelimeter + 1);
-      final PsiClass psiClass = RefClassImpl.findPsiClass(manager, className);
+      final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
       if (psiClass != null) {
         return psiClass.findFieldByName(fieldName, false);
       }
