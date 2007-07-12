@@ -21,6 +21,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,5 +198,15 @@ public class XmlTagUtil {
 
     }
     return null;
+  }
+
+  @NotNull 
+  public static TextRange getTrimmedValueRange(final @NotNull XmlTag tag) {
+    XmlTagValue tagValue = tag.getValue();
+    final String text = tagValue.getText();
+    final String trimmed = text.trim();
+    final int index = text.indexOf(trimmed);
+    final int startOffset = tagValue.getTextRange().getStartOffset() - tag.getTextRange().getStartOffset() + index;
+    return new TextRange(startOffset, startOffset + trimmed.length());
   }
 }
