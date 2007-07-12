@@ -8,17 +8,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportWizard;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -37,9 +40,15 @@ public class MavenImportWizard extends ProjectImportWizard
   MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
+  private Icon mavenIcon = IconLoader.getIcon("/images/mavenEmblem.png");
 
   public String getName() {
     return ProjectBundle.message("maven.name");
+  }
+
+  @Nullable
+  public Icon getIcon(final VirtualFile file, final boolean open) {
+    return mavenIcon;
   }
 
   protected void initImport(final Project currentProject, final boolean updateCurrent) {
@@ -207,7 +216,7 @@ public class MavenImportWizard extends ProjectImportWizard
     openModulesConfigurator = on;
   }
 
-  protected boolean canQuickImport(VirtualFile file) {
+  public boolean canOpenProject(VirtualFile file) {
     return file.getName().equals(MavenEnv.POM_FILE);
   }
 

@@ -37,6 +37,8 @@ import java.util.*;
 public class EclipseImportWizard extends ProjectImportWizard
   implements EclipseProjectWizardContext, SelectImportedProjectsStep.Context<EclipseProjectModel> {
 
+  private static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
+
   static {
     Progress.defaultImpl = new Progress.Impl() {
       int myLimit = 0;
@@ -86,6 +88,11 @@ public class EclipseImportWizard extends ProjectImportWizard
 
   public String getName() {
     return EclipseBundle.message("eclipse.name");
+  }
+
+  @Nullable
+  public Icon getIcon(final VirtualFile file, final boolean open) {
+    return eclipseIcon;
   }
 
   @Nullable
@@ -245,7 +252,7 @@ public class EclipseImportWizard extends ProjectImportWizard
     return undefinedMacros;
   }
 
-  protected boolean canQuickImport(final VirtualFile file) {
+  public boolean canOpenProject(final VirtualFile file) {
     final String name = file.getName();
     return name.equals(EclipseXml.CLASSPATH_FILE) || name.equals(EclipseXml.PROJECT_FILE);
   }
