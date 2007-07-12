@@ -68,4 +68,8 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
     enableSilentOperation(SvnVcs.VCS_NAME, op);
   }
+
+  protected void checkin() throws IOException {
+    verify(runSvn("ci", "-m", "test"));
+  }
 }
