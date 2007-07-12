@@ -20,7 +20,7 @@ import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
@@ -49,7 +49,7 @@ public class ModifiersFilter implements ElementFilter {
       }
     }
     return context.getParent() instanceof GrExpression &&
-        context.getParent().getParent() instanceof GrApplicationExpression &&
+        context.getParent().getParent() instanceof GrApplicationStatement &&
         context.getParent().getParent().getParent() instanceof GroovyFile &&
         GroovyCompletionUtil.isNewStatement(context, false);
   }

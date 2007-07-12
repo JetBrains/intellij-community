@@ -10,11 +10,11 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -71,8 +71,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     PsiElement[] variants = PsiNamedElement.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
       variants = ((GrCallExpression) parent).getMethodVariants();
-    } else if (parent instanceof GrApplicationExpression) {
-      final GrExpression funExpr = ((GrApplicationExpression) parent).getFunExpression();
+    } else if (parent instanceof GrApplicationStatement) {
+      final GrExpression funExpr = ((GrApplicationStatement) parent).getFunExpression();
       if (funExpr instanceof GrReferenceExpression) {
         variants = ResolveUtil.mapToElements(((GrReferenceExpression) funExpr).getSameNameVariants());
       }

@@ -117,6 +117,10 @@ public abstract class GroovyElementVisitor {
     visitCallExpression(newExpression);
   }
 
+  public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+    visitStatement(applicationStatement);
+  }
+
   public void visitArrayDeclaration(GrArrayDeclaration arrayDeclaration) {
     visitElement(arrayDeclaration);
   }

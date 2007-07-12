@@ -36,15 +36,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -92,8 +92,8 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
     text.append(identifier);
     GrExpression expr;
-    if (initializer instanceof GrApplicationExpression) {
-      expr = createMethodCallByAppCall(((GrApplicationExpression) initializer));
+    if (initializer instanceof GrApplicationStatement) {
+      expr = createMethodCallByAppCall(((GrApplicationStatement) initializer));
     } else {
       expr = initializer;
     }
@@ -213,7 +213,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrOpenBlock) ((GrWhileStatement) file.getChildren()[0]).getBody());
   }
 
-  public GrMethodCallExpression createMethodCallByAppCall(GrApplicationExpression callExpr) {
+  public GrMethodCallExpression createMethodCallByAppCall(GrApplicationStatement callExpr) {
     StringBuffer text = new StringBuffer();
     text.append(callExpr.getFunExpression().getText());
     text.append("(");

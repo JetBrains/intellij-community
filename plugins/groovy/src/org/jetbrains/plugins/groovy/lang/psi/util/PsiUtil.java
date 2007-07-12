@@ -15,12 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,8 +136,8 @@ public class PsiUtil {
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrMethodCallExpression) {
       return ((GrMethodCallExpression) parent).getArgumentList();
-    } else if (parent instanceof GrApplicationExpression) {
-      return ((GrApplicationExpression) parent).getArgumentList();
+    } else if (parent instanceof GrApplicationStatement) {
+      return ((GrApplicationStatement) parent).getArgumentList();
     } else if (parent instanceof GrNewExpression) {
       return ((GrNewExpression) parent).getArgumentList();
     }
@@ -180,8 +180,8 @@ public class PsiUtil {
 
       return result.toArray(new PsiType[result.size()]);
 
-    } else if (parent instanceof GrApplicationExpression) {
-      GrExpression[] args = ((GrApplicationExpression) parent).getArguments();
+    } else if (parent instanceof GrApplicationStatement) {
+      GrExpression[] args = ((GrApplicationStatement) parent).getArguments();
       PsiType[] result = new PsiType[args.length];
       for (int i = 0; i < result.length; i++) {
         PsiType argType = getArgumentType(args[i]);

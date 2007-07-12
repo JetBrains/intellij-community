@@ -15,15 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ilyas
@@ -37,8 +36,8 @@ public class PackageFilter implements ElementFilter {
       if (context.getParent() instanceof GrReferenceExpression) {
         return true;
       }
-      if (context.getParent() instanceof GrApplicationExpression &&
-          ((GrApplicationExpression) context.getParent()).getArguments()[0] instanceof GrReferenceExpression) {
+      if (context.getParent() instanceof GrApplicationStatement &&
+          ((GrApplicationStatement) context.getParent()).getArguments()[0] instanceof GrReferenceExpression) {
         return true;
       }
       return false;

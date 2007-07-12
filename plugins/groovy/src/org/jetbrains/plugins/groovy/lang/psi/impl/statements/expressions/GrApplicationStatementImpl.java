@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -29,10 +28,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 /**
  * @author ilyas
  */
-public class GrApplicationExpressionImpl extends GrExpressionImpl implements GrApplicationExpression {
+public class GrApplicationStatementImpl extends GrExpressionImpl implements GrApplicationStatement {
 
-  public GrApplicationExpressionImpl(@NotNull ASTNode node) {
+  public GrApplicationStatementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitApplicationStatement(this);
   }
 
   public String toString() {
