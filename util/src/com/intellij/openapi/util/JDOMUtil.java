@@ -269,7 +269,7 @@ public class JDOMUtil {
   }
 
   public static Document loadDocument(final IFile iFile) throws IOException, JDOMException {
-    return loadDocument(new BufferedInputStream(iFile.openStream()));
+    return loadDocument(new BufferedInputStream(iFile.openInputStream()));
   }
 
 

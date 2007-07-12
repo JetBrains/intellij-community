@@ -22,8 +22,12 @@ class IoFile implements IFile {
     return FileUtil.loadFileBytes(myFile);
   }
 
-  public InputStream openStream() throws FileNotFoundException {
+  public InputStream openInputStream() throws FileNotFoundException {
     return new FileInputStream(myFile);
+  }
+
+  public OutputStream openOutputStream() throws FileNotFoundException {
+    return new FileOutputStream(myFile);
   }
 
   public boolean delete() {

@@ -3,13 +3,15 @@ package com.intellij.util.io.fs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public interface IFile {
   boolean exists();
 
   byte[] loadBytes() throws IOException;
 
-  InputStream openStream() throws FileNotFoundException;
+  InputStream openInputStream() throws IOException;
+  OutputStream openOutputStream() throws FileNotFoundException;
 
   boolean delete();
 

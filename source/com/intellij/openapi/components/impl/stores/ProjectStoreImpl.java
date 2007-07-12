@@ -24,13 +24,14 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.io.fs.FileSystem;
+import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -161,7 +164,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   public void setProjectFilePath(final String filePath) {
     if (filePath != null) {
-      final IFile iFile = FileSystem.FILE_SYSTEM.createFile(filePath);
+      final IFile iFile = FILE_SYSTEM.createFile(filePath);
       final IFile dir_store =
         iFile.isDirectory() ? iFile.getChild(Project.DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(Project.DIRECTORY_STORE_FOLDER);
 
@@ -170,7 +173,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         myScheme = StorageScheme.DIRECTORY_BASED;
 
         stateStorageManager.addMacro(PROJECT_FILE_MACRO, dir_store.getChild("misc.xml").getPath());
-        stateStorageManager.addMacro(WS_FILE_MACRO, dir_store.getChild("workspace.xml").getPath());
+        final IFile ws = dir_store.getChild("workspace.xml");
+        stateStorageManager.addMacro(WS_FILE_MACRO, ws.getPath());
+
+        if (!ws.exists() && !iFile.isDirectory()) {
+          useOldWsContent(filePath, ws, bytes);
+        }
+
         stateStorageManager.addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
       }
       else {
@@ -182,6 +191,38 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
         String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
         stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
+      }
+    }
+  }
+
+  private void useOldWsContent(final String filePath, final IFile ws, final byte[] bytes) {
+    int lastDot = filePath.lastIndexOf(".");
+    final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
+    String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
+    IFile oldWs = FILE_SYSTEM.createFile(workspacePath);
+    if (oldWs.exists()) {
+      try {
+        final InputStream is = oldWs.openInputStream();
+        final byte[] bytes;
+
+        try {
+          bytes = FileUtil.loadBytes(is, (int)oldWs.length());
+        }
+        finally {
+          is.close();
+        }
+
+        final OutputStream os = ws.openOutputStream();
+        try {
+          os.write(bytes);
+        }
+        finally {
+          os.close();
+        }
+
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
   }
