@@ -252,7 +252,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return false;
     }
     File ioDir = getIOFile(dir);
-    if (!SVNWCUtil.isVersionedDirectory(ioDir)) {
+    boolean pendingAdd = isPendingAdd(dir);
+    if (!SVNWCUtil.isVersionedDirectory(ioDir) && !pendingAdd) {
       return false;
     }
     SVNWCClient wcClient = vcs.createWCClient();
@@ -283,6 +284,15 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       catch (SVNException e) {
         SVNFileUtil.deleteAll(targetFile, true);
         return false;
+      }
+    }
+    return false;
+  }
+
+  private boolean isPendingAdd(final VirtualFile dir) {
+    for(AddedFileInfo i: myAddedFiles) {
+      if (i.myDir == dir.getParent() && i.myName == dir.getName()) {
+        return true;
       }
     }
     return false;
