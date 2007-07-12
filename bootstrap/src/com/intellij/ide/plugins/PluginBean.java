@@ -1,10 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.ComponentManagerConfig;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.*;
 import org.jdom.Element;
 
 public class PluginBean extends ComponentManagerConfig {
@@ -26,8 +23,8 @@ public class PluginBean extends ComponentManagerConfig {
   @Property(surroundWithTag = false)
   public PluginVendor vendor;
 
-  @Tag("idea-version")
-  public String ideaVersion;
+  @Property(surroundWithTag = false)
+  public IdeaVersionBean ideaVersion;
 
   @Tag(value = "is-internal", textIfEmpty = "true")
   public boolean isInternal;

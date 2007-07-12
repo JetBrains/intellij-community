@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -59,6 +60,8 @@ public class PluginManager {
   private static List<String> ourDisabledPlugins = null;
 
   static final Object lock = new Object();
+
+  private static String ourBuildNumber;
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -228,6 +231,20 @@ public class PluginManager {
                                   pluginId.equals(idString));
       if (shouldLoad) {
         shouldLoad = !getDisabledPlugins().contains(idString);
+      }
+      if (shouldLoad && descriptor instanceof IdeaPluginDescriptorImpl) {
+        final String buildNumber = getBuildNumber();
+        if (buildNumber != null) {
+          final String sinceBuild = ((IdeaPluginDescriptorImpl)descriptor).getSinceBuild();
+          if (sinceBuild != null && sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
+            return true;
+          }
+
+          final String untilBuild = ((IdeaPluginDescriptorImpl)descriptor).getUntilBuild();
+          if (untilBuild != null && untilBuild.compareToIgnoreCase(buildNumber) < 0) {
+            return true;
+          }
+        }
       }
     }
 
@@ -515,6 +532,19 @@ public class PluginManager {
       return message.toString();
     }
     return null;
+  }
+
+  @Nullable
+  private static String getBuildNumber() {
+    if (ourBuildNumber == null) {
+      try {
+        ourBuildNumber = new String(FileUtil.loadFileText(new File(PathManager.getHomePath() + "/build.txt"))).trim();
+      }
+      catch (IOException e) {
+        ourBuildNumber = null;
+      }
+    }
+    return ourBuildNumber;
   }
 
 

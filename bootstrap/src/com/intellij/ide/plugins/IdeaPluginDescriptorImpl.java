@@ -58,6 +58,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myUseIdeaClassLoader;
   private boolean myEnabled = true;
 
+  private String mySinceBuild;
+  private String myUntilBuild;
+
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
   }
@@ -106,6 +109,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
+    if (pluginBean.ideaVersion != null) {
+      mySinceBuild = pluginBean.ideaVersion.sinceBuild;
+      myUntilBuild = pluginBean.ideaVersion.untilBuild;
+    }
 
     myResourceBundleBaseName = pluginBean.resourceBundle;
 
@@ -451,5 +458,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setEnabled(final boolean enabled) {
     myEnabled = enabled;
+  }
+
+  public String getSinceBuild() {
+    return mySinceBuild;
+  }
+
+  public String getUntilBuild() {
+    return myUntilBuild;
   }
 }
