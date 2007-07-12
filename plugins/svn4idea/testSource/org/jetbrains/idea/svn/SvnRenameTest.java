@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public class SvnRenameTest extends SvnTestCase {
   @Test
-  public void simpleRename() throws Exception {
+  public void testSimpleRename() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "test");
     checkin();
@@ -25,9 +25,10 @@ public class SvnRenameTest extends SvnTestCase {
     verify(runSvn("ci", "-m", "test"));
   }
 
+  // IDEADEV-18844
   @Test
   @Ignore
-  public void renameReplace() throws Exception {
+  public void testRenameReplace() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "old");
     final VirtualFile aNew = createFileInCommand("aNew.txt", "new");
