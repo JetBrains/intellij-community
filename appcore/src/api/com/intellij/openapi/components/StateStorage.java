@@ -6,6 +6,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -32,13 +33,14 @@ public interface StateStorage {
   }
 
   interface SaveSession {
-    boolean needsSave() throws StateStorageException;
     void save() throws StateStorageException;
 
     Set<String> getUsedMacros() throws StateStorageException;
 
     @Nullable
     Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles);
+
+    Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException;
   }
 
   class StateStorageException extends Exception {

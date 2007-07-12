@@ -7,22 +7,22 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.ConfigurationException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Nls;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,6 +147,10 @@ public class ClasspathStorage implements StateStorage {
       @Nullable
       public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
         return null;
+      }
+
+      public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
+        return needsSave() ? getAllStorageFiles() : Collections.<VirtualFile>emptyList();
       }
     };
 

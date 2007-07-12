@@ -25,7 +25,7 @@ public class CompoundSaveSession {
     for (StateStorage stateStorage : mySaveSessions.keySet()) {
       final StateStorage.SaveSession saveSession = mySaveSessions.get(stateStorage);
 
-      if (saveSession.needsSave()) result.addAll(stateStorage.getAllStorageFiles());
+      result.addAll(saveSession.getStorageFilesToSave());
     }
 
     return result;

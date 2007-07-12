@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -79,6 +80,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
         protected void doSave() throws StateStorageException {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
+        }
+
+        public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
+          return needsSave() ? getAllStorageFiles() : Collections.<VirtualFile>emptyList();
         }
       }
     };

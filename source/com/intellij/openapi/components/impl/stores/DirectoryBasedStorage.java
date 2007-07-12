@@ -166,39 +166,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     return result;
   }
 
-  public boolean needsSave() throws StateStorageException {
-    try {
-      if (!myDir.exists()) return true;
-      assert myDir.isDirectory();
-
-      IFile[] children = myDir.listFiles();
-
-      Set<String> currentNames = new HashSet<String>();
-
-      for (IFile child : children) {
-        currentNames.add(child.getName());
-      }
-
-      for (String componentName : myStates.keySet()) {
-        Map<IFile, Element> stateMap = myStates.get(componentName);
-
-        for (IFile file : stateMap.keySet()) {
-          if (!currentNames.contains(file.getName())) return true;
-          currentNames.remove(file.getName());
-
-          final byte[] text = StorageUtil.printElement(stateMap.get(file));
-          if (!Arrays.equals(file.loadBytes(), text)) return true;
-        }
-      }
-
-      return !currentNames.isEmpty();
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      return true;
-    }
-  }
-
   public void save() throws StateStorageException {
     final Set<String> currentNames = new HashSet<String>();
 
@@ -289,11 +256,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   private class MySaveSession implements SaveSession {
-    public boolean needsSave() throws StateStorageException {
-      assert mySession == this;
-      return DirectoryBasedStorage.this.needsSave();
-    }
-
     public void save() throws StateStorageException {
       assert mySession == this;
       DirectoryBasedStorage.this.save();
@@ -307,6 +269,61 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     @Nullable
       public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
       return null;
+    }
+
+    public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
+      assert mySession == this;
+
+      try {
+        if (!myDir.exists()) return getAllStorageFiles();
+        assert myDir.isDirectory();
+
+
+        List<VirtualFile> filesToSave = new ArrayList<VirtualFile>();
+
+        IFile[] children = myDir.listFiles();
+
+        Set<String> currentChildNames = new HashSet<String>();
+
+        for (IFile child : children) {
+          currentChildNames.add(child.getName());
+        }
+
+        for (String componentName : myStates.keySet()) {
+          Map<IFile, Element> stateMap = myStates.get(componentName);
+
+          for (IFile file : stateMap.keySet()) {
+            if (!currentChildNames.contains(file.getName())) {
+              continue;
+            }
+
+            currentChildNames.remove(file.getName());
+
+            final byte[] text = StorageUtil.printElement(stateMap.get(file));
+            if (!Arrays.equals(file.loadBytes(), text)) {
+              final VirtualFile virtualFile = StorageUtil.getVirtualFile(file);
+              if (virtualFile != null) {
+                filesToSave.add(virtualFile);
+              }
+            }
+          }
+        }
+
+        for (String childName : currentChildNames) {
+          final IFile child = myDir.getChild(childName);
+          final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
+          if (virtualFile != null) {
+            filesToSave.add(virtualFile);
+          }
+        }
+
+        return filesToSave;
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
+
+      return Collections.<VirtualFile>emptyList();
     }
   }
 }

@@ -23,6 +23,7 @@ import org.picocontainer.PicoContainer;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -103,6 +104,10 @@ public class FileBasedStorage extends XmlElementStorage {
       final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
       StorageUtil.save(myFile, text);
+    }
+
+    public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
+      return needsSave() ? getAllStorageFiles() : Collections.<VirtualFile>emptyList();
     }
   }
 
