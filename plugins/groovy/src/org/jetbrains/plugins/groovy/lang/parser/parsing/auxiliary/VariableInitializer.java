@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -26,15 +25,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author: ilyas
  */
 public class VariableInitializer implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
-    if (!ParserUtils.getToken(builder, mASSIGN)) {
-      return WRONGWAY;
-    } else {
+  public static void parse(PsiBuilder builder) {
+    if (ParserUtils.getToken(builder, mASSIGN)) {
       ParserUtils.getToken(builder, mNLS);
       if (AssignmentExpression.parse(builder).equals(WRONGWAY)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      return VARIABLE_INITIALIZER;
     }
   }
 }

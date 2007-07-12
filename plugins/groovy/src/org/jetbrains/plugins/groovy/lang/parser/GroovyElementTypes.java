@@ -196,7 +196,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
-  GroovyElementType VARIABLE_INITIALIZER = new GroovyElementType("variable initializer");
   GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
   GroovyElementType FIELD = new GroovyElementType("field");
