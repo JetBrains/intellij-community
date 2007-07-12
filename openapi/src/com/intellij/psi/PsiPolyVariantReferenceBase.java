@@ -5,6 +5,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.TextRange;
 
 /**
  * @author Dmitry Avdeev
@@ -13,6 +14,10 @@ public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends 
 
   public PsiPolyVariantReferenceBase(final T psiElement) {
     super(psiElement);
+  }
+
+  public PsiPolyVariantReferenceBase(final T element, final TextRange range, final boolean soft) {
+    super(element, range, soft);
   }
 
   @Nullable

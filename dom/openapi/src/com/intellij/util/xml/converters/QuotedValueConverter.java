@@ -13,10 +13,7 @@ package com.intellij.util.xml.converters;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.*;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlTagTextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +43,8 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<T> genericDomValue,
                                                    final TextRange rangeInElement);
 
-  @Nullable
-  protected abstract PsiElement resolveReference(@Nullable final T t, final ConvertContext context);
+  @NotNull
+  protected abstract ResolveResult[] multiResolveReference(@Nullable final T t, final ConvertContext context);
 
   protected abstract String getUnresolvedMessage(String value);
 
@@ -114,7 +111,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     return new MyPsiReference(element, new TextRange(start, end), isSoft, context, genericDomValue, badQuotation);
   }
 
-  protected class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
+  protected class MyPsiReference extends PsiPolyVariantReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
     protected final ConvertContext myContext;
     protected final GenericDomValue<T> myGenericDomValue;
     private final boolean myBadQuotation;
@@ -127,11 +124,11 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
       myBadQuotation = badQuotation;
     }
 
-    @Nullable
-    public PsiElement resolve() {
-      if (myBadQuotation) return null;
+    @NotNull
+    public ResolveResult[] multiResolve(final boolean incompleteCode) {
+      if (myBadQuotation) return ResolveResult.EMPTY_ARRAY;
       final String value = getValue();
-      return resolveReference(convertString(value, myContext), myContext);
+      return multiResolveReference(convertString(value, myContext), myContext);
     }
 
     public Object[] getVariants() {
