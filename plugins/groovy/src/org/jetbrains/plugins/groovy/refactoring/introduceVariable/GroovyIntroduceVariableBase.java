@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -181,8 +181,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
               if (!(alreadyDefined && firstOccurrence.equals(occurence))) {
                 if (occurence instanceof GrExpression) {
                   GrExpression element = (GrExpression) occurence;
-                  if (element instanceof GrClosableBlock && element.getParent() instanceof GrMethodCall) {
-                    replaced.add(((GrMethodCall) element.getParent()).replaceClosureArgument(((GrClosableBlock) element), refExpr));
+                  if (element instanceof GrClosableBlock && element.getParent() instanceof GrMethodCallExpression) {
+                    replaced.add(((GrMethodCallExpression) element.getParent()).replaceClosureArgument(((GrClosableBlock) element), refExpr));
                   } else {
                     replaced.add(element.replaceWithExpression(refExpr));
                   }
@@ -203,8 +203,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             }
           } else {
             if (!alreadyDefined) {
-              if (selectedExpr instanceof GrClosableBlock && selectedExpr.getParent() instanceof GrMethodCall) {
-                refreshPositionMarker(((GrMethodCall) selectedExpr.getParent()).replaceClosureArgument(((GrClosableBlock) selectedExpr), refExpr));
+              if (selectedExpr instanceof GrClosableBlock && selectedExpr.getParent() instanceof GrMethodCallExpression) {
+                refreshPositionMarker(((GrMethodCallExpression) selectedExpr.getParent()).replaceClosureArgument(((GrClosableBlock) selectedExpr), refExpr));
               } else {
                 refreshPositionMarker(selectedExpr.replaceWithExpression(refExpr));
               }
@@ -343,7 +343,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                                          @NotNull PsiElement context,
                                          @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
 /*
-    if (expr instanceof GrMethodCall ||
+    if (expr instanceof GrMethodCallExpression ||
         expr instanceof GrApplicationExpression) {
       return false;
     }

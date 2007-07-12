@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -39,6 +40,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   public String toString() {
     return "NEW expression";
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitNewExpression(this);
   }
 
   public PsiType getType() {

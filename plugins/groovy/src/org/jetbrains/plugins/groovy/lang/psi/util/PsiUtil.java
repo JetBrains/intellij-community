@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
@@ -134,8 +134,8 @@ public class PsiUtil {
   @Nullable
   public static GroovyPsiElement getArgumentsElement(GroovyPsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
-    if (parent instanceof GrMethodCall) {
-      return ((GrMethodCall) parent).getArgumentList();
+    if (parent instanceof GrMethodCallExpression) {
+      return ((GrMethodCallExpression) parent).getArgumentList();
     } else if (parent instanceof GrApplicationExpression) {
       return ((GrApplicationExpression) parent).getArgumentList();
     } else if (parent instanceof GrNewExpression) {

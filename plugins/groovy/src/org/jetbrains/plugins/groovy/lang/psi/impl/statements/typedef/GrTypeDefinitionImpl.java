@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -227,8 +227,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     if (place instanceof GrReferenceExpression) {
       final PsiElement parent = place.getParent();
-      if (parent instanceof GrMethodCall) {
-        final GrMethodCall call = (GrMethodCall) parent;
+      if (parent instanceof GrMethodCallExpression) {
+        final GrMethodCallExpression call = (GrMethodCallExpression) parent;
         if (call.getNamedArguments().length > 0 || call.getClosureArguments().length > 0) return false;
         final GrExpression[] args = call.getExpressionArguments();
         if (isGetter) {

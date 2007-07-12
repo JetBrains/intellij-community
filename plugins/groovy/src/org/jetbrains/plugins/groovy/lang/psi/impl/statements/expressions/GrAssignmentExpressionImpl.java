@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
@@ -82,5 +83,9 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     }
 
     return true;
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitAssignmentExpression(this);
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -73,5 +74,9 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
       return GenericsUtil.getLeastUpperBound(thenType, elseType, getManager());
     }
     return null;
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitConditionalExpression(this);
   }
 }

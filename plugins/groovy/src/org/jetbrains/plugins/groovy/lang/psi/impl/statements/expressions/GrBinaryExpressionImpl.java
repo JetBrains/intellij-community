@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -54,5 +55,9 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     final ASTNode node = findChildByType(TokenSets.BINARY_OP_SET).getNode();
     assert node != null;
     return node.getElementType();
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitBinaryExpression(this);
   }
 }

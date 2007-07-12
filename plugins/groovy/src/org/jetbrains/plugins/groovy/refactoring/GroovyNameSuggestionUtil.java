@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
 
 import java.util.ArrayList;
@@ -78,8 +78,8 @@ public class GroovyNameSuggestionUtil {
         possibleNames.remove(refExpr.getName());
       }
     }
-    if (expr instanceof GrMethodCall) {
-      generateNameByExpr(((GrMethodCall) expr).getInvokedExpression(), possibleNames, validator);
+    if (expr instanceof GrMethodCallExpression) {
+      generateNameByExpr(((GrMethodCallExpression) expr).getInvokedExpression(), possibleNames, validator);
     }
   }
 

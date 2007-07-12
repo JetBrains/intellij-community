@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -67,5 +68,9 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
 
   public GrExpression getOperand() {
     return findChildByClass(GrExpression.class);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitUnaryExpression(this);
   }
 }

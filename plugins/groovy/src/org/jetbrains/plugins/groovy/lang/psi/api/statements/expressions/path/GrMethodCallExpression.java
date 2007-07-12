@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ilyas
  */
-public interface GrMethodCall extends GrExpression, GrCallExpression {
+public interface GrMethodCallExpression extends GrCallExpression {
 
   GrExpression getInvokedExpression();
 

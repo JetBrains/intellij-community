@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrComman
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -33,6 +34,10 @@ public class GrCommandArgumentListImpl extends GroovyPsiElementImpl implements G
 
   public String toString() {
     return "Command arguments";
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitCommandArguments(this);
   }
 
   public GrExpression[] getArguments() {

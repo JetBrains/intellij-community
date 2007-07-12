@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -41,6 +42,10 @@ public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
 
   public boolean isPlainString() {
     return true;
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitRegexExpression(this);
   }
 }
 

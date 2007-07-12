@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -41,5 +42,9 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
 
   public boolean isPlainString() {
     return !getText().startsWith("\"\"\"");
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitGStringExpression(this);
   }
 }

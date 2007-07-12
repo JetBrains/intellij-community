@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -197,8 +197,8 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     }
     text.append(")");
     PsiFile file = createGroovyFile(text.toString());
-    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCall);
-    return (((GrMethodCall) file.getChildren()[0])).getArgumentList();
+    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
+    return (((GrMethodCallExpression) file.getChildren()[0])).getArgumentList();
   }
 
   public GrOpenBlock createOpenBlockFromStatements(@NonNls GrStatement... statements) {
@@ -213,7 +213,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrOpenBlock) ((GrWhileStatement) file.getChildren()[0]).getBody());
   }
 
-  public GrMethodCall createMethodCallByAppCall(GrApplicationExpression callExpr) {
+  public GrMethodCallExpression createMethodCallByAppCall(GrApplicationExpression callExpr) {
     StringBuffer text = new StringBuffer();
     text.append(callExpr.getFunExpression().getText());
     text.append("(");
@@ -225,8 +225,8 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     }
     text.append(")");
     PsiFile file = createGroovyFile(text.toString());
-    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCall);
-    return ((GrMethodCall) file.getChildren()[0]);
+    assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
+    return ((GrMethodCallExpression) file.getChildren()[0]);
   }
 
   public GrImportStatement createImportStatementFromText(String qName) {

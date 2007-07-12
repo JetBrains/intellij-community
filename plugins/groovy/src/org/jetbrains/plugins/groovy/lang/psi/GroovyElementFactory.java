@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -57,7 +57,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrOpenBlock createOpenBlockFromStatements(GrStatement... statements);
 
-  public abstract GrMethodCall createMethodCallByAppCall(GrApplicationExpression callExpr);
+  public abstract GrMethodCallExpression createMethodCallByAppCall(GrApplicationExpression callExpr);
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String exprText);
 

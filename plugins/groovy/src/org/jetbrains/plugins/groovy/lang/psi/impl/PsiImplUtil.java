@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -105,8 +105,8 @@ public class PsiImplUtil {
         PsiElement parent = closure.getParent();
         if (parent instanceof GrApplicationExpression) {
           funExpr = ((GrApplicationExpression) parent).getFunExpression();
-        } else if (parent instanceof GrMethodCall) {
-          funExpr = ((GrMethodCall) parent).getInvokedExpression();
+        } else if (parent instanceof GrMethodCallExpression) {
+          funExpr = ((GrMethodCallExpression) parent).getInvokedExpression();
         }
         if (funExpr instanceof GrReferenceExpression) {
           qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();

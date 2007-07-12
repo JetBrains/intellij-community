@@ -25,12 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
@@ -40,14 +41,17 @@ import java.util.Arrays;
 /**
  * @author ilyas
  */
-public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
-
+public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Method call";
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitMethodCallExpression(this);
   }
 
   public PsiType getType() {
@@ -74,11 +78,6 @@ public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCa
   }
 
   public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException{
-
-    if (closure.getNode() == null ||
-        newExpr.getNode() == null){
-      throw new IncorrectOperationException();
-    }
 
     ASTNode parentNode = this.getParent().getNode();
     if (!(newExpr instanceof GrClosableBlock)) {

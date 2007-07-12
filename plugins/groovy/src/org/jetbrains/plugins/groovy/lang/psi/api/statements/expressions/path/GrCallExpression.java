@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author ven
  */
-public interface GrCallExpression {
+public interface GrCallExpression extends GrExpression {
   @Nullable
   GrArgumentList getArgumentList();
 

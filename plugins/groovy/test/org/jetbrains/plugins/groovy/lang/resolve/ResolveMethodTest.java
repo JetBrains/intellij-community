@@ -7,7 +7,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -135,7 +135,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("spreadOperator/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
-    GrMethodCall methodCall = (GrMethodCall) ref.getElement().getParent();
+    GrMethodCallExpression methodCall = (GrMethodCallExpression) ref.getElement().getParent();
     PsiType type = methodCall.getType();
     assertTrue(type instanceof PsiClassType);
     PsiClass clazz = ((PsiClassType) type).resolve();
