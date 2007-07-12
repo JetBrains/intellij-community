@@ -14,7 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,25 +87,30 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
+    final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
-      return myModifierListOwner.isValid()
-             && PsiManager.getInstance(project).isInProject(myModifierListOwner)
-             && myModifierListOwner.getModifierList() != null;
-    }
-    if (!file.getManager().isInProject(file)) {
-      final PsiModifierListOwner owner = getContainer(editor, file);
-      PsiType checkedType = null;
-      if (owner instanceof PsiMethod) {
-        checkedType = ((PsiMethod)owner).getReturnType();
-
+      if (!myModifierListOwner.isValid() || !PsiManager.getInstance(project).isInProject(myModifierListOwner) ||
+          myModifierListOwner.getModifierList() == null) {
+        return false;
       }
-      else if (owner instanceof PsiVariable) {
-        checkedType = ((PsiVariable)owner).getType();
-
-      }
-      return owner != null && !(checkedType instanceof PsiPrimitiveType) && !AnnotationUtil.isAnnotated(owner, myFQN, false);
+      owner = myModifierListOwner;
     }
-    return false;
+    else if (!file.getManager().isInProject(file)) {
+      owner = getContainer(editor, file);
+    }
+    else {
+      owner = null;
+    }
+    PsiType type = null;
+    if (owner instanceof PsiMethod) {
+      type = ((PsiMethod)owner).getReturnType();
+
+    }
+    else if (owner instanceof PsiVariable) {
+      type = ((PsiVariable)owner).getType();
+    }
+    return owner != null && type instanceof PsiClassType && !AnnotationUtil.isAnnotated(owner, myFQN, false);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

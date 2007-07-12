@@ -15,8 +15,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,15 +45,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
         return;
       }
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    do {
-      element = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    } while (element instanceof PsiTypeParameter);
-
-    final PsiClass aClass = (PsiClass) element;
+    final PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
     if (aClass == null || aClass.isInterface()) return; //?
     LOG.assertTrue(aClass.isValid());
     LOG.assertTrue(aClass.getContainingFile() != null);

@@ -20,10 +20,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author dsl
@@ -103,7 +100,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   public void run() {
     try {
-      final PsiElement[] members = generateMembers();
+      final Collection<PsiMethod> members = generateMembers();
       for (PsiElement member : members) {
         myClass.add(member);
       }
@@ -113,7 +110,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  public PsiMethod[] generateMembers() throws IncorrectOperationException {
+  public Collection<PsiMethod> generateMembers() throws IncorrectOperationException {
     PsiMethod equals = null;
     if (myEqualsFields != null && findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())) == null) {
       equals = createEquals();
@@ -132,16 +129,16 @@ public class GenerateEqualsHelper implements Runnable {
       }
     }
     if (hashCode != null && equals != null) {
-      return new PsiMethod[]{equals, hashCode};
+      return Arrays.asList(equals, hashCode);
     }
     else if (equals != null) {
-      return new PsiMethod[]{equals};
+      return Collections.singletonList(equals);
     }
     else if (hashCode != null) {
-      return new PsiMethod[]{hashCode};
+      return Collections.singletonList(hashCode);
     }
     else {
-      return PsiMethod.EMPTY_ARRAY;
+      return Collections.emptyList();
     }
   }
 
