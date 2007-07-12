@@ -26,7 +26,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
   @NonNls private static final String ALL = "ALL";
 
   public IntentionAction[] getSuppressActions(final PsiElement element) {
-    final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+    final XmlTag tag = PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
     if (tag != null) {
       return new IntentionAction[]{new SuppressTag(tag), new SuppressForFile(), new SuppressAllForFile()};
     }
@@ -34,7 +34,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
   }
 
   public boolean isSuppressedFor(final PsiElement element) {
-    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+    XmlTag tag = PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
     if (tag == null) return false;
 
     PsiElement prev = tag.getPrevSibling();
