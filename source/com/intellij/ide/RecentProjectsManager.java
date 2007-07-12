@@ -205,7 +205,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   }
 
   private static String getProjectPath(Project project) {
-    return project.getLocation();
+    return project.getLocation().replace('/', File.separatorChar);
   }
 
   private static class ReopenProjectAction extends AnAction {
