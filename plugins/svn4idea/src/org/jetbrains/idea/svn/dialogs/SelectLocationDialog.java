@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -99,6 +100,12 @@ public class SelectLocationDialog extends DialogWrapper {
         getOKAction().setEnabled(isOKActionEnabled());
       }
     });
+  }
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    Disposer.dispose(myRepositoryBrowser);
   }
 
   protected JComponent createCenterPanel() {
