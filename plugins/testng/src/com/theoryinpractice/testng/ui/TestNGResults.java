@@ -6,33 +6,33 @@
  */
 package com.theoryinpractice.testng.ui;
 
+import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleManager;
+import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.ui.Formatters;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.diagnostic.logging.LogConsoleManager;
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsole;
-import com.intellij.diagnostic.logging.LogFilesManager;
-import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -46,13 +46,13 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.File;
 
 public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleManager
 {
@@ -252,7 +252,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             ApplicationManager.getApplication().runReadAction(new Runnable()
             {
                 public void run() {
-                    finalOwner.setPsiElement(PsiManager.getInstance(project).findClass(result.getTestClass(), GlobalSearchScope.projectScope(project)));
+                    finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
                 }
             });
         }
