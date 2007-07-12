@@ -33,8 +33,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -409,7 +409,8 @@ public class GroovyCompiler implements TranslatingCompiler {
     for (ContentEntry contentEntry : contentEntries) {
       for (SourceFolder folder : contentEntry.getSourceFolders()) {
         VirtualFile file = folder.getFile();
-        assert file != null;
+        if (file == null) continue;
+
         if (file.isDirectory() && file.isWritable()) {
           sourceFolders.add(file);
         }
