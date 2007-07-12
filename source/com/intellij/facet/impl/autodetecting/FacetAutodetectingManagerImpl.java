@@ -78,7 +78,9 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void projectClosed() {
-    myImplicitFacetManager.disposeUI();
+    if (myImplicitFacetManager != null) {
+      myImplicitFacetManager.disposeUI();
+    }
   }
 
   @NonNls
