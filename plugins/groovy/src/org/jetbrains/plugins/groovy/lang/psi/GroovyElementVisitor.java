@@ -3,21 +3,23 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrParameterModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePairs;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
@@ -292,10 +294,78 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitParameter(GrParameter parameter) {
-    visitElement(parameter);
+    visitVariable(parameter);
+  }
+
+  public void visitField(GrField field) {
+    visitVariable(field);
   }
 
   public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
     visitElement(typeDefinitionBody);
+  }
+
+  public void visitIfStatement(GrIfStatement ifStatement) {
+    visitStatement(ifStatement);
+  }
+
+  public void visitForStatement(GrForStatement forStatement) {
+    visitStatement(forStatement);
+  }
+
+  public void visitWhileStatement(GrWhileStatement whileStatement) {
+    visitStatement(whileStatement);
+  }
+
+  public void visitWithStatement(GrWithStatement withStatement) {
+    visitStatement(withStatement);
+  }
+
+  public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+    visitStatement(switchStatement);
+  }
+
+  public void visitCaseBlock(GrCaseBlock caseBlock) {
+    visitElement(caseBlock);
+  }
+
+  public void visitCaseLabel(GrCaseLabel caseLabel) {
+    visitElement(caseLabel);
+  }
+
+  public void visitForInClause(GrForInClause forInClause) {
+    visitForClause(forInClause);
+  }
+
+  public void visitForClause(GrForClause forClause) {
+    visitElement(forClause);
+  }
+
+  public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
+    visitStatement(tryCatchStatement);
+  }
+
+  public void visitCatchClause(GrCatchClause catchClause) {
+    visitElement(catchClause);
+  }
+
+  public void visitFinallyClause(GrFinallyClause catchClause) {
+    visitElement(catchClause);
+  }
+
+  public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
+    visitStatement(synchronizedStatement);
+  }
+
+  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+    visitStatement(variableDeclaration);
+  }
+
+  public void visitVariable(GrVariable variable) {
+    visitElement(variable);
+  }
+
+  public void visitModifierList(GrModifierList modifierList) {
+    visitElement(modifierList);
   }
 }

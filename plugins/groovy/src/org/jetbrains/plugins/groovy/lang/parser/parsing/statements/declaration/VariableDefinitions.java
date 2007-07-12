@@ -157,8 +157,6 @@ public class VariableDefinitions implements GroovyElementTypes {
           }
 
           return VARIABLE_DEFINITION;
-
-//          return VARIABLE_DEFINITION_OR_METHOD_CALL;
         }
       } else {
         varAssMarker.drop();

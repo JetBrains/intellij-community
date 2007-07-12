@@ -187,7 +187,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType FOR_IN_CLAUSE = new GroovyElementType("IN clause");
   GroovyElementType FOR_TRADITIONAL_CLAUSE = new GroovyElementType("Traditional clause");
 
-  GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement");
   GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement");
   GroovyElementType CATCH_CLAUSE = new GroovyElementType("catch clause");
   GroovyElementType FINALLY_CLAUSE = new GroovyElementType("finally clause");
@@ -201,8 +200,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
   GroovyElementType FIELD = new GroovyElementType("field");
-  //variable difinition of method call
-  GroovyElementType VARIABLE_DEFINITION_OR_METHOD_CALL = new GroovyElementType("variable definition or method call");
 
   //modifiers
   //  GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node

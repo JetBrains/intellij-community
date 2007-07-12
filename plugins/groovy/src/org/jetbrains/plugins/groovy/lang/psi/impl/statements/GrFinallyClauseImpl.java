@@ -4,13 +4,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
@@ -18,6 +17,10 @@ import com.intellij.lang.ASTNode;
 public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinallyClause {
   public GrFinallyClauseImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitFinallyClause(this);
   }
 
   public String toString() {

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -24,6 +25,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements GrVariableDeclaration {
   public GrVariableDeclarationImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitVariableDeclaration(this);
   }
 
   public String toString() {

@@ -26,11 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +43,10 @@ import java.util.List;
 public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifierList {
   public GrModifierListImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitModifierList(this);
   }
 
   public String toString() {
@@ -65,7 +69,7 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     if (defKeyword != null)
       modifiers.add(defKeyword);
 
-    return modifiers.toArray(new PsiElement[0]);
+    return modifiers.toArray(new PsiElement[modifiers.size()]);
   }
 
   public boolean hasExplicitVisibilityModifiers() {
