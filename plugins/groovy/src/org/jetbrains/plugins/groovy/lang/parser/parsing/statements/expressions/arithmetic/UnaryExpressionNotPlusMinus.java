@@ -33,7 +33,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     GroovyElementType result;
     PsiBuilder.Marker marker = builder.mark();
     if (builder.getTokenType() == mLPAREN) {
-      if (!parseTypeCast(builder).equals(WRONGWAY)) {
+      if (parseTypeCast(builder)) {
         result = UnaryExpression.parse(builder);
         if (!result.equals(WRONGWAY)) {
           marker.done(CAST_EXPRESSION);
@@ -52,27 +52,27 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     return result;
   }
 
-  private static GroovyElementType parseTypeCast(PsiBuilder builder) {
+  private static boolean parseTypeCast(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) ||
             mIDENT.equals(builder.getTokenType())) {
       if (TypeSpec.parseStrict(builder).equals(WRONGWAY)) {
         marker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
       if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
         marker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
       marker.drop();
-      return TYPE_CAST;
+      return true;
     } else {
       marker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
   }
 

@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -15,6 +16,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrClassTypeElement {
   public GrClassTypeElementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitClassTypeElement(this);
   }
 
   public String toString() {

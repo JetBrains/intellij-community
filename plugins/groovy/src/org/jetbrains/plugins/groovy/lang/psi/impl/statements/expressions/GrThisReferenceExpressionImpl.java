@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
@@ -22,6 +23,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements GrThisReferenceExpression {
   public GrThisReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitThisExpression(this);
   }
 
   public String toString() {

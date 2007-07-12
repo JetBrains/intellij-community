@@ -1,7 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
@@ -9,20 +14,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstants;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 
 /**
  * @author ven
  */
 public abstract class GroovyElementVisitor {
-  public void visitElement(GroovyPsiElement element) {}
+  public void visitElement(GroovyPsiElement element) {
+  }
 
-  public void visitFile(GroovyFile file) {}
+  public void visitFile(GroovyFile file) {
+  }
 
   public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
     visitElement(packageDefinition);
@@ -130,5 +140,73 @@ public abstract class GroovyElementVisitor {
 
   public void visitGStringExpression(GrString gstring) {
     visitExpression(gstring);
+  }
+
+  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+    visitExpression(referenceExpression);
+  }
+
+  public void visitThisExpression(GrThisReferenceExpression thisExpression) {
+    visitExpression(thisExpression);
+  }
+
+  public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
+    visitExpression(superExpression);
+  }
+
+  public void visitCastExpression(GrTypeCastExpression typeCastExpression) {
+    visitExpression(typeCastExpression);
+  }
+
+  public void visitParenthesizedExpression(GrParenthesizedExpr expression) {
+    visitExpression(expression);
+  }
+
+  public void visitPropertySelection(GrPropertySelection expression) {
+    visitExpression(expression);
+  }
+
+  public void visitPropertySelector(GrPropertySelector selector) {
+    visitElement(selector);
+  }
+
+  public void visitIndexProperty(GrIndexProperty expression) {
+    visitExpression(expression);
+  }
+
+  public void visitLabel(GrLabel label) {
+    visitElement(label);
+  }
+
+  public void visitArgumentList(GrArgumentList list) {
+    visitElement(list);
+  }
+
+  public void visitNamedArgument(GrNamedArgument argument) {
+    visitElement(argument);
+  }
+
+  public void visitArgumentLabel(GrArgumentLabel argumentLabel) {
+    visitElement(argumentLabel);
+  }
+
+  public void visitListOrMap(GrListOrMap listOrMap) {
+    visitExpression(listOrMap);
+  }
+
+  public void visitArrayTypeElement(GrArrayTypeElement typeElement) {
+    visitElement(typeElement);
+  }
+
+  public void visitBuiltinTypeElement(GrBuiltInTypeElement typeElement) {
+    visitElement(typeElement);
+  }
+
+  public void visitClassTypeElement(GrClassTypeElement typeElement) {
+    visitElement(typeElement);
+  }
+
+  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    visitElement(typeDefinition);
   }
 }
