@@ -485,11 +485,13 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PsiElement element = event.getNewChild();
       final PsiFile psiFile = event.getFile();
       if (psiFile != null) {
-        queueUpdate(new Runnable() {
-          public void run() {
-            processRenamed(scope, psiFile);
-          }
-        }, false);
+        if (psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage()) {
+          queueUpdate(new Runnable() {
+            public void run() {
+              processRenamed(scope, psiFile);
+            }
+          }, false);
+        }
       }
       else if (element instanceof PsiDirectory && element.isValid()) {
         queueRefreshScope(scope);
