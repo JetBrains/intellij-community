@@ -272,6 +272,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return myRepositoryBrowser;
   }
 
+  private void disposeRepositoryBrowser() {
+    if (myRepositoryBrowser != null) {
+      Disposer.dispose(myRepositoryBrowser);
+    }
+  }
+
+  protected void dispose() {
+    super.dispose();
+    disposeRepositoryBrowser();
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return getRepositoryBrowser();
   }
@@ -862,11 +873,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private class CloseToolWindowAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
-      Disposer.dispose(getRepositoryBrowser());
+      disposeRepositoryBrowser();
       Project p = e.getData(DataKeys.PROJECT);
       ToolWindowManager.getInstance(p).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
 
     }
+
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
