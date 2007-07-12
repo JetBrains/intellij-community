@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -705,21 +706,21 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   @Nullable
-  public CommittedChangeList getIncomingChangeList(final VirtualFile file) {
+  public Pair<CommittedChangeList, Change> getIncomingChangeList(final VirtualFile file) {
     if (myCachedIncomingChangeLists != null) {
       File ioFile = new File(file.getPath());
       for(Map.Entry<CommittedChangeList, Change[]> changeListEntry: myCachedIncomingChangeLists.entrySet()) {
         if (changeListEntry.getValue() == ALL_CHANGES) {
           for(Change change: changeListEntry.getKey().getChanges()) {
             if (change.affectsFile(ioFile)) {
-              return changeListEntry.getKey();
+              return Pair.create(changeListEntry.getKey(), change);
             }
           }
         }
         else {
           for(Change change: changeListEntry.getValue()) {
             if (change.affectsFile(ioFile)) {
-              return changeListEntry.getKey();
+              return Pair.create(changeListEntry.getKey(), change);
             }
           }
         }

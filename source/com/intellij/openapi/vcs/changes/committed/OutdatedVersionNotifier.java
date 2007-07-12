@@ -13,7 +13,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
@@ -110,16 +112,16 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     LOG.info("Updating editors");
     final VirtualFile[] files = myFileEditorManager.getOpenFiles();
     for(VirtualFile file: files) {
-      final CommittedChangeList list = myCache.getIncomingChangeList(file);
+      final Pair<CommittedChangeList,Change> pair = myCache.getIncomingChangeList(file);
       final FileEditor[] fileEditors = myFileEditorManager.getEditors(file);
       for(FileEditor editor: fileEditors) {
         final OutdatedRevisionPanel oldPanel = editor.getUserData(PANEL_KEY);
-        if (list != null) {
+        if (pair != null) {
           if (oldPanel != null) {
-            oldPanel.setChangeList(list);
+            oldPanel.setChangeList(pair.first, pair.second);
           }
           else {
-            initPanel(list, editor);
+            initPanel(pair.first, pair.second, editor);
           }
         }
         else if (oldPanel != null) {
@@ -130,8 +132,8 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     }
   }
 
-  private void initPanel(final CommittedChangeList list, final FileEditor editor) {
-    final OutdatedRevisionPanel component = new OutdatedRevisionPanel(list);
+  private void initPanel(final CommittedChangeList list, final Change c, final FileEditor editor) {
+    final OutdatedRevisionPanel component = new OutdatedRevisionPanel(list, c);
     editor.putUserData(PANEL_KEY, component);
     myFileEditorManager.addTopComponent(editor, component);
   }
@@ -142,11 +144,11 @@ public class OutdatedVersionNotifier implements ProjectComponent {
         requestLoadIncomingChanges();
       }
       else {
-        final CommittedChangeList list = myCache.getIncomingChangeList(file);
-        if (list != null) {
+        final Pair<CommittedChangeList, Change> pair = myCache.getIncomingChangeList(file);
+        if (pair != null) {
           final FileEditor[] fileEditors = source.getEditors(file);
           for(FileEditor editor: fileEditors) {
-            initPanel(list, editor);
+            initPanel(pair.first, pair.second, editor);
           }
         }
       }
@@ -163,12 +165,12 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     private CommittedChangeList myChangeList;
     private JLabel myLabel = new JLabel();
 
-    public OutdatedRevisionPanel(CommittedChangeList changeList) {
+    public OutdatedRevisionPanel(CommittedChangeList changeList, final Change c) {
       super(new BorderLayout());
       setBackground(LightColors.YELLOW);
       setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
       myChangeList = changeList;
-      updateLabelText();
+      updateLabelText(c);
       add(myLabel, BorderLayout.CENTER);
 
       JPanel linksPanel = new JPanel(new FlowLayout());
@@ -203,20 +205,21 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       }
     }
 
-    private void updateLabelText() {
+    private void updateLabelText(final Change c) {
       final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
       String comment = myChangeList.getComment();
       int pos = comment.indexOf("\n");
       if (pos >= 0) {
         comment = comment.substring(0, pos).trim() + "...";
       }
-      myLabel.setText(VcsBundle.message("outdated.version.text", myChangeList.getCommitterName(),
+      final String key = c.getType() == Change.Type.DELETED ? "outdated.version.text.deleted" : "outdated.version.text";
+      myLabel.setText(VcsBundle.message(key, myChangeList.getCommitterName(),
                                         dateFormat.format(myChangeList.getCommitDate()), comment));
     }
 
-    public void setChangeList(final CommittedChangeList changeList) {
+    public void setChangeList(final CommittedChangeList changeList, final Change c) {
       myChangeList = changeList;
-      updateLabelText();
+      updateLabelText(c);
     }
   }
 }
