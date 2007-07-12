@@ -57,11 +57,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   private static final String GROOVYC_RUNNER_QUALIFIED_NAME = "org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner";
   private static final String JAVA_EXE = "java";
-  private static final String GROOVY_LANG_JAR = "embeddable/groovy-all-1.0.jar";
-
-  private static final String GROOVY_LIB = "lib";
   private static final String CLASS_PATH_LIST_SEPARATOR = File.pathSeparator;
-  private static final String antlrLibName = "antlr.jar";
   private Project myProject;
 
   public GroovyCompiler(Project project) {
@@ -70,8 +66,8 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   @Nullable
   public TranslatingCompiler.ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
-    Set<TranslatingCompiler.OutputItem> compiledItems = new HashSet<TranslatingCompiler.OutputItem>();
-    Set<VirtualFile> allCompiling = new HashSet<VirtualFile>();
+    Set<TranslatingCompiler.OutputItem> successfullyCompiled = new HashSet<TranslatingCompiler.OutputItem>();
+    Set<VirtualFile> toRecompile = new HashSet<VirtualFile>();
 
     GeneralCommandLine commandLine;
 
@@ -83,18 +79,6 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine.setExePath(JAVA_EXE);
 
       commandLine.addParameter("-cp");
-
-//      String asmLibPath = PathManager.getLibPath() + File.separator + "asm.jar";
-//
-//      PluginId groovyPluginId = PluginManager.getPluginByClassName(getClass().getName());
-//      IdeaPluginDescriptor ideaGroovyPluginDescriptor = PluginManager.getPlugin(groovyPluginId);
-//
-//      assert ideaGroovyPluginDescriptor != null;
-//      String groovyPluginPath = ideaGroovyPluginDescriptor.getPath().getPath();
-//      assert groovyPluginPath != null;
-
-//      String antlrLib = groovyPluginPath + File.separator + GROOVY_LIB + File.separator + antlrLibName;
-//      String groovyLangJarPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "\\" + GROOVY_LANG_JAR;
 
       String myJarPath = PathUtil.getJarPathForClass(getClass());
       final StringBuilder classPathBuilder = new StringBuilder();
@@ -112,41 +96,6 @@ public class GroovyCompiler implements TranslatingCompiler {
           }
         }
       }
-//      classPathBuilder.append(myJarPath).
-//          append(CLASS_PATH_LIST_SEPARATOR).
-//          append(groovyLangJarPath).
-//          append(CLASS_PATH_LIST_SEPARATOR).
-//          append(antlrLib).
-//          append(CLASS_PATH_LIST_SEPARATOR).
-//          append(asmLibPath).
-//          append(CLASS_PATH_LIST_SEPARATOR);
-
-//      final Module key = entry.getKey();
-//
-//      ApplicationManager.getApplication().runReadAction(new Runnable()
-//      {
-//        public void run()
-//        {
-//          ModuleRootManager rootManager = ModuleRootManager.getInstance(key);
-//          ModifiableRootModel model = rootManager.getModifiableModel();
-//          VirtualFile[] files = model.getOrderedRoots(OrderRootType.CLASSES_AND_OUTPUT);
-//
-//          for (VirtualFile file : files)
-//          {
-//            if (file.getFileSystem() instanceof JarFileSystem)
-//            {
-//              JarFileSystem jarFileSystem = (JarFileSystem) file.getFileSystem();
-//              classPathBuilder
-//                      .append(jarFileSystem.getVirtualFileForJar(file).getPath())
-//                      .append(CLASS_PATH_LIST_SEPARATOR);
-//            }
-//            else
-//              classPathBuilder
-//                      .append(file.getPath())
-//                      .append(CLASS_PATH_LIST_SEPARATOR);
-//          }
-//        }
-//      });
 
       commandLine.addParameter(classPathBuilder.toString());
 
@@ -170,24 +119,17 @@ public class GroovyCompiler implements TranslatingCompiler {
         processHandler.waitFor();
 
         Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
-        VirtualFile[] toRecompileVirtualFiles = new VirtualFile[toRecompileFiles.size()];
-
-        VirtualFile toRecompileVirtualFile;
-
-        int i = 0;
         for (File toRecompileFile : toRecompileFiles) {
-          toRecompileVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
-          toRecompileVirtualFiles[i] = toRecompileVirtualFile;
-          i++;
+          final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
+          LOG.assertTrue(vFile != null);
+          toRecompile.add(vFile);
         }
 
-        CompilerMessage[] compilerMessages = processHandler.getCompilerMessages().toArray(new CompilerMessage[0]);
-
-        for (final CompilerMessage compileMessage : compilerMessages) {
+        for (CompilerMessage compilerMessage : processHandler.getCompilerMessages()) {
           final CompilerMessageCategory category;
-          category = getMessageCategory(compileMessage);
+          category = getMessageCategory(compilerMessage);
 
-          String url = compileMessage.getUrl();
+          String url = compilerMessage.getUrl();
 
 
           final GroovyFile[] myPsiFile = new GroovyFile[1];
@@ -213,27 +155,19 @@ public class GroovyCompiler implements TranslatingCompiler {
           }
 
           url = url.replace('\\', '/');
-          compileContext.addMessage(category, compileMessage.getMessage(), url, compileMessage.getLinenum(), compileMessage.getColomnnum());
-
+          compileContext.addMessage(category, compilerMessage.getMessage(), url, compilerMessage.getLinenum(), compilerMessage.getColomnnum());
         }
 
         StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
         if (unparsedBuffer.length() != 0)
           compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
 
-        return new GroovyCompileExitStatus(processHandler.getSuccessfullyCompiled(), toRecompileVirtualFiles);
-
-//        if (exitStatus == null) return new GroovyCompileExitStatus(new HashSet<OutputItem>(), VirtualFile.EMPTY_ARRAY);
+        successfullyCompiled.addAll(processHandler.getSuccessfullyCompiled());
       } catch (ExecutionException e) {
         e.printStackTrace();
       }
     }
-
-    VirtualFile[] toRecompile = compiledItems.size() > 0 ?
-        VirtualFile.EMPTY_ARRAY :
-        allCompiling.toArray(new VirtualFile[allCompiling.size()]);
-
-    return new GroovyCompileExitStatus(compiledItems, toRecompile);
+    return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
   }
 
 
