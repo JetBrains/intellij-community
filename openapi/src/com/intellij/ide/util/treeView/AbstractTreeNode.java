@@ -194,4 +194,12 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
   public boolean canRepresent(final Object element) {
     return Comparing.equal(getValue(), element);
   }
+
+  public TextAttributesKey getAttributesKey() {
+    return myAttributesKey;
+  }
+
+  public String getLocationString() {
+    return myLocationString;
+  }
 }

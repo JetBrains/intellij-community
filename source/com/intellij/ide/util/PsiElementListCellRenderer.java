@@ -1,6 +1,10 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
@@ -12,8 +16,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,6 +49,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         Color color = list.getForeground();
         PsiFile psiFile = element.getContainingFile();
         boolean isProblemFile = false;
+
         if (psiFile != null) {
           VirtualFile vFile = psiFile.getVirtualFile();
           if (vFile != null) {
@@ -55,14 +60,28 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
             color = status.getColor();
           }
         }
+
+        TextAttributes attributes = null;
+
+        if (value instanceof NavigationItem) {
+          TextAttributesKey attributesKey = null;
+          final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
+          if (presentation != null) attributesKey = presentation.getTextAttributesKey();
+
+          if (attributesKey != null) {
+            attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+          }
+        }
+
         SimpleTextAttributes nameAttributes;
         if (isProblemFile) {
-          TextAttributes attributes = new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
-          nameAttributes = SimpleTextAttributes.fromTextAttributes(attributes);
+          attributes = TextAttributes.merge(new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN),attributes);
         }
-        else {
-          nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
-        }
+
+        nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes):null;
+
+        if (nameAttributes == null)  nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+
         append(name, nameAttributes);
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
