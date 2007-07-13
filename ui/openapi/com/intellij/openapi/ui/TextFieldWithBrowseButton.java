@@ -39,7 +39,10 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(JTextField field, ActionListener browseActionListener) {
     super(field, browseActionListener);
-    installPathCompletion((Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT), FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    final DataManager manager = DataManager.getInstance();
+    if (manager != null) {
+      installPathCompletion((Project)manager.getDataContext().getData(DataConstants.PROJECT), FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    }
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
