@@ -170,4 +170,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return localRevision.compareTo(changeRevision) >= 0;
   }
 
+  public boolean refreshIncomingWithCommitted() {
+    return false;
+  }
+
 }
