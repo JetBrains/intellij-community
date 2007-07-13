@@ -45,20 +45,22 @@ public class ReplaceWithOperatorAssignmentIntention
         return new AssignmentExpressionReplaceableWithOperatorAssigment();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiAssignmentExpression expression =
                 (PsiAssignmentExpression)element;
-        final PsiBinaryExpression rhs =
-                (PsiBinaryExpression)expression.getRExpression();
+        final PsiExpression rhs =
+		        expression.getRExpression();
+	    final PsiBinaryExpression binaryExpression =
+			    (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
         final PsiExpression lhs = expression.getLExpression();
         assert rhs != null;
-        final PsiJavaToken sign = rhs.getOperationSign();
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
         final String operand = sign.getText();
-        final PsiExpression rhsrhs = rhs.getROperand();
-        assert rhsrhs != null;
+        final PsiExpression binaryRhs = binaryExpression.getROperand();
+        assert binaryRhs != null;
         final String newExpression =
-                lhs.getText() + operand + '=' + rhsrhs.getText();
+                lhs.getText() + operand + '=' + binaryRhs.getText();
         replaceExpression(newExpression, expression);
     }
 }
