@@ -595,6 +595,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
     r.unlock();
     if (!isValid()) {
+      r.lock();
       throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
     }
 
