@@ -56,6 +56,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private ReferenceEditorComboWithBrowseButton myClassPackageChooser;
   private JPanel myCardPanel;
   private ReferenceEditorWithBrowseButton myInnerClassChooser;
+  private JPanel myMoveClassPanel;
+  private JPanel myMovePackagePanel;
   private boolean myHavePackages;
 
   public MoveClassesOrPackagesDialog(Project project,
@@ -141,6 +143,17 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         validateButtons();
       }
     });
+
+    // override CardLayout sizing behavior
+    myCardPanel = new JPanel() {
+      public Dimension getMinimumSize() {
+        return myHavePackages ? myMovePackagePanel.getMinimumSize() : myMoveClassPanel.getMinimumSize();
+      }
+
+      public Dimension getPreferredSize() {
+        return myHavePackages ? myMovePackagePanel.getPreferredSize() : myMoveClassPanel.getPreferredSize();
+      }
+    };
   }
 
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
@@ -178,7 +191,9 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   protected String getDimensionServiceKey() {
-    return "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog";
+    return myHavePackages
+           ? "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.packages"
+           : "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes";
   }
 
   public void setData(PsiElement[] psiElements,
