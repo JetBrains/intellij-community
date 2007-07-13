@@ -13,6 +13,7 @@ import java.util.*;
 
 public class CvsChangeListsBuilder {
   @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
+  @NonNls private static final String ATTIC_SUFFIX = "/Attic";
 
   private static class ChangeListKey {
     public String branch;
@@ -118,7 +119,7 @@ public class CvsChangeListsBuilder {
               continue;
             }
             String branchName = getBranchName(revision, log.getSymbolicNames());
-            revisionWrappers.add(new RevisionWrapper(file, revision, branchName));
+            revisionWrappers.add(new RevisionWrapper(stripAttic(file), revision, branchName));
           }
         }
       }
@@ -130,6 +131,17 @@ public class CvsChangeListsBuilder {
     for (RevisionWrapper revisionWrapper : revisionWrappers) {
       addRevision(revisionWrapper);
     }
+  }
+
+  private static String stripAttic(final String file) {
+    int pos = file.lastIndexOf('/');
+    if (pos >= 0) {
+      String path = file.substring(0, pos);
+      if (path.endsWith(ATTIC_SUFFIX)) {
+        return path.substring(0, path.length()-6) + file.substring(pos);
+      }
+    }
+    return file;
   }
 
   @Nullable
