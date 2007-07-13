@@ -35,6 +35,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -69,7 +70,7 @@ public class SymbolPresentationUtil {
   }
 
   public static String getSymbolContainerText(PsiElement element) {
-    String result = null;
+    String result;
 
     if (element instanceof Property) {
       result = element.getContainingFile().getName();
@@ -115,6 +116,9 @@ public class SymbolPresentationUtil {
       }
 
       public TextAttributesKey getTextAttributesKey() {
+        if (psiMethod.isDeprecated()) {
+          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        }
         return null;
       }
 
@@ -135,6 +139,9 @@ public class SymbolPresentationUtil {
       }
 
       public TextAttributesKey getTextAttributesKey() {
+        if (psiField.isDeprecated()) {
+          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        }
         return null;
       }
 
