@@ -20,10 +20,12 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +40,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private JRadioButton myIgnoreAllFilesMatchingRadioButton;
   private JTextField myIgnoreMaskTextField;
   private JPanel myPanel;
-  private JTextField myIgnoreFileTextField;
+  private TextFieldWithBrowseButton myIgnoreFileTextField;
   private List<VirtualFile> myFilesToIgnore;
   private Project myProject;
 
@@ -47,6 +49,16 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myProject = project;
     setTitle(VcsBundle.message("ignored.edit.title"));
     init();
+    myIgnoreFileTextField.addBrowseFolderListener("Select File to Ignore",
+                                                  "Select the file which will not be tracked for changes",
+                                                  project,
+                                                  new FileChooserDescriptor(true, false, false, true, false, false));
+    myIgnoreFileTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        // on text change, clear remembered files to ignore
+        myFilesToIgnore = null;
+      }
+    });
     myIgnoreDirectoryTextField.addBrowseFolderListener("Select Directory to Ignore",
                                                        "Select the directory which will not be tracked for changes",
                                                        project,
