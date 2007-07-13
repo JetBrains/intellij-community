@@ -36,7 +36,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   public JComponent initContent() {
     myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
-    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group);
+    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null);
     myBrowser.addToolBar(toolbar.getComponent());
     myBrowser.setTableContextMenu(group);
     myConnection = myBus.connect();

@@ -10,6 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,18 +18,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,11 +50,13 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private List<CommittedChangeList> myChangesFromProvider;
   private JLabel myErrorLabel = new JLabel();
 
-  public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings) {
+  public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
+                               @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
     super(new BorderLayout());
     mySettings = settings;
     myProject = project;
     myProvider = provider;
+    myLocation = location;
     myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
     add(myBrowser, BorderLayout.CENTER);
 
@@ -62,7 +65,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
-    ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group);
+
+    ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions);
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
@@ -73,10 +77,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public RepositoryLocation getRepositoryLocation() {
     return myLocation;
-  }
-
-  public void setRepositoryLocation(final RepositoryLocation location) {
-    myLocation = location;
   }
 
   public void setMaxCount(final int maxCount) {

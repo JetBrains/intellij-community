@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.peer.PeerFactory;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
@@ -29,9 +30,9 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -224,9 +225,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     updateModel();
   }
 
-  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup group) {
+  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, @Nullable final ActionGroup tailGroup) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(group);
+    toolbarGroup.add(leadGroup);
     toolbarGroup.addSeparator();
     toolbarGroup.add(new SelectFilteringAction(project, this));
     toolbarGroup.add(new SelectGroupingAction(this));
@@ -242,6 +243,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(collapseAllAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     toolbarGroup.add(new ContextHelpAction(ourHelpId));
+    if (tailGroup != null) {
+      toolbarGroup.add(tailGroup);
+    }
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
   }
 

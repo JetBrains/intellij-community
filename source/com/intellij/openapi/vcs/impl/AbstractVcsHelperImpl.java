@@ -5,10 +5,13 @@ import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -666,8 +669,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       final ChangeBrowserSettings settings,
                                       final int maxCount,
                                       String title) {
-    CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings);
-    panel.setRepositoryLocation(location);
+    DefaultActionGroup extraActions = new DefaultActionGroup();
+    CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings, location, extraActions);
     panel.setMaxCount(maxCount);
     panel.refreshChanges(false);
     final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
@@ -678,6 +681,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final ChangesViewContentManager contentManager = ChangesViewContentManager.getInstance(myProject);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
+
+    extraActions.add(new CloseTabToolbarAction() {
+      public void actionPerformed(final AnActionEvent e) {
+        contentManager.removeContent(content);
+      }
+    });
 
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (!window.isVisible()) {
