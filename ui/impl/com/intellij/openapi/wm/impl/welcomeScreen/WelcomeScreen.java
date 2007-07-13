@@ -6,6 +6,7 @@ import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -400,15 +401,6 @@ public class WelcomeScreen {
     quickStarts.addButton(getFromVCS, UIBundle.message("welcome.screen.check.out.from.version.control.action.name"),
                           UIBundle.message("welcome.screen.check.out.from.version.control.action.description"));
 
-    MyActionButton importProjects = new ButtonWithExtension(IMPORT_ICON, null) {
-      protected void onPress(InputEvent e, final MyActionButton button) {
-        new ProjectImportPopupAction().showPopup(button, e);
-      }
-    };
-
-    quickStarts.addButton(importProjects,
-                          UIBundle.message("welcome.screen.import.projects.action.name"),
-                          UIBundle.message("welcome.screen.import.projects.action.description"));
 
     /*
     MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
@@ -520,9 +512,9 @@ public class WelcomeScreen {
 
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
       addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
-        .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null, true);
+        .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
       addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
-        .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null, true);
+        .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
     }
     else {
       final Comparator<IdeaPluginDescriptor> pluginsComparator = new Comparator<IdeaPluginDescriptor>() {
@@ -545,36 +537,43 @@ public class WelcomeScreen {
           // this is not really a plugin, so it shouldn't be displayed
           continue;
         }
-        final boolean enabled = ((IdeaPluginDescriptorImpl)plugin).isEnabled();
         if (plugin.getPath().getAbsolutePath().startsWith(preinstalledPrefix)) {
           embeddedPlugins++;
-          addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
-                               plugin.getPluginClassLoader(), plugin.getUrl(), enabled);
+          addListItemToPlugins(bundledPluginsPanel, (IdeaPluginDescriptorImpl)plugin);
         }
         else {
           installedPlugins++;
-          addListItemToPlugins(installedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
-                               plugin.getPluginClassLoader(), plugin.getUrl(), enabled);
+          addListItemToPlugins(installedPluginsPanel, (IdeaPluginDescriptorImpl)plugin);
         }
       }
       if (embeddedPlugins == 0) {
         addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
-          .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null, true);
+          .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
       }
       if (installedPlugins == 0) {
         addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
-          .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null, true);
+          .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
       }
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private String makeItalic(final String message) {
+  private static String makeItalic(final String message) {
     return "<i>" + message + "</i>";
   }
 
+
+  private void addListItemToPlugins(final JPanel bundledPluginsPanel, final String title) {
+    addListItemToPlugins(bundledPluginsPanel, title, null, null, null, null, true, false);
+  }
+
+  private void addListItemToPlugins(final JPanel bundledPluginsPanel, final IdeaPluginDescriptorImpl plugin) {
+    addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
+                         plugin.getPluginClassLoader(), plugin.getUrl(), plugin.isEnabled(), PluginManager.isIncompatible(plugin));
+  }
+
   public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url,
-                                   final boolean enabled) {
+                                   final boolean enabled, final boolean incompatible) {
 
     if (StringUtil.isEmptyOrSpaces(name)) {
       return;
@@ -599,7 +598,7 @@ public class WelcomeScreen {
                                                     new Insets(15, 20, 0, 0), 0, 0);
     panel.add(imageLabel, gBC);
 
-    String shortenedName = adjustStringBreaksByWidth(name + " " + (enabled ? "": UIBundle.message("welcome.screen.disabled.plugins.description")), LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
+    String shortenedName = adjustStringBreaksByWidth(name + " " + (incompatible ? UIBundle.message("welcome.screen.incompatible.plugins.description") : (enabled ? "": UIBundle.message("welcome.screen.disabled.plugins.description"))), LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(enabled ? CAPTION_COLOR : DISABLED_CAPTION_COLOR);
