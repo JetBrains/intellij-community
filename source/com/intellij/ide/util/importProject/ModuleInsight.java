@@ -16,7 +16,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.CharArrayCharSequence;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,7 @@ public class ModuleInsight {
   @NotNull private final ProgressIndicatorWrapper myProgress;
   private final List<File> myContentRoots;
   private final List<Pair<File, String>> mySourceRoots; // list of Pair: [sourceRoot-> package prefix]
-  private final Set<File> myIgnoredRoots;
+  private final Set<String> myIgnoredNames;
 
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<File, Set<String>>();
   private final Map<File, Set<String>> mySourceRootToReferencedPackagesMap = new HashMap<File, Set<String>>();
@@ -46,11 +45,11 @@ public class ModuleInsight {
   private final StringInterner myInterner = new StringInterner();
   private final JavaLexer myLexer;
 
-  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> contentRoots, List<Pair<File,String>> sourceRoots, final Set<File> ignoredRoots) {
+  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> contentRoots, List<Pair<File,String>> sourceRoots, final Set<String> ignoredNames) {
     myProgress = new ProgressIndicatorWrapper(progress);
     myContentRoots = contentRoots;
     mySourceRoots = sourceRoots;
-    myIgnoredRoots = ignoredRoots;
+    myIgnoredNames = ignoredNames;
     myLexer = new JavaLexer(LanguageLevel.JDK_1_5);
   }
   
@@ -72,7 +71,7 @@ public class ModuleInsight {
       myProgress.pushState();
       for (Pair<File, String> pair : mySourceRoots) {
         final File sourceRoot = pair.getFirst();
-        if (myIgnoredRoots.contains(sourceRoot)) {
+        if (myIgnoredNames.contains(sourceRoot.getName())) {
           continue;
         }
         myProgress.setText("Scanning " + sourceRoot.getPath());
@@ -90,7 +89,7 @@ public class ModuleInsight {
       
       myProgress.setText("Creating modules layout...");
       for (File srcRoot : mySourceRootToPackagesMap.keySet()) {
-        File moduleContentRoot = srcRoot.getParentFile();
+        final File moduleContentRoot = srcRoot.getParentFile();
         ModuleDescriptor moduleDescriptor = myContentRootToModules.get(moduleContentRoot);
         if (moduleDescriptor != null) { // if such module aready exists
           moduleDescriptor.addSourceRoot(srcRoot);
@@ -112,7 +111,7 @@ public class ModuleInsight {
           final Set<String> jarPackages = myJarToPackagesMap.get(jarFile);
           for (File srcRoot : checkedModule.getSourceRoots()) {
             if (intersects(mySourceRootToReferencedPackagesMap.get(srcRoot), jarPackages)) {
-              checkedModule.attachLibrary(jarFile);
+              checkedModule.addLibraryFile(jarFile);
               break;
             }
           }
@@ -129,7 +128,7 @@ public class ModuleInsight {
             final Set<String> referencedBySourceRoot = mySourceRootToReferencedPackagesMap.get(srcRoot);
             for (File aSourceRoot : aModuleRoots) {
               if (intersects(referencedBySourceRoot, mySourceRootToPackagesMap.get(aSourceRoot))) {
-                checkedModule.dependsOn(aModule);
+                checkedModule.addDependencyOn(aModule);
                 break checkModules;
               }
             }
@@ -152,7 +151,7 @@ public class ModuleInsight {
   }
   
   private void scanSources(final File fromRoot, final String parentPackageName, final Set<String> usedPackages, final Set<String> selfPackages) {
-    if (myIgnoredRoots.contains(fromRoot)) {
+    if (myIgnoredNames.contains(fromRoot.getName())) {
       return;
     }
     final File[] files = fromRoot.listFiles();
@@ -201,7 +200,7 @@ public class ModuleInsight {
   }
   
   private void scanLibraries(File fromRoot) {
-    if (myIgnoredRoots.contains(fromRoot)) {
+    if (myIgnoredNames.contains(fromRoot.getName())) {
       return;
     }
     final File[] files = fromRoot.listFiles();
@@ -349,60 +348,6 @@ public class ModuleInsight {
       lexer.advance();
     }
   }
-  
-  
-  public static class ModuleDescriptor {
-    final Set<File> myContentRoots = new HashSet<File>();
-    final Set<File> mySourceRoots = new HashSet<File>();
-    final Set<File> myLibraries = new HashSet<File>();
-    final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
-    
-    public ModuleDescriptor(final File contentRoot, final File sourceRoot) {
-      myContentRoots.add(contentRoot);
-      mySourceRoots.add(sourceRoot);
-    }
 
-    public Set<File> getContentRoots() {
-      return myContentRoots;
-    }
 
-    public Set<File> getSourceRoots() {
-      return mySourceRoots;
-    }
-
-    public void addSourceRoot(File sourceRoot) {
-      mySourceRoots.add(sourceRoot);
-    }
-    
-    public void dependsOn(ModuleDescriptor dependence) {
-      myDependencies.add(dependence);
-    }
-    
-    public void attachLibrary(File libFile) {
-      myLibraries.add(libFile);
-    }
-
-    public Set<File> getLibraries() {
-      return myLibraries;
-    }
-
-    public Set<ModuleDescriptor> getDependencies() {
-      return myDependencies;
-    }
-
-    /**
-     * For debug purposes only
-     */
-    public String toString() {
-      @NonNls final StringBuilder builder = new StringBuilder();
-      builder.append("[Module: ").append(myContentRoots).append(" | ");
-      for (File sourceRoot : mySourceRoots) {
-        builder.append(sourceRoot.getName()).append(",");
-      }
-      builder.append("]");
-      return builder.toString();
-    }
-  }
-  
-  
 }

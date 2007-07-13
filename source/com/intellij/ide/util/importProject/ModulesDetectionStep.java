@@ -2,6 +2,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.Tree;
@@ -20,7 +21,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 6, 2004
  */
-public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleInsight.ModuleDescriptor>> {
+public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDescriptor>> {
   private final JavaModuleBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
@@ -71,36 +72,44 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleIn
     return true;
   }
 
-  protected List<ModuleInsight.ModuleDescriptor> calculate() {
+  protected List<ModuleDescriptor> calculate() {
+    // build sources array
     final List<Pair<String,String>> sourcePaths = myBuilder.getSourcePaths();
     final List<Pair<File,String>> _sourcePaths = new ArrayList<Pair<File, String>>();
     for (Pair<String, String> path : sourcePaths) {
       _sourcePaths.add(new Pair<File, String>(new File(path.first), path.second != null? path.second : ""));
     }
-    ModuleInsight insight = new ModuleInsight(new DelegatingProgressIndicator(), Arrays.asList(new File(myBuilder.getContentEntryPath())), _sourcePaths, Collections.<File>emptySet());
+    // build ignored names set
+    final HashSet<String> ignored = new HashSet<String>();
+    final StringTokenizer tokenizer = new StringTokenizer(FileTypeManager.getInstance().getIgnoredFilesList(), ";", false);
+    while (tokenizer.hasMoreTokens()) {
+      ignored.add(tokenizer.nextToken());
+    }
+    // start scan
+    final ModuleInsight insight = new ModuleInsight(new DelegatingProgressIndicator(), Arrays.asList(new File(myBuilder.getContentEntryPath())), _sourcePaths, ignored);
     insight.scan();
-    final List<ModuleInsight.ModuleDescriptor> list = insight.getSuggestedModules();
-    return list;
+    
+    return insight.getSuggestedModules();
   }
 
-  protected void onFinished(final List<ModuleInsight.ModuleDescriptor> moduleDescriptors, final boolean canceled) {
+  protected void onFinished(final List<ModuleDescriptor> moduleDescriptors, final boolean canceled) {
     final Set<File> jars = new HashSet<File>();
-    for (ModuleInsight.ModuleDescriptor moduleDescriptor : moduleDescriptors) {
-      jars.addAll(moduleDescriptor.getLibraries());
+    for (ModuleDescriptor moduleDescriptor : moduleDescriptors) {
+      jars.addAll(moduleDescriptor.getLibraryFiles());
     }
     rebuildModuleTree(moduleDescriptors);
     rebuildJarsTree(jars);
   }
 
-  private void rebuildModuleTree(List<ModuleInsight.ModuleDescriptor> descriptors) {
+  private void rebuildModuleTree(List<ModuleDescriptor> descriptors) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final DefaultTreeModel model = new DefaultTreeModel(root);
     myModuleTree.setModel(model);
     int index = 0;
-    for (ModuleInsight.ModuleDescriptor descriptor : descriptors) {
+    for (ModuleDescriptor descriptor : descriptors) {
       final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(descriptor);
       model.insertNodeInto(moduleNode, root, index++);
-      final Set<File> libraries = descriptor.getLibraries();
+      final Set<File> libraries = descriptor.getLibraryFiles();
       int j = 0;
       for (File library : libraries) {
         model.insertNodeInto(new DefaultMutableTreeNode(library), moduleNode, j++);
