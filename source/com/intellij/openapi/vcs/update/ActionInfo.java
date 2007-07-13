@@ -50,6 +50,10 @@ public interface ActionInfo {
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getUpdateName();
     }
+
+    public boolean canGroupByChangelist() {
+      return true;
+    }
   };
 
   ActionInfo STATUS = new ActionInfo() {
@@ -90,6 +94,10 @@ public interface ActionInfo {
 
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getStatusName();
+    }
+
+    public boolean canGroupByChangelist() {
+      return false;
     }
   };
 
@@ -133,6 +141,10 @@ public interface ActionInfo {
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getUpdateName();
     }
+
+    public boolean canGroupByChangelist() {
+      return false;
+    }
   };
 
 
@@ -148,4 +160,6 @@ public interface ActionInfo {
   String getActionName();
 
   String getGroupName(FileGroup fileGroup);
+
+  boolean canGroupByChangelist();
 }

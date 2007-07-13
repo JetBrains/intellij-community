@@ -177,7 +177,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     final UpdateInfoTree updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles,
                                                                                                        getTemplatePresentation().getText(),
                                                                                                        myActionInfo);
-                    updateInfoTree.setCanGroupByChangeList(true);
+                    updateInfoTree.setCanGroupByChangeList(myActionInfo.canGroupByChangelist());
                     final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
                     messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
                       public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
