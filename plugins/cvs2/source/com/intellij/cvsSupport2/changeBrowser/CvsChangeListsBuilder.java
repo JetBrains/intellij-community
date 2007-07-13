@@ -128,10 +128,25 @@ public class CvsChangeListsBuilder {
     CvsRevisionNumber number = new CvsRevisionNumber(revision.getNumber().trim());
     final int[] subRevisions = number.getSubRevisions();
     String branchName = null;
+    String branchNumberString = null;
     if (subRevisions != null && subRevisions.length == 4) {
       int branchRevNumber = subRevisions [2];
       CvsRevisionNumber branchNumber = number.removeTailVersions(2).addTailVersions(0, branchRevNumber);
-      String branchNumberString = branchNumber.asString();
+      branchNumberString = branchNumber.asString();
+    }
+    if (branchNumberString == null) {
+      final String branches = revision.getBranches();
+      if (branches != null && branches.length() > 0) {
+        final String[] branchNames = branches.split(";");
+        final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchNames [0].trim());
+        int[] branchSubRevisions = revisionNumber.getSubRevisions();
+        assert branchSubRevisions != null;
+        int rev = branchSubRevisions [branchSubRevisions.length-1];
+        CvsRevisionNumber branchNumber = revisionNumber.removeTailVersions(1).addTailVersions(0, rev);
+        branchNumberString = branchNumber.asString();
+      }
+    }
+    if (branchNumberString != null) {
       for(SymbolicName name: symbolicNames) {
         if (name.getRevision().equals(branchNumberString)) {
           branchName = name.getName();
@@ -139,6 +154,7 @@ public class CvsChangeListsBuilder {
         }
       }
     }
+
     return branchName;
   }
 }
