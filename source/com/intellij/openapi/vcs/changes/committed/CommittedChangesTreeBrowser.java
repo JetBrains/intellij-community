@@ -5,6 +5,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -30,6 +31,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -63,9 +65,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private Splitter myFilterSplitter;
   private JPanel myLeftPanel;
   private FilterChangeListener myFilterChangeListener = new FilterChangeListener();
-  private List<CommittedChangeList> myFilteredChangeLists;
   private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
   private CopyProvider myCopyProvider;
+
+  @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -128,13 +131,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private TreeModel buildTreeModel() {
-    myFilteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
+    final List<CommittedChangeList> filteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
     DefaultMutableTreeNode lastGroupNode = null;
     String lastGroupName = null;
-    Collections.sort(myFilteredChangeLists, myGroupingStrategy.getComparator());
-    for(CommittedChangeList list: myFilteredChangeLists) {
+    Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
+    for(CommittedChangeList list: filteredChangeLists) {
       String groupName = myGroupingStrategy.getGroupName(list);
       if (!Comparing.equal(groupName, lastGroupName)) {
         lastGroupName = groupName;
@@ -238,6 +241,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    toolbarGroup.add(new ContextHelpAction(ourHelpId));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
   }
 
@@ -265,6 +269,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
         sink.put(DataKeys.NAVIGATABLE_ARRAY, result);
       }
+    }
+    else if (key.equals(DataKeys.HELP_ID)) {
+      sink.put(DataKeys.HELP_ID, ourHelpId);
     }
   }
 
