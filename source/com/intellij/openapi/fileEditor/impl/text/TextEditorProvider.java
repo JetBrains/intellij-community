@@ -148,6 +148,11 @@ public final class TextEditorProvider implements FileEditorProvider {
       }
     }
 
+    if (editor instanceof TextEditor) {
+      Document document = ((TextEditor)editor).getEditor().getDocument();
+      return new Document[]{document};
+    }
+
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (int i = projects.length - 1; i >= 0; i--) {
       VirtualFile file = FileEditorManagerEx.getInstanceEx(projects[i]).getFile(editor);
@@ -156,16 +161,9 @@ public final class TextEditorProvider implements FileEditorProvider {
         if (document != null) {
           return new Document[]{document};
         }
-        else {
-          return null;
-        }
       }
     }
 
-    if (editor instanceof TextEditor) {
-      Document document = ((TextEditor)editor).getEditor().getDocument();
-      return new Document[]{document};
-    }
     return null;
   }
 
