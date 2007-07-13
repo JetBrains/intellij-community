@@ -180,6 +180,10 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return localRevision.compareTo(changeRevision) >= 0;
   }
 
+  public boolean refreshIncomingWithCommitted() {
+    return true;
+  }
+
   private ChangeListColumn<CvsChangeList> BRANCH_COLUMN = new ChangeListColumn<CvsChangeList>() {
     public String getTitle() {
       return CvsBundle.message("changelist.column.branch");

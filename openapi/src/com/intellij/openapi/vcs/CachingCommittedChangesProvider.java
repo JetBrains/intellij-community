@@ -29,6 +29,7 @@ import java.util.Collection;
 
 /**
  * @author yole
+ * @since 7.0
  */
 public interface CachingCommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends CommittedChangesProvider<T, U> {
   int getFormatVersion();
@@ -71,4 +72,12 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
   String getChangelistTitle();
 
   boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision);
+
+  /**
+   * Returns true if a timer-based refresh of committed changes should be followed by refresh of incoming changes, so that,
+   * for example, changes from the wrong branch would be automatically removed from view.
+   *
+   * @return true if auto-refresh includes incoming changes refresh, false otherwise
+   */
+  boolean refreshIncomingWithCommitted();
 }

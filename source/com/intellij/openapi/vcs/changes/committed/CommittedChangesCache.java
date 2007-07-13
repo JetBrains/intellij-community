@@ -700,6 +700,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         public void run() {
           refreshAllCachesAsync(false);
+          final List<ChangesCacheFile> list = getAllCaches();
+          for(ChangesCacheFile file: list) {
+            if (file.getProvider().refreshIncomingWithCommitted()) {
+              refreshIncomingChangesAsync();
+              break;
+            }
+          }
         }
       }, myState.getRefreshInterval()*60, myState.getRefreshInterval()*60, TimeUnit.SECONDS);
     }
