@@ -70,7 +70,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
   @Nullable
   public SaveSession startSave() throws IOException {
     try {
-      assert mySession == null;
       final ComponentStoreImpl.SaveSessionImpl session = createSaveSession();
       session.commit();
       mySession = session;
