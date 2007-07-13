@@ -46,6 +46,11 @@ public class FilePatch {
     return pathNameComponents [pathNameComponents.length-1];
   }
 
+  public String getAfterFileName() {
+    String[] pathNameComponents = myAfterName.split("/");
+    return pathNameComponents [pathNameComponents.length-1];
+  }
+
   public void setBeforeName(final String fileName) {
     myBeforeName = fileName;  
   }

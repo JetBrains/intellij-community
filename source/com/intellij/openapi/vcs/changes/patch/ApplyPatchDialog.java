@@ -20,20 +20,21 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +46,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,6 +70,7 @@ public class ApplyPatchDialog extends DialogWrapper {
   private JSpinner myStripLeadingDirectoriesSpinner;
   private JList myPatchContentsList;
   private ChangeListChooserPanel myChangeListChooser;
+  private JButton myShowDiffButton;
   private List<FilePatch> myPatches;
   private Collection<FilePatch> myPatchesFailedToLoad;
   private final Alarm myLoadPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -130,6 +136,65 @@ public class ApplyPatchDialog extends DialogWrapper {
 
     init();
     updateOKAction();
+    myShowDiffButton.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        showDiff();
+      }
+    });
+    myPatchContentsList.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(final MouseEvent e) {
+        if (e.getButton() == 1 && e.getClickCount() == 2) {
+          showDiff();
+        }
+      }
+    });
+  }
+
+  private void showDiff() {
+    List<Change> changes = new ArrayList<Change>();
+    ApplyPatchContext context = getApplyPatchContext().getPrepareContext();
+    Object[] selection = myPatchContentsList.getSelectedValues();
+    if (selection.length == 0) {
+      if (myPatches == null) return;
+      selection = myPatches.toArray(new Object[myPatches.size()]);
+    }
+    for(Object o: selection) {
+      final FilePatch patch = (FilePatch) o;
+      try {
+        if (patch.isNewFile()) {
+          final FilePath newFilePath = FilePathImpl.createNonLocal(patch.getAfterName(), false);
+          final String content = patch.getNewFileText();
+          ContentRevision revision = new SimpleContentRevision(content, newFilePath, patch.getAfterVersionId());
+          changes.add(new Change(null, revision));
+        }
+          else {
+          final VirtualFile fileToPatch = patch.findFileToPatch(context);
+          if (fileToPatch != null) {
+            final FilePathImpl filePath = new FilePathImpl(fileToPatch);
+            final CurrentContentRevision currentRevision = new CurrentContentRevision(filePath);
+            if (patch.isDeletedFile()) {
+              changes.add(new Change(currentRevision, null));
+            }
+            else {
+              final Document doc = FileDocumentManager.getInstance().getDocument(fileToPatch);
+              String baseContent = doc.getText();
+              StringBuilder newText = new StringBuilder();
+              patch.applyModifications(baseContent, newText);
+              ContentRevision revision = new SimpleContentRevision(newText.toString(), filePath, patch.getAfterVersionId());
+              changes.add(new Change(currentRevision, revision));
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        Messages.showErrorDialog(myProject, "Error loading changes for " + patch.getAfterFileName() + ": " + e.getMessage(), "Apply Patch");
+        return;
+      }
+    }
+    if (changes.size() > 0) {
+      ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), 0, myProject,
+                                       ShowDiffAction.DiffExtendUIFactory.NONE, false);
+    }
   }
 
   @Override
@@ -336,6 +401,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     else {
       myPatchContentsList.setModel(new DefaultListModel());
     }
+    myShowDiffButton.setEnabled(myPatches != null && myPatches.size() > 0);
   }
 
   private String buildPatchSummary() {
