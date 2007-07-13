@@ -236,13 +236,25 @@ public class PluginManager {
         final String buildNumber = getBuildNumber();
         if (buildNumber != null) {
           final String sinceBuild = ((IdeaPluginDescriptorImpl)descriptor).getSinceBuild();
-          if (sinceBuild != null && sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
-            return true;
+          try {
+            Integer.parseInt(sinceBuild);
+            if (sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
+              return true;
+            }
+          }
+          catch (NumberFormatException e) {
+            //skip invalid numbers
           }
 
           final String untilBuild = ((IdeaPluginDescriptorImpl)descriptor).getUntilBuild();
-          if (untilBuild != null && untilBuild.compareToIgnoreCase(buildNumber) < 0) {
-            return true;
+          try {
+            Integer.parseInt(untilBuild);
+            if (untilBuild.compareToIgnoreCase(buildNumber) < 0) {
+              return true;
+            }
+          }
+          catch (NumberFormatException e) {
+            //skip invalid numbers
           }
         }
       }
