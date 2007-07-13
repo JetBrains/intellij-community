@@ -187,7 +187,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
     public Object getValue(final CvsChangeList changeList) {
       final String branch = changeList.getBranch();
-      return branch == null ? "" : branch;
+      return branch == null ? "HEAD" : branch;
     }
   };
 }
