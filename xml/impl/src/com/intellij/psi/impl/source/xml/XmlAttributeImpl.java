@@ -6,6 +6,7 @@ import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -27,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
@@ -290,11 +292,29 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   private class MyPsiReference implements PsiReference {
-    private final XmlElementDescriptor myDescr;
+    private final XmlElementDescriptor myTagDescr;
+    private final XmlAttributeDescriptor myDescr;
 
     public MyPsiReference(XmlElementDescriptor descr) {
-      myDescr = descr;
+      myTagDescr = descr;
+      myDescr = getAttributeDescriptor();
     }
+
+    private XmlAttributeDescriptor getAttributeDescriptor() {
+      final XmlTag tag = getParent();
+      if (tag instanceof XmlTagImpl) {
+        final XmlNSDescriptor descriptor = tag.getNSDescriptor(getNamespace(), false);
+        if (descriptor instanceof XmlNSDescriptorEx) {
+          for (final XmlAttributeDescriptor attributeDescriptor : ((XmlNSDescriptorEx)descriptor).getAttributeDescriptors(tag)) {
+            if (attributeDescriptor.getName().equals(getName())) {
+              return attributeDescriptor;
+            }
+          }
+        }
+      }
+      return myTagDescr.getAttributeDescriptor(XmlAttributeImpl.this);
+    }
+
 
     public PsiElement getElement() {
       return XmlAttributeImpl.this;
@@ -306,19 +326,24 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public PsiElement resolve() {
-      final XmlAttributeDescriptor descriptor = myDescr.getAttributeDescriptor(XmlAttributeImpl.this);
-      if (descriptor != null) {
-        return descriptor.getDeclaration();
-      }
-      return null;
+      return myDescr != null ? myDescr.getDeclaration() : null;
     }
 
     public String getCanonicalText() {
-      return XmlAttributeImpl.this.getName();
+      return getName();
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return setName(newElementName);
+      String newName = newElementName;
+      if (myDescr instanceof XmlAttributeDescriptorEx) {
+        final XmlAttributeDescriptorEx xmlAttributeDescriptorEx = (XmlAttributeDescriptorEx)myDescr;
+        final String s = xmlAttributeDescriptorEx.handleTargetRename(newElementName);
+        if (s != null) {
+          final String prefix = getNamespacePrefix();
+          newName = StringUtil.isEmpty(prefix) ? s : prefix + ":" + s;
+        }
+      }
+      return setName(newName);
     }
 
     // TODO[ik]: namespace support
