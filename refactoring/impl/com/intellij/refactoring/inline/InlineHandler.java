@@ -37,7 +37,11 @@ public class InlineHandler implements RefactoringActionHandler {
       InlineConstantFieldHandler.invoke(project, editor, (PsiField) elements[0]);
     } else if (elements[0] instanceof PsiLocalVariable) {
       InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)elements[0], null);
-    } else {
+    }
+    else if (elements [0] instanceof PsiClass) {
+      InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) elements[0]);
+    }
+    else {
       LOG.error("Unknown element type to inline:" + elements[0]);
     }
   }
