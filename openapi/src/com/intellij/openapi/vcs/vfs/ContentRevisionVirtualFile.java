@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   private final ContentRevision myContentRevision;
   private byte[] myContent;
+  private boolean myContentLoadFailed;
 
   private static final WeakHashMap<ContentRevision, ContentRevisionVirtualFile> ourMap = new WeakHashMap<ContentRevision, ContentRevisionVirtualFile>();
 
@@ -59,6 +60,9 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
+    if (myContentLoadFailed) {
+      return new byte[0];
+    }
     if (myContent == null) {
       loadContent();
     }
@@ -87,6 +91,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
 
     }
     catch (VcsException e) {
+      myContentLoadFailed = true;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           vcsFileSystem.fireBeforeFileDeletion(this, ContentRevisionVirtualFile.this);
