@@ -189,6 +189,11 @@ public class CvsChangeList implements CommittedChangeList {
     if (ADDED_STATE.equals(revisionState)) {
       return true;
     }
+    // files added on branch
+    final int[] subRevisions = new CvsRevisionNumber(revision.getNumber()).getSubRevisions();
+    if (subRevisions != null && subRevisions.length > 2 && subRevisions [subRevisions.length-1] == 1) {
+      return true;
+    }
     return false;
   }
 
