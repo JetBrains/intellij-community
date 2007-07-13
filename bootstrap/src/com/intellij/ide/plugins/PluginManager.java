@@ -233,30 +233,7 @@ public class PluginManager {
         shouldLoad = !getDisabledPlugins().contains(idString);
       }
       if (shouldLoad && descriptor instanceof IdeaPluginDescriptorImpl) {
-        final String buildNumber = getBuildNumber();
-        if (buildNumber != null) {
-          final String sinceBuild = ((IdeaPluginDescriptorImpl)descriptor).getSinceBuild();
-          try {
-            Integer.parseInt(sinceBuild);
-            if (sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
-              return true;
-            }
-          }
-          catch (NumberFormatException e) {
-            //skip invalid numbers
-          }
-
-          final String untilBuild = ((IdeaPluginDescriptorImpl)descriptor).getUntilBuild();
-          try {
-            Integer.parseInt(untilBuild);
-            if (untilBuild.compareToIgnoreCase(buildNumber) < 0) {
-              return true;
-            }
-          }
-          catch (NumberFormatException e) {
-            //skip invalid numbers
-          }
-        }
+        if (isIncompatible(descriptor)) return true;
       }
     }
 
@@ -264,7 +241,33 @@ public class PluginManager {
     return !shouldLoad;
   }
 
+  public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
+    final String buildNumber = getBuildNumber();
+    if (buildNumber != null) {
+      final String sinceBuild = ((IdeaPluginDescriptorImpl)descriptor).getSinceBuild();
+      try {
+        Integer.parseInt(sinceBuild);
+        if (sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
+          return true;
+        }
+      }
+      catch (NumberFormatException e) {
+        //skip invalid numbers
+      }
 
+      final String untilBuild = ((IdeaPluginDescriptorImpl)descriptor).getUntilBuild();
+      try {
+        Integer.parseInt(untilBuild);
+        if (untilBuild.compareToIgnoreCase(buildNumber) < 0) {
+          return true;
+        }
+      }
+      catch (NumberFormatException e) {
+        //skip invalid numbers
+      }
+    }
+    return false;
+  }
 
   private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap) {
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);

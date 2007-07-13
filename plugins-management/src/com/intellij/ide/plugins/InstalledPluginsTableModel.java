@@ -179,6 +179,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
             }
           }
         }
+        if (PluginManager.isIncompatible(ideaPluginDescriptor)) {
+          cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning"));
+          cellRenderer.setForeground(Color.red);
+        }
       }
       return cellRenderer;
     }
