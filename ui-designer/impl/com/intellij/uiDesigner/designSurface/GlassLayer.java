@@ -60,6 +60,8 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     registerKeyboardAction(new MoveComponentAction(0, 0, 0, -1), "EditorPreviousWordWithSelection");
     registerKeyboardAction(new MoveComponentAction(0, 0, 0, 1), "EditorNextWordWithSelection");
 
+    registerKeyboardAction(new SelectAllComponentsAction(), "$SelectAll");
+
     // F2 should start inplace editing
     final StartInplaceEditingAction startInplaceEditingAction = new StartInplaceEditingAction(editor);
     startInplaceEditingAction.registerCustomShortcutSet(
