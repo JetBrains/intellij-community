@@ -1,5 +1,6 @@
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -14,6 +15,6 @@ public class ChooseByNameFactoryImpl extends ChooseByNameFactory {
   }
 
   public ChooseByNamePopup createChooseByNamePopupComponent(final ChooseByNameModel model) {
-    return ChooseByNamePopup.createPopup(myProject, model, null);  
+    return ChooseByNamePopup.createPopup(myProject, model, GotoActionBase.getPsiContext(myProject));  
   }
 }

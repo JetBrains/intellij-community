@@ -1,11 +1,14 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 
 /**
  * Author: msk
@@ -32,5 +35,20 @@ public abstract class GotoActionBase extends AnAction {
     final Presentation presentation = event.getPresentation();
     final Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
     presentation.setEnabled(!getClass ().equals (myInAction) && project != null);
+  }
+
+  public static PsiElement getPsiContext(final AnActionEvent e) {
+    PsiFile file = e.getData(DataKeys.PSI_FILE);
+    if (file != null) return file;
+    Project project = e.getData(DataKeys.PROJECT);
+    return getPsiContext(project);
+  }
+
+  public static PsiElement getPsiContext(final Project project) {
+    if (project == null) return null;
+    Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (selectedEditor == null) return null;
+    Document document = selectedEditor.getDocument();
+    return PsiDocumentManager.getInstance(project).getPsiFile(document);
   }
 }

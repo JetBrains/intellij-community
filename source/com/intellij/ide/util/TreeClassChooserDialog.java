@@ -289,8 +289,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   public void showPopup() {
-    PsiElement context = getContext();
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, createChooseByNameModel(), context);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, createChooseByNameModel(), getContext());
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
 

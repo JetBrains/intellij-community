@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 
 public class GotoClassAction extends GotoActionBase {
   public void gotoActionPerformed(AnActionEvent e) {
@@ -18,9 +17,7 @@ public class GotoClassAction extends GotoActionBase {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement context = e.getData(DataKeys.PSI_FILE);
-
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), context);
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), getPsiContext(e));
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
