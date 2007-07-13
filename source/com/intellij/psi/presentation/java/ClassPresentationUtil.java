@@ -33,6 +33,7 @@ package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -105,6 +106,9 @@ public class ClassPresentationUtil {
       }
 
       public TextAttributesKey getTextAttributesKey() {
+        if (psiClass.isDeprecated()) {
+          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        }
         return null;
       }
 
