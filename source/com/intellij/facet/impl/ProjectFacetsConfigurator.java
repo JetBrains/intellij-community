@@ -254,13 +254,16 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
             ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()));
     }
 
-    public Library createProjectLibrary(final String baseName, final VirtualFile[] roots) {
+    public Library createProjectLibrary(final String baseName, final VirtualFile[] roots, final VirtualFile[] sources) {
       LibraryTableModifiableModelProvider provider = myContext.getProjectLibrariesProvider(false);
       LibraryTable.ModifiableModel model = provider.getModifiableModel();
       Library library = model.createLibrary(getUniqueLibraryName(baseName, model));
       LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
       for (VirtualFile root : roots) {
         libraryEditor.addRoot(root, OrderRootType.CLASSES);
+      }
+      for (VirtualFile source : sources) {
+        libraryEditor.addRoot(source, OrderRootType.SOURCES);
       }
       return library;
     }

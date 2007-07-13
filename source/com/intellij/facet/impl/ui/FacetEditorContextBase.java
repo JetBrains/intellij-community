@@ -99,13 +99,16 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return getModifiableRootModel();
   }
 
-  public static Library createLibraryInTable(final String name, final VirtualFile[] roots, final LibraryTable table) {
+  public static Library createLibraryInTable(final String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
     LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
     Library library = modifiableModel.createLibrary(getUniqueLibraryName(name, modifiableModel));
     modifiableModel.commit();
     final Library.ModifiableModel model = library.getModifiableModel();
     for (VirtualFile root : roots) {
       model.addRoot(root, OrderRootType.CLASSES);
+    }
+    for (VirtualFile root : sources) {
+      model.addRoot(root, OrderRootType.SOURCES);
     }
     model.commit();
     return library;

@@ -51,7 +51,7 @@ public class DelegatingLibrariesValidatorContext implements LibrariesValidatorCo
   }
 
   public Library createProjectLibrary(final String name, final VirtualFile[] roots) {
-    return myDelegate.createProjectLibrary(name, roots);
+    return myDelegate.createProjectLibrary(name, roots, VirtualFile.EMPTY_ARRAY);
   }
 
   public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {

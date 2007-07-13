@@ -33,6 +33,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
@@ -77,7 +78,7 @@ public interface FacetEditorContext extends UserDataHolder {
   @Nullable
   WizardContext getWizardContext();
 
-  Library createProjectLibrary(String name, final VirtualFile[] roots);
+  Library createProjectLibrary(@NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources);
 
   VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType);
 

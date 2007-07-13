@@ -60,7 +60,7 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
   }
 
   public Library createProjectLibrary(String name, VirtualFile[] roots) {
-    return FacetEditorContextBase.createLibraryInTable(name, roots, getProjectLibraryTable());
+    return FacetEditorContextBase.createLibraryInTable(name, roots, VirtualFile.EMPTY_ARRAY, getProjectLibraryTable());
   }
 
   public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {

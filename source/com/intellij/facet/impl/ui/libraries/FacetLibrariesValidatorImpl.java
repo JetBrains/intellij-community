@@ -161,7 +161,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     if (!myAddedRoots.isEmpty()) {
       VirtualFile[] roots = myAddedRoots.toArray(new VirtualFile[myAddedRoots.size()]);
       LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
-      Library library = FacetEditorContextBase.createLibraryInTable(myDescription.getDefaultLibraryName(), roots, libraryTable);
+      Library library = FacetEditorContextBase.createLibraryInTable(myDescription.getDefaultLibraryName(), roots, VirtualFile.EMPTY_ARRAY, libraryTable);
       model.addLibraryEntry(library);
       addedLibraries.add(library);
     }
