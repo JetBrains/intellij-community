@@ -20,6 +20,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,32 +95,40 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
         name = XmlUtil.findLocalNameByQualifiedName(name);
 
         if (!name.equals(text)) {
-          holder.registerProblem(
-            tag,
-            XmlErrorMessages.message("wrong.root.element"),
-            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-            new LocalQuickFix() {
-              public String getName() {
-                return XmlBundle.message("change.root.element.to",doctype.getNameElement().getText());
-              }
-
-              public String getFamilyName() {
-                return getName();
-              }
-
-              public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-                if (!CodeInsightUtil.prepareFileForWrite(tag.getContainingFile())) {
-                  return;
-                }
-
-                new WriteCommandAction(project) {
-                  protected void run(final Result result) throws Throwable {
-                    tag.setName(doctype.getNameElement().getText());
-                  }
-                }.execute();
-              }
+          final LocalQuickFix localQuickFix = new LocalQuickFix() {
+            public String getName() {
+              return XmlBundle.message("change.root.element.to", doctype.getNameElement().getText());
             }
+
+            public String getFamilyName() {
+              return getName();
+            }
+
+            public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+              if (!CodeInsightUtil.prepareFileForWrite(tag.getContainingFile())) {
+                return;
+              }
+
+              new WriteCommandAction(project) {
+                protected void run(final Result result) throws Throwable {
+                  tag.setName(doctype.getNameElement().getText());
+                }
+              }.execute();
+            }
+          };
+
+          holder.registerProblem(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()).getPsi(),
+            XmlErrorMessages.message("wrong.root.element"),
+            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
           );
+
+          final ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag.getNode());
+          if (astNode != null) {
+            holder.registerProblem(astNode.getPsi(),
+              XmlErrorMessages.message("wrong.root.element"),
+              ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
+            );
+          }
         }
       }
     }
