@@ -10,8 +10,10 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -22,17 +24,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class IgnoreUnversionedDialog extends DialogWrapper {
   private JRadioButton myIgnoreSpecifiedFileRadioButton;
   private JRadioButton myIgnoreAllFilesUnderRadioButton;
-  private JTextField myIgnoreDirectoryTextField;
+  private TextFieldWithBrowseButton myIgnoreDirectoryTextField;
   private JRadioButton myIgnoreAllFilesMatchingRadioButton;
   private JTextField myIgnoreMaskTextField;
   private JPanel myPanel;
@@ -45,24 +47,23 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myProject = project;
     setTitle(VcsBundle.message("ignored.edit.title"));
     init();
-    myIgnoreAllFilesUnderRadioButton.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myIgnoreDirectoryTextField.setEnabled(myIgnoreAllFilesUnderRadioButton.isSelected());
+    myIgnoreDirectoryTextField.addBrowseFolderListener("Select Directory to Ignore",
+                                                       "Select the directory which will not be tracked for changes",
+                                                       project,
+                                                       new FileChooserDescriptor(false, true, false, false, false, false));
+    ActionListener listener = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        updateControls();
       }
-    });
-    myIgnoreAllFilesMatchingRadioButton.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myIgnoreMaskTextField.setEnabled(myIgnoreAllFilesMatchingRadioButton.isSelected());
-      }
-    });
-    myIgnoreSpecifiedFileRadioButton.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        updateFileTextField();
-      }
-    });
+    };
+    myIgnoreAllFilesUnderRadioButton.addActionListener(listener);
+    myIgnoreAllFilesMatchingRadioButton.addActionListener(listener);
+    myIgnoreSpecifiedFileRadioButton.addActionListener(listener);
   }
 
-  private void updateFileTextField() {
+  private void updateControls() {
+    myIgnoreDirectoryTextField.setEnabled(myIgnoreAllFilesUnderRadioButton.isSelected());
+    myIgnoreMaskTextField.setEnabled(myIgnoreAllFilesMatchingRadioButton.isSelected());
     myIgnoreFileTextField.setEnabled(myIgnoreSpecifiedFileRadioButton.isSelected() &&
                                      (myFilesToIgnore == null || (myFilesToIgnore.size() == 1 && !myFilesToIgnore.get(0).isDirectory())));
   }
@@ -83,7 +84,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     else {
       myIgnoreFileTextField.setText(VcsBundle.message("ignored.edit.multiple.files", virtualFiles.size()));
     }
-    updateFileTextField();
+    updateControls();
 
     for(VirtualFile file: virtualFiles) {
       if (file.isDirectory()) {
