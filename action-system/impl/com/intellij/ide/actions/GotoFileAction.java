@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author Eugene Belyaev
@@ -20,7 +21,9 @@ public class GotoFileAction extends GotoActionBase {
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
     final Project project = e.getData(DataKeys.PROJECT);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project));
+    PsiElement context = e.getData(DataKeys.PSI_FILE);
+
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), context);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
         if (GotoFileAction.class.equals(myInAction)) myInAction = null;

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,8 +15,8 @@ import java.util.List;
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
-  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup) {
-    super(project, model, oldPopup != null ? oldPopup.myTextField.getText() : null);
+  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup, final PsiElement context) {
+    super(project, model, oldPopup != null ? oldPopup.myTextField.getText() : null, context);
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
@@ -72,7 +73,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myListScrollPane.setBounds(prefferedBounds);
     }
 
-    layeredPane.add(myListScrollPane, new Integer(600));
+    layeredPane.add(myListScrollPane, Integer.valueOf(600));
     layeredPane.moveToFront(myListScrollPane);
     myListScrollPane.validate();
     myListScrollPane.setVisible(true);
@@ -101,7 +102,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         return;
       }
 
-      if (chosenElements.size() > 0){
+      if (!chosenElements.isEmpty()){
         final String enteredText = myTextField.getText();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
@@ -166,15 +167,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
-  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model) {
-    final ChooseByNamePopup newPopup;
+  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context) {
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
-      newPopup = new ChooseByNamePopup(project, model, oldPopup);
-    } else {
-      newPopup = new ChooseByNamePopup(project, model, null);
     }
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context);
 
     project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
     return newPopup;

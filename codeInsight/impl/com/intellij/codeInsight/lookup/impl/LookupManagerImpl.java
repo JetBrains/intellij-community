@@ -17,6 +17,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import com.intellij.psi.util.PsiProximityComparator;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
@@ -32,21 +33,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   protected Editor myActiveLookupEditor = null;
   private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  protected static final Comparator<LookupItem> COMPARATOR = new Comparator<LookupItem>(){
-    public int compare(LookupItem o1, LookupItem o2){
-      int priority = o1.getObject() instanceof LookupValueWithPriority ?
-                     ((LookupValueWithPriority)o1.getObject()).getPriority():
-                     LookupValueWithPriority.NORMAL;
-      
-      int priority2 = o2.getObject() instanceof LookupValueWithPriority ?
-                     ((LookupValueWithPriority)o2.getObject()).getPriority():
-                     LookupValueWithPriority.NORMAL;
-      if (priority != priority2) {
-        return priority2 - priority;
-      }
-      return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-    }
-  };
   private boolean myIsDisposed;
   private EditorFactoryAdapter myEditorFactoryListener;
 
@@ -98,9 +84,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    if (sortItems(psiFile, items)) {
-      Arrays.sort(items, COMPARATOR);
-    }
+    sortItems(psiFile, items);
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable(){
@@ -164,12 +148,38 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
-  private static boolean sortItems(PsiFile containingFile, LookupItem[] items) {
+  protected void sortItems(PsiFile containingFile, LookupItem[] items) {
+    if (shouldSortItems(containingFile, items)) {
+      final PsiProximityComparator proximityComparator = new PsiProximityComparator(containingFile, myProject);
+      final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
+        public int compare(LookupItem o1, LookupItem o2) {
+          int priority = o1.getObject() instanceof LookupValueWithPriority
+                         ? ((LookupValueWithPriority)o1.getObject()).getPriority()
+                         : LookupValueWithPriority.NORMAL;
+
+          int priority2 = o2.getObject() instanceof LookupValueWithPriority
+                          ? ((LookupValueWithPriority)o2.getObject()).getPriority()
+                          : LookupValueWithPriority.NORMAL;
+          if (priority != priority2) {
+            return priority2 - priority;
+          }
+          int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+          if (stringCompare != 0) {
+            return stringCompare;
+          }
+          return proximityComparator.compare(o1.getObject(), o2.getObject());
+        }
+      };
+      Arrays.sort(items, comparator);
+    }
+  }
+
+  protected boolean shouldSortItems(final PsiFile containingFile, final LookupItem[] items) {
     if (!(containingFile instanceof XmlFile)) return true;
 
     for (LookupItem item : items) {
       final Object object = item.getObject();
-      
+
       if (object instanceof PsiElement ||
           object instanceof LookupValueWithPriority) {
         return true;

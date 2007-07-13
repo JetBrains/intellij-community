@@ -33,7 +33,4 @@ public abstract class GotoActionBase extends AnAction {
     final Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
     presentation.setEnabled(!getClass ().equals (myInAction) && project != null);
   }
-
-
-  //protected abstract void navigateToFile(Project project, PsiElement element);
 }

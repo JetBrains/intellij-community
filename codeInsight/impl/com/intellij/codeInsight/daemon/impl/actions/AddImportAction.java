@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
@@ -61,6 +63,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void chooseClassAndImport() {
+    Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference, myProject));
     final JList list = new JList(myTargetClasses);
     list.setCellRenderer(new FQNameCellRenderer());
     Runnable runnable = new Runnable() {

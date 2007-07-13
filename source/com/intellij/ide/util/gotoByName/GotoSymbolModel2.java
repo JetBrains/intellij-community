@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
   public GotoSymbolModel2(Project project) {
@@ -83,6 +84,7 @@ public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
     return getElementName(element);
   }
 
+  @NotNull
   public String[] getSeparators() {
     return new String[] {".", ":"};
   }

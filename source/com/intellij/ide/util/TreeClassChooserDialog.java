@@ -206,7 +206,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       name = myInitialClass.getName();
     }
 */
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, createChooseByNameModel(), name, myScope.isSearchInLibraries()) {
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, createChooseByNameModel(), name, myScope.isSearchInLibraries(), getContext()) {
 
       protected void showTextFieldPanel() {
       }
@@ -289,7 +289,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   public void showPopup() {
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, createChooseByNameModel());
+    PsiElement context = getContext();
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, createChooseByNameModel(), context);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {
 
@@ -299,6 +300,10 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         ((NavigationItem)element).navigate(true);
       }
     }, getModalityState(), true);
+  }
+
+  private PsiClass getContext() {
+    return myBaseClass != null ? myBaseClass : myInitialClass != null ? myInitialClass : null;
   }
 
 

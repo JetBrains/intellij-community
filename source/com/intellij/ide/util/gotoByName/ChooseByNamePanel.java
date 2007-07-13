@@ -2,6 +2,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,8 +11,8 @@ public class ChooseByNamePanel extends ChooseByNameBase {
   private JPanel myPanel;
   private boolean myCheckBoxVisible = false;
 
-  public ChooseByNamePanel(Project project, ChooseByNameModel model, String initialText, boolean isCheckboxVisible){
-    super(project, model, initialText);
+  public ChooseByNamePanel(Project project, ChooseByNameModel model, String initialText, boolean isCheckboxVisible, final PsiElement context){
+    super(project, model, initialText, context);
     myCheckBoxVisible = isCheckboxVisible;
   }
 

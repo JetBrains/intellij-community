@@ -1,27 +1,27 @@
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 
 public class GotoSymbolAction extends GotoActionBase {
 
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiElement context = e.getData(DataKeys.PSI_FILE);
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoSymbolModel2(project));
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoSymbolModel2(project), context);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose ()
       {

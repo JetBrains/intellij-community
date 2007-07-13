@@ -3,7 +3,6 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,12 +19,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.*;
@@ -39,6 +40,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -48,6 +51,7 @@ public abstract class ChooseByNameBase{
   protected final Project myProject;
   protected final ChooseByNameModel myModel;
   protected final String myInitialText;
+  private final Reference<PsiElement> myContext;
 
   protected Component myPreviouslyFocusedComponent;
 
@@ -100,11 +104,13 @@ public abstract class ChooseByNameBase{
 
   /**
    * @param initialText initial text which will be in the lookup text field
+   * @param context
    */
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText) {
+  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, final PsiElement context) {
     myProject = project;
     myModel = model;
     myInitialText = initialText;
+    myContext = new WeakReference<PsiElement>(context);
   }
 
   public void invoke(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
@@ -133,7 +139,7 @@ public abstract class ChooseByNameBase{
           return element;
         }
       }
-      else if (dataId.equals(DataConstantsEx.PSI_ELEMENT_ARRAY)) {
+      else if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
         final List<Object> chosenElements = getChosenElements();
         if (chosenElements != null) {
           List<PsiElement> result = new ArrayList<PsiElement>();
@@ -442,7 +448,7 @@ public abstract class ChooseByNameBase{
 
 
     myTextFieldPanel.setBounds(x, y, preferredTextFieldPanelSize.width, preferredTextFieldPanelSize.height);
-    layeredPane.add(myTextFieldPanel, new Integer(500));
+    layeredPane.add(myTextFieldPanel, Integer.valueOf(500));
     layeredPane.moveToFront(myTextFieldPanel);
     VISIBLE_LIST_SIZE_LIMIT = Math.max
       (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
@@ -558,7 +564,7 @@ public abstract class ChooseByNameBase{
   private void setElementsToList(int pos, Set<?> elements) {
     myListUpdater.cancelAll();
     if (myDisposedFlag) return;
-    if (elements.size() == 0) {
+    if (elements.isEmpty()) {
       myListModel.clear();
       myTextField.setForeground(Color.red);
       myListUpdater.cancelAll();
@@ -742,7 +748,7 @@ public abstract class ChooseByNameBase{
 
     public MyTextField() {
       super(40);
-      enableEvents(KeyEvent.KEY_EVENT_MASK);
+      enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
@@ -777,7 +783,7 @@ public abstract class ChooseByNameBase{
       }
       if (backStroke != null && keyStroke.equals(backStroke)) {
         e.consume();
-        if (myHistory.size() != 0) {
+        if (!myHistory.isEmpty()) {
           final String oldText = myTextField.getText();
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
@@ -789,7 +795,7 @@ public abstract class ChooseByNameBase{
       }
       if (forwardStroke != null && keyStroke.equals(forwardStroke)) {
         e.consume();
-        if (myFuture.size() != 0) {
+        if (!myFuture.isEmpty()) {
           final String oldText = myTextField.getText();
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
@@ -811,7 +817,7 @@ public abstract class ChooseByNameBase{
       final int oldPos = myList.getSelectedIndex();
 
       String commonPrefix  = null;
-      if (list.size() != 0) {
+      if (!list.isEmpty()) {
         for (String name : list) {
           final String string = name.toLowerCase();
           if (commonPrefix == null) {
@@ -849,7 +855,7 @@ public abstract class ChooseByNameBase{
     private boolean isComplexPattern(final String pattern) {
       if (pattern.indexOf('*') >= 0) return true;
       for (String s : myModel.getSeparators()) {
-        if (pattern.indexOf(s) >= 0) return true;
+        if (pattern.contains(s)) return true;
       }
 
       return false;
@@ -871,7 +877,7 @@ public abstract class ChooseByNameBase{
 
     private Set<Object> myElements = null;
 
-    private volatile boolean [] myCancelled = new boolean[]{false};
+    private volatile boolean myCancelled = false;
     private boolean myCanCancel = true;
 
     public CalcElementsThread(String pattern, boolean checkboxState, CalcElementsCallback callback, ModalityState modalityState) {
@@ -892,9 +898,10 @@ public abstract class ChooseByNameBase{
             ensureNamesLoaded(myCheckboxState);
             addElementsByPattern(elements, myPattern);
             for (Object elem : elements) {
+              if (myCancelled) throw new ProcessCanceledException();
               if (elem instanceof PsiElement) {
                 final PsiElement psiElement = (PsiElement)elem;
-                psiElement.isWritable(); // That will cache writable flag in VirtualFile. Taking the action here makes it canceled.
+                psiElement.isWritable(); // That will cache writable flag in VirtualFile. Taking the action here makes it canceleable.
               }
             }
           }
@@ -904,19 +911,19 @@ public abstract class ChooseByNameBase{
       };
       ApplicationManager.getApplication().runReadAction(action);
 
-      if (myCancelled[0]) {
+      if (myCancelled) {
         myShowCardAlarm.cancelAllRequests();
         return;
       }
 
       final String cardToShow;
-      if (elements.size() == 0 && !myCheckboxState) {
+      if (elements.isEmpty() && !myCheckboxState) {
         myCheckboxState = true;
         ApplicationManager.getApplication().runReadAction(action);
-        cardToShow = elements.size() == 0 ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
+        cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
       else {
-        cardToShow = elements.size() == 0 ? NOT_FOUND_CARD : CHECK_BOX_CARD;
+        cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : CHECK_BOX_CARD;
       }
       showCard(cardToShow, 0);
 
@@ -942,7 +949,6 @@ public abstract class ChooseByNameBase{
       myCanCancel = canCancel;
     }
 
-
     private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
       String namePattern = getNamePattern(pattern);
       String qualifierPattern = getQualifierPattern(pattern);
@@ -950,26 +956,32 @@ public abstract class ChooseByNameBase{
       if (namePattern.length() == 0 && !isShowListForEmptyPattern()) return;
       
       List<String> namesList = new ArrayList<String>();
-      getNamesByPattern(myCheckboxState, myCancelled, namesList, namePattern);
-      if (myCancelled[0]) {
+      getNamesByPattern(myCheckboxState, this, namesList, namePattern);
+      if (myCancelled) {
         throw new ProcessCanceledException();
       }
       Collections.sort(namesList, new MatchesComparator(pattern));
 
       boolean overflow = false;
+      List<Object> sameNameElements = new SmartList<Object>();
       All:
       for (String name : namesList) {
-        if (myCancelled[0]) {
+        if (myCancelled) {
           throw new ProcessCanceledException();
         }
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
+        sameNameElements.clear();
         for (final Object element : elements) {
           if (matchesQualifier(element, qualifierPattern)) {
-            elementsArray.add(element);
-            if (elementsArray.size() >= myMaximumListSizeLimit) {
-              overflow = true;
-              break All;
-            }
+            sameNameElements.add(element);
+          }
+        }
+        sortByProximity(sameNameElements);
+        for (Object element : sameNameElements) {
+          elementsArray.add(element);
+          if (elementsArray.size() >= myMaximumListSizeLimit) {
+            overflow = true;
+            break All;
           }
         }
       }
@@ -979,17 +991,21 @@ public abstract class ChooseByNameBase{
       }
     }
 
-    public void cancel() {
+    private void cancel() {
       if (myCanCancel) {
-        myCancelled[0] = true;
+        myCancelled = true;
       }
     }
+  }
+
+  private void sortByProximity(final List<Object> sameNameElements) {
+    Collections.sort(sameNameElements, new PsiProximityComparator(myContext.get(), myProject));
   }
 
   private List<String> split(String s) {
     for (String separator : myModel.getSeparators()) {
       final List<String> result = StringUtil.split(s, separator);
-      if (result.size() > 0) return result;
+      if (!result.isEmpty()) return result;
     }
     return Collections.singletonList(s);
   }
@@ -1006,8 +1022,7 @@ public abstract class ChooseByNameBase{
 patterns:
     for (String pattern : patterns) {
       if (pattern.length() > 0) {
-        int j;
-        for (j = matchPosition; j < suspects.size() - 1; j++) {
+        for (int j = matchPosition; j < suspects.size() - 1; j++) {
           String suspect = suspects.get(j);
           if (StringUtil.startsWithIgnoreCase(suspect, pattern)) {
             matchPosition = j + 1;
@@ -1023,7 +1038,7 @@ patterns:
   }
 
   private void getNamesByPattern(final boolean checkboxState,
-                                 final boolean[] cancelled,
+                                 CalcElementsThread calcElementsThread,
                                  final List<String> list,
                                  final String pattern) throws ProcessCanceledException {
     if (!isShowListForEmptyPattern()) {
@@ -1039,7 +1054,7 @@ patterns:
       final PatternMatcher matcher = new Perl5Matcher();
 
       for (String name : names) {
-        if (cancelled != null && cancelled[0]) {
+        if (calcElementsThread != null && calcElementsThread.myCancelled) {
           throw new ProcessCanceledException();
         }
         if (name != null) {
@@ -1062,4 +1077,5 @@ patterns:
   private static interface CalcElementsCallback {
     void run(Set<?> elements);
   }
+
 }

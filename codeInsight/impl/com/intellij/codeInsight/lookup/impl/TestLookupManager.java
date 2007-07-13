@@ -12,8 +12,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 
-import java.util.Arrays;
-
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -45,9 +43,7 @@ public class TestLookupManager extends LookupManagerImpl{
 
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    if (sortItems(psiFile, items)) {
-      Arrays.sort(items, COMPARATOR);
-    }
+    sortItems(psiFile, items);
 
     myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter);
     myActiveLookupEditor = editor;
@@ -55,7 +51,7 @@ public class TestLookupManager extends LookupManagerImpl{
     return myActiveLookup;
   }
 
-  private static boolean sortItems(PsiFile containingFile, LookupItem[] items) {
+  protected boolean shouldSortItems(PsiFile containingFile, LookupItem[] items) {
     if (!(containingFile instanceof XmlFile)) return true;
 
     for (LookupItem item : items) {

@@ -64,7 +64,7 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
   }
 
   public char getCheckBoxMnemonic() {
-    // Some combination like Alt+N, Ant+O, etc are a dead sysmbols, therefore
+    // Some combination like Alt+N, Ant+O, etc are a dead symbols, therefore
     // we have to change mnemonics for Mac users.
     return SystemInfo.isMac?'P':'n';
   }

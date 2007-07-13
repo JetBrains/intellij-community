@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
@@ -187,7 +188,8 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     if (myInitialFile != null) {
       name = myInitialFile.getName();
     }
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true) {
+    PsiElement context = myInitialFile == null ? null : myInitialFile;
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, context) {
       protected void close(final boolean isOk) {
         super.close(isOk);
 
@@ -397,10 +399,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         if (myFilter != null && !myFilter.accept(psiFile)) {
           return false;
         }
-        if (myFileType != null && psiFile.getFileType() != myFileType) {
-          return false;
-        }
-        return true;
+        return myFileType == null || psiFile.getFileType() == myFileType;
       }
     };
     final List<Object> result = new ArrayList<Object>(list.length);

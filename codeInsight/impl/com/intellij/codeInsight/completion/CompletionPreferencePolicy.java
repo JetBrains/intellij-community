@@ -72,19 +72,15 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     item1String = item1String.toLowerCase();
     item2String = item2String.toLowerCase();
 
-    if(item1String.startsWith(myPrefixLowered) && !item2String.startsWith(myPrefixLowered))
-      return -1;
-    if(!item1String.startsWith(myPrefixLowered) && item2String.startsWith(myPrefixLowered))
-      return 1;
+    if (item1String.startsWith(myPrefixLowered) && !item2String.startsWith(myPrefixLowered)) return -1;
+    if (!item1String.startsWith(myPrefixLowered) && item2String.startsWith(myPrefixLowered)) return 1;
 
     // Check equality in case
     item1String = item1.getLookupString();
     item2String = item2.getLookupString();
 
-    if(item1String.startsWith(myPrefix) && !item2String.startsWith(myPrefix))
-      return -1;
-    if(!item1String.startsWith(myPrefix) && item2String.startsWith(myPrefix))
-      return 1;
+    if (item1String.startsWith(myPrefix) && !item2String.startsWith(myPrefix)) return -1;
+    if (!item1String.startsWith(myPrefix) && item2String.startsWith(myPrefix)) return 1;
 
     Object o1 = item1.getObject();
     Object o2 = item2.getObject();
@@ -97,25 +93,23 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       }
     }
 
-    if(o1 instanceof String || o1 instanceof PsiKeyword){
-      if(!(o2 instanceof String || o2 instanceof PsiKeyword))
-        return 1;
-      else{
+    if (o1 instanceof String || o1 instanceof PsiKeyword) {
+      if (o2 instanceof String || o2 instanceof PsiKeyword) {
         return o1.toString().compareTo(o2.toString());
       }
+      else {
+        return 1;
+      }
     }
-    else if(o2 instanceof String || o2 instanceof PsiKeyword)
-      return -1;
+    if (o2 instanceof String || o2 instanceof PsiKeyword) return -1;
 
     if (o1 instanceof PsiLocalVariable ||
         o2 instanceof PsiLocalVariable ||
         o1 instanceof PsiParameter ||
         o2 instanceof PsiParameter
     ){
-      if(!(o1 instanceof PsiLocalVariable ||
-           o1 instanceof PsiParameter)) return 1;
-      if(!(o2 instanceof PsiLocalVariable ||
-           o2 instanceof PsiParameter)) return -1;
+      if (!(o1 instanceof PsiLocalVariable || o1 instanceof PsiParameter)) return 1;
+      if (!(o2 instanceof PsiLocalVariable || o2 instanceof PsiParameter)) return -1;
       synchronized(myItemToIndexMap){
         int index1 = myItemToIndexMap.get(item1) - 1;
         if (index1 < 0){
@@ -130,10 +124,10 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
     if (o1 instanceof PsiMember && o2 instanceof PsiMember){
       boolean equalsName1 = false;
-      boolean equalsName2 = false;
       if(o1 instanceof PsiNamedElement){
         equalsName1 = myPrefix.equals(((PsiNamedElement)o1).getName());
       }
+      boolean equalsName2 = false;
       if(o2 instanceof PsiNamedElement){
         equalsName2 = myPrefix.equals(((PsiNamedElement)o2).getName());
       }
@@ -148,10 +142,11 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       if (qualifierType1 != null && qualifierType2 != null){
         int count1 = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)o1);
         int count2 = StatisticsManager.getInstance().getMemberUseCount(qualifierType2, (PsiMember)o2);
-        return count2 - count1;
+        if (count2 != count1) {
+          return count2 - count1;
+        }
       }
     }
-
     return 0;
   }
 

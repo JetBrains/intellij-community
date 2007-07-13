@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -91,8 +92,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
     JScrollPane scrollPane = new JScrollPane(myList);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(new com.intellij.ui.plaf.beg.BegPopupMenuBorder());
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(new BegPopupMenuBorder());
     getComponent().add(scrollPane, BorderLayout.CENTER);
 
     myEditorCaretListener = new CaretListener() {
@@ -212,9 +213,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
         }
       }
     }
-    boolean isEmpty = array.size() == 0;
+    boolean isEmpty = array.isEmpty();
     if (isEmpty){
-      LookupItem item = new LookupItem(CompletionBundle.message("completion.no.suggestions"), "");
+      LookupItem<String> item = new LookupItem<String>(CompletionBundle.message("completion.no.suggestions"), "");
       item.setAttribute(EMPTY_ITEM_ATTRIBUTE, "");
       model.addElement(item);
       array.add(item);
@@ -353,8 +354,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     int offset = myEditor.getSelectionModel().hasSelection()
                  ? myEditor.getSelectionModel().getSelectionStart()
                  : myEditor.getCaretModel().getOffset();
-    int lookupStart = offset - myPrefix.length();
-    return lookupStart;
+    return offset - myPrefix.length();
   }
 
   private void selectMostPreferableItem(){
@@ -405,7 +405,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
       myItemPreferencePolicy.itemSelected(item);
     }
 
-    if (myListeners.size() > 0){
+    if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, completionChar);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {
@@ -415,7 +415,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   }
 
   private void fireLookupCanceled(){
-    if (myListeners.size() > 0){
+    if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, null);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {
@@ -425,7 +425,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   }
 
   private void fireCurrentItemChanged(LookupItem item){
-    if (myListeners.size() > 0){
+    if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
       for (LookupListener listener : listeners) {

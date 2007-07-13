@@ -37,20 +37,19 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.IconUtil;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Comparator;
 
 public class NavigationItemListCellRenderer extends JPanel implements ListCellRenderer {
   public NavigationItemListCellRenderer() {
@@ -130,26 +129,5 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     }
-  }
-
-  public static Comparator getComparator() {
-    return new Comparator() {
-      public int compare(Object o1, Object o2) {
-        return getText(o1).compareTo(getText(o2));
-      }
-
-      private String getText(Object o) {
-        if (o instanceof NavigationItem) {
-          NavigationItem element = (NavigationItem)o;
-          ItemPresentation presentation = element.getPresentation();
-          String elementText = presentation.getLocationString();
-          String containerText = presentation.getLocationString();
-          return containerText != null ? elementText + " " + containerText : elementText;
-        }
-        else {
-          return o.toString();
-        }
-      }
-    };
   }
 }
