@@ -7,10 +7,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
 public class CvsChangeListsBuilder {
+  @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
+
   private static class ChangeListKey {
     public String branch;
     public String author;
@@ -108,6 +111,12 @@ public class CvsChangeListsBuilder {
       if (CvsChangeList.isAncestor(myRootPath, file)) {
         for (Revision revision : log.getRevisions()) {
           if (revision != null) {
+            if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
+                revision.getMessage().indexOf(INITIALLY_ADDED_ON_BRANCH) >= 0) {
+              // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
+              // the file is never actually deleted)              
+              continue;
+            }
             String branchName = getBranchName(revision, log.getSymbolicNames());
             revisionWrappers.add(new RevisionWrapper(file, revision, branchName));
           }
