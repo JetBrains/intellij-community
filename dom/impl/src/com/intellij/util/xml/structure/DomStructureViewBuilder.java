@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -22,17 +23,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
-  private final DomElement myRoot;
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
+  private final XmlFile myFile;
 
-  public DomStructureViewBuilder(final DomElement root, final Function<DomElement,DomService.StructureViewMode> descriptor) {
-    myRoot = root;
+  public DomStructureViewBuilder(final XmlFile file, final Function<DomElement,DomService.StructureViewMode> descriptor) {
+    myFile = file;
     myDescriptor = descriptor;
   }
 
   @NotNull
   public StructureViewModel createStructureViewModel() {
-    return new DomStructureViewTreeModel(myRoot, myRoot.getManager().getProject(), myDescriptor);
+    return new DomStructureViewTreeModel(myFile, myDescriptor);
   }
 
   public boolean isRootNodeShown() {

@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 
 /**
@@ -22,5 +23,5 @@ public abstract class DomService {
   public enum StructureViewMode {
     SHOW, SHOW_CHILDREN, SKIP
   }
-  public abstract StructureViewBuilder createSimpleStructureViewBuilder(final DomElement element, final Function<DomElement, StructureViewMode> modeProvider);
+  public abstract StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider);
 }

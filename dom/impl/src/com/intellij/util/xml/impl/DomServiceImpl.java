@@ -5,6 +5,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomService;
@@ -22,8 +23,8 @@ public class DomServiceImpl extends DomService {
   }
 
 
-  public StructureViewBuilder createSimpleStructureViewBuilder(final DomElement element, final Function<DomElement, StructureViewMode> modeProvider) {
-    return new DomStructureViewBuilder(element, modeProvider);
+  public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
+    return new DomStructureViewBuilder(file, modeProvider);
   }
 
 }

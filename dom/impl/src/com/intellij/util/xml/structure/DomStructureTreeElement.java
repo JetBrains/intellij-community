@@ -38,7 +38,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   public Object getValue() {
-    return myElement.getXmlElement();
+    return !myElement.isValid() ? null : myElement.getXmlElement();
   }
 
   public ItemPresentation getPresentation() {
@@ -46,6 +46,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   public TreeElement[] getChildren() {
+    if (!myElement.isValid()) return EMPTY_ARRAY;
     final ArrayList<TreeElement> result = new ArrayList<TreeElement>();
     final DomElementVisitor elementVisitor = new DomElementVisitor() {
       public void visitDomElement(final DomElement element) {
