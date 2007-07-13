@@ -117,6 +117,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void fileDirty(VirtualFile file) {
+    if (!file.isInLocalFileSystem()) {
+      return;
+    }
     fileDirty(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
   }
 
@@ -196,6 +199,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     @Override
     public void beforeFileDeletion(VirtualFileEvent event) {
+      if (!event.getFile().isInLocalFileSystem()) return;
       // need to keep track of whether the deleted file was a directory
       final boolean directory = event.getFile().isDirectory();
       final FilePathImpl path = new FilePathImpl(new File(event.getFile().getPath()), directory);
