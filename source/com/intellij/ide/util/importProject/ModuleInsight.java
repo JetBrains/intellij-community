@@ -53,8 +53,8 @@ public class ModuleInsight {
     myLexer = new JavaLexer(LanguageLevel.JDK_1_5);
   }
   
-  public List<ModuleDescriptor> getSuggestedModules() {
-    return new ArrayList<ModuleDescriptor>(myContentRootToModules.values());
+  public ProjectLayout getSuggestedLayout() {
+    return new ProjectLayout(myContentRootToModules.values(), myJarToPackagesMap.keySet());
   }
   
   public void scan() {

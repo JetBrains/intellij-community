@@ -21,7 +21,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 6, 2004
  */
-public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDescriptor>> {
+public class ModulesDetectionStep extends AbstractStepWithProgress<ProjectLayout> {
   private final JavaModuleBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
@@ -72,7 +72,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     return true;
   }
 
-  protected List<ModuleDescriptor> calculate() {
+  protected ProjectLayout calculate() {
     // build sources array
     final List<Pair<String,String>> sourcePaths = myBuilder.getSourcePaths();
     final List<Pair<File,String>> _sourcePaths = new ArrayList<Pair<File, String>>();
@@ -89,15 +89,16 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     final ModuleInsight insight = new ModuleInsight(new DelegatingProgressIndicator(), Arrays.asList(new File(myBuilder.getContentEntryPath())), _sourcePaths, ignored);
     insight.scan();
     
-    return insight.getSuggestedModules();
+    return insight.getSuggestedLayout();
   }
 
-  protected void onFinished(final List<ModuleDescriptor> moduleDescriptors, final boolean canceled) {
+  protected void onFinished(final ProjectLayout moduleDescriptors, final boolean canceled) {
     final Set<File> jars = new HashSet<File>();
-    for (ModuleDescriptor moduleDescriptor : moduleDescriptors) {
+    final List<ModuleDescriptor> modules = moduleDescriptors.getModules();
+    for (ModuleDescriptor moduleDescriptor : modules) {
       jars.addAll(moduleDescriptor.getLibraryFiles());
     }
-    rebuildModuleTree(moduleDescriptors);
+    rebuildModuleTree(modules);
     rebuildJarsTree(jars);
   }
 
