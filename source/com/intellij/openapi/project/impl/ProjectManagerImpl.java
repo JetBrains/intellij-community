@@ -390,7 +390,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           try {
             if (indicator != null) {
-              indicator.setText("Loading components");
+              indicator.setText("Loading components for '" + filePath + "'");
               indicator.setIndeterminate(true);
             }
 
