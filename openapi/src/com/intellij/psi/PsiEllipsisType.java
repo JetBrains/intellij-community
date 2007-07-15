@@ -39,9 +39,13 @@ public class PsiEllipsisType extends PsiArrayType {
     return getComponentType().getCanonicalText() + "...";
   }
 
+  public String getInternalCanonicalText() {
+    return getComponentType().getInternalCanonicalText() + "...";
+  }
+
   public boolean equalsToText(String text) {
-    return (text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3))) ||
-           super.equalsToText(text);
+    return text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3))
+           || super.equalsToText(text);
   }
 
   /**
