@@ -81,11 +81,11 @@ public class ShowUsagesAction extends AnAction {
     }
     else {
       final String title = presentation.getTabText();
-      getUsagePopup(usages, title, processor).showInBestPositionFor(editor);
+      getUsagePopup(usages, title, processor, project).showInBestPositionFor(editor);
     }
   }
 
-  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor) {
+  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor, final Project project) {
     Collections.sort(usages, new Comparator<Usage>() {
       public int compare(final Usage o1, final Usage o2) {
         VirtualFile file1 = UsageListCellRenderer.getVirtualFile(o1);
@@ -98,7 +98,7 @@ public class ShowUsagesAction extends AnAction {
       }
     });
     final JList list = new JList(new Vector<Usage>(usages));
-    list.setCellRenderer(new UsageListCellRenderer());
+    list.setCellRenderer(new UsageListCellRenderer(project));
 
     final Runnable runnable = new Runnable() {
       public void run() {

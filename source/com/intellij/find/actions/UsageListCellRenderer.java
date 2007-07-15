@@ -6,23 +6,27 @@
  */
 package com.intellij.find.actions;
 
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.rules.UsageInFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UsageListCellRenderer extends ColoredListCellRenderer {
-  private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-  private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
+  private final Project myProject;
+
+  public UsageListCellRenderer(@NotNull Project project) {
+    myProject = project;
+  }
 
   protected void customizeCellRenderer(final JList list,
                                        final Object value,
@@ -36,6 +40,10 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
     if (virtualFile != null) {
       append(virtualFile.getName() + ": ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFile(virtualFile).getIcon());
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+      if (psiFile != null) {
+        setIcon(psiFile.getIcon(0));
+      }
     }
 
     TextChunk[] text = presentation.getText();
