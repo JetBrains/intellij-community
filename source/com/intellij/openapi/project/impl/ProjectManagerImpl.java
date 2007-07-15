@@ -1,6 +1,7 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
@@ -319,6 +320,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (!ok) {
       closeProject(project, false);
+      updateLastProjectToReopen();
       return false;
     }
 
@@ -344,6 +346,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (!ok) {
       closeProject(project, false);
+      updateLastProjectToReopen();
       return false;
     }
 
@@ -421,6 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           Disposer.dispose(project[0]);
           project[0] = null;
         }
+        updateLastProjectToReopen();
       }
 
       if (project[0] == null || !ok) {
@@ -442,6 +446,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
     }
+  }
+
+  private static void updateLastProjectToReopen() {
+    RecentProjectsManager.getInstance().updateLastProjectPath();
   }
 
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {
