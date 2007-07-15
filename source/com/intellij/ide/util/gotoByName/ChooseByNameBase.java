@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.JBPopupImpl;
@@ -671,27 +671,31 @@ public abstract class ChooseByNameBase{
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private static final int DELAY = 10;
     private static final int MAX_BLOCKING_TIME = 30;
+    private final List<Cmd> myCommands = Collections.synchronizedList(new ArrayList<Cmd>());
 
     public void cancelAll() {
+      myCommands.clear();
       myAlarm.cancelAllRequests();
     }
 
     public void appendToModel(final List<Cmd> commands, final int selectionPos) {
       myAlarm.cancelAllRequests();
-      if (commands.isEmpty() || myDisposedFlag) return;
+      myCommands.addAll(commands);
+
+      if (myCommands.isEmpty() || myDisposedFlag) return;
       myAlarm.addRequest(new Runnable() {
         public void run() {
           if (myDisposedFlag) return;
           final long startTime = System.currentTimeMillis();
           do {
-            final Cmd cmd = commands.remove(0);
+            final Cmd cmd = myCommands.remove(0);
             cmd.apply();
           }
-          while (!commands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME);
+          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME);
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
           ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
-          if (!commands.isEmpty()) {
+          if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
           }
           showList();
