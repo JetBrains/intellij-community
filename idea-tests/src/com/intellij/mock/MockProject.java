@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -113,11 +114,27 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   }
 
   public GlobalSearchScope getAllScope() {
-    return null;
+    return new GlobalSearchScope() {
+      public boolean contains(final VirtualFile file) {
+        return false;
+      }
+
+      public int compare(final VirtualFile file1, final VirtualFile file2) {
+        return 0;
+      }
+
+      public boolean isSearchInModuleContent(@NotNull final Module aModule) {
+        return false;
+      }
+
+      public boolean isSearchInLibraries() {
+        return false;
+      }
+    };
   }
 
   public GlobalSearchScope getProjectScope() {
-    return null;
+    return getAllScope();
   }
 
 }

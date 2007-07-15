@@ -87,7 +87,7 @@ public abstract class ActionRunner {
     }
     Throwable e = exception[0];
     if (e != null) {
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
+      if (e instanceof Exception) throw (Exception)e;
       throw new Exception(e);
     }
     return result[0];

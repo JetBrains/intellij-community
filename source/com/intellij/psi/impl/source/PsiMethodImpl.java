@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   private PsiReferenceListImpl myRepositoryThrowsList = null;
   private PsiTypeParameterListImpl myRepositoryTypeParameterList;
 
-  private String myCachedName = null;
+  @NonNls private String myCachedName = null;
   private Boolean myCachedIsDeprecated = null;
   private Boolean myCachedIsConstructor = null;
   private Boolean myCachedIsVarargs = null;
@@ -144,11 +145,11 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   @NotNull
   public String getName() {
-    String name = myCachedName;
+    @NonNls String name = myCachedName;
     if (name == null){
       if (getTreeElement() != null){
         final PsiIdentifier nameIdentifier = getNameIdentifier();
-        name = nameIdentifier != null ? nameIdentifier.getText() : "<unnamed>";
+        name = nameIdentifier == null ? "<unnamed>" : nameIdentifier.getText();
       }
       else{
         name = getRepositoryManager().getMethodView().getName(getRepositoryId());
@@ -338,7 +339,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return "PsiMethod:" + getName();
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     return PsiImplUtil.processDeclarationsInMethod(this, processor, substitutor, lastParent, place);
 
   }

@@ -255,7 +255,8 @@ public class PackageUtil {
       int lastDotIndex = nameToMatch.lastIndexOf(".");
       if (lastDotIndex >= 0) {
         nameToMatch = nameToMatch.substring(0, lastDotIndex);
-      } else {
+      }
+      else {
         return null;
       }
     }

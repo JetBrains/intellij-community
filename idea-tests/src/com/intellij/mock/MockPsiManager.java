@@ -151,7 +151,7 @@ public class MockPsiManager extends PsiManagerEx {
     return psiPackage;
   }
 
-  public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return findClass(qualifiedName);
   }
 

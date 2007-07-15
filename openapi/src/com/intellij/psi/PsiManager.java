@@ -45,7 +45,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param project the project for which the PSI manager is requested.
    * @return the PSI manager instance.
    */
-  public static @NotNull PsiManager getInstance(@NotNull Project project) {
+  @NotNull
+  public static PsiManager getInstance(@NotNull Project project) {
     return project.getComponent(PsiManager.class);
   }
 
@@ -54,12 +55,14 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the project instance.
    */
-  public abstract @NotNull Project getProject();
+  @NotNull
+  public abstract Project getProject();
 
   /**
    * @deprecated
    */
-  public abstract @NotNull PsiDirectory[] getRootDirectories(int rootType);
+  @NotNull
+  public abstract PsiDirectory[] getRootDirectories(int rootType);
 
   /**
    * Returns the PSI file corresponding to the specified virtual file.
@@ -68,9 +71,11 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI file, or null if <code>file</code> is a directory, an invalid virtual file,
    * or the current project is a dummy or default project.
    */
-  public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
+  @Nullable
+  public abstract PsiFile findFile(@NotNull VirtualFile file);
 
-  public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
+  @Nullable
+  public abstract FileViewProvider findViewProvider(@NotNull VirtualFile file);
 
   /**
    * Returns the PSI directory corresponding to the specified virtual file system directory.
@@ -78,7 +83,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param file the directory for which the PSI is requested.
    * @return the PSI directory, or null if there is no PSI for the specified directory in this project.
    */
-  public abstract @Nullable PsiDirectory findDirectory(@NotNull VirtualFile file);
+  @Nullable
+  public abstract PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
    * Searches the project and all its libraries for a class with the specified full-qualified
@@ -88,7 +94,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI class, or null if no class with such name is found.
    * @deprecated use {@link #findClass(String, GlobalSearchScope)}
    */
-  public abstract @Nullable PsiClass findClass(@NotNull @NonNls String qualifiedName);
+  @Nullable
+  public abstract PsiClass findClass(@NotNull @NonNls String qualifiedName);
 
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified
@@ -98,7 +105,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param scope the scope to search.
    * @return the PSI class, or null if no class with such name is found.
    */
-  public abstract @Nullable PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  @Nullable
+  public abstract PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -108,7 +116,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param scope the scope to search.
    * @return the array of found classes, or an empty array if no classes are found.
    */
-  public abstract @NotNull PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  @NotNull
+  public abstract PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the project for the package with the specified full-qualified name and retunrs one
@@ -117,7 +126,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param qualifiedName the full-qualified name of the package to find.
    * @return the PSI package, or null if no package with such name is found.
    */
-  public abstract @Nullable PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
+  @Nullable
+  public abstract PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
@@ -166,7 +176,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the code style manager instance.
    */
-  public abstract @NotNull CodeStyleManager getCodeStyleManager();
+  @NotNull
+  public abstract CodeStyleManager getCodeStyleManager();
 
   /**
    * Returns the element factory for the project, which can be used to
@@ -174,7 +185,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the element factory instance.
    */
-  public abstract @NotNull PsiElementFactory getElementFactory();
+  @NotNull
+  public abstract PsiElementFactory getElementFactory();
 
   /**
    * Returns the factory for the project, which can be used to create instances of certain java constructs from their textual
@@ -183,7 +195,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * provides exactly same methods but ensures created instances will get properly formatted.
    * @return the parser facade.
    */
-  public abstract @NotNull PsiJavaParserFacade getParserFacade();
+  @NotNull
+  public abstract PsiJavaParserFacade getParserFacade();
   /**
    * Returns the search helper for the project, which provides low-level search and
    * find usages functionality. It can be used to perform operations like finding references
@@ -191,7 +204,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the search helper instance.
    */
-  public abstract @NotNull PsiSearchHelper getSearchHelper();
+  @NotNull
+  public abstract PsiSearchHelper getSearchHelper();
 
   /**
    * Returns the resolve helper for the project, which can be used to resolve references
@@ -199,7 +213,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the resolve helper instance.
    */
-  public abstract @NotNull PsiResolveHelper getResolveHelper();
+  @NotNull
+  public abstract PsiResolveHelper getResolveHelper();
 
   /**
    * Returns the short name cache for the project, which can be used to locate files, classes,
@@ -207,7 +222,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the short name cache instance.
    */
-  public abstract @NotNull PsiShortNamesCache getShortNamesCache();
+  @NotNull
+  public abstract PsiShortNamesCache getShortNamesCache();
 
   /**
    * Registers a custom short name cache implementation for the project, which is used
@@ -223,7 +239,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the migrate operation object.
    */
-  public abstract @NotNull PsiMigration startMigration();
+  @NotNull
+  public abstract PsiMigration startMigration();
 
   /**
    * Returns the JavaDoc manager for the project, which can be used to retrieve
@@ -231,7 +248,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the JavaDoc manager instance.
    */
-  public abstract @NotNull JavadocManager getJavadocManager();
+  @NotNull
+  public abstract JavadocManager getJavadocManager();
 
   /**
    * Returns the name helper for the project, which can be used to validate
@@ -239,14 +257,16 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the name helper instance.
    */
-  public abstract @NotNull PsiNameHelper getNameHelper();
+  @NotNull
+  public abstract PsiNameHelper getNameHelper();
 
   /**
    * Returns the constant expression evaluator for the project.
    *
    * @return the evaluator instance.
    */
-  public abstract @NotNull PsiConstantEvaluationHelper getConstantEvaluationHelper();
+  @NotNull
+  public abstract PsiConstantEvaluationHelper getConstantEvaluationHelper();
 
   /**
    * Returns the modification tracker for the project, which can be used to get the PSI
@@ -254,7 +274,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the modification tracker instance.
    */
-  public abstract @NotNull PsiModificationTracker getModificationTracker();
+  @NotNull
+  public abstract PsiModificationTracker getModificationTracker();
 
 
   /**
@@ -263,7 +284,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the cached values manager instance.
    */
-  public abstract @NotNull CachedValuesManager getCachedValuesManager();
+  @NotNull
+  public abstract CachedValuesManager getCachedValuesManager();
 
   /**
    * Moves the specified file to the specified directory.
@@ -322,7 +344,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    * {@link com.intellij.psi.util.PsiUtil#getLanguageLevel(PsiElement)}
    * @return the language level instance.
    */
-  public abstract @NotNull LanguageLevel getEffectiveLanguageLevel();
+  @NotNull
+  public abstract LanguageLevel getEffectiveLanguageLevel();
 
   /**
    * Checks if the specified package name is part of the package prefix for

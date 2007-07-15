@@ -23,9 +23,8 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
     super(manager, treeElement);
   }
 
-  public boolean hasModifierProperty(String name) {
-    if (PsiModifier.FINAL.equals(name)) return true;
-    return super.hasModifierProperty(name);
+  public boolean hasModifierProperty(@NotNull String name) {
+    return PsiModifier.FINAL.equals(name) || super.hasModifierProperty(name);
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {

@@ -15,9 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author mike
@@ -29,7 +28,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   private VirtualFile[][] myFiles = new VirtualFile[ProjectRootType.ALL_TYPES.length][];
 
   private boolean myInsideChange = false;
-  private List myListeners = new ArrayList();
+  private List<ProjectRootListener> myListeners = new CopyOnWriteArrayList<ProjectRootListener>();
 
   private boolean myNoCopyJars = false;
 
@@ -80,15 +79,11 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   public void addProjectRootContainerListener(ProjectRootListener listener) {
-    List listeners = new ArrayList(myListeners);
-    listeners.add(listener);
-    myListeners = listeners;
+    myListeners.add(listener);
   }
 
   public void removeProjectRootContainerListener(ProjectRootListener listener) {
-    List listeners = new ArrayList(myListeners);
-    listeners.remove(listener);
-    myListeners = listeners;
+    myListeners.remove(listener);
   }
 
   private void fireRootsChanged(final VirtualFile[] oldRoots, final VirtualFile[] newRoots, final ProjectRootType type) {
@@ -99,8 +94,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       }
     });
     */
-    for (Iterator listenersIterator = myListeners.iterator(); listenersIterator.hasNext();) {
-      final ProjectRootListener listener = (ProjectRootListener)listenersIterator.next();
+    for (final ProjectRootListener listener : myListeners) {
       listener.rootsChanged();
     }
   }
@@ -133,21 +127,21 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   public void removeAllRoots() {
     LOG.assertTrue(myInsideChange);
-    for (int i = 0; i < myRoots.length; i++) {
-      myRoots[i].clear();
+    for (CompositeProjectRoot myRoot : myRoots) {
+      myRoot.clear();
     }
   }
 
   public void update() {
     LOG.assertTrue(myInsideChange);
-    for (int i = 0; i < myRoots.length; i++) {
-      myRoots[i].update();
+    for (CompositeProjectRoot myRoot : myRoots) {
+      myRoot.update();
     }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    for (int i = 0; i < ProjectRootType.ALL_TYPES.length; i++) {
-      read(element, ProjectRootType.ALL_TYPES[i]);
+    for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
+      read(element, type);
     }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -163,22 +157,22 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       }
     });
 
-    for (int i = 0; i < ProjectRootType.ALL_TYPES.length; i++) {
-      final VirtualFile[] newRoots = getRootFiles(ProjectRootType.ALL_TYPES[i]);
+    for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
+      final VirtualFile[] newRoots = getRootFiles(type);
       final VirtualFile[] oldRoots = VirtualFile.EMPTY_ARRAY;
       if (!Comparing.equal(oldRoots, newRoots)) {
-        fireRootsChanged(oldRoots, newRoots, ProjectRootType.ALL_TYPES[i]);
+        fireRootsChanged(oldRoots, newRoots, type);
       }
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (int i = 0; i < ProjectRootType.ALL_TYPES.length; i++) {
-      write(element, ProjectRootType.ALL_TYPES[i]);
+    for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
+      write(element, type);
     }
   }
 
-  private void setNoCopyJars(ProjectRoot root){
+  private static void setNoCopyJars(ProjectRoot root){
     if (root instanceof SimpleProjectRoot){
       String url = ((SimpleProjectRoot)root).getUrl();
       if (JarFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))){
@@ -188,8 +182,8 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
     else if (root instanceof CompositeProjectRoot){
       ProjectRoot[] roots = ((CompositeProjectRoot)root).getProjectRoots();
-      for(int i = 0; i < roots.length; i++){
-        setNoCopyJars(roots[i]);
+      for (ProjectRoot root1 : roots) {
+        setNoCopyJars(root1);
       }
     }
   }
@@ -218,8 +212,8 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   void readOldVersion(Element child) {
-    for (Iterator iterator = child.getChildren("root").iterator(); iterator.hasNext();) {
-      Element root = (Element)iterator.next();
+    for (final Object o : child.getChildren("root")) {
+      Element root = (Element)o;
       String url = root.getAttributeValue("file");
       SimpleProjectRoot projectRoot = new SimpleProjectRoot(url);
       String type = root.getChild("property").getAttributeValue("value");
@@ -239,11 +233,11 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     for (int i = 0; i < myFiles.length; i++) {
       myFiles[i] = myRoots[i].getVirtualFiles();
     }
-    for (int i = 0; i < ProjectRootType.ALL_TYPES.length; i++) {
+    for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
       final VirtualFile[] oldRoots = VirtualFile.EMPTY_ARRAY;
-      final VirtualFile[] newRoots = getRootFiles(ProjectRootType.ALL_TYPES[i]);
+      final VirtualFile[] newRoots = getRootFiles(type);
       if (!Comparing.equal(oldRoots, newRoots)) {
-        fireRootsChanged(oldRoots, newRoots, ProjectRootType.ALL_TYPES[i]);
+        fireRootsChanged(oldRoots, newRoots, type);
       }
     }
   }

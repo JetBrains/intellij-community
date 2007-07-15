@@ -20,11 +20,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PsiImplUtil {
@@ -34,12 +34,12 @@ public class PsiImplUtil {
   }
 
   @NotNull public static PsiMethod[] getConstructors(PsiClass aClass) {
-    final List<PsiMethod> constructorsList = new ArrayList<PsiMethod>();
+    final List<PsiMethod> constructorsList = new SmartList<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
     for (final PsiMethod method : methods) {
       if (method.isConstructor()) constructorsList.add(method);
     }
-    return constructorsList.toArray(PsiMethod.EMPTY_ARRAY);
+    return constructorsList.toArray(new PsiMethod[constructorsList.size()]);
   }
 
   @Nullable
