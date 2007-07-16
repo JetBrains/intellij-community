@@ -269,7 +269,9 @@ public class HtmlUtil {
         getCustomAttributeDescriptors(context),
         XmlAttributeDescriptor.class
       );
-    } else if (declarationTag.getNSDescriptor(XmlUtil.JSF_HTML_URI, true) != null && declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null) {
+    } else if (declarationTag.getNSDescriptor(XmlUtil.JSF_HTML_URI, true) != null &&
+               declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null && !XmlUtil.JSP_URI.equals(declarationTag.getNamespace())
+              ) {
       descriptors = ArrayUtil.append(
         descriptors,
         new XmlAttributeDescriptorImpl() {
