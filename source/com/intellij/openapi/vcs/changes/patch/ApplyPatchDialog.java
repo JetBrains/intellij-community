@@ -10,7 +10,9 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -19,15 +21,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -73,7 +77,7 @@ public class ApplyPatchDialog extends DialogWrapper {
   private JButton myShowDiffButton;
   private List<FilePatch> myPatches;
   private Collection<FilePatch> myPatchesFailedToLoad;
-  private final Alarm myLoadPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myLoadPatchAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm myVerifyPatchAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private String myLoadPatchError = null;
   private String myDetectedBaseDirectory = null;
@@ -102,7 +106,7 @@ public class ApplyPatchDialog extends DialogWrapper {
         myLoadPatchAlarm.cancelAllRequests();
         myLoadPatchAlarm.addRequest(new Runnable() {
           public void run() {
-            checkLoadPatches();
+            checkLoadPatches(true);
           }
         }, 400);
       }
@@ -223,16 +227,33 @@ public class ApplyPatchDialog extends DialogWrapper {
 
   public void setFileName(String fileName) {
     myFileNameField.setText(fileName);
-    checkLoadPatches();
+    checkLoadPatches(false);
   }
 
-  private void checkLoadPatches() {
+  private void checkLoadPatches(final boolean async) {
     final String fileName = myFileNameField.getText().replace(File.separatorChar, '/');
-    final VirtualFile patchFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+    final VirtualFile patchFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
+      }
+    });
     if (patchFile == null) {
       queueUpdateStatus("Cannot find patch file");
       return;
     }
+    if (async) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          loadPatchesFromFile(patchFile);
+        }
+      });
+    }
+    else {
+      loadPatchesFromFile(patchFile);
+    }
+  }
+
+  private void loadPatchesFromFile(final VirtualFile patchFile) {
     myPatches = new ArrayList<FilePatch>();
     myPatchesFailedToLoad = new HashSet<FilePatch>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -268,7 +289,7 @@ public class ApplyPatchDialog extends DialogWrapper {
           queueUpdateStatus(VcsBundle.message("patch.apply.no.patches.found"));
           return;
         }
-        
+
         autoDetectBaseDirectory();
         queueUpdateStatus(null);
       }
@@ -452,7 +473,7 @@ public class ApplyPatchDialog extends DialogWrapper {
   protected void doOKAction() {
     if (myPatches == null) {
       myLoadPatchAlarm.cancelAllRequests();
-      checkLoadPatches();
+      checkLoadPatches(false);
     }
     if (myLoadPatchError == null) {
       mySelectedChangeList = myChangeListChooser.getSelectedList(myProject);
