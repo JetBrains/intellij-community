@@ -36,6 +36,7 @@ public class InlineAction extends BaseRefactoringAction {
   protected boolean isAvailableForLanguage(Language language) {
     return language instanceof JavaLanguage ||
            language.equals(StdFileTypes.JSPX.getLanguage()) ||
-           language.equals(StdFileTypes.JSP.getLanguage());
+           language.equals(StdFileTypes.JSP.getLanguage()) ||
+           language.getRefactoringSupportProvider().getInlineHandler() != null;
   }
 }
