@@ -76,6 +76,7 @@ public class JarHandler implements FileSystemInterface {
             child.delete(this);
           }
 
+          root.markDirtyRecursively();
           RefreshQueue.getInstance().refresh(false, true, null, root);
         }
         catch (IOException e) {
