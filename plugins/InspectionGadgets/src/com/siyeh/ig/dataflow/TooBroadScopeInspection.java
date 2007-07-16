@@ -46,7 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 
 public class TooBroadScopeInspection extends BaseInspection
 {
@@ -124,10 +126,15 @@ public class TooBroadScopeInspection extends BaseInspection
                     ReferencesSearch.search(variable, variable.getUseScope());
             final Collection<PsiReference> referenceCollection =
                     query.findAll();
-            final PsiReference[] references =
-                    referenceCollection.toArray(
-                            new PsiReference[referenceCollection.size()]);
-            PsiElement commonParent = ScopeUtils.getCommonParent(references);
+	        final PsiElement[] referenceElements = new PsiElement[referenceCollection.size()];
+	        int index = 0;
+	        for (PsiReference reference : referenceCollection)
+	        {
+		        final PsiElement referenceElement = reference.getElement();
+		        referenceElements[index] = referenceElement;
+		        index++;
+	        }
+            PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
             assert commonParent != null;
             final PsiExpression initializer = variable.getInitializer();
             if (initializer != null)
@@ -143,8 +150,7 @@ public class TooBroadScopeInspection extends BaseInspection
                     return;
                 }
             }
-            final PsiReference firstReference = references[0];
-            final PsiElement referenceElement = firstReference.getElement();
+            final PsiElement referenceElement = referenceElements[0];
             final PsiElement firstReferenceScope =
                     PsiTreeUtil.getParentOfType(referenceElement,
                             PsiCodeBlock.class, PsiForStatement.class);
@@ -375,10 +381,17 @@ public class TooBroadScopeInspection extends BaseInspection
             {
                 return;
             }
-            final PsiReference[] references =
-                    referencesCollection.toArray(new PsiReference[size]);
-            PsiElement commonParent = ScopeUtils.getCommonParent(references);
-            if (commonParent == null)
+	        final PsiElement[] referenceElements = new PsiElement[referencesCollection.size()];
+	        int index = 0;
+	        for (PsiReference reference : referencesCollection)
+	        {
+		        final PsiElement referenceElement = reference.getElement();
+		        referenceElements[index] = referenceElement;
+		        index++;
+	        }
+	        Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
+            PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
+	        if (commonParent == null)
             {
                 return;
             }
@@ -404,12 +417,7 @@ public class TooBroadScopeInspection extends BaseInspection
             {
                 return;
             }
-            final PsiReference firstReference = references[0];
-            final PsiElement referenceElement = firstReference.getElement();
-            if (referenceElement == null)
-            {
-                return;
-            }
+            final PsiElement referenceElement = referenceElements[0];
             final PsiElement blockChild =
                     ScopeUtils.getChildWhichContainsElement(variableScope,
                                                             referenceElement);
@@ -442,7 +450,7 @@ public class TooBroadScopeInspection extends BaseInspection
                         (PsiAssignmentExpression)expression;
                 final PsiExpression lExpression =
                         assignmentExpression.getLExpression();
-                if (!lExpression.equals(firstReference))
+                if (!lExpression.equals(referenceElement))
                 {
                     return;
                 }
@@ -529,4 +537,23 @@ public class TooBroadScopeInspection extends BaseInspection
             return false;
         }
     }
+
+	private static class PsiElementOrderComparator implements Comparator<PsiElement>
+	{
+
+		private static final PsiElementOrderComparator INSTANCE =
+				new PsiElementOrderComparator();
+
+		public int compare(PsiElement element1, PsiElement element2)
+		{
+			final int offset1 = element1.getTextOffset();
+			final int offset2 = element2.getTextOffset();
+			return offset1 - offset2;
+		}
+
+		public static PsiElementOrderComparator getInstance()
+		{
+			return INSTANCE;
+		}
+	}
 }
