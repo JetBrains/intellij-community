@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
 
 /**
@@ -40,4 +42,10 @@ public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportP
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new GroovyIntroduceVariableHandler();
   }
+
+  @Nullable
+  public InlineHandler getInlineHandler() {
+    return new GroovyInlineHandler();
+  }
+
 }
