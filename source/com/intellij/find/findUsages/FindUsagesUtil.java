@@ -154,6 +154,9 @@ public class FindUsagesUtil {
             return metaData.getName();
           }
         }
+        if (norm instanceof PsiNamedElement) {
+          return ((PsiNamedElement)norm).getName();
+        }
 
         LOG.error("Unknown element type: " + element);
         return null;
