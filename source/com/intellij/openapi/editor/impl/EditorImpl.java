@@ -2781,11 +2781,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
 
       g.setColor(myScheme.getColor(EditorColors.CARET_COLOR));
-      if (!SystemInfo.isMac) {
-        Color background = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
-        if (background == null) background = getBackroundColor();
-        g.setXORMode(background);
-      }
 
       if (EditorImpl.this.myIsInsertMode != mySettings.isBlockCursor()) {
         for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
@@ -2793,10 +2788,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       else {
-        g.fillRect(x, y, myWidth, lineHeight - 1);
-      }
+        Color background = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
+        if (background == null) background = getBackroundColor();
+        g.setXORMode(background);
 
-      g.setPaintMode();
+        g.fillRect(x, y, myWidth, lineHeight - 1);
+
+        g.setPaintMode();
+      }
     }
   }
 
