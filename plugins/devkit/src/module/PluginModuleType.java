@@ -70,16 +70,12 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
                                               ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    final ModuleWizardStep nameAndLocationStep = stepFactory
-      .createNameAndLocationStep(wizardContext, moduleBuilder, modulesProvider, ADD_PLUGIN_MODULE_ICON, "plugin.creation");
-    steps.add(nameAndLocationStep);
     steps.add(stepFactory.createProjectJdkStep(wizardContext, ApplicationManager.getApplication().getComponent(IdeaJdk.class), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
         final ProjectJdk projectJdk = wizardContext.getProjectJdk();
         return IdeaJdk.findIdeaJdk(projectJdk) == null ? Boolean.TRUE : Boolean.FALSE;
       }
     }, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
-    steps.add(stepFactory.createSourcePathsStep(nameAndLocationStep, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
     final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
     return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
   }
@@ -90,6 +86,10 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
   public String getName() {
     return DevKitBundle.message("module.title");
+  }
+
+  public String getProjectType() {
+    return DevKitBundle.message("project.title");
   }
 
   public String getDescription() {

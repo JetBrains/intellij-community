@@ -14,21 +14,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-public class EclipseWorkspaceRootStep extends ProjectImportWizardStep{
+public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
 
   private JPanel myPanel;
   private NamePathComponent myWorkspacePathComponent;
   private ModuleDirComponent myModuleDirComponent;
-  private WizardContext myWizardContext;
   private EclipseProjectWizardContext myContext;
-  private EclipseImportWizard.Parameters myParameters;
+  private EclipseImportBuilder.Parameters myParameters;
   private JCheckBox myLinkCheckBox;
 
-  public EclipseWorkspaceRootStep(final WizardContext context, EclipseProjectWizardContext eclipseContext, EclipseImportWizard.Parameters parameters) {
-    super(parameters.updateCurrent);
-    myWizardContext = context;
-    myParameters = parameters;
-    myContext = eclipseContext;
+  public EclipseWorkspaceRootStep(final WizardContext context) {
+    super(context);
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
@@ -53,23 +49,24 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep{
   }
 
   public void updateDataModel() {
-    myContext.setRootDirectory(myWorkspacePathComponent.getPath());
-    myParameters.converterOptions.commonModulesDirectory = myModuleDirComponent.getPath();
-    myParameters.linkConverted = myLinkCheckBox.isSelected();
+    final String path = myWorkspacePathComponent.getPath();
+    getContext().setRootDirectory(path);
+    final String projectFilesDir = myModuleDirComponent.getPath();
+    getParameters().converterOptions.commonModulesDirectory = projectFilesDir;
+    getParameters().linkConverted = myLinkCheckBox.isSelected();
+    suggestProjectNameAndPath(projectFilesDir, path);
   }
 
   public void updateStep() {
     if (!myWorkspacePathComponent.isPathChangedByUser()) {
-      String path = myContext.getRootDirectory();
+      String path = getContext().getRootDirectory();
       if (path == null) {
-        path = myWizardContext.getProjectFileDirectory();
+        path = getWizardContext().getProjectFileDirectory();
       }
-      if(path!=null){
-        myWorkspacePathComponent.setPath(path.replace('/', File.separatorChar));
-        myWorkspacePathComponent.getPathComponent().selectAll();
-      }
+      myWorkspacePathComponent.setPath(path.replace('/', File.separatorChar));
+      myWorkspacePathComponent.getPathComponent().selectAll();
     }
-    myLinkCheckBox.setSelected(myParameters.linkConverted);
+    myLinkCheckBox.setSelected(getParameters().linkConverted);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -78,6 +75,20 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep{
 
   public String getHelpId() {
     return null;
+  }
+
+  public EclipseProjectWizardContext getContext() {
+    if (myContext == null) {
+      myContext = (EclipseProjectWizardContext)getBuilder();
+    }
+    return myContext;
+  }
+
+  public EclipseImportBuilder.Parameters getParameters() {
+    if (myParameters == null) {
+      myParameters = ((EclipseImportBuilder)getBuilder()).getParameters();
+    }
+    return myParameters;
   }
 
   private class ModuleDirComponent {

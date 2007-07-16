@@ -11,7 +11,9 @@
   <idea-version since-build="7020"/>
   <extensions xmlns="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
-    <projectImportProvider implementation="org.jetbrains.idea.eclipse.action.EclipseImportWizard"/>
+    <projectImportProvider implementation="org.jetbrains.idea.eclipse.action.EclipseProjectImportProvider"/>
+    <projectOpenProcessor implementation="org.jetbrains.idea.eclipse.action.EclipseProjectOpenProcessor"/>
+    <projectImportBuilder implementation="org.jetbrains.idea.eclipse.action.EclipseImportBuilder"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
   <project-components>

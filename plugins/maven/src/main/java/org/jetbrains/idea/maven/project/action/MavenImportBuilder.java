@@ -1,17 +1,13 @@
 package org.jetbrains.idea.maven.project.action;
 
-import com.intellij.ide.util.projectWizard.AddModuleWizard;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectImportWizard;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +18,15 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.*;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportWizard extends ProjectImportWizard
+public class MavenImportBuilder extends ProjectImportBuilder
   implements MavenImportProcessorContext, SelectImportedProjectsStep.Context<MavenProjectModel.Node> {
+
+  private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private Project projectToUpdate;
   private MavenImporterPreferences preferences;
@@ -40,58 +37,23 @@ public class MavenImportWizard extends ProjectImportWizard
   MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
-  private Icon mavenIcon = IconLoader.getIcon("/images/mavenEmblem.png");
 
   public String getName() {
     return ProjectBundle.message("maven.name");
   }
 
-  @Nullable
-  public Icon getIcon(final VirtualFile file, final boolean open) {
-    return mavenIcon;
+  public Icon getIcon() {
+    return ICON;
   }
 
-  protected void initImport(final Project currentProject, final boolean updateCurrent) {
-    super.initImport(currentProject, updateCurrent);
-
-    if (updateCurrent) {
-      projectToUpdate = currentProject;
-      preferences = MavenImporterPreferencesComponent.getInstance(currentProject).getState().clone();
-      importRoot = currentProject.getBaseDir();
-    }
-    else {
-      projectToUpdate = null;
-      preferences = new MavenImporterPreferences();
-      importRoot = null;
-    }
-  }
-
-  public AddModuleWizard.ModuleWizardStepFactory getStepsFactory(final Project currentProject, final boolean updateCurrent) {
-    return new AddModuleWizard.ModuleWizardStepFactory() {
-      public ModuleWizardStep[] createSteps(final WizardContext wizardContext) {
-        return new ModuleWizardStep[]{new MavenImportRootStep(wizardContext, MavenImportWizard.this, preferences),
-          new SelectProfilesStep(MavenImportWizard.this),
-          new SelectImportedProjectsStep<MavenProjectModel.Node>(MavenImportWizard.this, updateCurrent) {
-            protected String getElementText(final MavenProjectModel.Node node) {
-              final StringBuilder stringBuilder = new StringBuilder();
-              stringBuilder.append(node.getArtifact().toString());
-              final String relPath = VfsUtil.getRelativePath(node.getFile().getParent(), getRootDirectory(), File.separatorChar);
-              if (relPath.length() != 0) {
-                stringBuilder.append(" [").append(relPath).append("]");
-              }
-              return stringBuilder.toString();
-            }
-          }};
-      }
-    };
-  }
-
-  protected void cleanup() {
+  public void cleanup() {
+    super.cleanup();
     myImportProcessor = null;
+    importRoot = null;
+    projectToUpdate = null;
   }
 
-  public void afterProjectOpen(final Project project) {
-
+  public void commit(final Project project) {
     myImportProcessor.resolve(project, myProfiles);
 
     myImportProcessor.commit(project, preferences.isAutoImportNew());
@@ -124,21 +86,21 @@ public class MavenImportWizard extends ProjectImportWizard
   }
 
   public Project getUpdatedProject() {
-    return projectToUpdate;
+    return getProjectToUpdate();
   }
 
   public VirtualFile getRootDirectory() {
-    return importRoot;
+    return getImportRoot();
   }
 
   public boolean setRootDirectory(final String root) {
     myFiles = null;
     importRoot = FileFinder.refreshRecursively(root);
-    if (importRoot != null) {
+    if (getImportRoot() != null) {
       ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
         public void run(ProgressIndicator indicator) {
           indicator.setText(ProjectBundle.message("maven.locating.files"));
-          myFiles = FileFinder.findFilesByName(importRoot.getChildren(), MavenEnv.POM_FILE, new ArrayList<VirtualFile>(), null, indicator,
+          myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(), MavenEnv.POM_FILE, new ArrayList<VirtualFile>(), null, indicator,
                                                preferences.isLookForNested());
           indicator.setText2("");
         }
@@ -154,7 +116,7 @@ public class MavenImportWizard extends ProjectImportWizard
   public List<String> getProfiles() {
     final SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(projectToUpdate);
+    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(getProjectToUpdate());
     final MavenProjectReader reader = new MavenProjectReader(embedder);
     for (VirtualFile file : myFiles) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);
@@ -169,7 +131,7 @@ public class MavenImportWizard extends ProjectImportWizard
     myProfiles = new ArrayList<String>(profiles);
     ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
       public void run(ProgressIndicator indicator) {
-        myImportProcessor = new MavenImportProcessor(projectToUpdate, preferences);
+        myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), preferences);
         myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
         indicator.setText2("");
       }
@@ -216,30 +178,37 @@ public class MavenImportWizard extends ProjectImportWizard
     openModulesConfigurator = on;
   }
 
-  public boolean canOpenProject(VirtualFile file) {
-    return file.getName().equals(MavenEnv.POM_FILE);
+  public MavenImporterPreferences getPreferences() {
+    if (preferences == null) {
+      if (isUpdate()) {
+        preferences = MavenImporterPreferencesComponent.getInstance(getProjectToUpdate()).getState().clone();
+      }
+      else {
+        preferences = new MavenImporterPreferences();
+      }
+    }
+    return preferences;
   }
 
-  public boolean doQuickImport(VirtualFile file) {
-    myFiles = Arrays.asList(file);
+  public void setFiles(final Collection<VirtualFile> files) {
+    myFiles = files;
+  }
 
-    if(!setProfiles(new ArrayList<String>())){
-      return false;
+  @Nullable
+  public Project getProjectToUpdate() {
+    if (projectToUpdate == null) {
+      projectToUpdate = getCurrentProject();
     }
+    return projectToUpdate;
+  }
 
-    final List<MavenProjectModel.Node> projects = getList();
-    try {
-      setList(projects);
+  @Nullable
+  public VirtualFile getImportRoot() {
+    if (importRoot == null && isUpdate()) {
+      final Project project = getProjectToUpdate();
+      assert project != null;
+      importRoot = project.getBaseDir();
     }
-    catch (ValidationException e) {
-      return false;
-    }
-
-    if(projects.size()!=1){
-      return false;
-    }
-
-    myNewProjectName = projects.get(0).getMavenProject().getArtifactId();
-    return true;
+    return importRoot;
   }
 }

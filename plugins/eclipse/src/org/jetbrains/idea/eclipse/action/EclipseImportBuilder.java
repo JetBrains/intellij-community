@@ -1,9 +1,5 @@
 package org.jetbrains.idea.eclipse.action;
 
-import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.util.projectWizard.AddModuleWizard;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -18,13 +14,11 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectImportWizard;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
-import org.jetbrains.idea.eclipse.util.PathUtil;
 import org.jetbrains.idea.eclipse.util.Progress;
 
 import javax.swing.*;
@@ -34,7 +28,7 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class EclipseImportWizard extends ProjectImportWizard
+public class EclipseImportBuilder extends ProjectImportBuilder
   implements EclipseProjectWizardContext, SelectImportedProjectsStep.Context<EclipseProjectModel> {
 
   private static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
@@ -78,11 +72,10 @@ public class EclipseImportWizard extends ProjectImportWizard
     public List<EclipseProjectModel> projectsToConvert = new ArrayList<EclipseProjectModel>();
     public boolean openModuleSettings;
     public EclipseToIdeaConverter.Options converterOptions = new EclipseToIdeaConverter.Options();
-    public boolean updateCurrent;
     public Set<String> existingModuleNames;
   }
 
-  private final Parameters parameters = new Parameters();
+  private Parameters parameters;
 
   private IdeaProjectModel ideaProjectModel;
 
@@ -90,21 +83,20 @@ public class EclipseImportWizard extends ProjectImportWizard
     return EclipseBundle.message("eclipse.name");
   }
 
-  @Nullable
-  public Icon getIcon(final VirtualFile file, final boolean open) {
+  public Icon getIcon() {
     return eclipseIcon;
   }
 
   @Nullable
   public String getRootDirectory() {
-    return parameters.workspace == null ? null : parameters.workspace.getRoot();
+    return getParameters().workspace == null ? null : getParameters().workspace.getRoot();
   }
 
   public void setRootDirectory(final String path) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        parameters.workspace = EclipseWorkspace.load(path, new EclipseProjectReader.Options());
-        Collections.sort(parameters.workspace.getProjects(), new Comparator<EclipseProjectModel>() {
+        getParameters().workspace = EclipseWorkspace.load(path, new EclipseProjectReader.Options());
+        Collections.sort(getParameters().workspace.getProjects(), new Comparator<EclipseProjectModel>() {
           public int compare(EclipseProjectModel o1, EclipseProjectModel o2) {
             return o1.getName().compareToIgnoreCase(o2.getName());
           }
@@ -114,59 +106,42 @@ public class EclipseImportWizard extends ProjectImportWizard
   }
 
   public List<EclipseProjectModel> getList() {
-    return parameters.workspace.getProjects();
+    return getParameters().workspace.getProjects();
   }
 
   public boolean isMarked(final EclipseProjectModel element) {
-    return !parameters.existingModuleNames.contains(element.getName());
+    return !getParameters().existingModuleNames.contains(element.getName());
   }
 
   public void setList(List<EclipseProjectModel> list) {
-    parameters.projectsToConvert = list;
+    getParameters().projectsToConvert = list;
   }
 
   public boolean isOpenProjectSettingsAfter() {
-    return parameters.openModuleSettings;
+    return getParameters().openModuleSettings;
   }
 
   public void setOpenProjectSettingsAfter(boolean on) {
-    parameters.openModuleSettings = on;
+    getParameters().openModuleSettings = on;
   }
 
-  protected void initImport(final Project currentProject, final boolean updateCurrent) {
-    super.initImport(currentProject, updateCurrent);
-
-    parameters.workspace = null;
-    parameters.updateCurrent = updateCurrent;
-    parameters.existingModuleNames = new HashSet<String>();
-    if (updateCurrent) {
-      for (Module module : ModuleManager.getInstance(currentProject).getModules()) {
-        parameters.existingModuleNames.add(module.getName());
-      }
-    }
+  public void cleanup() {
+    super.cleanup();
+    parameters = null;
   }
 
-  protected AddModuleWizard.ModuleWizardStepFactory getStepsFactory(final Project currentProject, final boolean updateCurrent) {
-    return new AddModuleWizard.ModuleWizardStepFactory() {
-      public ModuleWizardStep[] createSteps(final WizardContext context) {
-        return new ModuleWizardStep[]{new EclipseWorkspaceRootStep(context, EclipseImportWizard.this, parameters),
-          new MySelectImportedProjectsStep(updateCurrent)};
-      }
-    };
-  }
-
-  protected boolean beforeProjectOpen(final Project currentProject, final Project dstProject) {
+  public boolean validate(final Project currentProject, final Project dstProject) {
     final EclipseResolver eclipseResolver = new EclipseResolver() {
       final Map<String, String> existingModuleRoots = ClasspathStorage.getStorageRootMap(dstProject, null);
 
       @Nullable
       public String getProjectNameByPluginId(final String id) {
-        return Util.getProjectNameByPluginId(parameters.projectsToConvert, id);
+        return Util.getProjectNameByPluginId(getParameters().projectsToConvert, id);
       }
 
       @Nullable
       public String getRootByName(final String name) {
-        String root = Util.getRootByName(parameters.projectsToConvert, name);
+        String root = Util.getRootByName(getParameters().projectsToConvert, name);
         return root != null ? root : existingModuleRoots.get(name);
       }
     };
@@ -175,9 +150,9 @@ public class EclipseImportWizard extends ProjectImportWizard
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
-          ideaProjectModel = EclipseToIdeaConverter.convert(parameters.projectsToConvert, eclipseResolver,
+          ideaProjectModel = EclipseToIdeaConverter.convert(getParameters().projectsToConvert, eclipseResolver,
                                                             EclipseClasspathStorageProvider.createLibraryResolver(dstProject),
-                                                            parameters.converterOptions);
+                                                            getParameters().converterOptions);
         }
         catch (ConversionException e) {
           refEx.set(e);
@@ -201,12 +176,12 @@ public class EclipseImportWizard extends ProjectImportWizard
     return true;
   }
 
-  protected void afterProjectOpen(final Project project) {
+  public void commit(final Project project) {
     final Collection<String> libraries = new TreeSet<String>();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        convertModules(project, ideaProjectModel.getModules(), parameters.linkConverted, libraries);
+        convertModules(project, ideaProjectModel.getModules(), getParameters().linkConverted, libraries);
         project.save();
       }
     });
@@ -252,75 +227,16 @@ public class EclipseImportWizard extends ProjectImportWizard
     return undefinedMacros;
   }
 
-  public boolean canOpenProject(final VirtualFile file) {
-    final String name = file.getName();
-    return name.equals(EclipseXml.CLASSPATH_FILE) || name.equals(EclipseXml.PROJECT_FILE);
-  }
-
-  public boolean doQuickImport(VirtualFile file) {
-    //noinspection ConstantConditions
-    setRootDirectory(file.getParent().getPath());
-
-    final List<EclipseProjectModel> projects = getList();
-    if (projects.size() != 1) {
-      return false;
-    }
-    setList(projects);
-    myNewProjectName = projects.get(0).getName();
-    return true;
-  }
-
-  private static final Icon ICON_CONFLICT = IconLoader.getIcon("/actions/cancel.png");
-
-  private class MySelectImportedProjectsStep extends SelectImportedProjectsStep<EclipseProjectModel> {
-
-    Set<String> duplicateNames;
-
-    public MySelectImportedProjectsStep(final boolean updateCurrent) {
-      super(EclipseImportWizard.this, updateCurrent);
-      fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<EclipseProjectModel>() {
-        public void elementMarkChanged(final EclipseProjectModel element, final boolean isMarked) {
-          duplicateNames = null;
-          fileChooser.repaint();
-        }
-      });
-    }
-
-    private boolean isInConflict(final EclipseProjectModel item) {
-      calcDuplicates();
-      return fileChooser.getMarkedElements().contains(item) && duplicateNames.contains(item.getName());
-    }
-
-    private void calcDuplicates() {
-      if (duplicateNames == null) {
-        duplicateNames = new HashSet<String>();
-        Set<String> usedNames = new HashSet<String>();
-        for (EclipseProjectModel model : fileChooser.getMarkedElements()) {
-          if (!usedNames.add(model.getName())) {
-            duplicateNames.add(model.getName());
-          }
+  public Parameters getParameters() {
+    if (parameters == null) {
+      parameters = new Parameters();
+      parameters.existingModuleNames = new HashSet<String>();
+      if (isUpdate()) {
+        for (Module module : ModuleManager.getInstance(getCurrentProject()).getModules()) {
+          parameters.existingModuleNames.add(module.getName());
         }
       }
     }
-
-    protected String getElementText(final EclipseProjectModel item) {
-      StringBuilder stringBuilder = new StringBuilder();
-      stringBuilder.append(item.getName());
-      String relPath = PathUtil.getRelative(parameters.workspace.getRoot(), item.getRoot());
-      if (!relPath.equals(".") && !relPath.equals(item.getName())) {
-        stringBuilder.append(" (").append(relPath).append(")");
-      }
-      return stringBuilder.toString();
-    }
-
-    @Nullable
-    protected Icon getElementIcon(final EclipseProjectModel item) {
-      return isInConflict(item) ? ICON_CONFLICT : null;
-    }
-
-    public boolean validate() {
-      calcDuplicates();
-      return duplicateNames.isEmpty() && super.validate();
-    }
+    return parameters;
   }
 }

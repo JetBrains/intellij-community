@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
-import org.jetbrains.idea.maven.project.MavenImportProcessorContext;
 
 import javax.swing.*;
 
@@ -12,11 +12,13 @@ import javax.swing.*;
 public class SelectProfilesStep extends ProjectImportWizardStep {
   private JPanel panel;
   private ElementsChooser<String> profileChooser;
-  private final MavenImportProcessorContext myContext;
 
-  public SelectProfilesStep(final MavenImportProcessorContext context) {
-    super(context.getUpdatedProject()!=null);
-    myContext = context;
+  public SelectProfilesStep(final WizardContext context) {
+    super(context);
+  }
+
+  protected MavenImportBuilder getBuilder() {
+    return (MavenImportBuilder)super.getBuilder();
   }
 
   public void createUIComponents (){
@@ -28,11 +30,11 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
   }
 
   public void updateStep() {
-    profileChooser.setElements(myContext.getProfiles(), false);
+    profileChooser.setElements(getBuilder().getProfiles(), false);
   }
 
   public boolean validate() {
-    return myContext.setProfiles(profileChooser.getMarkedElements());
+    return getBuilder().setProfiles(profileChooser.getMarkedElements());
   }
 
   public void updateDataModel() {

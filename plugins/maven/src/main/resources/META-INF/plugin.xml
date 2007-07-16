@@ -13,7 +13,10 @@
     <extensionPoint name="packagingConverter" interface="org.jetbrains.idea.maven.project.PackagingConverter"/>
   </extensionPoints>
   <extensions xmlns="com.intellij">
-    <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenImportWizard"/>
+    <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenProjectImportProvider"/>
+    <projectOpenProcessor implementation="org.jetbrains.idea.maven.project.action.MavenProjectOpenProcessor"/>
+    <projectImportBuilder implementation="org.jetbrains.idea.maven.project.action.MavenImportBuilder"/>
+
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
