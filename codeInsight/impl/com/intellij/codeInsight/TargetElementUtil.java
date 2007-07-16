@@ -82,15 +82,18 @@ public class TargetElementUtil {
 
     offset = adjustOffset(document, offset);
 
+    PsiElement element = file.findElementAt(offset);
     if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
       //  return getReferenceOrReferencedElement(file, editor, flags, offset);
       //}
-      if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return referenceOrReferencedElement;
+      if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid() &&
+          !isEnumConstantReference(element, referenceOrReferencedElement)) {
+        return referenceOrReferencedElement;
+      }
     }
 
-    PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
@@ -168,6 +171,12 @@ public class TargetElementUtil {
     return null;
   }
 
+  private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    return element != null &&
+           element.getParent() instanceof PsiEnumConstant &&
+           referenceOrReferencedElement instanceof PsiMethod &&
+           ((PsiMethod)referenceOrReferencedElement).isConstructor();
+  }
 
   private static int adjustOffset(Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
