@@ -327,6 +327,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       );
     }
 
+    if (rootTag == null) return null;
+    if (visited != null) {
+      if (visited.contains(rootTag)) return null;
+      visited.add(rootTag);
+    }
+
     final Pair<String, XmlTag> pair = new Pair<String, XmlTag>(name, rootTag);
     final CachedValue<TypeDescriptor> descriptor = myTypesMap.get(pair);
     if(descriptor != null) {
@@ -339,19 +345,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       return value;
     }
 
-    if (rootTag == null) return null;
     XmlTag[] tags = rootTag.getSubTags();
 
-    if (visited == null) visited = new HashSet<XmlTag>(1);
-    else if (visited.contains(rootTag)) return null;
-    visited.add(rootTag);
+    if (visited == null) {
+      visited = new HashSet<XmlTag>(1);
+      visited.add(rootTag);
+    }
 
     return doFindIn(tags, name, pair, rootTag, visited);
   }
 
   private TypeDescriptor doFindIn(final XmlTag[] tags, final String name, final Pair<String, XmlTag> pair, final XmlTag rootTag, final Set<XmlTag> visited) {
-    XmlNSDescriptorImpl nsDescriptor;
-
     for (final XmlTag tag : tags) {
       if (equalsToSchemaName(tag, "complexType")) {
         if (name == null) {
