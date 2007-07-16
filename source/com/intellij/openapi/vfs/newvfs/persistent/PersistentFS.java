@@ -316,7 +316,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final NewVirtualFileSystem delegate = getDelegate(file);
     delegate.renameFile(requestor, file, newName);
 
-    if (!delegate.exists(file)) {
+    if (newName.equalsIgnoreCase(file.getName()) || !delegate.exists(file)) {
       processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
     }
     else {
