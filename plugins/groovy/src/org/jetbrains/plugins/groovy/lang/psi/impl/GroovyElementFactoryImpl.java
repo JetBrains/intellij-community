@@ -85,7 +85,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      text.append(getTypeText(type)).append(" ");
+      final String typeText = getTypeText(type);
+      if (Character.isLowerCase(typeText.charAt(0))) text.append("def ");
+      text.append(typeText).append(" ");
     } else {
       text.append("def ");
     }
