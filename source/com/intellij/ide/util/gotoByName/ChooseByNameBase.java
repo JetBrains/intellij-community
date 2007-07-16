@@ -687,11 +687,10 @@ public abstract class ChooseByNameBase{
         public void run() {
           if (myDisposedFlag) return;
           final long startTime = System.currentTimeMillis();
-          do {
+          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
             final Cmd cmd = myCommands.remove(0);
             cmd.apply();
           }
-          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME);
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
           ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
