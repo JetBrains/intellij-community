@@ -65,12 +65,11 @@ class ScopeUtils
     }
 
     @Nullable
-    public static PsiElement getCommonParent(@NotNull PsiReference[] references)
+    public static PsiElement getCommonParent(@NotNull PsiElement[] referenceElements)
     {
         PsiElement commonParent = null;
-        for (PsiReference reference : references)
+        for (PsiElement referenceElement : referenceElements)
         {
-            final PsiElement referenceElement = reference.getElement();
             final PsiElement parent = PsiTreeUtil.getParentOfType(
                     referenceElement, PsiCodeBlock.class, PsiForStatement.class);
             if (parent != null && commonParent != null)
@@ -95,7 +94,7 @@ class ScopeUtils
         if (commonParent instanceof PsiForStatement)
         {
             final PsiForStatement forStatement = (PsiForStatement)commonParent;
-            final PsiElement referenceElement = references[0].getElement();
+            final PsiElement referenceElement = referenceElements[0];
             final PsiStatement initialization =
                     forStatement.getInitialization();
             if (!(initialization instanceof PsiEmptyStatement))
@@ -137,7 +136,7 @@ class ScopeUtils
         if (commonParent != null)
         {
             final PsiElement parent = commonParent.getParent();
-            if (parent instanceof PsiSwitchStatement && references.length > 1)
+            if (parent instanceof PsiSwitchStatement && referenceElements.length > 1)
             {
                 commonParent = PsiTreeUtil.getParentOfType(parent,
                         PsiCodeBlock.class, false);
