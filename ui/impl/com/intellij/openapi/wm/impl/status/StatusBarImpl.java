@@ -4,14 +4,14 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.NotificationPopup;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,6 +38,8 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   private UISettings myUISettings;
   private AsyncProcessIcon myRefreshIcon;
+  private JPanel myRefreshPanel;
+  private JLabel myEmptyRefreshIcon;
 
   public StatusBarImpl(UISettings uiSettings) {
     super();
@@ -56,9 +58,14 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
     final Border separatorLeft = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
 
+    myRefreshPanel = new JPanel(new BorderLayout());
+
     myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem");
-    add(myRefreshIcon, BorderLayout.WEST);
-    myRefreshIcon.setVisible(false);
+    myRefreshPanel.add(myRefreshIcon, BorderLayout.WEST);
+    myEmptyRefreshIcon = new JLabel(new EmptyIcon(myRefreshIcon.getPreferredSize().width, myRefreshIcon.getPreferredSize().height));
+    myRefreshPanel.add(myEmptyRefreshIcon, BorderLayout.EAST);
+    add(myRefreshPanel, BorderLayout.WEST);
+    setRefreshVisible(false);
 
     myInfoPanel.setBorder(emptyBorder);
     myInfoPanel.setOpaque(false);
@@ -113,6 +120,11 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     add(rightPanel, BorderLayout.EAST);
 
     setBorder(new EmptyBorder(2, 0, 1, 0));
+  }
+
+  private void setRefreshVisible(final boolean visible) {
+    myRefreshIcon.setVisible(visible);
+    myEmptyRefreshIcon.setVisible(!visible);
   }
 
   public void add(final ProgressIndicatorEx indicator, TaskInfo info) {
@@ -302,10 +314,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public void startRefreshIndication(String tooltipText) {
     myRefreshIcon.setToolTipText(tooltipText);
-    myRefreshIcon.setVisible(true);
+    setRefreshVisible(true);
   }
 
   public void stopRefreshIndication() {
-    myRefreshIcon.setVisible(false);
+    setRefreshVisible(false);
   }
 }
