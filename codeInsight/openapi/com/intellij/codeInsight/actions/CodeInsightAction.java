@@ -38,6 +38,7 @@ public abstract class CodeInsightAction extends AnAction {
         final CodeInsightActionHandler handler = getHandler();
         final Runnable action = new Runnable() {
           public void run() {
+            if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
             handler.invoke(project, editor, psiFile);
           }
         };

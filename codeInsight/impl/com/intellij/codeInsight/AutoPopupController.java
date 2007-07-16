@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
 
 /**
@@ -72,6 +73,7 @@ public class AutoPopupController implements Disposable {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           new WriteCommandAction(myProject) {
             protected void run(Result result) throws Throwable {
+              if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
               new DotAutoLookupHandler().invoke(myProject, editor, file);
             }
           }.execute();
@@ -118,13 +120,17 @@ public class AutoPopupController implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (file == null) return;
+
+      final PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file).getDocument());
+      if (injectedFile == null) return;
+
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          new ShowParameterInfoHandler().invoke(myProject, editor, file, lbraceOffset, highlightedMethod);
+          new ShowParameterInfoHandler().invoke(myProject, editor, injectedFile, lbraceOffset, highlightedMethod);
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action
