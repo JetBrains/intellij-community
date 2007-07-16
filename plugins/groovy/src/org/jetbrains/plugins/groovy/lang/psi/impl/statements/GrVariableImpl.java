@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -107,6 +108,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
       parent.addLeaf(GroovyTokenTypes.kDEF, "def", typeElementNode);
       parent.removeChild(typeElementNode);
     } else {
+      type = TypesUtil.unboxPrimitiveTypeWrapper(type);
       GrTypeElement newTypeElement = GroovyElementFactory.getInstance(getProject()).createTypeElement(type);
       final ASTNode newTypeElementNode = newTypeElement.getNode();
       if (typeElement == null) {

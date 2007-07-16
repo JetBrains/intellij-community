@@ -133,8 +133,8 @@ public class TypesUtil {
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (isNumericType(lType) && isNumericType(rType)) {
-      lType = unboxPrimitiveType(lType);
-      rType = unboxPrimitiveType(rType);
+      lType = unboxPrimitiveTypeWrapper(lType);
+      rType = unboxPrimitiveTypeWrapper(rType);
     } else {
       rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
       lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
@@ -152,11 +152,11 @@ public class TypesUtil {
            TypeConversionUtil.isNumericType(type);
   }
 
-  public static PsiType unboxPrimitiveTypeAndEraseGenerics(PsiType result) {
-    return TypeConversionUtil.erasure(unboxPrimitiveType(result));
+  public static PsiType unboxPrimitiveTypeWraperAndEraseGenerics(PsiType result) {
+    return TypeConversionUtil.erasure(unboxPrimitiveTypeWrapper(result));
   }
 
-  public static PsiType unboxPrimitiveType(PsiType type) {
+  public static PsiType unboxPrimitiveTypeWrapper(PsiType type) {
     if (type instanceof PsiClassType) {
       PsiType unboxed = ourQNameToUnboxed.get(type.getCanonicalText());
       if (unboxed != null) type = unboxed;
