@@ -30,6 +30,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
+import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -73,7 +74,7 @@ public class GroovyAnnotator implements Annotator {
     } else if (element instanceof GrAssignmentExpression) {
       checkAssignmentExpression((GrAssignmentExpression) element, holder);
     } else if (element instanceof GrNamedArgument) {
-      checkCommandArgument((GrNamedArgument)element, holder);
+      checkCommandArgument((GrNamedArgument) element, holder);
     }
   }
 
@@ -206,8 +207,7 @@ public class GroovyAnnotator implements Annotator {
     GroovyResolveResult resolveResult = refElement.advancedResolve();
     if (parent instanceof GrNewExpression) {
       checkNewExpression(holder, refElement, resolveResult);
-    }
-    else if (refElement.getReferenceName() != null) {
+    } else if (refElement.getReferenceName() != null) {
       final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {
         if (parent instanceof GrImportStatement && ((GrImportStatement) parent).isStatic()) { //multiple members might be imported by single static import
@@ -222,6 +222,7 @@ public class GroovyAnnotator implements Annotator {
         // Register quickfix
         final Annotation annotation = holder.createErrorAnnotation(refElement, message);
         registerAddImportFixes(refElement, annotation);
+        //registerCreteClassByTypeFix(refElement, annotation);
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       } else if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
@@ -249,6 +250,11 @@ public class GroovyAnnotator implements Annotator {
     for (IntentionAction action : actions) {
       annotation.registerFix(action);
     }
+  }
+
+  private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation) {
+    annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
+
   }
 }
 
