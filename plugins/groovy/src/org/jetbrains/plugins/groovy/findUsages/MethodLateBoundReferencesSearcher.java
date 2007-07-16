@@ -15,6 +15,9 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -26,12 +29,9 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ven
@@ -41,7 +41,7 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
     final PsiElement element = params.getMethod();
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) element;
-      SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(params.getScope().intersectWith(method.getUseScope()));
+      SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(params.getScope().intersectWith(getUseScopeInReadAction(method)));
 
       final String name = method.getName();
 
@@ -54,6 +54,14 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
       }
     }
     return true;
+  }
+
+  private SearchScope getUseScopeInReadAction(final PsiMethod method) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        return method.getUseScope();
+      }
+    });
   }
 
   private String getPropertyName(final PsiMethod method) {
