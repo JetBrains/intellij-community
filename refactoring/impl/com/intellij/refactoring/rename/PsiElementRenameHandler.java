@@ -125,14 +125,6 @@ public class PsiElementRenameHandler implements RenameHandler {
       if (psiMethod.isConstructor()) {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass == null) return;
-        String classType = UsageViewUtil.getType(containingClass);
-        String className = UsageViewUtil.getShortName(containingClass);
-        int ret = Messages.showYesNoDialog(project, RefactoringBundle.message(
-          "constructor.cannot.be.renamed.would.you.like.to.rename.class", classType, className), RefactoringBundle.message("warning.title"),
-                                                                                                 Messages.getQuestionIcon());
-        if (ret != 0) {
-          return;
-        }
         element = containingClass;
         if (!canRename(element, project)) {
           return;
