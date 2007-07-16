@@ -38,6 +38,7 @@ public class Change {
   }
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision, FileStatus fileStatus) {
+    assert beforeRevision != null || afterRevision != null;
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus;

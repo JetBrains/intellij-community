@@ -125,12 +125,13 @@ public class CvsChangeList implements CommittedChangeList {
         else {
           localFile = new File(wrapper.getFile());
         }
-        ContentRevision beforeRevision = isAdded(revision)
+        final boolean added = isAdded(revision);
+        ContentRevision beforeRevision = added
           ? null
           : new CvsContentRevision(new File(wrapper.getFile()), localFile,
                                    new SimpleRevision(new CvsRevisionNumber(revision.getNumber()).getPrevNumber().asString()),
                                    myEnvironment, myProject);
-        ContentRevision afterRevision = (DEAD_STATE.equals(state))
+        ContentRevision afterRevision = (!added && DEAD_STATE.equals(state))
           ? null
           : new CvsContentRevision(new File(wrapper.getFile()), localFile,
                                    new SimpleRevision(revision.getNumber()),
