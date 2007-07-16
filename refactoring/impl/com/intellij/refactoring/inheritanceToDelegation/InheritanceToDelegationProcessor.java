@@ -1,5 +1,6 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -260,7 +261,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private ObjectUpcastedUsageInfo[] objectUpcastedUsages(UsageInfo[] usages) {
+  private static ObjectUpcastedUsageInfo[] objectUpcastedUsages(UsageInfo[] usages) {
     ArrayList<ObjectUpcastedUsageInfo> result = new ArrayList<ObjectUpcastedUsageInfo>();
     for (UsageInfo usage : usages) {
       if (usage instanceof ObjectUpcastedUsageInfo) {
@@ -273,9 +274,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private ArrayList<UsageInfo> filterUsages(ArrayList<UsageInfo> usages) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
-    for (int i = 0; i < usages.size(); i++) {
-      UsageInfo usageInfo = usages.get(i);
-
+    for (UsageInfo usageInfo : usages) {
       if (!(usageInfo instanceof InheritanceToDelegationUsageInfo)) {
         continue;
       }
@@ -284,7 +283,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
 
       if (!myIsDelegateOtherMembers) {
-        final FieldAccessibility delegateFieldAccessible = ((InheritanceToDelegationUsageInfo) usageInfo).getDelegateFieldAccessible();
+        final FieldAccessibility delegateFieldAccessible = ((InheritanceToDelegationUsageInfo)usageInfo).getDelegateFieldAccessible();
         if (!delegateFieldAccessible.isAccessible()) continue;
       }
 
@@ -429,7 +428,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private boolean isStatic(PsiElement member) {
+  private static boolean isStatic(PsiElement member) {
     if (member instanceof PsiModifierListOwner) {
       final PsiModifierListOwner method = (PsiModifierListOwner) member;
       return method.hasModifierProperty (PsiModifier.STATIC);
@@ -491,7 +490,14 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     substitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
     PsiMethod methodToAdd = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
-    methodToAdd.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+    final PsiModifierList modifierList = methodToAdd.getModifierList();
+    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE, false)) {
+      modifierList.addAfter(myFactory.createAnnotationFromText("@" + AnnotationUtil.NULLABLE, methodToAdd), null);
+    }
+    else if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false)) {
+      modifierList.addAfter(myFactory.createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, methodToAdd), null);
+    }
 
     final String delegationBody = getDelegationBody(methodToAdd, delegationTarget);
     PsiCodeBlock newBody = myFactory.createCodeBlockFromText(delegationBody, method);
@@ -506,10 +512,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     if (methodToAdd.getDocComment() != null) methodToAdd.getDocComment().delete();
     methodToAdd = (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(methodToAdd);
+    methodToAdd = (PsiMethod)CodeStyleManager.getInstance(myProject).shortenClassReferences(methodToAdd);
     return methodToAdd;
   }
 
-  private String getDelegationBody(PsiMethod methodToAdd, String delegationTarget) {
+  private static String getDelegationBody(PsiMethod methodToAdd, String delegationTarget) {
     @NonNls final StringBuffer buffer = new StringBuffer();
     buffer.append("{\n");
 

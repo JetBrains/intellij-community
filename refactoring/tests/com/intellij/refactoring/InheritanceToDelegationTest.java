@@ -1,7 +1,9 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
@@ -14,6 +16,23 @@ import java.util.List;
  * @author dsl
  */
 public class InheritanceToDelegationTest extends MultiFileTestCase {
+  private LanguageLevel myPreviousLanguageLevel;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPreviousLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
+    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+  protected void tearDown() throws Exception {
+    getPsiManager().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    super.tearDown();
+  }
+
+  protected ProjectJdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
+  }
+
   protected String getTestRoot() {
     return "/refactoring/inheritanceToDelegation/";
   }
@@ -69,6 +88,9 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
+  public void testAnnotations() throws Exception {
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+  }
 
   public void testInnerClassForInterface() throws Exception {
     doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
