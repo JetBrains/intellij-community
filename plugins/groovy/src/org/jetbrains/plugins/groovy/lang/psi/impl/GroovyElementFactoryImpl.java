@@ -158,9 +158,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrTypeElement createTypeElement(PsiType type) {
-    final String text = getTypeText(type);
-    if (text == null) throw new RuntimeException("Cannot create type element: cannot obtain text for type");
-    final GroovyFile file = createDummyFile(text + " someVar");
+    final String typeText = getTypeText(type);
+    if (typeText == null) throw new RuntimeException("Cannot create type element: cannot obtain text for type");
+    final GroovyFile file = createDummyFile("def " + typeText + " someVar");
     GrVariableDeclaration decl = (GrVariableDeclaration) file.getTopStatements()[0];
     return decl.getTypeElementGroovy();
   }
