@@ -8,6 +8,8 @@ import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.CorruptedProjectFilesDialog;
+import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,7 +20,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
 import com.intellij.util.containers.HashSet;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -40,7 +44,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final UpdateSettings myUpdateSettings;
 
   public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, UpdatedFiles updatedFiles) {
-    super(com.intellij.CvsBundle.message("operation.name.update"), new UpdateOperation(new FilePath[0], updateSettings, project),
+    super(CvsBundle.message("operation.name.update"), new UpdateOperation(new FilePath[0], updateSettings, project),
           FileSetToBeUpdated.selectedFiles(files));
     myFiles = files;
     myProject = project;
@@ -55,12 +59,26 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
       myRoots.addAll(findAllRoots.executeOn(myFiles));
       myNotProcessedRepositories.addAll(findAllRoots.getDirectoriesToBeUpdated());
       myDirectoriesToBeProcessedCount = myNotProcessedRepositories.size();
-      ((UpdateOperation)myCvsOperation).addAllFiles(myRoots.toArray(new VirtualFile[myRoots.size()]));
+      for(VirtualFile file: myRoots) {
+        if (getValidCvsRoot(file) != null) {
+          ((UpdateOperation)myCvsOperation).addFile(file);
+        }
+      }
     }
     catch (ProcessCanceledException ex) {
       myIsCanceled = true;
     }
 
+  }
+
+  @Nullable
+  private static CvsRootProvider getValidCvsRoot(final VirtualFile file) {
+    try {
+      return CvsRootProvider.createOn(new File(file.getPath()));
+    }
+    catch (CannotFindCvsRootException e) {
+      return null;
+    }
   }
 
   public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
