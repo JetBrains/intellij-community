@@ -44,10 +44,12 @@ public abstract class GroovyUtils {
    * @return true if current file is true groovy file
    */
 
-  public static boolean isGroovyFileOrDirectory(final VirtualFile file) {
-    return (file != null) &&
-            (GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension().equals(file.getExtension()) ||
-                    file.isDirectory());
+  public static boolean isGroovyFileOrDirectory(final @NotNull VirtualFile file) {
+    return isGroovyFile(file) || file.isDirectory();
+  }
+
+  public static boolean isGroovyFile(VirtualFile file) {
+    return GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension().equals(file.getExtension());
   }
 
   /**
