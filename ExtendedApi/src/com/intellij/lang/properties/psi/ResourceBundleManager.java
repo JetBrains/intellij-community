@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,8 +44,15 @@ public abstract class ResourceBundleManager {
     return paths;
   }
 
+  @Nullable
+  public I18nizedTextGenerator getI18nizedTextGenerator() {
+    return null;
+  }
+
+  @Nullable @NonNls
   public abstract String getTemplateName();
 
+  @Nullable @NonNls
   public abstract String getConcatenationTemplateName();
 
   public abstract boolean isActive(PsiFile context) throws ResourceBundleNotFoundException;
@@ -62,6 +70,11 @@ public abstract class ResourceBundleManager {
     }
     final DefaultResourceBundleManager manager = new DefaultResourceBundleManager(project);
     return manager.isActive(context) ? manager : null;
+  }
+
+  @Nullable
+  public PropertyCreationHandler getPropertyCreationHandler() {
+    return null;
   }
 
   public static class ResourceBundleNotFoundException extends Exception {

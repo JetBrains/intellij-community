@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatActio
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -70,13 +71,13 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
                                  final Editor editor,
                                  PsiLiteralExpression literalExpression,
                                  Collection<PropertiesFile> propertiesFiles,
-                                 String key,
-                                 String value,
-                                 String i18nizedText) throws IncorrectOperationException {
+                                 String key, String value, String i18nizedText,
+                                 PsiExpression[] parameters,
+                                 final PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException {
     Project project = psiFile.getProject();
     TextRange selectedText = getSelectedRange(editor, psiFile);
     if (selectedText == null) return;
-    I18nizeQuickFix.createProperty(project, propertiesFiles, key, value);
+    propertyCreationHandler.createProperty(project, propertiesFiles, key, value, parameters);
     editor.getDocument().replaceString(selectedText.getStartOffset(), selectedText.getEndOffset(), i18nizedText);
   }
 
@@ -161,7 +162,9 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
         CommandProcessor.getInstance().executeCommand(project, new Runnable(){
           public void run() {
             try {
-              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), dialog.getValue(), dialog.getI18nizedText());
+              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), dialog.getValue(),
+                                         dialog.getI18nizedText(), dialog.getParameters(),
+                                         dialog.getPropertyCreationHandler());
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

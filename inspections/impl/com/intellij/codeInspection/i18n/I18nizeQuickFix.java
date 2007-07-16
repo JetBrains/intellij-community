@@ -7,9 +7,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,11 +74,11 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
                                  final Editor editor,
                                  PsiLiteralExpression literalExpression,
                                  Collection<PropertiesFile> propertiesFiles,
-                                 String key,
-                                 String value,
-                                 String i18nizedText) throws IncorrectOperationException {
+                                 String key, String value, String i18nizedText,
+                                 PsiExpression[] parameters,
+                                 final PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException {
     Project project = psiFile.getProject();
-    createProperty(project, propertiesFiles, key, value);
+    propertyCreationHandler.createProperty(project, propertiesFiles, key, value, parameters);
     try {
       final PsiElement newExpression = doReplacementInJava(psiFile, editor,literalExpression, i18nizedText);
       reformatAndCorrectReferences(newExpression);
@@ -117,7 +116,8 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
           public void run() {
             try {
               performI18nization(psiFile, getEditorForFile(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
-                                 dialog.getValue(), dialog.getI18nizedText());
+                                 dialog.getValue(), dialog.getI18nizedText(), dialog.getParameters(),
+                                 dialog.getPropertyCreationHandler());
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -209,20 +209,4 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     return literalExpression.replace(expression);
   }
 
-  public static void createProperty(final Project project,
-                                    final Collection<PropertiesFile> propertiesFiles,
-                                    final String key,
-                                    final String value)
-    throws IncorrectOperationException {
-    Property property = PropertiesElementFactory.createProperty(project, key, value);
-    for (PropertiesFile file : propertiesFiles) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(documentManager.getDocument(file));
-
-      Property existingProperty = file.findPropertyByKey(property.getKey());
-      if (existingProperty == null) {
-        file.addProperty(property);
-      }
-    }
-  }
 }

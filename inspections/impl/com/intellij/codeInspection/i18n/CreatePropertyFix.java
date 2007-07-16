@@ -128,7 +128,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
         CommandProcessor.getInstance().executeCommand(project, new Runnable(){
           public void run() {
             try {
-              I18nizeQuickFix.createProperty(project, selectedPropertiesFiles, key, value);
+              I18nUtil.createProperty(project, selectedPropertiesFiles, key, value);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

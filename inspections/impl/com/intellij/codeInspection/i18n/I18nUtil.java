@@ -4,16 +4,25 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertyCreationHandler;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +33,13 @@ import java.util.*;
  * @author max
  */
 public class I18nUtil {
+  public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
+    public void createProperty(final Project project, final Collection<PropertiesFile> propertiesFiles, final String key, final String value,
+                               final PsiExpression[] parameters) throws IncorrectOperationException {
+      I18nUtil.createProperty(project, propertiesFiles, key, value);
+    }
+  };
+
   private I18nUtil() {
   }
 
@@ -178,5 +194,66 @@ public class I18nUtil {
       }
     }
     return Collections.emptyList();
+  }
+
+  public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiLiteralExpression context) {
+    PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(context, "");
+    Set<String> result = new LinkedHashSet<String>();
+    for (PsiVariable var : variables) {
+      PsiType varType = var.getType();
+      if (type == null || type.isAssignableFrom(varType)) {
+        result.add(var.getNameIdentifier().getText());
+      }
+    }
+
+    PsiExpression[] expressions = MacroUtil.getStandardExpressionsOfType(context, type);
+    for (PsiExpression expression : expressions) {
+      result.add(expression.getText());
+    }
+    if (type != null) {
+      addAvailableMethodsOfType(type, context, result);
+    }
+    return result;
+  }
+
+  private static void addAvailableMethodsOfType(final PsiClassType type, final PsiLiteralExpression context, final Collection<String> result) {
+    PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
+      public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+        if (element instanceof PsiMethod) {
+          PsiMethod method = (PsiMethod)element;
+          PsiType returnType = method.getReturnType();
+          if (returnType != null && TypeConversionUtil.isAssignable(type, returnType)
+              && method.getParameterList().getParametersCount() == 0) {
+            result.add(method.getName() + "()");
+          }
+        }
+        return true;
+      }
+
+      public <T> T getHint(Class<T> hintClass) {
+        return null;
+      }
+
+      public void handleEvent(Event event, Object associated) {
+
+      }
+    }, context, null);
+  }
+
+  public static void createProperty(final Project project,
+                                    final Collection<PropertiesFile> propertiesFiles,
+                                    final String key,
+                                    final String value)
+    throws IncorrectOperationException {
+    Property property = PropertiesElementFactory.createProperty(project, key, value);
+    for (PropertiesFile file : propertiesFiles) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      documentManager.commitDocument(documentManager.getDocument(file));
+
+      Property existingProperty = file.findPropertyByKey(property.getKey());
+      if (existingProperty == null) {
+        file.addProperty(property);
+      }
+    }
   }
 }

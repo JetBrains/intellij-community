@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.properties.psi.I18nizedTextGenerator;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,8 +78,18 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     String value = ConcatenationToMessageFormatAction.prepareString(formatString.toString());
 
     return new I18nizeQuickFixDialog(project, context, literalExpression, value, true, true) {
+      @Nullable
       protected String getTemplateName() {
         return myResourceBundleManager.getConcatenationTemplateName();
+      }
+
+      protected String generateText(final I18nizedTextGenerator textGenerator, final String propertyKey, final PropertiesFile propertiesFile,
+                                    final PsiLiteralExpression literalExpression) {
+        return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression);
+      }
+
+      public PsiExpression[] getParameters() {
+        return args.toArray(new PsiExpression[args.size()]);
       }
 
       protected void addAdditionalAttributes(final Map<String, String> attributes) {

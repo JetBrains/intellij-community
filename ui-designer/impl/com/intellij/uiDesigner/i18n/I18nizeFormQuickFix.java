@@ -2,8 +2,8 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInspection.i18n.I18nizeQuickFix;
 import com.intellij.codeInspection.i18n.I18nizeQuickFixDialog;
+import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -70,7 +70,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run() {
             try {
-              I18nizeQuickFix.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
+              I18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

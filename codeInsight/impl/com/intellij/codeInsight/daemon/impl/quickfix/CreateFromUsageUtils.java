@@ -172,24 +172,28 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupMethodParameters(
-    PsiMethod method,
-    TemplateBuilder builder,
-    PsiExpressionList argumentList,
-    PsiSubstitutor substitutor) throws IncorrectOperationException {
+  public static void setupMethodParameters(PsiMethod method, TemplateBuilder builder, PsiExpressionList argumentList,
+                                           PsiSubstitutor substitutor) throws IncorrectOperationException {
     if (argumentList == null) return;
+    PsiExpression[] args = argumentList.getExpressions();
+
+    setupMethodParameters(method, builder, argumentList, substitutor, args);
+  }
+
+  public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
+                                           final PsiSubstitutor substitutor, final PsiExpression[] arguments)
+    throws IncorrectOperationException {
     PsiManager psiManager = method.getManager();
     PsiElementFactory factory = psiManager.getElementFactory();
 
     PsiParameterList parameterList = method.getParameterList();
 
-    PsiExpression[] args = argumentList.getExpressions();
     GlobalSearchScope resolveScope = method.getResolveScope();
 
-    GuessTypeParameters guesser = new GuessTypeParameters(argumentList.getManager().getElementFactory());
+    GuessTypeParameters guesser = new GuessTypeParameters(factory);
 
-    for (int i = 0; i < args.length; i++) {
-      PsiExpression arg = args[i];
+    for (int i = 0; i < arguments.length; i++) {
+      PsiExpression arg = arguments[i];
 
       SuggestedNameInfo suggestedInfo = CodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
         VariableKind.PARAMETER, null, arg, null);
@@ -210,7 +214,7 @@ public class CreateFromUsageUtils {
       ExpectedTypeInfo info = ExpectedTypesProvider.getInstance(psiManager.getProject()).createInfo(argType,
                                                                                                     ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
+      PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
                                substitutor, builder, context, method.getContainingClass());
 
