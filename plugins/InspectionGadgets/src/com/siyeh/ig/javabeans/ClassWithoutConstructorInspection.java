@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -93,7 +94,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isEnum() ||
-                    aClass.isAnnotationType()) {
+                    aClass.isAnnotationType() || PsiUtil.isInJspFile(aClass)) {
                 return;
             }
             if (aClass instanceof PsiTypeParameter ||
