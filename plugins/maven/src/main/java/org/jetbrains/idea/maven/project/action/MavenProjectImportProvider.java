@@ -4,11 +4,11 @@
  */
 package org.jetbrains.idea.maven.project.action;
 
-import com.intellij.ide.util.newProjectWizard.projectImport.ProjectImportProvider;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 

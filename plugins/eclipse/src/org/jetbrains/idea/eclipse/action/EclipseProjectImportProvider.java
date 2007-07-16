@@ -4,10 +4,10 @@
  */
 package org.jetbrains.idea.eclipse.action;
 
-import com.intellij.ide.util.newProjectWizard.projectImport.ProjectImportProvider;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.projectImport.ProjectImportProvider;
 
 public class EclipseProjectImportProvider extends ProjectImportProvider {
   public EclipseProjectImportProvider(final EclipseImportBuilder builder) {
