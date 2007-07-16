@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -39,7 +38,7 @@ public class ThrowClause implements GroovyElementTypes {
 
     if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
       throwClauseMarker.done(THROW_CLAUSE);
-      builder.error(GroovyBundle.message("no.exception.handler.found"));
+      builder.error(GroovyBundle.message("identifier.expected"));
       return;
     }
 
