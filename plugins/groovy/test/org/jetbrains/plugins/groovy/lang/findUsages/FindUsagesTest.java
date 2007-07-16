@@ -57,15 +57,15 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testSetter1() throws Throwable {
-    doTest("setter1/A.groovy", 2);
+    doTest("setter1/ABCF.groovy", 2);
   }
 
   public void testGetter1() throws Throwable {
-    doTest("getter1/A.groovy", 1);
+    doTest("getter1/ABCF.groovy", 1);
   }
 
   public void testProperty1() throws Throwable {
-    doTest("property1/A.groovy", 2);
+    doTest("property1/ABCF.groovy", 2);
   }
 
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {

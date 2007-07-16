@@ -38,7 +38,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   }
 
   public void testQualifiedRefExpr() throws Exception {
-    doTest("qualifiedRefExpr/A.groovy");
+    doTest("qualifiedRefExpr/ABCF.groovy");
   }
 
   public void testGrvy102() throws Exception {

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -70,7 +71,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public PsiElement getReferenceNameElement() {
     PsiElement superNameElement = super.getReferenceNameElement();
-    return superNameElement == null ? findChildByType(GroovyTokenTypes.kCLASS) : superNameElement;
+    if (superNameElement != null) return superNameElement;
+    for (IElementType keyWord : TokenSets.KEYWORD_PROPERTY_NAMES.getTypes()) {
+      if (findChildByType(keyWord) != null) {
+        return findChildByType(keyWord);
+      }
+    }
+    return null;
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -336,9 +343,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod) element)) {
       return getManager().areElementsEquivalent(element, resolve());
-    } if (element instanceof GrField && ((GrField) element).isProperty()) {
+    }
+    if (element instanceof GrField && ((GrField) element).isProperty()) {
       return getManager().areElementsEquivalent(element, resolve());
-    } else if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
+    } else
+    if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;
