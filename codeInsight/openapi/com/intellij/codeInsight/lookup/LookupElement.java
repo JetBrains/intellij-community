@@ -38,4 +38,6 @@ public interface LookupElement<T> {
 
   @NotNull
   LookupElement<T> setCaseSensitive(boolean caseSensitive);
+
+  LookupElement<T> setBold();
 }

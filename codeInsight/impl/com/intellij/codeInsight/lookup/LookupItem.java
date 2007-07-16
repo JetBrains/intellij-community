@@ -211,7 +211,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     return this;
   }
 
-  public LookupItem setBold() {
+  public LookupItem<T> setBold() {
     setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
     return this;
   }
