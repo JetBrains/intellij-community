@@ -23,11 +23,10 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -36,11 +35,13 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.util.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.DataOutput;
 import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author yole
@@ -61,9 +62,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Nullable
-  public RepositoryLocation getLocationFor(final VirtualFile root) {
+  public RepositoryLocation getLocationFor(final FilePath root) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), new File(root.getPath()), progress);
+    String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), root.getIOFile(), progress);
     if (urls.length == 1) {
       return new SvnRepositoryLocation(root, urls [0]);
     }

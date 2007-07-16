@@ -1,16 +1,16 @@
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 
 /**
  * @author yole
  */
 public class SvnRepositoryLocation implements RepositoryLocation {
-  private VirtualFile myRootFile;
+  private FilePath myRootFile;
   private String myURL;
 
-  public SvnRepositoryLocation(final VirtualFile rootFile, final String URL) {
+  public SvnRepositoryLocation(final FilePath rootFile, final String URL) {
     myRootFile = rootFile;
     myURL = URL;
   }
@@ -27,7 +27,7 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     return myURL;
   }
 
-  public VirtualFile getRootFile() {
+  public FilePath getRootFile() {
     return myRootFile;
   }
 
