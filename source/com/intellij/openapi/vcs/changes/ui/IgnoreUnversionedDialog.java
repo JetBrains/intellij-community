@@ -71,6 +71,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myIgnoreAllFilesUnderRadioButton.addActionListener(listener);
     myIgnoreAllFilesMatchingRadioButton.addActionListener(listener);
     myIgnoreSpecifiedFileRadioButton.addActionListener(listener);
+    updateControls();
   }
 
   private void updateControls() {
