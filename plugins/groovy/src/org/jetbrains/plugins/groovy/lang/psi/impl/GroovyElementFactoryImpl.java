@@ -85,7 +85,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      text.append(type.getCanonicalText()).append(" ");
+      text.append(getTypeText(type)).append(" ");
     } else {
       text.append("def ");
     }
@@ -100,6 +100,11 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     text.append("=").append(expr.getText());
     PsiFile file = createGroovyFile(text.toString());
     return ((GrVariableDeclaration) ((GroovyFile) file).getTopStatements()[0]);
+  }
+
+  private String getTypeText(PsiType type) {
+    final String canonical = type.getCanonicalText();
+    return canonical != null ? canonical : type.getPresentableText();
   }
 
   @Nullable
@@ -151,9 +156,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrTypeElement createTypeElement(PsiType type) {
-    final String canonicalText = type.getCanonicalText();
-    if (canonicalText == null) throw new RuntimeException("Cannot create type element: canonical text is null");
-    final GroovyFile file = createDummyFile(canonicalText + " someVar");
+    final String text = getTypeText(type);
+    if (text == null) throw new RuntimeException("Cannot create type element: cannot obtain text for type");
+    final GroovyFile file = createDummyFile(text + " someVar");
     GrVariableDeclaration decl = (GrVariableDeclaration) file.getTopStatements()[0];
     return decl.getTypeElementGroovy();
   }
