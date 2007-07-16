@@ -174,7 +174,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
           path = relPath;
         }
       }
-      if (!path.endsWith(File.separator)) {
+      if (!path.endsWith("/") && !path.endsWith(File.separator)) {
         path += File.separator;
       }
       result.setPath(FileUtil.toSystemIndependentName(path));
