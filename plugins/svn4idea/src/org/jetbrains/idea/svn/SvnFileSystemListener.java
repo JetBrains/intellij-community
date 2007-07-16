@@ -305,11 +305,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   }
 
   public void commandFinished(CommandEvent event) {
+    final Project project = event.getProject();
+    if (project == null) return;
     if (myAddedFiles.size() > 0) {
-      processAddedFiles(event.getProject());
+      processAddedFiles(project);
     }
     if (myDeletedFiles.size() > 0) {
-      processDeletedFiles(event.getProject());
+      processDeletedFiles(project);
     }
   }
 
