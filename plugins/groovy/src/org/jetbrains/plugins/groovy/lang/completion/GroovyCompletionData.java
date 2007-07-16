@@ -80,7 +80,6 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerClassInterfaceEnumAnnotationCompletion() {
     registerStandardCompletion(new ClassInterfaceEnumFilter(), "class", "interface", "enum");
-
     registerStandardCompletion(new ExtendsFilter(), "extends");
     registerStandardCompletion(new ImplementsFilter(), "implements");
   }
