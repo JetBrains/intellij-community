@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
@@ -58,5 +59,11 @@ public class ExistingModuleLoader extends ModuleBuilder{
 
   public ModuleType getModuleType() {
     return null; // no matter
+  }
+
+  public boolean validate(final Project current, final Project dest) {
+    if (getName() == null) return false;
+    if (getModuleFilePath() == null) return false;
+    return super.validate(current, dest);
   }
 }

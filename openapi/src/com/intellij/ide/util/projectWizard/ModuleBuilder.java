@@ -15,34 +15,35 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.facet.FacetInfo;
-import com.intellij.facet.FacetManager;
 import com.intellij.util.EventDispatcher;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
-public abstract class ModuleBuilder {
+public abstract class ModuleBuilder extends ProjectBuilder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
-  private String myModuleFilePath;
+  @NonNls private String myModuleFilePath;
   @Nullable
-  private AddSupportContext[] myAddSupportContexts;
   private FacetInfo[] myFacetInfos = FacetInfo.EMPTY_ARRAY;
   private EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
@@ -122,7 +123,6 @@ public abstract class ModuleBuilder {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             onModuleInitialized(module);
-            addSupport(module);
           }
         });
       }
@@ -130,23 +130,10 @@ public abstract class ModuleBuilder {
     }
     else {
       onModuleInitialized(module);
-      addSupport(module);
     }
     return module;
   }
 
-  public void addSupport(@NotNull Module module) {
-
-    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    if (myAddSupportContexts != null) {
-      for (AddSupportContext supportContext : myAddSupportContexts) {
-        if (supportContext.isAddSupport()) {
-          supportContext.installSupportInAction(module, rootModel);
-        }
-      }
-    }
-    rootModel.commit();
-  }
 
   public void setFacetInfos(final FacetInfo[] facetInfos) {
     myFacetInfos = facetInfos;
@@ -161,12 +148,33 @@ public abstract class ModuleBuilder {
     myDispatcher.removeListener(listener);
   }
 
-  @Nullable
-  public AddSupportContext[] getAddSupportContexts() {
-    return myAddSupportContexts;
+  public boolean canCreateModule() {
+    return true;
   }
 
-  public void setAddSupportContexts(final AddSupportContext[] addSupportContexts) {
-    myAddSupportContexts = addSupportContexts;
+  public void commit(final Project project) {
+    if (canCreateModule()) {
+      if (myName == null) {
+        myName = project.getName();
+      }
+      if (myModuleFilePath == null) {
+        myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ".iml";
+      }
+      Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
+        public Exception compute() {
+          try {
+            final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+            createAndCommit(moduleModel, true);
+            return null;
+          }
+          catch (Exception e) {
+            return e;
+          }
+        }
+      });
+      if (ex != null) {
+        Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
+      }
+    }
   }
 }

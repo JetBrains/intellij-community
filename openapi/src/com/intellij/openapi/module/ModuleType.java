@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.ide.util.projectWizard.*;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,6 +27,7 @@ import javax.swing.*;
 public abstract class ModuleType<T extends ModuleBuilder> {
   // predefined module types
   public static ModuleType JAVA;
+  public static ModuleType EMPTY;
 
   private final String myId;
 
@@ -38,10 +42,15 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract Icon getBigIcon();
   public abstract Icon getNodeIcon(boolean isOpened);
 
+  public String getProjectType() {
+    return getName();
+  }
+
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, T moduleBuilder, ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
+  @Deprecated
   public ModuleWizardStep[] createAddSupportSteps(WizardContext wizardContext,
                                                   T moduleBuilder,
                                                   ModulesProvider modulesProvider,
@@ -75,6 +84,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   static {
     JAVA = instantiate("com.intellij.openapi.module.JavaModuleType");
+    EMPTY = instantiate("com.intellij.openapi.module.EmptyModuleType");
   }
 
   private static ModuleType instantiate(String className) {

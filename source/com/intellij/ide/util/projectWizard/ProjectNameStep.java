@@ -1,21 +1,19 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,22 +30,6 @@ public class ProjectNameStep extends ModuleWizardStep {
     myWizardContext = wizardContext;
     myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message("label.project.file.location"), 'a', 'l',
                                                 IdeBundle.message("title.select.project.file.directory"), IdeBundle.message("description.select.project.file.directory"));
-
-    if (myWizardContext.getProjectFileDirectory() != null) {
-      myNamePathComponent.setPath(myWizardContext.getProjectFileDirectory());
-      List<String> components = StringUtil.split(myWizardContext.getProjectFileDirectory(), File.separator);
-      if (components.size() > 0) {
-        myNamePathComponent.setNameValue(components.get(components.size()-1));
-      }
-    }
-    else {
-      final String projectsStorePath = getDefaultProjectsStorePath();
-      //noinspection HardCodedStringLiteral
-      final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(projectsStorePath, "untitled", "");
-      myNamePathComponent.setPath(projectsStorePath + File.separator + initialProjectName);
-      myNamePathComponent.setNameValue(initialProjectName);
-    }
-
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
@@ -71,6 +53,19 @@ public class ProjectNameStep extends ModuleWizardStep {
     return myPanel;
   }
 
+  public void updateStep() {
+    super.updateStep();
+    myNamePathComponent.setPath(myWizardContext.getProjectFileDirectory());
+    String name = myWizardContext.getProjectName();
+    if (name == null) {
+      List<String> components = StringUtil.split(FileUtil.toSystemIndependentName(myWizardContext.getProjectFileDirectory()), "/");
+      if (components.size() > 0) {
+        name = components.get(components.size()-1);
+      }
+    }
+    myNamePathComponent.setNameValue(name);
+  }
+
   public void updateDataModel() {
     myWizardContext.setProjectName(getProjectName());
     myWizardContext.setProjectFileDirectory(getProjectFileDirectory());
@@ -79,18 +74,6 @@ public class ProjectNameStep extends ModuleWizardStep {
   public Icon getIcon() {
     return NEW_PROJECT_ICON;
   }
-
-  private String getDefaultProjectsStorePath() {
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
-    if (lastProjectLocation != null) {
-      return lastProjectLocation.replace('/', File.separatorChar);
-    }
-    final String userHome = SystemProperties.getUserHome();
-    //noinspection HardCodedStringLiteral
-    return userHome.replace('/', File.separatorChar) + File.separator +
-           ApplicationNamesInfo.getInstance().getLowercaseProductName() + "Projects";
-  }
-
 
   public boolean validate() {
     String name = myNamePathComponent.getNameValue();

@@ -5,7 +5,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +24,6 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -300,10 +298,9 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
             parentWindow.removeWindowListener(this);
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                final Pair<ModuleBuilder,ConfigureFacetsStep> pair = myModulesConfigurator.runModuleWizard(parentWindow);
-                final ModuleBuilder moduleBuilder = pair.getFirst();
-                if (moduleBuilder != null) {
-                  myModulesConfigurator.addModule(moduleBuilder, pair.getSecond());
+                final ModuleBuilder builder = myModulesConfigurator.runModuleWizard(parentWindow);
+                if (builder != null) {
+                  myModulesConfigurator.addModule(builder);
                 }
               }
             });

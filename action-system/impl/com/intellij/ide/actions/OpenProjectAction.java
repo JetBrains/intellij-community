@@ -10,7 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectImportProvider;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +44,9 @@ public class OpenProjectAction extends AnAction {
 
       @Nullable
       public Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
-        final ProjectImportProvider provider = ProjectUtil.getImportProvider(virtualFile);
+        final ProjectOpenProcessor provider = ProjectUtil.getImportProvider(virtualFile);
         if(provider!=null) {
-          return provider.getIcon(virtualFile, open);
+          return provider.getIcon();
         }
         return null;
       }

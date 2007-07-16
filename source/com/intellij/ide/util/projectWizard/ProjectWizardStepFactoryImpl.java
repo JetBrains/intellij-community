@@ -27,6 +27,10 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
     return new NameLocationStep(wizardContext, builder, modulesProvider, icon, helpId);
   }
 
+  public ModuleWizardStep createNameAndLocationStep(final WizardContext wizardContext) {
+    return new ProjectNameStep(wizardContext);
+  }
+
   /**
    * @deprecated
    */
@@ -100,12 +104,19 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         contexts.add(wizardSteps[0].myContext);
       }
       final AddSupportContext[] supportContexts = contexts.toArray(new AddSupportContext[contexts.size()]);
-      moduleBuilder.setAddSupportContexts(supportContexts);
       final AddSupportFeaturesStep featuresStep =
         new AddSupportFeaturesStep(providers, supportContexts, icon);
       result.add(0, featuresStep);
     }
     return result.toArray(ModuleWizardStep.EMPTY_ARRAY);
+  }
+
+  public ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext) {
+    return new ProjectJdkStep(wizardContext){
+      public boolean isStepVisible() {
+        return com.intellij.ide.util.newProjectWizard.AddModuleWizard.getNewProjectJdk() == null;
+      }
+    };
   }
 
 }

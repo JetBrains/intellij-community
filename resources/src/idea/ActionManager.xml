@@ -203,8 +203,6 @@
       <reference ref="VcsFileGroupPopup"/>
     </group>
 
-    <group class="com.intellij.projectImport.ProjectImportActionGroup" id="ProjectImport" popup="true"/>
-
     <group id="MainMenu">
 
       <!-- File  -->
@@ -224,8 +222,6 @@
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
         <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
         <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-        <separator/>
-        <reference ref="ProjectImport"/>
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction"/>

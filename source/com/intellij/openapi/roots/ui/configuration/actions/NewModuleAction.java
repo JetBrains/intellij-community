@@ -1,18 +1,14 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
-import com.intellij.ide.util.projectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,25 +30,20 @@ public class NewModuleAction extends AnAction {
     wizard.show();
 
     if (wizard.isOK()) {
-      final ModuleBuilder moduleBuilder = wizard.getModuleBuilder();
-      Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
-        @Nullable
-        public Exception compute() {
-          try {
-            final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-            moduleBuilder.createAndCommit(moduleModel, false);
-            return null;
-          }
-          catch (Exception e) {
-            return e;
-          }
+      final ProjectBuilder builder = wizard.getProjectBuilder();
+      if (builder instanceof ModuleBuilder) {
+        final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+        if (moduleBuilder.getName() == null) {
+          moduleBuilder.setName(wizard.getProjectName());
         }
-      });
-
-      if (ex != null) {
-        Messages.showErrorDialog(ProjectBundle.message("module.new.error.message", ex.getMessage()),
-                                 ProjectBundle.message("module.new.error.title"));
+        if (moduleBuilder.getModuleFilePath() == null) {
+          moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
+        }
       }
+      if (!builder.validate(project, project)) {
+        return;
+      }
+      builder.commit(project);
     }
   }
 

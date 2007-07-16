@@ -15,14 +15,19 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class WizardContext {
   /**
@@ -34,6 +39,7 @@ public class WizardContext {
   private String myProjectName;
   private String myCompilerOutputDirectory;
   private ProjectJdk myProjectJdk;
+  private ProjectBuilder myProjectBuilder;
   private List<Listener> myListeners = new ArrayList<Listener>();
 
   public static interface Listener {
@@ -52,8 +58,19 @@ public class WizardContext {
     return myProject;
   }
 
+  @NotNull
   public String getProjectFileDirectory() {
-    return myProjectFileDirectory;
+    if (myProjectFileDirectory != null) {
+      return myProjectFileDirectory;
+    }
+    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
+    if (lastProjectLocation != null) {
+      return lastProjectLocation.replace('/', File.separatorChar);
+    }
+    final String userHome = SystemProperties.getUserHome();
+    //noinspection HardCodedStringLiteral
+    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
+           "Projects";
   }
 
   public void setProjectFileDirectory(String projectFileDirectory) {
@@ -101,5 +118,17 @@ public class WizardContext {
 
   public ProjectJdk getProjectJdk() {
     return myProjectJdk;
+  }
+
+  public ProjectBuilder getProjectBuilder() {
+    return myProjectBuilder;
+  }
+
+  public void setProjectBuilder(final ProjectBuilder projectBuilder) {
+    myProjectBuilder = projectBuilder;
+  }
+
+  public String getPresentationName() {
+    return myProject == null ? IdeBundle.message("project.new.wizard.project.identification") : IdeBundle.message("project.new.wizard.module.identification");
   }
 }

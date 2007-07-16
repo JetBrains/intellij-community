@@ -87,5 +87,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   private void registerDefaultTypes() {
     registerModuleType(ModuleType.JAVA, true);
+    registerModuleType(ModuleType.EMPTY, false);
   }
 }

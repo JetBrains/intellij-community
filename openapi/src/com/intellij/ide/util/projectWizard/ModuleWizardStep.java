@@ -20,11 +20,10 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class ModuleWizardStep extends StepAdapter{
   
@@ -69,7 +68,7 @@ public abstract class ModuleWizardStep extends StepAdapter{
   public void disposeUIResources() {
   }
 
-  protected static FieldPanel createFieldPanel(final JTextField field, final String labelText, final BrowseFilesListener browseButtonActionListener) {
+  public static FieldPanel createFieldPanel(final JTextField field, final String labelText, final BrowseFilesListener browseButtonActionListener) {
     final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
     fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     return fieldPanel;

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -46,7 +47,11 @@ public class JavaModuleBuilder extends ModuleBuilder {
   private List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
   private ProjectJdk myJdk;
 
+  @Nullable
   public final String getContentEntryPath() {
+    if (myContentEntryPath == null) {
+      return getModuleFileDirectory();
+    }
     return myContentEntryPath;
   }
 
@@ -73,6 +78,13 @@ public class JavaModuleBuilder extends ModuleBuilder {
   }
 
   public List<Pair<String,String>> getSourcePaths() {
+    if (mySourcePaths == null) {
+      final List<Pair<String, String>> paths = new ArrayList<Pair<String, String>>();
+      @NonNls final String path = getContentEntryPath() + File.separator + "src";
+      new File(path).mkdirs();
+      paths.add(Pair.create(path, ""));
+      return paths;
+    }
     return mySourcePaths;
   }
 
@@ -163,7 +175,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
   }
 
   @Nullable
-  protected String getPathForOutputPathStep() {
+  protected static String getPathForOutputPathStep() {
     return null;
   }
 }

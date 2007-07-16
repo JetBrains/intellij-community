@@ -38,7 +38,7 @@ import java.util.Map;
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
 
-  private int myCurrentStep;
+  protected int myCurrentStep;
   protected final ArrayList<T> mySteps;
   private JButton myPreviousButton;
   private JButton myNextButton;

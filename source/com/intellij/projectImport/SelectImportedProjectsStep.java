@@ -2,9 +2,10 @@ package com.intellij.projectImport;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,8 +24,6 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
     void setList(List<T> list) throws ValidationException;
 
-    boolean isOpenProjectSettingsAfter();
-
     void setOpenProjectSettingsAfter(boolean on);
 
     String getName();
@@ -36,15 +35,14 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     }
   }
 
-  private final Context<T> myContext;
+  private Context<T> myContext;
 
   private final JPanel panel;
   protected final ElementsChooser<T> fileChooser;
   private final JCheckBox openModuleSettingsCheckBox;
 
-  public SelectImportedProjectsStep(Context<T> context, final boolean updating) {
-    super(updating);
-    myContext = context;
+  public SelectImportedProjectsStep(WizardContext context) {
+    super(context);
     fileChooser = new ElementsChooser<T>(true) {
       protected String getItemText(T item) {
         return getElementText(item);
@@ -56,7 +54,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     };
 
     panel = new JPanel(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
-    fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", myContext.getName())));
+
     panel.add(fileChooser, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_BOTH,
                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null,
@@ -80,25 +78,33 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
   public void updateStep() {
     fileChooser.clear();
-    for (T element : myContext.getList()) {
-      fileChooser.addElement(element, myContext.isMarked(element));
+    for (T element : getContext().getList()) {
+      fileChooser.addElement(element, getContext().isMarked(element));
     }
-    openModuleSettingsCheckBox.setSelected(myContext.isOpenProjectSettingsAfter());
+    openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 
   public boolean validate() {
     try {
-      myContext.setList(fileChooser.getMarkedElements());
+      fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
+      getContext().setList(fileChooser.getMarkedElements());
     }
     catch (Context.ValidationException e) {
-      Messages.showErrorDialog(panel, e.getMessage(), IdeBundle.message("project.import.wizard.title", myContext.getName()));
+      Messages.showErrorDialog(panel, e.getMessage(), IdeBundle.message("project.import.wizard.title", getContext().getName()));
       return false;
     }
     return fileChooser.getMarkedElements().size() != 0;
   }
 
   public void updateDataModel() {
-    myContext.setOpenProjectSettingsAfter(openModuleSettingsCheckBox.isSelected());
+    getContext().setOpenProjectSettingsAfter(openModuleSettingsCheckBox.isSelected());
+  }
+
+  public Context<T> getContext() {
+    if (myContext == null) {
+      myContext = (Context<T>)getWizardContext().getProjectBuilder();
+    }
+    return myContext;
   }
 }
 

@@ -3,8 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.ui.ConfigureFacetsStep;
-import com.intellij.ide.util.projectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -158,7 +157,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final Module[] modules = myModuleModel.getModules();
         if (modules.length > 0) {
           for (Module module : modules) {
-            createModuleEditor(module, null, null);
+            createModuleEditor(module, null);
           }
           Collections.sort(myModuleEditors, myModuleEditorComparator);
         }
@@ -168,11 +167,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModified = false;
   }
 
-  private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder, final @Nullable ConfigureFacetsStep facetsStep) {
+  private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder) {
     final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, myFacetsConfigurator, module, moduleBuilder);
-    if (facetsStep != null) {
-      myFacetsConfigurator.registerEditors(module, facetsStep);
-    }
     myModuleEditors.add(moduleEditor);
     moduleEditor.addChangeListener(this);
   }
@@ -235,17 +231,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           myFacetsConfigurator.disposeEditors();
           myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-          for (Module module : myModuleModel.getModules()) {
-            if (!module.isDisposed()) {
-              final ModuleEditor moduleEditor = getModuleEditor(module);
-              if (moduleEditor != null) {
-                final ModuleBuilder builder = moduleEditor.getModuleBuilder();
-                if (builder != null) {
-                  builder.addSupport(module);
-                }
-              }
-            }
-          }
         }
       }
     });
@@ -284,14 +269,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   @Nullable
   public Module addModule(Component parent) {
     if (myProject.isDefault()) return null;
-    final Pair<ModuleBuilder, ConfigureFacetsStep> pair = runModuleWizard(parent);
-    final ModuleBuilder builder = pair.getFirst();
+    final ModuleBuilder builder = runModuleWizard(parent);
     if (builder != null) {
       final Module module = createModule(builder);
       if (module != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            createModuleEditor(module, builder, pair.getSecond());
+            createModuleEditor(module, builder);
           }
         });
       }
@@ -321,12 +305,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
-  void addModule(final ModuleBuilder moduleBuilder, final ConfigureFacetsStep facetsStep) {
+  void addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          createModuleEditor(module, moduleBuilder, facetsStep);
+          createModuleEditor(module, moduleBuilder);
           Collections.sort(myModuleEditors, myModuleEditorComparator);
         }
       });
@@ -334,15 +318,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  Pair<ModuleBuilder, ConfigureFacetsStep> runModuleWizard(Component dialogParent) {
+  ModuleBuilder runModuleWizard(Component dialogParent) {
     AddModuleWizard wizard = new AddModuleWizard(dialogParent, myProject, this);
     wizard.show();
-    final ConfigureFacetsStep facetEditorsStep = wizard.getFacetEditorsStep();
     if (wizard.isOK()) {
-      return Pair.create(wizard.getModuleBuilder(), facetEditorsStep);
+      return (ModuleBuilder)wizard.getProjectBuilder();
     }
 
-    return Pair.create(null, null);
+    return null;
   }
 
 

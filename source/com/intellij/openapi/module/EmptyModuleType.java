@@ -31,79 +31,39 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
-public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
-  private static Icon JAVA_MODULE_ICON;
-  private static Icon JAVA_MODULE_NODE_ICON_OPEN;
-  private static Icon JAVA_MODULE_NODE_ICON_CLOSED;
-  private static Icon WIZARD_ICON;
+public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
 
-  public JavaModuleType() {
-    this("JAVA_MODULE");
+  public EmptyModuleType() {
+    this("EMPTY_MODULE");
   }
 
-  protected JavaModuleType(@NonNls String id) {
+  protected EmptyModuleType(@NonNls String id) {
     super(id);
   }
 
-  public JavaModuleBuilder createModuleBuilder() {
-    return new JavaModuleBuilder();
+  public EmptyModuleBuilder createModuleBuilder() {
+    return new EmptyModuleBuilder();
   }
 
   public String getName() {
-    return ProjectBundle.message("module.type.java.name");
-  }
-
-  public String getProjectType() {
-    return ProjectBundle.message("project.type.java.name");
+    return ProjectBundle.message("module.type.empty.name");
   }
 
   public String getDescription() {
-    return ProjectBundle.message("module.type.java.description");
+    return ProjectBundle.message("module.type.empty.description");
   }
 
   public Icon getBigIcon() {
-    return getJavaModuleIcon();
+    return null;
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return isOpened ? getJavaModuleNodeIconOpen() : getJavaModuleNodeIconClosed();
-  }
-
-  private static Icon getJavaModuleIcon() {
-    if (JAVA_MODULE_ICON == null) {
-      JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
-    }
-
-    return JAVA_MODULE_ICON;
-  }
-
-  private static Icon getJavaModuleNodeIconOpen() {
-    if (JAVA_MODULE_NODE_ICON_OPEN == null) {
-      JAVA_MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
-    }
-    return JAVA_MODULE_NODE_ICON_OPEN;
-  }
-
-  private static Icon getJavaModuleNodeIconClosed() {
-    if (JAVA_MODULE_NODE_ICON_CLOSED == null) {
-      JAVA_MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
-    }
-
-    return JAVA_MODULE_NODE_ICON_CLOSED;
-  }
-
-  private static Icon getWizardIcon() {
-    if (WIZARD_ICON == null) {
-      WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
-    }
-
-    return WIZARD_ICON;
+    return null;
   }
 }

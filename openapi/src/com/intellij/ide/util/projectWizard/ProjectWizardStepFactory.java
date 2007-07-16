@@ -36,6 +36,8 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, @NonNls String helpId);
 
+  public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext);
+
   public abstract ModuleWizardStep createOutputPathPathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId);
@@ -47,6 +49,8 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
+  public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);
+
   @Deprecated
   public abstract AddSupportStep createLoadJarsStep(AddSupportContext context, String title, String description, Icon icon);
 
@@ -55,6 +59,7 @@ public abstract class ProjectWizardStepFactory {
   @NotNull
   public abstract AddSupportStepsProvider[] getAddSupportProviders(ModuleType moduleType);
 
+  @Deprecated
   public abstract ModuleWizardStep[] createAddSupportSteps(WizardContext wizardContext,
                                                   ModuleBuilder moduleBuilder,
                                                   ModulesProvider modulesProvider, final Icon icon);

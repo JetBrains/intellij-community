@@ -33,6 +33,7 @@ import java.util.EventListener;
  * @author Eugene Zhuravlev
  *         Date: Dec 29, 2003
  */
+@Deprecated
 public class ModuleTypeStep extends ModuleWizardStep {
   private JPanel myPanel;
   private JRadioButton myRbCreateNewModule;

@@ -5,14 +5,12 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.util.projectWizard.AddModuleWizard;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -26,7 +24,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,7 +34,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.projectImport.ProjectImportProvider;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,32 +61,33 @@ public class ProjectUtil {
 
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
+    final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
-    final Project newProject = projectManager.newProject(projectFilePath, true, false);
+    try {
+      final Project newProject = projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(projectFilePath, true, false) : projectToClose;
 
-    final ProjectJdk jdk = dialog.getNewProjectJdk();
-    if (jdk != null) {
-      final String versionString = jdk.getVersionString();
-      if (versionString != null) { //jdk is valid
-        CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
-                projectRootManager.setProjectJdk(jdk);
-                final LanguageLevel languageLevel = getDefaultLanguageLevel(versionString);
-                if (projectRootManager.getLanguageLevel().compareTo(languageLevel) > 0) {
-                  projectRootManager.setLanguageLevel(languageLevel);
+      final ProjectJdk jdk = dialog.getNewProjectJdk();
+      if (jdk != null) {
+        final String versionString = jdk.getVersionString();
+        if (versionString != null) { //jdk is valid
+          CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
+                  projectRootManager.setProjectJdk(jdk);
+                  final LanguageLevel languageLevel = getDefaultLanguageLevel(versionString);
+                  if (projectRootManager.getLanguageLevel().compareTo(languageLevel) > 0) {
+                    projectRootManager.setLanguageLevel(languageLevel);
+                  }
                 }
-              }
-            });
-          }
-        }, null, null);
+              });
+            }
+          }, null, null);
+        }
       }
-    }
 
-    final String compileOutput = dialog.getNewCompileOutput();
-    if (compileOutput != null) {
+      final String compileOutput = dialog.getNewCompileOutput();
       CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -108,52 +106,50 @@ public class ProjectUtil {
           });
         }
       }, null, null);
-    }
 
-    newProject.save();
+      newProject.save();
 
-    closePreviousProject(projectToClose);
 
-    final ModuleBuilder moduleBuilder = dialog.getModuleBuilder();
-    if (moduleBuilder != null) {
-      Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
-        public Exception compute() {
-          try {
-            final ModifiableModuleModel moduleModel = ModuleManager.getInstance(newProject).getModifiableModel();
-            moduleBuilder.createAndCommit(moduleModel, true);
-            return null;
-          }
-          catch (Exception e) {
-            return e;
-          }
+      if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
+        return;
+      }
+
+      if (newProject != projectToClose) {
+        closePreviousProject(projectToClose);
+      }
+
+      if (projectBuilder != null) {
+        projectBuilder.commit(newProject);
+      }
+
+      StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          // ensure the dialog is shown after all startup activities are done
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+              if (toolWindow != null) {
+                toolWindow.activate(null);
+              }
+              if (projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter()) {
+                ModulesConfigurator.showDialog(newProject, null, null, true);
+              }
+            }
+          });
         }
       });
-      if (ex != null) {
-        Messages
-          .showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
+
+      if (newProject != projectToClose) {
+        updateLastProjectLocation(projectFilePath);
+
+        projectManager.openProject(newProject);
       }
     }
-
-    StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        // ensure the dialog is shown after all startup activities are done
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-            if (toolWindow != null) {
-              toolWindow.activate(null);
-            }
-            if (moduleBuilder == null) {
-              ModulesConfigurator.showDialog(newProject, null, null, true);
-            }
-          }
-        });
+    finally {
+      if (projectBuilder != null) {
+        projectBuilder.cleanup();
       }
-    });
-
-    updateLastProjectLocation(projectFilePath);
-
-    projectManager.openProject(newProject);
+    }
   }
 
   public static void closePreviousProject(final Project projectToClose) {
@@ -228,7 +224,7 @@ public class ProjectUtil {
     else {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       if (virtualFile != null) {
-        ProjectImportProvider provider = getImportProvider(virtualFile);
+        ProjectOpenProcessor provider = getImportProvider(virtualFile);
         if (provider != null) {
           provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
           return true;
@@ -239,8 +235,8 @@ public class ProjectUtil {
   }
 
   @Nullable
-  public static ProjectImportProvider getImportProvider(VirtualFile file) {
-    for (ProjectImportProvider provider : Extensions.getExtensions(ProjectImportProvider.EXTENSION_POINT_NAME)) {
+  public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
+    for (ProjectOpenProcessor provider : Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME)) {
       if (provider.canOpenProject(file)) {
         return provider;
       }
