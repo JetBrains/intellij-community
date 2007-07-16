@@ -38,7 +38,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   private UISettings myUISettings;
   private AsyncProcessIcon myRefreshIcon;
-  private JPanel myRefreshPanel;
   private JLabel myEmptyRefreshIcon;
 
   public StatusBarImpl(UISettings uiSettings) {
@@ -58,13 +57,13 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
     final Border separatorLeft = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
 
-    myRefreshPanel = new JPanel(new BorderLayout());
+    final JPanel refreshPanel = new JPanel(new BorderLayout());
 
     myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem");
-    myRefreshPanel.add(myRefreshIcon, BorderLayout.WEST);
+    refreshPanel.add(myRefreshIcon, BorderLayout.WEST);
     myEmptyRefreshIcon = new JLabel(new EmptyIcon(myRefreshIcon.getPreferredSize().width, myRefreshIcon.getPreferredSize().height));
-    myRefreshPanel.add(myEmptyRefreshIcon, BorderLayout.EAST);
-    add(myRefreshPanel, BorderLayout.WEST);
+    refreshPanel.add(myEmptyRefreshIcon, BorderLayout.EAST);
+    add(refreshPanel, BorderLayout.WEST);
     setRefreshVisible(false);
 
     myInfoPanel.setBorder(emptyBorder);
