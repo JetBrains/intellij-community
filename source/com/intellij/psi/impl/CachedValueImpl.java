@@ -73,38 +73,36 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   @Nullable
   public T getValue() {
+    T value;
+
     r.lock();
 
     try {
-      T value = getUpToDateOrNull();
+      value = getUpToDateOrNull();
+      if (value != null) {
+        return value == NULL ? null : value;
+      }
+    } finally {
+      r.unlock();
+    }
+
+    w.lock();
+
+    try {
+      value = getUpToDateOrNull();
       if (value != null) {
         return value == NULL ? null : value;
       }
 
-      r.unlock();
-      w.lock();
+      CachedValueProvider.Result<T> result = myProvider.compute();
+      value = result == null ? null : result.getValue();
 
-      try {
-        value = getUpToDateOrNull();
-        if (value != null) {
-          return value == NULL ? null : value;
-        }
+      setValue(value, result);
 
-
-        CachedValueProvider.Result<T> result = myProvider.compute();
-        value = result == null ? null : result.getValue();
-
-        setValue(value, result);
-
-        return value;
-      }
-      finally {
-        w.unlock();
-        r.lock();
-      }
+      return value;
     }
     finally {
-      r.unlock();
+      w.unlock();
     }
   }
 
