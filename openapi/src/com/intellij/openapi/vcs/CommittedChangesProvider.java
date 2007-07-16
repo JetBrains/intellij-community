@@ -20,7 +20,6 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -33,7 +32,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   ChangesBrowserSettingsEditor<U> createFilterUI(final boolean showDateFilter);
 
   @Nullable
-  RepositoryLocation getLocationFor(VirtualFile root);
+  RepositoryLocation getLocationFor(FilePath root);
 
   List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
   ChangeListColumn[] getColumns();

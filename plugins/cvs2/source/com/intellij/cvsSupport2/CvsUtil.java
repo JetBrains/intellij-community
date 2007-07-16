@@ -72,7 +72,14 @@ public class CvsUtil {
     } else {
       return CvsEntriesManager.getInstance().getRepositoryFor(file.getParent()) + "/" + file.getName();
     }
+  }
 
+  public static String getModuleName(FilePath path) {
+    if (path.isDirectory()) {
+      return CvsEntriesManager.getInstance().getRepositoryFor(path.getVirtualFile());
+    } else {
+      return CvsEntriesManager.getInstance().getRepositoryFor(path.getVirtualFileParent()) + "/" + path.getName();
+    }
   }
 
   public static boolean fileIsUnderCvs(VirtualFile vFile) {

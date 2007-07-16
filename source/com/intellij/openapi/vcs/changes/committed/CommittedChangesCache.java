@@ -203,7 +203,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     if (provider == null) {
       return Collections.emptyList();
     }
-    final RepositoryLocation location = provider.getLocationFor(file);
+    final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(file));
     if (location == null) {
       return Collections.emptyList();
     }
@@ -287,7 +287,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       assert vcs != null;
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
-        final RepositoryLocation location = provider.getLocationFor(file);
+        final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(file));
         if (location != null) {
           ChangesCacheFile cacheFile = getCacheFile(vcs, file, location);
           result.add(cacheFile);

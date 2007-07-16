@@ -12,12 +12,12 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -29,10 +29,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInput;
 import java.util.*;
 
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
@@ -53,11 +52,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Nullable
-  public CvsRepositoryLocation getLocationFor(final VirtualFile root) {
-    if (!CvsUtil.fileIsUnderCvs(new File(root.getPresentableUrl()))) {
+  public CvsRepositoryLocation getLocationFor(final FilePath root) {
+    if (!CvsUtil.fileIsUnderCvs(root.getIOFile())) {
       return null;
     }
-    final VirtualFile rootDir = root.isDirectory() ? root : root.getParent();
+    final VirtualFile rootDir = root.isDirectory() ? root.getVirtualFile() : root.getVirtualFileParent();
     final String module = CvsUtil.getModuleName(root);
     final CvsEnvironment connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
     return new CvsRepositoryLocation(rootDir, connectionSettings, module);

@@ -660,7 +660,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       final ChangeBrowserSettings settings,
                                       final int maxCount,
                                       String title) {
-    final RepositoryLocation location = provider.getLocationFor(root);
+    final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(root));
     openCommittedChangesTab(provider, location, settings, maxCount, title);
   }
 

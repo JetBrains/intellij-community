@@ -4,23 +4,22 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 /**
  * @author yole
@@ -49,7 +48,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return new CompositeChangesBrowserSettingsEditor();
   }
 
-  public CompositeRepositoryLocation getLocationFor(final VirtualFile root) {
+  public CompositeRepositoryLocation getLocationFor(final FilePath root) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root);
     if (vcs != null) {
       final CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
