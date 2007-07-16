@@ -304,13 +304,24 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
-    getDelegate(file).deleteFile(requestor, file);
-    processEvent(new VFileDeleteEvent(requestor, file, false));
+    final NewVirtualFileSystem delegate = getDelegate(file);
+    delegate.deleteFile(requestor, file);
+
+    if (!delegate.exists(file)) {
+      processEvent(new VFileDeleteEvent(requestor, file, false));
+    }
   }
 
   public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
-    getDelegate(file).renameFile(requestor, file, newName);
-    processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
+    final NewVirtualFileSystem delegate = getDelegate(file);
+    delegate.renameFile(requestor, file, newName);
+
+    if (!delegate.exists(file)) {
+      processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
+    }
+    else {
+      processEvent(new VFileCreateEvent(requestor, file.getParent(), newName, file.isDirectory(), false));
+    }
   }
 
   public InputStream getInputStream(final VirtualFile file) throws IOException {
