@@ -2,12 +2,11 @@
  * User: anna
  * Date: 10-Jul-2007
  */
-package com.intellij.ide.util.newProjectWizard.projectImport;
+package com.intellij.projectImport;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -3,7 +3,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.modes.CreationMode;
+import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
@@ -42,11 +42,11 @@ public class ProjectNameStep extends ModuleWizardStep {
   private JPanel myPanel;
   private final WizardContext myWizardContext;
   private final StepSequence mySequence;
-  private final CreationMode myMode;
+  private final WizardMode myMode;
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
 
-  public ProjectNameStep(WizardContext wizardContext, StepSequence sequence, final CreationMode mode) {
+  public ProjectNameStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     myWizardContext = wizardContext;
     mySequence = sequence;
     myMode = mode;

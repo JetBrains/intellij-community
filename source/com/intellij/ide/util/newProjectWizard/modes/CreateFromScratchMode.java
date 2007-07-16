@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreateFromScratchMode implements CreationMode {
+public class CreateFromScratchMode implements WizardMode {
   private StepSequence myStepSequence;
   private Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
 

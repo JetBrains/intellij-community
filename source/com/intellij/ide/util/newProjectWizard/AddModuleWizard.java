@@ -6,7 +6,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.util.newProjectWizard.modes.CreationMode;
+import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -74,8 +74,8 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       }
     });
 
-    final ArrayList<CreationMode> modes = new ArrayList<CreationMode>();
-    for (CreationMode mode : Extensions.getExtensions(CreationMode.MODES)) {
+    final ArrayList<WizardMode> modes = new ArrayList<WizardMode>();
+    for (WizardMode mode : Extensions.getExtensions(WizardMode.MODES)) {
       if (mode.isAvailable(myWizardContext)) {
         modes.add(mode);
       }
@@ -86,7 +86,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       }
     };
     addStep(myRootStep);
-    for (CreationMode mode : modes) {
+    for (WizardMode mode : modes) {
       appendSteps(mode.getSteps(myWizardContext, modulesProvider));
     }
     init();
@@ -306,7 +306,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     return previousStep == null ? 0 : mySteps.indexOf(previousStep);
   }
 
-  private CreationMode getMode() {
+  private WizardMode getMode() {
     return myRootStep.getMode();
   }
 

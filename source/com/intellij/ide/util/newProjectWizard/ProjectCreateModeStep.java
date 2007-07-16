@@ -5,7 +5,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode;
-import com.intellij.ide.util.newProjectWizard.modes.CreationMode;
+import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Disposer;
@@ -24,11 +24,11 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
 
   private JPanel myWholePanel;
 
-  private CreationMode myMode;
-  private final List<CreationMode> myModes;
+  private WizardMode myMode;
+  private final List<WizardMode> myModes;
   private final WizardContext myWizardContext;
 
-  public ProjectCreateModeStep(List<CreationMode> modes, final WizardContext wizardContext) {
+  public ProjectCreateModeStep(List<WizardMode> modes, final WizardContext wizardContext) {
     myModes = modes;
     myWizardContext = wizardContext;
     myWholePanel = new JPanel(new GridBagLayout());
@@ -36,7 +36,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.HORIZONTAL, insets, 0, 0);
     final ButtonGroup group = new ButtonGroup();
-    for (final CreationMode mode : modes) {
+    for (final WizardMode mode : modes) {
       insets.top = 15;
       insets.left = 5;
       boolean selected = false;
@@ -82,13 +82,13 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     return myWizardContext.getProject() == null ? NEW_PROJECT_ICON : ICON;
   }
 
-  public CreationMode getMode() {
+  public WizardMode getMode() {
     return myMode;
   }
 
   public void disposeUIResources() {
     super.disposeUIResources();
-    for (CreationMode mode : myModes) {
+    for (WizardMode mode : myModes) {
       Disposer.dispose(mode);
     }
   }

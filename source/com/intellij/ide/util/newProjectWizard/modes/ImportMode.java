@@ -5,8 +5,6 @@
 package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
-import com.intellij.ide.util.newProjectWizard.projectImport.ImportChooserStep;
-import com.intellij.ide.util.newProjectWizard.projectImport.ProjectImportProvider;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -15,6 +13,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectImport.ImportChooserStep;
+import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class ImportMode implements CreationMode {
+public class ImportMode implements WizardMode {
   private StepSequence myStepSequence;
   @NotNull
   public String getDisplayName(final WizardContext context) {

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ImportImlMode implements CreationMode {
+public class ImportImlMode implements WizardMode {
   private TextFieldWithBrowseButton myModulePathFieldPanel;
 
   @NotNull

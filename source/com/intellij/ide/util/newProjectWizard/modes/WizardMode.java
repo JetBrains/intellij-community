@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface CreationMode extends Disposable {
-  ExtensionPointName<CreationMode> MODES = ExtensionPointName.create("com.intellij.creationMode");
+public interface WizardMode extends Disposable {
+  ExtensionPointName<WizardMode> MODES = ExtensionPointName.create("com.intellij.wizardMode");
 
   @NotNull
   String getDisplayName(final WizardContext context);

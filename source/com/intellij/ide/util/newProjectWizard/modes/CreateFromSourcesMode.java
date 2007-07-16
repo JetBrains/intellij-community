@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CreateFromSourcesMode implements CreationMode {
+public class CreateFromSourcesMode implements WizardMode {
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName());
