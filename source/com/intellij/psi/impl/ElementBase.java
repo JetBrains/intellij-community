@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.lang.ant.PsiAntElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -49,7 +50,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
-    if (element instanceof PsiDirectory) {
+    if (element instanceof ItemPresentation && ((ItemPresentation)element).getIcon(false) != null) {
+        baseIcon = createLayeredIcon(((ItemPresentation)element).getIcon(false), elementFlags);
+    } else if (element instanceof PsiDirectory) {
       Icon symbolIcon;
       final PsiDirectory psiDirectory = (PsiDirectory)element;
       if (psiDirectory.getPackage() != null) {
