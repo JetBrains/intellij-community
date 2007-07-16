@@ -76,20 +76,22 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       targetFile = (PsiUtil.getJspFile(targetFile)).getBaseLanguageRoot();
     }
 
-    final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : element;
+    final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;
     synchronized(PsiLock.LOCK) {
       Map<String, CachedValue<XmlEntityDecl>> map = getCachingMap(targetElement);
 
       value = map.get(entityName);
+      final PsiFile containingFile = element.getContainingFile();
+
       if (value == null) {
         final PsiManager manager = element.getManager();
         if(manager == null){
-          return resolveEntity(targetElement, entityName, element).getValue();
+          return resolveEntity(targetElement, entityName, containingFile).getValue();
         }
         value = manager.getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
           public Result<XmlEntityDecl> compute() {
-            return resolveEntity(targetElement, entityName, element);
+            return resolveEntity(targetElement, entityName, containingFile);
           }
         });
 
@@ -109,7 +111,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return map;
   }
 
-  private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName, PsiElement context) {
+  private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName, PsiFile contextFile) {
     if (targetElement.getUserData(EVALUATION_IN_PROCESS) != null) {
       return new CachedValueProvider.Result<XmlEntityDecl>(null,targetElement);
     }
@@ -153,9 +155,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
       boolean notfound = PsiTreeUtil.processElements(targetElement, processor);
       if (notfound) {
-        final PsiFile containingFile = context.getContainingFile();
-        if (containingFile != targetElement) {
-          notfound = PsiTreeUtil.processElements(containingFile, processor);
+        if (contextFile != targetElement && contextFile != null && contextFile.isValid()) {
+          notfound = PsiTreeUtil.processElements(contextFile, processor);
         }
       }
 
