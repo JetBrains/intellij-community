@@ -19,7 +19,9 @@
   <id>org.intellij.groovy</id>
 
   <extensions xmlns="com.intellij">
-        <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
+    <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"
+                        serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"/>
   </extensions>
 
   <project-components>
@@ -103,7 +105,7 @@
   <description>Plugin for Groovy language support</description>
   <version>0.1</version>
   <vendor>JetBrains Inc.</vendor>
-  <idea-version since-build="6967"/>
+  <idea-version since-build="7051"/>
 
   <application-components>
     <component>

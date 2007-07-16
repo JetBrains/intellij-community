@@ -32,8 +32,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -113,7 +113,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   }
 
   public PsiType getSelectedType() {
-    if (!myCbTypeSpec.isSelected()) {
+    if (!myCbTypeSpec.isSelected() || !myCbTypeSpec.isEnabled()) {
       return null;
     } else {
       return myTypeMap.get(myTypeComboBox.getSelectedItem());
@@ -134,11 +134,19 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       myCbTypeSpec.setEnabled(false);
       myTypeComboBox.setEnabled(false);
     } else {
-      myCbTypeSpec.setSelected(true);
+      if (GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY != null) {
+        myCbTypeSpec.setSelected(GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
+      } else {
+        myCbTypeSpec.setSelected(true);
+      }
       myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
       for (String typeName : myTypeMap.keySet()) {
         myTypeComboBox.addItem(typeName);
       }
+    }
+
+    if (GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS != null){
+      myCbIsFinal.setSelected(GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
     }
 
     myCbTypeSpec.addActionListener(new ActionListener() {
@@ -218,6 +226,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   protected void doOKAction() {
     if (!myValidator.isOK(this)) {
       return;
+    }
+    if (myCbTypeSpec.isEnabled()) {
+      GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY = myCbTypeSpec.isSelected();
+    }
+    if (myCbIsFinal.isEnabled()) {
+      GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
     }
     super.doOKAction();
   }
