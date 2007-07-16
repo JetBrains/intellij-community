@@ -227,6 +227,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
         else {
           myDeletedFiles.add(new DeletedFileInfo(vcs.getProject(), ioFile));
+          // packages deleted from disk should not be deleted from svn (IDEADEV-16066)
+          if (file.isDirectory()) return true;
         }
       }
       return false;
@@ -426,10 +428,17 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         List<VcsException> exceptions = new ArrayList<VcsException>();
         SVNWCClient wcClient = vcs.createWCClient();
         for(FilePath file: filesToProcess) {
+          VirtualFile vFile = file.getVirtualFile();  // for deleted directories
           File ioFile = new File(file.getPath());
           try {
             wcClient.doDelete(ioFile, true, false);
-            VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+            if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+              vFile.refresh(true, true);
+              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(vFile, true);
+            }
+            else {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+            }
           }
           catch (SVNException e) {
             exceptions.add(new VcsException(e));
