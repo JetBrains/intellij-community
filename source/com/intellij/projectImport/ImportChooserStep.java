@@ -2,13 +2,11 @@
  * User: anna
  * Date: 10-Jul-2007
  */
-package com.intellij.ide.util.newProjectWizard.projectImport;
+package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.projectImport.ProjectImportWizardStep;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
