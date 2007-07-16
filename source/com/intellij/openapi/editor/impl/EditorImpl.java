@@ -1328,7 +1328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                              int fontType,
                              Color defaultBackground,
                              Rectangle clip) {
-    int w = getTextSegmentWidth(text, position.x, fontType);
+    int w = getTextSegmentWidth(text, position.x, fontType, clip);
 
     if (backColor != null && !backColor.equals(defaultBackground) && clip.intersects(position.x, position.y, w, getLineHeight())) {
       if (backColor.equals(myLastBackgroundColor) && myLastBackgroundPosition.y == position.y &&
@@ -1691,23 +1691,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int drawTablessString(final char[] text,
-                                final int start,
+                                int start,
                                 final int end,
                                 final Graphics g,
-                                final int x,
+                                int x,
                                 final int y,
                                 final int fontType,
                                 final Color fontColor,
                                 final Rectangle clip) {
     int endX = x;
     if (start < end) {
-      final FontInfo font = fontForChar(text[start], fontType);
+      FontInfo font = fontForChar(text[start], fontType);
       for (int j = start; j < end; j++) {
         final char c = text[j];
         FontInfo newFont = fontForChar(c, fontType);
-        if (font != newFont) {
-          int x1 = drawTablessString(text, start, j, g, x, y, fontType, fontColor, clip);
-          return drawTablessString(text, j, end, g, x1, y, fontType, fontColor, clip);
+        if (font != newFont || endX > clip.x + clip.width) {
+          if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
+            drawCharsCached(g, text, start, j, x, y, fontType, fontColor);
+          }
+          start = j;
+          x = endX;
+          font = newFont;
+        }
+        if (x < clip.x && endX < clip.x) {
+          start = j;
+          x = endX;
+          font = newFont;
+        }
+        else if (x > clip.x + clip.width) {
+          return endX;
         }
         endX += font.charWidth(c, myEditorComponent);
       }
@@ -1811,24 +1823,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     UIUtil.drawLine(g, x + WAVE_SEGMENT_LENGTH / 2, y, x + WAVE_SEGMENT_LENGTH, y + WAVE_HEIGHT);
   }
 
-  private int getTextSegmentWidth(CharSequence text, int xStart, int fontType) {
-    int start = 0;
+  private int getTextSegmentWidth(CharSequence text, int xStart, int fontType, Rectangle clip) {
     int x = xStart;
 
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) != '\t') continue;
-
-      if (i > start) {
-        for (int j = start; j < i; j++) x += charWidth(text.charAt(j), fontType);
+    final int textLength = text.length();
+    for (int i = 0; i < textLength && xStart < clip.x + clip.width; i++) {
+      if (text.charAt(i) == '\t') {
+        x = nextTabStop(x);
       }
-      x = nextTabStop(x);
-      start = i + 1;
+      else {
+        x += charWidth(text.charAt(i), fontType);
+      }
+      if (x > clip.x + clip.width) {
+        break;
+      }
     }
-
-    if (start < text.length()) {
-      for (int j = start; j < text.length(); j++) x += charWidth(text.charAt(j), fontType);
-    }
-
     return x - xStart;
   }
 
@@ -3561,7 +3570,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
     private HashMap<EditorFontType, Font> myFontsMap = null;
-    private Integer myFontSize = null;
+    private int myFontSize = -1;
     private String myFaceName = null;
     private final EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
@@ -3629,8 +3638,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public int getEditorFontSize() {
-      if (myFontSize != null) return myFontSize.intValue();
-      return getGlobal().getEditorFontSize();
+      if (myFontSize == -1) {
+        myFontSize = getGlobal().getEditorFontSize();
+      }
+      return myFontSize;
     }
 
     public void setEditorFontSize(int fontSize) {
@@ -3641,8 +3652,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public String getEditorFontName() {
-      if (myFaceName != null) return myFaceName;
-      return getGlobal().getEditorFontName();
+      if (myFaceName == null) {
+        myFaceName = getGlobal().getEditorFontName();
+      }
+      return myFaceName;
     }
 
     public void setEditorFontName(String fontName) {
