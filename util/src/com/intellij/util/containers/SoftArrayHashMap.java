@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.PairProcessor;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Map;
@@ -57,6 +58,20 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
       return myEmptyValue;
     }
     return get(key, 0);
+  }
+
+  public boolean processLeafEntries(final PairProcessor<T, V> processor) {
+    if (myValuesMap != null) {
+      for (T t : myValuesMap.keySet()) {
+        if (!processor.process(t, myValuesMap.get(t))) return false;
+      }
+    }
+    if (myContinuationMap != null) {
+      for (SoftArrayHashMap<T, V> map : myContinuationMap.values()) {
+        if (!map.processLeafEntries(processor)) return false;
+      }
+    }
+    return true;
   }
 
   private void put(T[] array, int index, V value) {
