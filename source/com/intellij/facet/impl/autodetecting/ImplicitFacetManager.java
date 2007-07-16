@@ -128,12 +128,16 @@ public class ImplicitFacetManager implements Disposable {
   public void initUI() {
     myAttentionComponent = new AttentionComponent();
     myStatusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (myStatusBar == null) return;
+
     myStatusBar.addCustomIndicationComponent(myAttentionComponent);
     myUIInitialized = true;
     onImplicitFacetChanged();
   }
 
   public void disposeUI() {
+    if (!myUIInitialized) return;
+
     myStatusBar.removeCustomIndicationComponent(myAttentionComponent);
   }
 
