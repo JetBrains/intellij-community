@@ -104,12 +104,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     return getRawType().getAnnotation(annotationClass);
   }
 
-  public final <T extends DomElement> T createStableCopy() {
+  public final DomElement createPathStableCopy() {
     final DomFixedChildDescription description = (DomFixedChildDescription)getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
-    return getManager().createStableValue(new Factory<T>() {
-      public T create() {
-        return parentCopy.isValid() ? (T)description.getValues(parentCopy).get(myIndex) : null;
+    return getManager().createStableValue(new Factory<DomElement>() {
+      public DomElement create() {
+        return parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null;
       }
     });
   }

@@ -4,7 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -65,11 +65,11 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     return myParent;
   }
 
-  public <T extends DomElement> T createStableCopy() {
+  public DomElement createPathStableCopy() {
     final DomFileElement stableCopy = myParent.createStableCopy();
-    return getManager().createStableValue(new Factory<T>() {
-      public T create() {
-        return stableCopy.isValid() ? (T) stableCopy.getRootElement() : null;
+    return getManager().createStableValue(new NullableFactory<DomElement>() {
+      public DomElement create() {
+        return stableCopy.isValid() ? stableCopy.getRootElement() : null;
       }
     });
   }

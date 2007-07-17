@@ -8,9 +8,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -211,6 +214,36 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
+  public <T extends DomElement> T createStableCopy() {
+    r.lock();
+    try {
+      if (myXmlTag != null && myXmlTag.isPhysical()) {
+        final SmartPsiElementPointer<XmlTag> pointer =
+          SmartPointerManager.getInstance(myManager.getProject()).createSmartPsiElementPointer(myXmlTag);
+        return myManager.createStableValue(new NullableFactory<T>() {
+          public T create() {
+            final XmlTag tag = pointer.getElement();
+            if (tag == null) return null;
+
+            final DomElement element = myManager.getDomElement(tag);
+            if (element == null || !element.getDomElementType().equals(myType)) return null;
+
+            final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
+            if (handler == null || !handler.getClass().equals(DomInvocationHandler.this.getClass())) return null;
+
+            return (T)element;
+          }
+        });
+      }
+    } finally {
+      r.unlock();
+    }
+    return (T)createPathStableCopy();
+  }
+
+  protected DomElement createPathStableCopy() {
+    throw new UnsupportedOperationException();
+  }
 
   public final <T extends DomElement> T createMockCopy(final boolean physical) {
     final T copy = myManager.createMockElement((Class<? extends T>)getRawType(), getProxy().getModule(), physical);
