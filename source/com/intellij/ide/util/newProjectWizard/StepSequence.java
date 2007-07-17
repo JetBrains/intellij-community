@@ -15,6 +15,10 @@ public class StepSequence {
   private String myType;
   private StepSequence myParentSequence;
 
+  public StepSequence() {
+    this(null);
+  }
+
   public StepSequence(final StepSequence stepSequence) {
     myParentSequence = stepSequence;
   }

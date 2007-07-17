@@ -39,7 +39,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   public ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, String helpId) {
-    return new SourcePathsStep((NameLocationStep)nameAndLocationStep, builder, icon, helpId);
+    return null;
   }
 
   public ModuleWizardStep createProjectJdkStep(WizardContext context,

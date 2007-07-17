@@ -7,6 +7,7 @@ package com.intellij.ide.util.importProject;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -135,6 +136,9 @@ public class ModuleInsight {
           }
         }
       }
+    }
+    catch (ProcessCanceledException ignored) {
+      
     }
     finally {
       myProgress.popState();

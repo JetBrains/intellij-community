@@ -1,10 +1,11 @@
-package com.intellij.ide.util.projectWizard;
+package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.JavaUtil;
+import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,15 +41,14 @@ import java.util.List;
  *         Date: Jan 6, 2004
  */
 public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, String>>> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.SourcePathsStep");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.SourcePathsStep");
 
   private String myCurrentMode;
   @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
   @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
 
   private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
-  private final NameLocationStep myNameLocationStep;
-  private final JavaModuleBuilder myBuilder;
+  private final ProjectFromSourcesBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
   private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
@@ -59,9 +59,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   private JTextField myTfFullPath;
   private JPanel myResultPanel;
 
-  public SourcePathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId) {
+  public SourcePathsStep(ProjectFromSourcesBuilder builder, Icon icon, @NonNls String helpId) {
     super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
-    myNameLocationStep = nameLocationStep;
     myBuilder = builder;
     myIcon = icon;
     myHelpId = helpId;
@@ -230,7 +229,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
         }
       }
       if (sourceDirectoryPath != null) {
-        final File rootDir = new File(myBuilder.getContentEntryPath());
+        final File rootDir = new File(myBuilder.getContentRootPath());
         final File srcDir = new File(sourceDirectoryPath);
         try {
           if (!FileUtil.isAncestor(rootDir, srcDir, false)) {
@@ -252,7 +251,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
 
   @Nullable
   private String getSourceDirectoryPath() {
-    final String contentEntryPath = myBuilder.getContentEntryPath();
+    final String contentEntryPath = myBuilder.getContentRootPath();
     final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
     if (contentEntryPath != null) {
       return dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
@@ -273,7 +272,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
       myCurrentMode = CREATE_SOURCE_PANEL;
       updateFullPathField();
     }
-    updateStepUI(canceled ? null : myBuilder.getContentEntryPath());
+    updateStepUI(canceled ? null : myBuilder.getContentRootPath());
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
       mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
     }
@@ -289,12 +288,12 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   }
 
   protected boolean isContentEntryChanged() {
-    final String contentEntryPath = myBuilder.getContentEntryPath();
+    final String contentEntryPath = myBuilder.getContentRootPath();
     return myCurrentContentEntryPath == null? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
   }
 
   protected List<Pair<String,String>> calculate() {
-    String contentEntryPath = myBuilder.getContentEntryPath();
+    String contentEntryPath = myBuilder.getContentRootPath();
     if (contentEntryPath == null) {
       return EMPTY_STRING_STRING_ARRAY;
     }
@@ -328,7 +327,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   }
 
   protected String getProgressText() {
-    return IdeBundle.message("progress.searching.for.sources", myBuilder.getContentEntryPath().replace('/', File.separatorChar));
+    return IdeBundle.message("progress.searching.for.sources", myBuilder.getContentRootPath().replace('/', File.separatorChar));
   }
 
   private class BrowsePathListener extends BrowseFilesListener {
@@ -343,7 +342,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
 
     @Nullable
     private VirtualFile getContentEntryDir() {
-      final String contentEntryPath = myBuilder.getContentEntryPath();
+      final String contentEntryPath = myBuilder.getContentRootPath();
       if (contentEntryPath != null) {
         return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
           public VirtualFile compute() {
@@ -368,10 +367,6 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
         }
       }
     }
-  }
-
-  public boolean isStepVisible() {
-    return myNameLocationStep.getContentEntryPath() != null;
   }
 
   public Icon getIcon() {
