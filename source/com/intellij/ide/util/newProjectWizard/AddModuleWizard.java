@@ -153,9 +153,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       do {
         final ModuleWizardStep step = mySteps.get(idx);
         step.updateStep();
-        if (!step.validate()) {
-          return;
-        }
         if (!commitStepData(step)) {
           return;
         }
@@ -167,18 +164,12 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
           Messages.showErrorDialog(getCurrentStepComponent(), e.getMessage());
           return;
         }
-        if (!validateDataOnClose()) {
-          return;
-        }
         if (!isLastStep(idx)) {
           idx = getNextStep(idx);
         } else {
           break;
         }
       } while (true);
-    }
-    catch (ConfigurationException e) {
-      Messages.showErrorDialog(myCurrentProject, e.getMessage(), e.getTitle());
     }
     finally {
       myCurrentStep = idx;
@@ -198,54 +189,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     }
     step.updateDataModel();
     return true;
-  }
-
-  private boolean validateDataOnClose() {
-    return true;
-    /*final ProjectBuilder projectBuilder = getProjectBuilder();
-    return projectBuilder == null || projectBuilder.validate();*/
-
-    /*if (myModuleTypeStep.isCreateNewModule()) {
-      final File file = new File(projectBuilder.getModuleFilePath());
-      if (file.exists()) {
-        final int answer = Messages.showOkCancelDialog(
-          IdeBundle.message("prompt.module.file.overwrite", file.getPath()),
-          IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-        if (answer != 0) {
-          return false;
-        }
-      }
-    }
-    else if (myModuleTypeStep.isImportExistingModule()) {
-      final File file = new File(projectBuilder.getModuleFilePath());
-      if (file.exists()) {
-        try {
-          final Document document = JDOMUtil.loadDocument(file);
-          final Element root = document.getRootElement();
-          if (!convertModule(file, document, root)) {
-            return false;
-          }
-          final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
-          final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
-          usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
-          usedMacros.removeAll(definedMacros);
-          if (usedMacros.size() > 0) {
-            final boolean ok = ProjectManagerImpl.showMacrosConfigurationDialog(myCurrentProject, usedMacros);
-            if (!ok) {
-              return false;
-            }
-          }
-        }
-        catch (JDOMException e) {
-          Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
-          return false;
-        }
-        catch (IOException e) {
-          Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
-          return false;
-        }
-      }
-    }*/
   }
 
   protected void doNextAction() {
