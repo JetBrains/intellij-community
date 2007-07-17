@@ -47,28 +47,6 @@ public class CleanupInspectionIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    runInspection(project, file, new Processor() {
-      public void process(final Project project, final CommonProblemDescriptor descriptor, final QuickFix fix) {
-        final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
-        if (element != null && element.isValid()) {
-          fix.applyFix(project, descriptor);
-        }
-      }
-    });
-  }
-
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myQuickfixClass == null) return false;
-    final int[] count = new int[]{0};
-    runInspection(project, file, new Processor() {
-      public void process(final Project project, final CommonProblemDescriptor descriptor, final QuickFix fix) {
-        count[0] += 1;
-      }
-    });
-    return count[0] > 1;
-  }
-
-  private void runInspection(final Project project, final PsiFile file, final Processor processor) {
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);
@@ -76,7 +54,7 @@ public class CleanupInspectionIntention implements IntentionAction {
     ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
     tool.processFile(file, true, managerEx);
     final List<CommonProblemDescriptor> descriptions = new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
-    Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>(){
+    Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
         final ProblemDescriptorImpl d1 = (ProblemDescriptorImpl)o1;
         final ProblemDescriptorImpl d2 = (ProblemDescriptorImpl)o2;
@@ -88,7 +66,10 @@ public class CleanupInspectionIntention implements IntentionAction {
       if (fixes != null && fixes.length > 0) {
         for (QuickFix fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
-            processor.process(project, descriptor, fix);
+            final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+            if (element != null && element.isValid()) {
+              fix.applyFix(project, descriptor);
+            }
             break;
           }
         }
@@ -98,11 +79,11 @@ public class CleanupInspectionIntention implements IntentionAction {
     context.cleanup(managerEx);
   }
 
-  public boolean startInWriteAction() {
-    return true;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    return myQuickfixClass != null;
   }
 
-  private static interface Processor {
-    void process(Project project, CommonProblemDescriptor descriptor, QuickFix fix);
+  public boolean startInWriteAction() {
+    return true;
   }
 }
