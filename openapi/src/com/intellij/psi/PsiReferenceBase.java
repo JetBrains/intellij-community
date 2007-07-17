@@ -84,6 +84,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    System.out.println("PsiReferenceBase.handleElementRename: " + this);
     final ElementManipulator<T> manipulator = getManipulator();
     assert manipulator != null: "Cannot find manipulator for " + myElement;
     return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
@@ -100,6 +101,10 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
 
     return new PsiReferenceBase<T>(element,true) {
+      //do nothing. the element will be renamed via PsiMetaData (com.intellij.refactoring.rename.RenameUtil.doRenameGenericNamedElement())
+      public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+        return getElement();
+      }
 
       @Nullable
       public PsiElement resolve() {
