@@ -57,10 +57,9 @@ import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
+import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -99,7 +98,6 @@ public class SvnVcs extends AbstractVcs {
   private UpdateEnvironment mySvnUpdateEnvironment;
   private UpdateEnvironment mySvnIntegrateEnvironment;
   private VcsHistoryProvider mySvnHistoryProvider;
-  private UpdateEnvironment mySvnStatusEnvironment;
   private AnnotationProvider myAnnotationProvider;
   private DiffProvider mySvnDiffProvider;
   private VcsShowConfirmationOption myAddConfirmation;
@@ -310,13 +308,6 @@ public class SvnVcs extends AbstractVcs {
 
   public VcsHistoryProvider getVcsBlockHistoryProvider() {
     return getVcsHistoryProvider();
-  }
-
-  public UpdateEnvironment getStatusEnvironment() {
-    if (mySvnStatusEnvironment == null) {
-      mySvnStatusEnvironment = new SvnStatusEnvironment(this);
-    }
-    return mySvnStatusEnvironment;
   }
 
   public AnnotationProvider getAnnotationProvider() {
