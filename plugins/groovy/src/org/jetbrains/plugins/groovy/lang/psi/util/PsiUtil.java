@@ -224,4 +224,24 @@ public class PsiUtil {
   public static PsiClass getJavaLangObject(PsiElement resolved, GlobalSearchScope scope) {
     return resolved.getManager().findClass("java.lang.Class", scope);
   }
+
+  public static PsiElement realPrevious(PsiElement previousLeaf) {
+    while (previousLeaf != null &&
+        (previousLeaf instanceof PsiWhiteSpace ||
+            previousLeaf instanceof PsiComment ||
+            previousLeaf instanceof PsiErrorElement)) {
+      previousLeaf = previousLeaf.getPrevSibling();
+    }
+    return previousLeaf;
+  }
+
+  public static PsiElement realNext(PsiElement nextLeaf) {
+    while (nextLeaf != null &&
+        (nextLeaf instanceof PsiWhiteSpace ||
+            nextLeaf instanceof PsiComment ||
+            nextLeaf instanceof PsiErrorElement)) {
+      nextLeaf = nextLeaf.getNextSibling();
+    }
+    return nextLeaf;
+  }
 }

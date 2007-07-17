@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -162,23 +161,6 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return findChildByType(GroovyTokenTypes.mIDENT);
-  }
-
-  @NotNull
-  public void removeVariable() throws IncorrectOperationException {
-      if (getParent() == null ||
-          getParent().getNode() == null ||
-          !(getParent() instanceof GrVariableDeclaration)) {
-        throw new IncorrectOperationException();
-      }
-
-      ASTNode parentNode = getParent().getNode();
-      parentNode.removeChild(this.getNode());
-
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration) getParent();
-    if (variableDeclaration.getVariables().length == 0){
-      variableDeclaration.removeVariableDeclaration();
-    }
   }
 
   @Nullable

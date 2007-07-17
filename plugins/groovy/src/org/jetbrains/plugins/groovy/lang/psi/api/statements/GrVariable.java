@@ -36,9 +36,6 @@ public interface GrVariable extends GrNamedElement, PsiVariable, GroovyPsiElemen
   @NotNull
   PsiElement getNameIdentifierGroovy();
 
-  @NotNull
-  void removeVariable() throws IncorrectOperationException;
-
   @Nullable
   GrExpression getInitializerGroovy();
 

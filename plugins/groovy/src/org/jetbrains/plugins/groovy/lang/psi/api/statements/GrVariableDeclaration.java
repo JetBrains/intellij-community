@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -22,5 +23,5 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
 
   GrVariable[] getVariables();
 
-  void removeVariableDeclaration() throws IncorrectOperationException;
+  void removeVariable(@NotNull GrVariable variable) throws IncorrectOperationException;
 }

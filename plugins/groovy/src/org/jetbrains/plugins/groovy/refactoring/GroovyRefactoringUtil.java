@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -28,6 +30,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -256,9 +260,24 @@ public abstract class GroovyRefactoringUtil {
       HighlightManager highlightManager = HighlightManager.getInstance(project);
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      if (elements.length > 1) {
+      if (elements.length > 0) {
         highlightManager.addOccurrenceHighlights(editor, elements, attributes, true, highlighters);
       }
     }
+  }
+
+  public static void reformatCode(final PsiElement element) {
+    // todo rewrite activity
+    final TextRange textRange = element.getTextRange();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
+              textRange.getStartOffset(), textRange.getEndOffset());
+        } catch (IncorrectOperationException e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
 }

@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
 /**
@@ -31,7 +32,7 @@ public class AnnotationFilter implements ElementFilter, GroovyElementTypes {
 
 
   public boolean isAcceptable(Object element, PsiElement context) {
-    PsiElement previous = GroovyCompletionUtil.realPrevious(context.getParent().getPrevSibling());
+    PsiElement previous = PsiUtil.realPrevious(context.getParent().getPrevSibling());
     if (previous == null ||
         !GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;

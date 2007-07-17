@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -47,8 +48,9 @@ import java.util.Collection;
  */
 public class GroovyInlineHandler implements InlineHandler {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
 
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
 
   @Nullable
@@ -116,12 +118,12 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
   public void removeDefinition(final PsiElement element) {
-/*
-    Runnable runnable = new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          if (element instanceof GrVariable) {
-            ((GrVariable) element).removeVariable();
+          if (element instanceof GrVariable &&
+              (GrVariableDeclaration) element.getParent() instanceof GrVariableDeclaration) {
+            ((GrVariableDeclaration) element.getParent()).removeVariable(((GrVariable) element));
           }
         } catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -129,13 +131,13 @@ public class GroovyInlineHandler implements InlineHandler {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(referenced.getProject(), new Runnable() {
+    // todo remove
+    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
-    }, GroovyRefactoringBundle.message("inline.local.command", variable.getNameIdentifierGroovy().getText()), null);
+    }, GroovyRefactoringBundle.message("inline.local.command", ((GrVariable) element).getNameIdentifierGroovy().getText()), null);
 
-*/
   }
 
   @Nullable
@@ -161,7 +163,7 @@ public class GroovyInlineHandler implements InlineHandler {
         return null;
       }
 
-      public void inlineReference(final PsiReference reference, PsiElement referenced) {
+      public void inlineReference(final PsiReference reference, final PsiElement referenced) {
         assert reference instanceof GrExpression;
         assert variable.getInitializerGroovy() != null;
         final Runnable runnable = new Runnable() {
@@ -176,6 +178,7 @@ public class GroovyInlineHandler implements InlineHandler {
           }
         };
 
+        // todo remove
         CommandProcessor.getInstance().executeCommand(referenced.getProject(), new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(runnable);
