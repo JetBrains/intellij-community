@@ -3,10 +3,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
@@ -236,7 +236,7 @@ public class CompletionUtil {
           pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, true, true));
           break;
         case CodeInsightSettings.FIRST_LETTER:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, true, false));
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, true, true));
           break;
         case CodeInsightSettings.ALL:
           pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false, false));

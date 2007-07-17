@@ -26,6 +26,7 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private CodeStyleManager myCodeStyleManager;
   private String myPrefix;
   private String myPrefixLowered;
+  private String myPrefixCapitals;
 
   public void setPrefix(String prefix) {
     myPrefix = prefix;
@@ -34,6 +35,7 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix) {
     setPrefix( prefix );
+    myPrefixCapitals = capitalsOnly(prefix);
     myCodeStyleManager = manager.getCodeStyleManager();
     if(expectedInfos != null){
       final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
@@ -52,6 +54,16 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
   }
 
+  public static String capitalsOnly(String s) {
+    StringBuffer b = new StringBuffer();
+    for (int i = 0; i < s.length(); i++) {
+      if (Character.isUpperCase(s.charAt(i))) {
+        b.append(s.charAt(i));
+      }
+    }
+
+    return b.toString();
+  }
 
   public void itemSelected(LookupItem item) {
     final Object o = item.getObject();
@@ -61,26 +73,31 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
         StatisticsManager.getInstance().incMemberUseCount(qualifierType, (PsiMember)o);
       }
     }
-
   }
 
   public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
+
+    String item1StringCap = capitalsOnly(item1.getLookupString());
+    String item2StringCap = capitalsOnly(item2.getLookupString());
+
+    if (item1StringCap.startsWith(myPrefixCapitals) && !item2StringCap.startsWith(myPrefixCapitals)) return -1;
+    if (!item1StringCap.startsWith(myPrefixCapitals) && item2StringCap.startsWith(myPrefixCapitals)) return 1;
+
+    // Check equality in case
     String item1String = item1.getLookupString();
     String item2String = item2.getLookupString();
 
-    item1String = item1String.toLowerCase();
-    item2String = item2String.toLowerCase();
-
-    if (item1String.startsWith(myPrefixLowered) && !item2String.startsWith(myPrefixLowered)) return -1;
-    if (!item1String.startsWith(myPrefixLowered) && item2String.startsWith(myPrefixLowered)) return 1;
-
-    // Check equality in case
-    item1String = item1.getLookupString();
-    item2String = item2.getLookupString();
-
     if (item1String.startsWith(myPrefix) && !item2String.startsWith(myPrefix)) return -1;
     if (!item1String.startsWith(myPrefix) && item2String.startsWith(myPrefix)) return 1;
+
+
+    String item1StringLowered = item1.getLookupString().toLowerCase();
+    String item2StringLowered = item2.getLookupString().toLowerCase();
+
+    if (item1StringLowered.startsWith(myPrefixLowered) && !item2StringLowered.startsWith(myPrefixLowered)) return -1;
+    if (!item1StringLowered.startsWith(myPrefixLowered) && item2StringLowered.startsWith(myPrefixLowered)) return 1;
+
 
     Object o1 = item1.getObject();
     Object o2 = item2.getObject();
