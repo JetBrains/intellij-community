@@ -82,6 +82,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
+  private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
 
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
@@ -124,6 +125,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (vcs == null) {
       return false;
     }
+    myFilesToRefresh.add(file.getParent());
     return move(vcs, srcFile, dstFile);
   }
 
@@ -132,6 +134,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
     if (vcs != null) {
+      myFilesToRefresh.add(file.getParent());
       return move(vcs, srcFile, dstFile);
     }
     return false;
@@ -315,6 +318,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (myDeletedFiles.size() > 0) {
       processDeletedFiles(project);
     }
+    for(VirtualFile file: myFilesToRefresh) {
+      file.refresh(true, true);
+    }
+    myFilesToRefresh.clear();
   }
 
   private void processAddedFiles(Project project) {

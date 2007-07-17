@@ -86,7 +86,9 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertEquals(4, changes.size());
     Collections.sort(changes, new Comparator<Change>() {
       public int compare(final Change o1, final Change o2) {
-        return o1.getBeforeRevision().getFile().getPath().compareTo(o2.getBeforeRevision().getFile().getPath());
+        final String p1 = FileUtil.toSystemIndependentName(o1.getBeforeRevision().getFile().getPath());
+        final String p2 = FileUtil.toSystemIndependentName(o2.getBeforeRevision().getFile().getPath());
+        return p1.compareTo(p2);
       }
     });
     verifyChange(changes.get(0), "child", "newchild");
@@ -103,7 +105,8 @@ public class SvnRenameTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
-    Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(child));
+    VirtualFile oldChild = myWorkingCopyDir.findChild("child");
+    Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));
   }
 
   private VirtualFile prepareDirectoriesForRename() throws IOException {
@@ -124,7 +127,8 @@ public class SvnRenameTest extends SvnTestCase {
   private void verifyRevision(final ContentRevision beforeRevision, final String beforePath) {
     File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
-    Assert.assertEquals(beforeFullPath, beforeRevision.getFile().getPath());
+    final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
+    Assert.assertEquals(beforeFullPath, beforeRevPath);
   }
 
   // IDEADEV-19065
