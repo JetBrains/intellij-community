@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -38,7 +38,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   }
 
   public void testQualifiedRefExpr() throws Exception {
-    doTest("qualifiedRefExpr/ABCF.groovy");
+    doTest("qualifiedRefExpr/A.groovy");
   }
 
   public void testGrvy102() throws Exception {
