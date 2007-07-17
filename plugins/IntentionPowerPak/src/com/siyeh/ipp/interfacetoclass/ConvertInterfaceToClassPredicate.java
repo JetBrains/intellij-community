@@ -39,9 +39,6 @@ class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 		if (leftBrace == null || offsetInParent >= leftBrace.getStartOffsetInParent()) {
 			return false;
 		}
-		if (!element.isWritable()) {
-			return false;
-		}
 		final PsiManager manager = element.getManager();
 		final PsiSearchHelper searchHelper = manager.getSearchHelper();
 		final SearchScope useScope = aClass.getUseScope();
