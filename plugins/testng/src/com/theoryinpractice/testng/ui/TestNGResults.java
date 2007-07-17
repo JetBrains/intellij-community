@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.GuiUtils;
@@ -44,6 +45,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -103,6 +106,20 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         model = new TestNGResultsTableModel();
         consoleProperties = console.getConsoleProperties();
         resultsTable = new TableView(model);
+        resultsTable.addMouseListener(new MouseAdapter() {
+          public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2){
+              final Object result = resultsTable.getSelectedObject();
+              if (result instanceof TestResultMessage) {
+                final String testClass = ((TestResultMessage)result).getTestClass();
+                final PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass);
+                if (psiClass != null) {
+                  psiClass.navigate(true);
+                }
+              }
+            }
+          }
+        });
         rootNode = new TreeRootNode();
         final TestTreeStructure structure = new TestTreeStructure(project, rootNode);
         tree.attachToModel(this);
