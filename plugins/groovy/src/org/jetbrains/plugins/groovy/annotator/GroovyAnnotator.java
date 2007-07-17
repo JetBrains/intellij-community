@@ -29,17 +29,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -79,16 +83,19 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkCommandArgument(GrNamedArgument namedArgument, AnnotationHolder holder) {
-    PsiType expectedType = namedArgument.getLabel().getExpectedArgumentType();
-    if (expectedType != null) {
-      expectedType = TypeConversionUtil.erasure(expectedType);
-      final GrExpression expr = namedArgument.getExpression();
-      if (expr != null) {
-        final PsiType argType = expr.getType();
-        if (argType != null) {
-          final PsiClassType listType = namedArgument.getManager().getElementFactory().createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
-          if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
-          checkAssignability(holder, expectedType, argType, namedArgument);
+    final GrArgumentLabel label = namedArgument.getLabel();
+    if (label != null) {
+      PsiType expectedType = label.getExpectedArgumentType();
+      if (expectedType != null) {
+        expectedType = TypeConversionUtil.erasure(expectedType);
+        final GrExpression expr = namedArgument.getExpression();
+        if (expr != null) {
+          final PsiType argType = expr.getType();
+          if (argType != null) {
+            final PsiClassType listType = namedArgument.getManager().getElementFactory().createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
+            if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
+            checkAssignability(holder, expectedType, argType, namedArgument);
+          }
         }
       }
     }

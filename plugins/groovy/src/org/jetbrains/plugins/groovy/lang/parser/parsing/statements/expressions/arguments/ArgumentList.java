@@ -21,8 +21,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -72,9 +70,8 @@ public class ArgumentList implements GroovyElementTypes {
   private static GroovyElementType argumentParse(PsiBuilder builder, IElementType closingBrace) {
 
     PsiBuilder.Marker argMarker = builder.mark();
-    builder.getTokenText(); //TODO Show to ven as bug
     boolean labeled = argumentLabelStartCheck(builder);
-    boolean expansed = ParserUtils.getToken(builder, mSTAR);
+    boolean expanded = ParserUtils.getToken(builder, mSTAR);
     if (labeled) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     }
@@ -92,7 +89,7 @@ public class ArgumentList implements GroovyElementTypes {
       result = AssignmentExpression.parse(builder);
     }
 
-    if (labeled || expansed) {
+    if (labeled || expanded) {
       argMarker.done(ARGUMENT);
     } else {
       argMarker.drop();
@@ -126,23 +123,23 @@ public class ArgumentList implements GroovyElementTypes {
             mGSTRING_LITERAL.equals(builder.getTokenType())
             ) {
       builder.advanceLexer();
-      boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
-      if (isArgumentLabel) {
+      if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
+        return true;
       } else {
         marker.rollbackTo();
+        return false;
       }
-      return isArgumentLabel;
     } else if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType()) ||
             mLPAREN.equals(builder.getTokenType())) {
       PrimaryExpression.parse(builder);
-      boolean isArgumentLabel = mCOLON.equals(builder.getTokenType());
-      if (isArgumentLabel) {
+      if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
+        return true;
       } else {
         marker.rollbackTo();
+        return false;
       }
-      return isArgumentLabel;
     } else {
       marker.drop();
       return false;
