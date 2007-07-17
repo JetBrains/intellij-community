@@ -1,9 +1,11 @@
 package com.intellij.historyIntegrTests.revertion;
 
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.Clock;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -97,6 +99,29 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     assertEquals(0, f.contentsToByteArray().length);
     assertEquals(root, dir1.getParent());
     assertNull(root.findChild("dir2"));
+  }
+
+  public void testRevertDeletionOfContentRoot() throws Exception {
+    VirtualFile newRoot = addContentRootWithFiles(myModule, "f.java");
+    String path = newRoot.getPath();
+
+    newRoot.delete(null);
+
+    ChangeReverter r = createReverter(getVcs().getChangeList().getChanges().get(0));
+    r.revert();
+
+    VirtualFile restoredRoot = findFile(path);
+    assertNotNull(restoredRoot);
+
+    VirtualFile restoredFile = restoredRoot.findChild("f.java");
+    assertNotNull(restoredFile);
+
+    assertEquals(2, getVcsRevisionsFor(restoredRoot).size());
+    assertEquals(2, getVcsRevisionsFor(restoredFile).size());
+  }
+
+  private VirtualFile findFile(String path) {
+    return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
   public void testRevertDeletion() throws Exception {

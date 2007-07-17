@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ProfilingUtil;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.List;
 
 public class BasicsTest extends IntegrationTestCase {
@@ -26,9 +27,10 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testSaving() throws Exception {
     VirtualFile f = root.createChildData(null, "file.java");
+    File dir = getVcsComponent().getStorageDir();
     myProject.save();
 
-    Storage s = new Storage(getVcsComponent().getStorageDir());
+    Storage s = new Storage(dir);
     LocalVcs vcs = new TestLocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(f.getPath()));
@@ -133,6 +135,20 @@ public class BasicsTest extends IntegrationTestCase {
 
     assertNull(LocalHistory.getByteContent(myProject, f, comparator(10)));
   }
+
+  public void testRevisionsIfThereWasFileThatBecameUnversioned() throws IOException {
+    FileTypeManager.getInstance().registerFileType(StdFileTypes.JAVA, "jjj");
+    VirtualFile f = root.createChildData(null, "f.jjj");
+    FileTypeManager.getInstance().removeAssociatedExtension(StdFileTypes.JAVA, "jjj");
+
+    List<Revision> rr = getVcsRevisionsFor(root);
+    assertEquals(3, rr.size());
+
+    assertNull(rr.get(0).getEntry().findChild("f.jjj"));
+    assertNotNull(rr.get(1).getEntry().findChild("f.jjj"));
+    assertNull(rr.get(2).getEntry().findChild("f.jjj"));
+  }
+
 
   private RevisionTimestampComparator comparator(long timestamp) {
     return new TestTimestampComparator(timestamp);

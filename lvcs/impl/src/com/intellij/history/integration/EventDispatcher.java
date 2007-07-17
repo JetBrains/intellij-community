@@ -59,12 +59,19 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   @Override
   public void fileCreated(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
+    VirtualFile f = e.getFile();
+
     if (e.getRequestor() instanceof Entry) {
-      myFacade.restore(e.getFile(), (Entry)e.getRequestor());
+      myFacade.restore(f, (Entry)e.getRequestor());
     }
     else {
-      myFacade.create(e.getFile());
+      if (wasCreatedDuringRootsUpdate(f)) return;
+      myFacade.create(f);
     }
+  }
+
+  private boolean wasCreatedDuringRootsUpdate(VirtualFile f) {
+    return myVcs.hasEntry(f.getPath());
   }
 
   @Override
@@ -128,8 +135,12 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
       f = new ReparentedVirtualFile(e.getParent(), e.getFile());
     }
 
-    if (!myVcs.hasEntry(f.getPath())) return;
+    if (wasDeletedDuringRootsUpdate(f)) return;
     myFacade.delete(f);
+  }
+
+  private boolean wasDeletedDuringRootsUpdate(VirtualFile f) {
+    return !myVcs.hasEntry(f.getPath());
   }
 
   private boolean notAllowedOrNotUnderContentRoot(VirtualFile f) {

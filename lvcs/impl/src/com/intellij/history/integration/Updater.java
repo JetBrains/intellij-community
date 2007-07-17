@@ -25,10 +25,10 @@ public class Updater implements CacheUpdater {
   public Updater(ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
-    myVfsRoots = selectSortParentlessRoots(gw.getContentRoots());
+    myVfsRoots = selectParentlessRootsAndSort(gw.getContentRoots());
   }
 
-  private VirtualFile[] selectSortParentlessRoots(List<VirtualFile> roots) {
+  private VirtualFile[] selectParentlessRootsAndSort(List<VirtualFile> roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile r : roots) {
       if (parentIsNotUnderContentRoot(r)) result.add(r);

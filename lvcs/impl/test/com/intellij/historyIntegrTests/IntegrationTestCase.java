@@ -1,9 +1,9 @@
 package com.intellij.historyIntegrTests;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.Clock;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.Clock;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
 import com.intellij.history.utils.RunnableAdapter;
@@ -47,6 +47,10 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
       }
     });
   }
+
+  //protected File getIprFile() throws IOException {
+  //  return new File(createTempDirectory(), "test.ipr");
+  //}
 
   protected void setUpInWriteAction() throws Exception {
     root = addContentRoot();
@@ -142,8 +146,8 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     return LocalHistoryComponent.getComponentInstance(myProject);
   }
 
-  protected ILocalVcs getVcs() {
-    return LocalHistoryComponent.getLocalVcsFor(myProject);
+  protected LocalVcs getVcs() {
+    return LocalHistoryComponent.getLocalVcsImplFor(myProject);
   }
 
   protected boolean hasVcsEntry(VirtualFile f) {

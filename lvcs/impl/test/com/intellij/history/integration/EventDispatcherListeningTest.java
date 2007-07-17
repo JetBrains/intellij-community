@@ -84,6 +84,14 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   }
 
   @Test
+  public void testIgnoringCreationOfAlreadyExistedFiles() {
+    vcs.createFile("f", null, -1);
+    fireCreated(new TestVirtualFile("f"));
+
+    assertEquals(1, vcs.getChangeList().getChanges().size());
+  }
+
+  @Test
   public void testChangingFileContent() {
     vcs.createFile("file", cf("old content"), -1);
 

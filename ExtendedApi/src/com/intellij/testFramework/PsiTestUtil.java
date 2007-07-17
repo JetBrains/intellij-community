@@ -105,11 +105,19 @@ import java.util.Collection;
     rootModel.commit();
   }
   
-  public static void addContentRoot(Module module, VirtualFile vDir) {
+  public static ContentEntry addContentRoot(Module module, VirtualFile vDir) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    rootModel.addContentEntry(vDir);
+    ContentEntry e = rootModel.addContentEntry(vDir);
     rootModel.commit();
+    return e;
+  }
+
+  public static void removeContentEntry(Module m, ContentEntry e) {
+    ModuleRootManager rootModel = ModuleRootManager.getInstance(m);
+    ModifiableRootModel model = rootModel.getModifiableModel();
+    model.removeContentEntry(e);
+    model.commit();
   }
 
   public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {

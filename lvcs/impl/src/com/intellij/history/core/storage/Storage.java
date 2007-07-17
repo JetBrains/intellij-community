@@ -29,7 +29,7 @@ public class Storage {
   }
 
   private void validate() {
-    if (wasMarkedAsBroken() || isValidVersion()) {
+    if (wasMarkedAsBroken() || notValidVersion()) {
       deleteStorage();
       myDir.mkdirs();
       storeVersion();
@@ -44,7 +44,7 @@ public class Storage {
     return new File(myDir, BROKEN_MARK_FILE).exists();
   }
 
-  private boolean isValidVersion() {
+  private boolean notValidVersion() {
     int version = load(VERSION_FILE, -1, new Loader<Integer>() {
       public Integer load(Stream s) throws IOException {
         return s.readInteger();

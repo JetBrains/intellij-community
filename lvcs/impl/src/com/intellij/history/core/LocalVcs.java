@@ -157,7 +157,7 @@ public abstract class LocalVcs implements ILocalVcs {
   }
 
   // test-support
-  protected ChangeList getChangeList() {
+  public ChangeList getChangeList() {
     return myChangeList;
   }
 

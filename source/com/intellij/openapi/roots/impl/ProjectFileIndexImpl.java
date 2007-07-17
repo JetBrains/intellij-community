@@ -29,6 +29,8 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private final ContentFilter myContentFilter;
   private final ProjectRootContentFilter myProjectRootContentFilter;
 
+  private VirtualFile myBaseDirCache;
+
 
   public ProjectFileIndexImpl(Project project, DirectoryIndex directoryIndex, FileTypeManager fileTypeManager) {
     myProject = project;
@@ -208,7 +210,10 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && info.module != null;
+      if (info == null) return false;
+      if (info.module != null) return true;
+
+      return VfsUtil.isAncestor(getBaseDir(), fileOrDir, false);
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -238,6 +243,12 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     }
   }
 
+  private VirtualFile getBaseDir() {
+    if (myBaseDirCache != null) return myBaseDirCache;
+    myBaseDirCache = myProject.getBaseDir();
+    return myBaseDirCache;
+  }
+
   private class ContentFilter implements VirtualFileFilter {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
@@ -251,8 +262,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   private class ProjectRootContentFilter implements VirtualFileFilter {
-    private VirtualFile myBaseDir;
-
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
@@ -261,12 +270,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       else {
         return !myFileTypeManager.isFileIgnored(file.getName());
       }
-    }
-
-    private VirtualFile getBaseDir() {
-      if (myBaseDir != null) return myBaseDir;
-      myBaseDir =  myProject.getBaseDir();
-      return myBaseDir;
     }
   }
 }

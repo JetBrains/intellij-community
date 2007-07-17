@@ -59,7 +59,7 @@ public abstract class Entry {
   }
 
   public long getTimestamp() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   public boolean isOutdated(long timestamp) {
@@ -67,7 +67,7 @@ public abstract class Entry {
   }
 
   public Content getContent() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   public boolean hasUnavailableContent() {
@@ -87,11 +87,11 @@ public abstract class Entry {
   }
 
   public void addChild(Entry child) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   public void removeChild(Entry child) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   public List<Entry> getChildren() {
@@ -187,7 +187,7 @@ public abstract class Entry {
   }
 
   public void changeContent(Content newContent, long timestamp) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   public abstract Difference getDifferenceWith(Entry e);
@@ -199,5 +199,10 @@ public abstract class Entry {
   @Override
   public String toString() {
     return String.valueOf(myId) + "-" + myName;
+  }
+
+  private RuntimeException unsupported() {
+    String s = isDirectory() ? "dir:" : "file:";
+    return new UnsupportedOperationException(s + getPath());
   }
 }

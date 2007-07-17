@@ -1,11 +1,11 @@
 package com.intellij.history.integration;
 
-import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.history.*;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.ThreadSafeLocalVcs;
 import com.intellij.history.core.storage.Storage;
-import com.intellij.history.*;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -29,6 +29,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private CommandProcessor myCommandProcessor;
   private Storage myStorage;
   private ILocalVcs myVcs;
+  private LocalVcs myVcsImpl;
   private LocalHistoryService myService;
   private LocalHistoryConfiguration myConfiguration;
 
@@ -39,7 +40,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   // todo bad method - extend interface instead
   public static ILocalVcs getLocalVcsFor(Project p) {
-    return getComponentInstance(p).getLocalVcs();
+    return getComponentInstance(p).myVcs;
+  }
+
+  public static LocalVcs getLocalVcsImplFor(Project p) {
+    return getComponentInstance(p).myVcsImpl;
   }
 
   public LocalHistoryComponent(Project p,
@@ -69,12 +74,13 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
-    myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage) {
+    myVcsImpl = new LocalVcs(myStorage) {
       @Override
       protected long getPurgingPeriod() {
         return myConfiguration.PURGE_PERIOD;
       }
-    });
+    };
+    myVcs = new ThreadSafeLocalVcs(myVcsImpl);
   }
 
   protected void initService() {

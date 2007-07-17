@@ -1,6 +1,7 @@
 package com.intellij.historyIntegrTests.revertion;
 
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
@@ -20,7 +21,11 @@ public abstract class ChangeReverterTestCase extends IntegrationTestCase {
 
   protected ChangeReverter createReverter(VirtualFile f, int index) {
     List<Revision> rr = getVcsRevisionsFor(f);
-    return new ChangeReverter(getVcs(), gateway, rr.get(index).getCauseChange());
+    return createReverter(rr.get(index).getCauseChange());
+  }
+
+  protected ChangeReverter createReverter(Change c) {
+    return new ChangeReverter(getVcs(), gateway, c);
   }
 
   protected void assertCanRevert(VirtualFile f, int changeIndex) throws IOException {

@@ -140,7 +140,7 @@ import java.util.HashSet;
     myProjectManager = ProjectManagerEx.getInstanceEx();
     LOG.assertTrue(myProjectManager != null, "Cannot instaitiate ProjectManager component");
 
-    File projectFile = File.createTempFile("temp", ".ipr");
+    File projectFile = getIprFile();
     myFilesToDelete.add(projectFile);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
@@ -152,6 +152,10 @@ import java.util.HashSet;
     setUpJdk();
 
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
+  }
+
+  protected File getIprFile() throws IOException {
+    return File.createTempFile("temp", ".ipr");
   }
 
   protected void setUpModule() {
