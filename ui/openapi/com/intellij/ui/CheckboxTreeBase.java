@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -79,6 +80,11 @@ public class CheckboxTreeBase extends Tree {
   protected boolean toggleNode(CheckedTreeNode node) {
     boolean checked = !node.isChecked();
     checkNode(node, checked);
+
+    // notify model listeners about model change
+    final TreeModel model = getModel();
+    model.valueForPathChanged(new TreePath(node.getPath()), node.getUserObject());
+
     return checked;
   }
 

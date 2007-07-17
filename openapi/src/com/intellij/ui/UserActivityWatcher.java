@@ -98,6 +98,25 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
   };
 
+  private final TreeModelListener myTreeModelListener = new TreeModelListener() {
+    public void treeNodesChanged(final TreeModelEvent e) {
+      fireUIChanged();
+    }
+
+    public void treeNodesInserted(final TreeModelEvent e) {
+      fireUIChanged();
+    }
+
+    public void treeNodesRemoved(final TreeModelEvent e) {
+      fireUIChanged();
+    }
+
+    public void treeStructureChanged(final TreeModelEvent e) {
+      fireUIChanged();
+    }
+  };
+
+
   public UserActivityWatcher(Class[] controlsToIgnore) {
     super(controlsToIgnore);
   }
@@ -116,7 +135,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
     else if (parentComponent instanceof JList) {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
+    } else if (parentComponent instanceof JTree) {
+      ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
     }
+
     if (parentComponent instanceof JComboBox) {
       ComboBoxEditor editor = ((JComboBox)parentComponent).getEditor();
       if (editor != null) {
@@ -140,6 +162,8 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
     else if (component instanceof ItemSelectable) {
       ((ItemSelectable)component).removeItemListener(myItemListener);
+    } else if (component instanceof JTree) {
+      ((JTree)component).getModel().removeTreeModelListener(myTreeModelListener);
     }
 
     if (component instanceof JTable) {
