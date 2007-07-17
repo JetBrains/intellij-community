@@ -5,6 +5,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -318,10 +319,24 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
+  @Nullable
   ModuleBuilder runModuleWizard(Component dialogParent) {
     AddModuleWizard wizard = new AddModuleWizard(dialogParent, myProject, this);
     wizard.show();
     if (wizard.isOK()) {
+      final ProjectBuilder builder = wizard.getProjectBuilder();
+      if (builder instanceof ModuleBuilder) {
+        final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+        if (moduleBuilder.getName() == null) {
+          moduleBuilder.setName(wizard.getProjectName());
+        }
+        if (moduleBuilder.getModuleFilePath() == null) {
+          moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
+        }
+      }
+      if (!builder.validate(myProject, myProject)) {
+        return null;
+      }
       return (ModuleBuilder)wizard.getProjectBuilder();
     }
 
