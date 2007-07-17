@@ -1,7 +1,8 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -400,7 +401,7 @@ public class JavaCompletionData extends CompletionData{
 
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, true);
-      variant.addCompletion(PsiKeyword.CATCH, TailType.LPARENTH);
+      variant.addCompletion(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH);
       variant.addCompletion(PsiKeyword.FINALLY, TailType.createSimpleTailType('{'));
       variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
@@ -419,7 +420,7 @@ public class JavaCompletionData extends CompletionData{
 
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, false);
-      variant.addCompletion(PsiKeyword.CATCH, TailType.LPARENTH);
+      variant.addCompletion(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH);
       variant.addCompletion(PsiKeyword.FINALLY, TailType.createSimpleTailType('{'));
       //variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
@@ -617,9 +618,9 @@ public class JavaCompletionData extends CompletionData{
   }
 
   private static void addKeywords(CompletionVariant variant){
-    variant.addCompletion(PsiKeyword.SWITCH, TailType.LPARENTH);
-    variant.addCompletion(PsiKeyword.WHILE, TailType.LPARENTH);
-    variant.addCompletion(PsiKeyword.FOR, TailType.LPARENTH);
+    variant.addCompletion(PsiKeyword.SWITCH, TailTypes.SWITCH_LPARENTH);
+    variant.addCompletion(PsiKeyword.WHILE, TailTypes.WHILE_LPARENTH);
+    variant.addCompletion(PsiKeyword.FOR, TailTypes.FOR_LPARENTH);
     variant.addCompletion(PsiKeyword.TRY, TailType.createSimpleTailType('{'));
     variant.addCompletion(PsiKeyword.THROW, TailType.SPACE);
     variant.addCompletion(PsiKeyword.RETURN, TailType.SPACE);

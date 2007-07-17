@@ -246,9 +246,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     boolean insertRightParenth = !settings.INSERT_SINGLE_PARENTH
                                  || (settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams)
                                  || generateAnonymousBody
-                                 || (tailType != TailType.NONE && tailType != TailType.LPARENTH);
+                                 || tailType != TailType.NONE;
 
-//    if(tailType == SimpleTailType.LPARENTH) tailType = SimpleTailType.NONE; //???
     if (needParenth){
       if (myContext.lparenthOffset >= 0){
         myState.tailOffset = myContext.argListEndOffset;
@@ -310,10 +309,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private boolean isToInsertParenth(TailType tailType){
     boolean needParens = false;
-    if (tailType == TailType.LPARENTH){
-      needParens = true;
-    }
-    else if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
+    if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       needParens = true;
       final PsiClass aClass = (PsiClass)myLookupItem.getObject();
@@ -433,7 +429,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case '=': return TailType.EQ;
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
-      case '(': return TailType.LPARENTH;
+      case '(': return TailTypes.SMART_LPARENTH;
       case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
     }
     final TailType attr = (TailType)item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);

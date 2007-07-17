@@ -63,6 +63,10 @@ public abstract class TailType {
       if (styleSettings.SPACE_AFTER_COMMA) tailOffset = insertChar(editor, tailOffset, ' ');
       return tailOffset;
     }
+
+    public String toString() {
+      return "COMMA";
+    }
   };
   public static final TailType SPACE = new CharTailType(' ');
   public static final TailType DOT = new CharTailType('.');
@@ -82,6 +86,10 @@ public abstract class TailType {
       }
       document.insertString(tailOffset, " : ");
       return moveCaret(editor, tailOffset, 3);
+    }
+
+    public String toString() {
+      return "COND_EXPR_COLON";
     }
   };
   public static final TailType EQ = new TailType(){
@@ -110,12 +118,12 @@ public abstract class TailType {
       }
       return tailOffset;
     }
-  };
-  public static final TailType LPARENTH = new TailType(){
-    public int processTail(final Editor editor, final int tailOffset) {
-      return tailOffset;
+
+    public String toString() {
+      return "EQ";
     }
   };
+  public static final TailType LPARENTH = new CharTailType('(');
 
   public abstract int processTail(final Editor editor, int tailOffset);
 
