@@ -1,17 +1,18 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 
 import java.util.Set;
 
@@ -20,7 +21,14 @@ public class JavaCompletionUtil {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
     final VariableKind variableKind = codeStyleManager.getVariableKind(var);
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
+
+    String propertyName = null;
+    if (variableKind == VariableKind.PARAMETER) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+      propertyName = PropertyUtil.getPropertyName(method);
+    }
+
+    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
     LookupItemUtil.addLookupItems(set, suggestedNames, context.getPrefix());
 
