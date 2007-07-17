@@ -175,11 +175,11 @@ public class AbstractVcsTestCase {
     option.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
   }
 
-  protected void verify(final RunResult runResult) {
+  protected static void verify(final RunResult runResult) {
     Assert.assertEquals(runResult.stdErr, 0, runResult.exitCode);
   }
 
-  protected void verify(final RunResult runResult, final String... stdoutLines) {
+  protected static void verify(final RunResult runResult, final String... stdoutLines) {
     verify(runResult);
     final String[] lines = new LineTokenizer(runResult.stdOut).execute();
     Assert.assertEquals(stdoutLines.length, lines.length); 
@@ -188,7 +188,7 @@ public class AbstractVcsTestCase {
     }
   }
 
-  private String compressWhitespace(String line) {
+  private static String compressWhitespace(String line) {
     while(line.indexOf("  ") > 0) {
       line = line.replace("  ", " ");
     }
@@ -198,6 +198,15 @@ public class AbstractVcsTestCase {
   protected VcsDirtyScope getAllDirtyScope() {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     dirtyScopeManager.markEverythingDirty();
+    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
+    Assert.assertEquals(1, scopes.size());
+    return scopes.get(0);
+  }
+
+  protected VcsDirtyScope getDirtyScopeForFile(VirtualFile file) {
+    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    dirtyScopeManager.retrieveScopes();  // ensure that everything besides the file is clean
+    dirtyScopeManager.fileDirty(file);
     List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
     Assert.assertEquals(1, scopes.size());
     return scopes.get(0);

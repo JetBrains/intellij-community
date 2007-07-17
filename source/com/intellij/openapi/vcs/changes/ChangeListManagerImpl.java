@@ -5,9 +5,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -747,6 +747,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     if (myIgnoredFilesHolder.containsFile(file)) return FileStatus.IGNORED;
     final Change change = getChange(file);
     if (change != null) {
+      // moved/renamed dir, both old and new paths are present in filesystem - return "deleted" status for old path
+      final FilePath beforePath = ChangesUtil.getBeforePath(change);
+      final FilePath afterPath = ChangesUtil.getAfterPath(change);
+      if (afterPath != null && beforePath != null && !beforePath.equals(afterPath)) {
+        String revisionPath = FileUtil.toSystemIndependentName(beforePath.getPath());
+        if (FileUtil.pathsEqual(revisionPath, file.getPath())) {
+          return FileStatus.DELETED;
+        }
+      }
       return change.getFileStatus();
     }
     if (mySwitchedFilesHolder.containsFile(file)) return FileStatus.SWITCHED;
