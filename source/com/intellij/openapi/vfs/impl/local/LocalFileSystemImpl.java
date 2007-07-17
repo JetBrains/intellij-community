@@ -527,7 +527,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     finally {
       WRITE_LOCK.unlock();
     }
-    if (!filesToSynchronize.isEmpty()) {
+
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !filesToSynchronize.isEmpty()) {
       refreshFiles(filesToSynchronize, toWatchRecursively);
     }
 
