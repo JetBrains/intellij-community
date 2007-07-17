@@ -291,10 +291,7 @@ public class RefactoringUtil {
     helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
       public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
         UsageInfo usageInfo = factory.createUsageInfo(psiFile, startOffset, endOffset);
-        if (usageInfo != null) {
-          if (!processor.process(usageInfo)) return false;
-        }
-        return true;
+        return usageInfo == null || processor.process(usageInfo);
       }
     }, searchScope);
   }

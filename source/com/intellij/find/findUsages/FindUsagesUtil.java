@@ -24,11 +24,12 @@ import com.intellij.util.Processor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Arrays;
 
 public class FindUsagesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.FindUsagesUtil");
 
-  public static void processUsages(PsiElement element, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+  public static void processUsages(final PsiElement element, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
     if (element instanceof PsiVariable){
       if (options.isReadAccess || options.isWriteAccess){
         if (options.isReadAccess && options.isWriteAccess){
@@ -87,8 +88,8 @@ public class FindUsagesUtil {
           addImplementingClasses((PsiClass)element, processor, options);
         }
       }
-      else if (options.isDerivedClasses){
-          addInheritors((PsiClass)element, processor, options);
+      else if (options.isDerivedClasses) {
+        addInheritors((PsiClass)element, processor, options);
       }
     }
 
@@ -108,8 +109,15 @@ public class FindUsagesUtil {
     if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
       String stringToSearch = getStringToSearch(element);
       if (stringToSearch != null) {
+        final TextRange elementTextRange = element.getTextRange();
         RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
           public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+            if (elementTextRange != null
+                && usage.getContainingFile() == element.getContainingFile()
+                && elementTextRange.contains(startOffset)
+                && elementTextRange.contains(endOffset)) {
+              return null;
+            }
             return new UsageInfo(usage, startOffset, endOffset, true);
           }
         };
@@ -266,9 +274,7 @@ public class FindUsagesUtil {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         PsiClass[] classes = dir.getClasses();
-        for (PsiClass aClass : classes) {
-          array.add(aClass);
-        }
+        array.addAll(Arrays.asList(classes));
         if (includeSubdirs) {
           PsiDirectory[] dirs = dir.getSubdirectories();
           for (PsiDirectory directory : dirs) {
@@ -481,5 +487,13 @@ public class FindUsagesUtil {
       }
     }
     return true;
+  }
+
+  static boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
+    if (isSingleFile) return false;
+    if (psiElement instanceof PsiClass) {
+      return ((PsiClass)psiElement).getQualifiedName() != null;
+    }
+    return psiElement instanceof PsiPackage;
   }
 }

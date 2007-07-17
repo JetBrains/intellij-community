@@ -25,7 +25,7 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
                              boolean mustOpenInNewTab,
                              boolean isSingleFile) {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-          isSearchForTextOccurencesAvailable(element, isSingleFile), !isSingleFile && !element.getManager().isInProject(element));
+          FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile), !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     myIncludeOverloadedMethodsAvailable = element instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)element);
     init();
@@ -55,16 +55,6 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
                                                         FindSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
 
     }
-  }
-
-  private static boolean isSearchForTextOccurencesAvailable(PsiElement myPsiElement, boolean isSingleFile) {
-    if (!isSingleFile) {
-      if (myPsiElement instanceof PsiClass) {
-        return ((PsiClass)myPsiElement).getQualifiedName() != null;
-      }
-      return myPsiElement instanceof PsiPackage;
-    }
-    return false;
   }
 
   private PsiManager getPsiManager() {

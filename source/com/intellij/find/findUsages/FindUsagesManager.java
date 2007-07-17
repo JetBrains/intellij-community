@@ -95,9 +95,15 @@ public class FindUsagesManager implements JDOMExternalizable {
     myAnotherManager = anotherManager;
     final FindUsagesOptions findClassOptions = FindUsagesHandler.createFindUsagesOptions(project);
     final FindUsagesOptions findMethodOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    findMethodOptions.isCheckDeepInheritance = false;
+    findMethodOptions.isIncludeSubpackages = false;
+    findMethodOptions.isSearchForTextOccurences = false;
     final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
     final FindUsagesOptions findPointcutOptions = FindUsagesHandler.createFindUsagesOptions(project);
     final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    findVariableOptions.isCheckDeepInheritance = false;
+    findVariableOptions.isIncludeSubpackages = false;
+    findVariableOptions.isSearchForTextOccurences = false;
 
     myHandlers.add(new Function<PsiElement, Factory<FindUsagesHandler>>() {
       @Nullable
