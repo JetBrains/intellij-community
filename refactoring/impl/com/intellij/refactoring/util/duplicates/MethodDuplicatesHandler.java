@@ -57,7 +57,6 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       showErrorMessage(message, project);
       return;
     }
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     if (method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors"));
       showErrorMessage(message, project);
@@ -95,6 +94,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       }
 
       public void visitFile(final PsiFile file) {
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
         final VirtualFile virtualFile = file.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
         if (invokeOnElements(project, file, method)) {
