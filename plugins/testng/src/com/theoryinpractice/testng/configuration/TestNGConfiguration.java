@@ -11,6 +11,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.junit.SourceScope;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -31,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration
 {
@@ -212,7 +213,11 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
         if (data.TEST_OBJECT.equals(TestType.CLASS.getType()) || data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
-            PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), data.getScope().getSourceScope(this).getGlobalSearchScope());
+          final SourceScope scope = data.getScope().getSourceScope(this);
+          if (scope == null) {
+            throw new RuntimeConfigurationException("Invalid scope specified");
+          }
+          PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
             if (psiClass == null)
                 throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
             if(data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
