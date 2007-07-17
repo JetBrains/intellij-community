@@ -104,8 +104,9 @@ public class SvnVcs extends AbstractVcs {
   private VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
   private CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> myCommittedChangesProvider;
-  private ChangeProvider myChangeProvider;
+  private VcsShowSettingOption myCheckoutOptions;
 
+  private ChangeProvider myChangeProvider;
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   @NonNls public static final String VCS_NAME = "svn";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
@@ -152,6 +153,7 @@ public class SvnVcs extends AbstractVcs {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
+    myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
   }
 
   @Override
@@ -175,6 +177,10 @@ public class SvnVcs extends AbstractVcs {
 
   public VcsShowConfirmationOption getDeleteConfirmation() {
     return myDeleteConfirmation;
+  }
+
+  public VcsShowSettingOption getCheckoutOptions() {
+    return myCheckoutOptions;
   }
 
   public EditFileProvider getEditFileProvider() {

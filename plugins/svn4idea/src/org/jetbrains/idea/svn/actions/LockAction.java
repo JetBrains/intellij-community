@@ -96,7 +96,7 @@ public class LockAction extends BasicAction {
       VirtualFile virtualFile = files[i];
       ioFiles[i] = new File(virtualFile.getPath());
     }
-    SvnUtil.doLockFiles(project, activeVcs, ioFiles, helper);
+    SvnUtil.doLockFiles(project, activeVcs, ioFiles);
 
   }
 

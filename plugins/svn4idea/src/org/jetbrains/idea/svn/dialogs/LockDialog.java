@@ -15,16 +15,15 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn.SvnBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,7 +32,7 @@ import org.jetbrains.idea.svn.SvnBundle;
  * Time: 14:39:24
  * To change this template use File | Settings | File Templates.
  */
-public class LockDialog extends DialogWrapper {
+public class LockDialog extends OptionsDialog {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
@@ -120,5 +119,17 @@ public class LockDialog extends DialogWrapper {
 
   public JComponent getPreferredFocusedComponent() {
     return myLockTextArea;
+  }
+
+  protected boolean isToBeShown() {
+    return true;
+  }
+
+  protected void setToBeShown(final boolean value, final boolean onOk) {
+    SvnVcs.getInstance(myProject).getCheckoutOptions().setValue(value);
+  }
+
+  protected boolean shouldSaveOptionsOnCancel() {
+    return false;
   }
 }

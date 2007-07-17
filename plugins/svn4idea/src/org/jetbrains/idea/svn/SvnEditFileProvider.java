@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.EditFileProvider;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -57,7 +56,7 @@ public class SvnEditFileProvider implements EditFileProvider {
         throw new VcsException(e);
       }
     }
-    SvnUtil.doLockFiles(myVCS.getProject(), myVCS, ioFiles, AbstractVcsHelper.getInstance(myVCS.getProject()));
+    SvnUtil.doLockFiles(myVCS.getProject(), myVCS, ioFiles);
   }
 
   public String getRequestText() {

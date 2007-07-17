@@ -82,16 +82,24 @@ public class SvnUtil {
     return crawler.getLocations();
   }
 
-  public static void doLockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles,
-                                 AbstractVcsHelper helper) throws VcsException {
-    LockDialog dialog = new LockDialog(project, true, ioFiles != null && ioFiles.length > 1);
-    dialog.show();
-    if (!dialog.isOK()) {
-      return;
+  public static void doLockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
+    final String lockMessage;
+    final boolean force;
+    // TODO[yole]: check for shift pressed
+    if (activeVcs.getCheckoutOptions().getValue()) {
+      LockDialog dialog = new LockDialog(project, true, ioFiles != null && ioFiles.length > 1);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return;
+      }
+      lockMessage = dialog.getComment();
+      force = dialog.isForce();
+    }
+    else {
+      lockMessage = "";
+      force = false;
     }
 
-    final String lockMessage = dialog.getComment();
-    final boolean force = dialog.isForce();
     final SVNException[] exception = new SVNException[1];
     final Collection<String> failedLocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
@@ -138,14 +146,14 @@ public class SvnUtil {
     };
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
-    if (!failedLocks.isEmpty() && helper != null) {
+    if (!failedLocks.isEmpty()) {
       String[] failedFiles = failedLocks.toArray(new String[failedLocks.size()]);
       List<VcsException> exceptions = new ArrayList<VcsException>();
 
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
-      helper.showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
+      AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
     }
 
     WindowManager.getInstance().getStatusBar(project).setInfo(SvnBundle.message("message.text.files.locked", count[0]));
