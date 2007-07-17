@@ -23,7 +23,7 @@ import javax.swing.*;
 public class TestNGConfigurationType implements LocatableConfigurationType
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-    private static final Icon ICON = IconLoader.getIcon("/resources/testng.gif");
+    private static final Icon ICON = IconLoader.getIcon("/resources/testNG.png");
 
     private final ConfigurationFactory myFactory;
 
