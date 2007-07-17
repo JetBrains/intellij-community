@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
@@ -53,17 +55,14 @@ import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -462,6 +461,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         final SVNURL tURL = targetURL;
 
         Runnable command;
+        boolean cancelable;
         if (dialog.isUnifiedDiff()) {
           final File targetFile = dialog.getTargetFile();
           command = new Runnable() {
@@ -470,18 +470,28 @@ public class RepositoryBrowserDialog extends DialogWrapper {
               doUnifiedDiff(targetFile, sURL, tURL);
             }
           };
+          cancelable = false;
         } else {
           command = new Runnable() {
             public void run() {
               try {
                 doGraphicalDiff(sURL, tURL);
-              } catch (SVNException e1) {
-                Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
+              }
+              catch(SVNCancelException ex) {
+                // ignore
+              }
+              catch (final SVNException e1) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
+                  }
+                });
               }
             }
           };
+          cancelable = true;
         }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(command, "Computing Difference", false,
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(command, "Computing Difference", cancelable,
                 myProject);
       }
     }
@@ -830,18 +840,20 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
     SVNRepository repository = myVCS.createRepository(sourceURL.toString());
+    repository.setCanceller(new SvnProgressCanceller());
     SvnDiffEditor diffEditor;
     try {
       final long rev = repository.getLatestRevision();
       // generate Map of path->Change
       diffEditor = new SvnDiffEditor(myVCS.createRepository(sourceURL.toString()),
               myVCS.createRepository(targetURL.toString()));
+      final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
       repository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
         public void report(ISVNReporter reporter) throws SVNException {
           reporter.setPath("", null, rev, false);
           reporter.finishReport();
         }
-      }, diffEditor);
+      }, cancellableEditor);
     }
     finally {
       repository.closeSession();
