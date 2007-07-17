@@ -5,11 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jan 31, 2006
- * Time: 10:42:37 PM
- * To change this template use File | Settings | File Templates.
+ * @auhtor Maxim.Mossienko
  */
 public interface ParameterInfoHandler <O,P> {
   boolean couldShowInLookup();

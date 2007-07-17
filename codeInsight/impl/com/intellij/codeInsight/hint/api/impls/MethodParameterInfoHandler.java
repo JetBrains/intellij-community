@@ -1,30 +1,31 @@
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.util.text.CharArrayUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.Arrays;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Feb 1, 2006
- * Time: 3:16:01 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
-public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpressionList,Object> {
+public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpressionList,Object,PsiExpression> {
+  private static Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
+      Arrays.asList(PsiMethodCallExpression.class,PsiNewExpression.class, PsiAnonymousClass.class,PsiEnumConstant.class));
+
   public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
     final PsiElement[] allElements = LookupManager.getInstance(context.getProject()).getAllElementsForItem(item);
 
@@ -53,7 +54,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
 
   @Nullable
   public PsiExpressionList findElementForParameterInfo(final CreateParameterInfoContext context) {
-    final PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    final PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(),this);
     if (argumentList != null) {
       CandidateInfo[] candidates = getMethods(argumentList);
       if (candidates.length == 0) {
@@ -70,141 +71,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
   }
 
   public PsiExpressionList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
-    return findArgumentList(context.getFile(), context.getOffset(), context.getParameterStart());
+    return ParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterStart(),this);
   }
 
   public void updateParameterInfo(@NotNull final PsiExpressionList o, final UpdateParameterInfoContext context) {
-    updateMethodInfo(o, context);
-  }
-
-  public String getParameterCloseChars() {
-    return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
-  }
-
-  public boolean tracksParameterIndex() {
-    return true;
-  }
-
-  @Nullable
-  public static PsiExpressionList findArgumentList(PsiFile file, int offset, int lbraceOffset){
-    if (file == null) return null;
-    
-    CharSequence chars = file.getViewProvider().getContents();
-    if (offset >= chars.length()) offset = chars.length() - 1;
-    int offset1 = CharArrayUtil.shiftBackward(chars, offset, " \t\n\r");
-    if (offset1 < 0) return null;
-    boolean acceptRparenth = true;
-    boolean acceptLparenth = false;
-    if (offset1 != offset){
-      offset = offset1;
-      acceptRparenth = false;
-      acceptLparenth = true;
-    }
-
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-    PsiElement parent = element.getParent();
-    while(true){
-      if (parent instanceof PsiExpressionList) {
-        TextRange range = parent.getTextRange();
-        if (!acceptRparenth){
-          if (offset == range.getEndOffset() - 1){
-            PsiElement[] children = parent.getChildren();
-            PsiElement last = children[children.length - 1];
-            if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH){
-              parent = parent.getParent();
-              continue;
-            }
-          }
-        }
-        if (!acceptLparenth){
-          if (offset == range.getStartOffset()){
-            parent = parent.getParent();
-            continue;
-          }
-        }
-        if (lbraceOffset >= 0 && range.getStartOffset() != lbraceOffset){
-          parent = parent.getParent();
-          continue;
-        }
-        break;
-      }
-      if (parent instanceof PsiFile) return null;
-      parent = parent.getParent();
-    }
-    PsiExpressionList list = (PsiExpressionList)parent;
-    PsiElement listParent = list.getParent();
-    if (listParent instanceof PsiMethodCallExpression
-        || listParent instanceof PsiNewExpression
-        || listParent instanceof PsiAnonymousClass
-        || listParent instanceof PsiEnumConstant){
-      return list;
-    }
-    else{
-      return null;
-    }
-  }
-
-  private static PsiCall getCall(PsiExpressionList list){
-    if (list.getParent() instanceof PsiMethodCallExpression){
-      return (PsiCallExpression)list.getParent();
-    }
-    else if (list.getParent() instanceof PsiNewExpression){
-      return (PsiCallExpression)list.getParent();
-    }
-    else if (list.getParent() instanceof PsiAnonymousClass){
-      return (PsiCallExpression)list.getParent().getParent();
-    }
-    else if (list.getParent() instanceof PsiEnumConstant){
-      return (PsiCall)list.getParent();
-    }
-    else{
-      return null;
-    }
-  }
-
-  public static CandidateInfo[] getMethods(PsiExpressionList argList) {
-    final PsiCall call = getCall(argList);
-    PsiResolveHelper helper = argList.getManager().getResolveHelper();
-
-    if (call instanceof PsiCallExpression) {
-      CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);
-      ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
-
-      if (!(argList.getParent() instanceof PsiAnonymousClass)) {
-        for (CandidateInfo candidate : candidates) {
-          if (candidate.isStaticsScopeCorrect() && candidate.isAccessible()) result.add(candidate);
-        }
-      }
-      else {
-        PsiClass aClass = (PsiAnonymousClass)argList.getParent();
-        for (CandidateInfo candidate : candidates) {
-          if (candidate.isStaticsScopeCorrect() && helper.isAccessible((PsiMethod)candidate.getElement(), argList, aClass)) {
-            result.add(candidate);
-          }
-        }
-      }
-      return result.toArray(new CandidateInfo[result.size()]);
-    }
-    else {
-      assert call instanceof PsiEnumConstant;
-      //We are inside our own enum, no isAccessible check needed
-      PsiMethod[] constructors = ((PsiEnumConstant)call).getContainingClass().getConstructors();
-      CandidateInfo[] result = new CandidateInfo[constructors.length];
-
-      for (int i = 0; i < constructors.length; i++) {
-        result[i] = new CandidateInfo(constructors[i], PsiSubstitutor.EMPTY);
-      }
-      return result;
-    }
-  }
-
-  public static void updateMethodInfo(PsiExpressionList list, UpdateParameterInfoContext context) {
-    int index = ParameterInfoUtils.getCurrentParameterIndex(list.getNode(), context.getOffset(),JavaTokenType.COMMA);
+    int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(),JavaTokenType.COMMA);
     context.setCurrentParameter(index);
 
     Object[] candidates = context.getObjectsToView();
-    PsiExpression[] args = list.getExpressions();
+    PsiExpression[] args = o.getExpressions();
     for(int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo) candidates[i];
       PsiMethod method = (PsiMethod) candidate.getElement();
@@ -276,6 +151,88 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
       }
 
       context.setUIComponentEnabled(i, enabled);
+    }
+  }
+
+  public String getParameterCloseChars() {
+    return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
+  }
+
+  public boolean tracksParameterIndex() {
+    return true;
+  }
+
+  public Class<PsiExpressionList> getArgumentListClass() {
+    return PsiExpressionList.class;
+  }
+
+  public IElementType getRBraceType() {
+    return JavaTokenType.RBRACE;
+  }
+
+  public Set<Class> getArgumentListAllowedParentClasses() {
+    return ourArgumentListAllowedParentClassesSet;
+  }
+
+  public IElementType getDelimiterType() {
+    return JavaTokenType.COMMA;
+  }
+
+  public PsiExpression[] getParameters(PsiExpressionList psiExpressionList) {
+    return psiExpressionList.getExpressions();
+  }
+
+  private static PsiCall getCall(PsiExpressionList list){
+    if (list.getParent() instanceof PsiMethodCallExpression){
+      return (PsiCallExpression)list.getParent();
+    }
+    else if (list.getParent() instanceof PsiNewExpression){
+      return (PsiCallExpression)list.getParent();
+    }
+    else if (list.getParent() instanceof PsiAnonymousClass){
+      return (PsiCallExpression)list.getParent().getParent();
+    }
+    else if (list.getParent() instanceof PsiEnumConstant){
+      return (PsiCall)list.getParent();
+    }
+    else{
+      return null;
+    }
+  }
+
+  public static CandidateInfo[] getMethods(PsiExpressionList argList) {
+    final PsiCall call = getCall(argList);
+    PsiResolveHelper helper = argList.getManager().getResolveHelper();
+
+    if (call instanceof PsiCallExpression) {
+      CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);
+      ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
+
+      if (!(argList.getParent() instanceof PsiAnonymousClass)) {
+        for (CandidateInfo candidate : candidates) {
+          if (candidate.isStaticsScopeCorrect() && candidate.isAccessible()) result.add(candidate);
+        }
+      }
+      else {
+        PsiClass aClass = (PsiAnonymousClass)argList.getParent();
+        for (CandidateInfo candidate : candidates) {
+          if (candidate.isStaticsScopeCorrect() && helper.isAccessible((PsiMethod)candidate.getElement(), argList, aClass)) {
+            result.add(candidate);
+          }
+        }
+      }
+      return result.toArray(new CandidateInfo[result.size()]);
+    }
+    else {
+      assert call instanceof PsiEnumConstant;
+      //We are inside our own enum, no isAccessible check needed
+      PsiMethod[] constructors = ((PsiEnumConstant)call).getContainingClass().getConstructors();
+      CandidateInfo[] result = new CandidateInfo[constructors.length];
+
+      for (int i = 0; i < constructors.length; i++) {
+        result[i] = new CandidateInfo(constructors[i], PsiSubstitutor.EMPTY);
+      }
+      return result;
     }
   }
 
@@ -369,5 +326,4 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
     }
     else updateMethodPresentation((PsiMethod)p,null,context);
   }
-
 }

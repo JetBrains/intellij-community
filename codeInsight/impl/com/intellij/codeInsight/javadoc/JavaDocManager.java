@@ -193,10 +193,10 @@ public class JavaDocManager implements ProjectComponent {
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final PsiExpressionList list =
+    final PsiElement list =
       ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
     if (list != null) {
-      myParameterInfoController = ParameterInfoController.getControllerAtOffset(editor, list.getTextRange().getStartOffset());
+      myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
     }
 
     PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
@@ -651,8 +651,9 @@ public class JavaDocManager implements ProjectComponent {
             PsiElement parameter = getPsiElementFromParameterInfoObject(o, null);
 
             if (parameter != null) {
-              if (sb == null) sb = new StringBuffer();
               final String str2 = new JavaDocInfoGenerator(getProject(element), parameter, provider).generateDocInfo();
+              if (str2 == null) continue;
+              if (sb == null) sb = new StringBuffer();
               sb.append(str2);
               sb.append("<br>");
             } else {

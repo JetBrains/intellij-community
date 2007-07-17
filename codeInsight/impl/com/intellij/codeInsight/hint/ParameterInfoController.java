@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
-import com.intellij.codeInsight.hint.api.UpdateParameterInfoContext;
-import com.intellij.codeInsight.hint.api.ParameterInfoContext;
-import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.hint.api.impls.ParameterInfoUtils;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -14,8 +11,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -54,7 +53,7 @@ public class ParameterInfoController {
    */
   private static final Key<ArrayList<ParameterInfoController>> ALL_CONTROLLERS_KEY = Key.create("ParameterInfoController.ALL_CONTROLLERS_KEY");
 
-  public static ParameterInfoController getControllerAtOffset(Editor editor, int offset) {
+  public static ParameterInfoController findControllerAtOffset(Editor editor, int offset) {
     ArrayList<ParameterInfoController> allControllers = getAllControllers(editor);
     for (int i = 0; i < allControllers.size(); ++i) {
       ParameterInfoController controller = allControllers.get(i);
@@ -119,17 +118,7 @@ public class ParameterInfoController {
   }
 
   public static boolean isAlreadyShown(Editor editor, int lbraceOffset) {
-    ArrayList<ParameterInfoController> allControllers = getAllControllers(editor);
-    for(int i = 0; i < allControllers.size(); i++) {
-      ParameterInfoController controller = allControllers.get(i);
-      if (!controller.myHint.isVisible()){
-        controller.dispose();
-        i--;
-        continue;
-      }
-      if (controller.myLbraceMarker.getStartOffset() == lbraceOffset) return true;
-    }
-    return false;
+    return findControllerAtOffset(editor, lbraceOffset) != null;
   }
 
   public ParameterInfoController(
@@ -282,49 +271,32 @@ public class ParameterInfoController {
   }
 
   public static void nextParameter (Editor editor, int lbraceOffset) {
-    ArrayList<ParameterInfoController> controllers = getAllControllers(editor);
-    for (final ParameterInfoController controller : controllers) {
-      if (!controller.myHint.isVisible()) {
-        controller.dispose();
-        continue;
-      }
-      if (controller.myLbraceMarker.getStartOffset() == lbraceOffset) {
-        controller.prevOrNextParameter(true);
-        return;
-      }
-    }
+    final ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
+    if (controller != null) controller.prevOrNextParameter(true, (ParameterInfoHandler2)controller.myHandler);
   }
 
   public static void prevParameter (Editor editor, int lbraceOffset) {
-    ArrayList<ParameterInfoController> controllers = getAllControllers(editor);
-    for (ParameterInfoController controller : controllers) {
-      if (!controller.myHint.isVisible()) {
-        controller.dispose();
-        continue;
-      }
-      if (controller.myLbraceMarker.getStartOffset() == lbraceOffset) {
-        controller.prevOrNextParameter(false);
-        return;
-      }
-    }
+    final ParameterInfoController parameterInfoController = findControllerAtOffset(editor, lbraceOffset);
+    if (parameterInfoController != null) parameterInfoController.prevOrNextParameter(false, (ParameterInfoHandler2)parameterInfoController.myHandler);
   }
 
-  private void prevOrNextParameter(boolean isNext) {
+  private void prevOrNextParameter(boolean isNext, ParameterInfoHandler2 handler) {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     CharSequence chars = myEditor.getDocument().getCharsSequence();
     int offset = CharArrayUtil.shiftBackward(chars, myEditor.getCaretModel().getOffset() - 1, " \t") + 1;
 
     int lbraceOffset = myLbraceMarker.getStartOffset();
     if (lbraceOffset < offset) {
-      PsiExpressionList argList = findArgumentList(file, offset, lbraceOffset);
+      PsiElement argList = findArgumentList(file, offset, lbraceOffset);
+
       if (argList != null) {
-        int currentParameterIndex = getCurrentParameterIndex(argList, offset, JavaTokenType.COMMA);
-        PsiExpression currentParameter = null;
+        int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getDelimiterType());
+        PsiElement currentParameter = null;
         if (currentParameterIndex > 0 && !isNext) {
-          currentParameter = argList.getExpressions()[currentParameterIndex - 1];
+          currentParameter = handler.getParameters(argList)[currentParameterIndex - 1];
         }
-        else if (currentParameterIndex < argList.getExpressions().length - 1 && isNext) {
-          currentParameter = argList.getExpressions()[currentParameterIndex + 1];
+        else if (currentParameterIndex < handler.getParameters(argList).length - 1 && isNext) {
+          currentParameter = handler.getParameters(argList)[currentParameterIndex + 1];
         }
 
         if (currentParameter != null) {
@@ -332,19 +304,28 @@ public class ParameterInfoController {
           myEditor.getCaretModel().moveToOffset(offset);
           myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           myEditor.getSelectionModel().removeSelection();
-          MethodParameterInfoHandler.updateMethodInfo(argList, new MyUpdateParameterInfoContext(offset, file));
+          handler.updateParameterInfo(argList, new MyUpdateParameterInfoContext(offset, file));
         }
       }
     }
   }
 
-  public static int getCurrentParameterIndex(PsiElement argList, int offset, IElementType delimiterType) {
-    return ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, delimiterType);
-  }
-
   @Nullable
-  public static PsiExpressionList findArgumentList(PsiFile file, int offset, int lbraceOffset){
-    return MethodParameterInfoHandler.findArgumentList(file, offset, lbraceOffset);
+  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
+    final ParameterInfoProvider provider = ShowParameterInfoHandler.getHandler(PsiUtil.getLanguageAtOffset(file, offset));
+    
+    if (provider != null) {
+      for(ParameterInfoHandler handler:provider.getHandlers()) {
+        if (handler instanceof ParameterInfoHandler2) {
+          final ParameterInfoHandler2 parameterInfoHandler2 = (ParameterInfoHandler2)handler;
+
+          final E e = (E)ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
+          if (e != null) return e;
+        }
+      }
+    }
+
+    return null;
   }
 
   private class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {

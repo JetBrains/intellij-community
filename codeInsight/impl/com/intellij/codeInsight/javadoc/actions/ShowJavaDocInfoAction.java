@@ -3,6 +3,7 @@ package com.intellij.codeInsight.javadoc.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -37,7 +38,9 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile;
+    if(file instanceof PsiJavaFile) return true;
+    final PsiElement element = ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+    return element != null && ParameterInfoController.findControllerAtOffset(editor, element.getTextOffset()) != null;
   }
 
   protected boolean isValidForLookup() {
