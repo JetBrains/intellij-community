@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SimpleColoredComponent;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -51,7 +50,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
-    final Object valueToGetText = value instanceof AbstractTreeNode ? ((AbstractTreeNode)value).toString() : value;
+    final Object valueToGetText = value instanceof AbstractTreeNode ? value.toString() : value;
     String text = tree.convertValueToText(valueToGetText,selected, expanded, leaf, row, hasFocus);
 
     if (text == null) text = "";
@@ -75,7 +74,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  protected SimpleTextAttributes getSimpleTextAttributes(final Object value, final Color color) {
+  protected static SimpleTextAttributes getSimpleTextAttributes(final Object value, final Color color) {
     SimpleTextAttributes simpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (value instanceof DefaultMutableTreeNode) {
       final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();

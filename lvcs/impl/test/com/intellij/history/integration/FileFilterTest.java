@@ -10,8 +10,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class FileFilterTest {
-  private TestVirtualFile f1 = new TestVirtualFile(null, null, -1);
-  private TestVirtualFile f2 = new TestVirtualFile(null, null, -1);
+  private TestVirtualFile f1 = new TestVirtualFile("", null, -1);
+  private TestVirtualFile f2 = new TestVirtualFile("", null, -1);
 
   private FileType binary = createFileType(true);
   private FileType nonBinary = createFileType(false);

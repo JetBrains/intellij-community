@@ -75,8 +75,9 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return null;
   }
 
+  @NotNull
   public String getName() {
-    return null;
+    return "";
   }
 
   @Nullable
@@ -97,8 +98,9 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
+  @NotNull
   public String getProjectFilePath() {
-    return null;
+    return "";
   }
 
   public VirtualFile getWorkspaceFile() {

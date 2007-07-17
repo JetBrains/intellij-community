@@ -211,8 +211,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
     for (IntentionAction action : allIntentionActions) {
-      if ((action instanceof PsiElementBaseIntentionAction && isInProject && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement))
-               || action.isAvailable(project, editor, psiFile)) {
+      if (action instanceof PsiElementBaseIntentionAction && isInProject && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)
+          || action.isAvailable(project, editor, psiFile)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
@@ -304,6 +304,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (matcher.matches()) return false;
     }
     catch (PatternSyntaxException e) {
+      //ignore
     }
 
     List<PsiClass> availableClasses = new ArrayList<PsiClass>();
@@ -376,11 +377,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       containingClass = containingClass.getContainingClass();
     }
     final String qName = aClass.getQualifiedName();
-    if (qName == null ||
-        //default package
-        qName.indexOf('.') <= 0) return false;
-
-    return true;
+    //default package
+    return qName != null && qName.indexOf('.') > 0;
   }
 
   private static boolean hasUnresolvedImportWhichCanImport(final PsiFile psiFile, final String name) {

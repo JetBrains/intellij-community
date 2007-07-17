@@ -170,7 +170,7 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   @Test
   public void testDoNothingOnAnotherPropertyChanges() throws Exception {
     // shouldn't throw any exception here to make test pass
-    VirtualFile f = new TestVirtualFile(null, null, -1);
+    VirtualFile f = new TestVirtualFile("", null, -1);
     firePropertyChanged(f, "another property", null);
   }
 

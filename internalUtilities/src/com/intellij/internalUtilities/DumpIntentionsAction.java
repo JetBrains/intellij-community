@@ -21,7 +21,7 @@ import java.util.List;
 
 public class DumpIntentionsAction extends AnAction {
   public DumpIntentionsAction() {
-    super("Dupm Intentions");
+    super("Dump Intentions");
   }
 
   public void actionPerformed(AnActionEvent e) {

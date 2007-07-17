@@ -35,8 +35,9 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
+  @NotNull
   public String getName() {
-    return null;
+    return "";
   }
 
   @Nullable
@@ -57,8 +58,9 @@ public class DummyProject extends UserDataHolderBase implements Project {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
+  @NotNull
   public String getProjectFilePath() {
-    return null;
+    return "";
   }
 
   public VirtualFile getWorkspaceFile() {
@@ -129,8 +131,9 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
+  @NotNull
   public PomModel getModel() {
-    return null;
+    throw new UnsupportedOperationException("not implemented");
   }
 
   public GlobalSearchScope getAllScope() {
