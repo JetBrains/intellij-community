@@ -58,6 +58,7 @@
       <separator/>
       <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction"/>
       <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction"/>
+      <action id="Subversion.Relocate" class="org.jetbrains.idea.svn.actions.RelocateAction"/>
       <separator/>
       <reference id="ChangesView.Browse"/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>

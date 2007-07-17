@@ -162,8 +162,7 @@ public class SvnUtil {
     }
   }
 
-  public static void doUnlockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles,
-                                   AbstractVcsHelper helper) throws VcsException {
+  public static void doUnlockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
     final boolean force = true;
     final SVNException[] exception = new SVNException[1];
     final Collection<String> failedUnlocks = new ArrayList<String>();
@@ -211,14 +210,14 @@ public class SvnUtil {
     };
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
-    if (!failedUnlocks.isEmpty() && helper != null) {
+    if (!failedUnlocks.isEmpty()) {
       String[] failedFiles = failedUnlocks.toArray(new String[failedUnlocks.size()]);
       List<VcsException> exceptions = new ArrayList<VcsException>();
 
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.failed.to.unlock.file", file)));
       }
-      helper.showErrors(exceptions, SvnBundle.message("message.title.unlock.failures"));
+      AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.unlock.failures"));
     }
 
     WindowManager.getInstance().getStatusBar(project).setInfo(SvnBundle.message("message.text.files.unlocked", count[0]));

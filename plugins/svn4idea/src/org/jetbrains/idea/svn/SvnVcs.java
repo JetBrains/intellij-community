@@ -438,6 +438,25 @@ public class SvnVcs extends AbstractVcs {
     return file.isDirectory() ? new File(file, pathToEntries) : new File(file.getParentFile(), pathToEntries);
   }
 
+  @Nullable
+  public SVNInfo getInfoWithCaching(final VirtualFile file) {
+    SVNInfo info;
+    SVNInfoHolder infoValue = getCachedInfo(file);
+    if (infoValue != null) {
+      info = infoValue.getInfo();
+    } else {
+      try {
+        SVNWCClient wcClient = new SVNWCClient(getSvnAuthenticationManager(), getSvnOptions());
+        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+      }
+      catch (SVNException e) {
+        info = null;
+      }
+      cacheInfo(file, info);
+    }
+    return info;
+  }
+
   public static class SVNStatusHolder {
 
     private SVNStatus myValue;

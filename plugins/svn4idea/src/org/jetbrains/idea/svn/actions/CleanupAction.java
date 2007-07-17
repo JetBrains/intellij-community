@@ -78,7 +78,7 @@ public class CleanupAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
+  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     SVNWCClient wcClient = activeVcs.createWCClient();
     try {
@@ -91,7 +91,7 @@ public class CleanupAction extends BasicAction {
     }
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper)
+  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context)
     throws VcsException {
     throw new VcsException(SvnBundle.message("exception.text.cleanupaction.batchperform.not.implemented"));
   }

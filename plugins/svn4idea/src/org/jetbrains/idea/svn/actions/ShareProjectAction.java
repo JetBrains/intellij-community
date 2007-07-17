@@ -78,7 +78,7 @@ public class ShareProjectAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context, AbstractVcsHelper helper) throws VcsException {
+  protected void perform(Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
     ShareDialog shareDialog = new ShareDialog(project);
     shareDialog.show();
 
@@ -107,7 +107,7 @@ public class ShareProjectAction extends BasicAction {
 
   }
 
-  protected void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper) throws VcsException {
+  protected void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

@@ -90,7 +90,7 @@ public class CopyAction extends BasicAction {
     return true;
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
+  protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     CopyDialog dialog = new CopyDialog(project, true, new File(file.getPath()));
     dialog.show();
@@ -185,7 +185,7 @@ public class CopyAction extends BasicAction {
     return true;
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context, AbstractVcsHelper helper)
+  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
     throws VcsException {
   }
 

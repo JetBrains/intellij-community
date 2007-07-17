@@ -189,7 +189,7 @@ public abstract class BasicAction extends AnAction {
                        DataContext context,
                        AbstractVcsHelper helper) throws VcsException {
     if (file.isDirectory()) {
-      perform(project, activeVcs, file, context, helper);
+      perform(project, activeVcs, file, context);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           file.refresh(false, true);
@@ -206,7 +206,7 @@ public abstract class BasicAction extends AnAction {
         } */
     }
     else {
-      perform(project, activeVcs, file, context, helper);
+      perform(project, activeVcs, file, context);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           file.refresh(false, true);
@@ -221,7 +221,7 @@ public abstract class BasicAction extends AnAction {
                             final VirtualFile[] file,
                             DataContext context,
                             AbstractVcsHelper helper) throws VcsException {
-    batchPerform(project, activeVcs, file, context, helper);
+    batchPerform(project, activeVcs, file, context);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (int i = 0; file != null && i < file.length; i++) {
@@ -241,17 +241,9 @@ public abstract class BasicAction extends AnAction {
 
   protected abstract boolean needsFiles();
 
-  protected abstract void perform(Project project,
-                                  final SvnVcs activeVcs,
-                                  VirtualFile file,
-                                  DataContext context,
-                                  AbstractVcsHelper helper) throws VcsException;
+  protected abstract void perform(Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException;
 
-  protected abstract void batchPerform(Project project,
-                                       final SvnVcs activeVcs,
-                                       VirtualFile[] file,
-                                       DataContext context,
-                                       AbstractVcsHelper helper) throws VcsException;
+  protected abstract void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException;
 
   protected abstract boolean isBatchAction();
 }

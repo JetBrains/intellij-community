@@ -84,19 +84,19 @@ public class UnlockAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
+  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
-    batchPerform(project, activeVcs, new VirtualFile[]{file}, context, helper);
+    batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context, AbstractVcsHelper helper)
+  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
     throws VcsException {
     File[] ioFiles = new File[files.length];
     for (int i = 0; i < files.length; i++) {
       VirtualFile virtualFile = files[i];
       ioFiles[i] = new File(virtualFile.getPath());
     }
-    SvnUtil.doUnlockFiles(project, activeVcs, ioFiles, helper);
+    SvnUtil.doUnlockFiles(project, activeVcs, ioFiles);
   }
 
   protected boolean isBatchAction() {

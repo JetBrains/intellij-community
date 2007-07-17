@@ -44,7 +44,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SetPropertyDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -59,20 +58,7 @@ public class SetPropertyAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    SVNInfo info;
-    SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
-    if (infoValue != null) {
-      info = infoValue.getInfo();
-    } else {
-      try {
-        SVNWCClient wcClient = new SVNWCClient(vcs.getSvnAuthenticationManager(), vcs.getSvnOptions());
-        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-      }
-      catch (SVNException e) {
-        info = null;
-      }
-      vcs.cacheInfo(file, info);
-    }
+    SVNInfo info = vcs.getInfoWithCaching(file);
     return info != null && info.getURL() != null;
   }
 
@@ -80,12 +66,12 @@ public class SetPropertyAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
+  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
-    batchPerform(project, activeVcs, new VirtualFile[]{file}, context, helper);
+    batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper)
+  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context)
     throws VcsException {
     File[] ioFiles = new File[file.length];
     for (int i = 0; i < ioFiles.length; i++) {

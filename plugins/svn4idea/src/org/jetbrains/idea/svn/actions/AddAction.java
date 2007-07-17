@@ -96,7 +96,7 @@ public class AddAction extends BasicAction {
     return true;
   }
 
-  protected void batchPerform(final Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context, AbstractVcsHelper helper)
+  protected void batchPerform(final Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
     throws VcsException {
     log.debug("enter: batchPerform");
 
@@ -122,7 +122,7 @@ public class AddAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
+  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     try {
       SVNWCClient wcClient = activeVcs.createWCClient();
