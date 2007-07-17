@@ -172,7 +172,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   //virtualFile -> PsiFile
   private List<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
-    assert myContext != null;
     ProgressIndicator indicator = getProcessIndicator();
     if (indicator != null) indicator.setText(item.getPath());
 
@@ -325,7 +324,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
 
       if (implementsTypes.length > 0) {
-        text.append("implements ");
+        text.append(isInterface ? "extends " : "implements ");
         int i = 0;
         while (i < implementsTypes.length) {
           if (i > 0) text.append(", ");

@@ -1,0 +1,12 @@
+interface IBar {}
+interface Foo extends IBar {
+
+}
+class Test1 implements Foo {
+}
+-----
+public interface IBar {}
+---
+public interface Foo extends IBar {}
+---
+public class Test1 extends groovy.lang.GroovyObjectSupport implements Foo {}
