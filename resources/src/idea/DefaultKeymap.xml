@@ -60,7 +60,7 @@
       <keyboard-shortcut first-keystroke="shift F7"/>
     </action>
     <action id="ForceStepInto">
-      <keyboard-shortcut first-keystroke="control alt F7"/>
+      <keyboard-shortcut first-keystroke="alt shift F7"/>
     </action>
     <action id="ForceStepOver">
       <keyboard-shortcut first-keystroke="control alt F8"/>
