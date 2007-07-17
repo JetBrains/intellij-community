@@ -44,8 +44,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * @author ven
+ */
 public class GroovyPsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
   private Project myProject;
@@ -124,13 +130,13 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   private void buildGDKImpl() {
-    myDefaultMethods = new HashMap<String, List<PsiMethod>>();
+    final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
 
     PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultMethodsClass != null) {
       for (PsiMethod method : defaultMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
-        addDefaultMethod(method, false);
+        addDefaultMethod(method, newMap, false);
       }
 
     }
@@ -139,9 +145,11 @@ public class GroovyPsiManager implements ProjectComponent {
     if (defaultStaticMethodsClass != null) {
       for (PsiMethod method : defaultStaticMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
-        addDefaultMethod(method, true);
+        addDefaultMethod(method, newMap, true);
       }
     }
+
+    myDefaultMethods = newMap;
 
     try {
       addSwingBuilderMethods();
@@ -150,7 +158,7 @@ public class GroovyPsiManager implements ProjectComponent {
     }
   }
 
-  private void addDefaultMethod(PsiMethod method, boolean isStatic) {
+  private void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -158,10 +166,10 @@ public class GroovyPsiManager implements ProjectComponent {
     PsiType thisType = parameters[0].getType();
     String thisCanonicalText = thisType.getCanonicalText();
     LOG.assertTrue(thisCanonicalText != null);
-    List<PsiMethod> hisMethods = myDefaultMethods.get(thisCanonicalText);
+    List<PsiMethod> hisMethods = map.get(thisCanonicalText);
     if (hisMethods == null) {
       hisMethods = new ArrayList<PsiMethod>();
-      myDefaultMethods.put(thisCanonicalText, hisMethods);
+      map.put(thisCanonicalText, hisMethods);
     }
     hisMethods.add(convertMethod(method, isStatic));
   }
