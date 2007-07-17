@@ -1,18 +1,21 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -21,6 +24,8 @@ import java.util.List;
  * @author yole
  */
 public class SvnRenameTest extends SvnTestCase {
+  @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\r\n";
+
   @Test
   public void testSimpleRename() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -71,12 +76,7 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-15876
   @Test
   public void testRenamePackageWithChildren() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
-    final VirtualFile grandChild = createDirInCommand(child, "grandChild");
-    createFileInCommand(child, "a.txt", "a");
-    createFileInCommand(grandChild, "b.txt", "b");
-    checkin();
+    final VirtualFile child = prepareDirectoriesForRename();
 
     renameFileInCommand(child, "newchild");
     final RunResult result = runSvn("status");
@@ -106,6 +106,16 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(child));
   }
 
+  private VirtualFile prepareDirectoriesForRename() throws IOException {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
+    final VirtualFile grandChild = createDirInCommand(child, "grandChild");
+    createFileInCommand(child, "a.txt", "a");
+    createFileInCommand(grandChild, "b.txt", "b");
+    checkin();
+    return child;
+  }
+
   private void verifyChange(final Change c, final String beforePath, final String afterPath) {
     verifyRevision(c.getBeforeRevision(), beforePath);
     verifyRevision(c.getAfterRevision(), afterPath);
@@ -115,6 +125,22 @@ public class SvnRenameTest extends SvnTestCase {
     File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
     Assert.assertEquals(beforeFullPath, beforeRevision.getFile().getPath());
+  }
+
+  // IDEADEV-19065
+  @Test
+  public void testCommitAfterRenameDir() throws Exception {
+    final VirtualFile child = prepareDirectoriesForRename();
+
+    renameFileInCommand(child, "newchild");
+    checkin();
+
+    final RunResult runResult = runSvn("log", "-q", "newchild/a.txt");
+    verify(runResult);
+    final List<String> lines = StringUtil.split(runResult.stdOut, LOG_SEPARATOR);
+    Assert.assertEquals(2, lines.size());
+    Assert.assertTrue(lines.get(0).startsWith("r2 |"));
+    Assert.assertTrue(lines.get(1).startsWith("r1 |"));
   }
 
 }
