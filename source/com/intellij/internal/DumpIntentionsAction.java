@@ -2,7 +2,7 @@
  * User: anna
  * Date: 28-Jun-2007
  */
-package com.intellij.internalUtilities;
+package com.intellij.internal;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
