@@ -53,7 +53,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
-  private static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
+  public static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
   private Set<Document> myUnsavedDocuments = new HashSet<Document>();

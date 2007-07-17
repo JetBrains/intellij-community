@@ -26,6 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
@@ -119,7 +120,7 @@ public class IntentionHintComponent extends JPanel implements Disposable {
         result &= !cachedActions.add(cachedAction);
         final int caretOffset = myEditor.getCaretModel().getOffset();
         final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
-        final PsiElement element = myFile.findElementAt(fileOffset);
+        PsiElement element = InjectedLanguageUtil.findElementAt(myFile, fileOffset);
         final List<IntentionAction> options;
         if (element != null && (options = descriptor.getOptions(element)) != null) {
           for (IntentionAction option : options) {

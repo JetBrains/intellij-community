@@ -308,10 +308,28 @@ public class InjectedLanguageUtil {
   }
 
   public static PsiFile findInjectedPsiAt(PsiFile host, int offset) {
-    PsiDocumentManager.getInstance(host.getProject()).commitAllDocuments();
-    PsiLanguageInjectionHost injectionHost = findInjectionHost(host.findElementAt(offset));
+    PsiElement injected = findInjectedElementAt(host, offset);
+    if (injected != null) {
+      return injected.getContainingFile();
+    }
+    return null;
+  }
+
+  // consider injected elements
+  public static PsiElement findElementAt(PsiFile file, int offset) {
+    PsiElement injected = findInjectedElementAt(file, offset);
+    if (injected != null) {
+      return injected;
+    }
+    return file.findElementAt(offset);
+  }
+
+  public static PsiElement findInjectedElementAt(PsiFile file, int offset) {
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+    documentManager.commitAllDocuments();
+    PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
     if (injectionHost == null && offset != 0) {
-      injectionHost = findInjectionHost(host.findElementAt(offset-1));
+      injectionHost = findInjectionHost(file.findElementAt(offset-1));
     }
     List<Pair<PsiElement, TextRange>> injectedPsi = injectionHost == null ? null : injectionHost.getInjectedPsi();
     if (injectedPsi == null) {
@@ -321,7 +339,11 @@ public class InjectedLanguageUtil {
     for (Pair<PsiElement, TextRange> pair : injectedPsi) {
       TextRange range = pair.getSecond();
       if (hostRange.cutOut(range).grown(1).contains(offset)) {
-        return pair.getFirst().getContainingFile();
+        PsiFile injected = (PsiFile)pair.getFirst();
+        DocumentRange document = (DocumentRange)documentManager.getCachedDocument(injected);
+        int injectedOffset = document.hostToInjected(offset);
+        PsiElement element = injected.findElementAt(injectedOffset);
+        return element == null ? injected : element;
       }
     }
     return null;
