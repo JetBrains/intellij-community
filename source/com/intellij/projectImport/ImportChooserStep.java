@@ -10,8 +10,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -37,11 +35,6 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         setText(((ProjectImportProvider)value).getName());
         setIcon(((ProjectImportProvider)value).getIcon());
         return rendererComponent;
-      }
-    });
-    myList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        updateDataModel();
       }
     });
     myPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);

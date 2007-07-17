@@ -1,6 +1,5 @@
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
@@ -12,6 +11,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -184,20 +184,16 @@ public class ProjectNameStep extends ModuleWizardStep {
     super.disposeUIResources();
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
     if (name.length() == 0) {
       final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
-      final String message = IdeBundle.message("prompt.new.project.file.name", info.getVersionName());
-      Messages.showMessageDialog(myPanel, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      return false;
+      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
     if (projectFileDirectory.length() == 0) {
-      Messages.showMessageDialog(myPanel, IdeBundle.message("prompt.enter.project.file.location"), CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
-      return false;
+      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location"));
     }
 
     final boolean shouldPromptCreation = myNamePathComponent.isPathChangedByUser();

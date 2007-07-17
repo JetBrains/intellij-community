@@ -1,9 +1,9 @@
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,7 +35,7 @@ public class ProjectNameStep extends ModuleWizardStep {
 
     ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
     String appName = info.getVersionName();
-    myPanel.add(new JLabel(IdeBundle.message("label.please.enter.project.name", appName)),
+    myPanel.add(new JLabel(IdeBundle.message("label.please.enter.project.name", appName, wizardContext.getPresentationName())),
                 new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
 
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
@@ -75,19 +75,16 @@ public class ProjectNameStep extends ModuleWizardStep {
     return NEW_PROJECT_ICON;
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
-    if (name.length() == 0 ) {
+    if (name.length() == 0) {
       final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
-      final String message = IdeBundle.message("prompt.new.project.file.name", info.getVersionName());
-      Messages.showMessageDialog(myPanel, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      return false;
+      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
     if (projectFileDirectory.length() == 0) {
-      Messages.showMessageDialog(myPanel, IdeBundle.message("prompt.enter.project.file.location"), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      return false;
+      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location"));
     }
 
     final boolean shouldPromptCreation = myNamePathComponent.isPathChangedByUser();
