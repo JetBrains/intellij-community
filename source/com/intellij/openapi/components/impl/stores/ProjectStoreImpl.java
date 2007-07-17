@@ -277,13 +277,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Nullable
   public String getPresentableUrl() {
+    if (myProject.isDefault()) return null;
     if (myScheme == StorageScheme.DIRECTORY_BASED) {
       final VirtualFile baseDir = getProjectBaseDir();
       return baseDir != null ? baseDir.getPresentableUrl() : null;
     }
-
-    final VirtualFile projectFile = getProjectFile();
-    return projectFile != null ? projectFile.getPresentableUrl() : null;
+    else {
+      if (myProject.isDefault()) return null;
+      final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
+      assert storage != null;
+      return storage.getFilePath().replaceAll("/", File.separator);
+    }
   }
 
   public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
