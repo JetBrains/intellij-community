@@ -29,16 +29,39 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class OpenOrClosableBlock implements GroovyElementTypes {
 
+
+  /**
+   * Parses open block as block, not as statement
+   *
+   * @param builder
+   * @return
+   */
+  public static GroovyElementType parseOpenBlock(PsiBuilder builder) {
+    return parseOpenBlockInDifferentContext(builder, false);
+  }
+
+  /**
+   * Parses open block as a usual statement in role of loop or fork statement body
+   *
+   * @param builder
+   * @return
+   */
+  public static GroovyElementType parseBlockStatement(PsiBuilder builder) {
+    return parseOpenBlockInDifferentContext(builder, true);
+  }
+
   /**
    * Parses only OPEN blocks
    *
    * @param builder
    * @return
    */
-  public static GroovyElementType parseOpenBlock(PsiBuilder builder) {
+  public static GroovyElementType parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement) {
+    PsiBuilder.Marker blockStatementMarker = builder.mark();
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
+      blockStatementMarker.drop();
       return WRONGWAY;
     }
     ParserUtils.getToken(builder, mNLS);
@@ -50,6 +73,11 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     }
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(OPEN_BLOCK);
+    if (isBlockStatement) {
+      blockStatementMarker.done(BLOCK_STATEMENT);
+    } else {
+      blockStatementMarker.drop();
+    }
     return OPEN_BLOCK;
   }
 
@@ -91,7 +119,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
 
     GroovyElementType result = Statement.parse(builder, true);
     while (!result.equals(WRONGWAY) &&
-            (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
+        (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
       Separators.parse(builder);
       result = Statement.parse(builder, true);
       cleanAfterError(builder);
@@ -108,10 +136,10 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
     while (!builder.eof() &&
-            !(mNLS.equals(builder.getTokenType()) ||
-                    mRCURLY.equals(builder.getTokenType()) ||
-                    mSEMI.equals(builder.getTokenType()))
-            ) {
+        !(mNLS.equals(builder.getTokenType()) ||
+            mRCURLY.equals(builder.getTokenType()) ||
+            mSEMI.equals(builder.getTokenType()))
+        ) {
       builder.advanceLexer();
       i++;
     }

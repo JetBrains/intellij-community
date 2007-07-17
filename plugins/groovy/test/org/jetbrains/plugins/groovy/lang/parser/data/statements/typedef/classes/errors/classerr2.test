@@ -53,31 +53,32 @@ Groovy script
             PsiElement(true)('true')
           PsiElement())(')')
           PsiWhiteSpace(' ')
-          Open block
-            PsiElement({)('{')
-            PsiWhiteSpace('\n\n  ')
-            Method
-              Modifiers
-                Annotation
-                  PsiElement(@)('@')
-                  Reference element
-                    PsiElement(identifier)('Property')
+          Block statement
+            Open block
+              PsiElement({)('{')
+              PsiWhiteSpace('\n\n  ')
+              Method
+                Modifiers
+                  Annotation
+                    PsiElement(@)('@')
+                    Reference element
+                      PsiElement(identifier)('Property')
+                  PsiWhiteSpace(' ')
+                  PsiElement(def)('def')
                 PsiWhiteSpace(' ')
-                PsiElement(def)('def')
-              PsiWhiteSpace(' ')
-              PsiElement(identifier)('a')
-              PsiWhiteSpace(' ')
-              PsiElement(()('(')
-              Parameter list
-                <empty list>
-              PsiElement())(')')
-              PsiWhiteSpace(' ')
-              Throw clause
-                <empty list>
-              Open block
-                PsiElement({)('{')
-                PsiElement(})('}')
-            PsiElement(new line)('\n  ')
-            PsiElement(})('}')
+                PsiElement(identifier)('a')
+                PsiWhiteSpace(' ')
+                PsiElement(()('(')
+                Parameter list
+                  <empty list>
+                PsiElement())(')')
+                PsiWhiteSpace(' ')
+                Throw clause
+                  <empty list>
+                Open block
+                  PsiElement({)('{')
+                  PsiElement(})('}')
+              PsiElement(new line)('\n  ')
+              PsiElement(})('}')
         PsiElement(new line)('\n')
         PsiElement(})('}')

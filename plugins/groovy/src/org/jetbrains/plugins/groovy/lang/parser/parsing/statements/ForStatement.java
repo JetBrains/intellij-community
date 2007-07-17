@@ -64,7 +64,7 @@ public class ForStatement implements GroovyElementTypes {
 
     GroovyElementType result;
     if (mLCURLY.equals(builder.getTokenType())) {
-      result = OpenOrClosableBlock.parseOpenBlock(builder);
+      result = OpenOrClosableBlock.parseBlockStatement(builder);
     } else {
       result = Statement.parse(builder);
     }

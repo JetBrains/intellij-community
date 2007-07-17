@@ -19,12 +19,13 @@ Groovy script
           PsiElement(Integer)('10')
     PsiElement())(')')
     PsiWhiteSpace(' ')
-    Open block
-      PsiElement({)('{')
-      Method call
-        Reference expression
-          PsiElement(identifier)('do')
-        Arguments
-          PsiElement(()('(')
-          PsiElement())(')')
-      PsiElement(})('}')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        Method call
+          Reference expression
+            PsiElement(identifier)('do')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
+        PsiElement(})('}')

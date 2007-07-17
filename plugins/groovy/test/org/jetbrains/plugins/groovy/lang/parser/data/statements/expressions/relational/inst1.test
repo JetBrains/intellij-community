@@ -22,12 +22,13 @@ Groovy script
             PsiElement(>)('>')
     PsiElement())(')')
     PsiWhiteSpace(' ')
-    Open block
-      PsiElement({)('{')
-      Additive expression
-        Literal
-          PsiElement(Integer)('2')
-        PsiElement(+)('+')
-        Literal
-          PsiElement(Integer)('3')
-      PsiElement(})('}')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        Additive expression
+          Literal
+            PsiElement(Integer)('2')
+          PsiElement(+)('+')
+          Literal
+            PsiElement(Integer)('3')
+        PsiElement(})('}')

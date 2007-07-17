@@ -31,8 +31,9 @@ Groovy script
         PsiElement(])(']')
     PsiElement())(')')
     PsiWhiteSpace(' ')
-    Open block
-      PsiElement({)('{')
-      Reference expression
-        PsiElement(identifier)('do')
-      PsiElement(})('}')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        Reference expression
+          PsiElement(identifier)('do')
+        PsiElement(})('}')

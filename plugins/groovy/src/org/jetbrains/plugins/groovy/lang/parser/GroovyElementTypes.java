@@ -47,6 +47,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
   GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
   GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
+  GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
 
   // Enum
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");

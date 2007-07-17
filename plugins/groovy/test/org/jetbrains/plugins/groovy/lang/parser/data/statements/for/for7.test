@@ -9,6 +9,7 @@ Groovy script
       PsiElement(;)(';')
       PsiElement(;)(';')
     PsiElement())(')')
-    Open block
-      PsiElement({)('{')
-      PsiElement(})('}')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

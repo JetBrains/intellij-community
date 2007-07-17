@@ -10,23 +10,24 @@ Groovy script
     Literal
       PsiElement(true)('true')
     PsiElement())(')')
-    Open block
-      PsiElement({)('{')
-      PsiWhiteSpace('\n')
-      Method call
-        Reference expression
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n')
+        Method call
           Reference expression
             Reference expression
-              PsiElement(identifier)('System')
+              Reference expression
+                PsiElement(identifier)('System')
+              PsiElement(.)('.')
+              PsiElement(identifier)('out')
             PsiElement(.)('.')
-            PsiElement(identifier)('out')
-          PsiElement(.)('.')
-          PsiElement(identifier)('println')
-        Arguments
-          PsiElement(()('(')
-          Literal
-            PsiElement(Gstring)('"bugaga"')
-          PsiElement())(')')
-      PsiElement(;)(';')
-      PsiElement(new line)('\n')
-      PsiElement(})('}')
+            PsiElement(identifier)('println')
+          Arguments
+            PsiElement(()('(')
+            Literal
+              PsiElement(Gstring)('"bugaga"')
+            PsiElement())(')')
+        PsiElement(;)(';')
+        PsiElement(new line)('\n')
+        PsiElement(})('}')

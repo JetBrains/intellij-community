@@ -35,6 +35,7 @@ Groovy script
           PsiElement(identifier)('i')
         PsiElement(++)('++')
     PsiElement())(')')
-    Open block
-      PsiElement({)('{')
-      PsiElement(})('}')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
