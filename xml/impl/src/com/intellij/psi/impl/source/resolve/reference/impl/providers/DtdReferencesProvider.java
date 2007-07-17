@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -10,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -224,6 +226,15 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public LocalQuickFix[] getQuickFixes() {
+      final PsiFile containingFile = getElement().getContainingFile();
+
+      if (containingFile instanceof JspFile ||
+          containingFile.getFileType() == StdFileTypes.HTML ||
+          containingFile.getFileType() == StdFileTypes.XHTML
+        ) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
+      
       return new LocalQuickFix[] {
         new CheckDtdReferencesInspection.AddDtdDeclarationFix(
           "xml.dtd.create.entity.intention.name",
