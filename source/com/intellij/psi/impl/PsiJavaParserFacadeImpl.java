@@ -57,6 +57,19 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return createFileFromText(name, fileType, text, modificationStamp, physical, true);
   }
 
+  public PsiFile createFileFromText(@NotNull String name, @NotNull LanguageDialect dialect, @NotNull String text) {
+    ParserDefinition parserDefinition = dialect.getParserDefinition();
+    SingleRootFileViewProvider viewProvider = new SingleRootFileViewProvider(myManager, new LightVirtualFile(name, dialect, text));
+    assert parserDefinition != null;
+    PsiFile psiFile = parserDefinition.createFile(viewProvider);
+    psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
+    TreeElement node = (TreeElement)psiFile.getNode();
+    assert node != null;
+    node.acceptTree(new GeneratedMarkerVisitor());
+
+    return psiFile;
+  }
+
   @NotNull
   public PsiFile createFileFromText(@NotNull String name,
                                     @NotNull FileType fileType,
