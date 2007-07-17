@@ -33,11 +33,13 @@ package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
+  private static final Icon ICON = IconLoader.getIcon("/modules/emptyProjectType.png");
 
   public EmptyModuleType() {
     this("EMPTY_MODULE");
@@ -60,7 +62,7 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   }
 
   public Icon getBigIcon() {
-    return null;
+    return ICON;
   }
 
   public Icon getNodeIcon(boolean isOpened) {

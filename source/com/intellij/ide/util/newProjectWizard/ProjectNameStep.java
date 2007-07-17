@@ -29,7 +29,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -56,12 +55,10 @@ public class ProjectNameStep extends ModuleWizardStep {
                                                 'a', 'l', IdeBundle.message("title.select.project.file.directory", wizardContext.getPresentationName()),
                                                 IdeBundle.message("description.select.project.file.directory",
                                                                   StringUtil.capitalize(wizardContext.getPresentationName())));
-
-    myNamePathComponent.setPath(myWizardContext.getProjectFileDirectory());
-    List<String> components = StringUtil.split(myWizardContext.getProjectFileDirectory(), File.separator);
-    if (components.size() > 0) {
-      myNamePathComponent.setNameValue(components.get(components.size() - 1));
-    }
+    //noinspection HardCodedStringLiteral
+    final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(myWizardContext.getProjectFileDirectory(), "untitled", "");
+    myNamePathComponent.setPath(wizardContext.getProjectFileDirectory() + File.separator + initialProjectName);
+    myNamePathComponent.setNameValue(initialProjectName);
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
