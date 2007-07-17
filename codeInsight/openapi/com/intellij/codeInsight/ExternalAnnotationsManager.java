@@ -5,6 +5,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
@@ -14,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ExternalAnnotationsManager {
   @NonNls public static final String ANNOTATIONS_XML = "annotations.xml";
 
-  public static ExternalAnnotationsManager getInstance() {
-    return ServiceManager.getService(ExternalAnnotationsManager.class);
+  public static ExternalAnnotationsManager getInstance(Project project) {
+    return ServiceManager.getService(project, ExternalAnnotationsManager.class);
   }
 
   @Nullable

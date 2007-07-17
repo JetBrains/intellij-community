@@ -451,7 +451,7 @@ class JavaDocInfoGenerator {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
     PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
-    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance().findExternalAnnotations(owner);
+    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
     if (externalAnnotations != null) {
       annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.class);
     }

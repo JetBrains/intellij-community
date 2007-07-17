@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -11,12 +11,12 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +114,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance();
+    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     if (myModifierListOwner != null) {
       final PsiModifierList modifierList = myModifierListOwner.getModifierList();
       LOG.assertTrue(modifierList != null);

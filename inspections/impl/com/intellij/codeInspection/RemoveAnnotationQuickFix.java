@@ -38,7 +38,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
         LOG.error(e);
       }
     } else {
-      ExternalAnnotationsManager.getInstance().deannotate(myListOwner, myAnnotation.getQualifiedName());
+      ExternalAnnotationsManager.getInstance(project).deannotate(myListOwner, myAnnotation.getQualifiedName());
     }
   }
 

@@ -36,7 +36,7 @@ public class DeannotateIntentionAction implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiModifierListOwner listOwner = getContainer(editor, file);
-    return listOwner != null && ExternalAnnotationsManager.getInstance().findExternalAnnotations(listOwner) != null;
+    return listOwner != null && ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(listOwner) != null;
   }
 
   @Nullable
@@ -88,7 +88,7 @@ public class DeannotateIntentionAction implements IntentionAction {
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner listOwner = getContainer(editor, file);
-    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance();
+    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);
     JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(CodeInsightBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
       public PopupStep onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {

@@ -38,6 +38,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   @NonNls private static final String EXTERNAL_ANNOTATIONS_PROPERTY = "ExternalAnnotations";
 
+  private Map<VirtualFile, XmlFile> myExternalAnotations = new WeakHashMap<VirtualFile, XmlFile>();
+  private PsiManager myPsiManager;
+
+  public ExternalAnnotationsManagerImpl(final PsiManager psiManager) {
+    myPsiManager = psiManager;
+  }
+
   @Nullable
   public PsiAnnotation findExternalAnnotation(final PsiModifierListOwner listOwner, final String annotationFQN) {
     return collectExternalAnnotations(listOwner).get(annotationFQN);
@@ -65,7 +73,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     return result.isEmpty() ? null : result.values().toArray(new PsiAnnotation[result.size()]);
   }
 
-  private static Map<String, PsiAnnotation> collectExternalAnnotations(final PsiModifierListOwner listOwner) {
+  private Map<String, PsiAnnotation> collectExternalAnnotations(final PsiModifierListOwner listOwner) {
     final Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
     final XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
     if (xmlFile != null) {
@@ -104,7 +112,6 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   public void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName) {
     final Project project = listOwner.getProject();
-    final PsiManager psiManager = listOwner.getManager();
     XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
     if (xmlFile != null) {
       if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
@@ -122,7 +129,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             if (!(entry instanceof ModuleOrderEntry)) {
               final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
               if (virtualFiles.length > 0) {
-                annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, virtualFiles[0], packageName));
+                annotateExternally(listOwner, annotationFQName, createAnnotationsXml(virtualFiles[0], packageName));
               }
               else {
                 if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
@@ -142,7 +149,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                               if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
                               annotateExternally(listOwner, annotationFQName, xmlFile);
                             } else {
-                              annotateExternally(listOwner, annotationFQName, createAnnotationsXml(psiManager, files[0], packageName));
+                              annotateExternally(listOwner, annotationFQName, createAnnotationsXml(files[0], packageName));
                             }
                           }
                         }
@@ -271,7 +278,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   }
 
   @Nullable
-  private static XmlFile createAnnotationsXml(PsiManager psiManager, VirtualFile root, String packageName) {
+  private XmlFile createAnnotationsXml(VirtualFile root, String packageName) {
     final String[] dirs = packageName.split("[\\.]");
     for (String dir : dirs) {
       VirtualFile subdir = root.findChild(dir);
@@ -285,7 +292,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       }
       root = subdir;
     }
-    final PsiDirectory directory = psiManager.findDirectory(root);
+    final PsiDirectory directory = myPsiManager.findDirectory(root);
     if (directory == null) return null;
 
     final PsiFile psiFile = directory.findFile(ANNOTATIONS_XML);
@@ -294,7 +301,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
 
     try {
-      return (XmlFile)directory.add(psiManager.getElementFactory().createFileFromText(ANNOTATIONS_XML, "<root></root>"));
+      return (XmlFile)directory.add(myPsiManager.getElementFactory().createFileFromText(ANNOTATIONS_XML, "<root></root>"));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -303,14 +310,17 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   }
 
   @Nullable
-  private static XmlFile findExternalAnnotationsFile(PsiModifierListOwner listOwner) {
+  private XmlFile findExternalAnnotationsFile(PsiModifierListOwner listOwner) {
     final Project project = listOwner.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiFile containingFile = listOwner.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (myExternalAnotations.containsKey(virtualFile)) {
+        return myExternalAnotations.get(virtualFile);
+      }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
       final String packageName = javaFile.getPackageName();
-      final PsiPackage psiPackage = psiManager.findPackage(packageName);
+      final PsiPackage psiPackage = myPsiManager.findPackage(packageName);
       if (psiPackage != null) {
         final Module module = ModuleUtil.findModuleForPsiElement(javaFile);
         final PsiDirectory[] dirsWithExternalAnnotations = module != null
@@ -318,11 +328,11 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         for (final PsiDirectory directory : dirsWithExternalAnnotations) {
           final PsiFile psiFile = directory.findFile(ANNOTATIONS_XML);
           if (psiFile instanceof XmlFile) {
+            myExternalAnotations.put(virtualFile, (XmlFile)psiFile);
             return (XmlFile)psiFile;
           }
         }
       }
-      final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile != null) {
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
         for (OrderEntry entry : entries) {
@@ -332,8 +342,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
               final VirtualFile ext = LocalFileSystem.getInstance().findFileByPath(
                 VfsUtil.urlToPath(url) + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
               if (ext != null) {
-                final PsiFile psiFile = psiManager.findFile(ext);
+                final PsiFile psiFile = myPsiManager.findFile(ext);
                 if (psiFile instanceof XmlFile) {
+                  myExternalAnotations.put(virtualFile, (XmlFile)psiFile);
                   return (XmlFile)psiFile;
                 }
               }
@@ -341,6 +352,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             break;
           }
         }
+        myExternalAnotations.put(virtualFile, null);
       }
     }
     /*final VirtualFile virtualFile = containingFile.getVirtualFile(); //for java files only

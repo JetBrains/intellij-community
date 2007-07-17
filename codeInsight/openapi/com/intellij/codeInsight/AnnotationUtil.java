@@ -98,8 +98,9 @@ public class AnnotationUtil {
         return annotation;
       }
     }
+    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(listOwner.getProject());
     for (String annotationName : annotationNames) {
-      final PsiAnnotation annotation = ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationName);
+      final PsiAnnotation annotation = annotationsManager.findExternalAnnotation(listOwner, annotationName);
       if (annotation != null) {
         return annotation;
       }
@@ -182,7 +183,7 @@ public class AnnotationUtil {
       PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
       if (annotation != null) return true;
     }
-    if (ExternalAnnotationsManager.getInstance().findExternalAnnotation(listOwner, annotationFQN) != null) return true;
+    if (ExternalAnnotationsManager.getInstance(listOwner.getProject()).findExternalAnnotation(listOwner, annotationFQN) != null) return true;
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;
       if (processed.contains(method)) return false;
