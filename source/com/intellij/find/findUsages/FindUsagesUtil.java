@@ -17,6 +17,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
@@ -156,6 +157,9 @@ public class FindUsagesUtil {
         }
         if (norm instanceof PsiNamedElement) {
           return ((PsiNamedElement)norm).getName();
+        }
+        if (norm instanceof XmlAttributeValue) {
+          return ((XmlAttributeValue)norm).getValue();
         }
 
         LOG.error("Unknown element type: " + element);
