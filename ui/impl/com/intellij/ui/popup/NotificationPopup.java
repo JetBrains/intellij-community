@@ -22,6 +22,7 @@ public class NotificationPopup {
   private JBPopup myPopup;
   private int myTimerTick;
   private Color myBackgroud;
+  private final boolean myUseDefaultPreferredSize;
   private final static int FADE_IN_TICKS = 60;
   private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
   private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
@@ -46,7 +47,12 @@ public class NotificationPopup {
   });
 
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
+    this(owner, content, backgroud, true);
+  }
+
+  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize) {
     myBackgroud = backgroud;
+    myUseDefaultPreferredSize = useDefaultPreferredSize;
     myContent = new ContentComponent(content);
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
       .setForceHeavyweight(true)
@@ -107,7 +113,10 @@ public class NotificationPopup {
     }
 
     public Dimension getPreferredSize() {
-      return myPreferredContentSize;
+      if (myUseDefaultPreferredSize) {
+        return myPreferredContentSize;
+      }
+      return super.getPreferredSize();
     }
 
     @Override

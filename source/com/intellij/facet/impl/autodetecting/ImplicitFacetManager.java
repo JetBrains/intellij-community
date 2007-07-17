@@ -55,21 +55,31 @@ public class ImplicitFacetManager implements Disposable {
   public void onImplicitFacetChanged() {
     if (!myUIInitialized) return;
 
-    List<Facet> implicitFacets = getImplicitFacets();
+    final List<Facet> implicitFacets = getImplicitFacets();
 
     if (!Comparing.haveEqualElements(myImplicitFacets, implicitFacets)) {
-      Set<Facet> newFacets = new HashSet<Facet>(implicitFacets);
+      final Set<Facet> newFacets = new HashSet<Facet>(implicitFacets);
       newFacets.removeAll(myImplicitFacets);
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        if (!newFacets.isEmpty()) {
-          fireNotificationPopup(newFacets);
-        }
+        Runnable runnable = new Runnable() {
+          public void run() {
+            if (!newFacets.isEmpty()) {
+              fireNotificationPopup(newFacets);
+            }
 
-        if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
-          myAttentionComponent.stopBlinking();
+            if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
+              myAttentionComponent.stopBlinking();
+            }
+            if (myImplicitFacets.isEmpty() && !implicitFacets.isEmpty()) {
+              myAttentionComponent.startBlinking();
+            }
+          }
+        };
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          runnable.run();
         }
-        if (myImplicitFacets.isEmpty() && !implicitFacets.isEmpty()) {
-          myAttentionComponent.startBlinking();
+        else {
+          ApplicationManager.getApplication().invokeLater(runnable);
         }
       }
       myImplicitFacets = implicitFacets;
@@ -91,7 +101,7 @@ public class ImplicitFacetManager implements Disposable {
 
   private void fireNotificationPopup(final Collection<Facet> facets) {
     ImplicitFacetsComponent implicitFacetsComponent = createImplicitFacetsComponent(facets);
-    NotificationPopup popup = new NotificationPopup((JComponent)myStatusBar, implicitFacetsComponent.getMainPanel(), ImplicitFacetsComponent.BACKGROUND_COLOR);
+    NotificationPopup popup = new NotificationPopup((JComponent)myStatusBar, implicitFacetsComponent.getMainPanel(), ImplicitFacetsComponent.BACKGROUND_COLOR, false);
     implicitFacetsComponent.setContainingPopup(popup.getPopup());
     //todo[nik] return popup instance from fireNotificationPopup
     //myStatusBar.fireNotificationPopup(implicitFacetsComponent.getMainPanel(), ImplicitFacetsComponent.BACKGROUND_COLOR);
