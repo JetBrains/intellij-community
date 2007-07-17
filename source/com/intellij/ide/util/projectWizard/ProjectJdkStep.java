@@ -76,7 +76,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
     return NEW_PROJECT_ICON;
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     final ProjectJdk jdk = myProjectJdksConfigurable.getSelectedJdk();
     if (jdk == null) {
       int result = Messages.showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
@@ -85,13 +85,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
         return false;
       }
     }
-    try {
-      myProjectJdksConfigurable.apply();
-    }
-    catch (ConfigurationException e) {
-      Messages.showErrorDialog(myJDKsComponent, e.getMessage(), e.getTitle());
-      return false;
-    }
+    myProjectJdksConfigurable.apply();
     return true;
   }
 }

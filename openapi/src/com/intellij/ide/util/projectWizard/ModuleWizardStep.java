@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.wizard.StepAdapter;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +42,7 @@ public abstract class ModuleWizardStep extends StepAdapter{
     return null;
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     return true;
   }
 

@@ -20,8 +20,8 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreateFromScratchMode implements WizardMode {
-  private StepSequence myStepSequence;
+public class CreateFromScratchMode extends WizardMode {
+
   private Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
 
   @NotNull
@@ -34,9 +34,9 @@ public class CreateFromScratchMode implements WizardMode {
     return ProjectBundle.message("project.new.wizard.from.scratch.description", context.getPresentationName());
   }
 
-  @NotNull
-  public StepSequence getSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    if (myStepSequence == null) {
+  @Nullable
+  public StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+     StepSequence myStepSequence;
       myStepSequence = new StepSequence(null);
       myStepSequence.addCommonStep(new ProjectNameStep(context, myStepSequence, this));
       final ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
@@ -50,7 +50,6 @@ public class CreateFromScratchMode implements WizardMode {
           sequence.addCommonStep(step);
         }
       }
-    }
     return myStepSequence;
   }
 
@@ -59,7 +58,7 @@ public class CreateFromScratchMode implements WizardMode {
   }
 
   public ModuleBuilder getModuleBuilder() {
-    return myBuildersMap.get(myStepSequence.getSelectedType());
+    return myBuildersMap.get(getSelectedType());
   }
 
   @Nullable
@@ -72,7 +71,7 @@ public class CreateFromScratchMode implements WizardMode {
   }
 
   public void dispose() {
+    super.dispose();
       myBuildersMap.clear();
-      myStepSequence = null;
     }
 }

@@ -13,6 +13,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -176,6 +177,9 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
         }
       } while (true);
     }
+    catch (ConfigurationException e) {
+      Messages.showErrorDialog(myCurrentProject, e.getMessage(), e.getTitle());
+    }
     finally {
       myCurrentStep = idx;
       updateStep();
@@ -183,9 +187,14 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     super.doOKAction();
   }
 
-  private static boolean commitStepData(final ModuleWizardStep step) {
-    if (!step.validate()) {
-      return false;
+  private boolean commitStepData(final ModuleWizardStep step) {
+    try {
+      if (!step.validate()) {
+        return false;
+      }
+    }
+    catch (ConfigurationException e) {
+      Messages.showErrorDialog(myCurrentProject, e.getMessage(), e.getTitle());
     }
     step.updateDataModel();
     return true;
@@ -263,7 +272,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private void updateButtons() {
     final boolean isLastStep = isLastStep(getCurrentStep());
     getNextButton().setEnabled(!isLastStep);
-    getFinishButton().setEnabled(!isLastStep);
+    getFinishButton().setEnabled(isLastStep);
   }
 
   private boolean isLastStep(int step) {

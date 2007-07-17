@@ -15,25 +15,43 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface WizardMode extends Disposable {
-  ExtensionPointName<WizardMode> MODES = ExtensionPointName.create("com.intellij.wizardMode");
+public abstract class WizardMode implements Disposable {
+  public static final ExtensionPointName<WizardMode> MODES = ExtensionPointName.create("com.intellij.wizardMode");
+
+  private StepSequence myStepSequence;
 
   @NotNull
-  String getDisplayName(final WizardContext context);
+  public abstract String getDisplayName(final WizardContext context);
 
   @NotNull
-  String getDescription(final WizardContext context);
+  public abstract String getDescription(final WizardContext context);
 
-  boolean isAvailable(final WizardContext context);
-
-  @Nullable
-  StepSequence getSteps(final WizardContext context, final ModulesProvider modulesProvider);
+  public abstract boolean isAvailable(final WizardContext context);
 
   @Nullable
-  ProjectBuilder getModuleBuilder();
+  public StepSequence getSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+    if (myStepSequence == null) {
+      myStepSequence = createSteps(context, modulesProvider);
+    }
+    return myStepSequence;
+  }
 
   @Nullable
-  JComponent getAdditionalSettings();
+  public abstract StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider);
 
-  void onChosen(final boolean enabled);
+  @Nullable
+  public abstract ProjectBuilder getModuleBuilder();
+
+  @Nullable
+  public abstract JComponent getAdditionalSettings();
+
+  public abstract void onChosen(final boolean enabled);
+
+  protected String getSelectedType() {
+    return myStepSequence != null ? myStepSequence.getSelectedType() : null;
+  }
+
+  public void dispose() {
+    myStepSequence = null;
+  }
 }

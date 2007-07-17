@@ -3,40 +3,18 @@ package com.intellij.projectImport;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardStep {
-
-  public interface Context<T> {
-    List<T> getList();
-
-    boolean isMarked(final T element);
-
-    void setList(List<T> list) throws ValidationException;
-
-    void setOpenProjectSettingsAfter(boolean on);
-
-    String getName();
-
-    class ValidationException extends Exception {
-      public ValidationException (String message){
-        super(message);
-      }
-    }
-  }
-
-  private Context<T> myContext;
-
   private final JPanel panel;
   protected final ElementsChooser<T> fileChooser;
   private final JCheckBox openModuleSettingsCheckBox;
@@ -84,15 +62,9 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 
-  public boolean validate() {
-    try {
-      fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
-      getContext().setList(fileChooser.getMarkedElements());
-    }
-    catch (Context.ValidationException e) {
-      Messages.showErrorDialog(panel, e.getMessage(), IdeBundle.message("project.import.wizard.title", getContext().getName()));
-      return false;
-    }
+  public boolean validate() throws ConfigurationException {
+    fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
+    getContext().setList(fileChooser.getMarkedElements());
     return fileChooser.getMarkedElements().size() != 0;
   }
 
@@ -100,11 +72,8 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     getContext().setOpenProjectSettingsAfter(openModuleSettingsCheckBox.isSelected());
   }
 
-  public Context<T> getContext() {
-    if (myContext == null) {
-      myContext = (Context<T>)getWizardContext().getProjectBuilder();
-    }
-    return myContext;
+  public ProjectImportBuilder<T> getContext() {
+    return getBuilder();
   }
 }
 

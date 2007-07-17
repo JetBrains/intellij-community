@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class ImportMode implements WizardMode {
-  private StepSequence myStepSequence;
+public class ImportMode extends WizardMode {
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName());
@@ -41,22 +40,20 @@ public class ImportMode implements WizardMode {
       }, ", "));
   }
 
-  @NotNull
-  public StepSequence getSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    if (myStepSequence == null) {
-      myStepSequence = new StepSequence(null);
-      final ProjectImportProvider[] providers = Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER);
-      myStepSequence.addCommonStep(new ImportChooserStep(providers, myStepSequence, context));
-      for (ProjectImportProvider provider : providers) {
-        final ModuleWizardStep[] steps = provider.createSteps(context);
-        final StepSequence sequence = new StepSequence(myStepSequence);
-        for (ModuleWizardStep step : steps) {
-          sequence.addCommonStep(step);
-        }
-        myStepSequence.addSpecificSteps(provider.getId(), sequence);
+  @Nullable
+  public StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+    final StepSequence stepSequence = new StepSequence(null);
+    final ProjectImportProvider[] providers = Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER);
+    stepSequence.addCommonStep(new ImportChooserStep(providers, stepSequence, context));
+    for (ProjectImportProvider provider : providers) {
+      final ModuleWizardStep[] steps = provider.createSteps(context);
+      final StepSequence sequence = new StepSequence(stepSequence);
+      for (ModuleWizardStep step : steps) {
+        sequence.addCommonStep(step);
       }
+      stepSequence.addSpecificSteps(provider.getId(), sequence);
     }
-    return myStepSequence;
+    return stepSequence;
   }
 
   public boolean isAvailable(WizardContext context) {
@@ -75,7 +72,5 @@ public class ImportMode implements WizardMode {
 
   public void onChosen(final boolean enabled) {}
 
-  public void dispose() {
-    myStepSequence = null;
-  }
+  public void dispose() {}
 }

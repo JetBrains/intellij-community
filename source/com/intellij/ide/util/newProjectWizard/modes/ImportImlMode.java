@@ -20,10 +20,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ImportImlMode implements WizardMode {
+public class ImportImlMode extends WizardMode {
   private TextFieldWithBrowseButton myModulePathFieldPanel;
 
   @NotNull
@@ -37,7 +38,8 @@ public class ImportImlMode implements WizardMode {
   }
 
 
-  public StepSequence getSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+  @Nullable
+  public StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
     return null;
   }
 
