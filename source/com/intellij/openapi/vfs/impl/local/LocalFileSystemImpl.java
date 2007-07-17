@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -122,6 +123,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public void cleanupForNextTest() throws IOException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
         refresh(false);
       }
     });
