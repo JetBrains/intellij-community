@@ -29,6 +29,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   public static ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
+
   static {
     INSTANCE.registerExecutor(new QueryExecutor<PsiClass, SearchParameters>() {
       public boolean execute(final SearchParameters p, final Processor<PsiClass> consumer) {
@@ -53,7 +54,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                                            searchScope,
                                            p.isCheckDeep(),
                                            processed,
-                                           p.isCheckInheritance());
+                                           p.isCheckInheritance(),
+                                           p.isIncludeAnonymous());
 
         if (progress != null) {
           progress.popState();
@@ -69,12 +71,14 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
+    private final boolean myIncludeAnonymous;
 
-    public SearchParameters(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
+    public SearchParameters(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       myClass = aClass;
       myScope = scope;
       myCheckDeep = checkDeep;
       myCheckInheritance = checkInheritance;
+      myIncludeAnonymous = includeAnonymous;
     }
 
     public PsiClass getClassToProcess() {
@@ -92,12 +96,20 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     public boolean isCheckInheritance() {
       return myCheckInheritance;
     }
+
+    public boolean isIncludeAnonymous() {
+      return myIncludeAnonymous;
+    }
   }
 
   private ClassInheritorsSearch() {}
 
+  public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
+  }
+
   public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, checkDeep, checkInheritance));
+    return search(aClass, scope, checkDeep, checkInheritance, true);
   }
 
   public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, final boolean checkDeep) {
@@ -117,7 +129,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                                            final SearchScope searchScope,
                                            final boolean checkDeep,
                                            final Collection<PsiClass> processed,
-                                           final boolean checkInheritance) {
+                                           final boolean checkInheritance,
+                                           final boolean includeAnonymous) {
     LOG.assertTrue(searchScope != null);
 
     if (baseClass instanceof PsiAnonymousClass) return true;
@@ -138,7 +151,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
     final PsiManager psiManager = PsiManager.getInstance(baseClass.getProject());
 
-    DirectClassInheritorsSearch.search(baseClass).forEach(new Processor<PsiClass>() {
+    DirectClassInheritorsSearch.search(baseClass, GlobalSearchScope.allScope(baseClass.getProject()), includeAnonymous).forEach(new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
         final Ref<Boolean> result = new Ref<Boolean>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -170,7 +183,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         if (!result.isNull()) return result.get();
 
         if (checkDeep) {
-          if (!processInheritors(consumer, candidate, searchScope, checkDeep, processed, checkInheritance)) return false;
+          if (!processInheritors(consumer, candidate, searchScope, checkDeep, processed, checkInheritance, includeAnonymous)) return false;
         }
 
         return true;

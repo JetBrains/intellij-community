@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -21,13 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.filters.AndFilter;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.scope.processor.FilterElementProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,6 +34,8 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.FilteredQuery;
+import com.intellij.util.Query;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -485,21 +485,18 @@ public class CodeInsightUtil {
     final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
 
-    final FilterElementProcessor processor = new FilterElementProcessor(
-      new AndFilter(
-          new ClassFilter(PsiAnonymousClass.class, false),
-          new ClassFilter(PsiTypeParameter.class, false),
-          new ClassFilter(PsiClass.class)));
-    final PsiManager manager = context.getManager();
-    final PsiSearchHelper helper = manager.getSearchHelper();
+    final Query<PsiClass> query = new FilteredQuery<PsiClass>(
+      ClassInheritorsSearch.search(baseClass, context.getResolveScope(), true, false, false), new Condition<PsiClass>() {
+      public boolean value(final PsiClass psiClass) {
+        return !(psiClass instanceof PsiTypeParameter);
+      }
+    });
 
-    helper.processInheritors(processor, baseClass, context.getResolveScope(), true, false);
-    final Iterator<PsiElement> iter = processor.getResults().iterator();
+    final PsiManager manager = context.getManager();
     final PsiResolveHelper resolveHelper = manager.getResolveHelper();
 
     inheritors:
-    while(iter.hasNext()){
-      PsiClass inheritor = (PsiClass) iter.next();
+    for (PsiClass inheritor : query) {
       if(!manager.getResolveHelper().isAccessible(inheritor, context, null)) continue;
 
       if(inheritor.getUserData(CompletionUtil.COPY_KEY) != null){

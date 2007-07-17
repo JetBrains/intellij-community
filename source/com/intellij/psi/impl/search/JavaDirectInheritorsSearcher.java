@@ -3,16 +3,17 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.RepositoryPsiElement;
+import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -73,15 +74,22 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           return repositoryIndex.getNameOccurrencesInExtendsLists(aClass.getName(), rootFilter);
         }
       });
+
+      final boolean includeAnonymous = p.includeAnonymous();
+      final ClassView classView = repositoryManager.getClassView();
+
       for (final long candidateId : candidateIds) {
         PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           public PsiClass compute() {
+            if (!includeAnonymous && classView.isAnonymous(candidateId)) return null;
+
             final RepositoryPsiElement candidate = repositoryElementsManager.findOrCreatePsiElementById(candidateId);
             LOG.assertTrue(candidate.isValid());
             return (PsiClass)candidate;
           }
         });
-        if (!consumer.process(candidate)) {
+
+        if (candidate != null && !consumer.process(candidate)) {
           return false;
         }
       }
