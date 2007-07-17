@@ -317,7 +317,7 @@ public class ReplaceInProjectManager {
         }
         FindManager findManager = FindManager.getInstance(myProject);
         final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-        FindResult findResult = findManager.findString(foundString, 0, replaceContext.getFindModel());
+        FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, replaceContext.getFindModel());
         if (!findResult.isStringFound()){
           return;
         }
