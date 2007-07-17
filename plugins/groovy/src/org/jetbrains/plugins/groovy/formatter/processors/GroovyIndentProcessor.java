@@ -58,7 +58,8 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     // For common code block
-    if (BLOCK_SET.contains(astNode.getElementType())) {
+    if (BLOCK_SET.contains(astNode.getElementType()) &&
+        !BLOCK_STATEMENT.equals(astNode.getElementType())) {
       return indentForBlock(psiParent, child);
     }
 
@@ -176,7 +177,8 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
   private static Indent indentForBlock(PsiElement psiBlock, ASTNode child) {
 
     // Common case
-    if (mLCURLY.equals(child.getElementType()) || mRCURLY.equals(child.getElementType())) {
+    if (mLCURLY.equals(child.getElementType()) ||
+        mRCURLY.equals(child.getElementType())) {
       return Indent.getNoneIndent();
     }
     return Indent.getNormalIndent();

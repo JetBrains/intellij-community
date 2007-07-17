@@ -215,6 +215,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
+      BLOCK_STATEMENT,
       OPEN_BLOCK,
       CLASS_BODY,
       CASE_BLOCK);
