@@ -45,4 +45,5 @@ public interface GrVariable extends GrNamedElement, PsiVariable, GroovyPsiElemen
 
   @Nullable
   GrTypeElement getTypeElementGroovy();
+
 }

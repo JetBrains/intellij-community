@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -217,7 +218,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     text.append("}");
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement);
-    return ((GrOpenBlock) ((GrWhileStatement) file.getChildren()[0]).getBody());
+    return ((GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody()).getBlock();
   }
 
   public GrMethodCallExpression createMethodCallByAppCall(GrApplicationStatement callExpr) {

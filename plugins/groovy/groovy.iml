@@ -18,7 +18,7 @@
     <Base>
       <setting name="state" value="1" />
     </Base>
-    <LanguageOptions name="$MODULE_DIR$">
+    <LanguageOptions name="$TEMPLATE$">
       <option name="templateOptions">
         <value>
           <option name="block" value="true" />

@@ -235,4 +235,9 @@ public abstract class GroovyRefactoringUtil {
       }
     });
   }
+
+  boolean isLocalVariable(GrVariable variable){
+    return !(variable instanceof GrField ||
+        variable instanceof GrParameter);
+  }
 }
