@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -54,5 +55,9 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     return findChildByClass(GrTypeElement.class);
+  }
+
+  public GrMember[] getMembers() {
+    return findChildrenByClass(GrMember.class);
   }
 }

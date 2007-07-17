@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -16,13 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -276,7 +275,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     writePackageStatement(text, packageDefinition);
 
-    GrStatement[] statements = typeDefinition == null ? GrStatement.EMPTY_ARRAY : typeDefinition.getStatements();
+    GrMembersDeclaration[] membersDeclarations = typeDefinition == null ? GrMembersDeclaration.EMPTY_ARRAY : typeDefinition.getMemberDeclarations();
 
     boolean isClassDef = typeDefinition instanceof GrClassDefinition;
     boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
@@ -344,9 +343,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     Map<String, String> gettersNames = new HashMap<String, String>();
     Map<String, String> settersNames = new HashMap<String, String>();
 
-    for (GrStatement statement : statements) {
-      if (statement instanceof GrMethod) {
-        final GrMethod method = (GrMethod) statement;
+    for (GrMembersDeclaration declaration : membersDeclarations) {
+      if (declaration instanceof GrMethod) {
+        final GrMethod method = (GrMethod) declaration;
         if (method.isConstructor()) {
           writeConstructor(text, method);
         }
@@ -358,14 +357,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
         wasRunMethodPresent = wasRunMethod(method);
       }
-      if (statement instanceof GrVariableDeclaration) {
-        writeVariableDeclarations(text, (GrVariableDeclaration) statement);
+      if (declaration instanceof GrVariableDeclaration) {
+        writeVariableDeclarations(text, (GrVariableDeclaration) declaration);
       }
     }
 
-    for (GrStatement statement : statements) {
-      if (statement instanceof GrVariableDeclaration) {
-        writeGetterAndSetter(text, (GrVariableDeclaration) statement, gettersNames, settersNames);
+    for (GrMembersDeclaration decl : membersDeclarations) {
+      if (decl instanceof GrVariableDeclaration) {
+        writeGetterAndSetter(text, (GrVariableDeclaration) decl, gettersNames, settersNames);
       }
     }
 

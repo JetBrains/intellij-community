@@ -23,5 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @date: 20.03.2007
  */
 public interface GrMember extends PsiMember, GroovyPsiElement {
+  public static final GrMember[] EMPTY_ARRAY = new GrMember[0];
   //GrTypeDefinition getContainingTypeDefinition();
 }

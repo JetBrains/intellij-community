@@ -15,11 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas
  */
-public interface GrThrowStatement extends GrStatement, GrCondition {
+public interface GrThrowStatement extends GrStatement {
 }

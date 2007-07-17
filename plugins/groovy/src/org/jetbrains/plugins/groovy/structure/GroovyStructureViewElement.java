@@ -6,21 +6,21 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SmartPointerManager;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -98,13 +98,13 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
       }
 
     } else if (element instanceof GrTypeDefinition) {  //adding statements for type definition
-      GrStatement[] statements = ((GrTypeDefinition) element).getStatements();
+      GrMembersDeclaration[] declarations = ((GrTypeDefinition) element).getMemberDeclarations();
 
-      for (GrStatement statement : statements) {
-        if (statement instanceof GrVariableDeclaration) {
-          addVariables(children, (GrVariableDeclaration) statement);
+      for (GrMembersDeclaration declaration : declarations) {
+        if (declaration instanceof GrVariableDeclaration) {
+          addVariables(children, (GrVariableDeclaration) declaration);
         } else {
-          addNewChild(children, statement);
+          addNewChild(children, declaration);
         }
       }
     }

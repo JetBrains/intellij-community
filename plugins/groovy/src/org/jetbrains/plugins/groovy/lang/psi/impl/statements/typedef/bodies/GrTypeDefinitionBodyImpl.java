@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -32,10 +33,6 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
     return "Type definition body";
   }
 
-  public GrStatement[] getStatements() {
-    return findChildrenByClass(GrStatement.class);
-  }
-
   public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
@@ -55,6 +52,10 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
 
   public GrMethod[] getMethods() {
     return findChildrenByClass(GrMethod.class);
+  }
+
+  public GrMembersDeclaration[] getMemberDeclarations() {
+    return findChildrenByClass(GrMembersDeclaration.class);
   }
 
   public boolean mayUseNewLinesAsSeparators() {
