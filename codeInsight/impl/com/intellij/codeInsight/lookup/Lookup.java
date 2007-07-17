@@ -2,11 +2,12 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.UserDataHolder;
 
-import java.awt.Rectangle;
+import java.awt.*;
 
 public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
   char REPLACE_SELECT_CHAR = '\t';
+  char COPMLETE_STATEMENT_SELECT_CHAR = '\r';
 
   LookupItem getCurrentItem();
   void setCurrentItem(LookupItem item);

@@ -37,8 +37,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.DefaultInsertHandler");
@@ -431,6 +431,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case ':': return TailType.CASE_COLON; //?
       case '(': return TailTypes.SMART_LPARENTH;
       case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
+      case '\r': return TailTypes.SMART_COMPLETION;
     }
     final TailType attr = (TailType)item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
     return attr != null ? attr : TailType.NONE;

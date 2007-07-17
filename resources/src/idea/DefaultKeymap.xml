@@ -83,6 +83,9 @@
     <action id="EditorJoinLines">
       <keyboard-shortcut first-keystroke="control shift J"/>
     </action>
+    <action id="EditorChooseLookupItemCompleteStatement">
+      <keyboard-shortcut first-keystroke="control shift ENTER"/>
+    </action>
     <action id="EditorCompleteStatement">
       <keyboard-shortcut first-keystroke="control shift ENTER"/>
     </action>

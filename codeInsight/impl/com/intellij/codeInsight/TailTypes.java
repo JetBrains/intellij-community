@@ -1,11 +1,16 @@
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
+import com.intellij.codeInsight.completion.simple.RParenthTailType;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import org.jetbrains.annotations.NonNls;
 
 public class TailTypes {
   public static final TailType CAST_RPARENTH = new RParenthTailType(){
@@ -102,8 +107,37 @@ public class TailTypes {
              : tailOffset;
     }
 
+    @NonNls
     public String toString() {
       return "SMART_LPARENTH";
     }
   };
+
+  public static final TailType SMART_COMPLETION = new TailType() {
+    public int processTail(final Editor editor, int tailOffset) {
+      final Project project = editor.getProject();
+
+      final Document doc = editor.getDocument();
+      String textForRollback = doc.getText();
+
+      SmartEnterProcessor processor =
+        new SmartEnterProcessor(project, editor, PsiDocumentManager.getInstance(project).getPsiFile(doc));
+
+      try {
+        processor.process(0);
+      }
+      catch (SmartEnterProcessor.TooManyAttemptsException e) {
+        doc.replaceString(0, doc.getTextLength(), textForRollback);
+      }
+
+      return tailOffset;
+    }
+
+    @NonNls
+    public String toString() {
+      return "SMART_COMPLETION";
+    }
+  };
+
+  private TailTypes() {}
 }
