@@ -36,10 +36,19 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
     super(node);
   }
 
+  public void removeStatement() throws IncorrectOperationException {
+    if (getParent() == null ||
+        getParent().getNode() == null) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode parentNode = getParent().getNode();
+    parentNode.removeChild(this.getNode());
+  }
+
   public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) throws IncorrectOperationException {
     if (getParent() == null ||
-            getParent().getNode() == null ||
-            newStmt.getNode() == null) {
+        getParent().getNode() == null ||
+        newStmt.getNode() == null) {
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = getParent().getNode();
@@ -89,6 +98,7 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitElement(this);;
+    visitor.visitElement(this);
+    ;
   }
 }

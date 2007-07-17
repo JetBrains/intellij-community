@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -84,14 +85,8 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     return dialog;
   }
 
-  protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {
-    if (editor == null) return;
-    HighlightManager highlightManager = HighlightManager.getInstance(project);
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, highlighters);
-    WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+  protected void highlightOccurences(final Project project, Editor editor, final PsiElement[] elements) {
+    GroovyRefactoringUtil.highlightOccurences(project, editor, elements);
   }
 
 }

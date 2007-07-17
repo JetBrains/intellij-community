@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -29,14 +30,13 @@ public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
 
     int endOffset = grStatement.getTextRange().getEndOffset();
 
-    if (grStatement instanceof GrStatement) {
+    if (grStatement instanceof GrStatement &&
+        !(grStatement instanceof GrBlockStatement)) {
       endOffset = grStatement.getTextRange().getEndOffset();
       grStatement.getParent().getNode().removeChild(grStatement.getNode());
-
-    } else if (grStatement instanceof GrOpenBlock) {
-      GrStatement grStatementInBody = ((GrOpenBlock) grStatement).getStatements()[0];
+    } else if (grStatement instanceof GrBlockStatement) {
+      GrStatement grStatementInBody = ((GrBlockStatement) grStatement).getBlock().getStatements()[0];
       endOffset = grStatementInBody.getTextRange().getEndOffset();
-
       grStatementInBody.getParent().getNode().removeChild(grStatementInBody.getNode());
     }
 

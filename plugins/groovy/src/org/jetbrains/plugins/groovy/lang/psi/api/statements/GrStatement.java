@@ -27,4 +27,6 @@ public interface GrStatement extends GrTopStatement, GrCondition {
   public static final GrStatement[] EMPTY_ARRAY = new GrStatement[0];
   
   GrStatement replaceWithStatement (GrStatement statement) throws IncorrectOperationException;
+
+  void removeStatement() throws IncorrectOperationException;
 }

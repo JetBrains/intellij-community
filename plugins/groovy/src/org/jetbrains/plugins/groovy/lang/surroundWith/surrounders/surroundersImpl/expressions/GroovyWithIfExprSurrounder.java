@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -28,8 +29,8 @@ public class GroovyWithIfExprSurrounder extends GroovyExpressionSurrounder {
     GroovyPsiElement psiElement = grIfStatement.getThenBranch();
 
 
-    assert psiElement instanceof GrOpenBlock;
-    GrStatement[] grStatements = ((GrOpenBlock) psiElement).getStatements();
+    assert psiElement instanceof GrBlockStatement;
+    GrStatement[] grStatements = ((GrBlockStatement) psiElement).getBlock().getStatements();
     assert grStatements.length > 0;
 
     GrStatement grStatement = grStatements[0];

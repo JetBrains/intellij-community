@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -20,4 +21,6 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   GrModifierList getModifierList();
 
   GrVariable[] getVariables();
+
+  void removeVariableDeclaration() throws IncorrectOperationException;
 }

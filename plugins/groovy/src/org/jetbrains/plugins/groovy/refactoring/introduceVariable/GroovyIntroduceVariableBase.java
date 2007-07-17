@@ -376,7 +376,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   protected abstract void showErrorMessage(String message, Project project);
 
-  protected abstract void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences);
+  protected abstract void highlightOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences);
 
   protected abstract boolean reportConflicts(final ArrayList<String> conflicts, final Project project);
 

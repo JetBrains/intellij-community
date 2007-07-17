@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -34,6 +35,9 @@ public interface GrVariable extends GrNamedElement, PsiVariable, GroovyPsiElemen
 
   @NotNull
   PsiElement getNameIdentifierGroovy();
+
+  @NotNull
+  void removeVariable() throws IncorrectOperationException;
 
   @Nullable
   GrExpression getInitializerGroovy();

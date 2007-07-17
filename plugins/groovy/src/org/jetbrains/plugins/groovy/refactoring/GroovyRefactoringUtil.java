@@ -16,10 +16,18 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -104,7 +112,7 @@ public abstract class GroovyRefactoringUtil {
 
   private static void accumulateOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
     if (scope.equals(expr)) {
-     acc.add(expr);
+      acc.add(expr);
       return;
     }
     for (PsiElement child : scope.getChildren()) {
@@ -159,8 +167,8 @@ public abstract class GroovyRefactoringUtil {
   public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
     HashMap<String, PsiType> map = new HashMap<String, PsiType>();
     String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
-    if (unboxed != null && !unboxed.contains(".")){
-    map.put(PsiTypesUtil.unboxIfPossible(type.getCanonicalText()), type);
+    if (unboxed != null && !unboxed.contains(".")) {
+      map.put(PsiTypesUtil.unboxIfPossible(type.getCanonicalText()), type);
     } else {
       map.put(type.getPresentableText(), type);
     }
@@ -194,9 +202,9 @@ public abstract class GroovyRefactoringUtil {
    */
   @Nullable
   public static PsiElement calculatePositionToInsertBefore(@NotNull PsiElement container,
-                                                     PsiElement expr,
-                                                     PsiElement[] occurences,
-                                                     boolean replaceAllOccurences) {
+                                                           PsiElement expr,
+                                                           PsiElement[] occurences,
+                                                           boolean replaceAllOccurences) {
     if (occurences.length == 0) return null;
     PsiElement candidate;
     if (occurences.length == 1 || !replaceAllOccurences) {
@@ -236,8 +244,21 @@ public abstract class GroovyRefactoringUtil {
     });
   }
 
-  boolean isLocalVariable(GrVariable variable){
+  public static boolean isLocalVariable(GrVariable variable) {
     return !(variable instanceof GrField ||
         variable instanceof GrParameter);
+  }
+
+
+  public static void highlightOccurences(Project project, Editor editor, PsiElement[] elements) {
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    if (editor != null) {
+      HighlightManager highlightManager = HighlightManager.getInstance(project);
+      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      if (elements.length > 1) {
+        highlightManager.addOccurrenceHighlights(editor, elements, attributes, true, highlighters);
+      }
+    }
   }
 }

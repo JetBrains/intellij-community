@@ -8,6 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -50,6 +51,10 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
 
   public GrVariable[] getVariables() {
     return findChildrenByClass(GrVariable.class);
+  }
+
+  public void removeVariableDeclaration() throws IncorrectOperationException {
+    removeStatement();
   }
 
   @Nullable
