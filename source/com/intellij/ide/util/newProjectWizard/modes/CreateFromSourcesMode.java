@@ -29,7 +29,7 @@ public class CreateFromSourcesMode extends WizardMode {
   }
 
   @Nullable
-  public StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
     final StepSequence sequence = new StepSequence();
     final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder();
     sequence.addCommonStep(new ProjectNameStep(context, sequence, this));

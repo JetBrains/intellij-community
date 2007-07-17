@@ -41,7 +41,7 @@ public class ImportMode extends WizardMode {
   }
 
   @Nullable
-  public StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
     final StepSequence stepSequence = new StepSequence(null);
     final ProjectImportProvider[] providers = Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER);
     stepSequence.addCommonStep(new ImportChooserStep(providers, stepSequence, context));

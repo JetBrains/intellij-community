@@ -37,7 +37,7 @@ public abstract class WizardMode implements Disposable {
   }
 
   @Nullable
-  public abstract StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider);
+  protected abstract StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider);
 
   @Nullable
   public abstract ProjectBuilder getModuleBuilder();
