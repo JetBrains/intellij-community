@@ -21,35 +21,7 @@ public class ExpectedTypesGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext){
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
-    
-    if(expression == null) {
-      PsiElement parent = context.getParent();
-      
-      if (parent instanceof PsiJavaCodeReferenceElement &&
-          parent.getParent() instanceof PsiAnnotation
-         ) {
-        parent = parent.getParent().getParent();
-      }
-      
-      if (!(parent instanceof PsiNameValuePair))
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
-
-      final PsiNameValuePair psiNameValuePair = ((PsiNameValuePair)parent);
-      final PsiReference ref = psiNameValuePair.getReference();
-      if (ref != null) {
-        final Object[] variants = ref.getVariants();
-
-        if (variants != null &&
-            variants.length == 1 &&
-            variants[0] instanceof PsiMethod &&
-            ((PsiMethod)variants[0]).getReturnType() != null
-          ) {
-          return new PsiType[] { ((PsiMethod)variants[0]).getReturnType() };
-        }
-      }
-
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
+    if(expression == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 

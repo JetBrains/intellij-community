@@ -486,7 +486,7 @@ public class DeclarationParsing extends Parsing {
     if (mayBeSimple) {
       final LexerPosition pos = lexer.getCurrentPosition();
       TreeElement value = parseAnnotationMemberValue(lexer);
-      if (value != null && lexer.getTokenType() == RPARENTH) {
+      if (value != null && lexer.getTokenType() != EQ) {
         TreeUtil.addChildren(pair, value);
         return pair;
       } else {
