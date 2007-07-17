@@ -1,15 +1,15 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.util.containers.HashMap;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -25,10 +25,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -66,7 +63,12 @@ public class PropertiesComponent extends JPanel {
     mySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollPane, new JScrollPane(myTextArea));
     add(mySplitPane, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.WEST);
-    myTable.setModel(new DefaultTableModel(createTableModel(new HashMap<String, String>()), new Object[] {"Name", "Value"}));
+    final DefaultTableModel model = new DefaultTableModel(createTableModel(new HashMap<String, String>()), new Object[]{"Name", "Value"}) {
+      public boolean isCellEditable(final int row, final int column) {
+        return false;
+      }
+    };
+    myTable.setModel(model);
     myTable.setShowVerticalLines(true);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
