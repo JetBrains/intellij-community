@@ -24,23 +24,23 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testParameter1() throws Exception {
-    doTest("parameter1/ABCF.groovy");
+    doTest("parameter1/A.groovy");
   }
 
   public void testClosureParameter1() throws Exception {
-    doTest("closureParameter1/ABCF.groovy");
+    doTest("closureParameter1/A.groovy");
   }
 
   public void testLocal1() throws Exception {
-    doTest("local1/ABCF.groovy");
+    doTest("local1/A.groovy");
   }
 
   public void testField1() throws Exception {
-    doTest("field1/ABCF.groovy");
+    doTest("field1/A.groovy");
   }
 
   public void testField2() throws Exception {
-    doTest("field2/ABCF.groovy");
+    doTest("field2/A.groovy");
   }
 
   public void testForVariable1() throws Exception {
@@ -48,15 +48,15 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testArrayLength() throws Exception {
-    doTest("arrayLength/ABCF.groovy");
+    doTest("arrayLength/A.groovy");
   }
 
   public void testFromGetter() throws Exception {
-    doTest("fromGetter/ABCF.groovy");
+    doTest("fromGetter/A.groovy");
   }
 
   public void testFromSetter() throws Exception {
-    doTest("fromSetter/ABCF.groovy");
+    doTest("fromSetter/A.groovy");
   }
 
   public void testForVariable2() throws Exception {
@@ -76,28 +76,28 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testField3() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/ABCF.groovy");
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy");
     GroovyResolveResult resolveResult = ref.advancedResolve();
     assertTrue(resolveResult.getElement() instanceof GrField);
     assertFalse(resolveResult.isValidResult());
   }
 
   public void testToGetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("toGetter/ABCF.groovy");
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("toGetter/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod) resolved));
   }
 
   public void testToSetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("toSetter/ABCF.groovy");
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("toSetter/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
   }
 
   public void testUndefinedVar1() throws Exception {
-    PsiReference ref = configureByFile("undefinedVar1/ABCF.groovy");
+    PsiReference ref = configureByFile("undefinedVar1/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrReferenceExpression);
     GrTopStatement statement = ((GroovyFile) resolved.getContainingFile()).getTopStatements()[2];
@@ -105,37 +105,37 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testRecursive1() throws Exception {
-    PsiReference ref = configureByFile("recursive1/ABCF.groovy");
+    PsiReference ref = configureByFile("recursive1/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrField);
   }
 
   public void testRecursive2() throws Exception {
-    PsiReference ref = configureByFile("recursive2/ABCF.groovy");
+    PsiReference ref = configureByFile("recursive2/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertNull(((GrMethod) resolved).getReturnType());
   }
 
   public void testNotAField() throws Exception {
-    PsiReference ref = configureByFile("notAField/ABCF.groovy");
+    PsiReference ref = configureByFile("notAField/A.groovy");
     assertNull(ref.resolve());
   }
 
   public void testUndefinedVar2() throws Exception {
-    doUndefinedVarTest("undefinedVar2/ABCF.groovy");
+    doUndefinedVarTest("undefinedVar2/A.groovy");
   }
 
   public void testDefinedVar1() throws Exception {
-    doTest("definedVar1/ABCF.groovy");
+    doTest("definedVar1/A.groovy");
   }
 
   public void testOperatorOverload() throws Exception {
-    doTest("operatorOverload/ABCF.groovy");
+    doTest("operatorOverload/A.groovy");
   }
 
   public void testStackOverflow() throws Exception {
-    doTest("stackOverflow/ABCF.groovy");
+    doTest("stackOverflow/A.groovy");
   }
 
   private void doTest(String fileName) throws Exception {

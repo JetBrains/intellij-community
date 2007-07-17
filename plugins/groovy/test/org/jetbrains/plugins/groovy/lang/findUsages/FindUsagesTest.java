@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.lang.findUsages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -57,15 +57,15 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testSetter1() throws Throwable {
-    doTest("setter1/ABCF.groovy", 2);
+    doTest("setter1/A.groovy", 2);
   }
 
   public void testGetter1() throws Throwable {
-    doTest("getter1/ABCF.groovy", 1);
+    doTest("getter1/A.groovy", 1);
   }
 
   public void testProperty1() throws Throwable {
-    doTest("property1/ABCF.groovy", 2);
+    doTest("property1/A.groovy", 2);
   }
 
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
