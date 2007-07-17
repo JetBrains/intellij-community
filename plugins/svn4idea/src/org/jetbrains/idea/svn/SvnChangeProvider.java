@@ -61,43 +61,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
 
       for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
-        boolean foundRename = false;
-        final SVNStatus copiedStatus = copiedFile.getStatus();
-        for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
-          SvnChangedFile deletedFile = iterator.next();
-          final SVNStatus deletedStatus = deletedFile.getStatus();
-          if (copiedFile.getCopyFromURL().equals(deletedStatus.getURL().toString())) {
-            builder.processChange(new Change(SvnContentRevision.create(myVcs, deletedFile.getFilePath(), deletedStatus.getRevision()),
-                                             CurrentContentRevision.create(copiedFile.getFilePath())));
-            iterator.remove();
-            foundRename = true;
-            break;
-          }
-        }
-
-        // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
-        // by building a relative url
-        if (!foundRename && copiedStatus.getURL() != null) {
-          File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copiedFile.getCopyFromURL());
-          SVNStatus status;
-          try {
-            status = context.getClient().doStatus(wcPath, false);
-          }
-          catch(SVNException ex) {
-            status = null;
-          }
-          if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
-            final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
-            final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getRevision());
-            final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-            builder.processChange(new Change(beforeRevision, afterRevision));
-            foundRename = true;
-          }
-        }
-
-        if (!foundRename) {
-          processStatus(copiedFile.getFilePath(), copiedStatus, builder, null);
-        }
+        processCopiedFile(copiedFile, builder, context);
       }
       for(SvnChangedFile deletedFile: context.getDeletedFiles()) {
         processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), builder, null);
@@ -106,6 +70,63 @@ public class SvnChangeProvider implements ChangeProvider {
     catch (SVNException e) {
       throw new VcsException(e);
     }
+  }
+
+  private void processCopiedFile(SvnChangedFile copiedFile, ChangelistBuilder builder, SvnChangeProviderContext context) throws SVNException {
+    boolean foundRename = false;
+    final SVNStatus copiedStatus = copiedFile.getStatus();
+    final String copyFromURL = copiedFile.getCopyFromURL();
+    for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
+      SvnChangedFile deletedFile = iterator.next();
+      final SVNStatus deletedStatus = deletedFile.getStatus();
+      if (copyFromURL.equals(deletedStatus.getURL().toString())) {
+        builder.processChange(new Change(createBeforeRevision(deletedFile),
+                                         CurrentContentRevision.create(copiedFile.getFilePath())));
+        iterator.remove();
+        for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
+          SvnChangedFile deletedChild = iterChild.next();
+          final String childURL = deletedChild.getStatus().getURL().toString();
+          if (childURL.startsWith(copyFromURL)) {
+            String relativePath = childURL.substring(copyFromURL.length());
+            File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
+            FilePath newFilePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(newPath);
+            builder.processChange(new Change(createBeforeRevision(deletedChild),
+                                             CurrentContentRevision.create(newFilePath)));
+            iterChild.remove();
+          }
+        }
+        foundRename = true;
+        break;
+      }
+    }
+
+    // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
+    // by building a relative url
+    if (!foundRename && copiedStatus.getURL() != null) {
+      File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copyFromURL);
+      SVNStatus status;
+      try {
+        status = context.getClient().doStatus(wcPath, false);
+      }
+      catch(SVNException ex) {
+        status = null;
+      }
+      if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
+        final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
+        final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getRevision());
+        final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
+        builder.processChange(new Change(beforeRevision, afterRevision));
+        foundRename = true;
+      }
+    }
+
+    if (!foundRename) {
+      processStatus(copiedFile.getFilePath(), copiedStatus, builder, null);
+    }
+  }
+
+  private SvnContentRevision createBeforeRevision(final SvnChangedFile changedFile) {
+    return SvnContentRevision.create(myVcs, changedFile.getFilePath(), changedFile.getStatus().getRevision());
   }
 
   /**
@@ -127,8 +148,9 @@ public class SvnChangeProvider implements ChangeProvider {
     if (status == FileStatus.IGNORED) {
       return status;
     }
+    // performance optimization which doesn't work in tests: ask SVN for status only if we know of some change to file
     final Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(file);
-    if (change != null && (change.isRenamed() || change.isMoved())) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || (change != null && (change.isRenamed() || change.isMoved()))) {
       try {
         final SVNStatus svnStatus = context.getClient().doStatus(parentPath.getIOFile(), false, false);
         if (svnStatus.getCopyFromURL() != null) {
@@ -272,6 +294,9 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       else if (statusType == SVNStatusType.STATUS_IGNORED || parentStatus == FileStatus.IGNORED) {
         builder.processIgnoredFile(filePath.getVirtualFile());
+      }
+      else if (status.isCopied()) {
+        //
       }
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();

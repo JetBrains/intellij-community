@@ -1,16 +1,24 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import org.junit.After;
 import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
@@ -71,5 +79,21 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
   protected void checkin() throws IOException {
     verify(runSvn("ci", "-m", "test"));
+  }
+
+  protected List<Change> getAllChanges() throws VcsException {
+    return getChangesInScope(getAllDirtyScope());
+  }
+
+  protected List<Change> getChangesForFile(VirtualFile file) throws VcsException {
+    return getChangesInScope(getDirtyScopeForFile(file));
+  }
+
+  private List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
+    ChangeProvider changeProvider = SvnVcs.getInstance(myProject).getChangeProvider();
+    assert changeProvider != null;
+    MockChangelistBuilder builder = new MockChangelistBuilder();
+    changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator());
+    return builder.getChanges();
   }
 }
