@@ -4,11 +4,15 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -53,21 +57,28 @@ public class GenericInlineHandler {
       collectConflicts(reference, element, inliners, conflicts);
     }
 
+    final Project project = element.getProject();
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts);
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (PsiReference reference : allReferences) {
-          inlineReference(reference, element, inliners);
-        }
+        final String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
 
-        if (!settings.isOnlyOneReferenceToInline()) {
-          languageSpecific.removeDefinition(element);
-        }
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            for (PsiReference reference : allReferences) {
+              inlineReference(reference, element, inliners);
+            }
+
+            if (!settings.isOnlyOneReferenceToInline()) {
+              languageSpecific.removeDefinition(element);
+            }
+          }
+        }, RefactoringBundle.message("inline.command", subj), null);
       }
     });
   }

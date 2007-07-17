@@ -171,7 +171,7 @@ class InlineLocalHandler {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
-    }, RefactoringBundle.message("inline.local.command", localName), null);
+    }, RefactoringBundle.message("inline.command", localName), null);
   }
 
   private static boolean isSameDefinition(final PsiElement def, final PsiExpression defToInline) {
