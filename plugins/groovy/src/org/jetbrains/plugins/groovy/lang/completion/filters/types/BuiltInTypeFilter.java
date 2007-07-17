@@ -15,8 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.types;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import org.codehaus.groovy.ant.Groovy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -26,12 +28,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
  */
 public class BuiltInTypeFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
+    PsiElement previous = GroovyCompletionUtil.realPrevious(context.getParent().getPrevSibling());
+    if (previous != null &&
+        GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
+      return false;
+    }
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
         GroovyCompletionUtil.asTypedMethod(context) ||
         GroovyCompletionUtil.asVariableInBlock(context)) {
@@ -40,9 +48,10 @@ public class BuiltInTypeFilter implements ElementFilter {
     if ((context.getParent() instanceof GrParameter &&
         ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
         context.getParent() instanceof GrReferenceElement &&
-        !(context.getParent().getParent() instanceof GrImportStatement) &&
-        !(context.getParent().getParent() instanceof GrPackageDefinition)) {
-      return true;
+            !(context.getParent().getParent() instanceof GrImportStatement) &&
+            !(context.getParent().getParent() instanceof GrPackageDefinition)) {
+      return !(previous != null &&
+          GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()));
     }
     if (GroovyCompletionUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
       return true;

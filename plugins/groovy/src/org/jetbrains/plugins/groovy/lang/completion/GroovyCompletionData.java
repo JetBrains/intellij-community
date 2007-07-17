@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterfaceEnumFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.AnnotationFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.ControlStructureFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.CaseDefaultFilter;
@@ -80,6 +81,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerClassInterfaceEnumAnnotationCompletion() {
     registerStandardCompletion(new ClassInterfaceEnumFilter(), "class", "interface", "enum");
+    registerStandardCompletion(new AnnotationFilter(), "interface");
     registerStandardCompletion(new ExtendsFilter(), "extends");
     registerStandardCompletion(new ImplementsFilter(), "implements");
   }
