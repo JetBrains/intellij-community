@@ -84,6 +84,10 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     if (item1StringCap.startsWith(myPrefixCapitals) && !item2StringCap.startsWith(myPrefixCapitals)) return -1;
     if (!item1StringCap.startsWith(myPrefixCapitals) && item2StringCap.startsWith(myPrefixCapitals)) return 1;
 
+    final String fullCaps = capitalsOnly(myPrefix) + myPrefixCapitals;
+    if (item1StringCap.startsWith(fullCaps) && !item2StringCap.startsWith(fullCaps)) return -1;
+    if (!item1StringCap.startsWith(fullCaps) && item2StringCap.startsWith(fullCaps)) return 1;
+    
     // Check equality in case
     String item1String = item1.getLookupString();
     String item2String = item2.getLookupString();
