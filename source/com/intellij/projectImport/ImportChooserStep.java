@@ -10,26 +10,23 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
-  private final ProjectImportProvider[] myProviders;
   private final StepSequence mySequence;
   private JList myList;
   private JCheckBox myUpdateCurrentProject;
+  private final JPanel myPanel;
 
   public ImportChooserStep(final ProjectImportProvider[] providers, final StepSequence sequence, final WizardContext context) {
     super(context);
-    myProviders = providers;
     mySequence = sequence;
-  }
-
-  public JComponent getComponent() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    myPanel = new JPanel(new BorderLayout());
     final DefaultListModel model = new DefaultListModel();
-
     myList = new JList(model);
-    for (ProjectImportProvider provider : myProviders) {
+    for (ProjectImportProvider provider : providers) {
       model.addElement(provider);
     }
     myList.setCellRenderer(new DefaultListCellRenderer(){
@@ -42,13 +39,21 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         return rendererComponent;
       }
     });
-    myList.setSelectedIndex(0);
-    panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
+    myList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        updateDataModel();
+      }
+    });
+    myPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     final boolean selected = ProjectImportBuilder.getCurrentProject() != null;
-    myUpdateCurrentProject = new JCheckBox(ProjectBundle.message("project.import.reuse.current.project.checkbox.name"), selected);
+    myUpdateCurrentProject = new JCheckBox(ProjectBundle.message("project.import.reuse.current.project.checkbox.name"), false);
     myUpdateCurrentProject.setVisible(selected);
-    panel.add(myUpdateCurrentProject, BorderLayout.SOUTH);
-    return panel;
+    myPanel.add(myUpdateCurrentProject, BorderLayout.SOUTH);
+    myList.setSelectedIndex(0);
+  }
+
+  public JComponent getComponent() {
+    return myPanel;
   }
 
   public void updateDataModel() {
@@ -59,10 +64,5 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       getWizardContext().setProjectBuilder(builder);
       builder.setUpdate(myUpdateCurrentProject.isSelected());
     }
-  }
-
-  public void updateStep() {
-    updateDataModel();
-    super.updateStep();
   }
 }
