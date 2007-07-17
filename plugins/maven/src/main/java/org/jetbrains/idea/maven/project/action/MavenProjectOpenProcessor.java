@@ -5,9 +5,9 @@
 package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
@@ -40,7 +40,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessor {
     try {
       getBuilder().setList(projects);
     }
-    catch (SelectImportedProjectsStep.Context.ValidationException e) {
+    catch (ConfigurationException e) {
       return false;
     }
 

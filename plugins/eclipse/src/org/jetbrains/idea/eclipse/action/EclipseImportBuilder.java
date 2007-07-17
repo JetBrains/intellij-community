@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
@@ -28,8 +27,8 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class EclipseImportBuilder extends ProjectImportBuilder
-  implements EclipseProjectWizardContext, SelectImportedProjectsStep.Context<EclipseProjectModel> {
+public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectModel>
+  implements EclipseProjectWizardContext {
 
   private static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
 

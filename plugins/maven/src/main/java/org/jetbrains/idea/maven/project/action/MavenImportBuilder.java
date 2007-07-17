@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -8,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.FileFinder;
@@ -23,8 +23,7 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportBuilder extends ProjectImportBuilder
-  implements MavenImportProcessorContext, SelectImportedProjectsStep.Context<MavenProjectModel.Node> {
+public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.Node> implements MavenImportProcessorContext {
 
   private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
@@ -151,7 +150,7 @@ public class MavenImportBuilder extends ProjectImportBuilder
     return true;
   }
 
-  public void setList(List<MavenProjectModel.Node> nodes) throws ValidationException {
+  public void setList(List<MavenProjectModel.Node> nodes) throws ConfigurationException {
     for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
@@ -159,14 +158,14 @@ public class MavenImportBuilder extends ProjectImportBuilder
     checkDuplicates();
   }
 
-  private void checkDuplicates() throws ValidationException {
+  private void checkDuplicates() throws ConfigurationException {
     final Collection<String> duplicates = myImportProcessor.getMavenToIdeaMapping().getDuplicateNames();
     if (!duplicates.isEmpty()) {
       StringBuilder builder = new StringBuilder(ProjectBundle.message("maven.import.duplicate.modules"));
       for (String duplicate : duplicates) {
         builder.append("\n").append(duplicate);
       }
-      throw new ValidationException(builder.toString());
+      throw new ConfigurationException(builder.toString());
     }
   }
 

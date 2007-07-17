@@ -6,6 +6,7 @@ package org.jetbrains.idea.eclipse.action;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,7 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Eclip
     return isInConflict(item) ? ICON_CONFLICT : null;
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     calcDuplicates();
     return duplicateNames.isEmpty() && super.validate();
   }
