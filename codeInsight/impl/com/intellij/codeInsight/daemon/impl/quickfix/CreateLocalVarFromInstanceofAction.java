@@ -38,21 +38,19 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
-    if (instanceOfExpression != null) {
-      PsiTypeElement checkType = instanceOfExpression.getCheckType();
-      if (checkType == null) return false;
-      PsiType type = checkType.getType();
-      String castTo = type.getPresentableText();
-      setText(QuickFixBundle.message("create.local.from.instanceof.usage.text", castTo, instanceOfExpression.getOperand().getText()));
+    if (instanceOfExpression == null) return false;
+    PsiTypeElement checkType = instanceOfExpression.getCheckType();
+    if (checkType == null) return false;
+    PsiType type = checkType.getType();
+    String castTo = type.getPresentableText();
+    setText(QuickFixBundle.message("create.local.from.instanceof.usage.text", castTo, instanceOfExpression.getOperand().getText()));
 
-      PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
-      boolean insideIf = statement instanceof PsiIfStatement
-                         && PsiTreeUtil.isAncestor(((PsiIfStatement)statement).getCondition(), instanceOfExpression, false);
-      boolean insideWhile = statement instanceof PsiWhileStatement
-                            && PsiTreeUtil.isAncestor(((PsiWhileStatement)statement).getCondition(), instanceOfExpression, false);
-      return (insideIf || insideWhile) && !isAlreadyCastedTo(type, instanceOfExpression, statement);
-    }
-    return false;
+    PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
+    boolean insideIf = statement instanceof PsiIfStatement
+                       && PsiTreeUtil.isAncestor(((PsiIfStatement)statement).getCondition(), instanceOfExpression, false);
+    boolean insideWhile = statement instanceof PsiWhileStatement
+                          && PsiTreeUtil.isAncestor(((PsiWhileStatement)statement).getCondition(), instanceOfExpression, false);
+    return (insideIf || insideWhile) && !isAlreadyCastedTo(type, instanceOfExpression, statement);
   }
 
   private static boolean isAlreadyCastedTo(final PsiType type, final PsiInstanceOfExpression instanceOfExpression, final PsiStatement statement) {
@@ -136,7 +134,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
-
+    assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
     try {
       final PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression);
       if (decl == null) return;
