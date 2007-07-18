@@ -138,6 +138,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("stackOverflow/A.groovy");
   }
 
+  public void testFromDifferentCaseClause() throws Exception {
+    PsiReference ref = configureByFile("fromDifferentCaseClause/A.groovy");
+    assertNull(ref.resolve());
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

@@ -300,6 +300,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       } else if (qualifierType instanceof PsiArrayType) {
         final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
         if (!arrayClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+      } else if (qualifierType instanceof PsiIntersectionType) {
+        for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
+          processClassQualifierType(refExpr, processor, conjunct);
+        }
+        return;
       }
 
       ResolveUtil.processDefaultMethods(qualifierType, processor, project);

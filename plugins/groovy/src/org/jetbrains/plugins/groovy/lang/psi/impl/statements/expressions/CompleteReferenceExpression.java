@@ -206,6 +206,11 @@ public class CompleteReferenceExpression {
     } else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
       if (!arrayClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+    } else if (qualifierType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
+        getVariantsFromQualifierType(refExpr, processor, conjunct, project);
+      }
+      return;
     }
 
     ResolveUtil.processDefaultMethods(qualifierType, processor, project);
