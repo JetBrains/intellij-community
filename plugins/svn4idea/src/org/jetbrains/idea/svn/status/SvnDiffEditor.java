@@ -11,9 +11,12 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -23,24 +26,57 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.OutputStream;
 import java.util.Map;
 
 public class SvnDiffEditor implements ISVNEditor {
-
+  private VirtualFile mySourceRoot;
   private SVNRepository mySource;
   private SVNRepository myTarget;
+  private long myTargetRevision;
+  private boolean myReverse;
 
   private Map<String, Change> myChanges;
 
-  public SvnDiffEditor(SVNRepository source, SVNRepository target) {
+  public SvnDiffEditor(@NotNull SVNRepository source, SVNRepository target, long targetRevision, boolean reverse) {
     mySource = source;
     myTarget = target;
+    myTargetRevision = targetRevision;
     myChanges = new HashMap<String, Change>();
+    myReverse = reverse;
+  }
+
+  public SvnDiffEditor(@NotNull final VirtualFile sourceRoot, final SVNRepository target, long targetRevision,
+                       boolean reverse) {
+    mySourceRoot = sourceRoot;
+    myTarget = target;
+    myTargetRevision = targetRevision;
+    myChanges = new HashMap<String, Change>();
+    myReverse = reverse;
   }
 
   public Map<String, Change> getChangesMap() {
     return myChanges;
+  }
+
+  private ContentRevision createBeforeRevision(final String path) {
+    if (mySource != null) {
+      return new DiffContentRevision(path, mySource, -1);
+    }
+    // 'path' includes the first component of the root local path
+    File f = new File(mySourceRoot.getParent().getPath(), path);
+    FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(f);
+    return CurrentContentRevision.create(filePath);
+  }
+
+  private DiffContentRevision createAfterRevision(final String path) {
+    if (mySourceRoot != null) {
+      File f = new File(mySourceRoot.getParent().getPath(), path);
+      FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(f);
+      return new DiffContentRevision(path, myTarget, myTargetRevision, filePath);
+    }
+    return new DiffContentRevision(path, myTarget, myTargetRevision);
   }
 
   public void targetRevision(long revision) throws SVNException {
@@ -50,8 +86,7 @@ public class SvnDiffEditor implements ISVNEditor {
 
   public void deleteEntry(String path, long revision) throws SVNException {
     // deleted - null for target, existing for source.
-    Change change = new Change(new DiffContentRevision(path, mySource, false),
-            new DiffContentRevision(path, myTarget, true), FileStatus.DELETED);
+    Change change = createChange(path, FileStatus.DELETED);
     myChanges.put(path, change);
   }
 
@@ -66,10 +101,27 @@ public class SvnDiffEditor implements ISVNEditor {
       myChanges.remove(path);
       status = FileStatus.MODIFIED;
     }
-    Change change = new Change(new DiffContentRevision(path, mySource, false),
-            new DiffContentRevision(path, myTarget, false), status);
+    Change change = createChange(path, status);
     myChanges.put(path, change);
   }
+
+  private Change createChange(final String path, final FileStatus status) {
+    final ContentRevision beforeRevision = createBeforeRevision(path);
+    final DiffContentRevision afterRevision = createAfterRevision(path);
+    if (myReverse) {
+      if (status == FileStatus.ADDED) {
+        return new Change(afterRevision, null);
+      }
+      if (status == FileStatus.DELETED) {
+        return new Change(null, beforeRevision);
+      }
+      return new Change(afterRevision, beforeRevision, status);
+    }
+    return new Change(status == FileStatus.ADDED ? null : beforeRevision,
+                      status == FileStatus.DELETED ? null : afterRevision,
+                      status);
+  }
+
   public void openDir(String path, long revision) throws SVNException {
   }
   public void changeDirProperty(String name, String value) throws SVNException {
@@ -84,14 +136,12 @@ public class SvnDiffEditor implements ISVNEditor {
       myChanges.remove(path);
       status = FileStatus.MODIFIED;
     }
-    Change change = new Change(new DiffContentRevision(path, mySource, false),
-            new DiffContentRevision(path, myTarget, false), status);
+    Change change = createChange(path, status);
     myChanges.put(path, change);
   }
 
   public void openFile(String path, long revision) throws SVNException {
-    Change change = new Change(new DiffContentRevision(path, mySource, false),
-            new DiffContentRevision(path, myTarget, false), FileStatus.MODIFIED);
+    Change change = createChange(path, FileStatus.MODIFIED);
     myChanges.put(path, change);
   }
 
@@ -118,25 +168,25 @@ public class SvnDiffEditor implements ISVNEditor {
   }
 
   private static class DiffContentRevision implements ContentRevision {
-
     private String myPath;
     private SVNRepository myRepository;
-    private boolean myIsEmpty;
     private String myContents;
     private FilePath myFilePath;
+    private long myRevision;
 
-    public DiffContentRevision(String path, SVNRepository repos, boolean empty) {
+    public DiffContentRevision(String path, @NotNull SVNRepository repos, long revision) {
+      this(path, repos, revision, VcsUtil.getFilePath(path));
+    }
+
+    public DiffContentRevision(final String path, final SVNRepository repository, final long revision, final FilePath filePath) {
       myPath = path;
-      myIsEmpty = empty;
-      myRepository = repos;
-      myFilePath = VcsUtil.getFilePath(myPath);
+      myRepository = repository;
+      myFilePath = filePath;
+      myRevision = revision;
     }
 
     @Nullable
     public String getContent() throws VcsException {
-      if (myIsEmpty) {
-        return "";
-      }
       if (myContents == null) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
         try {
@@ -157,7 +207,7 @@ public class SvnDiffEditor implements ISVNEditor {
 
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
-      return new VcsRevisionNumber.Long(10);
+      return new VcsRevisionNumber.Long(myRevision);
     }
   }
 }

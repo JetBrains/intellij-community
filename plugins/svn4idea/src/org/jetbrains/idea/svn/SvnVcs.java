@@ -70,6 +70,7 @@ import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -233,6 +234,12 @@ public class SvnVcs extends AbstractVcs {
 
   public SVNDiffClient createDiffClient() {
     return new SVNDiffClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+  }
+
+  public SVNWCAccess createWCAccess() {
+    final SVNWCAccess access = SVNWCAccess.newInstance(null);
+    access.setOptions(myConfiguration.getOptions(myProject));
+    return access;
   }
 
   public ISVNOptions getSvnOptions() {

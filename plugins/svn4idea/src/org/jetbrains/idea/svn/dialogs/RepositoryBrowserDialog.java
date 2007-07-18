@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -39,15 +40,14 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnProgressCanceller;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
@@ -58,11 +58,13 @@ import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -491,8 +493,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           };
           cancelable = true;
         }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(command, "Computing Difference", cancelable,
-                myProject);
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.computing.difference"),
+                                                                          cancelable, myProject);
       }
     }
   }
@@ -839,16 +841,15 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
-    SVNRepository repository = myVCS.createRepository(sourceURL.toString());
-    repository.setCanceller(new SvnProgressCanceller());
+    SVNRepository sourceRepository = myVCS.createRepository(sourceURL.toString());
+    sourceRepository.setCanceller(new SvnProgressCanceller());
     SvnDiffEditor diffEditor;
     try {
-      final long rev = repository.getLatestRevision();
+      final long rev = sourceRepository.getLatestRevision();
       // generate Map of path->Change
-      diffEditor = new SvnDiffEditor(myVCS.createRepository(sourceURL.toString()),
-              myVCS.createRepository(targetURL.toString()));
+      diffEditor = new SvnDiffEditor(sourceRepository, myVCS.createRepository(targetURL.toString()), -1, false);
       final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
-      repository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
+      sourceRepository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
         public void report(ISVNReporter reporter) throws SVNException {
           reporter.setPath("", null, rev, false);
           reporter.finishReport();
@@ -856,14 +857,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }, cancellableEditor);
     }
     finally {
-      repository.closeSession();
+      sourceRepository.closeSession();
     }
-    Map<String, Change> changes = diffEditor.getChangesMap();
+    final String sourceTitle = SVNPathUtil.tail(sourceURL.toString());
+    final String targetTitle = SVNPathUtil.tail(targetURL.toString());
+    showDiffEditorResults(diffEditor.getChangesMap(), sourceTitle, targetTitle);
+  }
+
+  public void showDiffEditorResults(final Map<String, Change> changes, String sourceTitle, String targetTitle) {
     if (changes.isEmpty()) {
       // display no changes dialog.
-      final String text = SvnBundle.message("repository.browser.compare.no.difference.message",
-                                            SVNPathUtil.tail(sourceURL.toString()),
-                                            SVNPathUtil.tail(targetURL.toString()));
+      final String text = SvnBundle.message("repository.browser.compare.no.difference.message", sourceTitle, targetTitle);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           Messages.showInfoMessage(myProject, text, SvnBundle.message("repository.browser.compare.no.difference.title"));
@@ -873,9 +877,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     final Collection<Change> changesList = changes.values();
 
-    final String title = SvnBundle.message("repository.browser.compare.title",
-                                           SVNPathUtil.tail(sourceURL.toString()),
-                                           SVNPathUtil.tail(targetURL.toString()));
+    final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myRepositoryBrowser, changesList, title);
