@@ -188,7 +188,9 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void dispose() {
-    Disposer.dispose(myImplicitFacetManager);
+    if (myImplicitFacetManager != null) {
+      Disposer.dispose(myImplicitFacetManager);
+    }
     myMergingUpdateQueue.dispose();
     myPsiManager.removePsiTreeChangeListener(myPsiTreeChangeListener);
     myFileIndex.dispose();
