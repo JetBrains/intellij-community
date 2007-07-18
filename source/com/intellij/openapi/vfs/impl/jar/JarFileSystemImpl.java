@@ -152,7 +152,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return path;
   }
 
-  public String extractRootPath(final String path) {
+  public String extractRootPath(@NotNull final String path) {
     return path.substring(0, path.indexOf(JAR_SEPARATOR) + JAR_SEPARATOR.length());
   }
 

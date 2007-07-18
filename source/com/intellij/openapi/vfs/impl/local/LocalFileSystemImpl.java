@@ -181,6 +181,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return super.refreshAndFindFileByPath(canonicalPath);
   }
 
+  @Nullable
   public String normalize(final String path) {
     return getVfsCanonicalPath(path);
   }
@@ -808,7 +809,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return "LocalFileSystem";
   }
 
-  public String extractRootPath(final String path) {
+  public String extractRootPath(@NotNull final String path) {
     if (path.length() == 0) {
       try {
         return extractRootPath(new File("").getCanonicalPath());

@@ -26,6 +26,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @Nullable
   public VirtualFile findFileByPath(@NotNull @NonNls final String path) {
     final String normalizedPath = normalize(path);
+    if (normalizedPath == null) return null;
     final String basePath = extractRootPath(normalizedPath);
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
     if (file == null || !file.exists()) return null;
@@ -48,6 +49,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @Nullable
   public VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path) {
     final String normalizedPath = normalize(path);
+    if (normalizedPath == null) return null;
     final String basePath = extractRootPath(normalizedPath);
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
     if (file == null || !file.exists()) return null;
@@ -70,6 +72,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @Nullable
   public VirtualFile refreshAndFindFileByPath(final String path) {
     final String normalizedPath = normalize(path);
+    if (normalizedPath == null) return null;
     final String basePath = extractRootPath(normalizedPath);
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
     if (file == null || !file.exists()) return null;
@@ -89,6 +92,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return file;
   }
 
+  @Nullable
   protected String normalize(final String path) {
     return path;
   }
@@ -105,7 +109,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return true;
   }
 
-  protected abstract String extractRootPath(String path);
+  protected abstract String extractRootPath(@NotNull String path);
 
   public void addVirtualFileListener(final VirtualFileListener listener) {
     synchronized (myListenerWrappers) {

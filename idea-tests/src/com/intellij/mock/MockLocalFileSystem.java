@@ -126,7 +126,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return myDelegate.copyFile(requestor, virtualFile, newParent, copyName);
   }
 
-  public String extractRootPath(final String path) {
+  public String extractRootPath(@NotNull final String path) {
     return path;
   }
 
