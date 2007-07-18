@@ -386,9 +386,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         //noinspection IOResourceOpenedButNotSafelyClosed
         final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(FILE_CONTENT.writeAttribute(file)), delegate) {
           public void close() throws IOException {
-            super.close();
-            executeTouch(file, false, event.getModificationStamp());
-            publisher.after(events);
+            try {
+              super.close();
+            }
+            finally {
+              executeTouch(file, false, event.getModificationStamp());
+              publisher.after(events);
+            }
           }
         };
 
