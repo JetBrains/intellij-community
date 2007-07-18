@@ -37,6 +37,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private InternalDecorator myDecorator;
 
+  private boolean myHideOnEmptyContent = false;
+
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
     myChangeSupport = new PropertyChangeSupport(this);
@@ -250,5 +252,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void setDefaultState(@Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type, @Nullable final Rectangle floatingBounds) {
     myToolWindowManager.setDefaultState(this, anchor, type, floatingBounds);
+  }
+
+  public void setToHideOnEmptyContent(final boolean hideOnEmpty) {
+    myHideOnEmptyContent = hideOnEmpty;
+  }
+
+  public boolean isToHideOnEmptyContent() {
+    return myHideOnEmptyContent;
   }
 }

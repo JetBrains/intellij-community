@@ -133,4 +133,9 @@ public interface ToolWindow {
 
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 
+
+  void setToHideOnEmptyContent(boolean hideOnEmpty);
+
+  boolean isToHideOnEmptyContent();
+
 }

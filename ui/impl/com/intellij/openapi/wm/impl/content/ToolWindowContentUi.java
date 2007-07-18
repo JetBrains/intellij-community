@@ -140,6 +140,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     revalidate();
     repaint();
+
+    if (myTabs.size() == 0 && myWindow.isToHideOnEmptyContent()) {
+      myWindow.hide(null);
+    }
   }
 
   public void doLayout() {

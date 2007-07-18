@@ -67,7 +67,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setAutoHide(boolean state) {
     }
 
+    public void setToHideOnEmptyContent(final boolean hideOnEmpty) {
+    }
 
+    public boolean isToHideOnEmptyContent() {
+      return false;
+    }
 
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
@@ -144,6 +149,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void selectPreviousContent() { }
     public void setSelectedContent(final Content content) { }
     public void setSelectedContent(final Content content, final boolean requestFocus) { }
+
 
     public ContentFactory getFactory() {
       return PeerFactory.getInstance().getContentFactory();
