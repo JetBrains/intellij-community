@@ -1,18 +1,18 @@
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.Nullable;
-
-public final class ShadowAction {
+public final class ShadowAction implements Disposable {
 
   private AnAction myAction;
   private AnAction myCopyFromAction;
@@ -27,6 +27,7 @@ public final class ShadowAction {
   private Keymap myKeymap;
 
   private Presentation myPresentation;
+  private UiNotifyConnector myUiNotify;
 
   public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component, Presentation presentation) {
     this(action, copyFromAction, component);
@@ -54,7 +55,7 @@ public final class ShadowAction {
       }
     };
 
-    new UiNotifyConnector(myComponent, new Activatable() {
+    myUiNotify = new UiNotifyConnector(myComponent, new Activatable() {
       public void showNotify() {
         _connect();
       }
@@ -98,13 +99,7 @@ public final class ShadowAction {
       myAction.copyShortcutFrom(myCopyFromAction);
     }
 
-    if (myShortcutSet != null) {
-      myAction.unregisterCustomShortcutSet(myComponent);
-    }
-
-    if (myKeymap != null) {
-      myKeymap.removeShortcutChangeListener(myKeymapListener);
-    }
+    unregisterAll();
 
     myKeymap = mgr.getActiveKeymap();
     myKeymap.addShortcutChangeListener(myKeymapListener);
@@ -114,6 +109,23 @@ public final class ShadowAction {
     final Shortcut[] shortcuts = myKeymap.getShortcuts(myActionId);
     myShortcutSet = new CustomShortcutSet(shortcuts);
     myAction.registerCustomShortcutSet(myShortcutSet, myComponent);
+  }
+
+  private void unregisterAll() {
+    if (myShortcutSet != null) {
+      myAction.unregisterCustomShortcutSet(myComponent);
+    }
+
+    if (myKeymap != null) {
+      myKeymap.removeShortcutChangeListener(myKeymapListener);
+    }
+  }
+
+
+  public void dispose() {
+    unregisterAll();
+    myUiNotify.dispose();
+    disconnect();
   }
 
   private static @Nullable

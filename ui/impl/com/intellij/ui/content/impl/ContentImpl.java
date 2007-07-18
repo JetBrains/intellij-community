@@ -3,6 +3,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.LayeredIcon;
@@ -142,15 +143,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public final void release() {
-    myComponent = null;
-    myPreferredFocusableComponent = null;
-    myManager = null;
-
-    clearUserData();
-    if (myDisposer != null) {
-      myDisposer.dispose();
-      myDisposer = null;
-    }
+    Disposer.dispose(this);
   }
 
   //TODO[anton,vova] investigate
@@ -202,6 +195,14 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void dispose() {
-    release();
+    myComponent = null;
+    myPreferredFocusableComponent = null;
+    myManager = null;
+
+    clearUserData();
+    if (myDisposer != null) {
+      myDisposer.dispose();
+      myDisposer = null;
+    }
   }
 }

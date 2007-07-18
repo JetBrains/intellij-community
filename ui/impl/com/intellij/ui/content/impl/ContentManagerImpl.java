@@ -3,6 +3,7 @@ package com.intellij.ui.content.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class ContentManagerImpl implements ContentManager, PropertyChangeListener {
+public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.content.impl.ContentManagerImpl");
 
   private ContentUI myUI;
@@ -43,8 +44,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private final Project myProject;
 
-  private final ProjectManagerAdapter myProjectManagerListener;
-  private boolean myListenerAdded;
   private MyComponent myComponent = new MyComponent();
 
   private Set<Content> myContentWithChangedComponent = new HashSet<Content>();
@@ -61,16 +60,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myUI.setManager(this);
     myProject = project;
 
-    myProjectManagerListener = new ProjectManagerAdapter() {
-      public void projectClosed(Project project) {
-        if (project == myProject) {
-          Content[] contents = myContents.toArray(new Content[myContents.size()]);
-          for (Content content : contents) {
-            removeContent(content, false);
-          }
-        }
-      }
-    };
+    Disposer.register(project, this);
   }
 
   public boolean canCloseContents() {
@@ -98,6 +88,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
+      if (DataConstantsEx.CONTENT_MANAGER.equals(dataId)) return ContentManagerImpl.this;
+
       for (DataProvider each : myProviders) {
         final Object data = each.getData(dataId);
         if (data != null) return data;
@@ -111,21 +103,20 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void addContent(final Content content, final Object constraints) {
-    try {
-      ((ContentImpl)content).setManager(this);
-      myContents.add(content);
-      content.addPropertyChangeListener(this);
-      fireContentAdded(content, myContents.size() - 1);
-      if (myUI.isToSelectAddedContent() || mySelection.size() == 0) {
-        if (myUI.isSingleSelection()) {
-          setSelectedContent(content);
-        } else {
-          addSelectedContent(content);
-        }
+    ((ContentImpl)content).setManager(this);
+    myContents.add(content);
+    content.addPropertyChangeListener(this);
+    fireContentAdded(content, myContents.size() - 1);
+    if (myUI.isToSelectAddedContent() || mySelection.size() == 0) {
+      if (myUI.isSingleSelection()) {
+        setSelectedContent(content);
       }
-    } finally {
-      addProjectManagerListener();
+      else {
+        addSelectedContent(content);
+      }
     }
+
+    Disposer.register(this, content);
   }
 
   public boolean removeContent(Content content) {
@@ -134,7 +125,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private boolean removeContent(final Content content, boolean trackSelection) {
     try {
-      int selectedIndex = myContents.indexOf(mySelection);
+      Content selection = mySelection.size() > 0 ? mySelection.get(mySelection.size() - 1) : null;
+      int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
+
       int indexToBeRemoved = myContents.indexOf(content);
       if (indexToBeRemoved < 0) {
         return false;
@@ -176,7 +169,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
               setSelectedContent(toSelect);
-            } else {
+            }
+            else {
               addSelectedContent(toSelect);
             }
           }
@@ -188,32 +182,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       fireContentRemoved(content, indexToBeRemoved);
       ((ContentImpl)content).setManager(null);
 
-      final Disposable disposer = content.getDisposer();
-      if (disposer != null) {
-        Disposer.dispose(disposer);
-      }
+
+      Disposer.dispose(content);
 
       return true;
-    } finally {
-      removeProjectManagerListener();
     }
-  }
-
-  private void addProjectManagerListener() {
-    if (!myListenerAdded && myContents.size() > 0) {
-      ProjectManager.getInstance().addProjectManagerListener(myProjectManagerListener);
-      myListenerAdded = true;
-    }
-  }
-
-  private void removeProjectManagerListener() {
-    if (myContents.size() == 0) {
+    finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
-      }
-      if (myListenerAdded) {
-        ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
-        myListenerAdded = false;
       }
     }
   }
@@ -246,7 +222,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public Content getContent(int index) {
     if (index >= 0 && index < myContents.size()) {
       return myContents.get(index);
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -282,7 +259,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (!canCloseContents()) {
       return false;
     }
-    for(Content content: myContents) {
+    for (Content content : myContents) {
       if (content.isCloseable()) {
         return true;
       }
@@ -360,7 +337,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     if (focused || requestFocus) {
       myComponent.requestFocus(selection);
-    } else {
+    }
+    else {
       selection.run();
     }
   }
@@ -472,5 +450,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public ContentFactory getFactory() {
     return PeerFactory.getInstance().getContentFactory();
+  }
+
+  public void dispose() {
+    myContents = null;
+    mySelection = null;
+    myContentWithChangedComponent.clear();
+    myUI = null;
+    myListeners = null;
   }
 }

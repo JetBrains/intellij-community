@@ -2,16 +2,17 @@ package com.intellij.ui.content.tabs;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.Content;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class TabbedContentAction extends AnAction {
 
   protected final ContentManager myManager;
 
-  private ShadowAction myShadow;
+  protected final ShadowAction myShadow;
 
   protected TabbedContentAction(@NotNull final ContentManager manager, @NotNull AnAction shortcutTemplate, @NotNull String text) {
     super(text);
@@ -31,11 +32,18 @@ public abstract class TabbedContentAction extends AnAction {
     public ForContent(@NotNull Content content, @NotNull AnAction shortcutTemplate, final String text) {
       super(content.getManager(), shortcutTemplate, text);
       myContent = content;
+      Disposer.register(content, myShadow);
     }
 
     public ForContent(@NotNull Content content, final AnAction template) {
       super(content.getManager(), template);
       myContent = content;
+      Disposer.register(content, myShadow);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
     }
   }
 

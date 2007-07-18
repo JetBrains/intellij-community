@@ -35,15 +35,16 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public void projectOpened() {
-    myFindContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(new TabbedPaneContentUI(), true, myProject);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM);
+    toolWindow.setToHideOnEmptyContent(true);
+    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
+    myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void contentRemoved(ContentManagerEvent event) {
         event.getContent().release();
       }
     });
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FIND, myFindContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
     new ContentManagerWatcher(toolWindow, myFindContentManager);
   }
 

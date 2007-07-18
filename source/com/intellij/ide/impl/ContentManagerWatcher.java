@@ -21,16 +21,12 @@ public class ContentManagerWatcher {
 
     myPropertyChangeListener = new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent e) {
-        if (Content.PROP_DISPLAY_NAME.equals(e.getPropertyName())) {
-          updateTitle();
-        }
       }
     };
 
     contentManager.addContentManagerListener(
       new ContentManagerAdapter(){
         public void selectionChanged(ContentManagerEvent e) {
-          updateTitle();
         }
 
         public void contentAdded(ContentManagerEvent e) {
@@ -51,14 +47,6 @@ public class ContentManagerWatcher {
       Content content=myContentManager.getContent(i);
       content.addPropertyChangeListener(myPropertyChangeListener);
     }
-
-    updateTitle();
   }
 
-  private void updateTitle() {
-    Content content = myContentManager.getSelectedContent();
-    if (content != null){
-      myToolWindow.setTitle(content.getToolwindowTitle());
-    }
-  }
 }

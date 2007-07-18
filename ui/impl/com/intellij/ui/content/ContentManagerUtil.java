@@ -34,6 +34,9 @@ public class ContentManagerUtil {
       return null;
     }
 
-    return (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
+    final ContentManager fromContext = (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
+    if (fromContext != null) return fromContext;
+
+    return toolWindow != null ? toolWindow.getContentManager() : null;
   }
 }
