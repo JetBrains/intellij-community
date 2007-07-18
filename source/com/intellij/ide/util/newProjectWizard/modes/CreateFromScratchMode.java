@@ -4,7 +4,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
+import com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -38,7 +38,7 @@ public class CreateFromScratchMode extends WizardMode {
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
      StepSequence myStepSequence;
       myStepSequence = new StepSequence(null);
-      myStepSequence.addCommonStep(new ProjectNameStep(context, myStepSequence, this));
+      myStepSequence.addCommonStep(new ProjectNameWithTypeStep(context, myStepSequence, this));
       final ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
       for (ModuleType type : allModuleTypes) {
         final StepSequence sequence = new StepSequence(myStepSequence);
@@ -72,6 +72,6 @@ public class CreateFromScratchMode extends WizardMode {
 
   public void dispose() {
     super.dispose();
-      myBuildersMap.clear();
-    }
+    myBuildersMap.clear();
+  }
 }

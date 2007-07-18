@@ -1,5 +1,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.util.importProject.ProjectLayout;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -14,6 +15,7 @@ import java.util.List;
 public class ProjectFromSourcesBuilder extends ProjectBuilder {
   private List<Pair<String, String>> mySourcePaths = Collections.emptyList();
   private String myContentRootPath;
+  private ProjectLayout myProjectLayout;
 
   public ProjectFromSourcesBuilder() {
   }
@@ -38,5 +40,13 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
   }
 
   public void commit(final Project project) {
+  }
+
+  public void setProjectLayout(final ProjectLayout layout) {
+    myProjectLayout = layout;
+  }
+
+  public ProjectLayout getProjectLayout() {
+    return myProjectLayout;
   }
 }

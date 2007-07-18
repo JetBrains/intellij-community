@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class CreateFromSourcesMode extends WizardMode {
+  private ProjectFromSourcesBuilder myProjectBuilder;
+
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName());
@@ -30,10 +32,12 @@ public class CreateFromSourcesMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
+    myProjectBuilder = new ProjectFromSourcesBuilder();
     final StepSequence sequence = new StepSequence();
     final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder();
     sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
-    sequence.addCommonStep(new SourcePathsStep(projectBuilder, null, null));
+    sequence.addCommonStep(new SourcePathsStep(context, projectBuilder, null, null));
+    
     return sequence;
   }
 
@@ -42,7 +46,7 @@ public class CreateFromSourcesMode extends WizardMode {
   }
 
   public ProjectBuilder getModuleBuilder() {
-    return null;
+    return myProjectBuilder;
   }
 
   @Nullable
@@ -55,6 +59,7 @@ public class CreateFromSourcesMode extends WizardMode {
   }
 
   public void dispose() {
-
+    myProjectBuilder = null;
+    super.dispose();
   }
 }
