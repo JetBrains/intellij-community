@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,6 +28,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -32,15 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -156,7 +158,7 @@ public class PsiImplUtil {
       varDeclNode.removeChild(varNode);
     }
     // todo push formatter
-    GroovyRefactoringUtil.reformatCode(varDecl);
+    reformatCode(varDecl);
   }
 
   public static PsiElement realPrevious(PsiElement previousLeaf) {
@@ -177,5 +179,20 @@ public class PsiImplUtil {
       nextLeaf = nextLeaf.getNextSibling();
     }
     return nextLeaf;
+  }
+
+  public static void reformatCode(final PsiElement element) {
+    // todo rewrite activity
+    final TextRange textRange = element.getTextRange();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
+              textRange.getStartOffset(), textRange.getEndOffset());
+        } catch (IncorrectOperationException e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
 }

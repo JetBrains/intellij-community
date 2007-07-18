@@ -17,21 +17,18 @@ package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -47,9 +44,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -266,18 +263,4 @@ public abstract class GroovyRefactoringUtil {
     }
   }
 
-  public static void reformatCode(final PsiElement element) {
-    // todo rewrite activity
-    final TextRange textRange = element.getTextRange();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
-              textRange.getStartOffset(), textRange.getEndOffset());
-        } catch (IncorrectOperationException e) {
-          e.printStackTrace();
-        }
-      }
-    });
-  }
 }
