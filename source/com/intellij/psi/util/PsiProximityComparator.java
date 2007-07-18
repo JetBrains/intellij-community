@@ -48,6 +48,7 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (myContext == null) return -1;
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
     if (contextModule == null) return -1;
+    if (!element.isPhysical()) return -1;
     Module elementModule = ModuleUtil.findModuleForPsiElement(element);
     if (contextModule == elementModule) return 0;
     if (elementModule != null) {
