@@ -30,7 +30,7 @@
   </module-components>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.action.ExportEclipseProjectsAction" text="Export to Eclipse">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ProjectImport"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ImportSettings"/>
     </action>
   </actions>
 </idea-plugin>
