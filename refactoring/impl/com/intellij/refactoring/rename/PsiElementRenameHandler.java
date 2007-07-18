@@ -140,7 +140,8 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     if (editor != null) {
-      if (elementToRename instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable)elementToRename, editor)) {
+      if (elementToRename instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable)elementToRename, editor,
+                                                                                            nameSuggestionContext)) {
         new VariableInplaceRenamer((PsiVariable)elementToRename).performInplaceRename(editor);
         return;
       }
