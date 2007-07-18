@@ -19,6 +19,7 @@ import com.intellij.util.text.CharArrayUtil;
 public class SplitLineAction extends EditorAction {
   public SplitLineAction() {
     super(new Handler());
+    setEnabledInModalContext(false);
   }
 
   private static class Handler extends EditorWriteActionHandler {
@@ -55,7 +56,7 @@ public class SplitLineAction extends EditorAction {
 
     }
 
-    private EditorActionHandler getEnterHandler() {
+    private static EditorActionHandler getEnterHandler() {
       return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
     }
   }
