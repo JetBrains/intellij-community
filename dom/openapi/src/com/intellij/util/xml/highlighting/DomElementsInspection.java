@@ -71,7 +71,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
    */
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file instanceof XmlFile) {
+    if (file instanceof XmlFile && file.isPhysical()) {
       for (Class<? extends T> domClass: myDomClasses) {
         final DomFileElement<? extends T> fileElement = DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, domClass);
         if (fileElement != null) {
