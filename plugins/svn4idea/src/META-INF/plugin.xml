@@ -66,6 +66,9 @@
     <group id="SubversionUpdateActionGroup">
       <reference id="Subversion.Add"/>
       <reference id="Subversion.Revert"/>
+      <reference id="Subversion.Resolve"/>
+      <reference id="Subversion.MarkResolved"/>
+      <separator/>
       <add-to-group group-id="UpdateActionGroup" anchor="first"/>
     </group>
   </actions>
