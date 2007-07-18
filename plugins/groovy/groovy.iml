@@ -11,7 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="groovy-all-1.0" level="application" />
+    <orderEntry type="library" name="groovyj" level="application" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

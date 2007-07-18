@@ -16,9 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
 /**
  * author ven
  */
-public interface GrTopLevelDefintion extends GrNamedElement {
+public interface GrTopLevelDefintion extends GrNamedElement, GrTopStatement {
 }
