@@ -100,7 +100,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         if (weakestClasses.isEmpty()) {
             return null;
         }
-        final List<InspectionGadgetsFix> fixes = new ArrayList();
+        final Collection<InspectionGadgetsFix> fixes = new ArrayList();
         for (PsiClass weakestClass : weakestClasses) {
             final String qualifiedName = weakestClass.getQualifiedName();
             fixes.add(new TypeMayBeWeakenedFix(qualifiedName));
@@ -264,15 +264,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     parameter = parameters[parameters.length - 1];
                 }
                 final PsiType type = parameter.getType();
-                if (!(type instanceof PsiClassType)) {
-                    return Collections.EMPTY_LIST;
-                }
-                final PsiClassType classType = (PsiClassType) type;
-                final PsiClass aClass = classType.resolve();
-                if (aClass == null) {
-                    return Collections.EMPTY_LIST;
-                }
-                checkClass(weakestTypeClasses, aClass);
+	            if (!checkType(type, weakestTypeClasses)) {
+		            return Collections.EMPTY_LIST;
+	            }
             } else if (referenceGrandParent
                     instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression methodCallExpression =
@@ -290,12 +284,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     for (PsiMethod superMethod : superMethods) {
                         final PsiClass containingClass =
                                 superMethod.getContainingClass();
-                        checkClass(weakestTypeClasses, containingClass);
+                        checkClass(containingClass, weakestTypeClasses);
                     }
                 } else {
                     final PsiClass containingClass =
                             method.getContainingClass();
-                    checkClass(weakestTypeClasses, containingClass);
+                    checkClass(containingClass, weakestTypeClasses);
                 }
             } else if (referenceParent instanceof PsiAssignmentExpression) {
                 final PsiAssignmentExpression assignmentExpression =
@@ -306,28 +300,16 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                         assignmentExpression.getRExpression();
                 if (referenceElement.equals(rhs)) {
                     final PsiType type = lhs.getType();
-                    if (!(type instanceof PsiClassType)) {
-                        return Collections.EMPTY_LIST;
-                    }
-                    final PsiClassType classType = (PsiClassType) type;
-                    final PsiClass aClass = classType.resolve();
-                    if (aClass == null) {
-                        return Collections.EMPTY_LIST;
-                    }
-                    checkClass(weakestTypeClasses, aClass);
+	                if (!checkType(type, weakestTypeClasses)) {
+		                return Collections.EMPTY_LIST;
+	                }
                 }
             } else if (referenceParent instanceof PsiVariable) {
                 final PsiVariable variable = (PsiVariable)referenceParent;
                 final PsiType type = variable.getType();
-                if (!(type instanceof PsiClassType)) {
-                    return Collections.EMPTY_LIST;
-                }
-                final PsiClassType classType = (PsiClassType)type;
-                final PsiClass aClass = classType.resolve();
-                if (aClass == null) {
-                    return Collections.EMPTY_LIST;
-                }
-                checkClass(weakestTypeClasses, aClass);
+	            if (!checkType(type, weakestTypeClasses)) {
+		            return Collections.EMPTY_LIST;
+	            }
             } else if (referenceParent instanceof PsiForeachStatement) {
                 final PsiForeachStatement foreachStatement =
                         (PsiForeachStatement)referenceParent;
@@ -339,7 +321,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 if (javaLangIterableClass == null) {
                     return Collections.EMPTY_LIST;
                 }
-                checkClass(weakestTypeClasses, javaLangIterableClass);
+                checkClass(javaLangIterableClass, weakestTypeClasses);
             } else if (referenceParent instanceof PsiReturnStatement) {
                 final PsiMethod containingMethod =
                         PsiTreeUtil.getParentOfType(referenceParent,
@@ -348,15 +330,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return Collections.EMPTY_LIST;
                 }
                 final PsiType type = containingMethod.getReturnType();
-                if (!(type instanceof PsiClassType)) {
-                    return Collections.EMPTY_LIST;
-                }
-                final PsiClassType classType = (PsiClassType)type;
-                final PsiClass aClass = classType.resolve();
-                if (aClass == null) {
-                    return Collections.EMPTY_LIST;
-                }
-                checkClass(weakestTypeClasses, aClass);
+	            if (!checkType(type, weakestTypeClasses)) {
+		            return Collections.EMPTY_LIST;
+	            }
             } else if (referenceParent instanceof PsiReferenceExpression) {
                 // field access, method call is handled above.
                 final PsiReferenceExpression referenceExpression =
@@ -367,7 +343,19 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 }
                 final PsiField field = (PsiField)target;
                 final PsiClass containingClass = field.getContainingClass();
-                checkClass(weakestTypeClasses, containingClass);
+                checkClass(containingClass, weakestTypeClasses);
+            } else if (referenceParent instanceof PsiArrayInitializerExpression) {
+	            final PsiArrayInitializerExpression arrayInitializerExpression =
+			            (PsiArrayInitializerExpression)referenceParent;
+	            final PsiType type = arrayInitializerExpression.getType();
+	            if (!(type instanceof PsiArrayType)) {
+		            return Collections.EMPTY_LIST;
+	            }
+	            final PsiArrayType arrayType = (PsiArrayType)type;
+	            final PsiType componentType = arrayType.getComponentType();
+	            if (!checkType(componentType, weakestTypeClasses)) {
+		            return Collections.EMPTY_LIST;
+	            }
             }
             if (weakestTypeClasses.contains(variableClass)) {
                 return Collections.EMPTY_LIST;
@@ -381,7 +369,21 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return Collections.unmodifiableCollection(weakestTypeClasses);
     }
 
-    private static Set<PsiClass> filterVisibleClasses(
+	private static boolean checkType(@Nullable PsiType type,
+	                                 @NotNull Collection<PsiClass> weakestTypeClasses) {
+		if (!(type instanceof PsiClassType)) {
+			return false;
+		}
+		final PsiClassType classType = (PsiClassType) type;
+		final PsiClass aClass = classType.resolve();
+		if (aClass == null) {
+			return false;
+		}
+		checkClass(aClass, weakestTypeClasses);
+		return true;
+	}
+
+	private static Set<PsiClass> filterVisibleClasses(
             Set<PsiClass> weakestTypeClasses, PsiElement context) {
         final Set<PsiClass> result = new HashSet();
         for (PsiClass weakestTypeClass : weakestTypeClasses) {
@@ -416,9 +418,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return null;
     }
 
-    private static void checkClass(
-            @NotNull Collection<PsiClass> weakestTypeClasses,
-            @NotNull PsiClass aClass) {
+    private static void checkClass(@NotNull PsiClass aClass,
+                                   @NotNull Collection<PsiClass> weakestTypeClasses) {
         boolean shouldAdd = true;
         for (Iterator<PsiClass> iterator =
                 weakestTypeClasses.iterator(); iterator.hasNext();) {
