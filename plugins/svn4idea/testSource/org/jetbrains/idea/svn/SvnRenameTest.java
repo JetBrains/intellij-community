@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -131,6 +132,22 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertEquals(2, lines.size());
     Assert.assertTrue(lines.get(0).startsWith("r2 |"));
     Assert.assertTrue(lines.get(1).startsWith("r1 |"));
+  }
+
+  // IDEADEV-9755
+  @Test
+  public void testRollbackRenameDir() throws Exception {
+    final VirtualFile child = prepareDirectoriesForRename();
+    renameFileInCommand(child, "newchild");
+
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    changeListManager.ensureUpToDate(false);
+    final Change change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild"));
+    Assert.assertNotNull(change);
+
+    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change));
+    Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
+    Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
   }
 
 }

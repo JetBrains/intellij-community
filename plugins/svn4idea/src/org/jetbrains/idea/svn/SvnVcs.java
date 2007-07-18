@@ -305,6 +305,7 @@ public class SvnVcs extends AbstractVcs {
     return myCheckinEnvironment;
   }
 
+  @NotNull
   public RollbackEnvironment getRollbackEnvironment() {
     if (myRollbackEnvironment == null) {
       myRollbackEnvironment = new SvnRollbackEnvironment(this);
