@@ -23,5 +23,4 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
 
   GrVariable[] getVariables();
 
-  void removeVariable(@NotNull GrVariable variable) throws IncorrectOperationException;
 }

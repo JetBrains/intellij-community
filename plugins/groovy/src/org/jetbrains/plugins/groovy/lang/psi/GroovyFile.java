@@ -25,11 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
 /**
  * @author ven
  */
-public interface GroovyFile extends PsiFile, GroovyPsiElement {
+public interface GroovyFile extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner {
   String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
   
   GrTypeDefinition[] getTypeDefinitions();

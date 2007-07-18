@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  */
 public class BuiltInTypeFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    PsiElement previous = PsiUtil.realPrevious(context.getParent().getPrevSibling());
+    PsiElement previous = PsiImplUtil.realPrevious(context.getParent().getPrevSibling());
     if (previous != null &&
         GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;
@@ -52,10 +52,10 @@ public class BuiltInTypeFilter implements ElementFilter {
       return !(previous != null &&
           GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()));
     }
-    if (PsiUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
+    if (PsiImplUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
       return true;
     }
-    if (PsiUtil.realPrevious(context.getPrevSibling()) instanceof GrModifierList) {
+    if (PsiImplUtil.realPrevious(context.getPrevSibling()) instanceof GrModifierList) {
       return true;
     }
     return context.getParent() instanceof GrExpression &&

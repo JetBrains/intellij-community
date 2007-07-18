@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -44,7 +44,7 @@ public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTyp
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
       PsiElement prev = leaf;
-      prev = PsiUtil.realPrevious(prev);
+      prev = PsiImplUtil.realPrevious(prev);
       if (prev instanceof GrModifierList &&
           prev.getParent() != null &&
           prev.getParent().getParent() instanceof GroovyFile)

@@ -20,23 +20,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -47,8 +46,6 @@ import java.util.Collection;
  * @author ilyas
  */
 public class GroovyInlineHandler implements InlineHandler {
-
-
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
@@ -121,9 +118,10 @@ public class GroovyInlineHandler implements InlineHandler {
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
+          final PsiElement owner = element.getParent().getParent();
           if (element instanceof GrVariable &&
-              (GrVariableDeclaration) element.getParent() instanceof GrVariableDeclaration) {
-            ((GrVariableDeclaration) element.getParent()).removeVariable(((GrVariable) element));
+              owner instanceof GrVariableDeclarationOwner) {
+            ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
           }
         } catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -166,12 +164,22 @@ public class GroovyInlineHandler implements InlineHandler {
       public void inlineReference(final PsiReference reference, final PsiElement referenced) {
         assert reference instanceof GrExpression;
         assert variable.getInitializerGroovy() != null;
+        final GrExpression initializerGroovy = variable.getInitializerGroovy();
+        assert initializerGroovy != null;
+        final GrExpression expr = GroovyElementFactory.getInstance(variable.getProject()).
+            createExpressionFromText(initializerGroovy.getText());
         final Runnable runnable = new Runnable() {
           public void run() {
             try {
-              GrExpression expr = GroovyElementFactory.getInstance(variable.getProject()).
-                  createExpressionFromText(variable.getInitializerGroovy().getText());
+
               ((GrExpression) reference).replaceWithExpression(expr);
+              Project project = expr.getProject();
+              FileEditorManager manager = FileEditorManager.getInstance(project);
+              Editor editor = manager.getSelectedTextEditor();
+              // todo make work
+              GroovyRefactoringUtil.highlightOccurences(project, editor, new PsiElement[]{expr});
+              //WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+
             } catch (IncorrectOperationException e) {
               LOG.error(e);
             }

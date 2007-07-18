@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -24,7 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ilyas
  */
-public interface GrCodeBlock extends GroovyPsiElement {
+public interface GrCodeBlock extends GroovyPsiElement, GrVariableDeclarationOwner {
   GrStatement[] getStatements();
 
   GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException;

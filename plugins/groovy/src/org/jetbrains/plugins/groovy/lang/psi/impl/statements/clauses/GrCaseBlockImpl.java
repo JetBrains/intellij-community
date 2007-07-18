@@ -20,18 +20,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+
+import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author ilyas
  */
-public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock {
+public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock, GrVariableDeclarationOwner {
 
   private final TokenSet CASE_LABEL_SET = TokenSet.create(GroovyElementTypes.CASE_LABEL);
 
@@ -53,5 +63,9 @@ public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     return ResolveUtil.processChildren(this, processor, substitutor, lastParent, place);
+  }
+
+  public void removeVariable(GrVariable variable) throws IncorrectOperationException {
+    PsiImplUtil.removeVariable(variable);
   }
 }
