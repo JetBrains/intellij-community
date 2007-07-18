@@ -11,20 +11,21 @@ import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -212,13 +213,26 @@ public class AbstractVcsTestCase {
     return scopes.get(0);
   }
 
-  protected void renameFileInCommand(final VirtualFile fileToAdd, final String newName) {
+  protected void renameFileInCommand(final VirtualFile file, final String newName) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          fileToAdd.rename(this, newName);
+          file.rename(this, newName);
         }
         catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }, "", null);
+  }
+
+  protected void renamePsiInCommand(final PsiNamedElement element, final String newName) {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          element.setName(newName);
+        }
+        catch (IncorrectOperationException e) {
           throw new RuntimeException(e);
         }
       }
@@ -249,6 +263,18 @@ public class AbstractVcsTestCase {
         }
       }
     }, "", null);
+  }
+
+  protected void verifyChange(final Change c, final String beforePath, final String afterPath) {
+    verifyRevision(c.getBeforeRevision(), beforePath);
+    verifyRevision(c.getAfterRevision(), afterPath);
+  }
+
+  private void verifyRevision(final ContentRevision beforeRevision, final String beforePath) {
+    File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
+    String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
+    final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
+    Assert.assertEquals(beforeFullPath, beforeRevPath);
   }
 
   protected static class RunResult {

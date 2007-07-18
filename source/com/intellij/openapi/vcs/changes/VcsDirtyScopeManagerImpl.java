@@ -184,7 +184,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
-      fileDirty(event.getFile());
+      if (event.getPropertyName().equals(VirtualFile.PROP_NAME) && event.getFile().isDirectory()) {
+        dirDirtyRecursively(event.getFile(), true);
+      }
+      else {
+        fileDirty(event.getFile());
+      }
     }
 
     @Override
