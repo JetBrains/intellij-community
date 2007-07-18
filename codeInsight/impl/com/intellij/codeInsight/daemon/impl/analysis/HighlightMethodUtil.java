@@ -51,6 +51,7 @@ public class HighlightMethodUtil {
     String accessModifier = PsiUtil.getAccessModifier(accessLevel);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
+      if (!PsiUtil.isAccessible(superMethod, method, null)) continue;
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, includeRealPositionInfo);
       if (info != null) return info;
     }

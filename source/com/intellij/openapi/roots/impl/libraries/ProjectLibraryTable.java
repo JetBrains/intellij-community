@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +76,7 @@ public class ProjectLibraryTable extends LibraryTableBase implements ProjectComp
       final List list = e.getChildren();
       for (final Object o : list) {
         Element library = (Element)o;
-        final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) + ".xml";
+        @NonNls final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) + ".xml";
         result.add(new Pair<Element, String>(library, name));
       }
 

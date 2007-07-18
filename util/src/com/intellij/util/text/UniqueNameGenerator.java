@@ -41,7 +41,7 @@ public class UniqueNameGenerator implements Condition<String> {
     }
 
     for (int i = 2; ; i++) {
-      final String fullName = prefix + (defaultName + i) + suffix;
+      final String fullName = prefix + defaultName + i + suffix;
       if (validator.value(fullName)) {
         return fullName;
       }
