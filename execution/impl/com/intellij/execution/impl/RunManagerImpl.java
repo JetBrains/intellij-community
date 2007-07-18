@@ -489,7 +489,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       method = new HashMap<String, Boolean>();
       method.put(RunManagerConfig.MAKE, Boolean.TRUE);
     }
-    return method;
+    return new HashMap<String, Boolean>(method);
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
