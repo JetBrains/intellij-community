@@ -67,11 +67,9 @@ public class CustomActionsSchema implements JDOMExternalizable {
   public CustomActionsSchema copyFrom() {
     CustomActionsSchema result = new CustomActionsSchema(myName, myDescription);
 
-    for (Iterator<ActionUrl> iterator = myActions.iterator(); iterator.hasNext();) {
-      ActionUrl actionUrl = iterator.next();
-      final ActionUrl url =
-        new ActionUrl(new ArrayList<String>(actionUrl.getGroupPath()), actionUrl.getComponent(), actionUrl.getActionType(),
-                      actionUrl.getAbsolutePosition());
+    for (ActionUrl actionUrl : myActions) {
+      final ActionUrl url = new ActionUrl(new ArrayList<String>(actionUrl.getGroupPath()), actionUrl.getComponent(),
+                                          actionUrl.getActionType(), actionUrl.getAbsolutePosition());
       url.setInitialPosition(actionUrl.getInitialPosition());
       result.addAction(url);
     }
@@ -111,8 +109,7 @@ public class CustomActionsSchema implements JDOMExternalizable {
   }
 
   private void writeActions(Element element) throws WriteExternalException {
-    for (Iterator<ActionUrl> iterator = myActions.iterator(); iterator.hasNext();) {
-      ActionUrl group = iterator.next();
+    for (ActionUrl group : myActions) {
       Element groupElement = new Element(GROUP);
       group.writeExternal(groupElement);
       element.addContent(groupElement);
@@ -139,10 +136,13 @@ public class CustomActionsSchema implements JDOMExternalizable {
     }
   }
 
-  public void fillActionGroups(DefaultMutableTreeNode root){
+  public static void fillActionGroups(DefaultMutableTreeNode root){
     final ActionManager actionManager = ActionManager.getInstance();
     for (Pair pair : myIdToNameList) {
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup((ActionGroup)actionManager.getAction(pair.first), pair.second, null, null, true, null)));
+      final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(pair.first);
+      if (actionGroup != null) { //J2EE/Commander plugin was disabled
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, pair.second, null, null, true, null)));
+      }
     }
   }
 
@@ -163,8 +163,7 @@ public class CustomActionsSchema implements JDOMExternalizable {
 
       final String text = group.getTemplatePresentation().getText();
 
-      for (Iterator<ActionUrl> iterator = myActions.iterator(); iterator.hasNext();) {
-        ActionUrl url = iterator.next();
+      for (ActionUrl url : myActions) {
         if (url.getGroupPath().contains(text)) {
           return true;
         }
@@ -215,8 +214,7 @@ public class CustomActionsSchema implements JDOMExternalizable {
     }
 
     public boolean equals(Object obj) {
-      if (!(obj instanceof Pair)) return false;
-      return first.equals(((Pair)obj).first);
+      return obj instanceof Pair && first.equals(((Pair)obj).first);
     }
   }
 
