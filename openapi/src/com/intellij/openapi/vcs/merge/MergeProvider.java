@@ -23,4 +23,5 @@ import org.jetbrains.annotations.NotNull;
 public interface MergeProvider {
   @NotNull MergeData loadRevisions(final VirtualFile file) throws VcsException;
   void conflictResolvedForFile(VirtualFile file);
+  boolean isBinary(VirtualFile file);
 }

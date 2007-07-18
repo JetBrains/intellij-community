@@ -61,6 +61,10 @@ public class CvsMergeProvider implements MergeProvider {
     CvsUtil.resolveConflict(file);
   }
 
+  public boolean isBinary(final VirtualFile file) {
+    return false;
+  }
+
   private MergeDataProvider ensureMergeData(final VirtualFile file) {
     if (myFileToMergeData.containsKey(file)) return myFileToMergeData.get(file);
 

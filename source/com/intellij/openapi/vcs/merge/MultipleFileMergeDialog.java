@@ -42,9 +42,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -61,6 +59,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private Project myProject;
   private ProjectManagerEx myProjectManager;
   private List<VirtualFile> myProcessedFiles = new ArrayList<VirtualFile>();
+  private Set<VirtualFile> myBinaryFiles = new HashSet<VirtualFile>();
 
   private VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
 
@@ -77,7 +76,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private ColumnInfo<VirtualFile, String> TYPE_COLUMN = new ColumnInfo<VirtualFile, String>(VcsBundle.message("multiple.file.merge.column.type")) {
     public String valueOf(final VirtualFile virtualFile) {
-      return virtualFile.getFileType().isBinary()
+      return myBinaryFiles.contains(virtualFile)
              ? VcsBundle.message("multiple.file.merge.type.binary")
              : VcsBundle.message("multiple.file.merge.type.text");
     }
@@ -127,6 +126,11 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         updateButtonState();
       }
     });
+    for(VirtualFile file: files) {
+      if (file.getFileType().isBinary() || provider.isBinary(file)) {
+        myBinaryFiles.add(file);
+      }
+    }
     myTable.getSelectionModel().setSelectionInterval(0, 0);
   }
 
@@ -134,7 +138,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     boolean haveSelection = myTable.getSelectedRowCount() > 0;
     boolean haveBinaryFiles = false;
     for(VirtualFile file: myTable.getSelection()) {
-      if (file.getFileType().isBinary()) {
+      if (myBinaryFiles.contains(file)) {
         haveBinaryFiles = true;
         break;
       }
