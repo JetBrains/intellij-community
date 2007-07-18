@@ -28,7 +28,8 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public ProjectNameStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;
-    myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message("label.project.file.location"), 'a', 'l',
+    myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message("label.component.file.location",
+                                                                                                           StringUtil.capitalize(myWizardContext.getPresentationName())), 'a', 'l',
                                                 IdeBundle.message("title.select.project.file.directory"), IdeBundle.message("description.select.project.file.directory"));
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -79,16 +80,16 @@ public class ProjectNameStep extends ModuleWizardStep {
     String name = myNamePathComponent.getNameValue();
     if (name.length() == 0) {
       final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
-      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName()));
+      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), myWizardContext.getPresentationName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
     if (projectFileDirectory.length() == 0) {
-      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location"));
+      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
     }
 
     final boolean shouldPromptCreation = myNamePathComponent.isPathChangedByUser();
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory"), projectFileDirectory, shouldPromptCreation)) {
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory",myWizardContext.getPresentationName()), projectFileDirectory, shouldPromptCreation)) {
       return false;
     }
 
@@ -96,7 +97,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     final File projectFile = new File(getProjectFilePath());
     if (projectFile.exists()) {
       int answer = Messages.showYesNoDialog(
-        IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath()),
+        IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), myWizardContext.getPresentationName()),
         IdeBundle.message("title.file.already.exists"),
         Messages.getQuestionIcon()
       );

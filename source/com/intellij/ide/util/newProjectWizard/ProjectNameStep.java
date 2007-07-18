@@ -188,24 +188,24 @@ public class ProjectNameStep extends ModuleWizardStep {
     String name = myNamePathComponent.getNameValue();
     if (name.length() == 0) {
       final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
-      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName()));
+      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), myWizardContext.getPresentationName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
     if (projectFileDirectory.length() == 0) {
-      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location"));
+      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
     }
 
     final boolean shouldPromptCreation = myNamePathComponent.isPathChangedByUser();
     if (!ProjectWizardUtil
-      .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory"), projectFileDirectory, shouldPromptCreation)) {
+      .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", myWizardContext.getPresentationName()), projectFileDirectory, shouldPromptCreation)) {
       return false;
     }
 
     boolean shouldContinue = true;
     final File projectFile = new File(getProjectFilePath());
     if (projectFile.exists()) {
-      int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath()),
+      int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), myWizardContext.getPresentationName()),
                                             IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
       shouldContinue = (answer == 0);
     }
