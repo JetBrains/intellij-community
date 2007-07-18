@@ -135,7 +135,7 @@ public class StaticGenericInfo {
       return new AddChildInvocation(getTypeGetter(method), getIndexGetter(method), description, description.getType());
     }
 
-    throw new UnsupportedOperationException("No implementation for method " + method.toString() + " in class " + myClass);
+    throw new RuntimeException("No implementation for method " + method.toString() + " in class " + myClass);
   }
 
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {
