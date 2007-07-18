@@ -844,13 +844,16 @@ public class ExpressionParsing extends Parsing {
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
+    boolean afterBad = false;
     int argCount = 0;
     while (true) {
       TreeElement arg = parseExpression(lexer);
       if (arg == null) {
         if (lexer.getTokenType() == COMMA || (lexer.getTokenType() == RPARENTH && argCount > 0)) {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
-          TreeUtil.addChildren(element, Factory.createCompositeElement(EMPTY_EXPRESSION));
+          if (!afterBad) {
+            TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+            TreeUtil.addChildren(element, Factory.createCompositeElement(EMPTY_EXPRESSION));
+          }
         }
         else {
           break;
@@ -861,7 +864,12 @@ public class ExpressionParsing extends Parsing {
       }
       argCount++;
 
-      if (lexer.getTokenType() != COMMA) {
+      afterBad = false;
+      if (lexer.getTokenType() == BAD_CHARACTER) {
+        afterBad = true;
+        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
+      }
+      else if (lexer.getTokenType() != COMMA) {
         break;
       }
       TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));

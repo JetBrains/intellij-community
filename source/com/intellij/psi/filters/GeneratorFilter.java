@@ -24,26 +24,23 @@ public class GeneratorFilter implements ElementFilter{
 
   public boolean isClassAcceptable(Class hintClass){
     final ElementFilter filter = getFilter();
-    if(filter != null){
-      return filter.isClassAcceptable(hintClass);
-    }
-    return true;
+    return filter == null || filter.isClassAcceptable(hintClass);
   }
 
 
-  private SoftReference myCachedElement = new SoftReference(null);
-  private SoftReference myCachedFilter = new SoftReference(null);
+  private SoftReference<PsiElement> myCachedElement = new SoftReference<PsiElement>(null);
+  private SoftReference<ElementFilter> myCachedFilter = new SoftReference<ElementFilter>(null);
 
   private ElementFilter getFilter(){
-    return (ElementFilter) myCachedFilter.get();
+    return myCachedFilter.get();
   }
 
   private ElementFilter getFilter(PsiElement context){
-    ElementFilter filter = (ElementFilter)myCachedFilter.get();
+    ElementFilter filter = myCachedFilter.get();
     if(myCachedElement.get() != context || filter == null){
       filter = generateFilter(context);
-      myCachedFilter = new SoftReference(filter);
-      myCachedElement = new SoftReference(context);
+      myCachedFilter = new SoftReference<ElementFilter>(filter);
+      myCachedElement = new SoftReference<PsiElement>(context);
     }
     return filter;
   }
@@ -51,10 +48,7 @@ public class GeneratorFilter implements ElementFilter{
   public boolean isAcceptable(Object element, PsiElement context){
     if(element == null) return false;
     final ElementFilter filter = getFilter(context);
-    if(filter != null){
-      return filter.isAcceptable(element, context);
-    }
-    return false;
+    return filter != null && filter.isAcceptable(element, context);
   }
 
   private ElementFilter generateFilter(PsiElement context){

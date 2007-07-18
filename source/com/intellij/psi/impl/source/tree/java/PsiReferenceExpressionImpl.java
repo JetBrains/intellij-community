@@ -6,10 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.ConstructorFilter;
-import com.intellij.psi.filters.NotFilter;
-import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -321,7 +318,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     OrFilter filter = new OrFilter();
     filter.addFilter(new ClassFilter(PsiClass.class));
     filter.addFilter(new ClassFilter(PsiPackage.class));
-    filter.addFilter(new NotFilter(new ConstructorFilter()));
+    filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
     filter.addFilter(new ClassFilter(PsiVariable.class));
 
     FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);

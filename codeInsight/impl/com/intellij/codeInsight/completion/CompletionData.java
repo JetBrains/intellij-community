@@ -34,7 +34,7 @@ public class CompletionData {
     myFinalScopes.add(scopeClass);
   }
 
-  protected final boolean isScopeFinal(Class scopeClass){
+  protected boolean isScopeFinal(Class scopeClass){
     if(myFinalScopes.contains(scopeClass))
       return true;
 
