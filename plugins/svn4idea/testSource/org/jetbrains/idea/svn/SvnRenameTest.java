@@ -6,15 +6,13 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -117,18 +115,6 @@ public class SvnRenameTest extends SvnTestCase {
     createFileInCommand(grandChild, "b.txt", "b");
     checkin();
     return child;
-  }
-
-  private void verifyChange(final Change c, final String beforePath, final String afterPath) {
-    verifyRevision(c.getBeforeRevision(), beforePath);
-    verifyRevision(c.getAfterRevision(), afterPath);
-  }
-
-  private void verifyRevision(final ContentRevision beforeRevision, final String beforePath) {
-    File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
-    String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
-    final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
-    Assert.assertEquals(beforeFullPath, beforeRevPath);
   }
 
   // IDEADEV-19065
