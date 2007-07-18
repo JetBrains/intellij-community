@@ -1,11 +1,7 @@
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 
 import java.util.Comparator;
 
@@ -25,7 +21,10 @@ public class DocumentUtil {
   }
 
   public static int getStartLine(RangeMarker range) {
-    return range.getDocument().getLineNumber(range.getStartOffset());
+    final Document doc = range.getDocument();
+    if (doc.getTextLength() == 0) return 0;
+
+    return doc.getLineNumber(range.getStartOffset());
   }
 
   public static int getEndLine(RangeMarker range) {

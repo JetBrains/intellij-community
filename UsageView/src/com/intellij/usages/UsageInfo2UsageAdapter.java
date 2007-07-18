@@ -70,7 +70,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
         int startOffset = range.getStartOffset() + myUsageInfo.startOffset;
         int endOffset = range.getStartOffset() + myUsageInfo.endOffset;
 
-        myLineNumber = document.getLineNumber(startOffset);
+        myLineNumber = getLineNumber(document, startOffset);
 
         if (endOffset > document.getTextLength()) {
           LOG.assertTrue(false,
@@ -92,6 +92,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
         return new MyUsagePresentation();
       }
     });
+  }
+
+  private static int getLineNumber(final Document document, final int startOffset) {
+    if (document.getTextLength() == 0) return 0;
+    if (startOffset >= document.getTextLength()) return document.getLineCount();
+    return document.getLineNumber(startOffset);
   }
 
   private void initChunks() {
