@@ -243,10 +243,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private void handleParenses(final boolean hasParams, final boolean needParenth, TailType tailType){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
-    boolean insertRightParenth = !settings.INSERT_SINGLE_PARENTH
+    boolean insertRightParenth = (!settings.INSERT_SINGLE_PARENTH
                                  || (settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams)
                                  || generateAnonymousBody
-                                 || tailType != TailType.NONE;
+                                 || tailType != TailType.NONE) && tailType != TailTypes.SMART_COMPLETION;
 
     if (needParenth){
       if (myContext.lparenthOffset >= 0){
