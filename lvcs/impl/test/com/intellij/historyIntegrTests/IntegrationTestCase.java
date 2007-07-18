@@ -48,9 +48,9 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     });
   }
 
-  //protected File getIprFile() throws IOException {
-  //  return new File(createTempDirectory(), "test.ipr");
-  //}
+  protected File getIprFile() throws IOException {
+    return new File(createTempDirectory(), "test.ipr");
+  }
 
   protected void setUpInWriteAction() throws Exception {
     root = addContentRoot();

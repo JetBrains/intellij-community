@@ -1,6 +1,7 @@
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
@@ -60,8 +61,8 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
     c.revertOn(myRootEntry);
-    Entry parentEntry = getAffectedEntry(c).getParent();
-    VirtualFile parent = myGateway.findVirtualFile(parentEntry.getPath());
+    String parentPath = getParentPath(getAffectedEntry(c));
+    VirtualFile parent = myGateway.findVirtualFile(parentPath);
 
     f.move(this, parent);
   }
@@ -75,13 +76,13 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   private void revertDeletion(Entry e) throws IOException {
-    VirtualFile parent = myGateway.findVirtualFile(e.getParent().getPath());
+    VirtualFile parent = myGateway.findVirtualFile(getParentPath(e));
     if (e.isDirectory()) {
-      parent.createChildDirectory(e, e.getName());
+      parent.createChildDirectory(e, getName(e));
       for (Entry child : e.getChildren()) revertDeletion(child);
     }
     else {
-      VirtualFile f = parent.createChildData(e, e.getName());
+      VirtualFile f = parent.createChildData(e, getName(e));
       registerContentToApply(f, e);
     }
   }
@@ -114,6 +115,14 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
   private Entry getAffectedEntry(StructuralChange c, int i) {
     return myRootEntry.getEntry(c.getAffectedIdPaths()[i]);
+  }
+
+  private String getParentPath(Entry e) {
+    return Paths.getParentOf(e.getPath());
+  }
+
+  private String getName(Entry e) {
+    return Paths.getNameOf(e.getPath());
   }
 
   private static class ContentToApply {
