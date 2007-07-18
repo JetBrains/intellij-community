@@ -310,7 +310,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   }
 
   @Nullable
-  private XmlFile findExternalAnnotationsFile(PsiModifierListOwner listOwner) {
+  private synchronized XmlFile findExternalAnnotationsFile(PsiModifierListOwner listOwner) {
     final Project project = listOwner.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
