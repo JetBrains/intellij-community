@@ -33,18 +33,22 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ResolveAction extends BasicAction {
@@ -57,6 +61,7 @@ public class ResolveAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
+    if (file.isDirectory()) return true;
     SVNStatus status;
     try {
       SvnVcs.SVNStatusHolder statusValue = vcs.getCachedStatus(file);
@@ -91,15 +96,46 @@ public class ResolveAction extends BasicAction {
     return true;
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
-    throws VcsException {
+  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException {
     batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context)
-    throws VcsException {
-    List<VirtualFile> files = Arrays.asList(file);
-    AbstractVcsHelper.getInstance(project).showMergeDialog(files, new SvnMergeProvider(project));
+  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] files, DataContext context) throws VcsException {
+    boolean hasDirs = false;
+    for(VirtualFile file: files) {
+      if (file.isDirectory()) {
+        hasDirs = true;
+      }
+    }
+    final List<VirtualFile> fileList = new ArrayList<VirtualFile>();
+    if (!hasDirs) {
+      Collections.addAll(fileList, files);
+    }
+    else {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          for (VirtualFile file: files) {
+            if (file.isDirectory()) {
+              ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
+                public boolean processFile(final VirtualFile fileOrDir) {
+                  ProgressManager.getInstance().checkCanceled();
+                  if (!fileOrDir.isDirectory() && isEnabled(project, activeVcs, fileOrDir) && !fileList.contains(fileOrDir)) {
+                    fileList.add(fileOrDir);
+                  }
+                  return true;
+                }
+              });
+            }
+            else {
+              if (!fileList.contains(file)) {
+                fileList.add(file);
+              }
+            }
+          }
+        }
+      }, SvnBundle.message("progress.searching.for.files.with.conflicts"), true, project);
+    }
+    AbstractVcsHelper.getInstance(project).showMergeDialog(fileList, new SvnMergeProvider(project));
   }
 
   protected boolean isBatchAction() {
