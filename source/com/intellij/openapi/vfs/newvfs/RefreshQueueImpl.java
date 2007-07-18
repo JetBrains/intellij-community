@@ -94,7 +94,7 @@ public class RefreshQueueImpl extends RefreshQueue {
 
   public void processSingleEvent(VFileEvent event) {
     RefreshSessionImpl session = new RefreshSessionImpl(Collections.singletonList(event), myRefreshParticipants);
-    execute(session);
+    session.launch();
   }
 
   public void registerRefreshUpdater(final CacheUpdater updater) {

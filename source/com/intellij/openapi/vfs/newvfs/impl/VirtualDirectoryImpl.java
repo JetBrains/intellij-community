@@ -35,10 +35,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private synchronized NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
+  private NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
     final NewVirtualFile result = doFindChild(name, createIfNotFound);
-    if (result == null && myChildren instanceof Map) {
-      ensureAsMap().put(name, NullVirtualFile.INSTANCE);
+    synchronized (this) {
+      if (result == null && myChildren instanceof Map) {
+        ensureAsMap().put(name, NullVirtualFile.INSTANCE);
+      }
     }
     return result;
   }
