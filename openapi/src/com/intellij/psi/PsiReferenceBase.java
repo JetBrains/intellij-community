@@ -84,7 +84,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    System.out.println("PsiReferenceBase.handleElementRename: " + this);
     final ElementManipulator<T> manipulator = getManipulator();
     assert manipulator != null: "Cannot find manipulator for " + myElement;
     return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
