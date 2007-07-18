@@ -81,7 +81,7 @@ public abstract class AbstractVcsHelper {
                                           @Nls String title,
                                           @Nullable final Component parent);
 
-  public abstract void showChangesBrowser(Component parent, Collection<Change> changes, @Nls String title);
+  public abstract void showChangesBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
 
   @Nullable
   public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,

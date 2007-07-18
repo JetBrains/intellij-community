@@ -47,6 +47,11 @@ public class ChangeListViewerDialog extends DialogWrapper {
     initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
   }
 
+  public ChangeListViewerDialog(Project project, Collection<Change> changes) {
+    super(project, true);
+    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
+  }
+
   private void initDialog(final Project project, final CommittedChangeList changeList) {
     myProject = project;
     myChangeList = changeList;

@@ -448,7 +448,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showChangesBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
-    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(parent, myProject, changes);
+    final ChangeListViewerDialog dlg;
+    if (parent != null) {
+      dlg = new ChangeListViewerDialog(parent, myProject, changes);
+    }
+    else {
+      dlg = new ChangeListViewerDialog(myProject, changes);
+    }
     if (title != null) {
       dlg.setTitle(title);
     }
