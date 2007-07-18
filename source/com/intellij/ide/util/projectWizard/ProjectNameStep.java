@@ -107,8 +107,10 @@ public class ProjectNameStep extends ModuleWizardStep {
     return shouldContinue;
   }
 
+  @NonNls
   public String getProjectFilePath() {
-    return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ + PROJECT_FILE_EXTENSION;
+    return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ +
+      (myWizardContext.getProject() == null ? PROJECT_FILE_EXTENSION : ".iml");
   }
 
   public String getProjectFileDirectory() {

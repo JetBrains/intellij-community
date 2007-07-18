@@ -37,6 +37,7 @@ import java.io.File;
 public class ProjectNameStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   @NonNls private static final String PROJECT_FILE_EXTENSION = ".ipr";
+  @NonNls private static final String MODULE_FILE_EXTENSION = ".iml";
   private NamePathComponent myNamePathComponent;
   private JPanel myPanel;
   private final WizardContext myWizardContext;
@@ -215,7 +216,7 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public String getProjectFilePath() {
     return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ +
-           PROJECT_FILE_EXTENSION;
+           (myWizardContext.getProject() == null ? PROJECT_FILE_EXTENSION : MODULE_FILE_EXTENSION);
   }
 
   public String getProjectFileDirectory() {
