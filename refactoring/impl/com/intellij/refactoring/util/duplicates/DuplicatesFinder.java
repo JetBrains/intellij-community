@@ -117,11 +117,20 @@ public class DuplicatesFinder {
             PsiType type = variable.getType();
             final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(reference, PsiMethodCallExpression.class);
             if (methodCallExpression != null) {
-              final int idx = ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), reference);
+              int idx = ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), reference);
               if (idx > -1) {
                 final PsiMethod psiMethod = methodCallExpression.resolveMethod();
                 if (psiMethod != null) {
-                  type = psiMethod.getParameterList().getParameters()[idx].getType();
+                  final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+                  if (idx >= parameters.length) { //vararg parameter
+                    idx = parameters.length - 1;
+                  }
+                  if (idx > 0) { //incomplete code
+                    type = parameters[idx].getType();
+                  }
+                  if (type instanceof PsiEllipsisType) {
+                    type = ((PsiEllipsisType)type).getComponentType();
+                  }
                 }
               }
             }
