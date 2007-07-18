@@ -56,7 +56,11 @@ public class ControlFlowStatementWithoutBracesInspection
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            final PsiStatement statement = (PsiStatement)element.getParent();
+	        final PsiElement parent = element.getParent();
+	        if (!(parent instanceof PsiStatement)) {
+		        return;
+	        }
+	        final PsiStatement statement = (PsiStatement)parent;
             @NonNls final String elementText = element.getText();
             final PsiStatement statementWithoutBraces;
             if (statement instanceof PsiDoWhileStatement) {
@@ -107,46 +111,28 @@ public class ControlFlowStatementWithoutBracesInspection
         public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (!(body instanceof PsiBlockStatement)) {
-                final PsiElement doKeyword = statement.getFirstChild();
-                if (doKeyword == null) {
-                    return;
-                }
-                registerError(doKeyword);
-            }
+	        if (body == null || body instanceof PsiBlockStatement) {
+		        return;
+	        }
+	        registerStatementError(statement);
         }
 
         public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (!(body instanceof PsiBlockStatement)) {
-                final PsiElement forKeyword = statement.getFirstChild();
-                if (forKeyword == null) {
-                    return;
-                }
-                registerError(forKeyword);
-            }
+	        if (body == null || body instanceof PsiBlockStatement) {
+		        return;
+	        }
+	        registerStatementError(statement);
         }
 
         public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (!(body instanceof PsiBlockStatement)) {
-                final PsiElement forKeyword = statement.getFirstChild();
-                if (forKeyword == null) {
-                    return;
-                }
-                registerError(forKeyword);
-            }
+	        if (body == null || body instanceof PsiBlockStatement) {
+		        return;
+	        }
+	        registerStatementError(statement);
         }
 
         public void visitIfStatement(PsiIfStatement statement) {
@@ -156,11 +142,7 @@ public class ControlFlowStatementWithoutBracesInspection
                 return;
             }
             if (!(thenBranch instanceof PsiBlockStatement)) {
-                final PsiElement ifKeyword = statement.getFirstChild();
-                if (ifKeyword == null) {
-                    return;
-                }
-                registerError(ifKeyword);
+                registerStatementError(statement);
             }
             final PsiStatement elseBranch = statement.getElseBranch();
             if (elseBranch == null) {
@@ -179,16 +161,10 @@ public class ControlFlowStatementWithoutBracesInspection
         public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (!(body instanceof PsiBlockStatement)) {
-                final PsiElement whileKeyword = statement.getFirstChild();
-                if (whileKeyword == null) {
-                    return;
-                }
-                registerError(whileKeyword);
-            }
+	        if (body == null || body instanceof PsiBlockStatement) {
+		        return;
+	        }
+	        registerStatementError(statement);
         }
     }
 }
