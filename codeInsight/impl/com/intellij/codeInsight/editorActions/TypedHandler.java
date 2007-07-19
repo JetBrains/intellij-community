@@ -751,7 +751,6 @@ public class TypedHandler implements TypedActionHandler {
     if (quoteHandler == null) return false;
 
     int offset = editor.getCaretModel().getOffset();
-    if (offset == editor.getDocument().getTextLength()) return false;
 
     CharSequence chars = editor.getDocument().getCharsSequence();
     int length = editor.getDocument().getTextLength();
