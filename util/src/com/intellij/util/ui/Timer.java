@@ -63,7 +63,8 @@ public abstract class Timer implements Disposable {
   }
 
   private void startIfNeeded() {
-    assert !myDisposed;
+    if (myDisposed) return;
+
     if (!myThread.isAlive()) {
       start();
     }
