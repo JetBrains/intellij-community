@@ -563,7 +563,7 @@ public class ChangesCacheFile {
     return new File(myPath + "." + offset + ".partial");
   }
 
-  public boolean refreshIncomingChanges() throws IOException {
+  public boolean refreshIncomingChanges() throws IOException, VcsException {
     final DiffProvider diffProvider = myVcs.getDiffProvider();
     if (diffProvider == null) return false;
     final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);

@@ -53,7 +53,7 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
    * @return the files which may contain the changes, or null if the call is not supported.
    */
   @Nullable
-  Collection<FilePath> getIncomingFiles(final RepositoryLocation location);
+  Collection<FilePath> getIncomingFiles(final RepositoryLocation location) throws VcsException;
 
   /**
    * Returns true if the changelist number restriction should be used when refreshing the cache,

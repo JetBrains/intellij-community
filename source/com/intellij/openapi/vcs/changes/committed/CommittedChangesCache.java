@@ -525,6 +525,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         catch (IOException e) {
           LOG.error(e);
         }
+        catch(VcsException e) {
+          notifyRefreshError(e);
+        }
       }
 
       public void receivedError(VcsException ex) {
@@ -560,6 +563,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
       catch (IOException e) {
         LOG.error(e);
+      }
+      catch(VcsException e) {
+        notifyRefreshError(e);
       }
     }
     return hasChanges;
