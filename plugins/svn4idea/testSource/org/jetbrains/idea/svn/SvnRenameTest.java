@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -15,6 +16,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -83,13 +85,7 @@ public class SvnRenameTest extends SvnTestCase {
 
     List<Change> changes = getAllChanges();
     Assert.assertEquals(4, changes.size());
-    Collections.sort(changes, new Comparator<Change>() {
-      public int compare(final Change o1, final Change o2) {
-        final String p1 = FileUtil.toSystemIndependentName(o1.getBeforeRevision().getFile().getPath());
-        final String p2 = FileUtil.toSystemIndependentName(o2.getBeforeRevision().getFile().getPath());
-        return p1.compareTo(p2);
-      }
-    });
+    sortChanges(changes);
     verifyChange(changes.get(0), "child", "newchild");
     verifyChange(changes.get(1), "child\\a.txt", "newchild\\a.txt");
     verifyChange(changes.get(2), "child\\grandChild", "newchild\\grandChild");
@@ -106,6 +102,16 @@ public class SvnRenameTest extends SvnTestCase {
     changeListManager.ensureUpToDate(false);
     VirtualFile oldChild = myWorkingCopyDir.findChild("child");
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));
+  }
+
+  private void sortChanges(final List<Change> changes) {
+    Collections.sort(changes, new Comparator<Change>() {
+      public int compare(final Change o1, final Change o2) {
+        final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
+        final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
+        return p1.compareTo(p2);
+      }
+    });
   }
 
   private VirtualFile prepareDirectoriesForRename() throws IOException {
@@ -150,4 +156,22 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
   }
 
+  // IDEADEV-7697
+  @Test
+  public void testMovePackageToParent() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
+    final VirtualFile grandChild = createDirInCommand(child, "grandChild");
+    createFileInCommand(grandChild, "a.txt", "a");
+    checkin();
+
+    moveFileInCommand(grandChild, myWorkingCopyDir);
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    changeListManager.ensureUpToDate(false);
+    final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
+    Assert.assertEquals(2, changes.size());
+    sortChanges(changes);
+    verifyChange(changes.get(0), "child\\grandChild", "grandChild");
+    verifyChange(changes.get(1), "child\\grandChild\\a.txt", "grandChild\\a.txt");
+  }
 }

@@ -125,8 +125,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (vcs == null) {
       return false;
     }
-    myFilesToRefresh.add(file.getParent());
-    return move(vcs, srcFile, dstFile);
+    final VirtualFile oldParent = file.getParent();
+    myFilesToRefresh.add(oldParent);
+    final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
+    final boolean result = move(vcs, srcFile, dstFile);
+    dirtyScopeManager.dirDirtyRecursively(toDir, true);
+    dirtyScopeManager.dirDirtyRecursively(oldParent, true);
+    return result;
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
