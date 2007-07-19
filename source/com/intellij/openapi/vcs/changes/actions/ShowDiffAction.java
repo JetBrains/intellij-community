@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,12 +65,15 @@ public class ShowDiffAction extends AnAction {
       }
       ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
       if (changeList != null) {
-        final ArrayList<Change> changesInList = new ArrayList<Change>(changeList.getChanges());
-        Collections.sort(changesInList, new Comparator<Change>() {
-          public int compare(final Change o1, final Change o2) {
-            return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-          }
-        });
+        List<Change> changesInList = e.getData(ChangesListView.CHANGES_IN_LIST_KEY);
+        if (changesInList == null) {
+          changesInList = new ArrayList<Change>(changeList.getChanges());
+          Collections.sort(changesInList, new Comparator<Change>() {
+            public int compare(final Change o1, final Change o2) {
+              return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+            }
+          });
+        }
         changes = changesInList.toArray(new Change[changesInList.size()]);
         for(int i=0; i<changes.length; i++) {
           if (changes [i] == selectedChange) { 

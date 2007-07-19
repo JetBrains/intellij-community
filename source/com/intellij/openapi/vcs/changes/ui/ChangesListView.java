@@ -41,10 +41,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author max
@@ -66,6 +64,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   @NonNls public static final DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
+  @NonNls public static final DataKey<List<Change>> CHANGES_IN_LIST_KEY = DataKey.create("ChangeListView.ChangesInList");
 
   public static final Object UNVERSIONED_FILES_TAG = new Object() {
     public String toString() {
@@ -210,6 +209,16 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     else if (key == HELP_ID_DATA_KEY) {
       sink.put(HELP_ID_DATA_KEY, ourHelpId);
     }
+    else if (key == CHANGES_IN_LIST_KEY) {
+      final TreePath selectionPath = getSelectionPath();
+      if (selectionPath != null && selectionPath.getPathCount() > 1) {
+        ChangesBrowserNode firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
+        if (firstNode instanceof ChangesBrowserChangeListNode) {
+          final List<Change> list = firstNode.getAllChangesUnder();
+          sink.put(CHANGES_IN_LIST_KEY, list);
+        }
+      }
+    }
   }
 
   private List<VirtualFile> getSelectedUnversionedFiles() {
@@ -306,11 +315,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
   @NotNull
   private Change[] getSelectedChanges() {
-    Set<Change> changes = new HashSet<Change>();
-
-    for (ChangeList list : getSelectedChangeLists()) {
-      changes.addAll(list.getChanges());
-    }
+    Set<Change> changes = new LinkedHashSet<Change>();
 
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new Change[0];

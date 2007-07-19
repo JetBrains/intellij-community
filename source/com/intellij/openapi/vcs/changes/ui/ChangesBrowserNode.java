@@ -88,7 +88,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public List<Change> getAllChangesUnder() {
     List<Change> changes = new ArrayList<Change>();
-    final Enumeration enumeration = breadthFirstEnumeration();
+    final Enumeration enumeration = depthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
       ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
