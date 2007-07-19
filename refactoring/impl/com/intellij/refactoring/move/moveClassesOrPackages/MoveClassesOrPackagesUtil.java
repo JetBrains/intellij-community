@@ -24,6 +24,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -102,7 +103,7 @@ public class MoveClassesOrPackagesUtil {
   private static RefactoringUtil.UsageInfoFactory createUsageInfoFactory(final PsiElement element,
                                                                          final String newQName) {
     return new RefactoringUtil.UsageInfoFactory() {
-      public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         int start = usage.getTextRange().getStartOffset();
         return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
                                        newQName);

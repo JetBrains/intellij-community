@@ -757,7 +757,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void addNonCodeUsages(final PsiElement element, ArrayList<UsageInfo> usages, final UsageInsideDeleted insideElements) {
     RefactoringUtil.UsageInfoFactory nonCodeUsageFactory = new RefactoringUtil.UsageInfoFactory() {
-      public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         if (!insideElements.isInsideDeleted(usage)) {
           return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
         } else {

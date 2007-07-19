@@ -210,7 +210,7 @@ public class VariableInplaceRenamer {
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
     if (stringToSearch != null) {
       RefactoringUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new RefactoringUtil.UsageInfoFactory() {
-        public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
           return new UsageInfo(usage); //will not need usage
         }
       });

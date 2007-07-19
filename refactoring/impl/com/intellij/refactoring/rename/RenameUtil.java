@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -33,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -40,7 +42,7 @@ import java.util.regex.Pattern;
 public class RenameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameUtil");
 
-
+  @NotNull
   public static UsageInfo[] findUsages(final PsiElement element,
                                        String newName,
                                        boolean searchInStringsAndComments,
@@ -83,7 +85,7 @@ public class RenameUtil {
       if (element instanceof PsiVariable) {
         addLocalsCollisions(element, newName, result, allRenames);
         if (element instanceof PsiField) {
-          addFieldHidesOuterCollisions((PsiField)element, newName, result, allRenames);
+          addFieldHidesOuterCollisions((PsiField)element, newName, result);
         }
       }
     }
@@ -107,13 +109,7 @@ public class RenameUtil {
 
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, true);
-        RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
-          public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
-            int start = usage.getTextRange().getStartOffset();
-            return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
-          }
-        };
-        RefactoringUtil.addTextOccurences(element, stringToSearch, projectScope, result, factory);
+        addTextOccurence(element, result, projectScope, stringToSearch, stringToReplace);
 
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
@@ -121,13 +117,7 @@ public class RenameUtil {
             final String dollaredStringToSearch = RefactoringUtil.getInnerClassNameForClassLoader(aClass);
             final String dollaredStringToReplace = dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
             if (dollaredStringToReplace != null) {
-              RefactoringUtil.UsageInfoFactory dollaredFactory = new RefactoringUtil.UsageInfoFactory() {
-                public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
-                  int start = usage.getTextRange().getStartOffset();
-                  return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, dollaredStringToReplace);
-                }
-              };
-              RefactoringUtil.addTextOccurences(aClass, dollaredStringToSearch, projectScope, result, dollaredFactory);
+              addTextOccurence(aClass, result, projectScope, dollaredStringToSearch, dollaredStringToReplace);
             }
           }
         }
@@ -135,6 +125,19 @@ public class RenameUtil {
     }
 
     return result.toArray(new UsageInfo[result.size()]);
+  }
+
+  private static void addTextOccurence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
+                                       final String stringToSearch,
+                                       final String stringToReplace) {
+    RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
+      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+        TextRange textRange = usage.getTextRange();
+        int start = textRange == null ? 0 : textRange.getStartOffset();
+        return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
+      }
+    };
+    RefactoringUtil.addTextOccurences(element, stringToSearch, projectScope, result, factory);
   }
 
 
@@ -405,8 +408,7 @@ public class RenameUtil {
     });
   }
 
-  private static void addFieldHidesOuterCollisions(final PsiField field, final String newName, final List<UsageInfo> result,
-                                                   final Map<? extends PsiElement, String> allRenames) {
+  private static void addFieldHidesOuterCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
     final PsiClass fieldClass = field.getContainingClass();
     for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
       final PsiField conflict = aClass.findFieldByName(newName, false);
@@ -864,5 +866,4 @@ public class RenameUtil {
       message.append(directory.getVirtualFile().getPresentableUrl());
     }
   }
-
 }

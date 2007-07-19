@@ -232,7 +232,7 @@ public class RefactoringUtil {
   }
 
   public static interface UsageInfoFactory {
-    UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset);
+    UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset);
   }
 
   public static void addUsagesInStringsAndComments(PsiElement element,
@@ -381,7 +381,7 @@ public class RefactoringUtil {
   }
 
   public static PsiReturnStatement[] findReturnStatements(PsiMethod method) {
-    ArrayList<PsiElement> vector = new ArrayList<PsiElement>();
+    ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       addReturnStatements(vector, body);
@@ -389,9 +389,9 @@ public class RefactoringUtil {
     return vector.toArray(new PsiReturnStatement[vector.size()]);
   }
 
-  private static void addReturnStatements(ArrayList<PsiElement> vector, PsiElement element) {
+  private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {
     if (element instanceof PsiReturnStatement) {
-      vector.add(element);
+      vector.add((PsiReturnStatement)element);
     }
     else if (!(element instanceof PsiClass)) {
       PsiElement[] children = element.getChildren();

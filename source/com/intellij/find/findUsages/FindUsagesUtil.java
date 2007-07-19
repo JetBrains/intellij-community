@@ -21,10 +21,11 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class FindUsagesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.FindUsagesUtil");
@@ -111,7 +112,7 @@ public class FindUsagesUtil {
       if (stringToSearch != null) {
         final TextRange elementTextRange = element.getTextRange();
         RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
-          public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
+          public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
             if (elementTextRange != null
                 && usage.getContainingFile() == element.getContainingFile()
                 && elementTextRange.contains(startOffset)
