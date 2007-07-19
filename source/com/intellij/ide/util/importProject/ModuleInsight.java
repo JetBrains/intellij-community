@@ -165,7 +165,13 @@ public class ModuleInsight {
     }
     catch (ProcessCanceledException ignored) {
     }
+    
     myModules = new ArrayList<ModuleDescriptor>(contentRootToModules.values());
+    final Set<String> moduleNames = new HashSet<String>();
+    for (ModuleDescriptor module : myModules) {
+      final String suggested = suggestUniqueName(moduleNames, module.getName());
+      module.setName(suggested);
+    }
   }
 
   public void scanLibraries() {
@@ -186,7 +192,7 @@ public class ModuleInsight {
       final Set<String> libNames = new HashSet<String>(); 
       for (LibraryDescriptor library : libraries) {
         final Collection<File> libJars = library.getJars();
-        final String newName = suggestLibName(libNames, libJars.size() == 1? libJars.iterator().next().getName() : library.getName());
+        final String newName = suggestUniqueName(libNames, libJars.size() == 1? libJars.iterator().next().getName() : library.getName());
         library.setName(newName);
         libNames.add(newName);
       }
@@ -197,7 +203,7 @@ public class ModuleInsight {
     }
   }
   
-  private static String suggestLibName(Set<String> existingNames, String baseName) {
+  private static String suggestUniqueName(Set<String> existingNames, String baseName) {
     String name = baseName;
     int index = 1;
     while (existingNames.contains(name)) {
