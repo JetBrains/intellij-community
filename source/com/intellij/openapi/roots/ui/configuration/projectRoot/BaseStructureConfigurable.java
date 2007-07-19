@@ -76,6 +76,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof MyNode) {
           final MyNode node = (MyNode)value;
+
+          if (node.getConfigurable() == null) {
+            return;
+          }
+
           final String displayName = node.getDisplayName();
           final Icon icon = node.getConfigurable().getIcon();
           setIcon(icon);
