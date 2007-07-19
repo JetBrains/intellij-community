@@ -602,9 +602,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public void setCommitMessage(final String currentDescription) {
+    setCommitMessageText(currentDescription);
+    myCommitMessageArea.requestFocusInMessage();
+  }
+
+  private void setCommitMessageText(final String currentDescription) {
     myLastKnownComment = currentDescription;
     myCommitMessageArea.setText(currentDescription);
-    myCommitMessageArea.requestFocusInMessage();
   }
 
   public String getCommitMessage() {
@@ -725,7 +729,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     public void dispose() {
       if (myCommitDialog != null) {
-        myCommitDialog.setCommitMessage(myArea.getText());
+        myCommitDialog.setCommitMessageText(myArea.getText());
         myCommitDialog = null;
       }
     }
