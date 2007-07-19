@@ -149,13 +149,6 @@ public class GroovyInlineHandler implements InlineHandler {
         GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
         GrExpression newExpr = factory.createExpressionFromText(initializerGroovy.getText());
 
-        if (exprToBeReplaced.getParent() instanceof GrExpression) {
-          GrExpression parentExpr = (GrExpression) exprToBeReplaced.getParent();
-          if (PsiImplUtil.getExprPriorityLevel(parentExpr) >= PsiImplUtil.getExprPriorityLevel(newExpr)) {
-            newExpr = factory.createParenthesizedExpr(newExpr);
-          }
-        }
-
         try {
           newExpr = exprToBeReplaced.replaceWithExpression(newExpr);
           FileEditorManager manager = FileEditorManager.getInstance(project);

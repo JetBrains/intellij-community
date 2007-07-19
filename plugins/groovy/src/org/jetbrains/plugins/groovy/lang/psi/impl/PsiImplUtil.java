@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -63,6 +64,16 @@ public class PsiImplUtil {
         newExpr instanceof GrReferenceExpression){
       return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr);
     }
+
+    // check priorities
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(oldExpr.getProject());
+    if (oldExpr.getParent() instanceof GrExpression) {
+      GrExpression parentExpr = (GrExpression) oldExpr.getParent();
+      if (PsiImplUtil.getExprPriorityLevel(parentExpr) >= PsiImplUtil.getExprPriorityLevel(newExpr)) {
+        newExpr = factory.createParenthesizedExpr(newExpr);
+      }
+    }
+
     ASTNode parentNode = oldExpr.getParent().getNode();
     ASTNode newNode = newExpr.getNode();
     parentNode.replaceChild(oldExpr.getNode(), newNode);
