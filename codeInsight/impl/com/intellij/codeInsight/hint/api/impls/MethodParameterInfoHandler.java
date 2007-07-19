@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
@@ -54,15 +54,35 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
 
   @Nullable
   public PsiExpressionList findElementForParameterInfo(final CreateParameterInfoContext context) {
-    final PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(),this);
+    PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+
     if (argumentList != null) {
-      CandidateInfo[] candidates = getMethods(argumentList);
-      if (candidates.length == 0) {
-        DaemonCodeAnalyzer.getInstance(context.getProject()).updateVisibleHighlighters(context.getEditor());
-        return null;
-      }
-      context.setItemsToShow(candidates);
+      return findMethodsForArgumentList(context, argumentList);
     }
+    return argumentList;
+  }
+
+  private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart) {
+    PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(file, offset, parameterStart,this);
+    if (argumentList == null) {
+      final PsiMethodCallExpression methodCall = ParameterInfoUtils.findParentOfType(file, offset, PsiMethodCallExpression.class);
+
+      if (methodCall != null) {
+        argumentList = methodCall.getArgumentList();
+      }
+    }
+    return argumentList;
+  }
+
+  private static PsiExpressionList findMethodsForArgumentList(final CreateParameterInfoContext context,
+                                                              final @NotNull PsiExpressionList argumentList) {
+
+    CandidateInfo[] candidates = getMethods(argumentList);
+    if (candidates.length == 0) {
+      DaemonCodeAnalyzer.getInstance(context.getProject()).updateVisibleHighlighters(context.getEditor());
+      return null;
+    }
+    context.setItemsToShow(candidates);
     return argumentList;
   }
 
@@ -71,10 +91,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
   }
 
   public PsiExpressionList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
-    return ParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterStart(),this);
+    return findArgumentList(context.getFile(), context.getOffset(), context.getParameterStart());
   }
 
   public void updateParameterInfo(@NotNull final PsiExpressionList o, final UpdateParameterInfoContext context) {
+    if (context.getParameterOwner() != o) {
+      context.removeHint();
+      return;
+    }
     int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(),JavaTokenType.COMMA);
     context.setCurrentParameter(index);
 

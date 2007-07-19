@@ -99,7 +99,8 @@ public class ParameterInfoController {
       final Object[] availableParams = myHandler.getParametersForDocumentation(o, context);
 
       if (availableParams != null &&
-          selectedParameterIndex < availableParams.length
+          selectedParameterIndex < availableParams.length &&
+          selectedParameterIndex >= 0
         ) {
         params.add(availableParams[selectedParameterIndex]);
       }

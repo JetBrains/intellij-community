@@ -2,10 +2,8 @@ package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +62,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
-    context.setHighlightedParameter(index < objectsToView.length ? (PsiElement)objectsToView[index]:null);
+    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index]:null);
   }
 
   @NotNull

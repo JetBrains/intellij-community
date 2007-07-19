@@ -27,6 +27,7 @@ public class ParameterInfoUtils {
 
   public static int getCurrentParameterIndex(ASTNode argList, int offset, IElementType delimiterType) {
     int curOffset = argList.getTextRange().getStartOffset();
+    if (offset < curOffset) return -1;
     ASTNode[] children = argList.getChildren(null);
     int index = 0;
 
