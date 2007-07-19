@@ -53,7 +53,7 @@ class CommandMerger {
     eventMulticaster.removeDocumentListener(myDocumentListener);
     clearDocumentRefs();
   }
-  
+
   public void clearDocumentRefs() {
     myLastGroupId = null;
   }
@@ -124,8 +124,8 @@ class CommandMerger {
   public void flushCurrentCommand() {
     if (!isEmpty()) {
       int commandCounter = myManager.getCommandCounterAndInc();
-      UndoableGroup undoableGroup = new UndoableGroup(myCommandName, myIsComplex, myManager.getProject(),
-                                                      myStateBefore, myStateAfter, commandCounter, myUndoConfirmationPolicy,
+      UndoableGroup undoableGroup = new UndoableGroup(myCommandName, myIsComplex, myManager.getProject(), myStateBefore, myStateAfter,
+                                                      commandCounter, myUndoConfirmationPolicy,
                                                       myHasUndoTransparents && myOnlyUndoTransparents);
       undoableGroup.addTailActions(myCurrentActions);
       addToAllStacks(undoableGroup);
@@ -190,13 +190,14 @@ class CommandMerger {
     return myAffectedDocuments;
   }
 
-  public void mergeUndoConfirmationPolicy(UndoConfirmationPolicy undoConfirmationPolicy){
-    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT){
+  public void mergeUndoConfirmationPolicy(UndoConfirmationPolicy undoConfirmationPolicy) {
+    if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT) {
       myUndoConfirmationPolicy = undoConfirmationPolicy;
-    } else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION){
-        if (undoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION){
-          myUndoConfirmationPolicy = UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-        }
+    }
+    else if (myUndoConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) {
+      if (undoConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) {
+        myUndoConfirmationPolicy = UndoConfirmationPolicy.REQUEST_CONFIRMATION;
+      }
     }
   }
 

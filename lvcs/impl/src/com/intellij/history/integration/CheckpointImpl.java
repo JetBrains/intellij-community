@@ -21,22 +21,17 @@ public class CheckpointImpl implements Checkpoint {
     myLastChange = myVcs.getLastChange();
   }
 
-  public void revertToPreviousState() {
+  public void revertToPreviousState() throws IOException {
     doRevert(true);
   }
 
-  public void revertToThatState() {
+  public void revertToThatState() throws IOException {
     doRevert(false);
   }
 
-  private void doRevert(boolean revertLastChange) {
-    try {
-      ChangeVisitor v = new ChangeRevertionVisitor(myVcs, myGateway);
-      myVcs.accept(new SelectiveChangeVisitor(v, revertLastChange));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private void doRevert(boolean revertLastChange) throws IOException {
+    ChangeVisitor v = new ChangeRevertionVisitor(myVcs, myGateway);
+    myVcs.accept(new SelectiveChangeVisitor(v, revertLastChange));
   }
 
   private class SelectiveChangeVisitor extends ChangeVisitor {

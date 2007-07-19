@@ -4,9 +4,13 @@ import com.intellij.history.Checkpoint;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,7 +108,11 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   }
 
   private boolean shouldNotProcess(VirtualFileEvent e) {
-    return myProject.isDisposed() || !LocalHistory.isUnderControl(myProject, e.getFile());
+    return isProjectClosed() || !LocalHistory.isUnderControl(myProject, e.getFile());
+  }
+
+  private boolean isProjectClosed() {
+    return myProject.isDisposed();
   }
 
   private boolean isUndoable(VirtualFileEvent e) {
@@ -112,22 +120,16 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   }
 
   private void createNonUndoableAction(VirtualFileEvent e) {
-    VirtualFile f = e.getFile();
-
-    DocumentReference newRef = new DocumentReferenceByVirtualFile(f);
-    registerNonUndoableAction(newRef);
-
-    DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());
-    if (oldRef != null && !oldRef.equals(newRef)) {
-      registerNonUndoableAction(oldRef);
-    }
+    createNonUndoableAction(e.getFile(), false);
   }
 
   private void createNonUndoableDeletionAction(VirtualFileEvent e) {
-    VirtualFile f = e.getFile();
+    createNonUndoableAction(e.getFile(), true);
+  }
 
+  private void createNonUndoableAction(VirtualFile f, boolean isDeletion) {
     DocumentReference newRef = new DocumentReferenceByVirtualFile(f);
-    newRef.beforeFileDeletion(f);
+    if (isDeletion) newRef.beforeFileDeletion(f);
     registerNonUndoableAction(newRef);
 
     DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());
@@ -179,12 +181,22 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
       myBeforeUndoCheckpoint = LocalHistory.putCheckpoint(myProject);
 
       if (!myUseUndo) return;
-      myAfterActionCheckpoint.revertToPreviousState();
+      try {
+        myAfterActionCheckpoint.revertToPreviousState();
+      }
+      catch (IOException e) {
+        throw new UnexpectedUndoException(e.getMessage());
+      }
     }
 
     public void redo() throws UnexpectedUndoException {
       if (!myUseRedo) return;
-      myBeforeUndoCheckpoint.revertToThatState();
+      try {
+        myBeforeUndoCheckpoint.revertToThatState();
+      }
+      catch (IOException e) {
+        throw new UnexpectedUndoException(e.getMessage());
+      }
     }
 
     public DocumentReference[] getAffectedDocuments() {
