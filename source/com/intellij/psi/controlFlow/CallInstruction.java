@@ -1,5 +1,6 @@
 package com.intellij.psi.controlFlow;
 
+import org.jetbrains.annotations.NotNull;
 
 
 public class CallInstruction extends GoToInstruction {
@@ -7,7 +8,7 @@ public class CallInstruction extends GoToInstruction {
   public int procBegin;
   public int procEnd;
 
-  public CallInstruction(int procBegin, int procEnd, ControlFlowStack stack) {
+  public CallInstruction(int procBegin, int procEnd, @NotNull ControlFlowStack stack) {
     super(procBegin);
     this.stack = stack;
     this.procBegin = procBegin;

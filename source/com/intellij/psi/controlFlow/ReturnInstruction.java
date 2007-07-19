@@ -1,6 +1,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 
 public class ReturnInstruction extends GoToInstruction {
@@ -9,7 +10,7 @@ public class ReturnInstruction extends GoToInstruction {
   private final ControlFlowStack myStack;
   private CallInstruction myCallInstruction;
 
-  public ReturnInstruction(int offset, ControlFlowStack stack, CallInstruction callInstruction) {
+  public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, CallInstruction callInstruction) {
     super(offset, ControlFlow.JUMP_ROLE_GOTO_END, false);
     myStack = stack;
     myCallInstruction = callInstruction;
@@ -82,5 +83,9 @@ public class ReturnInstruction extends GoToInstruction {
 
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReturnInstruction(this, offset, nextOffset);
+  }
+
+  public ControlFlowStack getStack() {
+    return myStack;
   }
 }
