@@ -378,7 +378,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
 
   public final class CloseAction extends CloseTabToolbarAction {
     public final void actionPerformed(final AnActionEvent e) {
-      myContent.getManager().removeContent(myContent);
+      myContent.getManager().removeContent(myContent, true);
     }
   }
 

@@ -140,10 +140,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public Content getSelectedContent() { return null; }
     public Content[] getSelectedContents() { return new Content[0]; }
     public boolean isSelected(final Content content) { return false; }
-    public void removeAllContents() { }
-    public boolean removeContent(final Content content) { return false; }
+    public void removeAllContents(final boolean dispose) { }
+    public boolean removeContent(final Content content, final boolean dispose) { return false; }
     public void removeContentManagerListener(final ContentManagerListener l) { }
-    public void removeSelectedContent(final Content content) { }
+    public void removeFromSelection(final Content content) { }
     public void requestFocus(@Nullable final Content content) { }
     public void selectNextContent() { }
     public void selectPreviousContent() { }

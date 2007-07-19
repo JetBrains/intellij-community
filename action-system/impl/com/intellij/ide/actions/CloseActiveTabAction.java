@@ -13,7 +13,7 @@ public class CloseActiveTabAction extends AnAction {
     if (contentManager != null && contentManager.canCloseContents()) {
       final Content selectedContent = contentManager.getSelectedContent();
       if (selectedContent != null && selectedContent.isCloseable()) {
-        contentManager.removeContent(selectedContent);
+        contentManager.removeContent(selectedContent, true);
       }
     }
   }

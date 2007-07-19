@@ -88,7 +88,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     public void actionPerformed(AnActionEvent e) {
       Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
       if (content != null) {
-        myContentManager.removeContent(content);
+        myContentManager.removeContent(content, true);
       }
     }
   }

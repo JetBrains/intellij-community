@@ -238,7 +238,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public void closeContent(Content content) {
-    myContentManager.removeContent(content);
+    myContentManager.removeContent(content, true);
   }
 
   public void projectClosed() {

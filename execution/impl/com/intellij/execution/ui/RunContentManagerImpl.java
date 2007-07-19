@@ -113,7 +113,7 @@ public class RunContentManagerImpl implements RunContentManager {
     if (windowManager.getToolWindow(id) == null) return;
     windowManager.unregisterToolWindow(id);
     final ContentManager manager = myToolwindowIdToContentManagerMap.get(id);
-    manager.removeAllContents();
+    manager.removeAllContents(true);
     myToolwindowIdToContentManagerMap.remove(id);
     myToolwindowIdZbuffer.remove(id);
   }
@@ -239,7 +239,7 @@ public class RunContentManagerImpl implements RunContentManager {
   public boolean removeRunContent(final JavaProgramRunner requestor, final RunContentDescriptor descriptor) {
     final ContentManager contentManager = getContentManagerForRunner(requestor.getInfo());
     final Content content = getRunContentByDescriptor(contentManager, descriptor);
-    return content != null && contentManager.removeContent(content);
+    return content != null && contentManager.removeContent(content, true);
   }
 
   public void showRunContent(final JavaProgramRunner requestor, final RunContentDescriptor descriptor) {
@@ -500,7 +500,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
     public void projectClosed(final Project project) {
       if (myContent != null && project == myProject) {
-        myContent.getManager().removeContent(myContent);
+        myContent.getManager().removeContent(myContent, true);
         dispose(); // Dispose content even if content manager refused to.
       }
     }
@@ -513,7 +513,7 @@ public class RunContentManagerImpl implements RunContentManager {
       final boolean canClose = closeQuery();
       if (canClose) {
         final Content content = myContent;
-        content.getManager().removeContent(content);
+        content.getManager().removeContent(content, true);
         myContent = null;
       }
       return canClose;

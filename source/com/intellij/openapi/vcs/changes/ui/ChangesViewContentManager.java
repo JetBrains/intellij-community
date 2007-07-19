@@ -125,7 +125,7 @@ public class ChangesViewContentManager implements ProjectComponent {
         if (!(epContent.getComponent() instanceof ContentStub)) {
           ep.getInstance(myProject).disposeContent();
         }
-        myContentManager.removeContent(epContent);
+        myContentManager.removeContent(epContent, true);
       }
     }
   }
@@ -177,7 +177,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   public void removeContent(final Content content) {
-    myContentManager.removeContent(content);
+    myContentManager.removeContent(content, true);
   }
 
   public void setSelectedContent(final Content content) {

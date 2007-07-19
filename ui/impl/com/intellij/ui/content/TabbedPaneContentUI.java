@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
 
@@ -131,7 +130,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         }
         final Content content = myManager.getContent(index);
         if (content.isCloseable()) {
-          myManager.removeContent(content);
+          myManager.removeContent(content, true);
         }
       }
 

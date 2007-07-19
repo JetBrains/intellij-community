@@ -71,7 +71,7 @@ public class ErrorViewFactoryImpl implements ErrorViewFactory {
         ContentManager contentManager = contentManagerProvider.getParentContent();
         Content content = contentManager.getContent(this);
         if (content != null) {
-          contentManager.removeContent(content);
+          contentManager.removeContent(content, true);
         }
       }
     };

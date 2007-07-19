@@ -13,7 +13,7 @@ public class ContentsUtil {
     Content[] contents = manager.getContents();
     for(Content oldContent: contents) {
       if (!oldContent.isPinned() && oldContent.getDisplayName().equals(contentName)) {
-        manager.removeContent(oldContent);
+        manager.removeContent(oldContent, true);
       }
     }
     

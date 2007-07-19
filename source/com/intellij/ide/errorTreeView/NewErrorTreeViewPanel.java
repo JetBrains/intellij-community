@@ -311,7 +311,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     MessageView messageView = myProject.getComponent(MessageView.class);
     Content content = messageView.getContentManager().getContent(this);
     if (content != null) {
-      messageView.getContentManager().removeContent(content);
+      messageView.getContentManager().removeContent(content, true);
     }
   }
 

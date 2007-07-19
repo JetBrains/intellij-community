@@ -70,7 +70,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myContentManager.removeContent(myContent);
+      myContentManager.removeContent(myContent, true);
     }
   }
 

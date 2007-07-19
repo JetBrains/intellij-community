@@ -76,7 +76,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
         }
       }
       if (contentToDelete != null) {
-        myFindContentManager.removeContent(contentToDelete);
+        myFindContentManager.removeContent(contentToDelete, true);
       }
     }
     Content content = PeerFactory.getInstance().getContentFactory().createContent(component, contentName, isLockable);
@@ -117,7 +117,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public void closeContent(Content content) {
-    myFindContentManager.removeContent(content);
+    myFindContentManager.removeContent(content, true);
     content.release();
   }
 

@@ -387,7 +387,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (c instanceof ContentTabLabel) {
       final ContentTabLabel tab = (ContentTabLabel)c;
       if (myManager.canCloseContents() && tab.myContent.isCloseable()) {
-        myManager.removeContent(tab.myContent);
+        myManager.removeContent(tab.myContent, true);
       }
     }
     else {

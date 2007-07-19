@@ -234,7 +234,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         if (CONTENT_NAME.equals(content.getDisplayName()) && content != notToRemove) {
           ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
           if (listErrorView != null) {
-            if (messageView.getContentManager().removeContent(content)) {
+            if (messageView.getContentManager().removeContent(content, true)) {
               content.release();
             }
           }

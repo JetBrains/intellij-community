@@ -52,7 +52,7 @@ public class DependenciesAnalyzeManager implements JDOMExternalizable, ProjectCo
   }
 
   public void closeContent(Content content) {
-    myContentManager.removeContent(content);
+    myContentManager.removeContent(content, true);
   }
 
   public void projectClosed() {

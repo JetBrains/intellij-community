@@ -30,7 +30,8 @@ public interface ContentManager {
 
   void addContent(Content content);
   void addContent(Content content, Object constraints);
-  boolean removeContent(Content content);
+
+  boolean removeContent(Content content, final boolean dispose);
 
   void setSelectedContent(Content content);
   void setSelectedContent(Content content, boolean requestFocus);
@@ -42,7 +43,7 @@ public interface ContentManager {
   Content[] getSelectedContents();
 
 
-  void removeAllContents();
+  void removeAllContents(final boolean dispose);
 
   int getContentCount();
 
@@ -80,7 +81,7 @@ public interface ContentManager {
 
   List<AnAction> getAdditionalPopupActions(final Content content);
 
-  void removeSelectedContent(Content content);
+  void removeFromSelection(Content content);
 
   boolean isSelected(Content content);
 

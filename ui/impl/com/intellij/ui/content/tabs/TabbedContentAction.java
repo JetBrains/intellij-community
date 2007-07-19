@@ -55,7 +55,7 @@ public abstract class TabbedContentAction extends AnAction {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myManager.removeContent(myContent);
+      myManager.removeContent(myContent, true);
     }
 
     public void update(AnActionEvent e) {
@@ -76,7 +76,7 @@ public abstract class TabbedContentAction extends AnAction {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
         if (myContent != content && content.isCloseable()) {
-          myManager.removeContent(content);
+          myManager.removeContent(content, true);
         }
       }
       myManager.setSelectedContent(myContent);
@@ -136,7 +136,7 @@ public abstract class TabbedContentAction extends AnAction {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
         if (content.isCloseable()) {
-          myManager.removeContent(content);
+          myManager.removeContent(content, true);
         }
       }
     }

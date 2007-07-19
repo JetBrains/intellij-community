@@ -226,7 +226,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
 
       if (buildMessageView.isStopped()) {
-        ijMessageView.getContentManager().removeContent(content);
+        ijMessageView.getContentManager().removeContent(content, true);
         continue;
       }
 
@@ -236,7 +236,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       switch (result) {
         case 0:  // yes
           buildMessageView.stopProcess();
-          ijMessageView.getContentManager().removeContent(content);
+          ijMessageView.getContentManager().removeContent(content, true);
           continue;
         case 1: // no
           continue;
@@ -336,7 +336,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.getComponent() == this) {
-        messageView.getContentManager().removeContent(content);
+        messageView.getContentManager().removeContent(content, true);
         return;
       }
     }
@@ -563,7 +563,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     public void projectClosed(Project project) {
       if (myContent != null) {
-        myContentManager.removeContent(myContent);
+        myContentManager.removeContent(myContent, true);
       }
     }
 

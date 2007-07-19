@@ -234,7 +234,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     Content content = findContent(CONSOLE_CONTENT);
     if(content != null) {
-      myViewsContentManager.removeContent(content);
+      myViewsContentManager.removeContent(content, true);
     }
 
     content = createContent(myConsole.getComponent(), DebuggerBundle.message(
@@ -246,7 +246,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     Content[] contents = myViewsContentManager.getContents();
     final Content[] selected = myViewsContentManager.getSelectedContents();
-    myViewsContentManager.removeAllContents();
+    myViewsContentManager.removeAllContents(false);
 
     myViewsContentManager.addContent(content);
     for (Content each : contents) {
@@ -370,7 +370,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     disposeSession();
     myVariablesPanel.dispose();
     myWatchPanel.dispose();
-    myViewsContentManager.removeAllContents();
+    myViewsContentManager.removeAllContents(true);
     myManager.unregisterFileMatcher();
     myConsole = null;
   }
@@ -495,7 +495,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
     component.dispose();
     final Content content = myAdditionalContent.remove(component);
-    myViewsContentManager.removeContent(content);
+    myViewsContentManager.removeContent(content, true);
   }
 
   public void restoreLayout() {

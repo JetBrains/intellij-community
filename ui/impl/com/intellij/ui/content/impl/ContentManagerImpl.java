@@ -7,8 +7,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -119,11 +117,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, content);
   }
 
-  public boolean removeContent(Content content) {
-    return removeContent(content, true);
+  public boolean removeContent(Content content, final boolean dispose) {
+    return removeContent(content, true, dispose);
   }
 
-  private boolean removeContent(final Content content, boolean trackSelection) {
+  private boolean removeContent(final Content content, boolean trackSelection, boolean dispose) {
     try {
       Content selection = mySelection.size() > 0 ? mySelection.get(mySelection.size() - 1) : null;
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
@@ -142,7 +140,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       boolean wasSelected = isSelected(content);
       if (wasSelected) {
-        removeSelectedContent(content);
+        removeFromSelection(content);
       }
 
       int indexToSelect = -1;
@@ -183,7 +181,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       ((ContentImpl)content).setManager(null);
 
 
-      Disposer.dispose(content);
+      if (dispose) {
+        Disposer.dispose(content);
+      }
 
       return true;
     }
@@ -194,10 +194,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
-  public void removeAllContents() {
+  public void removeAllContents(final boolean dispose) {
     Content[] contents = getContents();
     for (Content content : contents) {
-      removeContent(content);
+      removeContent(content, dispose);
     }
   }
 
@@ -292,7 +292,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return result;
   }
 
-  public void removeSelectedContent(Content content) {
+  public void removeFromSelection(Content content) {
     if (!isSelected(content)) return;
     mySelection.remove(content);
     fireSelectionChanged(content);
@@ -326,7 +326,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         if (getIndexOfContent(content) == -1) return;
 
         for (Content each : old) {
-          removeSelectedContent(each);
+          removeFromSelection(each);
           mySelection.clear();
         }
 

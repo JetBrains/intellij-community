@@ -118,7 +118,7 @@ public class CvsTabbedWindow {
         return existing;
       }
       else if (!existingContent.isPinned()) {
-        getContentManager().removeContent(existingContent);
+        getContentManager().removeContent(existingContent, true);
         existingContent.release();
       }
     }

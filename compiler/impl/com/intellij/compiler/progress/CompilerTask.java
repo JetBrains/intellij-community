@@ -395,7 +395,7 @@ public class CompilerTask extends Task.Backgroundable {
       if (content.isPinned()) continue;
       if (content == notRemove) continue;
       if (content.getUserData(CONTENT_ID_KEY) != null) { // the content was added by me
-        messageView.getContentManager().removeContent(content);
+        messageView.getContentManager().removeContent(content, true);
       }
     }
   }
@@ -560,7 +560,7 @@ public class CompilerTask extends Task.Backgroundable {
 
     public void projectClosed(Project project) {
       if (myContent != null) {
-        myContentManager.removeContent(myContent);
+        myContentManager.removeContent(myContent, true);
       }
     }
 

@@ -293,7 +293,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
         ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
         if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content)) {
+          if (messageView.getContentManager().removeContent(content, true)) {
             content.release();
           }
         }

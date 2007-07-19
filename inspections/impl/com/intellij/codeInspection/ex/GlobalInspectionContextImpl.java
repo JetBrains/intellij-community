@@ -291,7 +291,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
 
     cleanup();
-    getContentManager().removeContent(myContent);
+    getContentManager().removeContent(myContent, true);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -1017,7 +1017,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     AnalysisUIOptions.getInstance(myProject).save(myUIOptions);
     final ContentManager contentManager = getContentManager();
     if (contentManager != null) {  //null for tests
-      contentManager.removeContent(myContent);
+      contentManager.removeContent(myContent, true);
     }
     myView = null;
   }
