@@ -851,7 +851,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
             mapping.setRootSettings(instance);
           }
           catch (Exception e) {
-            LOG.error(e);
+            LOG.error("Failed to load VCS root settings class "+ className + " for VCS " + vcsInstance.getClass().getName(), e);
           }
         }
       }
