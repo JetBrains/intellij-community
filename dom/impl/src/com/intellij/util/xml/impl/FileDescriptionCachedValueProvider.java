@@ -54,7 +54,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   };
 
   private final XmlFile myXmlFile;
-  private boolean myComputing;
+  private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private DomFileElementImpl<T> myLastResult;
   private final CachedValue<Boolean> myCachedValue;
   private final MyCondition myCondition = new MyCondition();
@@ -117,8 +117,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   private List<DomEvent> _computeFileElement(final boolean fireEvents, final String rootTagName) {
-    if (myComputing || myDomManager.getProject().isDisposed()) return Collections.emptyList();
-    myComputing = true;
+    if (myComputing.get() != null || myDomManager.getProject().isDisposed()) return Collections.emptyList();
+    myComputing.set(Boolean.TRUE);
     try {
       if (!myXmlFile.isValid()) {
         myModCount++;
@@ -151,7 +151,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       return saveResult(description.first, fireEvents, description.second);
     }
     finally {
-      myComputing = false;
+      myComputing.set(null);
     }
   }
 
