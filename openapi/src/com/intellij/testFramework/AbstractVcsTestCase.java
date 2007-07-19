@@ -265,6 +265,19 @@ public class AbstractVcsTestCase {
     }, "", null);
   }
 
+  protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          file.move(this, newParent);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }, "", null);
+  }
+
   protected void verifyChange(final Change c, final String beforePath, final String afterPath) {
     verifyRevision(c.getBeforeRevision(), beforePath);
     verifyRevision(c.getAfterRevision(), afterPath);
