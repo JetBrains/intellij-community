@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -275,6 +276,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      FileDocumentManager.getInstance().saveAllDocuments();
       Change[] changes = e.getData(DataKeys.CHANGES);
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes), true);
       ChangeListManager.getInstance(myProject).ensureUpToDate(false);
