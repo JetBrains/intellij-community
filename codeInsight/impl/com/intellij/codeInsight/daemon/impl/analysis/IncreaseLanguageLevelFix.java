@@ -55,7 +55,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     Module module = VfsUtil.getModuleForFile(project, file.getVirtualFile());
-    LanguageLevel moduleLevel = module.getLanguageLevel();
+    LanguageLevel moduleLevel = module == null ? null : module.getLanguageLevel();
     ProjectJdk jdk = getRelevantJdk(project, module);
     if (moduleLevel != null && isJdkSupportsLevel(jdk)) {
       ModuleRootManager.getInstance(module).setLanguageLevel(myLevel);
