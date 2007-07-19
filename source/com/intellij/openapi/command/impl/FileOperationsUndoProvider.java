@@ -7,12 +7,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 class FileOperationsUndoProvider extends VirtualFileAdapter {
   private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
   private Project myProject;
   private UndoManagerImpl myUndoManager;
   private boolean myIsInsideCommand;
+
+  private List<MyUndoableAction> myCommandActions;
 
   public FileOperationsUndoProvider(UndoManagerImpl m, Project p) {
     myUndoManager = m;
@@ -34,11 +39,15 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   public void commandStarted(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = true;
+    myCommandActions = new ArrayList<MyUndoableAction>();
   }
 
   public void commandFinished(Project p) {
     if (myProject != p) return;
     myIsInsideCommand = false;
+    if (myCommandActions.isEmpty()) return;
+    myCommandActions.get(0).beFirstInCommand();
+    myCommandActions.get(myCommandActions.size() - 1).beLastInCommand();
   }
 
   public void fileCreated(VirtualFileEvent e) {
@@ -143,23 +152,38 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
 
   private void createUndoableAction() {
     if (!myIsInsideCommand) return;
-    myUndoManager.undoableActionPerformed(new MyUndoableAction());
+    MyUndoableAction a = new MyUndoableAction();
+    myUndoManager.undoableActionPerformed(a);
+    myCommandActions.add(a);
   }
 
   private class MyUndoableAction implements UndoableAction {
     private Checkpoint myAfterActionCheckpoint;
     private Checkpoint myBeforeUndoCheckpoint;
+    private boolean myUseUndo;
+    private boolean myUseRedo;
 
     public MyUndoableAction() {
       myAfterActionCheckpoint = LocalHistory.putCheckpoint(myProject);
     }
 
+    public void beFirstInCommand() {
+      myUseUndo = true;
+    }
+
+    public void beLastInCommand() {
+      myUseRedo = true;
+    }
+
     public void undo() throws UnexpectedUndoException {
       myBeforeUndoCheckpoint = LocalHistory.putCheckpoint(myProject);
+
+      if (!myUseUndo) return;
       myAfterActionCheckpoint.revertToPreviousState();
     }
 
     public void redo() throws UnexpectedUndoException {
+      if (!myUseRedo) return;
       myBeforeUndoCheckpoint.revertToThatState();
     }
 
