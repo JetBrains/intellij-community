@@ -185,6 +185,9 @@ public class InlineToAnonymousClassHandler {
       PsiElement element = psiReference.getElement();
       if (element instanceof PsiReferenceExpression) {
         PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+        while (qualifier instanceof PsiParenthesizedExpression) {
+          qualifier = ((PsiParenthesizedExpression) qualifier).getExpression();
+        }
         if (qualifier instanceof PsiNewExpression) {
           PsiNewExpression newExpr = (PsiNewExpression) qualifier;
           PsiJavaCodeReferenceElement classRef = newExpr.getClassReference();

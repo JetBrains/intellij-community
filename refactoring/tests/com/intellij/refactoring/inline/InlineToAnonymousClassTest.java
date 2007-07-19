@@ -198,6 +198,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testMethodCallInNewExpressionWithParens() throws Exception {
+    doTest(false);
+  }
+
   public void testRedundantImplementsInterface() throws Exception {
     doTest(false);
   }
