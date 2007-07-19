@@ -167,6 +167,8 @@ public class CompleteReferenceExpression {
   }
 
   private static String[] getVariantsWithSameQualifier(GrExpression qualifier, GrReferenceExpression refExpr) {
+    if (qualifier != null && qualifier.getType() != null) return ArrayUtil.EMPTY_STRING_ARRAY;
+
     final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFile.class);
     List<String> result = new ArrayList<String>();
     addVariantsWithSameQualifier(scope, refExpr, qualifier, result);
