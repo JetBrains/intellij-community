@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.table.TableView;
@@ -114,6 +115,14 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
                 final String testClass = ((TestResultMessage)result).getTestClass();
                 final PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass);
                 if (psiClass != null) {
+                  final String method = ((TestResultMessage)result).getMethod();
+                  if (method != null) {
+                    final PsiMethod[] psiMethods = psiClass.findMethodsByName(method, false);
+                    for (PsiMethod psiMethod : psiMethods) {
+                      psiMethod.navigate(true);
+                      return;
+                    }
+                  }
                   psiClass.navigate(true);
                 }
               }

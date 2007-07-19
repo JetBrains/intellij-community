@@ -13,8 +13,8 @@ import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
 
@@ -69,7 +69,7 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
     }
 
     public String valueOf(final TestResultMessage result) {
-      return result.getMethod();
+      return result.toDisplayString();
     }
 
     public Comparator<TestResultMessage> getComparator() {
