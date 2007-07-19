@@ -9,8 +9,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
@@ -20,7 +21,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-class SaveAndSyncHandler implements ApplicationComponent {
+public class SaveAndSyncHandler implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SaveAndSyncHandler");
   private Runnable myIdleListener;
   private PropertyChangeListener myGeneralSettingsListener;
@@ -82,12 +83,12 @@ class SaveAndSyncHandler implements ApplicationComponent {
     IdeEventQueue.getInstance().removeIdleListener(myIdleListener);
   }
 
-  private boolean canSyncOrSave() {
+  private static boolean canSyncOrSave() {
     return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator();
   }
 
 
-  private void saveProjectsAndDocuments() {
+  private static void saveProjectsAndDocuments() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: save()");
     }
@@ -95,8 +96,7 @@ class SaveAndSyncHandler implements ApplicationComponent {
       FileDocumentManager.getInstance().saveAllDocuments();
     }
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      Project project = openProjects[i];
+    for (Project project : openProjects) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("save project: " + project);
       }
@@ -111,29 +111,33 @@ class SaveAndSyncHandler implements ApplicationComponent {
     }
   }
 
-  private void refreshFiles() {
+  private static void refreshFiles() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: synchronize()");
     }
+
+    refreshOpenFiles();
+
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("refresh VFS");
       }
       VirtualFileManager.getInstance().refresh(true);
     }
-    else { // referesh only opened files
-      for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
-        VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-        for (VirtualFile file : files) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("refresh file: " + files);
-          }
-          file.refresh(true, false);
-        }
-      }
-    }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit: synchronize()");
     }
+  }
+
+  public static void refreshOpenFiles() {
+    // Refresh open files synchronously so it doesn't wait for potentially longish refresh request in the queue to finish
+    final RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
+
+    for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
+      session.addAllFiles(FileEditorManager.getInstance(project).getSelectedFiles());
+    }
+
+    session.launch();
   }
 }
