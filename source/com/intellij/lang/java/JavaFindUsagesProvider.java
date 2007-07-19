@@ -5,6 +5,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.UsageSearchContext;
@@ -30,7 +31,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            element instanceof PsiMethod ||
            element instanceof PsiPackage ||
            element instanceof PsiLabeledStatement ||
-           ThrowSearchUtil.isSearchable(element);
+           ThrowSearchUtil.isSearchable(element) ||
+           (element instanceof PsiMetaBaseOwner && ((PsiMetaBaseOwner)element).getMetaData() != null);
   }
 
   public String getHelpId(@NotNull PsiElement element) {

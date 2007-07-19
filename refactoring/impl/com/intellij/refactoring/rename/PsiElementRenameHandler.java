@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -93,7 +94,8 @@ public class PsiElementRenameHandler implements RenameHandler {
   static boolean canRename(PsiElement element, Project project) {
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
     if (element instanceof XmlTag && !(((XmlTag)element).getMetaData() instanceof PsiWritableMetaData) ||
-        !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
+        !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue ||
+          (element instanceof PsiMetaBaseOwner && ((PsiMetaBaseOwner)element).getMetaData() != null))) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
