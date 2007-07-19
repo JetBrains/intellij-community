@@ -52,7 +52,14 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                myModuleName = CvsUtil.getModuleName(parent) + "/" + fileName;
+                final String parentModule = CvsUtil.getModuleName(parent);
+                VirtualFile file = parent.findChild(fileName);
+                if (parentModule == null && file != null) {
+                  myModuleName = CvsUtil.getModuleName(file);
+                }
+                else {
+                  myModuleName = parentModule + "/" + fileName;
+                }
               }
             });
 
