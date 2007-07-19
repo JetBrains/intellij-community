@@ -6,7 +6,7 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   private Project myProject;
   private DomElement[] myDomElements;
 
-  private final DomElementsRefreshStatusRenderer myErrorStripeRenderer;
+  private final DomElementsTrafficLightRenderer myErrorStripeRenderer;
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
 
   private final Alarm myAlarm = new Alarm();
@@ -51,7 +51,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
 
     setPreferredSize(getDimension());
 
-    myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(domElements[0].getRoot().getFile());
+    myErrorStripeRenderer = new DomElementsTrafficLightRenderer(domElements[0].getRoot().getFile());
 
     addUpdateRequest();
     domManager.addDomEventListener(new DomChangeAdapter() {
@@ -129,9 +129,9 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, ERRORS_FOUND_ICON.getIconHeight() + 2);
   }
 
-  private class DomElementsRefreshStatusRenderer extends RefreshStatusRenderer {
+  private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {
 
-    public DomElementsRefreshStatusRenderer(final PsiFile xmlFile) {
+    public DomElementsTrafficLightRenderer(final PsiFile xmlFile) {
       super(xmlFile.getProject(), (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(xmlFile.getProject()),
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }

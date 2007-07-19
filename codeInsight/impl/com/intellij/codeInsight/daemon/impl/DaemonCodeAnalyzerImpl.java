@@ -144,7 +144,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (myProject.isDisposed()) return;
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(new RefreshStatusRenderer(myProject, this, document, psiFile));
+    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(new TrafficLightRenderer(myProject, this, document, psiFile));
   }
 
   private List<Pair<NamedScope, NamedScopesHolder>> myScopes = Collections.emptyList();

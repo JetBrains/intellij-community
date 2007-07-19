@@ -8,14 +8,15 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.List;
 public class SeverityRegistrar implements JDOMExternalizable, ApplicationComponent {
   @NonNls private static final String INFO = "info";
   private static final Map<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl> ourMap = new TreeMap<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl>();
-  private static final Map<HighlightSeverity, Color> ourRendererColors = new HashMap<HighlightSeverity, Color>();
+  private static final Map<HighlightSeverity, Color> ourRendererColors = new THashMap<HighlightSeverity, Color>();
   @NonNls private static final String ERROR = "error";
   @NonNls private static final String WARNING = "warning";
   @NonNls private static final String COLOR = "color";
@@ -172,28 +173,20 @@ public class SeverityRegistrar implements JDOMExternalizable, ApplicationCompone
     TreeSet<HighlightSeverity> set = new TreeSet<HighlightSeverity>();
     set.add(HighlightSeverity.ERROR);
     set.add(HighlightSeverity.WARNING);
-    set.add(HighlightSeverity.INFO);
     set.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
+    set.add(HighlightSeverity.INFO);
     set.addAll(ourMap.keySet());
     return set;
   }
 
-  public static Color getRendererColorByIndex(final int i) {
+  public static Icon getRendererIconByIndex(final int i) {
     final HighlightSeverity severity = getSeverityByIndex(i);
-    if (severity == HighlightSeverity.ERROR){
-      return CodeInsightColors.ERRORS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
-    }
-    if (severity == HighlightSeverity.WARNING){
-      return CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
-    }
-    if (severity == HighlightSeverity.INFO){
-      return CodeInsightColors.INFO_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor();
-    }
-    if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING){
-      return CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING.getDefaultAttributes().getErrorStripeColor();
+    HighlightDisplayLevel level = HighlightDisplayLevel.find(severity.toString());
+    if (level != null) {
+      return level.getIcon();
     }
 
-    return ourRendererColors.get(severity);
+    return HighlightDisplayLevel.createIconByMask(ourRendererColors.get(severity));
   }
 
   public static boolean isSeverityValid(final HighlightSeverity severity) {

@@ -33,8 +33,8 @@ public class HighlightDisplayLevel {
                                                                                                         createIconByMask(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING.getDefaultAttributes().getErrorStripeColor())); 
   public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(CodeInsightColors.ERRORS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor()));
   public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor()));
-  public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, createIconByMask(CodeInsightColors.INFO_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor()));
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(new Color(30, 160, 0)));
+  public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, DO_NOT_SHOW.getIcon());
 
   private Icon myIcon;
   private final HighlightSeverity mySeverity;
@@ -66,7 +66,8 @@ public class HighlightDisplayLevel {
     final HighlightDisplayLevel level = ourMap.get(severity.toString());
     if (level == null) {
       new HighlightDisplayLevel(severity, severityIcon);
-    } else {
+    }
+    else {
       level.myIcon = severityIcon;
     }
   }

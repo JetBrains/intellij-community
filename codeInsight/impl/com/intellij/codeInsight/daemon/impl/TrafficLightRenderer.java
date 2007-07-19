@@ -22,7 +22,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RefreshStatusRenderer implements ErrorStripeRenderer {
+public class TrafficLightRenderer implements ErrorStripeRenderer {
   private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
   private static final Icon NO_ANALYSIS_ICON = IconLoader.getIcon("/general/noAnalysis.png");
   private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
@@ -119,7 +119,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     return myProject;
   }
 
-  public RefreshStatusRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
+  public TrafficLightRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
     myProject = project;
     myDaemonCodeAnalyzer = highlighter;
     myDocument = document;
@@ -187,8 +187,8 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     //return DaemonBundle.message("pass.syntax");
   }
 
-  private static final URL progressUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progress.png");
-  private static final URL progressPlaceHolderUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progressTransparentPlaceHolder.png");
+  private static final URL progressUrl = TrafficLightRenderer.class.getClassLoader().getResource("/general/progress.png");
+  private static final URL progressPlaceHolderUrl = TrafficLightRenderer.class.getClassLoader().getResource("/general/progressTransparentPlaceHolder.png");
 
   private static String renderProgressHtml(double progress) {
     @NonNls String text = "<table><tr><td>";
@@ -222,14 +222,14 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   }
 
   public void paint(Component c, Graphics g, Rectangle r) {
-    Icon icon = getTrafficLightIcon();
+    Icon icon = getIcon();
 
     int height = icon.getIconHeight();
     int width = icon.getIconWidth();
     icon.paintIcon(c, g, r.x + (r.width - width) / 2, r.y + (r.height - height) / 2);
   }
 
-  private Icon getTrafficLightIcon() {
+  private Icon getIcon() {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
 
     if (status == null) {
@@ -253,7 +253,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     if (atLeastOnePassFinished) {
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] != 0) {
-          icon = HighlightDisplayLevel.createIconByMask(SeverityRegistrar.getRendererColorByIndex(i));
+          icon = SeverityRegistrar.getRendererIconByIndex(i);
           break;
         }
       }
