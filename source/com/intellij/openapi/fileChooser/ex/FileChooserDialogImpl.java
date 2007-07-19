@@ -322,7 +322,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         Object userObject = node.getUserObject();
         if (userObject instanceof FileNodeDescriptor) {
           final VirtualFile file = ((FileNodeDescriptor)userObject).getElement().getFile();
-          if (file != null) {
+          if (file != null && file.isDirectory()) {
             final String rootPath = file.getPath();
             if (myRequests.get(rootPath) == null) {
               toAdd.add(rootPath);
