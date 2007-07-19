@@ -33,7 +33,18 @@ public class NonNlsUtils {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) expression;
             final PsiMethod method = methodCallExpression.resolveMethod();
-            return isNonNlsAnnotatedModifierListOwner(method);
+	        if (isNonNlsAnnotatedModifierListOwner(method)) {
+		        return true;
+	        }
+	        final PsiReferenceExpression methodExpression =
+			        methodCallExpression.getMethodExpression();
+	        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+	        return isNonNlsAnnotated(qualifier);
+        } else if (expression instanceof PsiArrayAccessExpression) {
+	        final PsiArrayAccessExpression arrayAccessExpression =
+			        (PsiArrayAccessExpression)expression;
+	        final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
+	        return isNonNlsAnnotated(arrayExpression);
         }
         return false;
     }
