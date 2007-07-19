@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -38,7 +39,19 @@ public class GrArrayDeclarationImpl extends GroovyPsiElementImpl implements GrAr
     return "Array declaration";
   }
 
-  public GrExpression getBoundExpression() {
-    return findChildByClass(GrExpression.class);
+  public GrExpression[] getBoundExpressions() {
+    return findChildrenByClass(GrExpression.class);
+  }
+
+  public int getArrayDimensions() {
+    final ASTNode node = getNode();
+    int num = 0;
+    ASTNode run = node.getFirstChildNode();
+    while (run != null) {
+      if (run.getElementType() == GroovyTokenTypes.mLBRACK) num++;
+      run = run.getTreeNext();
+    }
+
+    return num;
   }
 }
