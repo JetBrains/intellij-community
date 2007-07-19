@@ -43,6 +43,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myIgnoreFileTextField;
   private List<VirtualFile> myFilesToIgnore;
   private Project myProject;
+  private boolean myInternalChange;
 
   public IgnoreUnversionedDialog(final Project project) {
     super(project, false);
@@ -56,7 +57,9 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myIgnoreFileTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         // on text change, clear remembered files to ignore
-        myFilesToIgnore = null;
+        if (!myInternalChange) {
+          myFilesToIgnore = null;
+        }
       }
     });
     myIgnoreDirectoryTextField.addBrowseFolderListener("Select Directory to Ignore",
@@ -89,13 +92,19 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private void setFilesToIgnore(List<VirtualFile> virtualFiles) {
     assert virtualFiles.size() > 0;
     myFilesToIgnore = virtualFiles;
-    if (virtualFiles.size() == 1) {
-      VirtualFile projectDir = myProject.getBaseDir();
-      String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(virtualFiles.get(0).getPresentableUrl()));
-      myIgnoreFileTextField.setText(path);
+    myInternalChange = true;
+    try {
+      if (virtualFiles.size() == 1) {
+        VirtualFile projectDir = myProject.getBaseDir();
+        String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(virtualFiles.get(0).getPresentableUrl()));
+        myIgnoreFileTextField.setText(path);
+      }
+      else {
+        myIgnoreFileTextField.setText(VcsBundle.message("ignored.edit.multiple.files", virtualFiles.size()));
+      }
     }
-    else {
-      myIgnoreFileTextField.setText(VcsBundle.message("ignored.edit.multiple.files", virtualFiles.size()));
+    finally {
+      myInternalChange = false;
     }
     updateControls();
 
