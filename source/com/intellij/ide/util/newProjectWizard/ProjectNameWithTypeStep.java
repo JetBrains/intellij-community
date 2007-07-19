@@ -3,9 +3,12 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -22,6 +25,7 @@ import java.awt.event.MouseEvent;
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
+  private LabeledComponent<JTextField> myModuleName = new LabeledComponent<JTextField>();
 
   public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
@@ -78,9 +82,20 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         }
       }
     });
+
+
+
+    final JTextField component = new JTextField();
+    component.setText(myNamePathComponent.getNameValue());
+    myModuleName.setComponent(component);
+    myModuleName.setText(ProjectBundle.message("project.new.wizard.module.name.title"));
+    myModuleName.getLabel().setFont(myModuleName.getFont().deriveFont(Font.BOLD));
+    myModuleName.setVisible(myWizardContext.getProject() == null);
+    myAdditionalContentPanel.add(myModuleName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST,
+                                                                      GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+
     final JLabel descriptionLabel = new JLabel(IdeBundle.message("label.description"));
     descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myAdditionalContentPanel.setLayout(new GridBagLayout());
     myAdditionalContentPanel.add(Box.createHorizontalGlue(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     myAdditionalContentPanel.add(descriptionLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
@@ -103,6 +118,9 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   public void updateDataModel() {
     mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
     super.updateDataModel();
+    final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
+    assert builder != null;
+    builder.setName(myModuleName.getComponent().getText());
   }
 
   public void disposeUIResources() {

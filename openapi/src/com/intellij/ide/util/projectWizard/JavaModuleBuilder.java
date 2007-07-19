@@ -50,7 +50,9 @@ public class JavaModuleBuilder extends ModuleBuilder {
   @Nullable
   public final String getContentEntryPath() {
     if (myContentEntryPath == null) {
-      return getModuleFileDirectory();
+      final String directory = getModuleFileDirectory();
+      new File(directory).mkdirs();
+      return directory;
     }
     return myContentEntryPath;
   }

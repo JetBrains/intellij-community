@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,7 +30,7 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
-  private NamePathComponent myNamePathComponent;
+  protected NamePathComponent myNamePathComponent;
   protected final WizardContext myWizardContext;
   protected final StepSequence mySequence;
   protected final WizardMode myMode;
@@ -45,8 +46,11 @@ public class ProjectNameStep extends ModuleWizardStep {
       IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(wizardContext.getPresentationName()))
     );
     //noinspection HardCodedStringLiteral
-    final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(myWizardContext.getProjectFileDirectory(), "untitled", "");
-    myNamePathComponent.setPath(wizardContext.getProjectFileDirectory() + File.separator + initialProjectName);
+    final String baseDir = myWizardContext.getProject() == null
+                           ? myWizardContext.getProjectFileDirectory()
+                           : FileUtil.toSystemDependentName(myWizardContext.getProject().getBaseDir().getPath());
+    final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
+    myNamePathComponent.setPath(baseDir + File.separator + initialProjectName);
     myNamePathComponent.setNameValue(initialProjectName);
     
     myPanel = new JPanel(new GridBagLayout());
@@ -58,7 +62,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     );
     myPanel.add(promptLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 8, 0), 0, 0));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 8, 0), 0, 0));
-    myAdditionalContentPanel = new JPanel();
+    myAdditionalContentPanel = new JPanel(new GridBagLayout());
     myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(8, 0, 8, 0), 0, 0));
   }
   
