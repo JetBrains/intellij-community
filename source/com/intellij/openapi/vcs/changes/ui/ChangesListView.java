@@ -90,6 +90,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       return VcsBundle.message("changes.nodetitle.switched.files");
     }
   };
+  private ActionGroup myMenuGroup;
 
   public ChangesListView(final Project project) {
     myProject = project;
@@ -356,9 +357,21 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {
-    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
+    myMenuGroup = menuGroup;
+    updateMenu();
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
+  }
+
+  private void updateMenu() {
+    PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
+  }
+
+  public void updateUI() {
+    super.updateUI();
+    if (myMenuGroup != null) {
+      updateMenu();
+    }
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
