@@ -251,14 +251,14 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  public static void highlightOccurences(Project project, Editor editor, PsiElement[] elements) {
+  public static void highlightOccurrences(Project project, Editor editor, PsiElement[] elements) {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(project);
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       if (elements.length > 0) {
-        highlightManager.addOccurrenceHighlights(editor, elements, attributes, true, highlighters);
+        highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
       }
     }
   }

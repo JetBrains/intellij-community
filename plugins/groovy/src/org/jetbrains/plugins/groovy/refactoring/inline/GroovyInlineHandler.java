@@ -31,10 +31,10 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -48,7 +48,6 @@ public class GroovyInlineHandler implements InlineHandler {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
-  private static ArrayList<PsiElement> replacedOccurences = new ArrayList<PsiElement>();
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
@@ -67,10 +66,6 @@ public class GroovyInlineHandler implements InlineHandler {
 
   /**
    * Returns Settings object for referenced definition in case of local variable
-   *
-   * @param variable
-   * @param editor
-   * @return
    */
   private Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor) {
     final String localName = variable.getNameIdentifierGroovy().getText();
@@ -81,7 +76,7 @@ public class GroovyInlineHandler implements InlineHandler {
       exprs.add(ref.getElement());
     }
 
-    GroovyRefactoringUtil.highlightOccurences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
     if (variable.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
@@ -93,8 +88,7 @@ public class GroovyInlineHandler implements InlineHandler {
       return null;
     }
 
-    final String question = refs.size() == 1 ? GroovyRefactoringBundle.message("inline.alone.local.variable.prompt.0", localName) :
-        GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
+    final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         REFACTORING_NAME,
         question,
@@ -122,14 +116,6 @@ public class GroovyInlineHandler implements InlineHandler {
           owner instanceof GrVariableDeclarationOwner) {
         ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
       }
-      if (replacedOccurences.size() > 0) {
-        Project project = element.getProject();
-        FileEditorManager manager = FileEditorManager.getInstance(project);
-        Editor editor = manager.getSelectedTextEditor();
-        GroovyRefactoringUtil.highlightOccurences(project, editor, replacedOccurences.toArray(PsiElement.EMPTY_ARRAY));
-        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        replacedOccurences.clear();
-      }
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
@@ -146,9 +132,6 @@ public class GroovyInlineHandler implements InlineHandler {
 
   /**
    * Creates new inliner for local variable occurences
-   *
-   * @param variable
-   * @return
    */
   private Inliner createInlinerForLocalVariable(final GrVariable variable) {
     return new Inliner() {
@@ -175,8 +158,11 @@ public class GroovyInlineHandler implements InlineHandler {
         }
 
         try {
-          exprToBeReplaced.replaceWithExpression(newExpr);
-          replacedOccurences.add(newExpr);
+          newExpr = exprToBeReplaced.replaceWithExpression(newExpr);
+          FileEditorManager manager = FileEditorManager.getInstance(project);
+          Editor editor = manager.getSelectedTextEditor();
+          GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
+          WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }

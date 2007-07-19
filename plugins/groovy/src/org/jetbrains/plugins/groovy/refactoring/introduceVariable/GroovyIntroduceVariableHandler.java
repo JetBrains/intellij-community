@@ -15,9 +15,10 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -27,12 +28,10 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 
@@ -86,7 +85,7 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
   }
 
   protected void highlightOccurences(final Project project, Editor editor, final PsiElement[] elements) {
-    GroovyRefactoringUtil.highlightOccurences(project, editor, elements);
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, elements);
   }
 
 }
