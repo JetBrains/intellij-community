@@ -318,7 +318,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false) : null;
       processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes);
     } else {
-      processor = new PropertyResolverProcessor(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), refExpr, forCompletion);
+      processor = new PropertyResolverProcessor(name, refExpr, forCompletion);
     }
 
     return processor;

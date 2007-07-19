@@ -15,15 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
-
-import com.intellij.psi.*;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author ven
@@ -31,14 +30,12 @@ import com.intellij.openapi.diagnostic.Logger;
 public class PropertyResolverProcessor extends ResolverProcessor {
   private static Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor");
 
-  public PropertyResolverProcessor(String name, EnumSet<ResolveKind> resolveKinds, GroovyPsiElement place, boolean forCompletion) {
-    super(name, resolveKinds, place, forCompletion, PsiType.EMPTY_ARRAY);
+  public PropertyResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion) {
+    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
-      return super.execute(element, substitutor);
-    } else if (myName != null && element instanceof PsiMethod) {
+    if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = PsiUtil.isLValue(myPlace);
       if (isSimplePropertyGetter(method) && !lValue) {
@@ -56,6 +53,8 @@ public class PropertyResolverProcessor extends ResolverProcessor {
           return false;
         }
       }
+    } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
+      return super.execute(element, substitutor);
     }
 
     return true;
