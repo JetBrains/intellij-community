@@ -34,6 +34,9 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
       }
       return Icons.LIBRARY_ICON;
     }
+    if (element instanceof File) {
+      return Icons.JAR_ICON;
+    }
     return super.getElementIcon(element);
   }
 
@@ -52,7 +55,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return "";
   }
 
-  protected Collection<ModuleDescriptor> getEntries() {
+  protected List<ModuleDescriptor> getEntries() {
     final ProjectLayout layout = getBuilder().getProjectLayout();
     return layout.getModules();
   }

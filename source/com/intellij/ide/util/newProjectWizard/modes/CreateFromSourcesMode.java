@@ -4,6 +4,8 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
+import com.intellij.ide.util.importProject.ModulesLayoutStep;
+import com.intellij.ide.util.importProject.ProjectLayoutDetectionStep;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
@@ -32,12 +34,14 @@ public class CreateFromSourcesMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
-    myProjectBuilder = new ProjectFromSourcesBuilder();
-    final StepSequence sequence = new StepSequence();
     final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder();
+    myProjectBuilder = projectBuilder;
+    
+    final StepSequence sequence = new StepSequence();
     sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
     sequence.addCommonStep(new SourcePathsStep(context, projectBuilder, null, null));
-    
+    sequence.addCommonStep(new ProjectLayoutDetectionStep(projectBuilder, null, null));
+    sequence.addCommonStep(new ModulesLayoutStep(projectBuilder, null, null));
     return sequence;
   }
 

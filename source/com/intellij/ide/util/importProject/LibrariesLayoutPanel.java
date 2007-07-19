@@ -2,6 +2,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.util.Icons;
+import com.intellij.util.StringBuilderSpinAllocator;
 
 import javax.swing.*;
 import java.io.File;
@@ -27,6 +28,9 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
       }
       return Icons.LIBRARY_ICON;
     }
+    if(element instanceof File) {
+      return Icons.JAR_ICON;
+    }
     return super.getElementIcon(element);
   }
 
@@ -35,17 +39,34 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
       final LibraryDescriptor libDescr = (LibraryDescriptor)element;
       final Collection<File> jars = libDescr.getJars();
       if (jars.size() == 1) {
-        return jars.iterator().next().getName();
+        return getDisplayText(jars.iterator().next());
       }
       return libDescr.getName();
     }
     if (element instanceof File) {
-      return ((File)element).getName();
+      return getDisplayText((File)element);
     }
     return "";
   }
 
-  protected Collection<LibraryDescriptor> getEntries() {
+  private static String getDisplayText(File file) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(file.getName());
+      final File parentFile = file.getParentFile();
+      if (parentFile != null) {
+        builder.append(" (");
+        builder.append(parentFile.getPath());
+        builder.append(")");
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+  
+  protected List<LibraryDescriptor> getEntries() {
     final ProjectLayout layout = getBuilder().getProjectLayout();
     return layout.getLibraries();
   }

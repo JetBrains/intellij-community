@@ -28,8 +28,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myDependenciesList = createList();
     
     final Splitter splitter = new Splitter(false);
-    splitter.setFirstComponent(myEntriesList);
-    splitter.setSecondComponent(myDependenciesList);
+    splitter.setFirstComponent(new JScrollPane(myEntriesList));
+    splitter.setSecondComponent(new JScrollPane(myDependenciesList));
     
     add(splitter, BorderLayout.CENTER);
     
@@ -37,9 +37,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       public void valueChanged(final ListSelectionEvent e) {
         final List<T> entries = getSelectedEntries();
         final Collection deps = getDependencies(entries);
+        
         final DefaultListModel depsModel = (DefaultListModel)myDependenciesList.getModel();
         depsModel.clear();
-        for (Object dep : deps) {
+        for (Object dep : alphaSortList(new ArrayList(deps))) {
           depsModel.addElement(dep);
         }
       }
@@ -51,7 +52,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
   
   private JList createList() {
-    JList list = new JList(new DefaultListModel());
+    final JList list = new JList(new DefaultListModel());
     list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
     return list;
@@ -78,21 +79,30 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myEntriesList.getSelectionModel().clearSelection();
     final DefaultListModel model = (DefaultListModel)myEntriesList.getModel();
     model.clear();
-    for (T entry : getEntries()) {
+    for (T entry : alphaSortList(getEntries())) {
       model.addElement(entry);
     }
     if (model.getSize() > 0) {
       myEntriesList.setSelectedIndex(0);
     }
   }
-  
+
+  private <T> List<T> alphaSortList(final List<T> entries) {
+    Collections.sort(entries, new Comparator<T>() {
+      public int compare(final T o1, final T o2) {
+        return getElementText(o1).compareToIgnoreCase(getElementText(o2));
+      }
+    });
+    return entries;
+  }
+
   protected Icon getElementIcon(Object element) {
     return null;
   }
   
   protected abstract String getElementText(Object element);
   
-  protected abstract Collection<T> getEntries();
+  protected abstract List<T> getEntries();
   
   protected abstract Collection getDependencies(T entry);
   
