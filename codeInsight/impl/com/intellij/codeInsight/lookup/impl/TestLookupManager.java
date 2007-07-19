@@ -43,7 +43,7 @@ public class TestLookupManager extends LookupManagerImpl{
 
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    sortItems(psiFile, items);
+    sortItems(psiFile, items, itemPreferencePolicy);
 
     myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter);
     myActiveLookupEditor = editor;

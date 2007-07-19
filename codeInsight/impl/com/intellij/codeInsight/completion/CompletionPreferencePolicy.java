@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -13,10 +14,12 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectIntHashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
+public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionPreferencePolicy");
 
   private final ExpectedTypeInfo[] myExpectedInfos;
@@ -31,6 +34,11 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public void setPrefix(String prefix) {
     myPrefix = prefix;
     myPrefixLowered = prefix.toLowerCase();
+  }
+
+  @Nullable
+  public ExpectedTypeInfo[] getExpectedInfos() {
+    return myExpectedInfos;
   }
 
   public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix) {
@@ -182,15 +190,23 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       name = ((PsiMethod)o).getName();
     }
     else if (o instanceof PsiClass && myExpectedInfos.length == 1){
+      final PsiClass psiClass = (PsiClass)o;
+      if ("true".equals(System.getProperty("sort.lookup.items.by.proximity"))) {
+        final THashSet<PsiClass> classes = LookupManagerImpl.getFirstClasses(myExpectedInfos);
+        if (classes.contains(psiClass)) {
+          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || !LookupManagerImpl.hasFewAbstractMethods(psiClass)) return -1;
+        }
+      }
+
       final PsiType type = myExpectedInfos[0].getType();
-      final PsiType objectType = ((PsiClass)o).getManager().getElementFactory().createType((PsiClass)o);
+      final PsiType objectType = psiClass.getManager().getElementFactory().createType(psiClass);
       PsiType componentType = type.getDeepComponentType();
 
       if(type instanceof PsiArrayType && componentType.equals(objectType)){
         return Integer.MAX_VALUE;
       }
 
-      int count = StatisticsManager.getInstance().getMemberUseCount(type, (PsiClass)o);
+      int count = StatisticsManager.getInstance().getMemberUseCount(type, psiClass);
       if(count == 0){
         if(componentType.equals(objectType)){
           return 1;

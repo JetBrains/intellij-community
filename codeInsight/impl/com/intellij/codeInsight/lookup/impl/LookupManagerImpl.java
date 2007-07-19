@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
@@ -10,14 +12,12 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
-import com.intellij.psi.util.PsiProximityComparator;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
@@ -67,12 +67,12 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public Lookup showLookup(
-      final Editor editor,
-      LookupItem[] items,
-      String prefix,
-      LookupItemPreferencePolicy itemPreferencePolicy,
-      CharFilter filter
-      ) {
+    final Editor editor,
+    LookupItem[] items,
+    String prefix,
+    LookupItemPreferencePolicy itemPreferencePolicy,
+    CharFilter filter
+  ) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -84,7 +84,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    sortItems(psiFile, items);
+    sortItems(psiFile, items, itemPreferencePolicy);
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable(){
@@ -148,11 +148,13 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
-  protected void sortItems(PsiFile containingFile, LookupItem[] items) {
+  protected void sortItems(PsiFile containingFile, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
     if (shouldSortItems(containingFile, items)) {
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(containingFile, myProject);
       final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
         public int compare(LookupItem o1, LookupItem o2) {
+
+
           int priority = o1.getObject() instanceof LookupValueWithPriority
                          ? ((LookupValueWithPriority)o1.getObject()).getPriority()
                          : LookupValueWithPriority.NORMAL;
@@ -163,12 +165,33 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
           if (priority != priority2) {
             return priority2 - priority;
           }
+
+          if ("true".equals(System.getProperty("sort.lookup.items.by.proximity"))) {
+            if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
+              final CompletionPreferencePolicy completionPreferencePolicy = (CompletionPreferencePolicy)itemPreferencePolicy;
+              final ExpectedTypeInfo[] expectedInfos = completionPreferencePolicy.getExpectedInfos();
+              if (expectedInfos != null) {
+                final THashSet<PsiClass> set = getFirstClasses(expectedInfos);
+                if (set.contains(o1.getObject()) && !set.contains(o2.getObject())) return -1;
+                if (!set.contains(o1.getObject()) && set.contains(o2.getObject())) return 1;
+              }
+
+            }
+
+            final int i = proximityComparator.compare(o1.getObject(), o2.getObject());
+            if (i != 0) return i;
+
+            return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+          }
+
           int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
           if (stringCompare != 0) {
             return stringCompare;
           }
           return proximityComparator.compare(o1.getObject(), o2.getObject());
         }
+
+
       };
       Arrays.sort(items, comparator);
     }
@@ -255,5 +278,30 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       }
     }
     return items;
+  }
+
+  public static THashSet<PsiClass> getFirstClasses(final ExpectedTypeInfo[] expectedInfos) {
+    final THashSet<PsiClass> set = new THashSet<PsiClass>();
+    for (final ExpectedTypeInfo info : expectedInfos) {
+      final PsiType type = info.getType();
+      if (type instanceof PsiClassType) {
+        final PsiClass psiClass = ((PsiClassType)type).resolve();
+        if (psiClass != null) {
+          set.add(psiClass);
+        }
+      }
+    }
+    return set;
+  }
+
+  public static boolean hasFewAbstractMethods(final PsiClass psiClass) {
+    int count = 0;
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        count++;
+        if (count > 2) return false;
+      }
+    }
+    return true;
   }
 }
