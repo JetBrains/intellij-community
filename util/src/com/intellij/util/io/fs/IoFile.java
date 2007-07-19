@@ -113,4 +113,8 @@ class IoFile implements IFile {
   public int hashCode() {
     return myFile.hashCode();
   }
+
+  public String toString() {
+    return myFile.toString();
+  }
 }

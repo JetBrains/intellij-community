@@ -318,8 +318,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
-    myConfigurations.clear();
-    myUnloadedElements = null;
+    clear();
 
     final List children = parentNode.getChildren();
     for (final Object aChildren : children) {
@@ -330,6 +329,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
+  }
+
+  public void clear() {
+    myConfigurations.clear();
+    myUnloadedElements = null;
   }
 
   public boolean loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {

@@ -1,7 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.IFile;
 
 import java.util.*;
 
@@ -19,8 +19,8 @@ public class CompoundSaveSession {
     }
   }
 
-  public List<VirtualFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+  public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
+    List<IFile> result = new ArrayList<IFile>();
 
     for (StateStorage stateStorage : mySaveSessions.keySet()) {
       final StateStorage.SaveSession saveSession = mySaveSessions.get(stateStorage);
@@ -37,7 +37,7 @@ public class CompoundSaveSession {
     }
   }
 
-  public Set<String> getUsedMacros() throws StateStorage.StateStorageException {
+  public Set<String> getUsedMacros() {
     Set<String> usedMacros = new HashSet<String>();
 
     for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
@@ -57,5 +57,14 @@ public class CompoundSaveSession {
 
   public StateStorage.SaveSession getSaveSession(final StateStorage storage) {
     return mySaveSessions.get(storage);
+  }
+
+  public List<IFile> getAllStorageFiles() {
+    List<IFile> result = new ArrayList<IFile>();
+    for (StateStorage.SaveSession saveSession : mySaveSessions.values()) {
+      result.addAll(saveSession.getAllStorageFiles());
+    }
+
+    return result;
   }
 }

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +43,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
       public void fileCreated(final VirtualFileEvent event) {
         final Collection<VirtualFileListener> listeners = getListeners(event.getFile(), event.isFromRefresh());
         if (listeners == null) return;
-
+                                             
         for (VirtualFileListener listener : listeners) {
           listener.fileCreated(event);
         }
@@ -147,19 +148,32 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
 
   @Nullable
   private Collection<VirtualFileListener> getListeners(VirtualFile virtualFile, boolean fromRefresh) {
-    final String url = virtualFile.getUrl();
+    Set<VirtualFileListener> listeners = null;
 
-    final Set<VirtualFileListener> listeners;
+    while (virtualFile != null) {
+      final String url = virtualFile.getUrl();
 
-    if (!fromRefresh) {
-      listeners = myNonRefreshTrackers.get(url);
-    }
-    else {
-      listeners = myAllTrackers.get(url);
+
+      if (!fromRefresh) {
+        listeners = addToSet(listeners, myNonRefreshTrackers.get(url));
+      }
+      else {
+        listeners = addToSet(listeners, myAllTrackers.get(url));
+      }
+
+      virtualFile = virtualFile.getParent();
     }
 
     if (listeners == null || listeners.isEmpty()) return null;
 
     return listeners;
+  }
+
+  private static <T> Set<T> addToSet(Set<T> to, final Set<T> what) {
+    if (what == null || what.size() == 0) return to;
+
+    if (to == null) to = new HashSet<T>();
+    to.addAll(what);
+    return to;
   }
 }

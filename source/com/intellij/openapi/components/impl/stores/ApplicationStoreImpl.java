@@ -9,12 +9,10 @@ import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.List;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
@@ -65,10 +63,6 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public void load() throws IOException {
     myApplication.initComponents();
   }
-
-  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
-     return myStateStorageManager.getAllStorageFiles();
-   }
 
   public void setConfigPath(final String path) {
     myStateStorageManager.addMacro(APP_CONFIG_STORAGE_MACRO, path);

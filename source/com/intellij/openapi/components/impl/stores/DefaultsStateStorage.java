@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 
@@ -58,14 +55,6 @@ class DefaultsStateStorage implements StateStorage {
     return url != null;
   }
 
-  public void save() {
-    throw new UnsupportedOperationException("Method save is not supported in " + getClass());
-  }
-
-  public Set<String> getUsedMacros() {
-    return Collections.EMPTY_SET;
-  }
-
   @NotNull
   public ExternalizationSession startExternalization() {
     throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
@@ -84,15 +73,4 @@ class DefaultsStateStorage implements StateStorage {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 
-  public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
-    throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
-  }
-
-  public boolean needsSave() throws StateStorageException {
-    throw new UnsupportedOperationException("Method needsSave is not supported in " + getClass());
-  }
-
-  public List<VirtualFile> getAllStorageFiles() {
-    throw new UnsupportedOperationException("Method getAllStorageFiles is not supported in " + getClass());
-  }
 }

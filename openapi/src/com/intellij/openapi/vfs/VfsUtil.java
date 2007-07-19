@@ -27,6 +27,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.fs.FileSystem;
+import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -460,6 +462,10 @@ public class VfsUtil {
 
   public static File virtualToIoFile(VirtualFile file) {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
+  }
+
+  public static IFile virtualToIFile(VirtualFile file) {
+    return FileSystem.FILE_SYSTEM.createFile(PathUtil.toPresentableUrl(file.getUrl()));
   }
 
   public static VirtualFile copyFileRelative(Object requestor, VirtualFile file, VirtualFile toDir, String relativePath) throws IOException {

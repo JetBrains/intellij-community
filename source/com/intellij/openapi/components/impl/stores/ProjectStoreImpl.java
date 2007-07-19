@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -300,7 +301,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return (ProjectConversionHelper)project.getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
-  private static boolean checkMacros(final Project project, Element root) throws IOException {
+  private static boolean checkMacros(final Project project, Element root)  {
     final Set<String> usedMacros = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
 
     usedMacros.removeAll(getDefinedMacros());
@@ -407,18 +408,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return storage;
   }
 
-
-  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
-    final List<VirtualFile> result = super.getAllStorageFiles(includingSubStructures);
-
-    if (includingSubStructures) {
-      for (Module module : getPersistentModules()) {
-        result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFiles(includingSubStructures));
-      }
-    }
-
-    return result;
-  }
 
 
   protected StateStorageManager createStateStorageManager() {
@@ -597,13 +586,25 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return result;
     }
 
-    public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
+    public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
       if (!includingSubStructures) return super.getAllStorageFilesToSave(false);
 
-      List<VirtualFile> result = new ArrayList<VirtualFile>(super.getAllStorageFilesToSave(false));
+      List<IFile> result = new ArrayList<IFile>(super.getAllStorageFilesToSave(false));
 
       for (SaveSession moduleSaveSession : myModuleSaveSessions) {
         result.addAll(moduleSaveSession.getAllStorageFilesToSave(true));
+      }
+
+      return result;
+    }
+
+    public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
+      final List<IFile> result = super.getAllStorageFiles(includingSubStructures);
+
+      if (includingSubStructures) {
+        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+          result.addAll(moduleSaveSession.getAllStorageFiles(true));
+        }
       }
 
       return result;
@@ -643,7 +644,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       final Set<String> result = super.analyzeExternalChanges(changedFiles);
       if (result == null) return null;
 
@@ -667,7 +668,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
       return ApplicationManager.getApplication().runWriteAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
         public ReadonlyStatusHandler.OperationStatus compute() {
-          final List<VirtualFile> filesToSave;
+          final List<IFile> filesToSave;
           try {
             filesToSave = getAllStorageFilesToSave(true);
           }
@@ -677,8 +678,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           }
 
           List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
-          for (VirtualFile file : filesToSave) {
-            if (!file.isWritable()) readonlyFiles.add(file);
+
+          for (IFile file : filesToSave) {
+            final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+            if (virtualFile != null && !virtualFile.isWritable()) readonlyFiles.add(virtualFile);
           }
 
           if (readonlyFiles.isEmpty()) return new ReadonlyStatusHandler.OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
@@ -747,7 +750,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myStateStorageChooser;
   }
 
-  protected void doReload(final Set<VirtualFile> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
+  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
     super.doReload(changedFiles, componentNames);
 
     for (Module module : getPersistentModules()) {
@@ -755,11 +758,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  protected void reinitComponents(final Set<String> componentNames, final Set<VirtualFile> changedFiles) {
-    super.reinitComponents(componentNames, changedFiles);
+  protected void reinitComponents(final Set<String> componentNames) {
+    super.reinitComponents(componentNames);
 
     for (Module module : getPersistentModules()) {
-      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponents(componentNames, changedFiles);
+      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponents(componentNames);
     }
   }
 

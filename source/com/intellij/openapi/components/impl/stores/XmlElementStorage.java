@@ -7,6 +7,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.StringInterner;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.*;
 
@@ -170,15 +170,12 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       try {
         setState(componentName,  DefaultStateSerializer.serializeState(state, storageSpec));
       }
-      catch (ParserConfigurationException e) {
-        LOG.error(e);
-      }
       catch (WriteExternalException e) {
         LOG.debug(e);
       }
     }
 
-    private synchronized void setState(final String componentName, final Element element) throws StateStorageException {
+    private synchronized void setState(final String componentName, final Element element)  {
       if (element.getAttributes().isEmpty() && element.getChildren().isEmpty()) return;
 
       myStorageData.setState(componentName, element);
@@ -208,7 +205,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       doSave();
     }
 
-    public Set<String> getUsedMacros() throws StateStorageException {
+    public Set<String> getUsedMacros() {
       assert mySession == this;
 
       if (myUsedMacros == null) {
@@ -230,7 +227,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       return myUsedMacros;
     }
 
-    protected Document getDocumentToSave() throws StateStorageException {
+    protected Document getDocumentToSave()  {
       if (myDocumentToSave != null) return myDocumentToSave;
 
       final Element element = myStorageData.save();
@@ -249,7 +246,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       try {
         final StorageData storageData = loadData();
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,12 +32,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TObjectLongHashMap;
@@ -73,7 +76,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
-  private HashMap<Project, List<VirtualFile>> myChangedProjectFiles = new HashMap<Project, List<VirtualFile>>();
+  private HashMap<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
   //todo[mike] make private again
   public PathMacrosImpl myPathMacros;
   private volatile int myReloadBlockCount = 0;
@@ -92,8 +95,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           MessageBus messageBus = project.getMessageBus();
           MessageBusConnection connection = messageBus.connect(project);
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
-            public void storageFileChanged(final VirtualFileEvent event) {
-              saveChangedProjectFile(event.getFile(), project);
+            public void storageFileChanged(final VirtualFileEvent event, final StateStorage storage) {
+              saveChangedProjectFile(event.getFile(), project, storage);
             }
           });
 
@@ -488,21 +491,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private boolean shouldReloadProject(final Project project) {
     if (project.isDisposed()) return false;
-    List<VirtualFile> causes = myChangedProjectFiles.get(project);
-    final Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
-    for (VirtualFile cause : causes) {
-      if (!cause.isValid()) liveCauses.remove(cause);
-    }
-
-    if (liveCauses.isEmpty()) return false;
-
+    final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedProjectFiles.get(project));
 
     final boolean[] reloadOk = new boolean[]{false};
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          reloadOk[0] = ((ProjectImpl)project).getStateStore().reload(liveCauses);
+          reloadOk[0] = ((ProjectImpl)project).getStateStore().reload(causes);
         }
         catch (StateStorage.StateStorageException e) {
           Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
@@ -517,16 +513,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (reloadOk[0]) return false;
 
     String message;
-    if (liveCauses.size() == 1) {
-      message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
+    if (causes.size() == 1) {
+      message = ProjectBundle.message("project.reload.external.change.single", causes.iterator().next().first.getPresentableUrl());
     }
     else {
       StringBuilder filesBuilder = new StringBuilder();
       boolean first = true;
-      for (VirtualFile cause : liveCauses) {
+      for (Pair<VirtualFile, StateStorage> cause : causes) {
         if (!first) filesBuilder.append("\n");
         first = false;
-        filesBuilder.append(cause.getPresentableUrl());
+        filesBuilder.append(cause.first.getPresentableUrl());
       }
       message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
@@ -566,20 +562,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void saveChangedProjectFile(final VirtualFile file, final Project project) {
-    copyToTemp(file);
-    registerProjectToReload(project, file);
+    if (file.exists()) {
+      copyToTemp(file);
+    }
+    registerProjectToReload(project, file, null);
+  }
+
+  public void saveChangedProjectFile(final VirtualFile file, final Project project, final StateStorage storage) {
+    if (file.exists()) {
+      copyToTemp(file);
+    }
+    registerProjectToReload(project, file, storage);
   }
 
 
-  private void registerProjectToReload(final Project project, final VirtualFile cause) {
-    List<VirtualFile> changedProjectFiles = myChangedProjectFiles.get(project);
+  private void registerProjectToReload(final Project project, final VirtualFile cause, final StateStorage storage) {
+    List<Pair<VirtualFile, StateStorage>> changedProjectFiles = myChangedProjectFiles.get(project);
 
     if (changedProjectFiles == null) {
-      changedProjectFiles = new ArrayList<VirtualFile>();
+      changedProjectFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
       myChangedProjectFiles.put(project, changedProjectFiles);
     }
 
-    changedProjectFiles.add(cause);
+    changedProjectFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
   }
 
   private void copyToTemp(VirtualFile file) {
@@ -631,13 +636,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         ProjectImpl projectImpl = (ProjectImpl)project[0];
         IProjectStore projectStore = projectImpl.getStateStore();
         final String location = projectImpl.getLocation();
-        final List<VirtualFile> original = projectStore.getAllStorageFiles(true);
+
+        final List<IFile> original;
+        try {
+          final IComponentStore.SaveSession saveSession = projectStore.startSave();
+          original = saveSession.getAllStorageFiles(true);
+          saveSession.finishSave();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return;
+        }
 
         if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
           application.runWriteAction(new Runnable() {
             public void run() {
-              for (final VirtualFile aOriginal : original) {
-                restoreCopy(aOriginal);
+              for (final IFile originalFile : original) {
+                restoreCopy(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(originalFile));
               }
             }
           });

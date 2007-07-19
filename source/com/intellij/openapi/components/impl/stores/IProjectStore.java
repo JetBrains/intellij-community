@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getPresentableUrl();
 
-  boolean reload(final Set<VirtualFile> changedFiles) throws StateStorage.StateStorageException, IOException;
+  boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorage.StateStorageException, IOException;
 
   enum StorageFormat {
     FILE_BASED, DIRECTORY_BASED

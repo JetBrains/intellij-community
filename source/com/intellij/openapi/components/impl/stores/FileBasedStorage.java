@@ -35,12 +35,11 @@ public class FileBasedStorage extends XmlElementStorage {
   protected final String myRootElementName;
   private Integer myUpToDateHash;
 
-  public FileBasedStorage(
-    @Nullable TrackingPathMacroSubstitutor pathMacroManager,
-    final String filePath,
-    String rootElementName,
-    Disposable parentDisposable,
-    PicoContainer picoContainer) {
+  public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
+                          final String filePath,
+                          String rootElementName,
+                          Disposable parentDisposable,
+                          PicoContainer picoContainer) {
     super(pathMacroManager, parentDisposable, rootElementName);
 
     myRootElementName = rootElementName;
@@ -59,7 +58,7 @@ public class FileBasedStorage extends XmlElementStorage {
       final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         public void contentsChanged(final VirtualFileEvent event) {
-          listener.storageFileChanged(event);
+          listener.storageFileChanged(event, FileBasedStorage.this);
         }
       }, true, this);
     }
@@ -106,15 +105,13 @@ public class FileBasedStorage extends XmlElementStorage {
       StorageUtil.save(myFile, text);
     }
 
-    public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
-      return needsSave() ? getAllStorageFiles() : Collections.<VirtualFile>emptyList();
+    public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+      return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
     }
-  }
 
-  public List<VirtualFile> getAllStorageFiles() {
-    final VirtualFile virtualFile = StorageUtil.getVirtualFile(myFile);
-    if (virtualFile != null) return Collections.singletonList(virtualFile);
-    return Collections.emptyList();
+    public List<IFile> getAllStorageFiles() {
+      return Collections.singletonList(myFile);
+    }
   }
 
 
@@ -169,7 +166,8 @@ public class FileBasedStorage extends XmlElementStorage {
       }
     }
     catch (JDOMException e) {
-      throw new StateStorage.StateStorageException("Error while parsing " + myFile.getAbsolutePath() + ". File is probably corrupted: " + e.getMessage(), e);
+      throw new StateStorage.StateStorageException(
+        "Error while parsing " + myFile.getAbsolutePath() + ". File is probably corrupted: " + e.getMessage(), e);
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException("Error while loading " + myFile.getAbsolutePath() + ": " + e.getMessage(), e);

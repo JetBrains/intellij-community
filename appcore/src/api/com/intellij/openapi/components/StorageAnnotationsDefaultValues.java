@@ -1,7 +1,6 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,10 +18,6 @@ public interface StorageAnnotationsDefaultValues {
 
     public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
       throw new UnsupportedOperationException("Method hasState not implemented in " + getClass());
-    }
-
-    public List<VirtualFile> getAllStorageFiles() {
-      throw new UnsupportedOperationException("Method getAllStorageFiles is not supported in " + getClass());
     }
 
     public boolean needsSave() throws StateStorageException {

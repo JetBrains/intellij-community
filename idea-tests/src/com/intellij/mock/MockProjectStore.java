@@ -3,9 +3,11 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -112,10 +114,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
   }
 
-  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
-    throw new UnsupportedOperationException("Method getAllStorageFiles is not yet implemented in " + getClass().getName());
-  }
-
+  @NotNull
   public SaveSession startSave() throws IOException {
     throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
   }
@@ -129,7 +128,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getPresentableUrl not implemented in " + getClass());
   }
 
-  public boolean reload(final Set<VirtualFile> changedFiles) {
+  public boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 }

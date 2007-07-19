@@ -21,6 +21,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private LibraryModel myModel = new LibraryModel();
+  private boolean myFirstLoad = true;
 
 
   public LibraryTable.ModifiableModel getModifiableModel() {
@@ -33,9 +34,18 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return element;
   }
 
-  public void loadState(final Element object) {
+  public void loadState(final Element element) {
     try {
-      myModel.readExternal(object);
+      if (myFirstLoad) {
+        myModel.readExternal(element);
+      }
+      else {
+        final LibraryModel model = new LibraryModel();
+        model.readExternal(element);
+        commit(model);
+      }
+
+      myFirstLoad = false;
     }
     catch (InvalidDataException e) {
       throw new RuntimeException(e);

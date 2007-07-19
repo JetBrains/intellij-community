@@ -11,16 +11,22 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.PicoContainer;
 
-import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -33,25 +39,54 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private IFile myDir;
   private StateSplitter mySplitter;
 
-  private Map<String, Map<IFile, Element>> myStates = null;
   private Object mySession;
+  private MyStorageData myStorageData = new MyStorageData();
+  private List<VirtualFile> myAllStorageFiles;
 
   public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final String dir, final StateSplitter splitter,
-                               Disposable parentDisposable) {
+                               Disposable parentDisposable, final PicoContainer picoContainer) {
     assert dir.indexOf("$") < 0;
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = FILE_SYSTEM.createFile(dir);
     mySplitter = splitter;
     Disposer.register(parentDisposable, this);
+
+    VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
+    MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
+
+
+    if (virtualFileTracker != null && messageBus != null) {
+      final String path = myDir.getAbsolutePath();
+      final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
+
+
+      final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+      virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
+        public void contentsChanged(final VirtualFileEvent event) {
+          listener.storageFileChanged(event, DirectoryBasedStorage.this);
+        }
+
+        public void fileDeleted(final VirtualFileEvent event) {
+          listener.storageFileChanged(event, DirectoryBasedStorage.this);
+        }
+
+        public void fileCreated(final VirtualFileEvent event) {
+          listener.storageFileChanged(event, DirectoryBasedStorage.this);
+        }
+      }, true, this);
+    }
   }
 
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
-    if (myStates == null) loadState();
+    if (myStorageData == null)
+      myStorageData = loadState();
 
-    final Map<IFile, Element> statesMap = myStates.get(componentName);
-    if (statesMap == null) return null;
+    final Map<IFile, Element> statesMap = myStorageData.myStates.get(componentName);
+    if (statesMap == null) {
+      return DefaultStateSerializer.deserializeState(new Element("component"), stateClass, mergeInto);
+    }
 
     List<Element> subElements = new ArrayList<Element>();
 
@@ -65,7 +100,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
     final Element state = new Element("component");
     mySplitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
-    myStates.remove(componentName);
+    myStorageData.myStates.remove(componentName);
 
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(state);
@@ -74,10 +109,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     return DefaultStateSerializer.deserializeState(state, stateClass, mergeInto);
   }
 
-  private void loadState() throws StateStorageException {
-    myStates = new HashMap<String, Map<IFile, Element>>();
+  private MyStorageData loadState() throws StateStorageException {
+    MyStorageData storageData = new MyStorageData();
+    storageData.myStates = new HashMap<String, Map<IFile, Element>>();
     if (!myDir.exists()) {
-      return;
+      return storageData;
     }
     try {
       final IFile[] files = myDir.listFiles();
@@ -89,10 +125,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
         String componentName = element.getAttributeValue("name");
         assert componentName != null;
-        Map<IFile, Element> stateMap = myStates.get(componentName);
+        Map<IFile, Element> stateMap = storageData.myStates.get(componentName);
         if (stateMap == null) {
           stateMap = new HashMap<IFile, Element>();
-          myStates.put(componentName, stateMap);
+          storageData.myStates.put(componentName, stateMap);
         }
 
         stateMap.put(file, element);
@@ -104,131 +140,19 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     catch (JDOMException e) {
       throw new StateStorageException(e);
     }
+
+    return storageData;
   }
 
-  public void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
-    if (myStates == null) myStates = new HashMap<String, Map<IFile, Element>>();
-    try {
-      final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
-
-      if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.collapsePaths(element);
-      }
-
-      final List<Pair<Element, String>> states = mySplitter.splitState(element);
-
-      Map<IFile, Element> stateMap = myStates.get(componentName);
-      if (stateMap == null) {
-        stateMap = new HashMap<IFile, Element>();
-        myStates.put(componentName, stateMap);
-      }
-
-      for (Pair<Element, String> pair : states) {
-        Element e = pair.first;
-        String name = pair.second;
-
-        Element statePart = new Element("component");
-        statePart.setAttribute("name", componentName);
-        e.detach();
-        statePart.addContent(e);
-
-
-        stateMap.put(myDir.getChild(name), statePart);
-      }
-    }
-    catch (ParserConfigurationException e) {
-      throw new StateStorageException(e);
-    }
-    catch (WriteExternalException e) {
-      throw new StateStorageException(e);
-    }
-  }
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
-    if (myStates == null) loadState();
-    return myStates.containsKey(componentName);
-  }
-
-  public List<VirtualFile> getAllStorageFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (String componentName : myStates.keySet()) {
-      Map<IFile, Element> stateMap = myStates.get(componentName);
-
-      for (IFile file : stateMap.keySet()) {
-        final VirtualFile virtualFile = StorageUtil.getVirtualFile(file);
-        if (virtualFile != null) {
-          result.add(virtualFile);
-        }
-      }
-    }
-
-
-    return result;
-  }
-
-  public void save() throws StateStorageException {
-    final Set<String> currentNames = new HashSet<String>();
-
-    if (!myDir.exists()) {
-      myDir.createParentDirs();
-      myDir.mkDir();
-    }
-
-    IFile[] children = myDir.listFiles();
-    for (IFile child : children) {
-      currentNames.add(child.getName());
-    }
-
-    for (String componentName : myStates.keySet()) {
-      Map<IFile, Element> stateMap = myStates.get(componentName);
-
-      for (IFile file : stateMap.keySet()) {
-        StorageUtil.save(file, stateMap.get(file));
-        currentNames.remove(file.getName());
-      }
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (String name : currentNames) {
-          IFile child = myDir.getChild(name);
-          final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
-          assert virtualFile != null;
-          try {
-            virtualFile.delete(DirectoryBasedStorage.this);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      }
-    });
-
-    myStates.clear();
-  }
-
-  public Set<String> getUsedMacros() {
-    if (myPathMacroSubstitutor != null) {
-      return myPathMacroSubstitutor.getUsedMacros();
-    }
-    else {
-      return Collections.EMPTY_SET;
-    }
+    return true;
   }
 
   @NotNull
   public ExternalizationSession startExternalization() {
     assert mySession == null;
-    final ExternalizationSession session = new ExternalizationSession() {
-      {
-        myPathMacroSubstitutor.reset();
-      }
-
-      public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
-        assert mySession == this;
-        DirectoryBasedStorage.this.setState(componentName, state, storageSpec);
-      }
-    };
+    final ExternalizationSession session = new MyExternalizationSession(myPathMacroSubstitutor, myStorageData.clone());
 
     mySession = session;
     return session;
@@ -238,7 +162,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
-    final MySaveSession session = new MySaveSession();
+    final MySaveSession session = new MySaveSession(((MyExternalizationSession)externalizationSession).myStorageData, myPathMacroSubstitutor);
     mySession = session;
     return session;
   }
@@ -249,29 +173,110 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   public void reload(final Set<String> changedComponents) throws StateStorageException {
-    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
+    myStorageData = loadState();
+
   }
 
   public void dispose() {
   }
 
   private class MySaveSession implements SaveSession {
-    public void save() throws StateStorageException {
-      assert mySession == this;
-      DirectoryBasedStorage.this.save();
+    private final MyStorageData myStorageData;
+    private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+
+    private MySaveSession(final MyStorageData storageData, final TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+      myStorageData = storageData;
+      myPathMacroSubstitutor = pathMacroSubstitutor;
+
+      List<VirtualFile> allStorageFiles = new ArrayList<VirtualFile>();
+      for (String componentName : myStorageData.myStates.keySet()) {
+        Map<IFile, Element> stateMap = myStorageData.myStates.get(componentName);
+
+        for (IFile file : stateMap.keySet()) {
+          final VirtualFile virtualFile = StorageUtil.getVirtualFile(file);
+          if (virtualFile != null) {
+            allStorageFiles.add(virtualFile);
+          }
+        }
+      }
+
+
+     myAllStorageFiles = allStorageFiles;
     }
 
     public Set<String> getUsedMacros() {
-      assert mySession == this : "Wrong session in progress: " + mySession;
-      return DirectoryBasedStorage.this.getUsedMacros();
+      if (myPathMacroSubstitutor != null) {
+        return myPathMacroSubstitutor.getUsedMacros();
+      }
+      else {
+        return Collections.EMPTY_SET;
+      }
+    }
+
+    public void save() throws StateStorageException {
+      assert mySession == this;
+      final Set<String> currentNames = new HashSet<String>();
+
+      if (!myDir.exists()) {
+        myDir.createParentDirs();
+        myDir.mkDir();
+      }
+
+      IFile[] children = myDir.listFiles();
+      for (IFile child : children) {
+        currentNames.add(child.getName());
+      }
+
+      for (String componentName : myStorageData.myStates.keySet()) {
+        Map<IFile, Element> stateMap = myStorageData.myStates.get(componentName);
+
+        for (IFile file : stateMap.keySet()) {
+          StorageUtil.save(file, stateMap.get(file));
+          currentNames.remove(file.getName());
+        }
+      }
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for (String name : currentNames) {
+            IFile child = myDir.getChild(name);
+            final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
+            assert virtualFile != null : "Can't find vFile for: " + child;
+            try {
+              virtualFile.delete(DirectoryBasedStorage.this);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+        }
+      });
+
+      myStorageData.myStates.clear();
     }
 
     @Nullable
-      public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
-      return null;
+    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      boolean containsSelf = false;
+
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == DirectoryBasedStorage.this) {
+          containsSelf = true;
+          break;
+        }
+      }
+
+      if (!containsSelf) return Collections.emptySet();
+
+      Set<String> fileNames = new HashSet<String>();
+
+      Set<String> componentNames = new HashSet<String>();
+      componentNames.addAll(myStorageData.myStates.keySet());
+
+      return componentNames;
     }
 
-    public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
+    public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
 
       try {
@@ -279,7 +284,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         assert myDir.isDirectory();
 
 
-        List<VirtualFile> filesToSave = new ArrayList<VirtualFile>();
+        List<IFile> filesToSave = new ArrayList<IFile>();
 
         IFile[] children = myDir.listFiles();
 
@@ -289,8 +294,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           currentChildNames.add(child.getName());
         }
 
-        for (String componentName : myStates.keySet()) {
-          Map<IFile, Element> stateMap = myStates.get(componentName);
+        for (String componentName : myStorageData.myStates.keySet()) {
+          Map<IFile, Element> stateMap = myStorageData.myStates.get(componentName);
 
           for (IFile file : stateMap.keySet()) {
             if (!currentChildNames.contains(file.getName())) {
@@ -301,20 +306,14 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
             final byte[] text = StorageUtil.printElement(stateMap.get(file));
             if (!Arrays.equals(file.loadBytes(), text)) {
-              final VirtualFile virtualFile = StorageUtil.getVirtualFile(file);
-              if (virtualFile != null) {
-                filesToSave.add(virtualFile);
-              }
+              filesToSave.add(file);
             }
           }
         }
 
         for (String childName : currentChildNames) {
           final IFile child = myDir.getChild(childName);
-          final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
-          if (virtualFile != null) {
-            filesToSave.add(virtualFile);
-          }
+          filesToSave.add(child);
         }
 
         return filesToSave;
@@ -323,7 +322,82 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         LOG.debug(e);
       }
 
-      return Collections.<VirtualFile>emptyList();
+      return Collections.emptyList();
+    }
+
+    public List<IFile> getAllStorageFiles() {
+      List<IFile> allStorageFiles = new ArrayList<IFile>();
+      for (String componentName : myStorageData.myStates.keySet()) {
+          Map<IFile, Element> stateMap = myStorageData.myStates.get(componentName);
+
+        for (IFile file : stateMap.keySet()) {
+          allStorageFiles.add(file);
+        }
+      }
+
+      return allStorageFiles;
+    }
+  }
+
+  private class MyStorageData {
+    private Map<String, Map<IFile, Element>> myStates = new HashMap<String, Map<IFile, Element>>();
+
+    protected MyStorageData clone() {
+      final MyStorageData result = new MyStorageData();
+      result.myStates = new HashMap<String, Map<IFile, Element>>(myStates);
+      return result;
+    }
+  }
+
+  private class MyExternalizationSession implements ExternalizationSession {
+    private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+    private final MyStorageData myStorageData;
+
+    private MyExternalizationSession(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final MyStorageData storageData) {
+      myStorageData = storageData;
+      myPathMacroSubstitutor = pathMacroSubstitutor;
+      myPathMacroSubstitutor.reset();
+    }
+
+    public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws
+                                                                                                                            StateStorageException {
+      assert mySession == this;
+      setState(componentName, state, storageSpec);
+    }
+
+    private void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
+      if (myStorageData.myStates == null) myStorageData.myStates = new HashMap<String, Map<IFile, Element>>();
+      try {
+        final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
+
+        if (myPathMacroSubstitutor != null) {
+          myPathMacroSubstitutor.collapsePaths(element);
+        }
+
+        final List<Pair<Element, String>> states = mySplitter.splitState(element);
+
+        Map<IFile, Element> stateMap = myStorageData.myStates.get(componentName);
+        if (stateMap == null) {
+          stateMap = new HashMap<IFile, Element>();
+          myStorageData.myStates.put(componentName, stateMap);
+        }
+
+        for (Pair<Element, String> pair : states) {
+          Element e = pair.first;
+          String name = pair.second;
+
+          Element statePart = new Element("component");
+          statePart.setAttribute("name", componentName);
+          e.detach();
+          statePart.addContent(e);
+
+
+          stateMap.put(myDir.getChild(name), statePart);
+        }
+      }
+      catch (WriteExternalException e) {
+        throw new StateStorageException(e);
+      }
     }
   }
 }

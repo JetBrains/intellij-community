@@ -3,7 +3,9 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -57,10 +59,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return document;
       }
 
-      public List<VirtualFile> getAllStorageFiles() {
-        return Collections.emptyList();
-      }
-
       protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
         return new DefaultSaveSession(externalizationSession);
       }
@@ -82,8 +80,12 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }
 
-        public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
-          return needsSave() ? getAllStorageFiles() : Collections.<VirtualFile>emptyList();
+        public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+          return Collections.emptyList();
+        }
+
+        public List<IFile> getAllStorageFiles() {
+          return Collections.emptyList();
         }
       }
     };
@@ -106,26 +108,16 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void clearStateStorage(@NotNull String file) {
       }
 
-      public List<VirtualFile> getAllStorageFiles() {
-        return Collections.EMPTY_LIST;
-      }
-
       public ExternalizationSession startExternalization() {
         return new MyExternalizationSession(storage);
       }
 
-      public SaveSession startSave(final ExternalizationSession externalizationSession) throws StateStorage.StateStorageException {
+      public SaveSession startSave(final ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 
       public void finishSave(SaveSession saveSession) {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
-      }
-
-      //returns set of component which were changed, null if changes are much more than just component state.
-      @Nullable
-      public Set<String> analyzeExternalChanges(final Set<VirtualFile> files) {
-        throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
       }
 
       @Nullable
@@ -134,7 +126,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return storage;
       }
 
-      public void reload(final Set<VirtualFile> changedFiles, final Set<String> changedComponents) {
+      public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) {
         throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
       }
     };
@@ -179,20 +171,24 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     //returns set of component which were changed, null if changes are much more than just component state.
     @Nullable
-    public Set<String> analyzeExternalChanges(Set<VirtualFile> files) {
+    public Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files) {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
-    public List<VirtualFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
-      return Collections.EMPTY_LIST;
+    public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
+      return Collections.emptyList();
+    }
+
+    public List<IFile> getAllStorageFiles() {
+      return Collections.emptyList();
     }
 
     public void save() throws StateStorage.StateStorageException {
       saveSession.save();
     }
 
-    public Set<String> getUsedMacros() throws StateStorage.StateStorageException {
-      return Collections.EMPTY_SET;
+    public Set<String> getUsedMacros() {
+      return Collections.emptySet();
     }
 
     public StateStorage.SaveSession getSaveSession(final String storage) {

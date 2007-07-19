@@ -1,7 +1,10 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.IFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -13,8 +16,6 @@ public interface IComponentStore {
   void load() throws IOException, StateStorage.StateStorageException;
 
 
-  List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures);
-
   class SaveCancelledException extends IOException {
 
     public SaveCancelledException() {
@@ -25,15 +26,18 @@ public interface IComponentStore {
     }
   }
 
+  //todo:remove throws
+  @NotNull
   SaveSession startSave() throws IOException;
 
   interface SaveSession {
     Collection<String> getUsedMacros() throws StateStorage.StateStorageException;
-    List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
+    List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
     SaveSession save() throws IOException;
     void finishSave();
 
-    Set<String> analyzeExternalChanges(Set<VirtualFile> changedFiles);
+    Set<String> analyzeExternalChanges(Set<Pair<VirtualFile,StateStorage>> changedFiles);
+    List<IFile> getAllStorageFiles(final boolean includingSubStructures);
   }
 
 }

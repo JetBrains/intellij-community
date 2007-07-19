@@ -13,7 +13,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.lang.annotation.Annotation;
 
 
@@ -24,7 +23,7 @@ class DefaultStateSerializer {
   private DefaultStateSerializer() {
   }
 
-  static Element serializeState(Object state, final Storage storage) throws ParserConfigurationException, WriteExternalException {
+  static Element serializeState(Object state, final Storage storage) throws  WriteExternalException {
     if (state instanceof Element) {
       return (Element)state;
     }

@@ -3,8 +3,10 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -18,6 +20,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   private String myRootTagName;
   private Object mySession;
   private PicoContainer myPicoContainer;
+  private Map<IFile, StateStorage> myFileToStorage = new HashMap<IFile, StateStorage>();
 
   public StateStorageManagerImpl(
     @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
@@ -118,7 +121,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       throw new StateStorage.StateStorageException(e);
     }
 
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this);
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this, myPicoContainer);
   }
 
   @Nullable
@@ -161,16 +164,6 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     return actualFile;
   }
 
-  public List<VirtualFile> getAllStorageFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-
-    for (StateStorage storage : myStorages.values()) {
-      result.addAll(storage.getAllStorageFiles());
-    }
-
-    return result;
-  }
-
   public ExternalizationSession startExternalization() {
     ExternalizationSession session = new MyExternalizationSession();
 
@@ -179,7 +172,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     return session;
   }
 
-  public SaveSession startSave(final ExternalizationSession externalizationSession) throws StateStorage.StateStorageException {
+  public SaveSession startSave(final ExternalizationSession externalizationSession)  {
     assert mySession == externalizationSession;
 
     SaveSession session = createSaveSession(externalizationSession);
@@ -189,7 +182,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     return session;
   }
 
-  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) throws StateStorage.StateStorageException {
+  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession)  {
     return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
@@ -238,19 +231,32 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
     public MySaveSession(final MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
+
+      myFileToStorage.clear();
+      for (StateStorage storage : myStorages.values()) {
+        final List<IFile> storageFiles = myCompoundSaveSession.getSaveSession(storage).getAllStorageFiles();
+        for (IFile storageFile : storageFiles) {
+          myFileToStorage.put(storageFile, storage);
+        }
+      }
     }
 
-    public List<VirtualFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
+    public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
 
+    public List<IFile> getAllStorageFiles() {
+      return myCompoundSaveSession.getAllStorageFiles();
+    }
+
     public void save() throws StateStorage.StateStorageException {
       assert mySession == this;
+
       myCompoundSaveSession.save();
     }
 
-    public Set<String> getUsedMacros() throws StateStorage.StateStorageException {
+    public Set<String> getUsedMacros()  {
       assert mySession == this;
       return myCompoundSaveSession.getUsedMacros();
     }
@@ -268,22 +274,17 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
     //returns set of component which were changed, null if changes are much more than just component state.
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       Set<String> result = new HashSet<String>();
 
-      nextSorage: for (StateStorage storage : myStorages.values()) {
-        final List<VirtualFile> virtualFiles = storage.getAllStorageFiles();
+      nextSorage: for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        final StateStorage stateStorage = pair.second;
+        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(stateStorage);
+        if (saveSession == null) continue nextSorage;
+        final Set<String> s = saveSession.analyzeExternalChanges(changedFiles);
 
-        for (VirtualFile virtualFile : virtualFiles) {
-          if (changedFiles.contains(virtualFile)) {
-            final Set<String> s = myCompoundSaveSession.getSaveSession(storage).analyzeExternalChanges(changedFiles);
-
-            if (s == null) return null;
-            result.addAll(s);
-
-            continue nextSorage;
-          }
-        }
+        if (s == null) return null;
+        result.addAll(s);
       }
 
       return result;
@@ -293,16 +294,9 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   public void dispose() {
   }
 
-  public void reload(final Set<VirtualFile> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException {
-    nextSorage: for (StateStorage storage : myStorages.values()) {
-      final List<VirtualFile> virtualFiles = storage.getAllStorageFiles();
-
-      for (VirtualFile virtualFile : virtualFiles) {
-        if (changedFiles.contains(virtualFile)) {
-          storage.reload(changedComponents);
-          continue nextSorage;
-        }
-      }
+  public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException {
+    for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+      pair.second.reload(changedComponents);
     }
   }
 }

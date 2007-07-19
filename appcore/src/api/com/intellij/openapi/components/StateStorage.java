@@ -1,7 +1,9 @@
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +20,6 @@ public interface StateStorage {
   boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException;
 
 
-  List<VirtualFile> getAllStorageFiles();
-
   @NotNull
   ExternalizationSession startExternalization();
   @NotNull
@@ -35,12 +35,13 @@ public interface StateStorage {
   interface SaveSession {
     void save() throws StateStorageException;
 
-    Set<String> getUsedMacros() throws StateStorageException;
+    Set<String> getUsedMacros();
 
     @Nullable
-    Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles);
+    Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles);
 
-    Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException;
+    Collection<IFile> getStorageFilesToSave() throws StateStorageException;
+    List<IFile> getAllStorageFiles();
   }
 
   class StateStorageException extends Exception {
@@ -61,6 +62,6 @@ public interface StateStorage {
   }
 
   interface Listener {
-    void storageFileChanged(final VirtualFileEvent event);
+    void storageFileChanged(final VirtualFileEvent event, final StateStorage storage);
   }
 }

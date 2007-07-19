@@ -5,10 +5,12 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +69,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
 
-  @Nullable
+  @NotNull
   public SaveSession startSave() throws IOException {
     try {
       final ComponentStoreImpl.SaveSessionImpl session = createSaveSession();
@@ -85,7 +87,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return new SaveSessionImpl();
   }
 
-  public void finishSave(final SaveSession saveSession) {
+  public void finishSave(@NotNull final SaveSession saveSession) {
     assert mySession == saveSession;
     mySession.finishSave();
     mySession = null;
@@ -95,10 +97,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     try {
       Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
 
-
-      final T state = persistentStateComponent.getState();
-
-      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
+      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), persistentStateComponent.getState());
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -308,7 +307,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   protected class SaveSessionImpl implements SaveSession {
-    @Nullable protected StateStorageManager.SaveSession myStorageManagerSaveSession;
+    protected StateStorageManager.SaveSession myStorageManagerSaveSession;
 
     public SaveSessionImpl() {
       ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
@@ -318,7 +317,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       return myStorageManagerSaveSession.getUsedMacros();
     }
 
-    public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
+    public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
       try {
         return myStorageManagerSaveSession.getAllStorageFilesToSave();
       }
@@ -374,19 +373,17 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       return myStorageManagerSaveSession.analyzeExternalChanges(changedFiles);
+    }
+
+    public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
+      return myStorageManagerSaveSession.getAllStorageFiles();
     }
   }
 
-  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
-    return getStateStorageManager().getAllStorageFiles();
-  }
-
-  public boolean reload(final Set<VirtualFile> changedFiles) throws IOException, StateStorage.StateStorageException {
-    final SaveSessionImpl saveSession = (SaveSessionImpl)startSave();
-
-
+  public boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws IOException, StateStorage.StateStorageException {
+    final SaveSession saveSession = startSave();
     final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
     try {
       if (componentNames == null) return false;
@@ -399,7 +396,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     doReload(changedFiles, componentNames);
 
-    reinitComponents(componentNames, changedFiles);
+    reinitComponents(componentNames);
 
     return true;
   }
@@ -414,22 +411,16 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return true;
   }
 
-  protected void reinitComponents(final Set<String> componentNames, final Set<VirtualFile> changedFiles) {
-    final List<VirtualFile> storageFiles = getAllStorageFiles(false);
-    for (VirtualFile storageFile : storageFiles) {
-      if (changedFiles.contains(storageFile)) {
-        for (String componentName : componentNames) {
-          final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
-          if (component != null) {
-            initPersistentComponent(component);
-          }
-        }
-        break;
+  protected void reinitComponents(final Set<String> componentNames) {
+    for (String componentName : componentNames) {
+      final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
+      if (component != null) {
+        initPersistentComponent(component);
       }
     }
   }
 
-  protected void doReload(final Set<VirtualFile> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
+  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
     getStateStorageManager().reload(changedFiles, componentNames);
   }
 }

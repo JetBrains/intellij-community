@@ -14,10 +14,14 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.fs.FileSystem;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -145,12 +149,26 @@ public class ClasspathStorage implements StateStorage {
       }
 
       @Nullable
-      public Set<String> analyzeExternalChanges(final Set<VirtualFile> changedFiles) {
+      public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
         return null;
       }
 
-      public Collection<? extends VirtualFile> getStorageFilesToSave() throws StateStorageException {
-        return needsSave() ? getAllStorageFiles() : Collections.<VirtualFile>emptyList();
+      public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+        return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
+      }
+
+      public List<IFile> getAllStorageFiles() {
+        final List<IFile> list = new ArrayList<IFile>();
+        final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+        getFileSet().listFiles(virtualFiles);
+
+        for (VirtualFile virtualFile : virtualFiles) {
+          final File ioFile = VfsUtil.virtualToIoFile(virtualFile);
+          if (ioFile == null) continue;
+          list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
+        }
+
+        return list;
       }
     };
 
@@ -165,12 +183,6 @@ public class ClasspathStorage implements StateStorage {
 
   public void reload(final Set<String> changedComponents) throws StateStorage.StateStorageException {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
-  }
-
-  public List<VirtualFile> getAllStorageFiles() {
-    final List<VirtualFile> list = new ArrayList<VirtualFile>();
-    getFileSet().listFiles(list);
-    return list;
   }
 
   public boolean needsSave() throws StateStorageException {
