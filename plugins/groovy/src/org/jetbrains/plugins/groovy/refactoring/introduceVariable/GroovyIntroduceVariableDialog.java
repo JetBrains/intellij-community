@@ -136,8 +136,10 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     } else {
       if (GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY != null) {
         myCbTypeSpec.setSelected(GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
+        myTypeComboBox.setEnabled(GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
       } else {
         myCbTypeSpec.setSelected(true);
+        myTypeComboBox.setEnabled(true);
       }
       myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
       for (String typeName : myTypeMap.keySet()) {

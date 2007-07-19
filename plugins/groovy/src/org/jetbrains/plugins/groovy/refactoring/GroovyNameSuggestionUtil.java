@@ -15,20 +15,22 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,21 +111,22 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static void generateNamesForArrayType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
-/*
     int arrayDim = type.getArrayDimensions();
-    if (arrayDim != 1) return;
-*/
-  }
+    if (arrayDim == 0) return;
+    PsiType deepType = type.getDeepComponentType();
+    String candidateName =cleanTypeName(deepType.getPresentableText());
+    if (deepType instanceof PsiClassType) {
+      PsiClass clazz = ((PsiClassType) deepType).resolve();
+      if (clazz == null) return;
+      candidateName = fromLowerLetter(clazz.getName());
+    }
+    candidateName = StringUtil.pluralize(fromLowerLetter(candidateName));
+    generateCamelNames(possibleNames, validator, candidateName);
 
-  @NotNull
-  private static String cleanTypeName(@NotNull String typeName) {
-    if (typeName.contains(".")) {
-      typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
-    }
-    if (typeName.contains("<")) {
-      typeName = typeName.substring(0, typeName.indexOf("<"));
-    }
-    return typeName;
+    ArrayList<String> camelizedName = camelizeString(candidateName);
+    candidateName = camelizedName.get(camelizedName.size()-1);
+    candidateName = "arrayOf" + fromUpperLetter(candidateName);
+    possibleNames.add(validator.validateName(candidateName, true));
   }
 
   private static void generateNamesForColletionType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
@@ -132,7 +135,6 @@ public class GroovyNameSuggestionUtil {
     PsiClass clazz = ((PsiClassType) type).resolve();
     if (clazz == null) return;
     String collectionName = clazz.getName();
-
     assert collectionName != null;
 
     String componentName = cleanTypeName(componentType.getPresentableText());
@@ -144,10 +146,24 @@ public class GroovyNameSuggestionUtil {
     }
 
     assert componentName != null;
-    String candidate = fromLowerLetter(componentName.toLowerCase()) + "s";
-    possibleNames.add(validator.validateName(candidate, true));
-    candidate = collectionName.toLowerCase() + "Of" + fromUpperLetter(componentName.toLowerCase()) + "s";
-    possibleNames.add(validator.validateName(candidate, true));
+    String candidateName = StringUtil.pluralize(fromLowerLetter(componentName));
+    generateCamelNames(possibleNames, validator, candidateName);
+
+    ArrayList<String> camelizedName = camelizeString(candidateName);
+    candidateName = camelizedName.get(camelizedName.size()-1);
+    candidateName = collectionName.toLowerCase() + "Of" + fromUpperLetter(candidateName);
+    possibleNames.add(validator.validateName(candidateName, true));
+  }
+
+  @NotNull
+  private static String cleanTypeName(@NotNull String typeName) {
+    if (typeName.contains(".")) {
+      typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
+    }
+    if (typeName.contains("<")) {
+      typeName = typeName.substring(0, typeName.indexOf("<"));
+    }
+    return typeName;
   }
 
   private static void generateCamelNames(ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator, String typeName) {
