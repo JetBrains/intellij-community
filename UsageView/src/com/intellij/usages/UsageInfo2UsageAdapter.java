@@ -55,13 +55,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   private String myTooltipText;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
-  private final MyUsagePresentation myUsagePresentation;
+  private final UsagePresentation myUsagePresentation;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
 
-    myUsagePresentation = ApplicationManager.getApplication().runReadAction(new Computable<MyUsagePresentation>() {
-      public MyUsagePresentation compute() {
+    myUsagePresentation = ApplicationManager.getApplication().runReadAction(new Computable<UsagePresentation>() {
+      public UsagePresentation compute() {
         PsiElement element = getElement();
         PsiFile psiFile = element.getContainingFile();
         Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
