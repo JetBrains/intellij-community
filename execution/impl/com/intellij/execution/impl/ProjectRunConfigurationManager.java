@@ -80,7 +80,6 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
 
   public void readExternal(Element element) throws InvalidDataException {
     myUnloadedElements = null;
-    myManager.clear();
 
     final List children = element.getChildren();
     for (final Object child : children) {

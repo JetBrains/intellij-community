@@ -22,6 +22,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -40,8 +41,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private StateSplitter mySplitter;
 
   private Object mySession;
-  private MyStorageData myStorageData = new MyStorageData();
-  private List<VirtualFile> myAllStorageFiles;
+  private MyStorageData myStorageData = null;
+  @NonNls private static final String COMPONENT = "component";
+  @NonNls private static final String NAME = "name";
 
   public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final String dir, final StateSplitter splitter,
                                Disposable parentDisposable, final PicoContainer picoContainer) {
@@ -85,7 +87,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
     final Map<IFile, Element> statesMap = myStorageData.myStates.get(componentName);
     if (statesMap == null) {
-      return DefaultStateSerializer.deserializeState(new Element("component"), stateClass, mergeInto);
+      return DefaultStateSerializer.deserializeState(new Element(COMPONENT), stateClass, mergeInto);
     }
 
     List<Element> subElements = new ArrayList<Element>();
@@ -98,7 +100,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       subElements.add(subElement);
     }
 
-    final Element state = new Element("component");
+    final Element state = new Element(COMPONENT);
     mySplitter.mergeStatesInto(state, subElements.toArray(new Element[subElements.size()]));
     myStorageData.myStates.remove(componentName);
 
@@ -121,9 +123,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       for (IFile file : files) {
         final Document document = JDOMUtil.loadDocument(file);
         final Element element = document.getRootElement();
-        assert element.getName().equals("component");
+        assert element.getName().equals(COMPONENT);
 
-        String componentName = element.getAttributeValue("name");
+        String componentName = element.getAttributeValue(NAME);
         assert componentName != null;
         Map<IFile, Element> stateMap = storageData.myStates.get(componentName);
         if (stateMap == null) {
@@ -146,6 +148,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
+    if (!myDir.exists()) return false;
     return true;
   }
 
@@ -187,21 +190,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     private MySaveSession(final MyStorageData storageData, final TrackingPathMacroSubstitutor pathMacroSubstitutor) {
       myStorageData = storageData;
       myPathMacroSubstitutor = pathMacroSubstitutor;
-
-      List<VirtualFile> allStorageFiles = new ArrayList<VirtualFile>();
-      for (String componentName : myStorageData.myStates.keySet()) {
-        Map<IFile, Element> stateMap = myStorageData.myStates.get(componentName);
-
-        for (IFile file : stateMap.keySet()) {
-          final VirtualFile virtualFile = StorageUtil.getVirtualFile(file);
-          if (virtualFile != null) {
-            allStorageFiles.add(virtualFile);
-          }
-        }
-      }
-
-
-     myAllStorageFiles = allStorageFiles;
     }
 
     public Set<String> getUsedMacros() {
@@ -209,7 +197,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         return myPathMacroSubstitutor.getUsedMacros();
       }
       else {
-        return Collections.EMPTY_SET;
+        return Collections.emptySet();
       }
     }
 
@@ -267,8 +255,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       }
 
       if (!containsSelf) return Collections.emptySet();
-
-      Set<String> fileNames = new HashSet<String>();
 
       Set<String> componentNames = new HashSet<String>();
       componentNames.addAll(myStorageData.myStates.keySet());
@@ -386,8 +372,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           Element e = pair.first;
           String name = pair.second;
 
-          Element statePart = new Element("component");
-          statePart.setAttribute("name", componentName);
+          Element statePart = new Element(COMPONENT);
+          statePart.setAttribute(NAME, componentName);
           e.detach();
           statePart.addContent(e);
 
