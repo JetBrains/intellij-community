@@ -405,6 +405,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     boolean isOK(GroovyIntroduceVariableDialog dialog);
 
     String validateName(String name, boolean increaseNumber);
+
+    Project getProject();
   }
 
 

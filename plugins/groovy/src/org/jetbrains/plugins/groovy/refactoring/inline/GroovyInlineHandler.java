@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
@@ -158,20 +159,30 @@ public class GroovyInlineHandler implements InlineHandler {
       }
 
       public void inlineReference(final PsiReference reference, final PsiElement referenced) {
-        assert reference instanceof GrExpression;
+        GrExpression exprToBeReplaced = (GrExpression) reference.getElement();
         assert variable.getInitializerGroovy() != null;
-        final GrExpression initializerGroovy = variable.getInitializerGroovy();
+        GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
-        final GrExpression expr = GroovyElementFactory.getInstance(variable.getProject()).
-            createExpressionFromText(initializerGroovy.getText());
+        Project project = variable.getProject();
+        GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+        GrExpression newExpr = factory.createExpressionFromText(initializerGroovy.getText());
+
+        if (exprToBeReplaced.getParent() instanceof GrExpression) {
+          GrExpression parentExpr = (GrExpression) exprToBeReplaced.getParent();
+          if (PsiImplUtil.getExprPriorityLevel(parentExpr) >= PsiImplUtil.getExprPriorityLevel(newExpr)) {
+            newExpr = factory.createParenthesizedExpr(newExpr);
+          }
+        }
+
         try {
-          ((GrExpression) reference).replaceWithExpression(expr);
-          replacedOccurences.add(expr);
+          exprToBeReplaced.replaceWithExpression(newExpr);
+          replacedOccurences.add(newExpr);
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
     };
   }
+
 }
 

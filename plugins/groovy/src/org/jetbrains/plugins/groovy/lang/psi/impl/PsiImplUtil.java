@@ -31,13 +31,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
 
 import java.util.ArrayList;
@@ -196,5 +200,32 @@ public class PsiImplUtil {
         }
       }
     });
+  }
+
+  /**
+   * Returns priiority level of expression
+   * @param expr
+   * @return
+   */
+  public static int getExprPriorityLevel(GrExpression expr){
+    int priority = 0;
+    if (expr instanceof GrPostfixExpression) priority = 1;
+    if (expr instanceof GrUnaryExpression ||
+        expr instanceof GrTypeCastExpression) priority = 2;
+    if (expr instanceof GrPowerExprImpl) priority = 3;
+    if (expr instanceof GrMultiplicativeExprImpl) priority = 4;
+    if (expr instanceof GrAdditiveExprImpl) priority = 5;
+    if (expr instanceof GrShiftExprImpl) priority = 6;
+    if (expr instanceof GrRelationalExpression) priority = 7;
+    if (expr instanceof GrEqualityExprImpl) priority = 8;
+    if (expr instanceof GrRegexExprImpl) priority = 9;
+    if (expr instanceof GrAndExprImpl) priority = 10;
+    if (expr instanceof GrExclusiveOrExprImpl) priority = 11;
+    if (expr instanceof GrInclusiveOrExprImpl) priority = 12;
+    if (expr instanceof GrLogicalAndExprImpl) priority = 13;
+    if (expr instanceof GrLogicalOrExprImpl) priority = 14;
+    if (expr instanceof GrConditionalExpression) priority = 15;
+    if (expr instanceof GrAssignmentExpression) priority = 16;
+    return -priority;
   }
 }

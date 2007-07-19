@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -164,6 +165,10 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     final GroovyFile file = createDummyFile("def " + typeText + " someVar");
     GrVariableDeclaration decl = (GrVariableDeclaration) file.getTopStatements()[0];
     return decl.getTypeElementGroovy();
+  }
+
+  public GrParenthesizedExpr createParenthesizedExpr(GrExpression newExpr) {
+    return ((GrParenthesizedExpr) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
   }
 
   private PsiFile createGroovyFile(String idText) {

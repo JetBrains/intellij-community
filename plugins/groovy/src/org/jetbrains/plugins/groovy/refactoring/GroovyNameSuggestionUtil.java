@@ -15,7 +15,11 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -25,9 +29,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.regex.Pattern;
+import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author ilyas
@@ -85,6 +91,7 @@ public class GroovyNameSuggestionUtil {
 
   private static void generateByType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
     String typeName = type.getPresentableText();
+//    generateForColletionType(type, possibleNames, validator);
     if (typeName.contains(".")) {
       typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
     }
@@ -122,6 +129,18 @@ public class GroovyNameSuggestionUtil {
         }
       }
     }
+  }
+
+  private static void generateForColletionType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
+    Project project = validator.getProject();
+    PsiManager manager = PsiManager.getInstance(project);
+    GlobalSearchScope scope = type.getResolveScope();
+    assert scope != null;
+    PsiType collectionType = manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_COLLECTION, scope).getDeepComponentType();
+    List<PsiType> superTypes = Arrays.asList(type.getSuperTypes());
+    for (PsiType superType : superTypes) {
+    }
+
   }
 
   private static String generateNameForBuiltInType(String unboxed) {
