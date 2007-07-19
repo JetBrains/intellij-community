@@ -24,10 +24,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,12 +167,10 @@ public abstract class GroovyRefactoringUtil {
   // todo add type hierarchy
   public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
     HashMap<String, PsiType> map = new HashMap<String, PsiType>();
-    String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
-    if (unboxed != null && !unboxed.contains(".")) {
-      map.put(PsiTypesUtil.unboxIfPossible(type.getCanonicalText()), type);
-    } else {
-      map.put(type.getPresentableText(), type);
-    }
+    final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
+    if (unboxed != null) type = unboxed;
+    map.put(type.getPresentableText(), type);
+
     return map;
   }
 

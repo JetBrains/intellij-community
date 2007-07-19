@@ -23,5 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 public interface GrArrayDeclaration extends GroovyPsiElement {
   GrExpression[] getBoundExpressions();
 
-  int getArrayDimensions();
+  int getArrayCount();
 }

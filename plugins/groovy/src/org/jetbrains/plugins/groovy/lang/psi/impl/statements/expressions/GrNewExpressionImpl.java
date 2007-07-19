@@ -74,7 +74,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   public int getArrayCount() {
     final GrArrayDeclaration arrayDeclaration = findChildByClass(GrArrayDeclaration.class);
     if (arrayDeclaration == null) return 0;
-    return arrayDeclaration.getArrayDimensions();
+    return arrayDeclaration.getArrayCount();
   }
 
   @Nullable

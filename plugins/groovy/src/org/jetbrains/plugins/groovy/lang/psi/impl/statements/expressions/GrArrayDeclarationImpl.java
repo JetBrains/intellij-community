@@ -43,7 +43,7 @@ public class GrArrayDeclarationImpl extends GroovyPsiElementImpl implements GrAr
     return findChildrenByClass(GrExpression.class);
   }
 
-  public int getArrayDimensions() {
+  public int getArrayCount() {
     final ASTNode node = getNode();
     int num = 0;
     ASTNode run = node.getFirstChildNode();
