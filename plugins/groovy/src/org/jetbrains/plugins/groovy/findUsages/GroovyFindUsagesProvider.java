@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ven
@@ -69,7 +70,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
     if (element instanceof PsiMethod) return "method";
     if (element instanceof PsiField) return "field";
     if (element instanceof PsiParameter) return "parameter";
-    if (element instanceof PsiVariable) return "variable";
+    if (element instanceof PsiVariable || element instanceof GrReferenceExpression) return "variable";
     return "";
   }
 
