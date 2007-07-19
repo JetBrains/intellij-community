@@ -93,7 +93,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @return highlighting duration in milliseconds.
    * @throws Throwable any exception thrown during highlighting.
    */
-  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths) throws Throwable;
+  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Throwable;
 
   /**
    * Runs highliting test for the given files.
@@ -104,7 +104,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @return highlighting duration in milliseconds
    * @throws Throwable any exception thrown during highlighting
    */
-  long testHighlighting(String... filePaths) throws Throwable;
+  long testHighlighting(@NonNls String... filePaths) throws Throwable;
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
