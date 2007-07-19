@@ -171,6 +171,7 @@ public class ModuleInsight {
     for (ModuleDescriptor module : myModules) {
       final String suggested = suggestUniqueName(moduleNames, module.getName());
       module.setName(suggested);
+      moduleNames.add(suggested);
     }
   }
 
