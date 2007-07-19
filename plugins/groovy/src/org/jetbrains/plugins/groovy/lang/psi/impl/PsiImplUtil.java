@@ -146,10 +146,12 @@ public class PsiImplUtil {
     }
 
     final ASTNode varDeclNode = varDecl.getNode();
-    final ASTNode owner = varDecl.getParent().getNode();
+    final PsiElement parent = varDecl.getParent();
+    final ASTNode owner = parent.getNode();
     if (variables.size() == 1 && owner != null) {
       GroovyVariableUtil.cleanAroundDeclarationBeforeRemove(varDecl);
       owner.removeChild(varDeclNode);
+      reformatCode(parent);
       return;
     }
     GroovyVariableUtil.cleanAroundVariableBeforeRemove(variable);

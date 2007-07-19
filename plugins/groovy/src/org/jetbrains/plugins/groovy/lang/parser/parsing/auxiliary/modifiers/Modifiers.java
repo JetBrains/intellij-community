@@ -34,29 +34,37 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 public class Modifiers implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
+    boolean endsWithNewLine = false;
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     IElementType annotation = Annotation.parse(builder);
     IElementType modifier = Modifier.parse(builder);
     IElementType def = ParserUtils.getToken(builder, kDEF) ? kDEF : NONE;
 
-    ParserUtils.getToken(builder, mNLS);
-
     if (!(ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def))) {
       modifiersMarker.done(MODIFIERS);
-      //modifiersMarker.rollbackTo();
       return WRONGWAY;
     }
 
+    PsiBuilder.Marker newLineMarker = builder.mark();
     while (ANNOTATION.equals(annotation) || MODIFIERS.equals(modifier) || kDEF.equals(def)) {
+      newLineMarker.drop();
+      newLineMarker = builder.mark();
+      endsWithNewLine = ParserUtils.getToken(builder, mNLS);
+
       annotation = Annotation.parse(builder);
       modifier = Modifier.parse(builder);
       def = ParserUtils.getToken(builder, kDEF) ? kDEF : NONE;
-
-      ParserUtils.getToken(builder, mNLS);
     }
 
+    // Do not include last newline
+    if (endsWithNewLine) {
+      newLineMarker.rollbackTo();
+    } else {
+      newLineMarker.drop();
+    }
     modifiersMarker.done(MODIFIERS);
+    ParserUtils.getToken(builder, mNLS);
     return MODIFIERS;
 
   }

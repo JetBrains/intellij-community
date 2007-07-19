@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -49,6 +47,7 @@ public class GroovyInlineHandler implements InlineHandler {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
+  private static ArrayList<PsiElement> replacedOccurences = new ArrayList<PsiElement>();
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
@@ -93,7 +92,8 @@ public class GroovyInlineHandler implements InlineHandler {
       return null;
     }
 
-    final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
+    final String question = refs.size() == 1 ? GroovyRefactoringBundle.message("inline.alone.local.variable.prompt.0", localName) :
+        GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         REFACTORING_NAME,
         question,
@@ -109,33 +109,29 @@ public class GroovyInlineHandler implements InlineHandler {
 
     return new Settings() {
       public boolean isOnlyOneReferenceToInline() {
-        return refs.size() == 1;
+        return false;
       }
     };
   }
 
   public void removeDefinition(final PsiElement element) {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        try {
-          final PsiElement owner = element.getParent().getParent();
-          if (element instanceof GrVariable &&
-              owner instanceof GrVariableDeclarationOwner) {
-            ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
-          }
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    try {
+      final PsiElement owner = element.getParent().getParent();
+      if (element instanceof GrVariable &&
+          owner instanceof GrVariableDeclarationOwner) {
+        ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
       }
-    };
-
-    // todo remove
-    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
+      if (replacedOccurences.size() > 0) {
+        Project project = element.getProject();
+        FileEditorManager manager = FileEditorManager.getInstance(project);
+        Editor editor = manager.getSelectedTextEditor();
+        GroovyRefactoringUtil.highlightOccurences(project, editor, replacedOccurences.toArray(PsiElement.EMPTY_ARRAY));
+        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        replacedOccurences.clear();
       }
-    }, GroovyRefactoringBundle.message("inline.local.command", ((GrVariable) element).getNameIdentifierGroovy().getText()), null);
-
+    } catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable
@@ -168,31 +164,12 @@ public class GroovyInlineHandler implements InlineHandler {
         assert initializerGroovy != null;
         final GrExpression expr = GroovyElementFactory.getInstance(variable.getProject()).
             createExpressionFromText(initializerGroovy.getText());
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            try {
-
-              ((GrExpression) reference).replaceWithExpression(expr);
-              Project project = expr.getProject();
-              FileEditorManager manager = FileEditorManager.getInstance(project);
-              Editor editor = manager.getSelectedTextEditor();
-              // todo make work
-              GroovyRefactoringUtil.highlightOccurences(project, editor, new PsiElement[]{expr});
-              //WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        };
-
-        // todo remove
-        CommandProcessor.getInstance().executeCommand(referenced.getProject(), new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(runnable);
-          }
-        }, GroovyRefactoringBundle.message("inline.local.command", variable.getNameIdentifierGroovy().getText()), null);
-
+        try {
+          ((GrExpression) reference).replaceWithExpression(expr);
+          replacedOccurences.add(expr);
+        } catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
     };
   }
