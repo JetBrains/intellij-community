@@ -171,6 +171,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       final StateStorageManager stateStorageManager = getStateStorageManager();
       if (dir_store.exists()) {
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir_store);
+
         myScheme = StorageScheme.DIRECTORY_BASED;
 
         stateStorageManager.addMacro(PROJECT_FILE_MACRO, dir_store.getChild("misc.xml").getPath());
@@ -187,10 +189,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         myScheme = StorageScheme.DEFAULT;
         stateStorageManager.addMacro(PROJECT_FILE_MACRO, filePath);
 
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
 
         int lastDot = filePath.lastIndexOf(".");
         final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
         String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
+
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(workspacePath);
         stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
       }
     }
