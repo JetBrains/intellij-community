@@ -14,50 +14,53 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 
-
 public class SynchronizeCurrentFileAction extends AnAction {
-
   public void update(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
-    if (files != null && files.length > 0) {
-      String message = getMessage(files);
-      e.getPresentation().setEnabled(true);
-      e.getPresentation().setText(message);
-    }
-    else {
+    VirtualFile[] files = getFiles(e);
+
+    if (getProject(e) == null || files == null || files.length == 0) {
       e.getPresentation().setEnabled(false);
+      return;
     }
+
+    String message = getMessage(files);
+    e.getPresentation().setEnabled(true);
+    e.getPresentation().setText(message);
   }
 
-  private static String getMessage(final VirtualFile[] files) {
-    String message;
+  private String getMessage(VirtualFile[] files) {
     if (files.length == 1) {
-      message = IdeBundle.message("action.synchronize.file", files[0].getName());
+      return IdeBundle.message("action.synchronize.file", files[0].getName());
     }
-    else {
-      message = IdeBundle.message("action.synchronize.selected.files");
-    }
-    return message;
+    return IdeBundle.message("action.synchronize.selected.files");
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
-
-    final Project project = e.getData(DataKeys.PROJECT);
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = getProject(e);
+    final VirtualFile[] files = getFiles(e);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (final VirtualFile file : files) {
-          file.refresh(false, true);
+        for (VirtualFile f : files) {
+          f.refresh(false, true);
         }
       }
     });
 
-    final FileStatusManager statusManager = FileStatusManager.getInstance(project);
-    for (VirtualFile file : files) {
-      statusManager.fileStatusChanged(file);
+    FileStatusManager sm = FileStatusManager.getInstance(project);
+    for (VirtualFile f : files) {
+      sm.fileStatusChanged(f);
     }
+
     String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
+  }
+
+  private Project getProject(AnActionEvent e) {
+    return e.getData(DataKeys.PROJECT);
+  }
+
+  private VirtualFile[] getFiles(AnActionEvent e) {
+    return e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
   }
 }
