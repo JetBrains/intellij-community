@@ -43,7 +43,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   private String myTitle = null;
 
   private boolean myStoppedAlready = false;
-  private FocusTrackback myFocusTrackback;
+  protected final FocusTrackback myFocusTrackback;
   private boolean myStarted = false;
   private boolean myBackgrounded = false;
 
@@ -77,6 +77,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
     else {
       myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, myProject, myCancelText);
     }
+
+    myFocusTrackback.registerFocusComponent(myDialog.getPanel());
   }
 
   public synchronized void start() {
@@ -101,7 +103,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
               if (myDialog != null) {
                 final DialogWrapper popup = myDialog.myPopup;
                 if (popup != null) {
-                  myFocusTrackback.onShown(new FocusTrackback.ComponentQuery() {
+                  myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
                     public Component getComponent() {
                       return popup.getPreferredFocusedComponent();
                     }
@@ -372,6 +374,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
           wnd.setLocation(draggedTo);
         }
       });
+    }
+
+    public JPanel getPanel() {
+      return myPanel;
     }
 
     public void changeCancelButtonText(String text){

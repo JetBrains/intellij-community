@@ -475,7 +475,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         public void windowActivated(final WindowEvent e) {
           final DialogWrapper wrapper = getDialogWrapper();
           if (wrapper != null) {
-            myFocusTrackback.onShown(new FocusTrackback.ComponentQuery() {
+            myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
               public Component getComponent() {
                 return wrapper.getPreferredFocusedComponent();
               }

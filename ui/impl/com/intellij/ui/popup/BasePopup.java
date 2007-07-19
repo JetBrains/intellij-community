@@ -269,7 +269,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           requestFocus();
-          myFocusTrackback.onShown(getPreferredFocusableComponent());
+          myFocusTrackback.registerFocusComponent(getPreferredFocusableComponent());
           afterShow();
         }
       });

@@ -28,6 +28,8 @@ public class FocusTrackback {
   private ComponentQuery myFocusedComponentQuery;
   private boolean myMustBeShown;
 
+  private boolean myForcedDead;
+
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
     this(requestor, SwingUtilities.getWindowAncestor(parent), mustBeShown);
   }
@@ -65,15 +67,15 @@ public class FocusTrackback {
     return false;
   }
 
-  public void onShown(@NotNull final Component focusedComponent) {
-    onShown(new ComponentQuery() {
+  public void registerFocusComponent(@NotNull final Component focusedComponent) {
+    registerFocusComponent(new ComponentQuery() {
       public Component getComponent() {
         return focusedComponent;
       }
     });
   }
 
-  public void onShown(@NotNull ComponentQuery query) {
+  public void registerFocusComponent(@NotNull ComponentQuery query) {
     myFocusedComponentQuery = query;
   }
 
@@ -109,7 +111,7 @@ public class FocusTrackback {
   }
 
   private void _restoreFocus() {
-    final List<FocusTrackback> stack = getStackForRoot(myRoot);
+    final List<FocusTrackback> stack = getCleanStack();
 
     if (!stack.contains(this)) return;
 
@@ -143,6 +145,18 @@ public class FocusTrackback {
 
     stack.remove(this);
     dispose();
+  }
+
+  private List<FocusTrackback> getCleanStack() {
+    final List<FocusTrackback> stack = getStackForRoot(myRoot);
+
+    final FocusTrackback[] all = stack.toArray(new FocusTrackback[stack.size()]);
+    for (FocusTrackback each : all) {
+      if (each != this && each.isDead()) {
+        stack.remove(each);
+      }
+    }
+    return stack;
   }
 
   private static List<FocusTrackback> getStackForRoot(final Window root) {
@@ -189,11 +203,17 @@ public class FocusTrackback {
   }
 
   private boolean isDead() {
+    if (myForcedDead) return true;
+
     if (myMustBeShown) {
       return myFocusedComponentQuery != null && myFocusedComponentQuery.getComponent() != null && !myFocusedComponentQuery.getComponent().isShowing();
     } else {
       return myParentWindow == null || !myParentWindow.isShowing();
     }
+  }
+
+  public void kill() {
+    myForcedDead = true;
   }
 
   private void setFocusOwner(final Component focusOwner) {
