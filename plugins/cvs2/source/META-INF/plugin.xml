@@ -69,7 +69,7 @@
 
     <group id="CvsActions">
       <reference id="CheckinFiles"/>
-      <action id="Cvs.Rollback" class="com.intellij.cvsSupport2.actions.CvsRollbackChangesAction" icon="/actions/rollback.png"/>
+      <reference id="ChangesView.Rollback"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction"/>
