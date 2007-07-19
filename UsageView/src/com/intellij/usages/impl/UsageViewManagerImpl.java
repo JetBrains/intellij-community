@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
@@ -97,19 +98,19 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                        final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
                                        final boolean showNotFoundMessage, final UsageViewPresentation presentation,
-                                       UsageViewStateListener listener) {
+                                       final UsageViewStateListener listener) {
     final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
 
-    FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(showNotFoundMessage);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
 
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject,
-                                                                       getProgressTitle(presentation),
-                                                                       new SearchForUsagesRunnable(usageView, presentation, searchFor,
-                                                                                                   searcherFactory, processPresentation,
-                                                                                                   listener),
-                                                                       null, null, new SearchInBackgroundOption());
+    Task task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
+      public void run(final ProgressIndicator indicator) {
+        new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener).run();
+      }
+    };
+    ProgressManager.getInstance().run(task);
     return usageView.get();
   }
 
@@ -191,7 +192,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     private final FindUsagesProcessPresentation myProcessPresentation;
     private final UsageViewStateListener myListener;
 
-    public SearchForUsagesRunnable(@NotNull final AtomicReference<UsageViewImpl> usageView,
+    private SearchForUsagesRunnable(@NotNull final AtomicReference<UsageViewImpl> usageView,
                                    @NotNull final UsageViewPresentation presentation,
                                    @NotNull final UsageTarget[] searchFor,
                                    @NotNull final Factory<UsageSearcher> searcherFactory,
@@ -245,6 +246,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       UsageSearcher usageSearcher = mySearcherFactory.create();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
+          if (mySearchHasBeenCancelled) return false;
           int usageCount = myUsageCount.incrementAndGet();
           if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
             myFirstUsage.compareAndSet(null,usage);
@@ -253,7 +255,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
           if (usageView != null) {
             usageView.appendUsageLater(usage);
           }
-          if (mySearchHasBeenCancelled) return false;
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           return indicator == null || !indicator.isCanceled();
         }
