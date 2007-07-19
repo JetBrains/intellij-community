@@ -21,6 +21,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
@@ -566,11 +567,18 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    boolean renameFile = isRenameFileOnClassRenaming();
+
     PsiElement nameElement = getNameIdentifierGroovy();
     ASTNode node = nameElement.getNode();
     ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(name).getNode();
     assert newNameNode != null && node != null;
     node.getTreeParent().replaceChild(node, newNameNode);
+
+    if (renameFile) {
+      final GroovyFile file = getContainingFile();
+      file.setName(name + "." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension());
+    }
 
     return this;
   }
@@ -640,4 +648,18 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     return Icons.CLAZZ;
   }
+
+  private boolean isRenameFileOnClassRenaming() {
+    final GroovyFile file = getContainingFile();
+    if (file.isScript()) return false;
+    final GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
+    if (typeDefinitions.length > 1) return false;
+    final String name = getName();
+    if (name == null) return false;
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return false;
+
+    return name.equals(vFile.getNameWithoutExtension());
+  }
+
 }

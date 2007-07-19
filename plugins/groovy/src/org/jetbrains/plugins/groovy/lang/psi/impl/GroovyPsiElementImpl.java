@@ -21,8 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 import java.util.Iterator;
@@ -99,6 +100,9 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitElement(this);
-    ;
+  }
+
+  public GroovyFile getContainingFile() {
+    return (GroovyFile) super.getContainingFile();
   }
 }
