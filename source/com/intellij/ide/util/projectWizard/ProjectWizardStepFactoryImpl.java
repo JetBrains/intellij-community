@@ -114,7 +114,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   public ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext) {
     return new ProjectJdkStep(wizardContext){
       public boolean isStepVisible() {
-        return com.intellij.ide.util.newProjectWizard.AddModuleWizard.getNewProjectJdk() == null;
+        return com.intellij.ide.util.newProjectWizard.AddModuleWizard.getNewProjectJdk(wizardContext) == null;
       }
     };
   }

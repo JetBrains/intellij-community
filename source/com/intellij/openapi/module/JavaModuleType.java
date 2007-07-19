@@ -32,11 +32,17 @@
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   private static Icon JAVA_MODULE_ICON;
@@ -74,6 +80,15 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   public Icon getNodeIcon(boolean isOpened) {
     return isOpened ? getJavaModuleNodeIconOpen() : getJavaModuleNodeIconClosed();
+  }
+
+  public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext, final JavaModuleBuilder moduleBuilder,
+                                              final ModulesProvider modulesProvider) {
+    final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
+    ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
+    steps.add(wizardFactory.createProjectJdkStep(wizardContext));
+    final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
+    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
   }
 
   private static Icon getJavaModuleIcon() {

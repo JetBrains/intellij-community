@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
@@ -31,6 +32,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
@@ -268,10 +271,34 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   @Nullable
-  public static ProjectJdk getNewProjectJdk() {
-    final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    return ProjectRootManager.getInstance(defaultProject).getProjectJdk();
+  public static ProjectJdk getNewProjectJdk(WizardContext context) {
+    if (context.getProjectJdk() != null) {
+      return context.getProjectJdk();
+    }
+    final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
+    final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    if (projectJdk != null) {
+      return projectJdk;
+    }
+    if (context.getProject() == null) {
+      final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
+      Arrays.sort(projectJdks, new Comparator<ProjectJdk>() {
+        public int compare(final ProjectJdk o1, final ProjectJdk o2) {
+          return o1.getVersionString().compareToIgnoreCase(o2.getVersionString());
+        }
+      });
+      if (projectJdks.length > 0) {
+        return projectJdks[0];
+      }
+    }
+    return null;
   }
+
+  @Nullable
+  public ProjectJdk getNewProjectJdk() {
+    return getNewProjectJdk(myWizardContext);
+  }
+
 
   @NotNull
   public String getNewCompileOutput() {
