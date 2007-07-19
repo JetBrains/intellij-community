@@ -44,12 +44,12 @@ public class LibraryDescriptor {
     return Collections.unmodifiableCollection(myJars);
   }
   
-  public void addJar(File jar) {
-    myJars.add(jar);
+  public void addJars(Collection<File> jars) {
+    myJars.addAll(jars);
   }
   
-  public void removeJar(File jar) {
-    myJars.remove(jar);
+  public void removeJars(Collection<File> jars) {
+    myJars.removeAll(jars);
   }
 
   public String toString() {

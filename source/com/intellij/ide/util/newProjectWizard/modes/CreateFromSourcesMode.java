@@ -4,8 +4,10 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.importProject.ModulesLayoutStep;
-import com.intellij.ide.util.importProject.ProjectLayoutDetectionStep;
+import com.intellij.ide.util.importProject.DelegatingProgressIndicator;
+import com.intellij.ide.util.importProject.LibrariesDetectionStep;
+import com.intellij.ide.util.importProject.ModuleInsight;
+import com.intellij.ide.util.importProject.ModulesDetectionStep;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
@@ -36,12 +38,13 @@ public class CreateFromSourcesMode extends WizardMode {
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
     final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder();
     myProjectBuilder = projectBuilder;
+    final ModuleInsight moduleInsight = new ModuleInsight(new DelegatingProgressIndicator());
     
     final StepSequence sequence = new StepSequence();
     sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
     sequence.addCommonStep(new SourcePathsStep(context, projectBuilder, null, null));
-    sequence.addCommonStep(new ProjectLayoutDetectionStep(projectBuilder, null, null));
-    sequence.addCommonStep(new ModulesLayoutStep(projectBuilder, null, null));
+    sequence.addCommonStep(new LibrariesDetectionStep(projectBuilder, moduleInsight, null, null));
+    sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, null, null));
     return sequence;
   }
 

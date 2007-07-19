@@ -1,12 +1,11 @@
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.util.Icons;
-import com.intellij.util.StringBuilderSpinAllocator;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,8 +14,8 @@ import java.util.List;
  */
 public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
-  public LibrariesLayoutPanel(final ProjectFromSourcesBuilder builder) {
-    super(builder);
+  public LibrariesLayoutPanel(final ModuleInsight insight) {
+    super(insight);
   }
 
   protected Icon getElementIcon(final Object element) {
@@ -34,6 +33,13 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return super.getElementIcon(element);
   }
 
+  protected int getWeight(final Object element) {
+    if (element instanceof LibraryDescriptor) {
+      return ((LibraryDescriptor)element).getJars().size() > 1? 10 : 20; 
+    }
+    return super.getWeight(element);
+  }
+
   protected String getElementText(final Object element) {
     if (element instanceof LibraryDescriptor) {
       final LibraryDescriptor libDescr = (LibraryDescriptor)element;
@@ -49,26 +55,9 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return "";
   }
 
-  private static String getDisplayText(File file) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(file.getName());
-      final File parentFile = file.getParentFile();
-      if (parentFile != null) {
-        builder.append(" (");
-        builder.append(parentFile.getPath());
-        builder.append(")");
-      }
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-  }
-  
   protected List<LibraryDescriptor> getEntries() {
-    final ProjectLayout layout = getBuilder().getProjectLayout();
-    return layout.getLibraries();
+    final List<LibraryDescriptor> libs = getInsight().getSuggestedLibraries();
+    return libs != null? libs : Collections.<LibraryDescriptor>emptyList();
   }
 
   protected Collection getDependencies(final LibraryDescriptor entry) {
@@ -76,7 +65,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   protected LibraryDescriptor merge(final List<LibraryDescriptor> entries) {
-    final ProjectLayout layout = getBuilder().getProjectLayout();
+    final ModuleInsight insight = getInsight();
     LibraryDescriptor mainLib = null;
     for (LibraryDescriptor entry : entries) {
       if (mainLib == null) {
@@ -84,9 +73,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
       }
       else {
         final Collection<File> files = entry.getJars();
-        for (File jar : files) {
-          layout.moveJarToLibrary(jar, mainLib);
-        }
+        insight.moveJarsToLibrary(entry, files, mainLib);
       }
     }
     return mainLib;

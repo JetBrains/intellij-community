@@ -1,13 +1,14 @@
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -18,11 +19,11 @@ import java.util.List;
 abstract class ProjectLayoutPanel<T> extends JPanel {
   private JList myEntriesList;
   private JList myDependenciesList;
-  private final ProjectFromSourcesBuilder myBuilder;
+  private final ModuleInsight myInsight;
 
-  public ProjectLayoutPanel(final ProjectFromSourcesBuilder builder) {
+  public ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
-    myBuilder = builder;
+    myInsight = insight;
 
     myEntriesList = createList();
     myDependenciesList = createList();
@@ -47,8 +48,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     });
   }
   
-  public final ProjectFromSourcesBuilder getBuilder() {
-    return myBuilder; 
+  public final ModuleInsight getInsight() {
+    return myInsight; 
   }
   
   private JList createList() {
@@ -90,6 +91,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private <T> List<T> alphaSortList(final List<T> entries) {
     Collections.sort(entries, new Comparator<T>() {
       public int compare(final T o1, final T o2) {
+        final int w1 = getWeight(o1);
+        final int w2 = getWeight(o2);
+        if (w1 != w2) {
+          return w1 - w2;
+        }
         return getElementText(o1).compareToIgnoreCase(getElementText(o2));
       }
     });
@@ -100,6 +106,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return null;
   }
   
+  protected int getWeight(Object element) {
+    return Integer.MAX_VALUE;
+  }
+  
   protected abstract String getElementText(Object element);
   
   protected abstract List<T> getEntries();
@@ -108,6 +118,24 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   
   @Nullable
   protected abstract T merge(List<T> entries);
+  
+  
+  protected static String getDisplayText(File file) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(file.getName());
+      final File parentFile = file.getParentFile();
+      if (parentFile != null) {
+        builder.append(" (");
+        builder.append(parentFile.getPath());
+        builder.append(")");
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
   
   private class MyListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {

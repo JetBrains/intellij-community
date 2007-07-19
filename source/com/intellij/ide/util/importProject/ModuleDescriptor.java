@@ -1,5 +1,6 @@
 package com.intellij.ide.util.importProject;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -12,14 +13,24 @@ import java.util.Set;
 *         Date: Jul 13, 2007
 */
 public class ModuleDescriptor {
+  String myName;
   final Set<File> myContentRoots = new HashSet<File>();
   final Set<File> mySourceRoots = new HashSet<File>();
   final Set<File> myLibraryFiles = new HashSet<File>();
   final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
   
   public ModuleDescriptor(final File contentRoot, final File sourceRoot) {
+    myName = StringUtil.capitalize(contentRoot.getName());
     myContentRoots.add(contentRoot);
     mySourceRoots.add(sourceRoot);
+  }
+
+  public String getName() {
+    return myName;
+  }
+
+  public void setName(final String name) {
+    myName = name;
   }
 
   public Set<File> getContentRoots() {

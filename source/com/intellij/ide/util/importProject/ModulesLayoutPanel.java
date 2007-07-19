@@ -1,15 +1,13 @@
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -18,8 +16,8 @@ import java.util.List;
 public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   private static final Icon ICON_MODULE = IconLoader.getIcon("/nodes/ModuleClosed.png");
 
-  public ModulesLayoutPanel(ProjectFromSourcesBuilder builder) {
-    super(builder);
+  public ModulesLayoutPanel(ModuleInsight insight) {
+    super(insight);
   }
 
   protected Icon getElementIcon(final Object element) {
@@ -40,15 +38,60 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return super.getElementIcon(element);
   }
 
+  protected int getWeight(final Object element) {
+    if (element instanceof File) {
+      return 10;
+    }
+    if (element instanceof ModuleDescriptor) {
+      return 20;
+    }
+    if (element instanceof LibraryDescriptor) {
+      return ((LibraryDescriptor)element).getJars().size() > 1? 30 : 40;
+    }
+    return Integer.MAX_VALUE;
+  }
+
   protected String getElementText(final Object element) {
     if (element instanceof ModuleDescriptor) {
-      return element.toString();
+      final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        builder.append(moduleDescriptor.getName());
+        
+        final Set<File> contents = moduleDescriptor.getContentRoots();
+        final int rootCount = contents.size();
+        if (rootCount > 0) {
+          builder.append(" (");
+          builder.append(contents.iterator().next().getPath());
+          if (rootCount > 1) {
+            builder.append("...");
+          }
+          builder.append(")");
+        }
+
+        final Set<File> sourceRoots = moduleDescriptor.getSourceRoots();
+        if (sourceRoots.size() > 0) {
+          builder.append(" [");
+          for (Iterator<File> it = sourceRoots.iterator(); it.hasNext();) {
+            File root = it.next();
+            builder.append(root.getName());
+            if (it.hasNext()) {
+              builder.append(",");
+            }
+          }
+          builder.append("]");
+        }
+        return builder.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
     }
     if (element instanceof LibraryDescriptor) {
       final LibraryDescriptor libDescr = (LibraryDescriptor)element;
       final Collection<File> jars = libDescr.getJars();
       if (jars.size() == 1) {
-        return jars.iterator().next().getName();
+        return getDisplayText(jars.iterator().next());
       }
       return libDescr.getName();
     }
@@ -56,28 +99,27 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   protected List<ModuleDescriptor> getEntries() {
-    final ProjectLayout layout = getBuilder().getProjectLayout();
-    return layout.getModules();
+    final List<ModuleDescriptor> modules = getInsight().getSuggestedModules();
+    return modules != null? modules : Collections.<ModuleDescriptor>emptyList();
   }
 
   protected Collection getDependencies(final ModuleDescriptor entry) {
-    final ProjectLayout layout = getBuilder().getProjectLayout();
     final List deps = new ArrayList();
     deps.addAll(entry.getDependencies());
-    deps.add(layout.getLibraryDependencies(entry));
+    deps.addAll(getInsight().getLibraryDependencies(entry));
     return deps;
   }
 
   @Nullable
   protected ModuleDescriptor merge(final List<ModuleDescriptor> entries) {
-    final ProjectLayout layout = getBuilder().getProjectLayout();
+    final ModuleInsight insight = getInsight();
     ModuleDescriptor mainDescr = null;
     for (ModuleDescriptor entry : entries) {
       if (mainDescr == null) {
         mainDescr = entry;
       }
       else {
-        layout.merge(mainDescr, entry);
+        insight.merge(mainDescr, entry);
       }
     }
     return mainDescr;

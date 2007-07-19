@@ -33,43 +33,78 @@ import java.util.zip.ZipFile;
 public class ModuleInsight {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");
   @NotNull private final ProgressIndicatorWrapper myProgress;
-  private final List<File> myContentRoots;
-  private final List<Pair<File, String>> mySourceRoots; // list of Pair: [sourceRoot-> package prefix]
-  private final Set<String> myIgnoredNames;
+  
+  private final List<File> myContentRoots = new ArrayList<File>();
+  private final List<Pair<File, String>> mySourceRoots = new ArrayList<Pair<File, String>>(); // list of Pair: [sourceRoot-> package prefix]
+  private final Set<String> myIgnoredNames = new HashSet<String>();
 
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<File, Set<String>>();
-  private final Map<File, Set<String>> mySourceRootToReferencedPackagesMap = new HashMap<File, Set<String>>();
-  private final Map<File, Set<String>> mySourceRootToPackagesMap = new HashMap<File, Set<String>>();
-  
-  private final Map<File, ModuleDescriptor> myContentRootToModules = new HashMap<File, ModuleDescriptor>();
-  
   private final StringInterner myInterner = new StringInterner();
   private final JavaLexer myLexer;
 
+  private List<ModuleDescriptor> myModules;
+  private List<LibraryDescriptor> myLibraries;
+  
+  public ModuleInsight(@Nullable final ProgressIndicator progress) {
+    this(progress, Collections.<File>emptyList(), Collections.<Pair<File,String>>emptyList(), Collections.<String>emptySet());
+  }
+  
   public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> contentRoots, List<Pair<File,String>> sourceRoots, final Set<String> ignoredNames) {
-    myProgress = new ProgressIndicatorWrapper(progress);
-    myContentRoots = contentRoots;
-    mySourceRoots = sourceRoots;
-    myIgnoredNames = ignoredNames;
     myLexer = new JavaLexer(LanguageLevel.JDK_1_5);
+    myProgress = new ProgressIndicatorWrapper(progress);
+    setRoots(contentRoots, sourceRoots, ignoredNames);
   }
-  
-  public ProjectLayout getSuggestedLayout() {
-    return new ProjectLayout(myContentRootToModules.values(), myJarToPackagesMap.keySet());
+
+  public final void setRoots(final List<File> contentRoots, final List<Pair<File, String>> sourceRoots, final Set<String> ignoredNames) {
+    myModules = null;
+    myLibraries = null;
+    
+    myContentRoots.clear();
+    myContentRoots.addAll(contentRoots);
+    
+    mySourceRoots.clear();
+    mySourceRoots.addAll(sourceRoots);
+    
+    myIgnoredNames.clear();
+    myIgnoredNames.addAll(ignoredNames);
+    
+    myJarToPackagesMap.clear();
+    myInterner.clear();
   }
-  
+
+  @Nullable
+  public List<LibraryDescriptor> getSuggestedLibraries() {
+    return myLibraries;
+  }
+
+  @Nullable
+  public List<ModuleDescriptor> getSuggestedModules() {
+    return myModules;
+  }
+
   public void scan() {
     myProgress.setIndeterminate(true);
     myProgress.pushState();
     try {
-      myProgress.pushState();
-      for (File root : myContentRoots) {
-        myProgress.setText("Scanning for libraries " + root.getPath());
-        scanLibraries(root);
+      scanLibraries();
+      if (myProgress.isCanceled()) {
+        return;
       }
+      scanModules();
+    }
+    finally {
       myProgress.popState();
-      
+    }
+  }
+
+  public void scanModules() {
+    final Map<File, Set<String>> sourceRootToReferencedPackagesMap = new HashMap<File, Set<String>>();
+    final Map<File, Set<String>> sourceRootToPackagesMap = new HashMap<File, Set<String>>();
+    final Map<File, ModuleDescriptor> contentRootToModules = new HashMap<File, ModuleDescriptor>();
+
+    try {
       myProgress.pushState();
+      
       for (Pair<File, String> pair : mySourceRoots) {
         final File sourceRoot = pair.getFirst();
         if (myIgnoredNames.contains(sourceRoot.getName())) {
@@ -78,57 +113,60 @@ public class ModuleInsight {
         myProgress.setText("Scanning " + sourceRoot.getPath());
         
         final HashSet<String> usedPackages = new HashSet<String>();
-        mySourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
-
+        sourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
+  
         final HashSet<String> selfPackages = new HashSet<String>();
-        mySourceRootToPackagesMap.put(sourceRoot, selfPackages);
+        sourceRootToPackagesMap.put(sourceRoot, selfPackages);
         
         scanSources(sourceRoot, pair.getSecond(), usedPackages, selfPackages) ;
         usedPackages.removeAll(selfPackages); 
       }
       myProgress.popState();
-      
-      myProgress.setText("Creating modules layout...");
-      for (File srcRoot : mySourceRootToPackagesMap.keySet()) {
+
+      myProgress.pushState();
+      myProgress.setText("Building modules layout...");
+      for (File srcRoot : sourceRootToPackagesMap.keySet()) {
         final File moduleContentRoot = srcRoot.getParentFile();
-        ModuleDescriptor moduleDescriptor = myContentRootToModules.get(moduleContentRoot);
+        ModuleDescriptor moduleDescriptor = contentRootToModules.get(moduleContentRoot);
         if (moduleDescriptor != null) { // if such module aready exists
           moduleDescriptor.addSourceRoot(srcRoot);
         }
         else {
           moduleDescriptor = new ModuleDescriptor(moduleContentRoot, srcRoot);
-          myContentRootToModules.put(moduleContentRoot, moduleDescriptor);
+          contentRootToModules.put(moduleContentRoot, moduleDescriptor);
         }
       }
       // build dependencies
-      
-      final Set<File> moduleContentRoots = myContentRootToModules.keySet();
-      
+
+      final Set<File> moduleContentRoots = contentRootToModules.keySet();
+
       for (File contentRoot : moduleContentRoots) {
-        final ModuleDescriptor checkedModule = myContentRootToModules.get(contentRoot);
+        final ModuleDescriptor checkedModule = contentRootToModules.get(contentRoot);
+        myProgress.setText2("Building library dependencies for module " + checkedModule.getName());
         
         // attach libraries
         for (File jarFile : myJarToPackagesMap.keySet()) {
           final Set<String> jarPackages = myJarToPackagesMap.get(jarFile);
           for (File srcRoot : checkedModule.getSourceRoots()) {
-            if (intersects(mySourceRootToReferencedPackagesMap.get(srcRoot), jarPackages)) {
+            if (intersects(sourceRootToReferencedPackagesMap.get(srcRoot), jarPackages)) {
               checkedModule.addLibraryFile(jarFile);
               break;
             }
           }
         }
         
+        myProgress.setText2("Building module dependencies for module " + checkedModule.getName());
         // setup module deps
         for (File aContentRoot : moduleContentRoots) {
-          final ModuleDescriptor aModule = myContentRootToModules.get(aContentRoot);
+          final ModuleDescriptor aModule = contentRootToModules.get(aContentRoot);
           if (checkedModule.equals(aModule)) {
             continue; // avoid self-dependencies
           }
           final Set<File> aModuleRoots = aModule.getSourceRoots();
           checkModules: for (File srcRoot: checkedModule.getSourceRoots()) {
-            final Set<String> referencedBySourceRoot = mySourceRootToReferencedPackagesMap.get(srcRoot);
+            final Set<String> referencedBySourceRoot = sourceRootToReferencedPackagesMap.get(srcRoot);
             for (File aSourceRoot : aModuleRoots) {
-              if (intersects(referencedBySourceRoot, mySourceRootToPackagesMap.get(aSourceRoot))) {
+              if (intersects(referencedBySourceRoot, sourceRootToPackagesMap.get(aSourceRoot))) {
                 checkedModule.addDependencyOn(aModule);
                 break checkModules;
               }
@@ -136,16 +174,133 @@ public class ModuleInsight {
           }
         }
       }
+      myProgress.popState();
     }
     catch (ProcessCanceledException ignored) {
-      
+    }
+    myModules = new ArrayList<ModuleDescriptor>(contentRootToModules.values());
+  }
+
+  public void scanLibraries() {
+    myProgress.pushState();
+    try {
+      try {
+        for (File root : myContentRoots) {
+          myProgress.setText("Scanning for libraries " + root.getPath());
+          scanRootForLibraries(root);
+        }
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      myProgress.setText("Building initial libraries layout...");
+      final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
+      for (LibraryDescriptor library : libraries) {
+        final Collection<File> libJars = library.getJars();
+        final boolean renameLib = libJars.size() == 1;
+        for (File jar : libJars) {
+          if (renameLib) {
+            library.setName(jar.getName());
+          }
+        }
+      }
+      myLibraries = libraries;
     }
     finally {
       myProgress.popState();
     }
   }
 
-  private static <T> boolean intersects(Set<T> set1, Set<T> set2) {
+  public void merge(final ModuleDescriptor mainModule, final ModuleDescriptor module) {
+    for (File contentRoot : module.getContentRoots()) {
+      appendContentRoot(mainModule, contentRoot);
+    }
+    for (File srcRoot : module.getSourceRoots()) {
+      mainModule.addSourceRoot(srcRoot);
+    }
+    for (File jar : module.getLibraryFiles()) {
+      mainModule.addLibraryFile(jar);
+    }
+    for (ModuleDescriptor dependency : module.getDependencies()) {
+      mainModule.addDependencyOn(dependency);
+    }
+    
+    myModules.remove(module);
+    
+    for (ModuleDescriptor moduleDescr : myModules) {
+      if (moduleDescr.getDependencies().contains(module)) {
+        moduleDescr.removeDependencyOn(module);
+        if (!moduleDescr.equals(mainModule)) { // avoid self-dependencies
+          moduleDescr.addDependencyOn(mainModule);
+        }
+      }
+    }
+  }
+
+  public void removeLibrary(LibraryDescriptor lib) {
+    myLibraries.remove(lib);
+  }
+  
+  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<File> files, LibraryDescriptor to) {
+    from.removeJars(files);
+    to.addJars(files);
+    // remove the library if it became empty
+    if (from.getJars().size() == 0) {
+      removeLibrary(from);
+    }
+  }
+  
+  public LibraryDescriptor extractToNewLibrary(final LibraryDescriptor from, Collection<File> jars, String libraryName) {
+    final LibraryDescriptor libraryDescriptor = new LibraryDescriptor(libraryName, new HashSet<File>());
+    myLibraries.add(libraryDescriptor);
+    moveJarsToLibrary(from, jars, libraryDescriptor);
+    return libraryDescriptor;
+  }
+  
+  public Collection<LibraryDescriptor> getLibraryDependencies(ModuleDescriptor module) {
+    final Set<LibraryDescriptor> libs = new HashSet<LibraryDescriptor>();
+    for (LibraryDescriptor library : myLibraries) {
+      if (intersects(library.getJars(), module.getLibraryFiles())) {
+        libs.add(library);
+      }
+    }
+    return libs;
+  }
+  
+  private static void appendContentRoot(final ModuleDescriptor module, final File contentRoot) {
+    final Set<File> moduleRoots = module.getContentRoots();
+    for (File moduleRoot : moduleRoots) {
+      try {
+        if (FileUtil.isAncestor(moduleRoot, contentRoot, false)) {
+          return; // no need to include a separate root
+        }
+        if (FileUtil.isAncestor(contentRoot, moduleRoot, true)) {
+          module.removeContentRoot(moduleRoot);
+          module.addContentRoot(contentRoot);
+          return; // no need to include a separate root
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }
+    module.addContentRoot(contentRoot);
+  }
+  
+  
+  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<File> jars) {
+    final Map<File, LibraryDescriptor> rootToLibraryMap = new HashMap<File, LibraryDescriptor>();
+    for (File jar : jars) {
+      final File parent = jar.getParentFile();
+      LibraryDescriptor lib = rootToLibraryMap.get(parent);
+      if (lib == null) {
+        lib = new LibraryDescriptor(parent.getName(), new HashSet<File>());
+        rootToLibraryMap.put(parent, lib);
+      }
+      lib.addJars(Collections.singleton(jar));
+    }
+    return new ArrayList<LibraryDescriptor>(rootToLibraryMap.values());
+  }
+
+  private static <T> boolean intersects(Collection<T> set1, Collection<T> set2) {
     for (final T item : set1) {
       if (set2.contains(item)) {
         return true;
@@ -203,7 +358,7 @@ public class ModuleInsight {
     }
   }
   
-  private void scanLibraries(File fromRoot) {
+  private void scanRootForLibraries(File fromRoot) {
     if (myIgnoredNames.contains(fromRoot.getName())) {
       return;
     }
@@ -212,7 +367,7 @@ public class ModuleInsight {
       myProgress.checkCanceled();
       for (File file : files) {
         if (file.isDirectory()) {
-          scanLibraries(file);
+          scanRootForLibraries(file);
         }
         else {
           final String fileName = file.getName();
