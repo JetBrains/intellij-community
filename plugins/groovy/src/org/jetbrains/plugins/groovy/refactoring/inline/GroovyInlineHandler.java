@@ -51,7 +51,6 @@ public class GroovyInlineHandler implements InlineHandler {
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
-    if (!invokedOnReference) return null;
 
     if (element instanceof GrVariable &&
         GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { // todo add method && class
@@ -83,7 +82,7 @@ public class GroovyInlineHandler implements InlineHandler {
       return null;
     }
     if (refs.isEmpty()) {
-      String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable);
+      String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable.getNameIdentifierGroovy().getText());
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
       return null;
     }

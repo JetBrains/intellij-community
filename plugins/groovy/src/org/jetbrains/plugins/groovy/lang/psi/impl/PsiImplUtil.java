@@ -163,7 +163,6 @@ public class PsiImplUtil {
     if (varNode != null) {
       varDeclNode.removeChild(varNode);
     }
-    // todo push formatter
     reformatCode(varDecl);
   }
 
@@ -188,7 +187,6 @@ public class PsiImplUtil {
   }
 
   public static void reformatCode(final PsiElement element) {
-    // todo rewrite activity
     final TextRange textRange = element.getTextRange();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

@@ -131,7 +131,7 @@ public class GroovyNameSuggestionUtil {
     }
   }
 
-  private static void generateForColletionType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
+  private static void generateForColletionOrArrayType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
     Project project = validator.getProject();
     PsiManager manager = PsiManager.getInstance(project);
     GlobalSearchScope scope = type.getResolveScope();
