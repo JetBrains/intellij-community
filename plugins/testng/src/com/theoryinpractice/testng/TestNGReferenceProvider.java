@@ -6,6 +6,7 @@
  */
 package com.theoryinpractice.testng;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -24,6 +25,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testng.annotations.DataProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,13 @@ public class TestNGReferenceProvider implements ProjectComponent {
         @NotNull
         public PsiReference[] getReferencesByElement(PsiElement element) {
           return new MethodReference[]{new MethodReference((PsiLiteralExpression)element)};
+        }
+      });
+    registry
+      .registerReferenceProvider(new TestAnnotationFilter("dataProvider"), PsiLiteralExpression.class, new PsiReferenceProviderBase() {
+        @NotNull
+        public PsiReference[] getReferencesByElement(PsiElement element) {
+          return new DataProviderReference[]{new DataProviderReference((PsiLiteralExpression)element)};
         }
       });
     registry.registerReferenceProvider(new TestAnnotationFilter("groups"), PsiLiteralExpression.class, new PsiReferenceProviderBase() {
@@ -67,6 +76,46 @@ public class TestNGReferenceProvider implements ProjectComponent {
   public void initComponent() {}
 
   public void disposeComponent() {}
+
+  private static class DataProviderReference extends PsiReferenceBase<PsiLiteralExpression> {
+
+    public DataProviderReference(PsiLiteralExpression element) {
+      super(element, false);
+    }
+
+    @Nullable
+    public PsiElement resolve() {
+      PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+      if (cls != null) {
+        PsiMethod[] methods = cls.getMethods();
+        @NonNls String val = getValue();
+        for (PsiMethod method : methods) {
+          if (AnnotationUtil.isAnnotated(method, DataProvider.class.getName(), false)) {
+            if (method.getName().equals(val)) {
+              return method;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    public Object[] getVariants() {
+      final List<Object> list = new ArrayList<Object>();
+      final PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+      if (cls != null) {
+        final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
+        final PsiMethod[] methods = cls.getMethods();
+        for (PsiMethod method : methods) {
+          if (current != null && method.getName().equals(current.getName())) continue;
+          if (AnnotationUtil.isAnnotated(method, DataProvider.class.getName(), false)) {
+            list.add(LookupValueFactory.createLookupValue(method.getName(), null));
+          }
+        }
+      }
+      return list.toArray();
+    }
+  }
 
   private static class MethodReference extends PsiReferenceBase<PsiLiteralExpression> {
 
