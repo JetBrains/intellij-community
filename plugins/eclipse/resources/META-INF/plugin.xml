@@ -4,7 +4,7 @@
   <id>org.jetbrains.idea.eclipse</id>
   <description>Eclipse Integration plugin</description>
   <version>2.0</version>
-  <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
+  <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
   <change-notes>
     <![CDATA[]]>
   </change-notes>
