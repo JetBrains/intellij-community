@@ -388,6 +388,10 @@ public class ApplyPatchDialog extends DialogWrapper {
       });
       return;
     }
+    updateStatus(s);
+  }
+
+  private void updateStatus(String s) {
     myInnerChange = true;
     try {
       if (myDetectedBaseDirectory != null) {
@@ -480,6 +484,10 @@ public class ApplyPatchDialog extends DialogWrapper {
       if (mySelectedChangeList == null) return;
       final Collection<String> missingDirs = verifyPatchPaths();
       if (missingDirs.size() > 0 && !checkCreateMissingDirs(missingDirs)) return;
+      if (getBaseDirectory() == null) {
+        Messages.showErrorDialog(getContentPane(), "Could not find patch base directory " + myBaseDirectoryField.getText());
+        return;
+      }
       super.doOKAction();
     }
   }
@@ -520,6 +528,9 @@ public class ApplyPatchDialog extends DialogWrapper {
   }
 
   private VirtualFile getBaseDirectory() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(myBaseDirectoryField.getText())); 
+    }
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myBaseDirectoryField.getText()));
   }
 
