@@ -30,7 +30,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   public void updateDataModel() {
-    myBuilder.setModules(myInsight.getSuggestedModules());
+    myBuilder.setModules(myModulesLayoutPanel.getChosenEntries());
   }
 
   protected JComponent createResultsPanel() {

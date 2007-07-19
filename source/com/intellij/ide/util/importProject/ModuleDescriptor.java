@@ -4,9 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -14,15 +12,13 @@ import java.util.Set;
 */
 public class ModuleDescriptor {
   String myName;
-  final Set<File> myContentRoots = new HashSet<File>();
-  final Set<File> mySourceRoots = new HashSet<File>();
+  final Map<File, Set<File>> myContentToSourceRoots = new HashMap<File, Set<File>>();
   final Set<File> myLibraryFiles = new HashSet<File>();
   final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
   
   public ModuleDescriptor(final File contentRoot, final File sourceRoot) {
     myName = StringUtil.capitalize(contentRoot.getName());
-    myContentRoots.add(contentRoot);
-    mySourceRoots.add(sourceRoot);
+    myContentToSourceRoots.put(contentRoot, new HashSet<File>(Arrays.asList(sourceRoot)));
   }
 
   public String getName() {
@@ -34,23 +30,37 @@ public class ModuleDescriptor {
   }
 
   public Set<File> getContentRoots() {
-    return myContentRoots;
+    return Collections.unmodifiableSet(myContentToSourceRoots.keySet());
   }
 
   public Set<File> getSourceRoots() {
-    return mySourceRoots;
+    final Set<File> allSources = new HashSet<File>();
+    for (Set<File> files : myContentToSourceRoots.values()) {
+      allSources.addAll(files);
+    }
+    return allSources;
+  }
+
+  public Set<File> getSourceRoots(File contentRoot) {
+    final Set<File> sources = myContentToSourceRoots.get(contentRoot);
+    return (sources != null) ? Collections.unmodifiableSet(sources) : Collections.<File>emptySet();
   }
   
   public void addContentRoot(File contentRoot) {
-    myContentRoots.add(contentRoot);
+    myContentToSourceRoots.put(contentRoot, new HashSet<File>());
   }
   
   public void removeContentRoot(File contentRoot) {
-    myContentRoots.remove(contentRoot);
+    myContentToSourceRoots.remove(contentRoot);
   }
   
-  public void addSourceRoot(File sourceRoot) {
-    mySourceRoots.add(sourceRoot);
+  public void addSourceRoot(final File contentRoot, File sourceRoot) {
+    Set<File> sources = myContentToSourceRoots.get(contentRoot);
+    if (sources == null) {
+      sources = new HashSet<File>();
+      myContentToSourceRoots.put(contentRoot, sources);
+    }
+    sources.add(sourceRoot);
   }
   
   public void addDependencyOn(ModuleDescriptor dependence) {
@@ -78,8 +88,8 @@ public class ModuleDescriptor {
    */
   public String toString() {
     @NonNls final StringBuilder builder = new StringBuilder();
-    builder.append("[Module: ").append(myContentRoots).append(" | ");
-    for (File sourceRoot : mySourceRoots) {
+    builder.append("[Module: ").append(getContentRoots()).append(" | ");
+    for (File sourceRoot : getSourceRoots()) {
       builder.append(sourceRoot.getName()).append(",");
     }
     builder.append("]");

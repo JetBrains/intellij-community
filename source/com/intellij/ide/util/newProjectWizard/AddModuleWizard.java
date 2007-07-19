@@ -288,7 +288,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
         }
       });
       if (projectJdks.length > 0) {
-        return projectJdks[0];
+        return projectJdks[projectJdks.length - 1];
       }
     }
     return null;

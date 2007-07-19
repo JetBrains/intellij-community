@@ -82,22 +82,9 @@ public class ModuleInsight {
     return myModules;
   }
 
-  public void scan() {
-    myProgress.setIndeterminate(true);
-    myProgress.pushState();
-    try {
-      scanLibraries();
-      if (myProgress.isCanceled()) {
-        return;
-      }
-      scanModules();
-    }
-    finally {
-      myProgress.popState();
-    }
-  }
 
   public void scanModules() {
+    myProgress.setIndeterminate(true);
     final Map<File, Set<String>> sourceRootToReferencedPackagesMap = new HashMap<File, Set<String>>();
     final Map<File, Set<String>> sourceRootToPackagesMap = new HashMap<File, Set<String>>();
     final Map<File, ModuleDescriptor> contentRootToModules = new HashMap<File, ModuleDescriptor>();
@@ -129,7 +116,7 @@ public class ModuleInsight {
         final File moduleContentRoot = srcRoot.getParentFile();
         ModuleDescriptor moduleDescriptor = contentRootToModules.get(moduleContentRoot);
         if (moduleDescriptor != null) { // if such module aready exists
-          moduleDescriptor.addSourceRoot(srcRoot);
+          moduleDescriptor.addSourceRoot(moduleContentRoot, srcRoot);
         }
         else {
           moduleDescriptor = new ModuleDescriptor(moduleContentRoot, srcRoot);
@@ -182,6 +169,7 @@ public class ModuleInsight {
   }
 
   public void scanLibraries() {
+    myProgress.setIndeterminate(true);
     myProgress.pushState();
     try {
       try {
@@ -194,14 +182,13 @@ public class ModuleInsight {
       }
       myProgress.setText("Building initial libraries layout...");
       final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
+      // correct library names so that there are no duplicates 
+      final Set<String> libNames = new HashSet<String>(); 
       for (LibraryDescriptor library : libraries) {
         final Collection<File> libJars = library.getJars();
-        final boolean renameLib = libJars.size() == 1;
-        for (File jar : libJars) {
-          if (renameLib) {
-            library.setName(jar.getName());
-          }
-        }
+        final String newName = suggestLibName(libNames, libJars.size() == 1? libJars.iterator().next().getName() : library.getName());
+        library.setName(newName);
+        libNames.add(newName);
       }
       myLibraries = libraries;
     }
@@ -209,13 +196,23 @@ public class ModuleInsight {
       myProgress.popState();
     }
   }
+  
+  private static String suggestLibName(Set<String> existingNames, String baseName) {
+    String name = baseName;
+    int index = 1;
+    while (existingNames.contains(name)) {
+      name = baseName + (index++);
+    }
+    return name;
+  }
 
   public void merge(final ModuleDescriptor mainModule, final ModuleDescriptor module) {
     for (File contentRoot : module.getContentRoots()) {
-      appendContentRoot(mainModule, contentRoot);
-    }
-    for (File srcRoot : module.getSourceRoots()) {
-      mainModule.addSourceRoot(srcRoot);
+      final File _contentRoot = appendContentRoot(mainModule, contentRoot);
+      final Set<File> sources = module.getSourceRoots(contentRoot);
+      for (File source : sources) {
+        mainModule.addSourceRoot(_contentRoot, source);
+      }
     }
     for (File jar : module.getLibraryFiles()) {
       mainModule.addLibraryFile(jar);
@@ -266,23 +263,28 @@ public class ModuleInsight {
     return libs;
   }
   
-  private static void appendContentRoot(final ModuleDescriptor module, final File contentRoot) {
+  private static File appendContentRoot(final ModuleDescriptor module, final File contentRoot) {
     final Set<File> moduleRoots = module.getContentRoots();
     for (File moduleRoot : moduleRoots) {
       try {
         if (FileUtil.isAncestor(moduleRoot, contentRoot, false)) {
-          return; // no need to include a separate root
+          return moduleRoot; // no need to include a separate root
         }
         if (FileUtil.isAncestor(contentRoot, moduleRoot, true)) {
+          final Set<File> currentSources = module.getSourceRoots(moduleRoot);
           module.removeContentRoot(moduleRoot);
           module.addContentRoot(contentRoot);
-          return; // no need to include a separate root
+          for (File source : currentSources) {
+            module.addSourceRoot(contentRoot, source);
+          }
+          return contentRoot; // no need to include a separate root
         }
       }
       catch (IOException ignored) {
       }
     }
     module.addContentRoot(contentRoot);
+    return contentRoot;
   }
   
   

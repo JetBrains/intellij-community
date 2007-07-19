@@ -30,7 +30,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
   }
 
   public void updateDataModel() {
-    myBuilder.setLibraries(myInsight.getSuggestedLibraries());
+    myBuilder.setLibraries(myLibrariesPanel.getChosenEntries());
   }
 
   protected JComponent createResultsPanel() {

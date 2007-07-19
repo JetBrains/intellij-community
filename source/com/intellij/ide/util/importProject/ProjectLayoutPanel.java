@@ -1,5 +1,6 @@
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,7 @@ import java.util.List;
  *         Date: Jul 16, 2007
  */
 abstract class ProjectLayoutPanel<T> extends JPanel {
-  private JList myEntriesList;
+  private ElementsChooser<T> myEntriesChooser;
   private JList myDependenciesList;
   private final ModuleInsight myInsight;
 
@@ -25,16 +26,20 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     super(new BorderLayout());
     myInsight = insight;
 
-    myEntriesList = createList();
+    myEntriesChooser = new ElementsChooser<T>(true) {
+      public String getItemText(T element) {
+        return getElementText(element);
+      }
+    }; 
     myDependenciesList = createList();
     
     final Splitter splitter = new Splitter(false);
-    splitter.setFirstComponent(new JScrollPane(myEntriesList));
+    splitter.setFirstComponent(new JScrollPane(myEntriesChooser));
     splitter.setSecondComponent(new JScrollPane(myDependenciesList));
     
     add(splitter, BorderLayout.CENTER);
     
-    myEntriesList.addListSelectionListener(new ListSelectionListener() {
+    myEntriesChooser.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         final List<T> entries = getSelectedEntries();
         final Collection deps = getDependencies(entries);
@@ -68,23 +73,28 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
 
   public List<T> getSelectedEntries() {
-    final Object[] values = myEntriesList.getSelectedValues();
-    final List<T> list = new ArrayList<T>(values.length);
-    for (Object value : values) {
-      list.add((T)value);
-    }
-    return list;
+    return myEntriesChooser.getSelectedElements();
+  }
+
+  public List<T> getChosenEntries() {
+    return myEntriesChooser.getMarkedElements();
   }
   
   public void rebuild() {
-    myEntriesList.getSelectionModel().clearSelection();
-    final DefaultListModel model = (DefaultListModel)myEntriesList.getModel();
-    model.clear();
-    for (T entry : alphaSortList(getEntries())) {
-      model.addElement(entry);
+    myEntriesChooser.clear();
+    for (final T entry : alphaSortList(getEntries())) {
+      myEntriesChooser.addElement(entry, true, new ElementsChooser.ElementProperties() {
+        public Icon getIcon() {
+          return getElementIcon(entry);
+        }
+
+        public Color getColor() {
+          return null;
+        }
+      });
     }
-    if (model.getSize() > 0) {
-      myEntriesList.setSelectedIndex(0);
+    if (myEntriesChooser.getElementCount() > 0) {
+      myEntriesChooser.selectElements(Collections.singleton(myEntriesChooser.getElementAt(0)));
     }
   }
 
