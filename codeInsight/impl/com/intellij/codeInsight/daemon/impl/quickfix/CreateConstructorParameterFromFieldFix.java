@@ -50,11 +50,11 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       constructors = aClass.getConstructors();
     }
     for (int i = 0; i < constructors.length; i++){
-      addParameterToConstructor(project, file, editor, getField().getContainingClass().getConstructors()[i]);
+      if (!addParameterToConstructor(project, file, editor, getField().getContainingClass().getConstructors()[i])) break;
     }
   }
 
-  private void addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, PsiMethod constructor) throws IncorrectOperationException {
+  private boolean addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, PsiMethod constructor) throws IncorrectOperationException {
     PsiParameter[] parameters = constructor.getParameterList().getParameters();
     PsiExpression[] expressions = new PsiExpression[parameters.length+1];
     PsiElementFactory factory = file.getManager().getElementFactory();
@@ -71,11 +71,14 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     addParamFix.invoke(project, editor, file);
     constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
-    parameters = constructor.getParameterList().getParameters();
-    final PsiParameter parameter = parameters[parameters.length-1];
+    PsiParameter[] newParameters = constructor.getParameterList().getParameters();
+    if (newParameters == parameters) return false; //user must have canceled dialog
+    final PsiParameter parameter = newParameters[newParameters.length-1];
     // do not introduce assignment in chanined constructor
-    if (HighlightControlFlowUtil.getChainedConstructors(constructor) != null) return;
-    AssignFieldFromParameterAction.addFieldAssignmentStatement(project, getField(), parameter, editor);
+    if (HighlightControlFlowUtil.getChainedConstructors(constructor) == null) {
+      AssignFieldFromParameterAction.addFieldAssignmentStatement(project, getField(), parameter, editor);
+    }
+    return true;
   }
 
   private PsiField getField() {
