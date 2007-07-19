@@ -16,22 +16,19 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +36,9 @@ import java.util.regex.Pattern;
  * @author ilyas
  */
 public class GroovyNameSuggestionUtil {
+
+  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil");
+
   public static String[] suggestVariableNames(GrExpression expr,
                                               GroovyIntroduceVariableBase.Validator validator) {
     ArrayList<String> possibleNames = new ArrayList<String>();
@@ -62,7 +62,7 @@ public class GroovyNameSuggestionUtil {
     if (possibleNames.size() == 0) {
       possibleNames.add(validator.validateName("var", true));
     }
-    return possibleNames.toArray(new String[0]);
+    return possibleNames.toArray(new String[possibleNames.size()]);
   }
 
 
@@ -91,13 +91,9 @@ public class GroovyNameSuggestionUtil {
 
   private static void generateByType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
     String typeName = type.getPresentableText();
-//    generateForColletionType(type, possibleNames, validator);
-    if (typeName.contains(".")) {
-      typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
-    }
-    if (typeName.contains("<")) {
-      typeName = typeName.substring(0, typeName.indexOf("<"));
-    }
+    generateNamesForColletionType(type, possibleNames, validator);
+    generateNamesForArrayType(type, possibleNames, validator);
+    typeName = cleanTypeName(typeName);
     if (typeName.equals("String")) {
       possibleNames.add(validator.validateName("s", true));
     }
@@ -110,6 +106,48 @@ public class GroovyNameSuggestionUtil {
       generateCamelNames(possibleNames, validator, typeName);
       possibleNames.remove(typeName);
     }
+  }
+
+  private static void generateNamesForArrayType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
+/*
+    int arrayDim = type.getArrayDimensions();
+    if (arrayDim != 1) return;
+*/
+  }
+
+  @NotNull
+  private static String cleanTypeName(@NotNull String typeName) {
+    if (typeName.contains(".")) {
+      typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
+    }
+    if (typeName.contains("<")) {
+      typeName = typeName.substring(0, typeName.indexOf("<"));
+    }
+    return typeName;
+  }
+
+  private static void generateNamesForColletionType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
+    PsiType componentType = getCollectionComponentType(type, validator.getProject());
+    if (!(type instanceof PsiClassType) || componentType == null) return;
+    PsiClass clazz = ((PsiClassType) type).resolve();
+    if (clazz == null) return;
+    String collectionName = clazz.getName();
+
+    assert collectionName != null;
+
+    String componentName = cleanTypeName(componentType.getPresentableText());
+    if (componentType instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType) componentType;
+      PsiClass psiClass = classType.resolve();
+      if (psiClass == null) return;
+      componentName = psiClass.getName();
+    }
+
+    assert componentName != null;
+    String candidate = fromLowerLetter(componentName.toLowerCase()) + "s";
+    possibleNames.add(validator.validateName(candidate, true));
+    candidate = collectionName.toLowerCase() + "Of" + fromUpperLetter(componentName.toLowerCase()) + "s";
+    possibleNames.add(validator.validateName(candidate, true));
   }
 
   private static void generateCamelNames(ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator, String typeName) {
@@ -129,18 +167,6 @@ public class GroovyNameSuggestionUtil {
         }
       }
     }
-  }
-
-  private static void generateForColletionOrArrayType(PsiType type, ArrayList<String> possibleNames, GroovyIntroduceVariableBase.Validator validator) {
-    Project project = validator.getProject();
-    PsiManager manager = PsiManager.getInstance(project);
-    GlobalSearchScope scope = type.getResolveScope();
-    assert scope != null;
-    PsiType collectionType = manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_COLLECTION, scope).getDeepComponentType();
-    List<PsiType> superTypes = Arrays.asList(type.getSuperTypes());
-    for (PsiType superType : superTypes) {
-    }
-
   }
 
   private static String generateNameForBuiltInType(String unboxed) {
@@ -185,5 +211,19 @@ public class GroovyNameSuggestionUtil {
     return str.substring(0, 1).toUpperCase() + str.substring(1);
   }
 
+  private static PsiType getCollectionComponentType(PsiType type, Project project) {
+    if (!(type instanceof PsiClassType)) return null;
+    PsiClassType classType = (PsiClassType) type;
+    PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+    PsiClass clazz = result.getElement();
+    if (clazz == null) return null;
+    PsiManager manager = PsiManager.getInstance(project);
+    PsiClass collectionClass = manager.findClass("java.util.Collection", ((PsiClassType) type).getResolveScope());
+    if (collectionClass == null || collectionClass.getTypeParameters().length != 1) return null;
+    PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, clazz, result.getSubstitutor());
 
+    if (substitutor == null) return null;
+    PsiType componentType = substitutor.substitute(collectionClass.getTypeParameters()[0]);
+    return componentType instanceof PsiIntersectionType ? null : componentType;
+  }
 }

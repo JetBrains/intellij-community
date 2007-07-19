@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -137,7 +138,15 @@ public class GroovyInlineHandler implements InlineHandler {
 
       @Nullable
       public Collection<String> getConflicts(PsiReference reference, PsiElement referenced) {
-        return null;
+        ArrayList<String> conflicts = new ArrayList<String>();
+        GrExpression expr = (GrExpression) reference.getElement();
+        if (expr.getParent() instanceof GrAssignmentExpression){
+          GrAssignmentExpression parent = (GrAssignmentExpression) expr.getParent();
+          if (expr.equals(parent.getLValue())) {
+            conflicts.add(GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
+          }
+        }
+        return conflicts;
       }
 
       public void inlineReference(final PsiReference reference, final PsiElement referenced) {
