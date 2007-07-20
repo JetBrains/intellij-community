@@ -19,10 +19,10 @@ public class PrevNextParameterHandler extends EditorActionHandler {
 
   private boolean myIsNextParameterHandler;
 
-  private PsiElement getExpressionList(Editor editor, Project project) {
+  private static PsiElement getExpressionList(Editor editor, Project project) {
     int offset = editor.getCaretModel().getOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
+    if (file == null) return null;
     return ParameterInfoController.findArgumentList(file, offset, -1);
   }
 
@@ -31,10 +31,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement exprList = getExpressionList(editor, project);
-    if (exprList != null) {
-      return ParameterInfoController.isAlreadyShown(editor, exprList.getTextRange().getStartOffset());
-    }
-    return false;
+    return exprList != null && ParameterInfoController.isAlreadyShown(editor, exprList.getTextRange().getStartOffset());
   }
 
   public void execute(Editor editor, DataContext dataContext) {

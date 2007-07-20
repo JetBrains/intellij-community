@@ -1162,7 +1162,7 @@ public final class PsiUtil {
   }
 
   @NotNull
-  public static Language getLanguageAtOffset (PsiFile file, int offset) {
+  public static Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
     final PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
     if (elt instanceof PsiWhiteSpace) {
