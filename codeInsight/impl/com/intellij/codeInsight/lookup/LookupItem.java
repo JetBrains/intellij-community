@@ -62,6 +62,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
 
   private Object myObject;
   private String myLookupString;
+  private double myPriority;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
   private static final OverwriteHandler DEFAULT_OVERWRITE_HANDLER = new OverwriteHandler() {
@@ -91,6 +92,10 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     }
     else{
       myObject = o;
+    }
+
+    if (o instanceof LookupValueWithPriority) {
+      setPriority(((LookupValueWithPriority)o).getPriority());
     }
   }
 
@@ -220,6 +225,16 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   public LookupItem<T> setIcon(Icon icon) {
     setAttribute(LookupItem.ICON_ATTR, icon);
     return this;
+  }
+
+  @NotNull
+  public LookupItem<T> setPriority(double priority) {
+    myPriority = priority;
+    return this;
+  }
+
+  public double getPriority() {
+    return myPriority;
   }
 
   @NotNull

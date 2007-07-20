@@ -31,6 +31,9 @@ public interface LookupElement<T> {
   LookupElement<T> setIcon(@Nullable Icon icon);
 
   @NotNull
+  LookupElement<T> setPriority(double priority);
+
+  @NotNull
   LookupElement<T> setPresentableText(@NotNull String presentableText);
 
   /*@NotNull
