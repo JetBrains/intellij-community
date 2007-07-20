@@ -191,6 +191,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     }
     catch (ConfigurationException e) {
       Messages.showErrorDialog(myCurrentProject, e.getMessage(), e.getTitle());
+      return false;
     }
     step.updateDataModel();
     return true;
