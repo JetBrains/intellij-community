@@ -110,7 +110,11 @@ public class FindUsagesUtil {
     if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
       String stringToSearch = getStringToSearch(element);
       if (stringToSearch != null) {
-        final TextRange elementTextRange = element.getTextRange();
+        final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+          public TextRange compute() {
+            return element.getTextRange();
+          }
+        });
         RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
           public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
             if (elementTextRange != null
