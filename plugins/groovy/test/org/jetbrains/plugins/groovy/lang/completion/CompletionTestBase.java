@@ -41,8 +41,8 @@ public abstract class CompletionTestBase extends ActionTestCase {
   protected String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
     String result = "";
     String fileText = file.getText();
-    int offset = fileText.indexOf(TestUtils.CARET_MARKER);
-    fileText = TestUtils.removeCaretMarker(fileText, offset);
+    int offset = fileText.indexOf(CARET_MARKER);
+    fileText = removeCaretMarker(fileText);
     myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
     myFileEditorManager = FileEditorManager.getInstance(myProject);
     myEditor = myFileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);

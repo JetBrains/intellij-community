@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.LargeGroovyBlock;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -55,6 +56,10 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     // For Groovy file
     if (psiParent instanceof GroovyFile) {
       return Indent.getNoneIndent();
+    }
+
+    if (psiParent instanceof GrListOrMap) {
+      return Indent.getContinuationIndent();
     }
 
     // For common code block
@@ -89,6 +94,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     if (psiParent instanceof GrArgumentList) {
       return Indent.getContinuationIndent();
     }
+
 
     // For case clause
     if (parent instanceof LargeGroovyBlock) {
