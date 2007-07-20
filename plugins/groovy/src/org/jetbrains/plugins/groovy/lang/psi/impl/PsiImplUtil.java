@@ -70,7 +70,8 @@ public class PsiImplUtil {
     if (oldExpr.getParent() instanceof GrExpression) {
       GrExpression parentExpr = (GrExpression) oldExpr.getParent();
       // todo fix me!
-      if (getExprPriorityLevel(parentExpr) >= getExprPriorityLevel(newExpr) && getExprPriorityLevel(parentExpr) != 0) {
+      if (getExprPriorityLevel(parentExpr) >= getExprPriorityLevel(newExpr) &&
+          getExprPriorityLevel(newExpr) != 0) {
         newExpr = factory.createParenthesizedExpr(newExpr);
       }
     }
