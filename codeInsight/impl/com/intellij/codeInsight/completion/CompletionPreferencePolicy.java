@@ -189,14 +189,16 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     else if (o instanceof PsiMethod) {
       name = ((PsiMethod)o).getName();
     }
-    else if (o instanceof PsiClass && myExpectedInfos.length == 1){
+    else if (o instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)o;
       if ("true".equals(System.getProperty("sort.lookup.items.by.proximity"))) {
         final THashSet<PsiClass> classes = LookupManagerImpl.getFirstClasses(myExpectedInfos);
         if (classes.contains(psiClass)) {
-          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || !LookupManagerImpl.hasFewAbstractMethods(psiClass)) return -1;
+          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || !hasFewAbstractMethods(psiClass)) return -1;
         }
       }
+
+      if (myExpectedInfos.length != 1) return 0;
 
       final PsiType type = myExpectedInfos[0].getType();
       final PsiType objectType = psiClass.getManager().getElementFactory().createType(psiClass);
@@ -260,5 +262,16 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       count++;
     }
     return name.substring(0, name.length() - count);
+  }
+
+  private static boolean hasFewAbstractMethods(final PsiClass psiClass) {
+    int count = 0;
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        count++;
+        if (count > 2) return false;
+      }
+    }
+    return count != 0;
   }
 }

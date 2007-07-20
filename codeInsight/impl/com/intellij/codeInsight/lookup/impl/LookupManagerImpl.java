@@ -282,14 +282,4 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     return set;
   }
 
-  public static boolean hasFewAbstractMethods(final PsiClass psiClass) {
-    int count = 0;
-    for (final PsiMethod method : psiClass.getAllMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        count++;
-        if (count > 2) return false;
-      }
-    }
-    return count != 0;
-  }
 }
