@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
 
   private List<TextRange> myFoldingData;
 
-  protected GeneratedCodeFoldingPass(final PsiFile psiFile, final Editor editor) {
+  protected GeneratedCodeFoldingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     super(psiFile.getProject(), editor.getDocument());
     myPsiFile = psiFile;
     myEditor = editor;

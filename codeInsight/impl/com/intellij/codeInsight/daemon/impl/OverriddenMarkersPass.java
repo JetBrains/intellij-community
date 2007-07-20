@@ -23,6 +23,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -41,7 +42,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
 
   private Collection<LineMarkerInfo> myMarkers;
 
-  public OverriddenMarkersPass(Project project, PsiFile file, Document document, int startOffset, int endOffset) {
+  public OverriddenMarkersPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
     super(project, document);
     myFile = file;
     myStartOffset = startOffset;

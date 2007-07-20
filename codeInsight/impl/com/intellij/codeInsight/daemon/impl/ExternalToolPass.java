@@ -2,8 +2,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
   private final AnnotationHolderImpl myAnnotationHolder;
 
-  public ExternalToolPass(PsiFile file,
-                          Editor editor,
+  public ExternalToolPass(@NotNull PsiFile file,
+                          @NotNull Editor editor,
                           int startOffset,
                           int endOffset) {
     super(file.getProject(), editor.getDocument());

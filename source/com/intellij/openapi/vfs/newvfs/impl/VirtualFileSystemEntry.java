@@ -207,7 +207,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public Charset getCharset() {
-    if (!isCharsetSet()) {
+    if (!isDirectory() && !isCharsetSet()) {
       try {
         LoadTextUtil.detectCharset(this, contentsToByteArray());
       }

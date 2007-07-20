@@ -40,7 +40,7 @@ public class UpdateHighlightersUtil {
 
   private UpdateHighlightersUtil() {}
 
-  private static void cleanFileLevelHighlights(Project project, Document document, final int group) {
+  private static void cleanFileLevelHighlights(@NotNull Project project, @NotNull Document document, final int group) {
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
@@ -59,15 +59,18 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  public static void setHighlightersToEditor(Project project,
-                                             Document document,
+  public static void setHighlightersToEditor(@NotNull Project project,
+                                             @NotNull Document document,
                                              int startOffset,
                                              int endOffset,
-                                             Collection<HighlightInfo> highlights,
+                                             @NotNull Collection<HighlightInfo> highlights,
                                              int group) {
     setAndGetHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
   }
-  public static HighlightInfo[] setAndGetHighlightersToEditor(final Project project, final Document document, final Map<TextRange, Collection<HighlightInfo>> infos,
+
+  public static HighlightInfo[] setAndGetHighlightersToEditor(@NotNull Project project,
+                                                              @NotNull Document document,
+                                                              @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
                                                               final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //serialized implicitly by the dispatch thread
@@ -299,7 +302,7 @@ public class UpdateHighlightersUtil {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, null);
   }
 
-  public static void updateHighlightersByTyping(Project project, DocumentEvent e) {
+  public static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
     Document document = e.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
 
