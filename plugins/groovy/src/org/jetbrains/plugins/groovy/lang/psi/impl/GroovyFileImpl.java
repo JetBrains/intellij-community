@@ -280,9 +280,5 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   public void removeVariable(GrVariable variable) throws IncorrectOperationException {
     PsiImplUtil.removeVariable(variable);
   }
-
-  public GroovyFile getContainingFile() {
-    return this;
-  }
 }
 

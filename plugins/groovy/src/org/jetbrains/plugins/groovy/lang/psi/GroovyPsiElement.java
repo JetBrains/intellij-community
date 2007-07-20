@@ -26,7 +26,5 @@ public interface GroovyPsiElement extends PsiElement {
   @NotNull
   ASTNode getNode();
 
-  GroovyFile getContainingFile();
-
   void accept(GroovyElementVisitor visitor);
 }

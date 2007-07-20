@@ -576,7 +576,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     node.getTreeParent().replaceChild(node, newNameNode);
 
     if (renameFile) {
-      final GroovyFile file = getContainingFile();
+      final GroovyFile file = (GroovyFile) getContainingFile();
       file.setName(name + "." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension());
     }
 
@@ -650,16 +650,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   private boolean isRenameFileOnClassRenaming() {
-    final GroovyFile file = getContainingFile();
+    final GroovyFile file = (GroovyFile) getContainingFile();
     if (file.isScript()) return false;
     final GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
     if (typeDefinitions.length > 1) return false;
     final String name = getName();
-    if (name == null) return false;
     final VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) return false;
-
-    return name.equals(vFile.getNameWithoutExtension());
+    return vFile != null && name.equals(vFile.getNameWithoutExtension());
   }
 
 }
