@@ -19,10 +19,8 @@ package org.jetbrains.plugins.groovy.testcases;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import junit.framework.TestSuite;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.FileScanner;
-import org.jetbrains.plugins.groovy.GroovyLoader;
 
 import java.io.File;
 import java.io.FileNotFoundException;

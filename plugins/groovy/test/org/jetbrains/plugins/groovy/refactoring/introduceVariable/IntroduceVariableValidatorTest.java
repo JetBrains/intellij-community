@@ -64,17 +64,17 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
   private String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
     String result = "";
     String fileText = file.getText();
-    int startOffset = fileText.indexOf(BEGIN_MARKER);
+    int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
       startOffset = fileText.indexOf(ALL_MARKER);
       replaceAllOccurences = true;
       fileText = removeAllMarker(fileText);
     } else {
       replaceAllOccurences = false;
-      fileText = removeBeginMarker(fileText);
+      fileText = TestUtils.removeBeginMarker(fileText, myOffset);
     }
-    int endOffset = fileText.indexOf(END_MARKER);
-    fileText = removeEndMarker(fileText);
+    int endOffset = fileText.indexOf(TestUtils.END_MARKER);
+    fileText = TestUtils.removeEndMarker(fileText, myOffset);
     myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
     fileEditorManager = FileEditorManager.getInstance(myProject);
     myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);

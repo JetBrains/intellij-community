@@ -219,23 +219,24 @@ public class PsiImplUtil {
    */
   public static int getExprPriorityLevel(GrExpression expr){
     int priority = 0;
-    if (expr instanceof GrPostfixExpression) priority = 1;
+    if (expr instanceof GrNewExpression) priority = 1;
+    if (expr instanceof GrPostfixExpression) priority = 5;
     if (expr instanceof GrUnaryExpression ||
-        expr instanceof GrTypeCastExpression) priority = 2;
-    if (expr instanceof GrPowerExprImpl) priority = 3;
-    if (expr instanceof GrMultiplicativeExprImpl) priority = 4;
-    if (expr instanceof GrAdditiveExprImpl) priority = 5;
-    if (expr instanceof GrShiftExprImpl) priority = 6;
-    if (expr instanceof GrRelationalExpression) priority = 7;
-    if (expr instanceof GrEqualityExprImpl) priority = 8;
-    if (expr instanceof GrRegexExprImpl) priority = 9;
-    if (expr instanceof GrAndExprImpl) priority = 10;
-    if (expr instanceof GrExclusiveOrExprImpl) priority = 11;
-    if (expr instanceof GrInclusiveOrExprImpl) priority = 12;
-    if (expr instanceof GrLogicalAndExprImpl) priority = 13;
-    if (expr instanceof GrLogicalOrExprImpl) priority = 14;
-    if (expr instanceof GrConditionalExpression) priority = 15;
-    if (expr instanceof GrAssignmentExpression) priority = 16;
+        expr instanceof GrTypeCastExpression) priority = 6;
+    if (expr instanceof GrPowerExprImpl) priority = 7;
+    if (expr instanceof GrMultiplicativeExprImpl) priority = 8;
+    if (expr instanceof GrAdditiveExprImpl) priority = 9;
+    if (expr instanceof GrShiftExprImpl) priority = 10;
+    if (expr instanceof GrRelationalExpression) priority = 11;
+    if (expr instanceof GrEqualityExprImpl) priority = 12;
+    if (expr instanceof GrRegexExprImpl) priority = 13;
+    if (expr instanceof GrAndExprImpl) priority = 14;
+    if (expr instanceof GrExclusiveOrExprImpl) priority = 15;
+    if (expr instanceof GrInclusiveOrExprImpl) priority = 16;
+    if (expr instanceof GrLogicalAndExprImpl) priority = 17;
+    if (expr instanceof GrLogicalOrExprImpl) priority = 18;
+    if (expr instanceof GrConditionalExpression) priority = 19;
+    if (expr instanceof GrAssignmentExpression) priority = 20;
     return -priority;
   }
 }
