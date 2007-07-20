@@ -10,7 +10,6 @@ import com.intellij.ide.util.importProject.ModuleInsight;
 import com.intellij.ide.util.importProject.ModulesDetectionStep;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
-import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
@@ -41,12 +40,13 @@ public class CreateFromSourcesMode extends WizardMode {
     final ProjectFromSourcesBuilder projectBuilder = new ProjectFromSourcesBuilder(moduleInsight);
     myProjectBuilder = projectBuilder;
     
+    final ProjectWizardStepFactory factory = ProjectWizardStepFactory.getInstance();
     final StepSequence sequence = new StepSequence();
     sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
-    sequence.addCommonStep(new SourcePathsStep(context, projectBuilder, null, null));
+    sequence.addCommonStep(factory.createSourcePathsStep(context, projectBuilder, null, null));
     sequence.addCommonStep(new LibrariesDetectionStep(projectBuilder, moduleInsight, null, null));
     sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, null, null));
-    sequence.addCommonStep(ProjectWizardStepFactory.getInstance().createProjectJdkStep(context));
+    sequence.addCommonStep(factory.createProjectJdkStep(context));
     return sequence;
   }
 
