@@ -10,7 +10,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,8 +44,8 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
         myMode = mode;
         selected = true;
       }
-      @NonNls final String htmlWrappedTitle = "<html><b>" + mode.getDisplayName(wizardContext) + "</b><html>";
-      final JRadioButton rb = new JRadioButton(htmlWrappedTitle, selected);
+      final JRadioButton rb = new JRadioButton(mode.getDisplayName(wizardContext), selected);
+      rb.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
       rb.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           myMode.onChosen(false);

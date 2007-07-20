@@ -10,6 +10,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -42,6 +44,11 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myUpdateCurrentProject = new JCheckBox(ProjectBundle.message("project.import.reuse.current.project.checkbox.name"), false);
     myUpdateCurrentProject.setVisible(selected);
     myPanel.add(myUpdateCurrentProject, BorderLayout.SOUTH);
+    myList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        mySequence.setType(((ProjectImportProvider)myList.getSelectedValue()).getId());
+      }
+    });
     myList.setSelectedIndex(0);
   }
 
