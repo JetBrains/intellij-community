@@ -69,7 +69,8 @@ public class PsiImplUtil {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(oldExpr.getProject());
     if (oldExpr.getParent() instanceof GrExpression) {
       GrExpression parentExpr = (GrExpression) oldExpr.getParent();
-      if (PsiImplUtil.getExprPriorityLevel(parentExpr) >= PsiImplUtil.getExprPriorityLevel(newExpr)) {
+      // todo fix me!
+      if (getExprPriorityLevel(parentExpr) >= getExprPriorityLevel(newExpr) && getExprPriorityLevel(parentExpr) != 0) {
         newExpr = factory.createParenthesizedExpr(newExpr);
       }
     }

@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -32,10 +34,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -88,18 +89,28 @@ public class GroovyInlineHandler implements InlineHandler {
       return null;
     }
 
-    final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
-    RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-        REFACTORING_NAME,
-        question,
-        HelpID.INLINE_VARIABLE,
-        "OptionPane.questionIcon",
-        true,
-        project);
-    dialog.show();
-    if (!dialog.isOK()) {
-      WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-      return null;
+    return inlineDialogResult(localName, project, refs);
+  }
+
+  /**
+   * Shows dialog with question to inline
+   */
+  private Settings inlineDialogResult(String localName, Project project, Collection<PsiReference> refs) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) { 
+      final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
+          REFACTORING_NAME,
+          question,
+          HelpID.INLINE_VARIABLE,
+          "OptionPane.questionIcon",
+          true,
+          project);
+      dialog.show();
+      if (!dialog.isOK()) {
+        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        return null;
+      }
     }
 
     return new Settings() {
@@ -140,7 +151,7 @@ public class GroovyInlineHandler implements InlineHandler {
       public Collection<String> getConflicts(PsiReference reference, PsiElement referenced) {
         ArrayList<String> conflicts = new ArrayList<String>();
         GrExpression expr = (GrExpression) reference.getElement();
-        if (expr.getParent() instanceof GrAssignmentExpression){
+        if (expr.getParent() instanceof GrAssignmentExpression) {
           GrAssignmentExpression parent = (GrAssignmentExpression) expr.getParent();
           if (expr.equals(parent.getLValue())) {
             conflicts.add(GroovyRefactoringBundle.message("local.varaible.is.lvalue"));

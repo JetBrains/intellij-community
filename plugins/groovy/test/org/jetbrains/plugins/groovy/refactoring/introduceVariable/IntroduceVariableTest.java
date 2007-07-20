@@ -78,9 +78,9 @@ public class IntroduceVariableTest extends ActionTestCase {
     }
     int endOffset = fileText.indexOf(END_MARKER);
     fileText = removeEndMarker(fileText);
-    myFile = TestUtils.createPseudoPhysicalFile(project, fileText);
-    fileEditorManager = FileEditorManager.getInstance(project);
-    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), false);
+    myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    fileEditorManager = FileEditorManager.getInstance(myProject);
+    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);
 
     try {
       myEditor.getSelectionModel().setSelection(startOffset, endOffset);
@@ -100,7 +100,7 @@ public class IntroduceVariableTest extends ActionTestCase {
       String varName = "preved";
       final boolean isFinal = false;
       final PsiType varType = null;
-      final GrVariableDeclaration varDecl = GroovyElementFactory.getInstance(project).createVariableDeclaration(varName,
+      final GrVariableDeclaration varDecl = GroovyElementFactory.getInstance(myProject).createVariableDeclaration(varName,
           GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
 
       introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),
@@ -122,7 +122,7 @@ public class IntroduceVariableTest extends ActionTestCase {
   public String transform(String testName, String[] data) throws Exception {
     setSettings();
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, fileText);
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
     String result = processFile(psiFile);
     System.out.println("------------------------ " + testName + " ------------------------");
     System.out.println(result);

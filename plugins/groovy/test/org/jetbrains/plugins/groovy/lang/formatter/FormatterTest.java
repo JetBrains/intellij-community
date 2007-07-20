@@ -52,13 +52,13 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
 
   public String transform(String testName, String[] data) throws Exception {
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, fileText);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              performFormatting(project, psiFile);
+              performFormatting(myProject, psiFile);
             } catch (IncorrectOperationException e) {
               e.printStackTrace();
             }

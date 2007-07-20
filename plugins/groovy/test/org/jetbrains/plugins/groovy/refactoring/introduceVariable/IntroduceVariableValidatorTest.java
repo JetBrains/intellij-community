@@ -22,9 +22,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduc
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -77,9 +75,9 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
     }
     int endOffset = fileText.indexOf(END_MARKER);
     fileText = removeEndMarker(fileText);
-    myFile = TestUtils.createPseudoPhysicalFile(project, fileText);
-    fileEditorManager = FileEditorManager.getInstance(project);
-    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), false);
+    myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    fileEditorManager = FileEditorManager.getInstance(myProject);
+    myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);
 
     try {
       myEditor.getSelectionModel().setSelection(startOffset, endOffset);
@@ -99,7 +97,7 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
       String varName = "preved";
       final boolean isFinal = false;
       final PsiType varType = null;
-      GroovyVariableValidator validator = new GroovyVariableValidator(introduceVariableBase, project,
+      GroovyVariableValidator validator = new GroovyVariableValidator(introduceVariableBase, myProject,
           selectedExpr, occurences, (GroovyPsiElement)tempContainer);
       result = validator.isOKTest(varName, replaceAllOccurences);
     } finally {
@@ -114,7 +112,7 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
   public String transform(String testName, String[] data) throws Exception {
     setSettings();
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, fileText);
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
     String result = processFile(psiFile);
     System.out.println("------------------------ " + testName + " ------------------------");
     System.out.println(result);

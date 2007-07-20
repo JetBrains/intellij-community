@@ -43,20 +43,20 @@ public abstract class CompletionTestBase extends ActionTestCase {
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
     fileText = removeCaretMarker(fileText);
-    myFile = TestUtils.createPseudoPhysicalFile(project, fileText);
-    myFileEditorManager = FileEditorManager.getInstance(project);
-    myEditor = myFileEditorManager.openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), false);
+    myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    myFileEditorManager = FileEditorManager.getInstance(myProject);
+    myEditor = myFileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);
     myEditor.getCaretModel().moveToOffset(offset);
 
     final CodeInsightActionHandler handler = getCompetionHandler();
-    final CompletionContext context = new CompletionContext(project, myEditor, myFile, 0, myOffset);
+    final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, 0, myOffset);
     CompletionData data = CompletionUtil.getCompletionDataByElement(myFile.findElementAt(myOffset), context);
     LookupItem[] items = getAcceptableItems(data);
 
     try {
-      performAction(project, new Runnable() {
+      performAction(myProject, new Runnable() {
         public void run() {
-          handler.invoke(project, myEditor, myFile);
+          handler.invoke(myProject, myEditor, myFile);
         }
       });
 
@@ -109,12 +109,12 @@ public abstract class CompletionTestBase extends ActionTestCase {
       /**
        * Hack for IDEA completion
        */
-      PsiFile newFile = TestUtils.createPseudoPhysicalFile(project, newFileText);
+      PsiFile newFile = TestUtils.createPseudoPhysicalFile(myProject, newFileText);
       PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
       final int offset1 =
           myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
       final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
-      final CompletionContext context = new CompletionContext(project, myEditor, myFile, offset1, offset2);
+      final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, offset1, offset2);
       context.setPrefix(elem, context.startOffset, completionData);
 
       if (lookupSet.size() == 0) {
@@ -149,7 +149,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
   public String transform(String testName, String[] data) throws Exception {
     setSettings();
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, fileText);
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
     String result = processFile(psiFile);
     System.out.println("------------------------ " + testName + " ------------------------");
     System.out.println(result);
