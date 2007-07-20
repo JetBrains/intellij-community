@@ -133,11 +133,13 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
   public void fireTableDataChanged() {
     // have to restore table selection since AbstractDataModel.fireTableDataChanged() clears all selection
-    final int[] selectedRows = table.getSelectedRows();
+    final TreePath[] treePaths = tree.getSelectionPaths();
     super.fireTableDataChanged();
-    for(int i=0;i<selectedRows.length;i++){
-      int selectedRow=selectedRows[i];
-      table.getSelectionModel().addSelectionInterval(selectedRow,selectedRow);
+    if (treePaths != null) {
+      for (TreePath treePath : treePaths) {
+        final int row = tree.getRowForPath(treePath);
+        table.getSelectionModel().addSelectionInterval(row, row);
+      }
     }
   }
 }
