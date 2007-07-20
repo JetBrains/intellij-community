@@ -66,7 +66,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
       myWorkspacePathComponent.setPath(path.replace('/', File.separatorChar));
       myWorkspacePathComponent.getPathComponent().selectAll();
     }
-    myLinkCheckBox.setSelected(getParameters().linkConverted);
+    //myLinkCheckBox.setSelected(getParameters().linkConverted);
   }
 
   public JComponent getPreferredFocusedComponent() {
