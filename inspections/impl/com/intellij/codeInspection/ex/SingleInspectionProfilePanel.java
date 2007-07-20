@@ -14,10 +14,10 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -965,10 +965,14 @@ public class SingleInspectionProfilePanel extends JPanel {
       comboBox.setRenderer(ourRenderer);
       addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this);
+          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, ((HighlightSeverity)getComboBox().getSelectedItem()));
           dlg.show();
           if (dlg.isOK()) {
             fillModel(model);
+            final HighlightInfoType type = dlg.getSelectedType();
+            if (type != null) {
+              getComboBox().setSelectedItem(type.getSeverity(null));
+            }
           }
         }
       });

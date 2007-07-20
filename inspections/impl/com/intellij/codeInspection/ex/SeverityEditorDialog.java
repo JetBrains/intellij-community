@@ -55,9 +55,8 @@ public class SeverityEditorDialog extends DialogWrapper {
   private int myCurrentSelection = -1;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.SeverityEditorDialog");
 
-  public SeverityEditorDialog(JComponent parent) {
+  public SeverityEditorDialog(JComponent parent, final HighlightSeverity severity) {
     super(parent, true);
-    fillList();
     myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -91,18 +90,13 @@ public class SeverityEditorDialog extends DialogWrapper {
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(leftPanel, BorderLayout.WEST);
     myPanel.add(myOptionsPanel, BorderLayout.CENTER);
-    myOptionsList.setSelectedIndex(0);
+    fillList(severity);
     init();
     setTitle(InspectionsBundle.message("severities.editor.dialog.title"));
   }
 
-  private void fillList() {
+  private void fillList(final HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
-    fillModel(model);
-    myOptionsList.setModel(model);
-  }
-
-  public static void fillModel(final DefaultListModel model) {
     model.removeAllElements();
     final TreeSet<HighlightInfoType.HighlightInfoTypeImpl> infoTypes =
       new TreeSet<HighlightInfoType.HighlightInfoTypeImpl>(new Comparator<HighlightInfoType.HighlightInfoTypeImpl>() {
@@ -110,14 +104,23 @@ public class SeverityEditorDialog extends DialogWrapper {
           return - o1.getSeverity(null).compareTo(o2.getSeverity(null));
         }
       });
+
     infoTypes.addAll(SeverityRegistrar.getRegisteredHighlightingInfoTypes());
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.ERROR);
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.WARNING);
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFO);
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    MyHighlightInfoTypeWithAtrributesDescription preselection = null;
     for (HighlightInfoType.HighlightInfoTypeImpl type : infoTypes) {
-      model.addElement(new MyHighlightInfoTypeWithAtrributesDescription(scheme.getAttributes(type.getAttributesKey()), type));
+      final MyHighlightInfoTypeWithAtrributesDescription typeWithAtrributesDescription =
+        new MyHighlightInfoTypeWithAtrributesDescription(scheme.getAttributes(type.getAttributesKey()), type);
+      model.addElement(typeWithAtrributesDescription);
+      if (type.getSeverity(null).equals(severity)) {
+        preselection = typeWithAtrributesDescription;
+      }
     }
+    myOptionsList.setModel(model);
+    myOptionsList.setSelectedValue(preselection, true);
   }
 
   private void processListValueChanged(final MyHighlightInfoTypeWithAtrributesDescription info, boolean apply) {
@@ -304,6 +307,10 @@ public class SeverityEditorDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  public HighlightInfoType getSelectedType() {
+    return ((MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getSelectedValue()).getHighlightInfoType();
   }
 
   private static class MyHighlightInfoTypeWithAtrributesDescription {
