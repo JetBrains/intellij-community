@@ -79,7 +79,7 @@ public class ElementsChooser<T> extends JPanel {
       JComponent.WHEN_FOCUSED
     );
 
-    new SpeedSearchBase<Table>(myTable) {
+    final SpeedSearchBase<Table> speedSearch = new SpeedSearchBase<Table>(myTable) {
       public int getSelectedIndex() {
         return myTable.getSelectedRow();
       }
@@ -108,7 +108,14 @@ public class ElementsChooser<T> extends JPanel {
         }
       }
     };
-
+    speedSearch.setComparator(    new SpeedSearchBase.SpeedSearchComparator() {
+      public void translatePattern(final StringBuilder buf, final String pattern) {
+        final int len = pattern.length();
+        for (int i = 0; i < len; ++i) {
+          translateCharacter(buf, pattern.charAt(i));
+        }
+      }
+    });
     setElements(elements, marked);
   }
 
