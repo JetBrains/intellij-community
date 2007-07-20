@@ -95,8 +95,9 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
       if (targetClass.equals(parentClass)) {
-        method = (PsiMethod) targetClass.addAfter(method, enclosingContext);
-      } else {
+        method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
+      }
+      else {
         PsiElement anchor = enclosingContext;
 
         while (anchor != null && anchor.getParent() != null && !anchor.getParent().equals(targetClass)) {
@@ -106,9 +107,10 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
         if (anchor != null && anchor.getParent() == null) anchor = null;
 
         if (anchor != null) {
-          method = (PsiMethod) targetClass.addAfter(method, anchor);
-        } else {
-          method = (PsiMethod) targetClass.add(method);
+          method = (PsiMethod)targetClass.addAfter(method, anchor);
+        }
+        else {
+          method = (PsiMethod)targetClass.add(method);
         }
       }
 
@@ -129,6 +131,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
 
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
+      if (method == null) return;
       body = method.getBody();
       TemplateBuilder builder = new TemplateBuilder(method);
 
@@ -141,6 +144,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
+      if (method == null) return;
 
       RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
       final Editor newEditor = positionCursor(project, targetFile, method);
@@ -160,7 +164,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                 if (method != null) {
                   try {
                     CreateFromUsageUtils.setupMethodBody(method);
-                  } catch (IncorrectOperationException e) {
+                  }
+                  catch (IncorrectOperationException e) {
                     LOG.error(e);
                   }
 
@@ -170,7 +175,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
             });
           }
         });
-      } else {
+      }
+      else {
         startTemplate(newEditor, template, project);
       }
     } catch (IncorrectOperationException e) {
