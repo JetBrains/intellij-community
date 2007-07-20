@@ -6,14 +6,17 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
+
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
@@ -35,10 +38,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
@@ -48,21 +48,10 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
-import org.testng.xml.LaunchSuite;
-import org.testng.xml.Parser;
-import org.testng.xml.SuiteGenerator;
-import org.testng.xml.XmlSuite;
+import org.testng.xml.*;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.*;
-
-public class TestNGRunnableState extends JavaCommandLineState {
+public class TestNGRunnableState extends JavaCommandLineState
+{
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private TestNGConfiguration config;
@@ -84,7 +73,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     client = new IDEARemoteTestRunnerClient();
     // Want debugging?
     if (runnerSettings.getData() instanceof DebuggingRunnerData) {
-      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings.getData());
+      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData) runnerSettings.getData());
       debugPort = debuggingRunnerData.getDebugPort();
       if (debugPort.length() == 0) {
         try {
@@ -103,7 +92,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
   public ExecutionResult execute() throws ExecutionException {
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     ProcessHandler processHandler = startProcess();
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessAdapter()
+    {
       @Override
       public void processTerminated(final ProcessEvent event) {
         client.stopTest();
@@ -154,12 +144,12 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     // Add plugin jars first...
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
-                                      new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
+        new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar").getPath());//todo !do not hard code lib name!
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
     ProjectJdk jdk =
-      module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleRootManager.getInstance(module).getJdk();
+        module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleRootManager.getInstance(module).getJdk();
     javaParameters.setJdk(jdk);
     PathUtilEx.addRtJar(javaParameters.getClassPath());
 
@@ -180,8 +170,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       LOGGER.info("Configuring for whole project");
       JavaParametersUtil.configureProject(config.getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                           config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
-    }
-    else {
+    } else {
       LOGGER.info("Configuring for module:" + config.getConfigurationModule().getModuleName());
       JavaParametersUtil.configureModule(config.getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
@@ -200,12 +189,19 @@ public class TestNGRunnableState extends JavaCommandLineState {
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, data.getOutputDirectory());
     }
 
+    if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
+      for (String listenerClassName : data.TEST_LISTENERS) {
+        if (listenerClassName != null && !"".equals(listenerClassName)) {
+          javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, listenerClassName);
+        }
+      }
+    }
+
     // Always include the source paths - just makes things easier :)
     VirtualFile[] sources;
     if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT || module == null) {
       sources = ProjectRootManager.getInstance(project).getContentSourceRoots();
-    }
-    else {
+    } else {
       sources = ModuleRootManager.getInstance(module).getSourceRoots();
     }
 
@@ -263,8 +259,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
       File xmlFile = suite.save(new File(PathManager.getSystemPath()));
       javaParameters.getProgramParametersList().add(xmlFile.getAbsolutePath());
-    }
-    else if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
+    } else if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
       // Running a suite, make a local copy of the suite and apply our custom parameters to it and run that instead.
 
       try {
@@ -279,7 +274,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
           //suite.setAnnotations(annotationType);
 
           final String fileId =
-            (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml").replace(' ', '_');
+              (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml").replace(' ', '_');
           final File suiteFile = new File(PathManager.getSystemPath(), fileId);
           FileWriter fileWriter = new FileWriter(suiteFile);
           fileWriter.write(suite.toXml());
@@ -319,16 +314,14 @@ public class TestNGRunnableState extends JavaCommandLineState {
       PsiPackage psiPackage = psiManager.findPackage(packageName);
       if (psiPackage == null) {
         throw CantRunException.packageNotFound(packageName);
-      }
-      else {
+      } else {
         TestClassFilter filter = getFilter(psiPackage);
         classes.putAll(calculateDependencies(data, true, TestNGUtil.getAllTestClasses(filter)));
         if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
       }
-    }
-    else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
+    } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       //it's a class
       PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
       if (psiClass == null) {
@@ -336,8 +329,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       }
       classes.putAll(calculateDependencies(data, true, psiClass));
 
-    }
-    else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
+    } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
       PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
       if (psiClass == null) {
@@ -345,11 +337,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
       }
       classes.putAll(calculateDependencies(data, false, psiClass));
       classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), true)));
-    }
-    else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
+    } else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes
       PsiClass[] testClasses =
-        TestNGUtil.getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true));
+          TestNGUtil.getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true));
       for (PsiClass c : testClasses) {
         classes.put(c, new HashSet<PsiMethod>());
       }
@@ -377,7 +368,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         try {
           properties.load(new FileInputStream(propertiesFile));
           for (Map.Entry entry : properties.entrySet()) {
-            params.put((String)entry.getKey(), (String)entry.getValue());
+            params.put((String) entry.getKey(), (String) entry.getValue());
           }
 
         }
@@ -402,7 +393,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       catch (IOException ex) {
         //we keep trying
         exception = ex;
-        port = 5000 + (int)(Math.random() * 5000);
+        port = 5000 + (int) (Math.random() * 5000);
       }
       finally {
         if (socket != null) {

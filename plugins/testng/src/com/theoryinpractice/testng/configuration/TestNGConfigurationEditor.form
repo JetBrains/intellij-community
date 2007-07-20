@@ -164,7 +164,6 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                   <forms top="0" left="2" bottom="0" right="0"/>
                 </constraints>
-                <properties/>
               </component>
               <component id="6ab4" class="com.intellij.openapi.ui.LabeledComponent" binding="moduleClasspath">
                 <constraints>
@@ -198,7 +197,7 @@
             <rowspec value="center:max(d;4px):noGrow"/>
             <colspec value="fill:d:grow"/>
             <constraints>
-              <tabbedpane title="Test Parameters"/>
+              <tabbedpane title="Parameters"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -261,6 +260,84 @@
                     <border type="none"/>
                     <children>
                       <component id="2e6d6" class="com.intellij.ui.table.TableView" binding="propertiesTableView">
+                        <constraints/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </scrollpane>
+                </children>
+              </grid>
+            </children>
+          </grid>
+          <grid id="da698" layout-manager="FormLayout">
+            <rowspec value="center:d:noGrow"/>
+            <rowspec value="top:4dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <colspec value="fill:d:grow"/>
+            <constraints>
+              <tabbedpane title="Listeners"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="c823f" class="com.intellij.openapi.ui.LabeledComponent">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Listener classes"/>
+                </properties>
+              </component>
+              <grid id="af0ed" layout-manager="FormLayout">
+                <rowspec value="center:d:noGrow"/>
+                <rowspec value="top:4dlu:noGrow"/>
+                <rowspec value="center:max(d;4px):noGrow"/>
+                <rowspec value="top:4dlu:noGrow"/>
+                <rowspec value="center:d:grow"/>
+                <colspec value="fill:d:grow"/>
+                <colspec value="left:4dlu:noGrow"/>
+                <colspec value="fill:max(d;4px):noGrow"/>
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="bf480" class="javax.swing.JButton" binding="addListener">
+                    <constraints>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+                      <forms defaultalign-vert="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="&amp;Add"/>
+                    </properties>
+                  </component>
+                  <component id="fb425" class="javax.swing.JButton" binding="removeListener">
+                    <constraints>
+                      <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <forms/>
+                    </constraints>
+                    <properties>
+                      <text value="&amp;Remove"/>
+                    </properties>
+                  </component>
+                  <vspacer id="e5369">
+                    <constraints>
+                      <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <forms defaultalign-vert="false"/>
+                    </constraints>
+                  </vspacer>
+                  <scrollpane id="20819">
+                    <constraints>
+                      <grid row="0" column="0" row-span="5" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <forms defaultalign-vert="false"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="e1bbe" class="com.intellij.ui.table.TableView" binding="listenersTable">
                         <constraints/>
                         <properties/>
                       </component>
