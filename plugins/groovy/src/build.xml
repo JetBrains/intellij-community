@@ -80,6 +80,8 @@
       <fileset dir="${project.dir}/resources"/>
     </copy>
 
+    <copy file="${project.dir}/src/org/jetbrains/plugins/grails/GrailsBundle.properties"
+          tofile="${production.dest.groovy}/org/jetbrains/plugins/grails/GrailsBundle.properties"/>
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/GroovyBundle.properties"
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/GroovyBundle.properties"/>
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"
