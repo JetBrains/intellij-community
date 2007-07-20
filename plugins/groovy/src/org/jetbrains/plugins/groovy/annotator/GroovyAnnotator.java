@@ -212,9 +212,7 @@ public class GroovyAnnotator implements Annotator {
     final PsiElement parent = refElement.getParent();
 
     GroovyResolveResult resolveResult = refElement.advancedResolve();
-    if (parent instanceof GrNewExpression) {
-      checkNewExpression(holder, refElement, resolveResult);
-    } else if (refElement.getReferenceName() != null) {
+    if (refElement.getReferenceName() != null) {
       final PsiElement resolved = resolveResult.getElement();
       if (resolved == null) {
         if (parent instanceof GrImportStatement && ((GrImportStatement) parent).isStatic()) { //multiple members might be imported by single static import
@@ -231,10 +229,15 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refElement, annotation);
         //registerCreteClassByTypeFix(refElement, annotation);
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        return;
       } else if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
         holder.createErrorAnnotation(refElement, message);
       }
+    }
+
+    if (parent instanceof GrNewExpression) {
+      checkNewExpression(holder, refElement, resolveResult);
     }
   }
 
