@@ -4,10 +4,10 @@
 
 package com.intellij.compiler.packaging;
 
-import com.intellij.compiler.impl.make.newImpl.DestinationInfo;
-import com.intellij.compiler.impl.make.newImpl.JarDestinationInfo;
-import com.intellij.compiler.impl.make.newImpl.JarInfo;
-import com.intellij.compiler.impl.make.newImpl.NewProcessingItem;
+import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
+import com.intellij.compiler.impl.packagingCompiler.JarDestinationInfo;
+import com.intellij.compiler.impl.packagingCompiler.JarInfo;
+import com.intellij.compiler.impl.packagingCompiler.PackagingProcessingItem;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,14 +131,14 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
     doTest(new MockBuildConfiguration(explodedEnabled, jarEnabled, buildExternalDependencies), info);
   }
   private void doTest(final MockBuildConfiguration mockBuildConfiguration, BuildRecipeInfo info) throws IOException {
-    final NewProcessingItem[] items = buildItems(info.myBuildRecipe, mockBuildConfiguration);
+    final PackagingProcessingItem[] items = buildItems(info.myBuildRecipe, mockBuildConfiguration);
     final String s = printItems(items);
     final File file = getExpectedFile(getTestName(true) + ".txt");
     String expected = loadText(file);
     assertEquals(expected, s);
   }
 
-  private String printItems(NewProcessingItem[] items) {
+  private String printItems(PackagingProcessingItem[] items) {
 
     List<Pair<JarInfo, String>> jarContent = getJarsContent(items);
 
@@ -149,7 +149,7 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
     }
 
     List<String> output = new ArrayList<String>();
-    for (NewProcessingItem item : items) {
+    for (PackagingProcessingItem item : items) {
       for (DestinationInfo destination : item.getDestinations()) {
         String o = item.getFile().getPath() + " -> " + destination.getOutputPath();
         final String d = printDestination(jar2Num, destination, false);
@@ -188,7 +188,7 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
     return builder.toString();
   }
 
-  private List<Pair<JarInfo, String>> getJarsContent(final NewProcessingItem[] items) {
+  private List<Pair<JarInfo, String>> getJarsContent(final PackagingProcessingItem[] items) {
     Set<JarInfo> jars = new HashSet<JarInfo>();
     final Map<JarInfo, Integer> deps = fillAllJars(items, jars);
 

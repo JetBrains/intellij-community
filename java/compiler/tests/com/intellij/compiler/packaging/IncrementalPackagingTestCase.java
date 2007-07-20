@@ -13,11 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.compiler.impl.make.BuildRecipeImpl;
-import com.intellij.compiler.impl.make.FileCopyInstructionImpl;
-import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
-import com.intellij.compiler.impl.make.CompoundBuildInstructionImpl;
-import com.intellij.compiler.impl.make.newImpl.*;
+import com.intellij.compiler.impl.packagingCompiler.*;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.mock.MockProgressIndicator;
@@ -45,7 +41,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     return new BuildRecipeInfo(null);
   }
 
-  protected NewProcessingItem[] buildItems(final BuildRecipe buildRecipe, final MockBuildConfiguration mockBuildConfiguration) {
+  protected PackagingProcessingItem[] buildItems(final BuildRecipe buildRecipe, final MockBuildConfiguration mockBuildConfiguration) {
     final MockBuildParticipant participant = new MockBuildParticipant(mockBuildConfiguration, buildRecipe);
     final DummyCompileContext compileContext = new MyDummyCompileContext();
     final ProcessingItemsBuilderContext context = new ProcessingItemsBuilderContext(compileContext);
@@ -61,9 +57,9 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     return context.getProcessingItems();
   }
 
-  protected Map<JarInfo, Integer> fillAllJars(final NewProcessingItem[] items, final Set<JarInfo> jars) {
+  protected Map<JarInfo, Integer> fillAllJars(final PackagingProcessingItem[] items, final Set<JarInfo> jars) {
     final Map<JarInfo, Integer> deps = new HashMap<JarInfo, Integer>();
-    for (NewProcessingItem item : items) {
+    for (PackagingProcessingItem item : items) {
       for (DestinationInfo destinationInfo : item.getDestinations()) {
         if (destinationInfo instanceof JarDestinationInfo) {
           final JarInfo info = ((JarDestinationInfo)destinationInfo).getJarInfo();

@@ -4,9 +4,9 @@
 
 package com.intellij.compiler.packaging;
 
-import com.intellij.compiler.impl.make.newImpl.JarInfo;
-import com.intellij.compiler.impl.make.newImpl.JarsBuilder;
-import com.intellij.compiler.impl.make.newImpl.NewProcessingItem;
+import com.intellij.compiler.impl.packagingCompiler.JarInfo;
+import com.intellij.compiler.impl.packagingCompiler.JarsBuilder;
+import com.intellij.compiler.impl.packagingCompiler.PackagingProcessingItem;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
@@ -65,7 +65,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
   private void doTest(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies,
                       final BuildRecipeInfo info) throws Exception {
     final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled, buildExternalDependencies);
-    final NewProcessingItem[] processingItems = buildItems(info.myBuildRecipe, configuration);
+    final PackagingProcessingItem[] processingItems = buildItems(info.myBuildRecipe, configuration);
     final HashSet<JarInfo> hashSet = new HashSet<JarInfo>();
     fillAllJars(processingItems, hashSet);
     final MyJarsBuilder builder = new MyJarsBuilder(hashSet);
