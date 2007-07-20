@@ -58,7 +58,7 @@ public class ReturnNullInspection extends BaseInspection {
     @Nullable
     protected LocalQuickFix buildFix(PsiElement location) {
         if (AnnotationUtil.isAnnotatingApplicable(location)) {
-            return new AnnotateMethodFix(AnnotationUtil.NULLABLE);
+            return new AnnotateMethodFix(AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL);
         } else {
             return null;
         }
