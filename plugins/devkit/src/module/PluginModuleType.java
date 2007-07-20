@@ -70,6 +70,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
                                               ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
+    steps.add(stepFactory.createSourcePathsStep(wizardContext, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "project.creatingModules.page3"));
     steps.add(stepFactory.createProjectJdkStep(wizardContext, ApplicationManager.getApplication().getComponent(IdeaJdk.class), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
         final ProjectJdk projectJdk = wizardContext.getProjectJdk();
