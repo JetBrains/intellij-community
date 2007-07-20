@@ -153,42 +153,30 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(containingFile, myProject);
       final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
         public int compare(LookupItem o1, LookupItem o2) {
-
-
-          int priority = o1.getObject() instanceof LookupValueWithPriority
-                         ? ((LookupValueWithPriority)o1.getObject()).getPriority()
-                         : LookupValueWithPriority.NORMAL;
-
-          int priority2 = o2.getObject() instanceof LookupValueWithPriority
-                          ? ((LookupValueWithPriority)o2.getObject()).getPriority()
-                          : LookupValueWithPriority.NORMAL;
-          if (priority != priority2) {
-            return priority2 - priority;
-          }
+          double priority1 = o1.getPriority();
+          double priority2 = o2.getPriority();
+          if (priority1 > priority2) return -1;
+          if (priority2 > priority1) return 1;
 
           if ("true".equals(System.getProperty("sort.lookup.items.by.proximity"))) {
             if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
-              final CompletionPreferencePolicy completionPreferencePolicy = (CompletionPreferencePolicy)itemPreferencePolicy;
-              final ExpectedTypeInfo[] expectedInfos = completionPreferencePolicy.getExpectedInfos();
+              final ExpectedTypeInfo[] expectedInfos = ((CompletionPreferencePolicy)itemPreferencePolicy).getExpectedInfos();
               if (expectedInfos != null) {
                 final THashSet<PsiClass> set = getFirstClasses(expectedInfos);
-                if (set.contains(o1.getObject()) && !set.contains(o2.getObject())) return -1;
-                if (!set.contains(o1.getObject()) && set.contains(o2.getObject())) return 1;
+                final boolean contains1 = set.contains(o1.getObject());
+                final boolean contains2 = set.contains(o2.getObject());
+                if (contains1 && !contains2) return -1;
+                if (!contains1 && contains2) return 1;
               }
-
             }
 
             final int i = proximityComparator.compare(o1.getObject(), o2.getObject());
-            if (i != 0) return i;
-
-            return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+            return i != 0 ? i : o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
           }
 
           int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-          if (stringCompare != 0) {
-            return stringCompare;
-          }
-          return proximityComparator.compare(o1.getObject(), o2.getObject());
+          return stringCompare != 0 ? stringCompare : proximityComparator.compare(o1.getObject(), o2.getObject());
+
         }
 
 
@@ -204,7 +192,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       final Object object = item.getObject();
 
       if (object instanceof PsiElement ||
-          object instanceof LookupValueWithPriority) {
+          object instanceof LookupValueWithPriority || item.getPriority() != 0) {
         return true;
       }
     }
@@ -302,6 +290,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         if (count > 2) return false;
       }
     }
-    return true;
+    return count != 0;
   }
 }
