@@ -404,6 +404,14 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <T> List<T> packNullables(T... elements) {
+    ArrayList<T> list = new ArrayList<T>();
+    for (T element : elements) {
+      addIfNotNull(element, list);
+    }
+    return list;
+  }
+
   public static <T,V> List<V> map(T[] arr, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : arr) {
