@@ -3,6 +3,7 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
+import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-  private static final AnnotateMethodFix ANNOTATE_OVERRIDDEN_METHODS_FIX = new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
+  private static final AnnotateMethodFix ANNOTATE_OVERRIDDEN_METHODS_FIX = new AnnotateMethodFix(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE){
     protected boolean annotateOverriddenMethods() {
       return true;
     }
@@ -39,7 +40,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     }
   };
   private static final AnnotateOverriddenMethodParameterFix ANNOTATE_OVERRIDDEN_METHODS_PARAMS_FIX =
-    new AnnotateOverriddenMethodParameterFix(AnnotationUtil.NOT_NULL);
+    new AnnotateOverriddenMethodParameterFix(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -56,6 +57,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         Annotated annotated = check(field, holder, field.getType());
         if (annotated.isDeclaredNotNull || annotated.isDeclaredNullable) {
           final String anno = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL : AnnotationUtil.NULLABLE;
+          final String annoToRemove = annotated.isDeclaredNotNull ? AnnotationUtil.NULLABLE : AnnotationUtil.NOT_NULL;
           final String simpleName = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL_SIMPLE_NAME : AnnotationUtil.NULLABLE_SIMPLE_NAME;
 
           final String propName = field.getManager().getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
@@ -67,7 +69,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 holder.registerProblem(getter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AnnotateMethodFix(anno));
+                                 new AnnotateMethodFix(anno, annoToRemove));
               }
             }
           }
@@ -82,7 +84,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 holder.registerProblem(parameter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AddAnnotationFix(anno, parameter));
+                                 new AddAnnotationFix(anno, parameter, annoToRemove));
               }
             }
           }
@@ -169,7 +171,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         reported_not_annotated_method_overrides_notnull = true;
         holder.registerProblem(method.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(AnnotationUtil.NOT_NULL) {
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE) {
           public int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
             return NullableStuffInspection.this.annotateBaseMethod(method, superMethod, project);
           }
@@ -198,7 +200,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             holder.registerProblem(parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new AddAnnotationFix(AnnotationUtil.NOT_NULL, parameter));
+                                   new AddNotNullAnnotationFix(parameter));
           }
         }
       }
@@ -249,7 +251,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   }
 
   protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
-    return new AnnotateMethodFix(AnnotationUtil.NOT_NULL).annotateBaseMethod(method, superMethod, project);
+    return new AnnotateMethodFix(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE).annotateBaseMethod(method, superMethod, project);
   }
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,

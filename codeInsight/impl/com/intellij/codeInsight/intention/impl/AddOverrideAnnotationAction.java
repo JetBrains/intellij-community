@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AddOverrideAnnotationAction implements IntentionAction {
-  private static final String ourFQName = "java.lang.Override";
+  private static final String JAVA_LANG_OVERRIDE = "java.lang.Override";
 
   @NotNull
   public String getText() {
@@ -27,15 +27,15 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     return CodeInsightBundle.message("intention.add.override.annotation.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return false;
-    if (method.getModifierList().findAnnotation(ourFQName) != null) return false;
+    if (method.getModifierList().findAnnotation(JAVA_LANG_OVERRIDE) != null) return false;
     PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-          && new AddAnnotationFix(ourFQName, method).isAvailable(project, editor, file)) {
+          && new AddAnnotationFix(JAVA_LANG_OVERRIDE, method).isAvailable(project, editor, file)) {
         return true;
       }
     }
@@ -43,9 +43,9 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     return false;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
-    new AddAnnotationFix(ourFQName, method).invoke(project, editor, file);
+    new AddAnnotationFix(JAVA_LANG_OVERRIDE, method).invoke(project, editor, file);
   }
 
   private static PsiMethod findMethod(PsiFile file, int offset) {

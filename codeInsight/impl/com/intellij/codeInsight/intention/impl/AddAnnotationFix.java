@@ -24,24 +24,24 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
-  private final String myFQN;
+  private final String myAnnotation;
   private final PsiModifierListOwner myModifierListOwner;
+  private final String[] myAnnotationsToRemove;
   private static final Logger LOG = Logger.getInstance("#" + AddAnnotationFix.class.getName());
 
-
-  public AddAnnotationFix(String fqn, PsiModifierListOwner modifierListOwner) {
-    myFQN = fqn;
+  public AddAnnotationFix(String fqn, PsiModifierListOwner modifierListOwner, String... annotationsToRemove) {
+    myAnnotation = fqn;
     myModifierListOwner = modifierListOwner;
+    myAnnotationsToRemove = annotationsToRemove;
   }
 
-  public AddAnnotationFix(final String FQN) {
-    myFQN = FQN;
-    myModifierListOwner = null;
+  public AddAnnotationFix(final String fqn, String... annotationsToRemove) {
+    this(fqn, null,annotationsToRemove);
   }
 
   @NotNull
   public String getText() {
-    final String shortName = myFQN.substring(myFQN.lastIndexOf('.') + 1);
+    final String shortName = myAnnotation.substring(myAnnotation.lastIndexOf('.') + 1);
     if (myModifierListOwner instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)myModifierListOwner).getName();
       if (name != null) {
@@ -110,7 +110,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     else if (owner instanceof PsiVariable) {
       type = ((PsiVariable)owner).getType();
     }
-    return owner != null && type instanceof PsiClassType && !AnnotationUtil.isAnnotated(owner, myFQN, false);
+    return owner != null && type instanceof PsiClassType && !AnnotationUtil.isAnnotated(owner, myAnnotation, false);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -118,22 +118,31 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     if (myModifierListOwner != null) {
       final PsiModifierList modifierList = myModifierListOwner.getModifierList();
       LOG.assertTrue(modifierList != null);
-      if (modifierList.findAnnotation(myFQN) != null) return;
+      if (modifierList.findAnnotation(myAnnotation) != null) return;
       if (annotationsManager.useExternalAnnotations(myModifierListOwner)) {
-        annotationsManager.annotateExternally(myModifierListOwner, myFQN);
+        for (String fqn : myAnnotationsToRemove) {
+          annotationsManager.deannotate(myModifierListOwner, fqn);
+        }
+        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation);
       }
       else {
         if (!CodeInsightUtil.preparePsiElementForWrite(modifierList)) return;
+        for (String fqn : myAnnotationsToRemove) {
+          PsiAnnotation annotation = AnnotationUtil.findAnnotation(myModifierListOwner, fqn);
+          if (annotation != null) {
+            annotation.delete();
+          }
+        }
         PsiManager manager = file.getManager();
         PsiElementFactory factory = manager.getElementFactory();
-        PsiAnnotation annotation = factory.createAnnotationFromText("@" + myFQN, myModifierListOwner);
+        PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotation, myModifierListOwner);
         PsiElement inserted = modifierList.addAfter(annotation, null);
         CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
       }
     }
     else {
       final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class), myFQN);
+      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class), myAnnotation);
     }
   }
 

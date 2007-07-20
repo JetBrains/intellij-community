@@ -216,7 +216,7 @@ public class OverrideImplementUtil {
         annotate(result, "java.lang.Override");
       }
       if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false)) {
-        annotate(result, AnnotationUtil.NOT_NULL);
+        annotate(result, AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
       }
 
       final PsiCodeBlock body = method.getManager().getElementFactory().createCodeBlockFromText("{}", null);
@@ -246,9 +246,9 @@ public class OverrideImplementUtil {
     return results;
   }
 
-  private static void annotate(final PsiMethod result, String fqn) throws IncorrectOperationException {
+  private static void annotate(final PsiMethod result, String fqn, String... annosToRemove) throws IncorrectOperationException {
     Project project = result.getProject();
-    AddAnnotationFix fix = new AddAnnotationFix(fqn, result);
+    AddAnnotationFix fix = new AddAnnotationFix(fqn, result, annosToRemove);
     if (fix.isAvailable(project, null, result.getContainingFile())) {
       fix.invoke(project, null, result.getContainingFile());
     }

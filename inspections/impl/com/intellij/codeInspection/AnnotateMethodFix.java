@@ -27,14 +27,16 @@ import java.util.List;
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
   private final String myAnnotation;
+  private final String[] myAnnotationsToRemove;
 
-  public AnnotateMethodFix(final String fqn) {
+  public AnnotateMethodFix(final String fqn, String... annotationsToRemove) {
     myAnnotation = fqn;
+    myAnnotationsToRemove = annotationsToRemove;
   }
 
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.annotate.quickfix.name", ClassUtil.extractClassName(myAnnotation));
+    return InspectionsBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -93,7 +95,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   private void annotateMethod(final PsiMethod method) {
     try {
-      new AddAnnotationFix(myAnnotation, method).invoke(method.getProject(), null, method.getContainingFile());
+      new AddAnnotationFix(myAnnotation, method, myAnnotationsToRemove).invoke(method.getProject(), null, method.getContainingFile());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

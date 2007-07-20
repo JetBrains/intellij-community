@@ -229,7 +229,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         final String text = isNullLiteralExpression(expr)
                                 ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable")
                                 : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable");
-        holder.registerProblem(expr, text, new AnnotateMethodFix(AnnotationUtil.NULLABLE));
+        holder.registerProblem(expr, text, new AnnotateMethodFix(AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL));
 
       }
     }

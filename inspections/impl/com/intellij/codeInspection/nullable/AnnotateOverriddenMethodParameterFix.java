@@ -3,9 +3,11 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -14,9 +16,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,9 +27,11 @@ import java.util.List;
 public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
   private final String myAnnotation;
+  private final String[] myAnnosToRemove;
 
-  public AnnotateOverriddenMethodParameterFix(final String fqn) {
+  public AnnotateOverriddenMethodParameterFix(final String fqn, String... annosToRemove) {
     myAnnotation = fqn;
+    myAnnosToRemove = annosToRemove;
   }
 
   @NotNull
@@ -63,7 +64,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     CodeInsightUtil.preparePsiElementsForWrite(toAnnotate);
     for (PsiParameter psiParam : toAnnotate) {
       try {
-        new AddAnnotationFix(myAnnotation, psiParam).invoke(project, null, psiParam.getContainingFile());
+        new AddAnnotationFix(myAnnotation, psiParam, myAnnosToRemove).invoke(project, null, psiParam.getContainingFile());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
