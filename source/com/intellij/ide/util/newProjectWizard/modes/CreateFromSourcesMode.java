@@ -51,7 +51,7 @@ public class CreateFromSourcesMode extends WizardMode {
   }
 
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return context.getProject() == null;
   }
 
   public ProjectBuilder getModuleBuilder() {

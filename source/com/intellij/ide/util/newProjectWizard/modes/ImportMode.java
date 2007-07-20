@@ -57,7 +57,7 @@ public class ImportMode extends WizardMode {
   }
 
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return context.getProject() == null;
   }
 
   @Nullable
