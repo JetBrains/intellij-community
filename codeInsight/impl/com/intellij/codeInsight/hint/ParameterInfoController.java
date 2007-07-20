@@ -313,6 +313,7 @@ public class ParameterInfoController {
 
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
+    if (file == null) return null;
     final ParameterInfoProvider provider = ShowParameterInfoHandler.getHandler(PsiUtil.getLanguageAtOffset(file, offset));
     
     if (provider != null) {
