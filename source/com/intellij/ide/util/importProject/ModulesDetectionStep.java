@@ -54,7 +54,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   private int calcStateHashCode() {
-    int hash = myBuilder.getContentRootPath().hashCode();
+    int hash = myBuilder.getContentEntryPath().hashCode();
     for (Pair<String, String> pair : myBuilder.getSourcePaths()) {
       hash = 31 * hash + pair.getFirst().hashCode();
       hash = 31 * hash + pair.getSecond().hashCode();

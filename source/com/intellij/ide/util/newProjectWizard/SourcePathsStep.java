@@ -6,6 +6,7 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -50,7 +51,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
 
   private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
   private final WizardContext myContext;
-  private final ProjectFromSourcesBuilder myBuilder;
+  private final SourcePathsBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
   private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
@@ -61,7 +62,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   private JTextField myTfFullPath;
   private JPanel myResultPanel;
 
-  public SourcePathsStep(final WizardContext context, ProjectFromSourcesBuilder builder, Icon icon, @NonNls String helpId) {
+  public SourcePathsStep(final WizardContext context, SourcePathsBuilder builder, Icon icon, @NonNls String helpId) {
     super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
     myContext = context;
     myBuilder = builder;
@@ -203,7 +204,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
         }
       }
     }
-    myBuilder.setContentRootPath(getContentRootPath());
+    myBuilder.setContentEntryPath(getContentRootPath());
     if (paths != null) {
       myBuilder.setSourcePaths(paths);
     }

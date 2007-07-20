@@ -5,6 +5,7 @@ import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
@@ -32,7 +33,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectFromSourcesBuilder extends ProjectBuilder {
+public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourcePathsBuilder {
   private List<Pair<String, String>> mySourcePaths = Collections.emptyList();
   private String myContentRootPath;
   private List<LibraryDescriptor> myChosenLibraries = Collections.emptyList();
@@ -44,12 +45,16 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder {
     myModuleInsight = moduleInsight;
   }
 
-  public void setContentRootPath(final String contentRootPath) {
+  public void setContentEntryPath(final String contentRootPath) {
     myContentRootPath = contentRootPath;
   }
 
-  public String getContentRootPath() {
+  public String getContentEntryPath() {
     return myContentRootPath;
+  }
+
+  public void addSourcePath(final Pair<String, String> sourcePathInfo) {
+    mySourcePaths.add(sourcePathInfo);
   }
 
   /**

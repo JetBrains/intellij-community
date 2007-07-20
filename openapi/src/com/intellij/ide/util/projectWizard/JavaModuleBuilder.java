@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaModuleBuilder extends ModuleBuilder {
+public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
 
   private String myContentEntryPath;
   private String myCompilerOutputPath;

@@ -4,6 +4,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -38,8 +39,12 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
     return new OutputPathsStep((NameLocationStep)nameAndLocationStep, builder, icon, helpId);
   }
 
-  public ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, String helpId) {
+  public ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, SourcePathsBuilder builder, Icon icon, String helpId) {
     return null;
+  }
+
+  public ModuleWizardStep createSourcePathsStep(final WizardContext context, final SourcePathsBuilder builder, final Icon icon, @NonNls final String helpId) {
+    return new SourcePathsStep(context, builder, icon, helpId);
   }
 
   public ModuleWizardStep createProjectJdkStep(WizardContext context,

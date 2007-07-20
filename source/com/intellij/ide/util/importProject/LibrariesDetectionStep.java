@@ -54,7 +54,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
   }
 
   private int calcStateHashCode() {
-    int hash = myBuilder.getContentRootPath().hashCode();
+    int hash = myBuilder.getContentEntryPath().hashCode();
     for (Pair<String, String> pair : myBuilder.getSourcePaths()) {
       hash = 31 * hash + pair.getFirst().hashCode();
       hash = 31 * hash + pair.getSecond().hashCode();
@@ -76,7 +76,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
       ignored.add(tokenizer.nextToken());
     }
     
-    myInsight.setRoots(Collections.singletonList(new File(myBuilder.getContentRootPath())), _sourcePaths, ignored);
+    myInsight.setRoots(Collections.singletonList(new File(myBuilder.getContentEntryPath())), _sourcePaths, ignored);
     myInsight.scanLibraries();
     
     return myInsight.getSuggestedLibraries();
