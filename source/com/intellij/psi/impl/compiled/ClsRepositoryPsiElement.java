@@ -6,6 +6,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.RepositoryPsiElement;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements RepositoryPsiElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsRepositoryPsiElement");
@@ -14,7 +15,7 @@ public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements 
   private volatile long myRepositoryId;
   private volatile long myCachedParentId = -1;
 
-  public ClsRepositoryPsiElement(PsiManagerImpl manager, long repositoryId) {
+  public ClsRepositoryPsiElement(@NotNull PsiManagerImpl manager, long repositoryId) {
     myManager = manager;
     myRepositoryId = repositoryId;
   }
