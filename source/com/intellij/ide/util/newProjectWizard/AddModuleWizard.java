@@ -155,7 +155,9 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     try {
       do {
         final ModuleWizardStep step = mySteps.get(idx);
-        step.updateStep();
+        if (step != getCurrentStepObject()) {
+          step.updateStep();
+        }
         if (!commitStepData(step)) {
           return;
         }

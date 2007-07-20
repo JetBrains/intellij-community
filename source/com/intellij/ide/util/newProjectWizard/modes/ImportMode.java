@@ -71,6 +71,4 @@ public class ImportMode extends WizardMode {
   }
 
   public void onChosen(final boolean enabled) {}
-
-  public void dispose() {}
 }
