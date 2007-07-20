@@ -30,6 +30,7 @@ public interface BuildInstruction {
   String getOutputRelativePath();
   Module getModule();
 
+  @Deprecated
   void addFilesToJar(@NotNull CompileContext context,
                      @NotNull File jarFile,
                      @NotNull JarOutputStream outputStream,

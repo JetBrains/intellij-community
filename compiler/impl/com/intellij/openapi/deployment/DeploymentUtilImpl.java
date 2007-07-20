@@ -1,7 +1,7 @@
 package com.intellij.openapi.deployment;
 
-import com.intellij.compiler.impl.make.BuildRecipeImpl;
-import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
+import com.intellij.compiler.impl.packagingCompiler.BuildRecipeImpl;
+import com.intellij.compiler.impl.packagingCompiler.JarAndCopyBuildInstructionImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;

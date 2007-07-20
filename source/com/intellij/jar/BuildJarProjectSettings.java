@@ -240,6 +240,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
               progressIndicator.setText2(IdeBundle.message("jar.build.processing.file.progress", presentablePath));
             }
           }
+          //todo[nik] use IncrementalPackagingCompiler instead
           instruction.addFilesToJar(DummyCompileContext.getInstance(), tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
           return true;
         }

@@ -27,6 +27,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 
 public interface JarAndCopyBuildInstruction extends FileCopyInstruction {
+  @Deprecated
   void makeJar(@NotNull CompileContext context,
                @NotNull File jarFile,
                @Nullable FileFilter fileFilter) throws IOException;

@@ -1,7 +1,7 @@
 /**
  * @author cdr
  */
-package com.intellij.compiler.impl.make;
+package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;

@@ -1,4 +1,4 @@
-package com.intellij.compiler.impl.make;
+package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;

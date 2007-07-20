@@ -2,7 +2,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
-import com.intellij.compiler.impl.make.newImpl.NewIncrementalPackagingCompiler;
+import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingCompiler;
@@ -42,7 +42,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new NotNullVerifyingCompiler(myProject));
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
-    addCompiler(new NewIncrementalPackagingCompiler(myProject));
+    addCompiler(new IncrementalPackagingCompiler(myProject));
 
     addCompilableFileType(StdFileTypes.JAVA);
     //

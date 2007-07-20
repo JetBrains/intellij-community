@@ -1,7 +1,7 @@
 /**
  * @author cdr
  */
-package com.intellij.compiler.impl.make;
+package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.compiler.CompilerBundle;

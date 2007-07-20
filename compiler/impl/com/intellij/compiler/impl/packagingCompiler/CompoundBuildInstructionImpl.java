@@ -1,4 +1,4 @@
-package com.intellij.compiler.impl.make;
+package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -23,7 +23,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class CompoundBuildInstructionImpl extends BuildInstructionBase implements CompoundBuildInstruction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.CompoundBuildInstructionImpl");
 
   private final BuildConfiguration myBuildConfiguration;
   private BuildParticipant myBuildParticipant;
