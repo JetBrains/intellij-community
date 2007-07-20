@@ -54,7 +54,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int REDO = 2;
   private int myCurrentOperationState = NONE;
 
-  private CommandMerger myLastMerger;
+  private CommandMerger myMerger;
 
   private CommandListener myCommandListener;
 
@@ -166,7 +166,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCommandProcessor.addCommandListener(myCommandListener);
 
     myDocumentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
-    myLastMerger = new CommandMerger(this, myEditorFactory);
+    myMerger = new CommandMerger(this, myEditorFactory);
 
     myFileOperationUndoProvider = new FileOperationsUndoProvider(this, myProject);
 
@@ -201,7 +201,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandLevel == 0) {
       myFileOperationUndoProvider.commandFinished(project);
       myCurrentActionProject = DummyProject.getInstance();
-      if (myProject == null) myLastMerger.clearDocumentRefs(); //do not leak document refs at app level
+      if (myProject == null) myMerger.clearDocumentRefs(); //do not leak document refs at app level
     }
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
@@ -244,7 +244,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandListener != null) {
       myCommandProcessor.removeCommandListener(myCommandListener);
       myDocumentEditingUndoProvider.dispose();
-      myLastMerger.dispose();
+      myMerger.dispose();
       myFileOperationUndoProvider.dispose();
     }
     if (myBeforeFileDeletionListener != null) {
@@ -270,7 +270,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public void clearUndoRedoQueue(FileEditor editor) {
     LOG.assertTrue(myCommandLevel == 0);
-    myLastMerger.flushCurrentCommand();
+    myMerger.flushCurrentCommand();
     disposeCurrentMerger();
 
     myUndoStacksHolder.clearEditorStack(editor);
@@ -282,7 +282,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void clearUndoRedoQueue(DocumentReference docRef) {
-    myLastMerger.flushCurrentCommand();
+    myMerger.flushCurrentCommand();
     disposeCurrentMerger();
 
     myUndoStacksHolder.clearFileQueue(docRef);
@@ -384,10 +384,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       public void run() {
         try {
           if (isUndoInProgress()) {
-            myLastMerger.undoOrRedo(editor, true);
+            myMerger.undoOrRedo(editor, true);
           }
           else {
-            myLastMerger.undoOrRedo(editor, false);
+            myMerger.undoOrRedo(editor, false);
           }
         }
         catch (RuntimeException ex) {
@@ -401,7 +401,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     CommandProcessor.getInstance()
       .executeCommand(myProject, executeUndoOrRedoAction, isUndoInProgress() ? CommonBundle.message("undo.command.name") : CommonBundle
-        .message("redo.command.name"), null, myLastMerger.getUndoConfirmationPolicy());
+        .message("redo.command.name"), null, myMerger.getUndoConfirmationPolicy());
     if (exception[0] != null) throw exception[0];
   }
 
@@ -415,7 +415,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     final Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
     if (documents != null && documents.length > 0) {
       for (Document document : documents) {
-        if (myLastMerger != null && !myLastMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
+        if (myMerger != null && !myMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
           return true;
         }
 
@@ -429,7 +429,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     }
     else {
-      if (myLastMerger != null && myLastMerger.isComplex() && !myLastMerger.isEmpty()) return true;
+      if (myMerger != null && myMerger.isComplex() && !myMerger.isEmpty()) return true;
       return !myUndoStacksHolder.getGlobalStack().isEmpty();
     }
   }
@@ -482,11 +482,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void commandFinished(String commandName, Object groupId) {
-    if (myCommandLevel == 0) return; // possible if command listener is added within command
+    if (myCommandLevel == 0) return; // possible if command listener was added within command
     myCommandLevel--;
     if (myCommandLevel > 0) return;
     myCurrentMerger.setAfterState(getCurrentState());
-    myLastMerger.commandFinished(commandName, groupId, myCurrentMerger);
+    myMerger.commandFinished(commandName, groupId, myCurrentMerger);
 
     disposeCurrentMerger();
   }
@@ -513,7 +513,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public boolean undoableActionsForDocumentAreEmpty(DocumentReference docRef) {
     if (myCurrentMerger != null && !myCurrentMerger.isEmpty(docRef)) return false;
-    if (myLastMerger != null && !myLastMerger.isEmpty(docRef)) return false;
+    if (myMerger != null && !myMerger.isEmpty(docRef)) return false;
     if (!myUndoStacksHolder.getStack(docRef).isEmpty()) return false;
     LinkedList<UndoableGroup> globalStack = myUndoStacksHolder.getGlobalStack();
     for (final UndoableGroup group : globalStack) {
@@ -534,8 +534,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (result != null) return result;
     result = findInvalidatedReferenceByUrl(myRedoStacksHolder.getGlobalStackAffectedDocuments(), url);
     if (result != null) return result;
-    if (myLastMerger != null) {
-      result = findInvalidatedReferenceByUrl(myLastMerger.getAffectedDocuments(), url);
+    if (myMerger != null) {
+      result = findInvalidatedReferenceByUrl(myMerger.getAffectedDocuments(), url);
       if (result != null) return result;
     }
     if (myCurrentMerger != null) {
@@ -588,7 +588,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       beforeFileDeletion(file, myUndoStacksHolder.getGlobalStackAffectedDocuments());
       beforeFileDeletion(file, myRedoStacksHolder.getAffectedDocuments());
       beforeFileDeletion(file, myRedoStacksHolder.getGlobalStackAffectedDocuments());
-      if (myLastMerger != null) beforeFileDeletion(file, myLastMerger.getAffectedDocuments());
+      if (myMerger != null) beforeFileDeletion(file, myMerger.getAffectedDocuments());
       if (myCurrentMerger != null) beforeFileDeletion(file, myCurrentMerger.getAffectedDocuments());
     }
 

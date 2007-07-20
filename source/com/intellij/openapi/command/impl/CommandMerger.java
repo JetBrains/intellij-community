@@ -87,9 +87,17 @@ class CommandMerger {
       myManager.compact();
     }
     merge(nextCommandToMerge);
+    clearRedoStacks(nextCommandToMerge);    
 
     myLastGroupId = groupId;
     if (myCommandName == null) myCommandName = commandName;
+  }
+
+  private void clearRedoStacks(CommandMerger m) {
+    for (DocumentReference d : m.myAffectedDocuments) {
+      myManager.getRedoStacksHolder().clearFileQueue(d);
+      myManager.getRedoStacksHolder().clearGlobalStack();
+    }
   }
 
   private boolean shouldMerge(Object groupId, CommandMerger nextCommandToMerge) {
@@ -134,13 +142,13 @@ class CommandMerger {
     reset();
   }
 
-  private void addToAllStacks(UndoableGroup commandInfo) {
+  private void addToAllStacks(UndoableGroup group) {
     for (DocumentReference document : myAffectedDocuments) {
-      myManager.getUndoStacksHolder().addToLocalStack(document, commandInfo);
+      myManager.getUndoStacksHolder().addToLocalStack(document, group);
     }
 
     if (myIsComplex) {
-      myManager.getUndoStacksHolder().addToGlobalStack(commandInfo);
+      myManager.getUndoStacksHolder().addToGlobalStack(group);
     }
   }
 

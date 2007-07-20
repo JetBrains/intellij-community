@@ -4,9 +4,6 @@ import com.intellij.history.Checkpoint;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 
@@ -70,7 +67,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   private void processEvent(VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
     if (isUndoable(e)) {
-      createUndoableAction();
+      createUndoableAction(e);
     }
     else {
       createNonUndoableAction(e);
@@ -102,7 +99,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     VirtualFile f = e.getFile();
 
     if (f.getUserData(DELETE_WAS_UNDOABLE) != null) {
-      createUndoableAction();
+      createUndoableAction(e);
       f.putUserData(DELETE_WAS_UNDOABLE, null);
     }
   }
@@ -152,20 +149,22 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     });
   }
 
-  private void createUndoableAction() {
+  private void createUndoableAction(VirtualFileEvent e) {
     if (!myIsInsideCommand) return;
-    MyUndoableAction a = new MyUndoableAction();
+    MyUndoableAction a = new MyUndoableAction(e.getFile());
     myUndoManager.undoableActionPerformed(a);
     myCommandActions.add(a);
   }
 
   private class MyUndoableAction implements UndoableAction {
+    private VirtualFile myFile;
     private Checkpoint myAfterActionCheckpoint;
     private Checkpoint myBeforeUndoCheckpoint;
     private boolean myUseUndo;
     private boolean myUseRedo;
 
-    public MyUndoableAction() {
+    public MyUndoableAction(VirtualFile f) {
+      myFile = f;
       myAfterActionCheckpoint = LocalHistory.putCheckpoint(myProject);
     }
 
@@ -200,7 +199,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     }
 
     public DocumentReference[] getAffectedDocuments() {
-      return DocumentReference.EMPTY_ARRAY;
+      return new DocumentReference[]{new DocumentReferenceByVirtualFile(myFile)};
     }
 
     public boolean isComplex() {
