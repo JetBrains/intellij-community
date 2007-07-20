@@ -310,15 +310,7 @@ public class FindUsagesUtil {
           else{
             helper.processReferencesIncludingOverriding(new PsiReferenceProcessor() {
               public boolean execute(PsiReference reference) {
-                PsiElement refElement = reference.getElement();
-                if (refElement instanceof PsiReferenceExpression) {
-                  PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, methodClass);
-                  if (usedClass != null) {
-                    if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
-                      addResult(results, refElement, options, method);
-                    }
-                  }
-                }
+                addResultFromReference(reference, methodClass, manager, aClass, results, options, method);
                 return true;
               }
             }, method, options.searchScope, !options.isIncludeOverloadUsages);
@@ -329,6 +321,24 @@ public class FindUsagesUtil {
       PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {
         addMethodUsages(method, results, options, options.searchScope);
+      }
+    }
+  }
+
+  private static void addResultFromReference(final PsiReference reference,
+                                             final PsiClass methodClass,
+                                             final PsiManager manager,
+                                             final PsiClass aClass,
+                                             final Processor<UsageInfo> results,
+                                             final FindUsagesOptions options,
+                                             final PsiElement element) {
+    PsiElement refElement = reference.getElement();
+    if (refElement instanceof PsiReferenceExpression) {
+      PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, methodClass);
+      if (usedClass != null) {
+        if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
+          addResult(results, refElement, options, element);
+        }
       }
     }
   }
@@ -351,15 +361,7 @@ public class FindUsagesUtil {
         else {
           ReferencesSearch.search(field, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
             public boolean processInReadAction(final PsiReference reference) {
-              PsiElement refElement = reference.getElement();
-              if (refElement instanceof PsiReferenceExpression) {
-                PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, fieldClass);
-                if (usedClass != null) {
-                  if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
-                    addResult(results, refElement, options, field);
-                  }
-                }
-              }
+              addResultFromReference(reference, fieldClass, manager, aClass, results, options, field);
               return true;
             }
           });
