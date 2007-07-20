@@ -68,7 +68,10 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     return fileChooser.getMarkedElements().size() != 0;
   }
 
-  public void updateDataModel() {
+  public void updateDataModel() {}
+
+  public void onStepLeaving() {
+    super.onStepLeaving();
     getContext().setOpenProjectSettingsAfter(openModuleSettingsCheckBox.isSelected());
   }
 
