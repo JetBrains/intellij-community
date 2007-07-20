@@ -2,9 +2,10 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.junit2.states.StackTraceLine;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.LineTokenizer;
@@ -71,7 +72,11 @@ public class TestProxy implements AbstractTestProxy {
     if (output != null) return output;
     List<Printable> total = new ArrayList<Printable>();
     for (TestProxy child : results) {
-      total.addAll(child.getOutput());
+      final List<Printable> out = child.getOutput();
+      if (total.size() > 0 && out.size() > 0) {
+        total.add(new TestNGConsoleView.Chunk("\n===============================================\n\n", ConsoleViewContentType.NORMAL_OUTPUT));
+      }
+      total.addAll(out);
     }
     return total;
   }
@@ -99,13 +104,16 @@ public class TestProxy implements AbstractTestProxy {
         }
       }
     });
-    this.resultMessage = resultMessage;
+
     TestProxy current = this;
     while (current != null) {
       current.inProgress = resultMessage.getResult() == MessageHelper.TEST_STARTED;
       current = current.getParent();
     }
-    this.name = resultMessage.toDisplayString();
+    if (this.resultMessage == null || this.resultMessage.getResult() == MessageHelper.TEST_STARTED) {
+      this.resultMessage = resultMessage;
+      this.name = resultMessage.toDisplayString();
+    }
   }
 
   public boolean isInProgress() {
@@ -173,26 +181,6 @@ public class TestProxy implements AbstractTestProxy {
     while ((testproxy = testproxy.getParent()) != null);
     Collections.reverse(arraylist);
     return arraylist.toArray(new TestProxy[arraylist.size()]);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final TestProxy testProxy = (TestProxy)o;
-
-    if (name != null ? !name.equals(testProxy.name) : testProxy.name != null) return false;
-    if (resultMessage != null ? !resultMessage.equals(testProxy.resultMessage) : testProxy.resultMessage != null) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = resultMessage != null ? resultMessage.hashCode() : 0;
-    result = 29 * result + (name != null ? name.hashCode() : 0);
-    return result;
   }
 
   @Override

@@ -51,10 +51,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +75,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     private Project project;
     private int count;
     private int total;
-    private int failed;
+    private Set<TestProxy> failed = new HashSet<TestProxy>();
     private long start;
     private long end;
     private JLabel statusLabel;
@@ -177,8 +175,8 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             sb.append("Done: ");
         }
         sb.append(count).append(" of ").append(total);
-        if (failed > 0)
-            sb.append("   Failed: ").append(failed).append(' ');
+        if (failed.size() > 0)
+            sb.append("   Failed: ").append(failed.size()).append(' ');
         if (end != 0) {
             sb.append(" (").append(Formatters.printTime(end - start)).append(")  ");
         }
@@ -222,24 +220,15 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             final TestProxy testCase = animator.getCurrentTestCase();
             if (testCase != null) {
               testCase.setResultMessage(result);
-            }
-            animator.setCurrentTestCase(null);
-            Object[] children = treeBuilder.getTreeStructure().getChildElements(classNode);
-            for (Object child : children) {
-                TestProxy proxy = (TestProxy) child;
-                if (result.equals(proxy.getResultMessage())) {
-                    proxy.setResultMessage(result);
-                    proxy.setOutput(output);
-                    proxy.setExceptionMark(exceptionMark);
-                    treeBuilder.repaintWithParents(proxy);
-                }
+              testCase.setOutput(output);
+              testCase.setExceptionMark(exceptionMark);
             }
         }
 
         if (result.getResult() == MessageHelper.PASSED_TEST) {
             //passed++;
         } else if (result.getResult() == MessageHelper.FAILED_TEST) {
-            failed++;
+            failed.add(animator.getCurrentTestCase());
             progress.setColor(ColorProgressBar.RED);
         }
         progress.setFraction((double) count / total);

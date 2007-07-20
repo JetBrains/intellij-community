@@ -20,16 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TestNGConsoleView implements ConsoleView
 {
@@ -78,12 +78,15 @@ public class TestNGConsoleView implements ConsoleView
                 String stackTrace = result.getStackTrace();
                 if (stackTrace != null && stackTrace.length() > 10) {
                     //trim useless crud from stacktrace
-                  exceptionMark = allOutput.size() - mark;
                   String trimmed = trimStackTrace(stackTrace);
                   List<Printable> printables = getPrintables(result, trimmed);
+                  for (Printable printable : printables) {
+                      printable.print(console); //enable for root element
+                  }
                   synchronized (allOutput) {
-                        allOutput.addAll(printables);
-                    }
+                       exceptionMark = allOutput.size() - mark;
+                       allOutput.addAll(printables);
+                  }
                 }
                 list = getPrintablesSinceMark();
             }
@@ -123,8 +126,10 @@ public class TestNGConsoleView implements ConsoleView
     }
 
   public void mark() {
-        mark = allOutput.size();
+    synchronized (allOutput) {
+      mark = allOutput.size();
     }
+  }
 
     public List<Printable> getPrintablesSinceMark() {
         synchronized (allOutput) {
