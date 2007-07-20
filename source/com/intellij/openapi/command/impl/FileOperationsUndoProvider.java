@@ -67,7 +67,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   private void processEvent(VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
     if (isUndoable(e)) {
-      createUndoableAction(e);
+      createUndoableAction(e, false);
     }
     else {
       createNonUndoableAction(e);
@@ -99,7 +99,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     VirtualFile f = e.getFile();
 
     if (f.getUserData(DELETE_WAS_UNDOABLE) != null) {
-      createUndoableAction(e);
+      createUndoableAction(e, true);
       f.putUserData(DELETE_WAS_UNDOABLE, null);
     }
   }
@@ -117,20 +117,20 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   }
 
   private void createNonUndoableAction(VirtualFileEvent e) {
-    createNonUndoableAction(e.getFile(), false);
+    createNonUndoableAction(e, false);
   }
 
   private void createNonUndoableDeletionAction(VirtualFileEvent e) {
-    createNonUndoableAction(e.getFile(), true);
+    createNonUndoableAction(e, true);
   }
 
-  private void createNonUndoableAction(VirtualFile f, boolean isDeletion) {
-    DocumentReference newRef = new DocumentReferenceByVirtualFile(f);
-    if (isDeletion) newRef.beforeFileDeletion(f);
-    registerNonUndoableAction(newRef);
+  private void createNonUndoableAction(VirtualFileEvent e, boolean isDeletion) {
+    VirtualFile f = e.getFile();
+    DocumentReference r = createDocumentReference(f, isDeletion);
+    registerNonUndoableAction(r);
 
     DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());
-    if (oldRef != null && !oldRef.equals(newRef)) {
+    if (oldRef != null && !oldRef.equals(r)) {
       registerNonUndoableAction(oldRef);
     }
   }
@@ -149,22 +149,31 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     });
   }
 
-  private void createUndoableAction(VirtualFileEvent e) {
+  private void createUndoableAction(VirtualFileEvent e, boolean isDeletion) {
     if (!myIsInsideCommand) return;
-    MyUndoableAction a = new MyUndoableAction(e.getFile());
+
+    DocumentReference ref = createDocumentReference(e.getFile(), isDeletion);
+    MyUndoableAction a = new MyUndoableAction(ref);
+
     myUndoManager.undoableActionPerformed(a);
     myCommandActions.add(a);
   }
 
+  private DocumentReference createDocumentReference(VirtualFile f, boolean isDeletion) {
+    DocumentReference r = new DocumentReferenceByVirtualFile(f);
+    if (isDeletion) r.beforeFileDeletion(f);
+    return r;
+  }
+
   private class MyUndoableAction implements UndoableAction {
-    private VirtualFile myFile;
     private Checkpoint myAfterActionCheckpoint;
     private Checkpoint myBeforeUndoCheckpoint;
     private boolean myUseUndo;
     private boolean myUseRedo;
+    private DocumentReference myDocumentRef;
 
-    public MyUndoableAction(VirtualFile f) {
-      myFile = f;
+    public MyUndoableAction(DocumentReference r) {
+      myDocumentRef = r;
       myAfterActionCheckpoint = LocalHistory.putCheckpoint(myProject);
     }
 
@@ -199,7 +208,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     }
 
     public DocumentReference[] getAffectedDocuments() {
-      return new DocumentReference[]{new DocumentReferenceByVirtualFile(myFile)};
+      return new DocumentReference[]{myDocumentRef};
     }
 
     public boolean isComplex() {

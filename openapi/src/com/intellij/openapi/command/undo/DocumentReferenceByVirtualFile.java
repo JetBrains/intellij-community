@@ -48,6 +48,7 @@ public class DocumentReferenceByVirtualFile extends DocumentReference {
   }
 
   public Document getDocument() {
+    if (!myFile.isValid()) return null;
     return FileDocumentManager.getInstance().getDocument(myFile);
   }
 }
