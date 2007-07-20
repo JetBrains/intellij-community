@@ -26,6 +26,7 @@ public interface FileTemplate{
   @NonNls String ATTRIBUTE_CLASS_NAME = "CLASS_NAME";
   @NonNls String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
   @NonNls String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
+  @NonNls String ATTRIBUTE_NAME = "NAME";
 
   @NotNull String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException;
 

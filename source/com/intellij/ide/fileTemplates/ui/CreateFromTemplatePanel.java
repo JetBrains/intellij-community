@@ -1,7 +1,7 @@
 package com.intellij.ide.fileTemplates.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +89,7 @@ public class CreateFromTemplatePanel{
   private void updateShown() {
     Insets insets = new Insets(2, 2, 2, 2);
     myAttrPanel.add(Box.createHorizontalStrut(200), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
-    if(mustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplateUtil.NAME_ATTR)){
+    if(mustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
       final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
       myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
       myFilenameField = new JTextField();
@@ -97,7 +97,7 @@ public class CreateFromTemplatePanel{
     }
 
     for (String attribute : myUnsetAttributes) {
-      if (attribute.equals(FileTemplateUtil.NAME_ATTR)) { // already asked above
+      if (attribute.equals(FileTemplate.ATTRIBUTE_NAME)) { // already asked above
         continue;
       }
       JLabel label = new JLabel(attribute.replace('_', ' ') + ":");

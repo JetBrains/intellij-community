@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -44,7 +43,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -59,7 +57,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   private final PsiManagerImpl myManager;
   private VirtualFile myFile;
 
-  @NonNls private static final String TEMPLATE_NAME_PROPERTY = "NAME";
   private LanguageLevel myLanguageLevel;
 
   public PsiDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
@@ -320,18 +317,18 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   @NotNull
   public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
-    return createSomeClass(name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
+    return createClassFromTemplate(name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
   @NotNull
   public PsiClass createClass(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
-    return createSomeClass(name, templateName);
+    return createClassFromTemplate(name, templateName);
   }
 
   @NotNull
   public PsiClass createInterface(@NotNull String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME;
-    PsiClass someClass = createSomeClass(name, templateName);
+    PsiClass someClass = createClassFromTemplate(name, templateName);
     if (!someClass.isInterface()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
     }
@@ -341,7 +338,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   @NotNull
   public PsiClass createEnum(@NotNull String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_ENUM_TEMPLATE_NAME;
-    PsiClass someClass = createSomeClass(name, templateName);
+    PsiClass someClass = createClassFromTemplate(name, templateName);
     if (!someClass.isEnum()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
     }
@@ -351,47 +348,43 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   @NotNull
   public PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
-    PsiClass someClass = createSomeClass(name, templateName);
+    PsiClass someClass = createClassFromTemplate(name, templateName);
     if (!someClass.isAnnotationType()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
     }
     return someClass;
   }
 
-  private PsiClass createSomeClass(String name, String templateName) throws IncorrectOperationException {
+  private PsiClass createClassFromTemplate(String name, String templateName) throws IncorrectOperationException {
     checkCreateClassOrInterface(name);
 
-    CodeStyleManager styleManager = CodeStyleManager.getInstance(myManager.getProject());
-
     FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
-    boolean adjustCode = template.isAdjust();
 
     Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
-    FileTemplateUtil.setPackageNameAttribute(properties, this);
-    properties.setProperty(TEMPLATE_NAME_PROPERTY, name);
-    String text;
+    properties.setProperty(FileTemplate.ATTRIBUTE_NAME, name);
+
+    String ext = StdFileTypes.JAVA.getDefaultExtension();
+    String fileName = name + "." + ext;
+
+    PsiElement element;
     try {
-      text = template.getText(properties);
+      element = FileTemplateUtil.createFromTemplate(template, fileName, properties, this);
+    }
+    catch (IncorrectOperationException e) {
+      throw e;
     }
     catch (Exception e) {
-      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName),
-                                 e);
+      LOG.error(e);
+      return null;
     }
 
-    PsiElementFactory factory = myManager.getElementFactory();
-    String ext = StdFileTypes.JAVA.getDefaultExtension();
-    final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText(name + "." + ext, text);
+    final PsiJavaFile file = (PsiJavaFile)element.getContainingFile();
     PsiClass[] classes = file.getClasses();
     if (classes.length != 1 || !name.equals(classes[0].getName())) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
     }
-    if (adjustCode) {
-      styleManager.reformat(file);
-    }
-
-    PsiJavaFile newFile = (PsiJavaFile)add(file);
-    return newFile.getClasses()[0];
+    return file.getClasses()[0];
   }
 
   private static String getIncorrectTemplateMessage(String templateName) {

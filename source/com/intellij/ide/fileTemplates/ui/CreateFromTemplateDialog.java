@@ -40,7 +40,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     PsiPackage aPackage = myDirectory.getPackage();
     String packageName = aPackage == null ? "" : aPackage.getQualifiedName();
     myDefaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
-    myDefaultProperties.setProperty(FileTemplateUtil.PACKAGE_ATTR, packageName);
+    myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, packageName);
 
     String[] unsetAttributes = null;
     try {
@@ -88,7 +88,8 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   private void doCreate(final String fileName)  {
     try {
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties), myProject, myDirectory);
+      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties),
+                                                             myDirectory);
     }
     catch (Exception e) {
       showErrorDialog(e);

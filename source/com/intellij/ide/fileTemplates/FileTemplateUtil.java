@@ -44,8 +44,6 @@ import java.util.*;
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static boolean ourVelocityInitialized = false;
-  @NonNls public static final String PACKAGE_ATTR = "PACKAGE_NAME";
-  @NonNls public static final String NAME_ATTR = "NAME";
 
   private FileTemplateUtil() {
   }
@@ -207,14 +205,19 @@ public class FileTemplateUtil{
     }
   }
 
-  public static PsiElement createFromTemplate(final FileTemplate template, @NonNls final String fileName, Properties props, final Project project, final @NotNull PsiDirectory directory) throws Exception{
+  public static PsiElement createFromTemplate(@NotNull final FileTemplate template,
+                                              @NonNls @Nullable final String fileName,
+                                              @Nullable Properties props,
+                                              @NotNull final PsiDirectory directory) throws Exception {
+    @NotNull final Project project = directory.getProject();
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
     }
     FileTemplateManager.getInstance().addRecentName(template.getName());
+    setPackageNameAttribute(props, directory);
 
-    if ( fileName != null ) {
-      props.setProperty(NAME_ATTR, fileName);
+    if (fileName != null && props.getProperty(FileTemplate.ATTRIBUTE_NAME) == null) {
+      props.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
     }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitely set)
@@ -226,10 +229,10 @@ public class FileTemplateUtil{
 
     try{
       if (template.isJavaClassTemplate()){
-        String packageName = props.getProperty(PACKAGE_ATTR);
+        String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
         if(packageName == null || packageName.length() == 0){
           props = new Properties(props);
-          props.setProperty(PACKAGE_ATTR, PACKAGE_ATTR);
+          props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
         }
       }
       mergedText = template.getText(props);
@@ -240,6 +243,7 @@ public class FileTemplateUtil{
     final String templateText = StringUtil.convertLineSeparators(mergedText);
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
+    final Properties finalProps = props;
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
       public void run(){
         final Runnable run = new Runnable(){
@@ -249,6 +253,7 @@ public class FileTemplateUtil{
               if (fileType.equals(StdFileTypes.JAVA)) {
                 String extension = template.getExtension();
                 result[0] = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
+                hackAwayEmptyPackage((PsiJavaFile)result[0].getContainingFile(), template, finalProps);
               }
               else{
                 result[0] = createPsiFile(project, directory, templateText, fileName, template.getExtension());
@@ -270,6 +275,18 @@ public class FileTemplateUtil{
     return result[0];
   }
 
+  private static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Properties props) throws IncorrectOperationException {
+    if (!template.isJavaClassTemplate()) return;
+
+    String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+    if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
+      PsiPackageStatement packageStatement = file.getPackageStatement();
+      if (packageStatement != null) {
+        packageStatement.delete();
+      }
+    }
+  }
+
   public static PsiClass createClassOrInterface(Project project,
                                                 PsiDirectory directory,
                                                 String content,
@@ -278,10 +295,13 @@ public class FileTemplateUtil{
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
     final PsiFile psiFile = PsiManager.getInstance(project).getElementFactory().createFileFromText("myclass" + "." + extension, content);
     if (!(psiFile instanceof PsiJavaFile)){
-      throw new IncorrectOperationException("This template did not produce Java class nor interface!");
+      throw new IncorrectOperationException("This template did not produce Java class nor interface!\n"+psiFile.getText());
     }
-    final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
     PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
+    final PsiClass[] classes = psiJavaFile.getClasses();
+    if (classes.length == 0) {
+      throw new IncorrectOperationException("This template did not produce Java class nor interface!\n"+psiFile.getText());
+    }
     PsiClass createdClass = classes[0];
     if(reformat){
       CodeStyleManager.getInstance(project).reformat(psiJavaFile);
@@ -295,7 +315,7 @@ public class FileTemplateUtil{
       directory.checkCreateClass(className);
     }
     psiJavaFile = (PsiJavaFile)psiJavaFile.setName(fileName);
-    psiJavaFile = (PsiJavaFile) directory.add(psiJavaFile);
+    psiJavaFile = (PsiJavaFile)directory.add(psiJavaFile);
 
     return psiJavaFile.getClasses()[0];
   }
@@ -362,7 +382,7 @@ public class FileTemplateUtil{
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, methodName);
   }
 
-  public static void setPackageNameAttribute (Properties properties, @NotNull PsiDirectory directory) {
+  public static void setPackageNameAttribute (@NotNull Properties properties, @NotNull PsiDirectory directory) {
     PsiPackage aPackage = directory.getPackage();
     if (aPackage != null) {
       String packageName = aPackage.getQualifiedName();
