@@ -1,7 +1,10 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +23,9 @@ import java.util.List;
 abstract class ProjectLayoutPanel<T> extends JPanel {
   private ElementsChooser<T> myEntriesChooser;
   private JList myDependenciesList;
-  private final ModuleInsight myInsight;
+  private final ModuleInsight myInsight; 
+  private static final Icon RENAME_ICON = IconLoader.getIcon("/toolbar/unknown.png"); 
+  private static final Icon MERGE_ICON = IconLoader.getIcon("/toolbar/unknown.png");
 
   public ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
@@ -34,7 +39,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myDependenciesList = createList();
     
     final Splitter splitter = new Splitter(false);
-    splitter.setFirstComponent(new JScrollPane(myEntriesChooser));
+    final JPanel entriesPanel = new JPanel(new BorderLayout());
+    entriesPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
+    entriesPanel.add(new JScrollPane(myEntriesChooser), BorderLayout.CENTER);
+    splitter.setFirstComponent(entriesPanel);
     splitter.setSecondComponent(new JScrollPane(myDependenciesList));
     
     add(splitter, BorderLayout.CENTER);
@@ -52,7 +60,14 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
     });
   }
-  
+
+  private ActionToolbar createEntriesActionToolbar() {
+    final DefaultActionGroup entriesActions = new DefaultActionGroup();
+    entriesActions.add(new RenameAction());
+    entriesActions.add(new MergeAction());
+    return ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", entriesActions, true);
+  }
+
   public final ModuleInsight getInsight() {
     return myInsight; 
   }
@@ -129,6 +144,59 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   @Nullable
   protected abstract T merge(List<T> entries);
   
+  protected abstract String getElementName(T entry);
+  
+  protected abstract void setElementName(T entry, String name);
+  
+  private class MergeAction extends AnAction {
+    private MergeAction() {
+      super("Merge", "", MERGE_ICON); // todo
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final List<T> elements = myEntriesChooser.getSelectedElements();
+      if (elements.size() > 1) {
+        final String newName = Messages.showInputDialog(
+          ProjectLayoutPanel.this, 
+          "Enter new name for merge result:", 
+          "Merge", 
+          Messages.getQuestionIcon(), getElementName(elements.get(0)), null);
+        final T merged = merge(elements);
+        setElementName(merged, newName);
+        rebuild();
+        myEntriesChooser.selectElements(Collections.singleton(merged));
+      }
+    }
+  }
+
+  private class RenameAction extends AnAction {
+    private RenameAction() {
+      super("Rename", "", RENAME_ICON); // todo
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final List<T> elements = myEntriesChooser.getSelectedElements();
+      if (elements.size() == 1) {
+        final T element = elements.get(0);
+        final String newName = Messages.showInputDialog(
+          ProjectLayoutPanel.this, 
+          "Enter new name for " + getElementText(element), 
+          "Rename", 
+          Messages.getQuestionIcon(), 
+          getElementName(element), 
+          null
+        );
+        setElementName(element, newName);
+        rebuild();
+        myEntriesChooser.selectElements(Collections.singleton(element));
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
+    }
+  }
   
   protected static String getDisplayText(File file) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
@@ -155,4 +223,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       return comp;
     }
   }
+  
+  
 }

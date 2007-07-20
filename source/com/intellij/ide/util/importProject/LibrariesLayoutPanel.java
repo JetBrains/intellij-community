@@ -40,6 +40,14 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return super.getWeight(element);
   }
 
+  protected String getElementName(final LibraryDescriptor entry) {
+    return entry.getName();
+  }
+
+  protected void setElementName(final LibraryDescriptor entry, final String name) {
+    entry.setName(name);
+  }
+
   protected String getElementText(final Object element) {
     if (element instanceof LibraryDescriptor) {
       final LibraryDescriptor libDescr = (LibraryDescriptor)element;

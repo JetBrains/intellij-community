@@ -245,8 +245,8 @@ public class ModuleInsight {
   }
   
   public void moveJarsToLibrary(final LibraryDescriptor from, Collection<File> files, LibraryDescriptor to) {
-    from.removeJars(files);
     to.addJars(files);
+    from.removeJars(files);
     // remove the library if it became empty
     if (from.getJars().size() == 0) {
       removeLibrary(from);

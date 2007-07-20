@@ -51,6 +51,14 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return Integer.MAX_VALUE;
   }
 
+  protected String getElementName(final ModuleDescriptor entry) {
+    return entry.getName();
+  }
+
+  protected void setElementName(final ModuleDescriptor entry, final String name) {
+    entry.setName(name);
+  }
+
   protected String getElementText(final Object element) {
     if (element instanceof ModuleDescriptor) {
       final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;

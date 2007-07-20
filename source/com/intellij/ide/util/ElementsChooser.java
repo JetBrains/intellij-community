@@ -264,6 +264,7 @@ public class ElementsChooser<T> extends JPanel {
       rows[index++] = myTableModel.getElementRow(element);
     }
     TableUtil.selectRows(myTable, rows);
+    TableUtil.scrollSelectionToVisible(myTable);
     myTable.requestFocus();
   }
 
