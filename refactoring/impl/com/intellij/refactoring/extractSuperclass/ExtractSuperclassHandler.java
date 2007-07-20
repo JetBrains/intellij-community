@@ -81,12 +81,9 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         return true;
       }
     }, false);
-    final String targetPackageName =
-      (mySubclass.getContainingFile() instanceof PsiJavaFile) ? ((PsiJavaFile)mySubclass.getContainingFile()).getPackageName() : null;
-
 
     final ExtractSuperclassDialog dialog =
-      new ExtractSuperclassDialog(project, mySubclass, memberInfos, targetPackageName, ExtractSuperclassHandler.this);
+      new ExtractSuperclassDialog(project, mySubclass, memberInfos, ExtractSuperclassHandler.this);
     dialog.show();
     if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
 
@@ -125,7 +122,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
   // invoked inside Command and Atomic action
   private void doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
-    final String superclassName = dialog.getSuperclassName();
+    final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
     final JavaDocPolicy javaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());

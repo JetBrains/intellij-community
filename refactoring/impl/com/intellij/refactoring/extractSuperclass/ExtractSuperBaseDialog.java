@@ -2,8 +2,18 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -13,11 +23,59 @@ import java.awt.event.ItemListener;
  * @author dsl
  */
 public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
+  protected String myRefactoringName;
+  protected PsiClass mySourceClass;
+  protected PsiDirectory myTargetDirectory;
+  protected MemberInfo[] myMemberInfos;
+
   protected JRadioButton myRbExtractSuperclass;
   protected JRadioButton myRbExtractSubclass;
 
-  public ExtractSuperBaseDialog(Project project, boolean canBeParent) {
-    super(project, canBeParent);
+  protected JTextField mySourceClassField;
+  protected JTextField myExtractedSuperNameField;
+  protected ReferenceEditorWithBrowseButton myPackageNameField;
+  protected JavaDocPanel myJavaDocPanel;
+
+
+  public ExtractSuperBaseDialog(Project project, PsiClass sourceClass, MemberInfo[] members, String refactoringName) {
+    super(project, true);
+    myRefactoringName = refactoringName;
+
+    mySourceClass = sourceClass;
+    myMemberInfos = members;
+    myTargetDirectory = mySourceClass.getContainingFile().getContainingDirectory();
+
+    init();
+  }
+
+  @Override
+  protected void init() {
+    setTitle(myRefactoringName);
+
+    initPackageNameField();
+    initSourceClassField();
+    myExtractedSuperNameField = new JTextField();
+
+    myJavaDocPanel = new JavaDocPanel(getJavaDocPanelName());
+    myJavaDocPanel.setPolicy(getJavaDocPolicySetting());
+
+    super.init();
+    updateDialogForExtractSuperclass();
+  }
+
+  private void initPackageNameField() {
+    String name = "";
+    PsiFile file = mySourceClass.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      name = ((PsiJavaFile)file).getPackageName();
+    }
+    myPackageNameField = new ReferenceEditorWithBrowseButton(null, name, PsiManager.getInstance(myProject), false);
+  }
+
+  private void initSourceClassField() {
+    mySourceClassField = new JTextField();
+    mySourceClassField.setEditable(false);
+    mySourceClassField.setText(mySourceClass.getQualifiedName());
   }
 
   protected JComponent createActionComponent() {
@@ -48,14 +106,31 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     return box;
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myExtractedSuperNameField;
+  }
+
   protected void updateDialogForExtractSubclass() {
     getClassNameLabel().setText(RefactoringBundle.message("extractSuper.rename.original.class.to"));
-    getPreviewAction().setEnabled (true);
+    getPreviewAction().setEnabled(true);
   }
 
   protected void updateDialogForExtractSuperclass() {
     getClassNameLabel().setText(getClassNameLabelText());
-    getPreviewAction().setEnabled (false);
+    getPreviewAction().setEnabled(false);
+  }
+
+  public String getExtractedSuperName() {
+    return myExtractedSuperNameField.getText().trim();
+  }
+
+  protected String getTargetPackageName() {
+    return myPackageNameField.getText().trim();
+  }
+
+  public PsiDirectory getTargetDirectory() {
+    return myTargetDirectory;
   }
 
   protected abstract String getClassNameLabelText();
@@ -66,9 +141,83 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
 
   protected abstract String getEntityName();
 
-  protected abstract JTextField getSuperEntityNameField();
+  public int getJavaDocPolicy() {
+    return myJavaDocPanel.getPolicy();
+  }
 
   public boolean isExtractSuperclass() {
     return myRbExtractSuperclass.isSelected();
   }
+
+  protected void doAction() {
+      final String[] errorString = new String[]{null};
+      final String extractedSuperName = getExtractedSuperName();
+      final String packageName = getTargetPackageName();
+      final PsiManager manager = PsiManager.getInstance(myProject);
+
+      if ("".equals(extractedSuperName)) {
+        errorString[0] = getExtractedSuperNameNotSpecifiedKey();
+        myExtractedSuperNameField.requestFocusInWindow();
+      }
+      else if (!manager.getNameHelper().isIdentifier(extractedSuperName)) {
+        errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(extractedSuperName);
+        myExtractedSuperNameField.requestFocusInWindow();
+      }
+      else {
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            try {
+              final PsiPackage aPackage = manager.findPackage(packageName);
+              if (aPackage != null) {
+                final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
+                if (directories.length >= 1) {
+                  myTargetDirectory = directories[0];
+                }
+              }
+              myTargetDirectory
+                = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myTargetDirectory, true);
+              if (myTargetDirectory == null) {
+                errorString[0] = ""; // message already reported by PackageUtil
+                return;
+              }
+              errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, extractedSuperName);
+            }
+            catch (IncorrectOperationException e) {
+              errorString[0] = e.getMessage();
+              myPackageNameField.requestFocusInWindow();
+            }
+          }
+        }, RefactoringBundle.message("create.directory"), null);
+      }
+      if (errorString[0] != null) {
+        if (errorString[0].length() > 0) {
+          CommonRefactoringUtil.showErrorMessage(myRefactoringName, errorString[0], getHelpId(), myProject);
+        }
+        return;
+      }
+
+      if (!checkConflicts()) return;
+
+      if (!isExtractSuperclass()) {
+        invokeRefactoring(createProcessor());
+      }
+      setJavaDocPolicySetting(getJavaDocPolicy());
+      closeOKAction();
+    }
+  
+  protected abstract String getJavaDocPanelName();
+
+  protected abstract String getExtractedSuperNameNotSpecifiedKey();
+  protected boolean checkConflicts() { return true; }
+  protected abstract ExtractSuperBaseProcessor createProcessor();
+
+  protected abstract int getJavaDocPolicySetting();
+  protected abstract void setJavaDocPolicySetting(int policy);
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(getHelpId());
+  }
+
+  protected abstract String getHelpId();
 }

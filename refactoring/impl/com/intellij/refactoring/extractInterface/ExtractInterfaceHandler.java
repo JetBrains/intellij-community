@@ -71,7 +71,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            myInterfaceName = dialog.getInterfaceName();
+            myInterfaceName = dialog.getExtractedSuperName();
             mySelectedMembers = dialog.getSelectedMembers();
             myTargetDir = dialog.getTargetDirectory();
             myJavaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
