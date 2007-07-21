@@ -173,12 +173,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    PsiElement nameElement = getNameIdentifierGroovy();
-    ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(name).getNode();
-    assert newNameNode != null && node != null;
-    node.getTreeParent().replaceChild(node, newNameNode);
-
+    PsiImplUtil.setName(name, getNameIdentifierGroovy());
     return this;
   }
 

@@ -109,11 +109,11 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
-    // Find occurences
-    final PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
+    // Find occurrences
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     // Getting settings
-    Validator validator = new GroovyVariableValidator(this, project, selectedExpr, occurences, tempContainer);
-    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurences, false, validator);
+    Validator validator = new GroovyVariableValidator(this, project, selectedExpr, occurrences, tempContainer);
+    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurrences, false, validator);
 
     if (!settings.isOK()) {
       return false;
@@ -122,13 +122,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final String varName = settings.getEnteredName();
     PsiType varType = settings.getSelectedType();
     final boolean isFinal = settings.isDeclareFinal();
-    final boolean replaceAllOccurences = settings.isReplaceAllOccurrences();
+    final boolean replaceAllOccurrences = settings.isReplaceAllOccurrences();
 
     // Generating varibable declaration
     final GrVariableDeclaration varDecl = factory.createVariableDeclaration(varName,
         GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
 
-    runRefactoring(selectedExpr, editor, tempContainer, occurences, varName, varType, replaceAllOccurences, varDecl);
+    runRefactoring(selectedExpr, editor, tempContainer, occurrences, varName, varType, replaceAllOccurrences, varDecl);
 
     return true;
 
@@ -142,7 +142,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                       final GroovyPsiElement tempContainer,
                       final PsiElement[] occurrences,
                       final String varName,
-                      final PsiType varType, final boolean replaceAllOccurences,
+                      final PsiType varType, final boolean replaceAllOccurrences,
                       final GrVariableDeclaration varDecl) {
     final Project project = selectedExpr.getProject();
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
@@ -151,55 +151,55 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       public void run() {
         try {
           /* insert new variable */
-          GroovyRefactoringUtil.sortOccurences(occurrences);
+          GroovyRefactoringUtil.sortOccurrences(occurrences);
           if (occurrences.length == 0 || !(occurrences[0] instanceof GrExpression)) {
-            throw new IncorrectOperationException("Wrong expression occurence");
+            throw new IncorrectOperationException("Wrong expression occurrence");
           }
           GrExpression firstOccurrence;
-          if (replaceAllOccurences) {
+          if (replaceAllOccurrences) {
             firstOccurrence = ((GrExpression) occurrences[0]);
           } else {
             firstOccurrence = selectedExpr;
           }
 
           assert varDecl.getVariables().length > 0;
-          resolveLocalConflicts(tempContainer, varDecl.getVariables()[0]);
-          // Replace at the place of first occurence
-          boolean alreadyDefined = replaceAloneExpression(firstOccurrence, selectedExpr, tempContainer, varDecl);
-          if (!alreadyDefined) {
-            // Insert before first occurence
-            insertVariableDefinition(tempContainer, selectedExpr, occurrences, replaceAllOccurences, varDecl, factory);
-          }
 
-          varDecl.getVariables()[0].setType(varType);
+          resolveLocalConflicts(tempContainer, varDecl.getVariables()[0]);
+          // Replace at the place of first occurrence
+
+          boolean alreadyDefined = replaceOnlyExpression(firstOccurrence, selectedExpr, tempContainer, varDecl);
+          if (!alreadyDefined) {
+            // Insert before first occurrence
+            insertVariableDefinition(tempContainer, selectedExpr, occurrences, replaceAllOccurrences, varDecl, factory, varType);
+          }
 
           //Replace other occurrences
           GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(varName);
-          if (replaceAllOccurences) {
+          if (replaceAllOccurrences) {
             ArrayList<PsiElement> replaced = new ArrayList<PsiElement>();
-            for (PsiElement occurence : occurrences) {
-              if (!(alreadyDefined && firstOccurrence.equals(occurence))) {
-                if (occurence instanceof GrExpression) {
-                  GrExpression element = (GrExpression) occurence;
+            for (PsiElement occurrence : occurrences) {
+              if (!(alreadyDefined && firstOccurrence.equals(occurrence))) {
+                if (occurrence instanceof GrExpression) {
+                  GrExpression element = (GrExpression) occurrence;
                   if (element instanceof GrClosableBlock && element.getParent() instanceof GrMethodCallExpression) {
                     replaced.add(((GrMethodCallExpression) element.getParent()).replaceClosureArgument(((GrClosableBlock) element), refExpr));
                   } else {
                     replaced.add(element.replaceWithExpression(refExpr));
                   }
                   // For caret position
-                  if (occurence.equals(selectedExpr)) {
+                  if (occurrence.equals(selectedExpr)) {
                     refreshPositionMarker(replaced.get(replaced.size() - 1));
                   }
                   refExpr = factory.createReferenceExpressionFromText(varName);
                 } else {
-                  throw new IncorrectOperationException("Expression occurence to be replaced is not instance of GroovyPsiElement");
+                  throw new IncorrectOperationException("Expression occurrence to be replaced is not instance of GroovyPsiElement");
                 }
               }
             }
             if (editor != null) {
               // todo implement it...
-//              final PsiElement[] replacedOccurences = replaced.toArray(new PsiElement[replaced.size()]);
-//              highlightReplacedOccurences(project, editor, replacedOccurences);
+//              final PsiElement[] replacedOccurrences = replaced.toArray(new PsiElement[replaced.size()]);
+//              highlightReplacedOccurrences(project, editor, replacedOccurrences);
             }
           } else {
             if (!alreadyDefined) {
@@ -261,14 +261,10 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     return positionElement;
   }
 
-
-  /**
-   * Inserts new variable definiton according the contex
-   */
   private void insertVariableDefinition(GroovyPsiElement tempContainer, GrExpression selectedExpr,
-                                        PsiElement[] occurences, boolean replaceAllOccurences,
-                                        GrVariableDeclaration varDecl, GroovyElementFactory factory) throws IncorrectOperationException {
-    PsiElement anchorElement = GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurences, replaceAllOccurences);
+                                        PsiElement[] occurrences, boolean replaceAllOccurrences,
+                                        GrVariableDeclaration varDecl, GroovyElementFactory factory, PsiType varType) throws IncorrectOperationException {
+    PsiElement anchorElement = GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurrences, replaceAllOccurrences);
     assert anchorElement instanceof GrStatement;
     PsiElement realContainer;
     if (anchorElement.equals(tempContainer)) {
@@ -296,9 +292,12 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       if (tempStatement.equals(selectedExpr)) {
         newBody = factory.createOpenBlockFromStatements(varDecl);
       } else {
-        replaceExpressionOccurencesInStatement(tempStatement, selectedExpr, refId, replaceAllOccurences);
+        replaceExpressionOccurrencesInStatement(tempStatement, selectedExpr, refId, replaceAllOccurrences);
         newBody = factory.createOpenBlockFromStatements(varDecl, tempStatement);
       }
+
+      varDecl = (GrVariableDeclaration) newBody.getStatements()[0];
+      varDecl.getVariables()[0].setType(varType);
 
       GrCodeBlock tempBlock = newBody;
       if (realContainer instanceof GrLoopStatement) {
@@ -315,17 +314,17 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     }
   }
 
-  private void replaceExpressionOccurencesInStatement(GrStatement stmt, GrExpression expr, String refText, boolean replaceAllOccurences)
+  private void replaceExpressionOccurrencesInStatement(GrStatement stmt, GrExpression expr, String refText, boolean replaceAllOccurrences)
       throws IncorrectOperationException {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(stmt.getProject());
     GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(refText);
-    if (!replaceAllOccurences) {
+    if (!replaceAllOccurrences) {
       expr.replaceWithExpression(refExpr);
     } else {
-      PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(expr, stmt);
-      for (PsiElement occurence : occurences) {
-        if (occurence instanceof GrExpression) {
-          GrExpression grExpression = (GrExpression) occurence;
+      PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, stmt);
+      for (PsiElement occurrence : occurrences) {
+        if (occurrence instanceof GrExpression) {
+          GrExpression grExpression = (GrExpression) occurrence;
           grExpression.replaceWithExpression(refExpr);
           refExpr = factory.createReferenceExpressionFromText(refText);
         } else {
@@ -336,9 +335,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   }
 
   /**
-   * Replaces an expression occurence by appropriate variable declaration
+   * Replaces an expression occurrence by appropriate variable declaration
    */
-  private boolean replaceAloneExpression(@NotNull GrExpression expr,
+  private boolean replaceOnlyExpression(@NotNull GrExpression expr,
                                          GrExpression selectedExpr,
                                          @NotNull PsiElement context,
                                          @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
@@ -376,7 +375,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   protected abstract void showErrorMessage(String message, Project project);
 
-  protected abstract void highlightOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences);
+  protected abstract void highlightOccurrences(final Project project, Editor editor, final PsiElement[] replacedOccurrences);
 
   protected abstract boolean reportConflicts(final ArrayList<String> conflicts, final Project project);
 

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -71,14 +72,29 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public PsiElement getReferenceNameElement() {
-    PsiElement superNameElement = super.getReferenceNameElement();
-    if (superNameElement != null) return superNameElement;
-    for (IElementType keyWord : TokenSets.KEYWORD_PROPERTY_NAMES.getTypes()) {
-      if (findChildByType(keyWord) != null) {
-        return findChildByType(keyWord);
-      }
+    final ASTNode lastChild = getNode().getLastChildNode();
+    if (lastChild == null) return null;
+    for (IElementType elementType : TokenSets.PROPERTY_NAMES.getTypes()) {
+      if (lastChild.getElementType() == elementType) return lastChild.getPsi();
+    }
+
+    return null;
+  }
+
+  public String getReferenceName() {
+    PsiElement nameElement = getReferenceNameElement();
+    if (nameElement != null) {
+      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL) return getValueText(nameElement);
+      return nameElement.getText();
     }
     return null;
+  }
+
+  private String getValueText(PsiElement stringNameElement) {
+    final String text = stringNameElement.getText();
+    final char firstChar = text.charAt(0);
+    if (text.charAt(text.length() - 1) == firstChar) return text.substring(1, text.length() - 1);
+    return text.substring(1);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -90,7 +106,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (PropertyUtil.isSimplePropertyAccessor(method)) {
           final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
           if (newPropertyName != null) {
-            return super.handleElementRename(newPropertyName);
+            return doHandleElementRename(newPropertyName);
           } else {
             //todo encapsulate fields:)
           }
@@ -101,12 +117,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final String oldName = getReferenceName();
       if (!oldName.equals(field.getName())) { //was accessor reference to property
         if (oldName.startsWith("get")) {
-          return super.handleElementRename("get" + StringUtil.capitalize(newElementName));
+          return doHandleElementRename("get" + StringUtil.capitalize(newElementName));
         } else if (oldName.startsWith("set")) {
-          return super.handleElementRename("set" + StringUtil.capitalize(newElementName));
+          return doHandleElementRename("set" + StringUtil.capitalize(newElementName));
         }
       }
     }
+
+    return doHandleElementRename(newElementName);
+  }
+
+  private PsiElement doHandleElementRename(String newElementName) throws IncorrectOperationException {
+    if (!PsiUtil.isIdentifier(newElementName)) {
+      PsiElement element = GroovyElementFactory.getInstance(getProject()).createStringLiteral(newElementName);
+      getReferenceNameElement().replace(element);
+      return this;
+    }
+
     return super.handleElementRename(newElementName);
   }
 

@@ -104,6 +104,8 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kFINALLY
   ), BUILT_IN_TYPE);
 
+  public static TokenSet PROPERTY_NAMES = TokenSet.orSet(KEYWORD_PROPERTY_NAMES, TokenSet.create(mIDENT, mSTRING_LITERAL));
+
 
   public static TokenSet VISIBILITY_MODIFIERS = TokenSet.create(
       kPRIVATE,

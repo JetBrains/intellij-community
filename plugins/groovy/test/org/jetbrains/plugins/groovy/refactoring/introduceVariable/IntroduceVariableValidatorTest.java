@@ -15,28 +15,25 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
-import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
-import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.annotations.NonNls;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
-
-import java.io.IOException;
-
 import junit.framework.Assert;
 import junit.framework.Test;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.io.IOException;
 
 /**
  * @author ilyas
@@ -93,12 +90,12 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
       final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
       Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
 
-      PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
+      PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
       String varName = "preved";
       final boolean isFinal = false;
       final PsiType varType = null;
       GroovyVariableValidator validator = new GroovyVariableValidator(introduceVariableBase, myProject,
-          selectedExpr, occurences, (GroovyPsiElement)tempContainer);
+          selectedExpr, occurrences, (GroovyPsiElement)tempContainer);
       result = validator.isOKTest(varName, replaceAllOccurences);
     } finally {
       fileEditorManager.closeFile(myFile.getVirtualFile());

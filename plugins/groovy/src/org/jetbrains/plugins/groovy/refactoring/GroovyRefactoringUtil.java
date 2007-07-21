@@ -95,7 +95,7 @@ public abstract class GroovyRefactoringUtil {
     return element;
   }
 
-  public static PsiElement[] getExpressionOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
+  public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurences = new ArrayList<PsiElement>();
     if (isLoopOrForkStatement(scope)) {
       PsiElement son = expr;
@@ -209,7 +209,7 @@ public abstract class GroovyRefactoringUtil {
     if (occurences.length == 1 || !replaceAllOccurences) {
       candidate = expr;
     } else {
-      sortOccurences(occurences);
+      sortOccurrences(occurences);
       candidate = occurences[0];
     }
     while (candidate != null && !container.equals(candidate.getParent())) {
@@ -233,7 +233,7 @@ public abstract class GroovyRefactoringUtil {
     return candidate;
   }
 
-  public static void sortOccurences(PsiElement[] occurences) {
+  public static void sortOccurrences(PsiElement[] occurences) {
     Arrays.sort(occurences, new Comparator<PsiElement>() {
       public int compare(PsiElement elem1, PsiElement elem2) {
         final int offset1 = elem1.getTextRange().getStartOffset();

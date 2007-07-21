@@ -1,12 +1,11 @@
 a.b.'c'
 -----
 Groovy script
-  Property selection
+  Reference expression
     Reference expression
       Reference expression
         PsiElement(identifier)('a')
       PsiElement(.)('.')
       PsiElement(identifier)('b')
     PsiElement(.)('.')
-    Property selector
-      PsiElement(string)(''c'')
+    PsiElement(string)(''c'')

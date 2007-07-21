@@ -22,6 +22,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -225,4 +227,9 @@ public class PsiUtil {
     return resolved.getManager().findClass("java.lang.Class", scope);
   }
 
+  public static boolean isIdentifier(String text) {
+    final GroovyLexer lexer = new GroovyLexer();
+    lexer.start(text.toCharArray());
+    return lexer.getTokenType() == GroovyElementTypes.mIDENT && lexer.getTokenEnd() == text.length();
+  }
 }

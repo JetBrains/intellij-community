@@ -3,12 +3,11 @@ a.'b'.c(3)
 Groovy script
   Method call
     Reference expression
-      Property selection
+      Reference expression
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
-        Property selector
-          PsiElement(string)(''b'')
+        PsiElement(string)(''b'')
       PsiElement(.)('.')
       PsiElement(identifier)('c')
     Arguments

@@ -1,7 +1,7 @@
 A.<T,S>'preved'
 -----
 Groovy script
-  Property selection
+  Reference expression
     Reference expression
       PsiElement(identifier)('A')
     PsiElement(.)('.')
@@ -15,5 +15,4 @@ Groovy script
         Reference element
           PsiElement(identifier)('S')
       PsiElement(>)('>')
-    Property selector
-      PsiElement(string)(''preved'')
+    PsiElement(string)(''preved'')

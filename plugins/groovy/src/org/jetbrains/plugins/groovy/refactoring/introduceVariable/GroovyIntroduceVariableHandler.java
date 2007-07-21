@@ -84,7 +84,7 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     return dialog;
   }
 
-  protected void highlightOccurences(final Project project, Editor editor, final PsiElement[] elements) {
+  protected void highlightOccurrences(final Project project, Editor editor, final PsiElement[] elements) {
     GroovyRefactoringUtil.highlightOccurrences(project, editor, elements);
   }
 

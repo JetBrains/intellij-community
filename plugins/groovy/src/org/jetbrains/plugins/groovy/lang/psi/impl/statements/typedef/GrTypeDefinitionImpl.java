@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -56,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
@@ -569,11 +569,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     boolean renameFile = isRenameFileOnClassRenaming();
 
-    PsiElement nameElement = getNameIdentifierGroovy();
-    ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(name).getNode();
-    assert newNameNode != null && node != null;
-    node.getTreeParent().replaceChild(node, newNameNode);
+    PsiImplUtil.setName(name, getNameIdentifierGroovy());
 
     if (renameFile) {
       final GroovyFile file = (GroovyFile) getContainingFile();

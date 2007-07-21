@@ -247,6 +247,12 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
   }
 
+  public void testEscapedReferenceExpression() throws Exception {
+    PsiReference ref = configureByFile("escapedReferenceExpression/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
+
   public void testGrvy179() throws Exception {
     PsiReference ref = configureByFile("grvy179/A.groovy");
     assertNull(ref.resolve());

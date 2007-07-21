@@ -26,8 +26,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -69,9 +69,7 @@ public class PsiImplUtil {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(oldExpr.getProject());
     if (oldExpr.getParent() instanceof GrExpression) {
       GrExpression parentExpr = (GrExpression) oldExpr.getParent();
-      // todo fix me!
-      if (getExprPriorityLevel(parentExpr) >= getExprPriorityLevel(newExpr) &&
-          getExprPriorityLevel(newExpr) != 0) {
+      if (getExprPriorityLevel(parentExpr) > getExprPriorityLevel(newExpr)) {
         newExpr = factory.createParenthesizedExpr(newExpr);
       }
     }
@@ -239,5 +237,12 @@ public class PsiImplUtil {
     if (expr instanceof GrConditionalExpression) priority = 19;
     if (expr instanceof GrAssignmentExpression) priority = 20;
     return -priority;
+  }
+
+  public static void setName(String name, PsiElement nameElement) {
+    ASTNode node = nameElement.getNode();
+    ASTNode newNameNode = GroovyElementFactory.getInstance(nameElement.getProject()).createIdentifierFromText(name).getNode();
+    assert newNameNode != null && node != null;
+    node.getTreeParent().replaceChild(node, newNameNode);
   }
 }

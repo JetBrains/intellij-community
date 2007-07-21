@@ -21,5 +21,4 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literal
 public interface GrString extends GrLiteral {
 
   boolean isPlainString();
-
 }

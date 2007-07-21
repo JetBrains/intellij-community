@@ -139,12 +139,11 @@ public class PathExpression implements GroovyElementTypes {
    */
   private static GroovyElementType namePartParse(PsiBuilder builder) {
     ParserUtils.getToken(builder, mAT);
-    if (mIDENT.equals(builder.getTokenType())) {
-      ParserUtils.getToken(builder, mIDENT);
+    if (ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL)) {
       return REFERENCE_EXPRESSION;
     }
-    if (mSTRING_LITERAL.equals(builder.getTokenType()) ||
-        mGSTRING_LITERAL.equals(builder.getTokenType()) ||
+
+    if (mGSTRING_LITERAL.equals(builder.getTokenType()) ||
         mREGEX_LITERAL.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, PATH_PROPERTY);
       return PATH_PROPERTY_REFERENCE;

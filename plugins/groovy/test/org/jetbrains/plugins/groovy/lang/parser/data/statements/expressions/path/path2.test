@@ -1,12 +1,11 @@
 3.toString*.'preved'
 -----
 Groovy script
-  Property selection
+  Reference expression
     Reference expression
       Literal
         PsiElement(Integer)('3')
       PsiElement(.)('.')
       PsiElement(identifier)('toString')
     PsiElement(*.)('*.')
-    Property selector
-      PsiElement(string)(''preved'')
+    PsiElement(string)(''preved'')
