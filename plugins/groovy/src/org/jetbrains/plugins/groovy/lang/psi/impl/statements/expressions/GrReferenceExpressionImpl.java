@@ -169,7 +169,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       PsiType result = null;
       PsiManager manager = refExpr.getManager();
       if (resolved instanceof PsiClass) {
-        result = manager.getElementFactory().createType((PsiClass) resolved);
+        if (refExpr.getParent() instanceof GrReferenceExpression) {
+          result = manager.getElementFactory().createType((PsiClass) resolved);
+        } else {
+          PsiClass javaLangClass = manager.findClass("java.lang.Class", refExpr.getResolveScope());
+          if (javaLangClass != null) {
+            PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+            final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+            if (typeParameters.length == 1) {
+              substitutor = substitutor.put(typeParameters[0], manager.getElementFactory().createType((PsiClass) resolved));
+            }
+            result = manager.getElementFactory().createType(javaLangClass, substitutor);
+          }
+        }
       } else if (resolved instanceof GrVariable) {
         result = ((GrVariable) resolved).getTypeGroovy();
       } else if (resolved instanceof PsiVariable) {
