@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -214,14 +213,7 @@ public class GroovyAnnotator implements Annotator {
     GroovyResolveResult resolveResult = refElement.advancedResolve();
     if (refElement.getReferenceName() != null) {
       final PsiElement resolved = resolveResult.getElement();
-      if (resolved == null) {
-        if (parent instanceof GrImportStatement && ((GrImportStatement) parent).isStatic()) { //multiple members might be imported by single static import
-          final ResolveResult[] allResults = refElement.multiResolve(false);
-          if (allResults.length > 0) {
-            return;
-          }
-        }
-
+      if (resolved == null && refElement.multiResolve(false).length == 0) {
         String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
 
         // Register quickfix
