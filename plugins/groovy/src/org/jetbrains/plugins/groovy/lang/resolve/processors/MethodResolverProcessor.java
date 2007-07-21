@@ -140,6 +140,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
     for (int i = 0; i < params1.length; i++) {
       PsiType type1 = params1[i].getType();
       PsiType type2 = params2[i].getType();
+      if ((type1 instanceof PsiArrayType) != (type2 instanceof PsiArrayType)) {
+        if (type1 instanceof PsiArrayType) {
+          type1 = ((PsiArrayType) type1).getComponentType();
+        } else {
+          type2 = ((PsiArrayType) type2).getComponentType();
+        }
+      }
       if (!TypesUtil.isAssignable(type1, type2, manager, scope)) return false;
     }
 

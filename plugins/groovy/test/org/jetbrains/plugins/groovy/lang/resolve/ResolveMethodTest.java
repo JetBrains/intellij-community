@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -256,6 +257,15 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   public void testGrvy179() throws Exception {
     PsiReference ref = configureByFile("grvy179/A.groovy");
     assertNull(ref.resolve());
+  }
+
+  public void testFixedVsVarargs1() throws Exception {
+    PsiReference ref = configureByFile("fixedVsVarargs1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    final GrParameter[] parameters = ((GrMethod) resolved).getParameters();
+    assertEquals(parameters.length, 1);
+    assertEquals(parameters[0].getType().getCanonicalText(), "int");
   }
 
 }
