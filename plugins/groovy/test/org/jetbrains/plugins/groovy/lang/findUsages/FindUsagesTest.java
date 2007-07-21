@@ -69,7 +69,7 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testEscapedReference() throws Throwable {
-    doTest("escapedReference/A.groovy", 2);
+    doTest("escapedReference/A.groovy", 1);
   }
 
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
