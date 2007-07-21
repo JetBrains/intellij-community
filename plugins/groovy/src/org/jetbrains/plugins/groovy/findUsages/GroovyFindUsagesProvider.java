@@ -14,14 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -30,13 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  */
 public class GroovyFindUsagesProvider implements FindUsagesProvider
 {
-  private static class WordsScanner extends DefaultWordsScanner
-  {
-    public WordsScanner()
-    {
-      super(new GroovyLexer(), GroovyElementTypes.IDENTIFIER_SET, GroovyElementTypes.COMMENT_SET, GroovyElementTypes.STRING_LITERAL_SET);
-    }
-  }
 
   public static final GroovyFindUsagesProvider INSTANCE = new GroovyFindUsagesProvider();
 
@@ -45,9 +35,9 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
   }
 
   @Nullable
-  public WordsScanner getWordsScanner()
+  public GroovyWordsScanner getWordsScanner()
   {
-    return new WordsScanner();
+    return new GroovyWordsScanner();
   }
 
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement)

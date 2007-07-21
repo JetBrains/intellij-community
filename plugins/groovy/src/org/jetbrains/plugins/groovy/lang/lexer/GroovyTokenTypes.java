@@ -213,10 +213,6 @@ public interface GroovyTokenTypes {
   IElementType kFALSE = new GroovyElementType("false");
   IElementType kNULL = new GroovyElementType("null");
 
-  TokenSet IDENTIFIER_SET = TokenSet.create(mIDENT);
-  TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT);
-  TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL);
-
   TokenSet KEYWORDS = TokenSet.create(kPACKAGE, kANY, kIMPORT, kSTATIC, kDEF, kCLASS, kINTERFACE, kENUM, kEXTENDS,
       kSUPER, kVOID, kBOOLEAN, kBYTE, kCHAR, kSHORT, kINT, kFLOAT, kLONG, kDOUBLE, kAS, kPRIVATE, kPUBLIC,
       kPROTECTED, kTRANSIENT, kNATIVE, kSYNCHRONIZED, kVOLATILE, kDEFAULT, kTHROWS, kIMPLEMENTS, kTHIS, kIF,

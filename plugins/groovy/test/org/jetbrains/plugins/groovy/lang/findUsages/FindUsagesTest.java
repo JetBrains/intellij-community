@@ -68,6 +68,10 @@ public class FindUsagesTest extends IdeaTestCase {
     doTest("property1/A.groovy", 2);
   }
 
+  public void testEscapedReference() throws Throwable {
+    doTest("escapedReference/A.groovy", 2);
+  }
+
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition(filePath);
