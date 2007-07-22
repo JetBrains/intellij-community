@@ -102,7 +102,7 @@ public class OptimizeImportsAction extends AnAction {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !(file instanceof PsiJavaFile)){
+      if (file == null || !isOptimizeImportsAvailable(file)){
         presentation.setEnabled(false);
         return;
       }
@@ -110,7 +110,7 @@ public class OptimizeImportsAction extends AnAction {
     else if (files != null && ReformatCodeAction.areFiles(files)) {
       for (VirtualFile virtualFile : files) {
         PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-        if (file == null || !(file instanceof PsiJavaFile)) {
+        if (file == null || !isOptimizeImportsAvailable(file)) {
           presentation.setEnabled(false);
           return;
         }
@@ -129,7 +129,7 @@ public class OptimizeImportsAction extends AnAction {
 
       if (!(element instanceof PsiDirectory)){
         PsiFile file = element.getContainingFile();
-        if (file == null || !(file instanceof PsiJavaFile)){
+        if (file == null || !isOptimizeImportsAvailable(file)){
           presentation.setEnabled(false);
           return;
         }
@@ -144,5 +144,9 @@ public class OptimizeImportsAction extends AnAction {
     }
 
     presentation.setEnabled(true);
+  }
+
+  private boolean isOptimizeImportsAvailable(final PsiFile file) {
+    return file.getLanguage().getImportOptimizer() != null;
   }
 }
