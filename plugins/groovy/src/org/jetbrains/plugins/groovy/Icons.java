@@ -31,4 +31,5 @@ public interface Icons {
   public static final Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");
   public static final Icon ANNOTAION = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationtype.png");
   public static final Icon ENUM = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/enum.png");
+  public static final Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
 }

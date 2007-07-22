@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -8,6 +10,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -92,9 +95,9 @@ public class CompleteReferenceExpression {
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0 && sameQualifier.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
-    String[] properties = addPretendedProperties(elements);
+    LookupElement[] propertyLookupElements = addPretendedProperties(elements);
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
-    variants = ArrayUtil.mergeArrays(variants, properties, Object.class);
+    variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
     return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
   }
 
@@ -120,8 +123,10 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static String[] addPretendedProperties(PsiElement[] elements) {
-    List<String> result = new ArrayList<String>();
+  private static LookupElement[] addPretendedProperties(PsiElement[] elements) {
+    List<LookupElement> result = new ArrayList<LookupElement>();
+    final LookupElementFactory factory = LookupElementFactory.getInstance();
+
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) element;
@@ -131,13 +136,13 @@ public class CompleteReferenceExpression {
             if (!PsiUtil.isIdentifier(propName)) {
               propName = "'" + propName + "'";
             }
-            result.add(propName);
+            result.add(factory.createLookupElement(propName).setIcon(Icons.PROPERTY));
           }
         }
       }
     }
 
-    return result.toArray(new String[result.size()]);
+    return result.toArray(new LookupElement[result.size()]);
   }
 
   private static void getVariantsFromQualifier(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
