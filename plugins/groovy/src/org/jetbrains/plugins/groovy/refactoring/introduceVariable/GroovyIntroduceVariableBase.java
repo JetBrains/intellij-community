@@ -278,9 +278,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!GroovyRefactoringUtil.isLoopOrForkStatement(realContainer)) {
       if (realContainer instanceof GrCodeBlock) {
         GrCodeBlock block = (GrCodeBlock) realContainer;
-        block.addStatementBefore(varDecl, (GrStatement) anchorElement);
+        varDecl = (GrVariableDeclaration) block.addStatementBefore(varDecl, (GrStatement) anchorElement);
       } else if (realContainer instanceof GroovyFile) {
-        ((GroovyFile) realContainer).addStatement(varDecl, (GrStatement) anchorElement);
+        varDecl = (GrVariableDeclaration) ((GroovyFile) realContainer).addStatement(varDecl, (GrStatement) anchorElement);
       }
     } else {
       GrStatement tempStatement = ((GrStatement) anchorElement);
@@ -297,7 +297,6 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       }
 
       varDecl = (GrVariableDeclaration) newBody.getStatements()[0];
-      varDecl.getVariables()[0].setType(varType);
 
       GrCodeBlock tempBlock = newBody;
       if (realContainer instanceof GrLoopStatement) {
@@ -310,8 +309,11 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
           tempBlock = ((GrCodeBlock) ifStatement.replaceElseBranch(newBody));
         }
       }
+
       refreshPositionMarker(tempBlock.getStatements()[tempBlock.getStatements().length - 1]);
     }
+
+    varDecl.getVariables()[0].setType(varType);
   }
 
   private void replaceExpressionOccurrencesInStatement(GrStatement stmt, GrExpression expr, String refText, boolean replaceAllOccurrences)
