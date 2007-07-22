@@ -44,12 +44,13 @@ public class CompleteReferenceExpression {
       if (type instanceof PsiClassType) {
         PsiClass clazz = ((PsiClassType) type).resolve();
         if (clazz != null) {
-          List<String> props = new ArrayList<String>();
+          List<LookupElement> props = new ArrayList<LookupElement>();
+          final LookupElementFactory factory = LookupElementFactory.getInstance();
           for (PsiMethod method : clazz.getAllMethods()) {
-            if (PropertyUtil.isSimplePropertySetter(method)) {
+            if (PsiUtil.isSimplePropertySetter(method)) {
               String prop = PropertyUtil.getPropertyName(method);
               if (prop != null) {
-                props.add(prop);
+                props.add(factory.createLookupElement(prop).setIcon(Icons.PROPERTY));
               }
             }
           }
