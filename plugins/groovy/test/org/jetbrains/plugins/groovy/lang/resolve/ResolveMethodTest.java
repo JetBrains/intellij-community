@@ -260,6 +260,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
   }
 
+  public void testEmptyVsMap() throws Exception {
+    PsiReference ref = configureByFile("emptyVsMap/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertEquals(0, ((PsiMethod) resolved).getParameterList().getParametersCount());
+  }
+
   public void testGrvy179() throws Exception {
     PsiReference ref = configureByFile("grvy179/A.groovy");
     assertNull(ref.resolve());

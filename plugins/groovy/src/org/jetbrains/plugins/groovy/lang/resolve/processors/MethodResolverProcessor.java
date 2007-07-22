@@ -135,9 +135,9 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
-    if (params1.length != params2.length) return false;
+    if (params1.length < params2.length) return false;
 
-    for (int i = 0; i < params1.length; i++) {
+    for (int i = 0; i < params2.length; i++) {
       PsiType type1 = params1[i].getType();
       PsiType type2 = params2[i].getType();
       if ((type1 instanceof PsiArrayType) != (type2 instanceof PsiArrayType)) {
