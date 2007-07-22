@@ -8,6 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 /**
  * @author ven
@@ -29,7 +30,7 @@ class GroovyWordsScanner implements WordsScanner
 
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
-      if (type == GroovyTokenTypes.mIDENT) {
+      if (type == GroovyTokenTypes.mIDENT || TokenSets.KEYWORD_PROPERTY_NAMES.contains(type)) {
         if (occurrence == null) occurrence = new WordOccurrence(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         else occurrence.init(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         if (!processor.process(occurrence)) return;
