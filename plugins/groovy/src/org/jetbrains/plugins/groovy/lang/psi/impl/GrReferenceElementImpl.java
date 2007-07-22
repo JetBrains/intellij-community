@@ -87,7 +87,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       final String qName = clazz.getQualifiedName();
       if (qName != null) {
         final GrImportStatement added = file.addImportForClass(clazz);
-        if (!isReferenceTo(element)) {
+        if (!bindsCorrectly(element)) {
           file.removeImport(added);
           final GrCodeReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
           getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
@@ -104,5 +104,9 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     }
 
     throw new IncorrectOperationException("Cannot bind");
+  }
+
+  protected boolean bindsCorrectly(PsiElement element) {
+    return isReferenceTo(element);
   }
 }

@@ -156,6 +156,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return null;
   }
 
+  protected boolean bindsCorrectly(PsiElement element) {
+    if (super.bindsCorrectly(element)) return true;
+    if (element instanceof PsiClass) {
+      final PsiElement resolved = resolve();
+      if (resolved instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod) resolved;
+        if (method.isConstructor() && getManager().areElementsEquivalent(element, method.getContainingClass())) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public boolean isReferenceTo(PsiElement element) {
     return getManager().areElementsEquivalent(element, resolve());
   }
