@@ -1,2 +1,2 @@
 def l = [String, Integer]
-def List names = l*.'package'*.<ref>name
+def List names = l*.'class'*.<ref>name
