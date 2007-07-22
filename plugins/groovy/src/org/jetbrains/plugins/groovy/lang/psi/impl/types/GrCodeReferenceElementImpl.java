@@ -282,7 +282,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   private static class MyResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
     public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
-      if (reference.getReferenceName() == null) return null;
+      if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
       return _resolve(reference, reference.getManager(), reference.getKind(), !incompleteCode);
     }
 
@@ -301,7 +301,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
         case PACKAGE_FQ:
           PsiPackage aPackage = manager.findPackage(PsiUtil.getQualifiedReferenceText(ref));
-          return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
+          if (aPackage != null) {
+            return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
+          }
 
         case CLASS:
         case CLASS_OR_PACKAGE: {
