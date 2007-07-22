@@ -155,7 +155,7 @@ public class GroovyCompletionData extends CompletionData {
 
     DefaultCharFilter.registerFilter(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new CharFilter() {
       public int accept(char c, String prefix) {
-        if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
+        if (Character.isJavaIdentifierPart(c) || c == '\'') return CharFilter.ADD_TO_PREFIX;
         else if (c == '\n' || c == '\t') {
           return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
         }
