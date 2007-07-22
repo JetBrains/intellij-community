@@ -29,31 +29,12 @@ public class RunToCursorAction extends AnAction {
     myIgnoreBreakpoints = ignoreBreakpoints;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if (project == null) {
-      return;
-    }
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor == null) {
-      return;
-    }
-    DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    if (debugProcess == null) {
-      return;
-    }
-    context.getDebuggerSession().runToCursor(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line, myIgnoreBreakpoints);
-  }
-
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = event.getData(DataKeys.PROJECT);
     boolean enabled;
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = event.getData(DataKeys.EDITOR);
 
     if (project == null || editor == null) {
       enabled = false;
@@ -68,7 +49,7 @@ public class RunToCursorAction extends AnAction {
         final VirtualFile virtualFile = file.getVirtualFile();
         FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
         if (DebuggerUtils.supportsJVMDebugging(fileType)) {
-          DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
+          DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
           enabled = debuggerSession != null && debuggerSession.isPaused();
         }
         else {
@@ -76,11 +57,28 @@ public class RunToCursorAction extends AnAction {
         }
       }
     }
-    if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);
     }
     else {
       presentation.setEnabled(enabled);
     }
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    Project project = e.getData(DataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
+    Editor editor = e.getData(DataKeys.EDITOR);
+    if (editor == null) {
+      return;
+    }
+    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    if (debugProcess == null) {
+      return;
+    }
+    context.getDebuggerSession().runToCursor(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line, myIgnoreBreakpoints);
   }
 }

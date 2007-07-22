@@ -16,7 +16,28 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 public class ToggleLineBreakpointAction extends AnAction {
-  
+
+  public void update(AnActionEvent event){
+    boolean toEnable = false;
+    PlaceInDocument place = getPlace(event);
+    if (place != null) {
+      final Project project = event.getData(DataKeys.PROJECT);
+      final Document document = place.getDocument();
+      final int offset = place.getOffset();
+      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+      toEnable = breakpointManager.findBreakpoint(document, offset, LineBreakpoint.CATEGORY) != null ||
+                 LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
+    }
+
+    final Presentation presentation = event.getPresentation();
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(toEnable);
+    }
+    else {
+      presentation.setEnabled(toEnable);
+    }
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     if (project == null) {
@@ -72,28 +93,5 @@ public class ToggleLineBreakpointAction extends AnAction {
       }
     }
     return null;
-  }
-
-  public void update(AnActionEvent event){
-    boolean toEnable = false;
-    PlaceInDocument place = getPlace(event);
-    if (place != null) {
-      final Project project = event.getData(DataKeys.PROJECT);
-      final Document document = place.getDocument();
-      final int offset = place.getOffset();
-      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-      toEnable = breakpointManager.findBreakpoint(document, offset, LineBreakpoint.CATEGORY) != null || 
-                 LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
-    }
-
-    final Presentation presentation = event.getPresentation();
-    if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace())) {
-      presentation.setVisible(toEnable);
-    }
-    else {
-      presentation.setEnabled(toEnable);
-    }
   }
 }

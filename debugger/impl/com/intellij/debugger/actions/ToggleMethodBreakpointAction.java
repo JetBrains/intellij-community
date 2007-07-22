@@ -30,7 +30,19 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class ToggleMethodBreakpointAction extends AnAction {
-  
+
+  public void update(AnActionEvent event){
+    boolean toEnable = getPlace(event) != null;
+
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      event.getPresentation().setVisible(toEnable);
+    }
+    else {
+      event.getPresentation().setEnabled(toEnable);
+    }
+  }
+
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     if (project == null) {
@@ -50,13 +62,12 @@ public class ToggleMethodBreakpointAction extends AnAction {
         if(methodBreakpoint != null) {
           RequestManagerImpl.createRequests(methodBreakpoint);
         }
-      } 
+      }
       else {
         manager.removeBreakpoint(breakpoint);
       }
     }
   }
-
 
   @Nullable
   private static PlaceInDocument getPlace(AnActionEvent event) {
@@ -123,19 +134,5 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
     final int offset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset(), " \t");
     return DebuggerUtilsEx.findPsiMethod(psiFile, offset);
-  }
-
-  public void update(AnActionEvent event){
-    boolean toEnable = getPlace(event) != null;
-
-    if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
-      event.getPresentation().setVisible(toEnable);
-    }
-    else {
-      event.getPresentation().setEnabled(toEnable);
-    }
   }
 }

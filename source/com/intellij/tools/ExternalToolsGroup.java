@@ -11,7 +11,7 @@ public class ExternalToolsGroup extends SimpleActionGroup {
     Presentation presentation = event.getPresentation();
     removeAll();
     String context = event.getPlace();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = event.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

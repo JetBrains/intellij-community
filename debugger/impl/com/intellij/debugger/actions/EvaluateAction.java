@@ -27,6 +27,33 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
 public class EvaluateAction extends DebuggerAction {
+  public void update(AnActionEvent event){
+    Presentation presentation = event.getPresentation();
+    final Project project = event.getData(DataKeys.PROJECT);
+    if (project == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+
+    DebuggerContextImpl context = getDebuggerContext(event.getDataContext());
+
+    boolean toEnable = false;
+
+    if(context != null) {
+      DebuggerSession debuggerSession = context.getDebuggerSession();
+
+      toEnable = debuggerSession != null && debuggerSession.isPaused();
+    }
+
+    presentation.setEnabled(toEnable);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(toEnable);
+    }
+    else {
+      presentation.setVisible(true);
+    }
+  }
+
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     final DataContext dataContext = e.getDataContext();
@@ -46,9 +73,8 @@ public class EvaluateAction extends DebuggerAction {
       if (selectedNode != null && selectedNode.getDescriptor() instanceof ValueDescriptorImpl) {
         context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
           public void threadAction() {
-            final TextWithImports evaluationText;
             try {
-              evaluationText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
+              final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(selectedNode, context);
               DebuggerInvocationUtil.invokeLater(project, new Runnable() {
                 public void run() {
                   showEvaluationDialog(project, evaluationText);
@@ -92,8 +118,8 @@ public class EvaluateAction extends DebuggerAction {
       defaultExpression = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     }
 
-    final DialogWrapper dialog;
     DebuggerSettings.getInstance().EVALUATION_DIALOG_TYPE = dialogType;
+    final DialogWrapper dialog;
     if(DebuggerSettings.EVALUATE_FRAGMENT.equals(dialogType)) {
       dialog = new StatementEvaluationDialog(project, defaultExpression);
     }
@@ -106,32 +132,5 @@ public class EvaluateAction extends DebuggerAction {
 
   public static void showEvaluationDialog(Project project, TextWithImports text) {
     showEvaluationDialog(project, text, DebuggerSettings.getInstance().EVALUATION_DIALOG_TYPE);
-  }
-
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    final Project project = event.getData(DataKeys.PROJECT);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-
-    DebuggerContextImpl context = getDebuggerContext(event.getDataContext());
-
-    boolean toEnable = false;
-
-    if(context != null) {
-      DebuggerSession debuggerSession = context.getDebuggerSession();
-
-      toEnable = debuggerSession != null && debuggerSession.isPaused();
-    }
-
-    presentation.setEnabled(toEnable);
-    if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
-      presentation.setVisible(toEnable);
-    }
-    else {
-      presentation.setVisible(true);
-    }
   }
 }

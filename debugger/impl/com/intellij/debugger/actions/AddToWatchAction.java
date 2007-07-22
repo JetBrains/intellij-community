@@ -12,18 +12,45 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
+import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 
 public class AddToWatchAction extends DebuggerAction {
+
+  public void update(AnActionEvent e) {
+    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
+    boolean enabled = false;
+    if (selectedNodes != null && selectedNodes.length > 0) {
+      if (getPanel(e.getDataContext()) instanceof VariablesPanel) {
+        enabled = true;
+        for (DebuggerTreeNodeImpl node : selectedNodes) {
+          NodeDescriptorImpl descriptor = node.getDescriptor();
+          if (!(descriptor instanceof ValueDescriptorImpl)) {
+            enabled = false;
+            break;
+          }
+        }
+      }
+    }
+    else {
+      final Editor editor = e.getData(DataKeys.EDITOR);
+      enabled = DebuggerUtilsEx.getEditorText(editor) != null;
+    }
+    e.getPresentation().setEnabled(enabled);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(enabled);
+    }
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
 
@@ -45,34 +72,12 @@ public class AddToWatchAction extends DebuggerAction {
       debuggerContext.getDebugProcess().getManagerThread().invokeLater(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
     }
     else {
-      final Editor editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
+      final Editor editor = e.getData(DataKeys.EDITOR);
       final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
-      if(editorText != null) {
+      if (editorText != null) {
         doAddWatch(watchPanel, editorText, null);
       }
     }
-  }
-
-  public void update(AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
-    boolean enabled = false;
-    if (selectedNodes != null && selectedNodes.length > 0) {
-      if (getPanel(e.getDataContext()) instanceof VariablesPanel) {
-        enabled = true;
-        for (DebuggerTreeNodeImpl node : selectedNodes) {
-          NodeDescriptorImpl descriptor = node.getDescriptor();
-          if (!(descriptor instanceof ValueDescriptorImpl)) {
-            enabled = false;
-            break;
-          }
-        }
-      }
-    }
-    else {
-      final Editor editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
-      enabled = DebuggerUtilsEx.getEditorText(editor) != null ;
-    }
-    e.getPresentation().setEnabled(enabled);
   }
 
   private static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
