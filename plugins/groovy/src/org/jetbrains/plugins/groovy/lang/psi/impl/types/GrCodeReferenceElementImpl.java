@@ -353,6 +353,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           for (GroovyResolveResult classResult : classResults) {
             final PsiElement element = classResult.getElement();
             if (element instanceof PsiClass) {
+              processor.setImportStatementContext(classResult.getImportStatementContext());
               if (!element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref)) break;
             }
           }
