@@ -7,7 +7,9 @@
       <antReference bundledAnt="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
-      <properties />
+      <properties>
+        <property name="idea.home" value="$IDEA_HOME$" />
+      </properties>
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
@@ -22,6 +24,17 @@
       <value>
         <option name="LINE_COMMENT_AT_FIRST_COLUMN" value="false" />
         <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
+        <option name="JAVA_INDENT_OPTIONS">
+          <value>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="4" />
+            <option name="USE_TAB_CHARACTER" value="false" />
+            <option name="SMART_TABS" value="false" />
+            <option name="LABEL_INDENT_SIZE" value="0" />
+            <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          </value>
+        </option>
         <option name="LINE_SEPARATOR" value="&#10;" />
         <option name="CLASS_BRACE_STYLE" value="2" />
         <option name="WHILE_ON_NEW_LINE" value="true" />
@@ -376,7 +389,7 @@
       <module fileurl="file://$PROJECT_DIR$/testng-j.iml" filepath="$PROJECT_DIR$/testng-j.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 6978" project-jdk-type="IDEA JDK" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA SDK" project-jdk-type="IDEA JDK" />
   <component name="RMI Configuration">
     <Server />
     <Port>0</Port>

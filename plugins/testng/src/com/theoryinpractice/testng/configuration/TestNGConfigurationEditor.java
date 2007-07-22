@@ -22,6 +22,7 @@ import com.intellij.execution.junit2.configuration.*;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -71,11 +72,10 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private TableView propertiesTableView;
   private JPanel commonParametersPanel;//temp compilation problems
   private JButton addListener;
-  private TableView listenersTable;
+  private JList listenersTable;
   private JButton removeListener;
   private CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
   private ArrayList<Map.Entry> propertiesList;
-  private ArrayList<String> listenerList;
   private TestNGListenersTableModel listenerModel;
 
   private TestNGConfiguration config;
@@ -128,11 +128,11 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     removeListener.addActionListener(new ActionListener()
     {
       public void actionPerformed(ActionEvent event) {
-        int idx = listenersTable.getSelectedRow() - 1;
-        for (int row : listenersTable.getSelectedRows()) {
+        int idx = listenersTable.getSelectedIndex() - 1;
+        for (int row : listenersTable.getSelectedIndices()) {
           listenerModel.removeListener(row);
         }
-        if (idx > -1) listenersTable.setRowSelectionInterval(idx, idx);
+        if (idx > -1) listenersTable.setSelectedIndex(idx);
       }
     });
   }
@@ -205,13 +205,10 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
 
-    listenerList = new ArrayList<String>();
-    listenerList.addAll(data.TEST_LISTENERS);
-    listenerModel.setListenerList(listenerList);
+    listenerModel.setListenerList(data.TEST_LISTENERS);
 
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
     outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
-
 
   }
 
@@ -239,9 +236,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     }
 
     data.TEST_LISTENERS.clear();
-    for (String listener : listenerList) {
-      data.TEST_LISTENERS.add(listener);
-    }
+    data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
 
     data.ENV_VARIABLES =
         envVariablesComponent.getEnvs().trim().length() > 0 ? FileUtil.toSystemIndependentName(envVariablesComponent.getEnvs()) : null;
@@ -315,7 +310,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     propertiesTableView.setShowGrid(true);
 
     listenersTable.setModel(listenerModel);
-    listenersTable.setShowGrid(true);
 
     myAddButton.addActionListener(new ActionListener()
     {
@@ -388,10 +382,12 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
   private class AddTestListenerListener implements ActionListener
   {
+    private Logger LOGGER = Logger.getInstance("TestNG Runner");
 
     public void actionPerformed(ActionEvent event) {
       String className = selectListenerClass();
       listenerModel.addListener(className);
+      LOGGER.info("Adding listener " + className + " to configuration.");
     }
 
     protected GlobalSearchScope getSearchScope(Module[] modules) {

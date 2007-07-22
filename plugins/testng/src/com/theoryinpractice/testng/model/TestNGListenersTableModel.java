@@ -7,42 +7,39 @@
 package com.theoryinpractice.testng.model;
 
 import java.util.ArrayList;
+import java.util.List;
+import javax.swing.*;
 
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-
-public class TestNGListenersTableModel extends ListTableModel<String>
+public class TestNGListenersTableModel extends AbstractListModel
 {
 
-  private ArrayList<String> listenerList;
+  private List<String> listenerList = new ArrayList<String>();
 
-  public TestNGListenersTableModel() {
-    super(
-        new ColumnInfo("Listener Class")
-        {
-          public Object valueOf(Object object) {
-            return object;
-          }
-        }
-    );
+  public int getSize() {
+    return listenerList.size();
   }
 
-  public boolean isCellEditable(int rowIndex, int columnIndex) {
-    return false;
+  public Object getElementAt(int i) {
+    return listenerList.get(i);
   }
 
-  public void setListenerList(ArrayList<String> listenerList) {
-    this.listenerList = listenerList;
-    setItems(listenerList);
+  public void setListenerList(List<String> listenerList) {
+    this.listenerList.clear();
+    this.listenerList.addAll(listenerList);
+    fireContentsChanged(this, 0, 0);
+  }
+
+  public List<String> getListenerList() {
+    return listenerList;
   }
 
   public void addListener(String listener) {
     listenerList.add(listener);
-    setListenerList(listenerList);
+    fireContentsChanged(this, 0, 0);
   }
 
   public void removeListener(int rowIndex) {
     listenerList.remove(rowIndex);
-    setListenerList(listenerList);
+    fireContentsChanged(this, 0, 0);
   }
 }

@@ -443,7 +443,7 @@ public class TestNGUtil implements TestFramework
 
   public static boolean inheritsITestListener(PsiClass psiClass) {
     for (PsiClass anInterface : psiClass.getInterfaces()) {
-      if ("org.testng.ITestListener".equals(anInterface.getQualifiedName())) return true;
+      if (anInterface.getQualifiedName().matches("org.testng.(IReporter|ITestListener)")) return true;
     }
     return false;
   }
