@@ -16,31 +16,34 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionData;
+import com.intellij.codeInsight.completion.CompletionVariant;
+import com.intellij.codeInsight.completion.DefaultCharFilter;
+import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterfaceEnumFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.AnnotationFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.control.ControlStructureFilter;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.control.ControlStructureFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.CaseDefaultFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.CatchFinallyFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.ElseFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.AnnotationFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterfaceEnumFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 
 import java.util.Set;
 
@@ -183,7 +186,17 @@ public class GroovyCompletionData extends CompletionData {
 
 
   public String findPrefix(PsiElement insertedElement, int offset) {
-    return WordCompletionData.findPrefixSimple(insertedElement, offset);
+    if(insertedElement == null) return "";
+    final String text = insertedElement.getText();
+    final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
+    int start = offsetInElement - 1;
+    while(start >=0 ) {
+      final char c = text.charAt(start);
+      if(!Character.isJavaIdentifierPart(c) && c != '\'') break;
+      --start;
+    }
+
+    return text.substring(start + 1, offsetInElement).trim();
   }
 
   /**

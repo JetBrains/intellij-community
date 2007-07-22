@@ -125,9 +125,14 @@ public class CompleteReferenceExpression {
     for (PsiElement element : elements) {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) element;
-        String propName = PropertyUtil.getPropertyName(method);
-        if (propName != null) {
-          result.add(propName);
+        if (PsiUtil.isSimplePropertyAccessor(method)) {
+          String propName = PropertyUtil.getPropertyName(method);
+          if (propName != null) {
+            if (!PsiUtil.isIdentifier(propName)) {
+              propName = "'" + propName + "'";
+            }
+            result.add(propName);
+          }
         }
       }
     }

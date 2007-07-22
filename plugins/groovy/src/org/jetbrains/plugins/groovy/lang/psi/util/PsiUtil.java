@@ -232,4 +232,43 @@ public class PsiUtil {
     lexer.start(text.toCharArray());
     return lexer.getTokenType() == GroovyElementTypes.mIDENT && lexer.getTokenEnd() == text.length();
   }
+
+  public static boolean isSimplePropertyAccessor(PsiMethod method) {
+    return isSimplePropertyGetter(method) || isSimplePropertySetter(method);
+  }
+  
+  //do not check return type
+  public static boolean isSimplePropertyGetter(PsiMethod method) {
+    if (method == null) return false;
+
+    if (method.isConstructor()) return false;
+
+    String methodName = method.getName();
+    if (methodName.startsWith("get") && methodName.length() > "get".length()) {
+      if (Character.isLowerCase(methodName.charAt("get".length()))
+          && (methodName.length() == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
+        return false;
+      }
+      return method.getParameterList().getParametersCount() == 0;
+    }
+
+    return false;
+  }
+
+  public static boolean isSimplePropertySetter(PsiMethod method) {
+    if (method == null) return false;
+
+    if (method.isConstructor()) return false;
+
+    String methodName = method.getName();
+
+    if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
+    if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
+
+    if (method.getParameterList().getParametersCount() != 1) {
+      return false;
+    }
+
+    return true;
+  }
 }

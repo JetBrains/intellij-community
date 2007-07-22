@@ -28,8 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.Arrays;
 
@@ -73,6 +73,14 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         }
       }
       return;
+    } else if (obj instanceof String) {
+      Editor editor = context.editor;
+      Document document = editor.getDocument();
+      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+        handleOverwrite(editor.getCaretModel().getOffset(), document);
+      }
+
+      return;
     }
 
     addTailType(item);
@@ -95,7 +103,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
   private void handleOverwrite(final int offset, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     int i = offset;
-    while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
+    while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\'')) i++;
     document.deleteString(offset, i);
   }
 

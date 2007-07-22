@@ -38,14 +38,14 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = PsiUtil.isLValue(myPlace);
-      if (isSimplePropertyGetter(method) && !lValue) {
+      if (PsiUtil.isSimplePropertyGetter(method) && !lValue) {
         String propName = PropertyUtil.getPropertyNameByGetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
           super.execute(element, substitutor);
           return false;
         }
-      } else if (isSimplePropertySetter(method) && lValue) {
+      } else if (PsiUtil.isSimplePropertySetter(method) && lValue) {
         String propName = PropertyUtil.getPropertyNameBySetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
@@ -69,40 +69,4 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     return super.getHint(hintClass);
   }
 
-  //do not check return type
-  private static boolean isSimplePropertyGetter(PsiMethod method) {
-    if (method == null) return false;
-
-    if (method.isConstructor()) return false;
-
-    String methodName = method.getName();
-    if (methodName.startsWith("get") && methodName.length() > "get".length()) {
-      if (Character.isLowerCase(methodName.charAt("get".length()))
-          && (methodName.length() == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
-        return false;
-      }
-      return method.getParameterList().getParametersCount() == 0;
-    }
-    else if (methodName.startsWith("is")) {
-      return method.getParameterList().getParametersCount() == 0;
-    }
-    return false;
-  }
-
-  private static boolean isSimplePropertySetter(PsiMethod method) {
-    if (method == null) return false;
-
-    if (method.isConstructor()) return false;
-
-    String methodName = method.getName();
-
-    if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
-    if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
-
-    if (method.getParameterList().getParametersCount() != 1) {
-      return false;
-    }
-
-    return true;
-  }
 }

@@ -1,0 +1,3 @@
+print String.'cl<caret>'.name
+-----
+'class'
