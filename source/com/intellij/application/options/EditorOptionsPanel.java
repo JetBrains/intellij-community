@@ -91,8 +91,6 @@ public class EditorOptionsPanel {
   private JCheckBox myCbSmoothScrolling;
   private JCheckBox myCbCamelWords;
   private JCheckBox myCbVirtualPageAtBottom;
-  private JCheckBox myCbOptimizeImports;
-  private JCheckBox myCbAddUnabmigiousImports;
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
@@ -197,14 +195,9 @@ public class EditorOptionsPanel {
     myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
 
     // Limits
-
-
     myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.MAX_CLIPBOARD_CONTENTS));
 
-
-
     // Paste
-
     switch(codeInsightSettings.REFORMAT_ON_PASTE){
       case CodeInsightSettings.NO_REFORMAT:
         myReformatOnPasteCombo.setSelectedItem(NO_REFORMAT);
@@ -277,10 +270,6 @@ public class EditorOptionsPanel {
     myCbCollapseAnonymousClasses.setSelected(codeFoldingSettings.isCollapseAnonymousClasses());
     myCbCollapseFileHeader.setSelected(codeFoldingSettings.isCollapseFileHeader());
     myCbCollapseAnnotations.setSelected(codeFoldingSettings.isCollapseAnnotations());
-
-    // optmiza imports
-    myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
-    myCbAddUnabmigiousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
 
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
@@ -414,9 +403,6 @@ public class EditorOptionsPanel {
     codeFoldingSettings.setCollapseFileHeader( myCbCollapseFileHeader.isSelected() );
     codeFoldingSettings.setCollapseAnnotations( myCbCollapseAnnotations.isSelected() );
 
-    codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
-    codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
-
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
@@ -445,7 +431,7 @@ public class EditorOptionsPanel {
     String temp = myEditorTabLimitField.getText();
     if(temp.trim().length() > 0){
       try {
-        int newEditorTabLimit = new Integer(temp).intValue();
+        int newEditorTabLimit = Integer.parseInt(temp);
         if(newEditorTabLimit>0&&newEditorTabLimit!=uiSettings.EDITOR_TAB_LIMIT){
           uiSettings.EDITOR_TAB_LIMIT=newEditorTabLimit;
           uiSettingsChanged = true;
@@ -455,7 +441,7 @@ public class EditorOptionsPanel {
     temp=myRecentFilesLimitField.getText();
     if(temp.trim().length() > 0){
       try {
-        int newRecentFilesLimit=new Integer(temp).intValue();
+        int newRecentFilesLimit= Integer.parseInt(temp);
         if(newRecentFilesLimit>0&&uiSettings.RECENT_FILES_LIMIT!=newRecentFilesLimit){
           uiSettings.RECENT_FILES_LIMIT=newRecentFilesLimit;
           uiSettingsChanged = true;
@@ -552,10 +538,6 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbCollapseAnonymousClasses, codeFoldingSettings.isCollapseAnonymousClasses());
     isModified |= isModified(myCbCollapseFileHeader, codeFoldingSettings.isCollapseFileHeader());
     isModified |= isModified(myCbCollapseAnnotations, codeFoldingSettings.isCollapseAnnotations());
-
-    // optimize imports
-    isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
-    isModified |= isModified(myCbAddUnabmigiousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());

@@ -31,8 +31,8 @@ import java.util.*;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
-  private static final @NonNls String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
-  private static final @NonNls String FILETYPE = "fileType";
+  @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
+  @NonNls private static final String FILETYPE = "fileType";
 
 
   public CodeStyleSettings() {
@@ -110,13 +110,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
         clon.addCustomSettings(settings);
       }
 
-      clon.FIELD_TYPE_TO_NAME = (TypeToNameMap)this.FIELD_TYPE_TO_NAME.clone();
-      clon.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)this.STATIC_FIELD_TYPE_TO_NAME.clone();
-      clon.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)this.PARAMETER_TYPE_TO_NAME.clone();
-      clon.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)this.LOCAL_VARIABLE_TYPE_TO_NAME.clone();
+      clon.FIELD_TYPE_TO_NAME = (TypeToNameMap)FIELD_TYPE_TO_NAME.clone();
+      clon.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)STATIC_FIELD_TYPE_TO_NAME.clone();
+      clon.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)PARAMETER_TYPE_TO_NAME.clone();
+      clon.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)LOCAL_VARIABLE_TYPE_TO_NAME.clone();
 
-      clon.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)this.PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
-      clon.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)this.IMPORT_LAYOUT_TABLE.clone();
+      clon.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
+      clon.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)IMPORT_LAYOUT_TABLE.clone();
 
       clon.JAVA_INDENT_OPTIONS = (IndentOptions)JAVA_INDENT_OPTIONS.clone();
       clon.JSP_INDENT_OPTIONS = (IndentOptions)JSP_INDENT_OPTIONS.clone();
@@ -671,6 +671,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public PackageTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageTable();
   public ImportLayoutTable IMPORT_LAYOUT_TABLE = new ImportLayoutTable();
+  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
+  public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
 //----------------- ORDER OF MEMBERS ------------------
 
@@ -1033,7 +1035,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 
   //-------------------------Enums----------------------------------------------------------
-  public int ENUM_CONSTANTS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+  public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
   //----------------------------------------------------------------------------------------
 
   private CodeStyleSettings myParentSettings;
@@ -1055,11 +1057,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
           if (fileTypeId != null) {
             FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
 
-            if (target != null) {
-              final IndentOptions options = new IndentOptions();
-              options.readExternal(additionalIndentElement);
-              registerAdditionalIndentOptions(target, options);
-            }
+            final IndentOptions options = new IndentOptions();
+            options.readExternal(additionalIndentElement);
+            registerAdditionalIndentOptions(target, options);
           }
         }
       }
@@ -1298,13 +1298,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
           return false;
         }
         Entry entry = (Entry)obj;
-        if (entry.withSubpackages != withSubpackages) {
-          return false;
-        }
-        if (!Comparing.equal(entry.packageName, packageName)) {
-          return false;
-        }
-        return true;
+        return entry.withSubpackages == withSubpackages
+               && Comparing.equal(entry.packageName, packageName);
       }
 
       public int hashCode() {
@@ -1337,10 +1332,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
 
     public int hashCode() {
-      if (myEntries.size() > 0) {
-        if (myEntries.get(0) != null) {
-          return myEntries.get(0).hashCode();
-        }
+      if (!myEntries.isEmpty() && myEntries.get(0) != null) {
+        return myEntries.get(0).hashCode();
       }
       return 0;
     }
@@ -1460,13 +1453,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
           return false;
         }
         PackageEntry entry = (PackageEntry)obj;
-        if (entry.myWithSubpackages != myWithSubpackages) {
-          return false;
-        }
-        if (!Comparing.equal(entry.myPackageName, myPackageName)) {
-          return false;
-        }
-        return true;
+        return entry.myWithSubpackages == myWithSubpackages
+               && Comparing.equal(entry.myPackageName, myPackageName);
       }
 
       public int hashCode() {
@@ -1479,10 +1467,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
     public static class EmptyLineEntry implements Entry {
       public boolean equals(Object obj) {
-        if (!(obj instanceof EmptyLineEntry)) {
-          return false;
-        }
-        return true;
+        return obj instanceof EmptyLineEntry;
       }
 
       public int hashCode() {
@@ -1580,10 +1565,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
 
     public int hashCode() {
-      if (myEntries.size() > 0) {
-        if (myEntries.get(0) != null) {
-          return myEntries.get(0).hashCode();
-        }
+      if (!myEntries.isEmpty() && myEntries.get(0) != null) {
+        return myEntries.get(0).hashCode();
       }
       return 0;
     }

@@ -22,6 +22,8 @@ public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbUseFQClassNamesInJavaDoc;
   private JCheckBox myCbUseSingleClassImports;
   private JCheckBox myCbInsertInnerClassImports;
+  private JCheckBox myCbOptimizeImportsOnTheFly;
+  private JCheckBox myCbAddUnambiguousImportsOnTheFly;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
   private CodeStyleSettings.ImportLayoutTable myImportLayoutList = new CodeStyleSettings.ImportLayoutTable();
@@ -118,6 +120,12 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbUseFQClassNamesInJavaDoc = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names.in.javadoc"));
     group.add(myCbUseFQClassNamesInJavaDoc);
 
+    myCbOptimizeImportsOnTheFly = new JCheckBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"));
+    group.add(myCbOptimizeImportsOnTheFly);
+
+    myCbAddUnambiguousImportsOnTheFly = new JCheckBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"));
+    group.add(myCbAddUnambiguousImportsOnTheFly);
+
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
@@ -212,7 +220,7 @@ public class CodeStyleImportsPanel extends JPanel {
     JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
     tableButtonsPanel.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
 
-    JButton addPackageToPackagesButton;addPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
+    JButton addPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
     tableButtonsPanel.add(addPackageToPackagesButton);
 
     myRemovePackageFromPackagesButton = new JButton(ApplicationBundle.message("button.remove.r"));
@@ -244,13 +252,17 @@ public class CodeStyleImportsPanel extends JPanel {
     }
     CodeStyleSettings.ImportLayoutTable.PackageEntry entry = new CodeStyleSettings.ImportLayoutTable.PackageEntry("", true);
     myImportLayoutList.insertEntryAt(entry, selected);
-    AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
-    model.fireTableRowsInserted(selected, selected);
-    myImportLayoutTable.setRowSelectionInterval(selected, selected);
+    refreshTableModel(selected, myImportLayoutTable);
+  }
+
+  private static void refreshTableModel(int selectedRow, Table table) {
+    AbstractTableModel model = (AbstractTableModel)table.getModel();
+    model.fireTableRowsInserted(selectedRow, selectedRow);
+    table.setRowSelectionInterval(selectedRow, selectedRow);
 //    myImportLayoutTable.requestFocus();
 //    myImportLayoutTable.editCellAt(selected, 0);
-    TableUtil.editCellAt(myImportLayoutTable, selected, 0);
-    Component editorComp = myImportLayoutTable.getEditorComponent();
+    TableUtil.editCellAt(table, selectedRow, 0);
+    Component editorComp = table.getEditorComponent();
     if(editorComp != null) {
       editorComp.requestFocus();
     }
@@ -263,16 +275,7 @@ public class CodeStyleImportsPanel extends JPanel {
     }
     CodeStyleSettings.PackageTable.Entry entry = new CodeStyleSettings.PackageTable.Entry("", true);
     myPackageList.insertEntryAt(entry, selected);
-    AbstractTableModel model = (AbstractTableModel)myPackageTable.getModel();
-    model.fireTableRowsInserted(selected, selected);
-    myPackageTable.setRowSelectionInterval(selected, selected);
-//    myPackageTable.requestFocus();
-//    myPackageTable.editCellAt(selected, 0);
-    TableUtil.editCellAt(myPackageTable, selected, 0);
-    Component editorComp = myPackageTable.getEditorComponent();
-    if(editorComp != null) {
-      editorComp.requestFocus();
-    }
+    refreshTableModel(selected, myPackageTable);
   }
 
   private void addBlankLine() {
@@ -532,15 +535,10 @@ public class CodeStyleImportsPanel extends JPanel {
       }
       public boolean isCellEditable(int row, int col) {
         CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(row);
-        if(isOtherEntry(entry) && entry == myOtherPackageEntry) {
+        if (isOtherEntry(entry) && entry == myOtherPackageEntry) {
           return false;
         }
-        else if(entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry) {
-          return true;
-        }
-        else {
-          return false;
-        }
+        return entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry;
       }
 
       public void setValueAt(Object aValue, int row, int col) {
@@ -620,23 +618,14 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   public void apply() {
-    if(myImportLayoutTable.isEditing()) {
-      TableCellEditor editor = myImportLayoutTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
-    if(myPackageTable.isEditing()) {
-      TableCellEditor editor = myPackageTable.getCellEditor();
-      if (editor != null) {
-        editor.stopCellEditing();
-      }
-    }
+    stopTableEditing();
 
     mySettings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
     mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC = myCbUseFQClassNamesInJavaDoc.isSelected();
     mySettings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
     mySettings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
+    mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImportsOnTheFly.isSelected();
+    mySettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnambiguousImportsOnTheFly.isSelected();
     try{
       mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
     }
@@ -667,7 +656,7 @@ public class CodeStyleImportsPanel extends JPanel {
     mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
   }
 
-  public boolean isModified() {
+  private void stopTableEditing() {
     if(myImportLayoutTable.isEditing()) {
       TableCellEditor editor = myImportLayoutTable.getCellEditor();
       if (editor != null) {
@@ -680,12 +669,17 @@ public class CodeStyleImportsPanel extends JPanel {
         editor.stopCellEditing();
       }
     }
+  }
 
-    boolean isModified;
-    isModified = isModified(myCbUseFQClassNames, mySettings.USE_FQ_CLASS_NAMES);
+  public boolean isModified() {
+    stopTableEditing();
+
+    boolean isModified = isModified(myCbUseFQClassNames, mySettings.USE_FQ_CLASS_NAMES);
     isModified |= isModified(myCbUseFQClassNamesInJavaDoc, mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     isModified |= isModified(myCbUseSingleClassImports, mySettings.USE_SINGLE_CLASS_IMPORTS);
     isModified |= isModified(myCbInsertInnerClassImports, mySettings.INSERT_INNER_CLASS_IMPORTS);
+    isModified |= isModified(myCbOptimizeImportsOnTheFly, mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    isModified |= isModified(myCbAddUnambiguousImportsOnTheFly, mySettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
     isModified |= isModified(myClassCountField, mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);
     isModified |= isModified(myNamesCountField, mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND);
 

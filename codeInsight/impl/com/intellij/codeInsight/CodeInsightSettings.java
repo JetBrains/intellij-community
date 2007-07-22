@@ -120,8 +120,6 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean HIGHLIGHT_SCOPE = false;
 
   public boolean AUTOINDENT_CLOSING_BRACE = true;
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
-  public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
   @Property(surroundWithTag = false)
   @AbstractCollection(

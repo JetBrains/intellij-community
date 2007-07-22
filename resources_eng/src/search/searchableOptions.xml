@@ -344,6 +344,12 @@
     <option name="more" path="HTML" hit="or if tag size more than" />
     <option name="size" path="HTML" hit="or if tag size more than" />
     <option name="tag" path="HTML" hit="or if tag size more than" />
+    <option name="fly" path="Behavior" hit="Add unambiguous imports on the fly" />
+    <option name="imports" path="Behavior" hit="Add unambiguous imports on the fly" />
+    <option name="unambiguous" path="Behavior" hit="Add unambiguous imports on the fly" />
+    <option name="fly" path="Behavior" hit="Optimize imports on the fly" />
+    <option name="imports" path="Behavior" hit="Optimize imports on the fly" />
+    <option name="optimize" path="Behavior" hit="Optimize imports on the fly" />
   </configurable>
   <configurable id="project.propVCSSupport" configurable_name="Version Control">
     <option name="silently" path="General Settings" hit="Add silently" />
@@ -3926,9 +3932,6 @@
     <option name="first" path="Behavior" hit="'Next Error' action goes to errors first" />
     <option name="goes" path="Behavior" hit="'Next Error' action goes to errors first" />
     <option name="next" path="Behavior" hit="'Next Error' action goes to errors first" />
-    <option name="fly" path="Behavior" hit="Add unambiguous imports on the fly" />
-    <option name="imports" path="Behavior" hit="Add unambiguous imports on the fly" />
-    <option name="unambiguous" path="Behavior" hit="Add unambiguous imports on the fly" />
     <option name="advanced" path="Behavior" hit="Advanced mouse usages" />
     <option name="mouse" path="Behavior" hit="Advanced mouse usages" />
     <option name="usages" path="Behavior" hit="Advanced mouse usages" />
@@ -4019,9 +4022,6 @@
     <option name="tabs" path="Appearance" hit="Mark modified tabs with asterisk" />
     <option name="bodies" path="Appearance" hit="Method bodies" />
     <option name="method" path="Appearance" hit="Method bodies" />
-    <option name="fly" path="Behavior" hit="Optimize imports on the fly" />
-    <option name="imports" path="Behavior" hit="Optimize imports on the fly" />
-    <option name="optimize" path="Behavior" hit="Optimize imports on the fly" />
     <option name="paste" path="Behavior" hit="Paste" />
     <option name="caret" path="Behavior" hit="Prefer moving caret line to minimize editor scrolling" />
     <option name="editor" path="Behavior" hit="Prefer moving caret line to minimize editor scrolling" />
@@ -4611,6 +4611,12 @@
     <option name="more" path="HTML" hit="or if tag size more than" />
     <option name="size" path="HTML" hit="or if tag size more than" />
     <option name="tag" path="HTML" hit="or if tag size more than" />
+    <option name="fly" path="Behavior" hit="Add unambiguous imports on the fly" />
+    <option name="imports" path="Behavior" hit="Add unambiguous imports on the fly" />
+    <option name="unambiguous" path="Behavior" hit="Add unambiguous imports on the fly" />
+    <option name="fly" path="Behavior" hit="Optimize imports on the fly" />
+    <option name="imports" path="Behavior" hit="Optimize imports on the fly" />
+    <option name="optimize" path="Behavior" hit="Optimize imports on the fly" />
   </configurable>
   <configurable id="preferences.codeCompletion" configurable_name="Code Completion">
     <option name="xml" hit="After '&lt;' in XML (ms):" />

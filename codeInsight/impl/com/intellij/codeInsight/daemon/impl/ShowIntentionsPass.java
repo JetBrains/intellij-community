@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -38,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
@@ -352,9 +352,12 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
 
-    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor, ref) &&
-        !PsiUtil.isInJspFile(psiFile) && codeAnalyzer.canChangeFileSilently(psiFile) &&
-        !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {
+    if (classes.length == 1
+        && CodeStyleSettingsManager.getSettings(manager.getProject()).ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+        && !isCaretNearRef(editor, ref)
+        && !PsiUtil.isInJspFile(psiFile)
+        && codeAnalyzer.canChangeFileSilently(psiFile)
+        && !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         public void run() {
           action.execute();
