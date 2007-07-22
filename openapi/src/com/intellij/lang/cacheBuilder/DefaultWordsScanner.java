@@ -19,9 +19,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
 
 /**
  * The default implementation of a words scanner based on a custom language lexer.
@@ -34,6 +31,7 @@ public class DefaultWordsScanner implements WordsScanner {
   private TokenSet myIdentifierTokenSet;
   private TokenSet myCommentTokenSet;
   private TokenSet myLiteralTokenSet;
+  private boolean myMayHaveFileRefsInLiterals;
 
   /**
    * Creates a new instance of the words scanner.
@@ -63,10 +61,10 @@ public class DefaultWordsScanner implements WordsScanner {
         if (!processor.process(occurence)) return;
       }
       else if (myCommentTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurence)) return;
+        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurence, false)) return;
       }
       else if (myLiteralTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurence)) return;
+        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurence, myMayHaveFileRefsInLiterals)) return;
       }
       myLexer.advance();
     }
@@ -77,7 +75,9 @@ public class DefaultWordsScanner implements WordsScanner {
                                     int from,
                                     int to,
                                     final WordOccurrence.Kind kind,
-                                    WordOccurrence occurence) {
+                                    WordOccurrence occurence,
+                                    boolean mayHaveFileRefs
+  ) {
     // This code seems strange but it is more effective as Character.isJavaIdentifier_xxx_ is quite costly operation due to unicode
     int index = from;
 
@@ -103,8 +103,18 @@ public class DefaultWordsScanner implements WordsScanner {
 
       if (occurence == null) occurence = new WordOccurrence(tokenText,index1, index, kind);
       else occurence.init(tokenText,index1, index, kind);
+
       if (!processor.process(occurence)) return false;
+
+      if (mayHaveFileRefs) {
+        occurence.init(tokenText,index1, index, WordOccurrence.Kind.FOREIGN_LANGUAGE);
+        if (!processor.process(occurence)) return false;
+      }
     }
     return true;
+  }
+
+  public void setMayHaveFileRefsInLiterals(final boolean mayHaveFileRefsInLiterals) {
+    myMayHaveFileRefsInLiterals = mayHaveFileRefsInLiterals;
   }
 }
