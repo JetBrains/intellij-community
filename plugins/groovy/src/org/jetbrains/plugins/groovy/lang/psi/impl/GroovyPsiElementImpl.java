@@ -100,4 +100,15 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitElement(this);
   }
+
+  public void acceptChildren(GroovyElementVisitor visitor) {
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      if (child instanceof GroovyPsiElement) {
+        ((GroovyPsiElement) child).accept(visitor);
+      }
+
+      child = child.getNextSibling();
+    }
+  }
 }

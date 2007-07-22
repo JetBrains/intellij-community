@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -275,6 +276,17 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitFile(this);
+  }
+
+  public void acceptChildren(GroovyElementVisitor visitor) {
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      if (child instanceof GroovyPsiElement) {
+        ((GroovyPsiElement) child).accept(visitor);
+      }
+
+      child = child.getNextSibling();
+    }
   }
 
   public void removeVariable(GrVariable variable) throws IncorrectOperationException {

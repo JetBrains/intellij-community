@@ -27,4 +27,6 @@ public interface GroovyPsiElement extends PsiElement {
   ASTNode getNode();
 
   void accept(GroovyElementVisitor visitor);
+
+  void acceptChildren(GroovyElementVisitor visitor);
 }

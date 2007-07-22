@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 
 /**
  * @author ven
@@ -47,6 +48,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitFile(GroovyFile file) {
+    visitElement(file);
   }
 
   public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
@@ -347,6 +349,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
     visitStatement(tryCatchStatement);
+  }
+
+  public void visitBlockStatement(GrBlockStatement blockStatement) {
+    visitStatement(blockStatement);
   }
 
   public void visitCatchClause(GrCatchClause catchClause) {
