@@ -8,7 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 /**
- * @author Hani Suleiman Date: Jul 21, 2005 Time: 9:03:06 PM
+ * @author Mark Derricutt
  */
 public class TestListenerFilter implements TreeClassChooser.ClassFilterWithScope
 {
