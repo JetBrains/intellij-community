@@ -39,10 +39,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       myFile.accept(new GroovyRecursiveElementVisitor() {
         public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
           visitRefElement(refElement);
+          super.visitCodeReferenceElement(refElement);
         }
 
         public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
           visitRefElement(referenceExpression);
+          super.visitReferenceExpression(referenceExpression);
         }
 
         private void visitRefElement(GrReferenceElement refElement) {
