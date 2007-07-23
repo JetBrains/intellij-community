@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -55,7 +56,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   private Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
   private Project myProject;
 
-  public InspectionProjectProfileManager(final Project project) {
+  @SuppressWarnings({"UnusedDeclaration"})
+  public InspectionProjectProfileManager(final Project project, EditorColorsManager manager) {
     super(project, Profile.INSPECTION);
     myProject = project;
   }

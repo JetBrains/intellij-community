@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Computable;
@@ -56,7 +57,8 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
 
   @NonNls private static final String CONFIG_FILE_EXTENSION = ".xml";
 
-  public InspectionProfileManager(InspectionToolRegistrar registrar) {
+  @SuppressWarnings({"UnusedDeclaration"})
+  public InspectionProfileManager(InspectionToolRegistrar registrar, EditorColorsManager manager) {
     super(Profile.INSPECTION,
           new Computable<Profile>() {
             public Profile compute() {

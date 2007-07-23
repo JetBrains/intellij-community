@@ -267,11 +267,11 @@ public class SeverityEditorDialog extends DialogWrapper {
     final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
     final EditorColorsScheme colorsScheme = editorColorsManager.getGlobalScheme();
     if (colorsScheme instanceof DefaultColorsScheme) {
-      final int res = Messages.showYesNoCancelDialog(myPanel, InspectionsBundle.message("highlight.severity.default.color.scheme.warning"), ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getQuestionIcon());
+      final int res = Messages.showOkCancelDialog(myPanel, InspectionsBundle.message("highlight.severity.default.color.scheme.warning"), ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getQuestionIcon());
       if (res == DialogWrapper.OK_EXIT_CODE){
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class));
-        return;
-      } else if (res != DialogWrapper.CANCEL_EXIT_CODE) {
+      } else {
+        super.doOKAction();
         return;
       }
     }
