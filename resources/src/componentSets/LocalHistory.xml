@@ -4,10 +4,6 @@
       <interface-class>com.intellij.history.LocalHistoryConfiguration</interface-class>
       <implementation-class>com.intellij.history.LocalHistoryConfiguration</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.history.NewLocalHistoryComponent</interface-class>
-      <implementation-class>com.intellij.history.integration.NewLocalHistoryComponentImpl</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>
