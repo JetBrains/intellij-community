@@ -224,12 +224,15 @@ public class ModuleInsight {
     for (File jar : module.getLibraryFiles()) {
       mainModule.addLibraryFile(jar);
     }
+    // fix forward dependencies
     for (ModuleDescriptor dependency : module.getDependencies()) {
-      mainModule.addDependencyOn(dependency);
+      if (!mainModule.equals(dependency)) { // avoid self-dependencies
+        mainModule.addDependencyOn(dependency);
+      }
     }
     
     myModules.remove(module);
-    
+    // fix back dependencies
     for (ModuleDescriptor moduleDescr : myModules) {
       if (moduleDescr.getDependencies().contains(module)) {
         moduleDescr.removeDependencyOn(module);

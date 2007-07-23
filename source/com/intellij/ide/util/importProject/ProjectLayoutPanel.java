@@ -39,12 +39,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myDependenciesList = createList();
     
     final Splitter splitter = new Splitter(false);
-    final JPanel entriesPanel = new JPanel(new BorderLayout());
-    entriesPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
-    entriesPanel.add(new JScrollPane(myEntriesChooser), BorderLayout.CENTER);
-    splitter.setFirstComponent(entriesPanel);
+    splitter.setFirstComponent(new JScrollPane(myEntriesChooser));
     splitter.setSecondComponent(new JScrollPane(myDependenciesList));
     
+    add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
     add(splitter, BorderLayout.CENTER);
     
     myEntriesChooser.addListSelectionListener(new ListSelectionListener() {
