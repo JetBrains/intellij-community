@@ -77,8 +77,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       public Exception compute() {
         try {
           for (LibraryDescriptor lib : myChosenLibraries) {
-            final Collection<File> files = lib.getJars();
-            if (files.size() > 1) {
+            if (lib.getLevel() == LibraryDescriptor.Level.PROJECT) {
+              final Collection<File> files = lib.getJars();
               final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
               final Library.ModifiableModel model = projectLib.getModifiableModel();
               for (File file : files) {

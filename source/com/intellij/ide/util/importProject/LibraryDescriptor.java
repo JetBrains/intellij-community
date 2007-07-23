@@ -25,7 +25,7 @@ public class LibraryDescriptor {
   }
 
   public String getName() {
-    return myName;
+    return myName != null? myName : "";
   }
 
   public void setName(final String name) {

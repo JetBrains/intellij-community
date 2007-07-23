@@ -103,4 +103,13 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   protected String getSplitDialogChooseFilesPrompt() {
     return "Select jars to extract to the new library:";
   }
+
+  protected String getNameAlreadyUsedMessage(final String name) {
+    return "library with name " + name + " already exists";
+  }
+
+  protected String getStepDescriptionText() {
+    return "Please review libraries found. At this stage you may set library names that will be used in the project,\n" +
+           "exclude particular libraries from the project, or move jar files between the libraries.";
+  }
 }
