@@ -56,6 +56,10 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     return myPanel;
   }
 
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
+  }
+
   public void updateDataModel() {
     final Object selectedValue = myList.getSelectedValue();
     if (selectedValue instanceof ProjectImportProvider) {
