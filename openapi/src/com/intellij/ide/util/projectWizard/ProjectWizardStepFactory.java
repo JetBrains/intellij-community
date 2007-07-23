@@ -16,12 +16,10 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -56,17 +54,4 @@ public abstract class ProjectWizardStepFactory {
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);
-
-  @Deprecated
-  public abstract AddSupportStep createLoadJarsStep(AddSupportContext context, String title, String description, Icon icon);
-
-  public abstract void registerAddSupportProvider(final ModuleType moduleType, AddSupportStepsProvider provider);
-
-  @NotNull
-  public abstract AddSupportStepsProvider[] getAddSupportProviders(ModuleType moduleType);
-
-  @Deprecated
-  public abstract ModuleWizardStep[] createAddSupportSteps(WizardContext wizardContext,
-                                                  ModuleBuilder moduleBuilder,
-                                                  ModulesProvider modulesProvider, final Icon icon);
 }
