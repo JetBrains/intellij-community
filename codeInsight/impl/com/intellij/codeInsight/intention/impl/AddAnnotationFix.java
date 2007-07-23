@@ -110,7 +110,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     else if (owner instanceof PsiVariable) {
       type = ((PsiVariable)owner).getType();
     }
-    return owner != null && type instanceof PsiClassType && !AnnotationUtil.isAnnotated(owner, myAnnotation, false);
+    return owner != null && !(type instanceof PsiPrimitiveType) && !AnnotationUtil.isAnnotated(owner, myAnnotation, false);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

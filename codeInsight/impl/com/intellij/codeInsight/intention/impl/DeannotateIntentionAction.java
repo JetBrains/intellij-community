@@ -54,7 +54,12 @@ public class DeannotateIntentionAction implements IntentionAction {
             expression = (PsiExpression)expression.getParent();
             if (expression instanceof PsiAssignmentExpression) break;
           }
-
+          if (expression instanceof PsiMethodCallExpression) {
+            final PsiMethod psiMethod = ((PsiMethodCallExpression)expression).resolveMethod();
+            if (psiMethod != null) {
+              return psiMethod;
+            }
+          }
           final PsiElement parent = expression.getParent();
           if (parent instanceof PsiExpressionList) {  //try to find corresponding formal parameter
             int idx = -1;
