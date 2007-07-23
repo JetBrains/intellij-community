@@ -20,7 +20,7 @@ abstract class Timed<T> implements Disposable {
 
   int myLastCheckedAccessCount;
   int myAccessCount;
-  T myT;
+  protected T myT;
   boolean myPolled;
 
   protected Timed(final Disposable parentDisposable) {

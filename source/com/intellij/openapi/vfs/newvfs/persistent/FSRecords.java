@@ -8,7 +8,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.MappedFile;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.storage.Storage;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FSRecords implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 2;
+  private final static int VERSION = 3;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -71,7 +73,7 @@ public class FSRecords implements Disposable {
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
 
     private static PersistentStringEnumerator myNames;
-    private static PagedMemoryMappedFile myAttributes;
+    private static Storage myAttributes;
     private static MappedFile myRecords;
 
     public static DbConnection connect() {
@@ -95,7 +97,7 @@ public class FSRecords implements Disposable {
 
       try {
         myNames = new PersistentStringEnumerator(namesFile);
-        myAttributes = new PagedMemoryMappedFile(attributesFile);
+        myAttributes = Storage.create(attributesFile.getCanonicalPath());
         myRecords = new MappedFile(recordsFile, 20 * 1024);
 
         if (myRecords.length() == 0) {
@@ -120,7 +122,7 @@ public class FSRecords implements Disposable {
           closeFiles();
 
           FileUtil.delete(namesFile);
-          FileUtil.delete(attributesFile);
+          Storage.deleteFiles(attributesFile.getCanonicalPath());
           FileUtil.delete(recordsFile);
         }
         catch (IOException e1) {
@@ -132,11 +134,16 @@ public class FSRecords implements Disposable {
     }
 
     private static int getVersion() throws IOException {
-      return myRecords.getInt(HEADER_VERSION_OFFSET);
+      final int storageVersion = myAttributes.getVersion();
+      final int recordsVersion = myRecords.getInt(HEADER_VERSION_OFFSET);
+      if (storageVersion != recordsVersion) return -1;
+
+      return recordsVersion;
     }
 
     private static void setCurrentVersion() throws IOException {
       myRecords.putInt(HEADER_VERSION_OFFSET, VERSION);
+      myAttributes.setVersion(VERSION);
       myRecords.putInt(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_MAGIC);
     }
 
@@ -148,7 +155,7 @@ public class FSRecords implements Disposable {
       return myNames;
     }
 
-    public PagedMemoryMappedFile getAttributes() {
+    public Storage getAttributes() {
       return myAttributes;
     }
 
@@ -255,11 +262,11 @@ public class FSRecords implements Disposable {
       int att_page = myConnection.getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
 
       while (att_page != 0) {
-        final RandomAccessPagedDataInput page = myConnection.getAttributes().getReader(att_page);
+        final DataInputStream page = myConnection.getAttributes().readStream(att_page);
         page.readInt(); // Skip att_id
         final int next = page.readInt();
         page.close();
-        myConnection.getAttributes().delete(att_page);
+        myConnection.getAttributes().deleteRecord(att_page);
         att_page = next;
       }
 
@@ -689,104 +696,84 @@ public class FSRecords implements Disposable {
       int encodedAttId = myConnection.getAttributeId(attId);
       int att_page = myConnection.getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
       while (att_page != 0) {
-        final RandomAccessPagedDataInput page = myConnection.getAttributes().getReader(att_page);
-        final int attIdOnPage = page.readInt();
-        final int next = page.readInt();
-        if (attIdOnPage == encodedAttId) {
-          return new DataInputStream(page) {
-            boolean closed = false;
-            public void close() throws IOException {
-              if (!closed) {
-                closed = true;
-                super.close();
-                r.unlock();
-              }
-            }
-
-            protected void finalize() throws Throwable {
-              if (!closed) {
-                w.unlock();
-              }
-
-              super.finalize();
-            }
-          };
+        final DataInputStream page = myConnection.getAttributes().readStream(att_page);
+        int attIdOnPage;
+        int next;
+        try {
+          attIdOnPage = page.readInt();
+          next = page.readInt();
         }
+        catch (IOException e) {
+          LOG.error(e);
+          attIdOnPage = 0;
+          next = 0;
+        }
+        if (attIdOnPage == encodedAttId) {
+          return page;
+        }
+
         att_page = next;
         page.close();
       }
 
-      r.unlock();
       return null;
     }
     catch (IOException e) {
-      r.unlock();
       throw new RuntimeException(e);
+    }
+    finally{
+      r.unlock();
     }
   }
 
   private DataOutputStream findPageToWrite(int id, final int encodedAttId, final int headPage) throws IOException {
-    final RecordDataOutput result;
+    final DataOutputStream result;
+    final int resultId;
     incModCount(id);
 
     int att_page = headPage;
 
     while (att_page != 0) {
       int curPage = att_page;
-      final RandomAccessPagedDataInput page = myConnection.getAttributes().getReader(att_page);
+      final DataInputStream page = myConnection.getAttributes().readStream(att_page);
       final int attIdOnPage = page.readInt();
       final int next = page.readInt();
       if (attIdOnPage == encodedAttId) {
         page.close();
-        result = myConnection.getAttributes().getWriter(curPage);
+        result = myConnection.getAttributes().writeStream(curPage);
         result.writeInt(encodedAttId);
         result.writeInt(next);
 
-        return (DataOutputStream)result;
+        return result;
       }
 
       att_page = next;
       page.close();
     }
 
-    result = myConnection.getAttributes().createRecord();
+    resultId = myConnection.getAttributes().createNewRecord();
+    result = myConnection.getAttributes().writeStream(resultId);
     result.writeInt(encodedAttId);
     result.writeInt(headPage);
 
-    myConnection.getRecords().putInt(id * RECORD_SIZE + ATTREF_OFFSET, result.getRecordId());
-    return (DataOutputStream)result;
+    myConnection.getRecords().putInt(id * RECORD_SIZE + ATTREF_OFFSET, resultId);
+
+    return result;
   }
 
   @NotNull
   public DataOutputStream writeAttribute(final int id, final String attId) {
     w.lock();
-    DataOutputStream result;
     try {
       final int encodedAttId = myConnection.getAttributeId(attId);
       final int headPage = myConnection.getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
-      result = findPageToWrite(id, encodedAttId, headPage);
-      return new DataOutputStream(result) {
-        boolean closed = false;
-        public void close() throws IOException {
-          if (!closed) {
-            closed = true;
-            super.close();
-            w.unlock();
-          }
-        }
-
-        protected void finalize() throws Throwable {
-          if (!closed) {
-            w.unlock();
-          }
-
-          super.finalize();
-        }
-      };
+      return findPageToWrite(id, encodedAttId, headPage);
     }
     catch (IOException e) {
-      w.unlock();
       throw new RuntimeException(e);
+    }
+    finally{
+      w.unlock();
     }
   }
 

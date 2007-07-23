@@ -37,6 +37,8 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil {
+  public static final int MEGABYTE = 1024 * 1024;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
   private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     protected byte[] initialValue() {
