@@ -122,6 +122,7 @@ public class ProjectUtil {
         projectBuilder.commit(newProject);
       }
 
+      final boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
       StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
         public void run() {
           // ensure the dialog is shown after all startup activities are done
@@ -131,7 +132,7 @@ public class ProjectUtil {
               if (toolWindow != null) {
                 toolWindow.activate(null);
               }
-              if (projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter()) {
+              if (need2OpenProjectStructure) {
                 ModulesConfigurator.showDialog(newProject, null, null, true);
               }
             }
