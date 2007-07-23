@@ -200,24 +200,31 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForFileThatWasCreatedAndDeletedInOneChangeSet() {
+    vcs.beginChangeSet();
     vcs.createFile("f", null, -1);
+    vcs.endChangeSet("1");
     int id = vcs.getEntry("f").getId();
     vcs.delete("f");
 
     vcs.beginChangeSet();
     vcs.restoreFile(id, "f", null, -1);
     vcs.delete("f");
-    vcs.endChangeSet(null);
+    vcs.endChangeSet("2");
 
+    vcs.beginChangeSet();
     vcs.restoreFile(id, "f", null, -1);
+    vcs.endChangeSet("3");
 
     vcs.beginChangeSet();
     vcs.delete("f");
     vcs.restoreFile(id, "f", null, -1);
-    vcs.endChangeSet(null);
+    vcs.endChangeSet("4");
 
     List<Revision> rr = vcs.getRevisionsFor("f");
     assertEquals(3, rr.size());
+    assertEquals("4", rr.get(0).getCauseChangeName());
+    assertEquals("3", rr.get(1).getCauseChangeName());
+    assertEquals("1", rr.get(2).getCauseChangeName());
   }
 
   @Test

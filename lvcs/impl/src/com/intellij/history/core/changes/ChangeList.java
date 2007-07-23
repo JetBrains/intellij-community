@@ -1,10 +1,10 @@
 package com.intellij.history.core.changes;
 
+import com.intellij.history.Clock;
 import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.Clock;
 import com.intellij.history.utils.Reversed;
 
 import java.io.IOException;
@@ -89,7 +89,8 @@ public class ChangeList {
     return result;
   }
 
-  public void accept(ChangeVisitor v) throws IOException {
+  public void accept(Entry root, ChangeVisitor v) throws IOException {
+    v.started(root.copy());
     try {
       for (Change change : Reversed.list(myChanges)) {
         change.accept(v);
@@ -102,8 +103,8 @@ public class ChangeList {
 
   public List<Change> getChangesFor(Entry r, String path) {
     try {
-      ChangeCollectingVisitor v = new ChangeCollectingVisitor(r, path);
-      accept(v);
+      ChangeCollectingVisitor v = new ChangeCollectingVisitor(path);
+      accept(r, v);
       return v.getResult();
     }
     catch (IOException ex) {
@@ -161,17 +162,23 @@ public class ChangeList {
   }
 
   private static class ChangeCollectingVisitor extends ChangeVisitor {
-    private List<Change> myResult = new ArrayList<Change>();
-    private Entry myRootCopy;
-    private Change myChangeToAdd;
+    private String myPath;
+    private Entry myRoot;
     private Entry myEntry;
     private IdPath myIdPath;
+    private Change myChangeToAdd;
     private boolean myExists = true;
-    private boolean myDoNotAddAnythingAlseFromCurrentChangeSet = false;
+    private boolean myDoNotAddAnythingElseFromCurrentChangeSet = false;
+    private List<Change> myResult = new ArrayList<Change>();
 
-    public ChangeCollectingVisitor(Entry r, String path) {
-      myRootCopy = r.copy();
-      myEntry = myRootCopy.getEntry(path);
+    public ChangeCollectingVisitor(String path) {
+      myPath = path;
+    }
+
+    @Override
+    public void started(Entry root) {
+      myRoot = root;
+      myEntry = myRoot.getEntry(myPath);
       myIdPath = myEntry.getIdPath();
     }
 
@@ -187,7 +194,7 @@ public class ChangeList {
     @Override
     public void end(ChangeSet c) {
       myChangeToAdd = null;
-      myDoNotAddAnythingAlseFromCurrentChangeSet = false;
+      myDoNotAddAnythingElseFromCurrentChangeSet = false;
     }
 
     @Override
@@ -225,8 +232,8 @@ public class ChangeList {
     public void visit(DeleteChange c) {
       if (skippedDueToNonexistence(c)) {
         if (c.isDeletionOf(myIdPath)) myExists = true;
-        myDoNotAddAnythingAlseFromCurrentChangeSet = true;
-        if (myExists) myEntry = myRootCopy.getEntry(myIdPath);
+        myDoNotAddAnythingElseFromCurrentChangeSet = true;
+        if (myExists) myEntry = myRoot.getEntry(myIdPath);
         return;
       }
 
@@ -235,16 +242,16 @@ public class ChangeList {
     }
 
     private void addIfAffectsAndRevert(Change c) {
-      if (!myDoNotAddAnythingAlseFromCurrentChangeSet && c.affects(myIdPath)) {
+      if (!myDoNotAddAnythingElseFromCurrentChangeSet && c.affects(myIdPath)) {
         myResult.add(myChangeToAdd);
       }
-      c.revertOn(myRootCopy);
+      c.revertOn(myRoot);
     }
 
     private boolean skippedDueToNonexistence(Change c) {
       if (myExists) return false;
 
-      c.revertOn(myRootCopy);
+      c.revertOn(myRoot);
       return true;
     }
   }

@@ -59,7 +59,7 @@ public abstract class Entry {
   }
 
   public long getTimestamp() {
-    throw unsupported();
+    throw new UnsupportedOperationException(formatPath());
   }
 
   public boolean isOutdated(long timestamp) {
@@ -67,7 +67,7 @@ public abstract class Entry {
   }
 
   public Content getContent() {
-    throw unsupported();
+    throw new UnsupportedOperationException(formatPath());
   }
 
   public boolean hasUnavailableContent() {
@@ -87,11 +87,15 @@ public abstract class Entry {
   }
 
   public void addChild(Entry child) {
-    throw unsupported();
+    throw new UnsupportedOperationException(formatAddRemove(child));
   }
 
   public void removeChild(Entry child) {
-    throw unsupported();
+    throw new UnsupportedOperationException(formatAddRemove(child));
+  }
+
+  private String formatAddRemove(Entry child) {
+    return "add/remove " + child.formatPath() + " to " + formatPath();
   }
 
   public List<Entry> getChildren() {
@@ -178,7 +182,6 @@ public abstract class Entry {
     return null;
   }
 
-  // todo try to get rid of entries copying
   public abstract Entry copy();
 
   public void changeName(String newName) {
@@ -187,7 +190,7 @@ public abstract class Entry {
   }
 
   public void changeContent(Content newContent, long timestamp) {
-    throw unsupported();
+    throw new UnsupportedOperationException(formatPath());
   }
 
   public abstract Difference getDifferenceWith(Entry e);
@@ -201,8 +204,8 @@ public abstract class Entry {
     return String.valueOf(myId) + "-" + myName;
   }
 
-  private RuntimeException unsupported() {
-    String s = isDirectory() ? "dir:" : "file:";
-    return new UnsupportedOperationException(s + getPath());
+  private String formatPath() {
+    String type = isDirectory() ? "dir: " : "file: ";
+    return type + getPath();
   }
 }

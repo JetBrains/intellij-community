@@ -237,7 +237,7 @@ public abstract class LocalVcs implements ILocalVcs {
   }
 
   public void accept(ChangeVisitor v) throws IOException {
-    myChangeList.accept(v);
+    myChangeList.accept(myRoot, v);
   }
 
   private byte[] getByteContentOf(Revision r) {

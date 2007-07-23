@@ -1,5 +1,7 @@
 package com.intellij.history.core.changes;
 
+import com.intellij.history.core.tree.Entry;
+
 import java.io.IOException;
 
 public abstract class SelectiveChangeVisitor extends ChangeVisitor {
@@ -23,6 +25,11 @@ public abstract class SelectiveChangeVisitor extends ChangeVisitor {
   }
 
   protected abstract boolean shouldProcess(StructuralChange c);
+
+  @Override
+  public void started(Entry r) throws IOException {
+    myVisitor.started(r);
+  }
 
   @Override
   public void finished() throws IOException {

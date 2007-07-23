@@ -77,15 +77,20 @@ public class ChangeReverter extends Reverter {
   }
 
   private void doCheckCanRevert(final List<String> errors) throws IOException {
-    final Entry r = myVcs.getRootEntry().copy();
     myVcs.accept(selective(new ChangeVisitor() {
+      private Entry myRoot;
+
+      public void started(Entry root) {
+        myRoot = root;
+      }
+
       @Override
       public void visit(StructuralChange c) {
-        if (!c.canRevertOn(r)) {
+        if (!c.canRevertOn(myRoot)) {
           errors.add("some files already exist");
           return;
         }
-        c.revertOn(r);
+        c.revertOn(myRoot);
       }
     }));
   }
@@ -101,7 +106,7 @@ public class ChangeReverter extends Reverter {
 
   @Override
   protected void doRevert() throws IOException {
-    myVcs.accept(selective(new ChangeRevertionVisitor(myVcs, myGateway)));
+    myVcs.accept(selective(new ChangeRevertionVisitor(myGateway)));
   }
 
   private ChangeVisitor selective(ChangeVisitor v) {

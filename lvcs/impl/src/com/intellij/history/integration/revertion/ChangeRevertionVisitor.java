@@ -16,13 +16,17 @@ import java.util.List;
 import java.util.Map;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
-  private Entry myRootEntry;
+  private Entry myRoot;
   private IdeaGateway myGateway;
   private Map<VirtualFile, ContentToApply> myContentsToApply = new HashMap<VirtualFile, ContentToApply>();
 
-  public ChangeRevertionVisitor(ILocalVcs vcs, IdeaGateway gw) {
-    myRootEntry = vcs.getRootEntry().copy();
+  public ChangeRevertionVisitor(IdeaGateway gw) {
     myGateway = gw;
+  }
+
+  @Override
+  public void started(Entry root) throws IOException {
+    myRoot = root;
   }
 
   @Override
@@ -33,12 +37,12 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     unregisterContentToApply(f);
     f.delete(this);
 
-    c.revertOn(myRootEntry);
+    c.revertOn(myRoot);
   }
 
   @Override
   public void visit(ChangeFileContentChange c) {
-    c.revertOn(myRootEntry);
+    c.revertOn(myRoot);
 
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
@@ -50,7 +54,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-    c.revertOn(myRootEntry);
+    c.revertOn(myRoot);
 
     f.rename(this, e.getName());
   }
@@ -60,7 +64,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry e = getAffectedEntry(c, 1);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-    c.revertOn(myRootEntry);
+    c.revertOn(myRoot);
     String parentPath = getParentPath(getAffectedEntry(c));
     VirtualFile parent = myGateway.findVirtualFile(parentPath);
 
@@ -69,7 +73,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
   @Override
   public void visit(DeleteChange c) throws IOException {
-    c.revertOn(myRootEntry);
+    c.revertOn(myRoot);
     Entry e = getAffectedEntry(c);
 
     revertDeletion(e);
@@ -114,7 +118,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   private Entry getAffectedEntry(StructuralChange c, int i) {
-    return myRootEntry.getEntry(c.getAffectedIdPaths()[i]);
+    return myRoot.getEntry(c.getAffectedIdPaths()[i]);
   }
 
   private String getParentPath(Entry e) {

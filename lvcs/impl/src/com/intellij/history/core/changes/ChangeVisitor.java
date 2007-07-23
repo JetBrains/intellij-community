@@ -1,8 +1,16 @@
 package com.intellij.history.core.changes;
 
+import com.intellij.history.core.tree.Entry;
+
 import java.io.IOException;
 
 public abstract class ChangeVisitor {
+  public void started(Entry root) throws IOException {
+  }
+
+  public void finished() throws IOException {
+  }
+
   public void begin(ChangeSet c) throws IOException, StopVisitingException {
   }
 
@@ -34,9 +42,6 @@ public abstract class ChangeVisitor {
 
   public void visit(DeleteChange c) throws IOException, StopVisitingException {
     visit((StructuralChange)c);
-  }
-
-  public void finished() throws IOException {
   }
 
   protected void stop() throws StopVisitingException {
