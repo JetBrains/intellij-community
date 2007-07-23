@@ -50,6 +50,24 @@ public class PsiTreeUtil {
       parent = parent.getParent();
     }
   }
+  /**
+   * Checks wheter one element in the psi tree is under another in {@link com.intellij.psi.PsiElement#getContext()}  hierarchy.
+   * @param ancestor parent candidate. <code>false</code> will be returned if ancestor is null.
+   * @param element child candidate
+   * @param strict whether return true if ancestor and parent are the same.
+   * @return true if element has ancestor as its parent somewhere in the hierarchy and false otherwise.
+   */
+  public static boolean isContextAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
+    if (ancestor == null) return false;
+    boolean stopAtFileLevel = !(element instanceof PsiFile || element instanceof PsiDirectory);
+    PsiElement parent = strict ? element.getContext() : element;
+    while (true) {
+      if (parent == null) return false;
+      if (parent.equals(ancestor)) return true;
+      if (stopAtFileLevel && parent instanceof PsiFile) return false;
+      parent = parent.getContext();
+    }
+  }
 
   @Nullable
   public static PsiElement findCommonParent (@NotNull PsiElement... elements) {

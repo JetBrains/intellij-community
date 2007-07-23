@@ -115,8 +115,8 @@ public class LocalSearchScope extends SearchScope {
   }
 
   private static PsiElement intersectScopeElements(PsiElement element1, PsiElement element2) {
-    if (PsiTreeUtil.isAncestor(element1, element2, false)) return element2;
-    if (PsiTreeUtil.isAncestor(element2, element1, false)) return element1;
+    if (PsiTreeUtil.isContextAncestor(element1, element2, false)) return element2;
+    if (PsiTreeUtil.isContextAncestor(element2, element1, false)) return element1;
     return null;
   }
 
