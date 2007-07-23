@@ -62,6 +62,8 @@ public interface GroovyFile extends PsiFile, GroovyPsiElement, GrVariableDeclara
 
   GrImportStatement addImportForClass(PsiClass aClass);
   void removeImport(GrImportStatement importStatement) throws IncorrectOperationException;
+  GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException;
+
   GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
 
   boolean isScript();

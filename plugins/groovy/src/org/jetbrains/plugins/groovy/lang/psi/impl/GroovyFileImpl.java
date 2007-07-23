@@ -180,24 +180,24 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       // Calculating position
       Project project = aClass.getProject();
       GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-      GrImportStatement ourImportStatement = factory.createImportStatementFromText(aClass.getQualifiedName());
-      GrImportStatement[] importStatements = getImportStatements();
-      PsiElement psiElementAfter = null;
-      if (importStatements.length > 0) {
-        psiElementAfter = importStatements[importStatements.length - 1];
-      } else if (getPackageDefinition() != null) {
-        psiElementAfter = getPackageDefinition();
-      }
-      if (psiElementAfter != null &&
-              psiElementAfter.getNode() != null) {
-        return (GrImportStatement) addAfter(ourImportStatement, psiElementAfter);
-      } else {
-        return (GrImportStatement) addBefore(ourImportStatement, getFirstChild());
-      }
+      GrImportStatement ourImportStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false);
+      PsiElement anchor = getAnchorToInsertImportAfter();
+      return (GrImportStatement) addAfter(ourImportStatement, anchor);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
       return null;
     }
+  }
+
+  private PsiElement getAnchorToInsertImportAfter() {
+    GrImportStatement[] importStatements = getImportStatements();
+    PsiElement psiElementAfter = getFirstChild();
+    if (importStatements.length > 0) {
+      psiElementAfter = importStatements[importStatements.length - 1];
+    } else if (getPackageDefinition() != null) {
+      psiElementAfter = getPackageDefinition();
+    }
+    return psiElementAfter;
   }
 
   public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
@@ -207,6 +207,13 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     } else {
       deleteChildRange(importStatement, importStatement);
     }
+  }
+
+  public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
+    PsiElement anchor = getAnchorToInsertImportAfter();
+    final PsiElement result = addBefore(statement, anchor);
+    getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+    return (GrImportStatement) result;
   }
 
   public GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException {
