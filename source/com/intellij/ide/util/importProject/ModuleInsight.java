@@ -251,7 +251,7 @@ public class ModuleInsight {
     }
   }
 
-  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Set<File> jarsToExtract) {
+  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<File> jarsToExtract) {
     final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, jarsToExtract);
     myLibraries.add(newLibrary);
     library.removeJars(jarsToExtract);
@@ -261,7 +261,7 @@ public class ModuleInsight {
     return newLibrary;
   }
   
-  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Set<File> contentsToExtract) {
+  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<File> contentsToExtract) {
     ModuleDescriptor newModule = null;
     for (File root : contentsToExtract) {
       final Set<File> sources = descriptor.removeContentRoot(root);

@@ -33,7 +33,8 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
       return Icons.LIBRARY_ICON;
     }
     if (element instanceof File) {
-      return Icons.JAR_ICON;
+      final File file = (File)element;
+      return file.isDirectory()? Icons.DIRECTORY_CLOSED_ICON : Icons.JAR_ICON;
     }
     return super.getElementIcon(element);
   }
@@ -103,6 +104,9 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
       }
       return libDescr.getName();
     }
+    if (element instanceof File) {
+      return getDisplayText(((File)element));
+    }
     return "";
   }
 
@@ -133,11 +137,19 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return mainDescr;
   }
 
-  protected ModuleDescriptor split(final ModuleDescriptor entry, final String newEntryName, final Set<File> extractedData) {
+  protected ModuleDescriptor split(final ModuleDescriptor entry, final String newEntryName, final Collection<File> extractedData) {
     return getInsight().splitModule(entry, newEntryName, extractedData);
   }
 
   protected Collection<File> getContent(final ModuleDescriptor entry) {
     return entry.getContentRoots();
+  }
+
+  protected String getSplitDialogTitle() {
+    return "Split Module";
+  }
+
+  protected String getSplitDialogChooseFilesPrompt() {
+    return "Select content roots to extract to the new module:";
   }
 }

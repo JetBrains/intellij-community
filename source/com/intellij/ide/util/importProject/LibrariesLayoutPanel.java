@@ -7,7 +7,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,7 +28,8 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
       return Icons.LIBRARY_ICON;
     }
     if(element instanceof File) {
-      return Icons.JAR_ICON;
+      final File file = (File)element;
+      return file.isDirectory()? Icons.DIRECTORY_CLOSED_ICON : Icons.JAR_ICON;
     }
     return super.getElementIcon(element);
   }
@@ -88,11 +88,19 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return mainLib;
   }
 
-  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Set<File> extractedData) {
+  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Collection<File> extractedData) {
     return getInsight().splitLibrary(entry, newEntryName, extractedData);
   }
 
   protected Collection<File> getContent(final LibraryDescriptor entry) {
     return entry.getJars();
+  }
+
+  protected String getSplitDialogTitle() {
+    return "Split Library";
+  }
+
+  protected String getSplitDialogChooseFilesPrompt() {
+    return "Select jars to extract to the new library:";
   }
 }

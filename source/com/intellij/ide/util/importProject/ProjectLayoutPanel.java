@@ -25,9 +25,9 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private ElementsChooser<T> myEntriesChooser;
   private JList myDependenciesList;
   private final ModuleInsight myInsight; 
-  private static final Icon RENAME_ICON = IconLoader.getIcon("/toolbar/unknown.png"); 
-  private static final Icon MERGE_ICON = IconLoader.getIcon("/toolbar/unknown.png");
-  private static final Icon SPLIT_ICON = IconLoader.getIcon("/toolbar/unknown.png");
+  private static final Icon RENAME_ICON = IconLoader.getIcon("/modules/edit.png"); 
+  private static final Icon MERGE_ICON = IconLoader.getIcon("/modules/merge.png");
+  private static final Icon SPLIT_ICON = IconLoader.getIcon("/modules/split.png");
 
   public ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
@@ -65,6 +65,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final DefaultActionGroup entriesActions = new DefaultActionGroup();
     entriesActions.add(new RenameAction());
     entriesActions.add(new MergeAction());
+    entriesActions.add(new SplitAction());
     return ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", entriesActions, true);
   }
 
@@ -145,13 +146,17 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   protected abstract T merge(List<T> entries);
   
   @Nullable
-  protected abstract T split(T entry, String newEntryName, Set<File> extractedData);
+  protected abstract T split(T entry, String newEntryName, Collection<File> extractedData);
   
   protected abstract Collection<File> getContent(T entry);
   
   protected abstract String getElementName(T entry);
   
   protected abstract void setElementName(T entry, String name);
+  
+  protected abstract String getSplitDialogTitle();
+  
+  protected abstract String getSplitDialogChooseFilesPrompt();
   
   private class MergeAction extends AnAction {
     private MergeAction() {
@@ -176,7 +181,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class SplitAction extends AnAction {
     private SplitAction() {
-      super("split", "", SPLIT_ICON); // todo
+      super("Split", "", SPLIT_ICON); // todo
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -191,7 +196,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
         if (dialog.isOK()) {
           final String newName = dialog.getName();
-          final Set<File> chosenFiles = dialog.getChosenFiles();
+          final Collection<File> chosenFiles = dialog.getChosenFiles();
           
           final T extracted = split(entry, newName, chosenFiles);
           if (extracted != null) {
@@ -259,25 +264,62 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
   
   private class SplitDialog extends DialogWrapper {
-    JTextField myNameField;
+    final JTextField myNameField;
+    final ElementsChooser<File> myChooser;
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
+      setTitle(getSplitDialogTitle());
+      
+      myNameField = new JTextField();
+      myChooser = new ElementsChooser<File>(true) {
+        protected String getItemText(final File value) {
+          return getElementText(value);
+        }
+      };
+      for (final File file : files) {
+        myChooser.addElement(file, false, new ElementsChooser.ElementProperties() {
+          public Icon getIcon() {
+            return getElementIcon(file);
+          }
+          public Color getColor() {
+            return null;
+          }
+        });
+      }
       init();
     }
 
     @Nullable
   protected JComponent createCenterPanel() {
       final JPanel panel = new JPanel(new BorderLayout());
+      
+      final JPanel labelNameField = new JPanel(new BorderLayout());
+      labelNameField.add(new JLabel("Name:"), BorderLayout.NORTH);
+      labelNameField.add(myNameField, BorderLayout.CENTER);
+      labelNameField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+      final JPanel labelChooser = new JPanel(new BorderLayout());
+      labelChooser.add(new JLabel(getSplitDialogChooseFilesPrompt()), BorderLayout.NORTH);
+      labelChooser.add(new JScrollPane(myChooser), BorderLayout.CENTER);
+      labelChooser.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      
+      panel.add(labelNameField, BorderLayout.NORTH);
+      panel.add(labelChooser, BorderLayout.CENTER);
+      panel.setPreferredSize(new Dimension(450, 300));
       return panel;
+    }
+
+    public JComponent getPreferredFocusedComponent() {
+      return myNameField;
     }
 
     public String getName() {
       return myNameField.getText().trim();
     }
 
-    public Set<File> getChosenFiles() {
-      return null;
+    public Collection<File> getChosenFiles() {
+      return myChooser.getMarkedElements();
     }
   }
   
