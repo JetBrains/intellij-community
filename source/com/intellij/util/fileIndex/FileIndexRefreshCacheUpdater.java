@@ -86,6 +86,9 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
 
   private void handleCreateDeleteFile(final VirtualFile file, final boolean fromRefresh, final boolean create) {
     if (file.isDirectory()) {
+      if (!myFileIndex.getProjectFileIndex().isInContent(file)) {
+        return;
+      }
       final VirtualFile[] children = file.getChildren();
       for (VirtualFile child : children) {
         handleCreateDeleteFile(child, fromRefresh, create);

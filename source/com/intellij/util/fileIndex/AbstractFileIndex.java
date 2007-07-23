@@ -51,7 +51,6 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
 
   protected abstract String getBuildingIndicesMessage(boolean formatChanged);
 
-
   public abstract boolean belongs(VirtualFile file);
 
 
@@ -63,6 +62,10 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
   public abstract void queueEntryUpdate(final VirtualFile file);
 
   protected abstract void doUpdateIndexEntry(final VirtualFile file);
+
+  public ProjectFileIndex getProjectFileIndex() {
+    return myProjectFileIndex;
+  }
 
   protected File getCacheLocation(final String dirName) {
     final String cacheFileName = myProject.getName() + "." + myProject.getLocationHash();
