@@ -8,6 +8,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseProjectModel;
@@ -66,6 +67,9 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Eclip
 
   public boolean validate() throws ConfigurationException {
     calcDuplicates();
-    return duplicateNames.isEmpty() && super.validate();
+    if (duplicateNames.isEmpty()) {
+      throw new ConfigurationException("Duplicated names found:" + StringUtil.join(duplicateNames.toArray(new String[duplicateNames.size()]), ","), "Unable to proceed");
+    }
+    return super.validate();
   }
 }
