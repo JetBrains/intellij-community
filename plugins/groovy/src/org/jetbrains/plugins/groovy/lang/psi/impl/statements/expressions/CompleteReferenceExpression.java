@@ -134,7 +134,7 @@ public class CompleteReferenceExpression {
         if (PsiUtil.isSimplePropertyAccessor(method)) {
           String propName = PropertyUtil.getPropertyName(method);
           if (propName != null) {
-            if (!PsiUtil.isIdentifier(propName)) {
+            if (!PsiUtil.isValidReferenceName(propName)) {
               propName = "'" + propName + "'";
             }
             result.add(factory.createLookupElement(propName).setIcon(Icons.PROPERTY));

@@ -128,7 +128,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   private PsiElement doHandleElementRename(String newElementName) throws IncorrectOperationException {
-    if (!PsiUtil.isIdentifier(newElementName)) {
+    if (!PsiUtil.isValidReferenceName(newElementName)) {
       PsiElement element = GroovyElementFactory.getInstance(getProject()).createStringLiteral(newElementName);
       getReferenceNameElement().replace(element);
       return this;

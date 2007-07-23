@@ -23,7 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -227,10 +227,10 @@ public class PsiUtil {
     return resolved.getManager().findClass("java.lang.Class", scope);
   }
 
-  public static boolean isIdentifier(String text) {
+  public static boolean isValidReferenceName(String text) {
     final GroovyLexer lexer = new GroovyLexer();
     lexer.start(text.toCharArray());
-    return lexer.getTokenType() == GroovyElementTypes.mIDENT && lexer.getTokenEnd() == text.length();
+    return TokenSets.PROPERTY_NAMES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
   }
 
   public static boolean isSimplePropertyAccessor(PsiMethod method) {
@@ -265,10 +265,6 @@ public class PsiUtil {
     if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
     if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
 
-    if (method.getParameterList().getParametersCount() != 1) {
-      return false;
-    }
-
-    return true;
+    return method.getParameterList().getParametersCount() == 1;
   }
 }
