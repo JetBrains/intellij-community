@@ -5,6 +5,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -39,6 +40,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +60,16 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private Map<VirtualFile, XmlFile> myExternalAnotations = new WeakHashMap<VirtualFile, XmlFile>();
   private PsiManager myPsiManager;
 
-  public ExternalAnnotationsManagerImpl(final PsiManager psiManager) {
+  public ExternalAnnotationsManagerImpl(final Project project, final PsiManager psiManager) {
     myPsiManager = psiManager;
+    final MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {}
+
+      public void rootsChanged(ModuleRootEvent event) {
+        myExternalAnotations.clear();
+      }
+    });
   }
 
   @Nullable
@@ -228,7 +238,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     return false;
   }
 
-  private static void appendChosenAnnotationsRoot(final OrderEntry entry, final VirtualFile vFile) {
+  private void appendChosenAnnotationsRoot(final OrderEntry entry, final VirtualFile vFile) {
     if (entry instanceof LibraryOrderEntry) {
       Library library = ((LibraryOrderEntry)entry).getLibrary();
       LOG.assertTrue(library != null);
@@ -248,6 +258,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       sdkModificator.addRoot(vFile, ProjectRootType.ANNOTATIONS);
       sdkModificator.commitChanges();
     }
+    myExternalAnotations.clear();
   }
 
   private static void annotateExternally(final PsiModifierListOwner listOwner,
