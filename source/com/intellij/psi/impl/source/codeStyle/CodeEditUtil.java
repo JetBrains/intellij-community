@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -332,7 +332,7 @@ public class CodeEditUtil {
   }
 
   private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
-    new HashMap<Pair<IElementType, IElementType>, Boolean>();
+    new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
 
   private static boolean canStickJavaTokens(PsiJavaToken token1, PsiJavaToken token2) {
     IElementType type1 = token1.getTokenType();
