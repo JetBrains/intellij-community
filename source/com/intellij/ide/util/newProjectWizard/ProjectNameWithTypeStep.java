@@ -9,15 +9,13 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -26,6 +24,8 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
   private LabeledComponent<JTextField> myModuleName = new LabeledComponent<JTextField>();
+  private boolean myInSync = false;
+  private boolean myChangedByUser = false;
 
   public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
@@ -84,7 +84,15 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     });
 
 
-
+    myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        myInSync = true;
+        if (!myChangedByUser) {
+          myModuleName.getComponent().setText(myNamePathComponent.getNameValue());
+        }
+        myInSync = false;
+      }
+    });
     final JTextField component = new JTextField();
     component.setText(myNamePathComponent.getNameValue());
     myModuleName.setComponent(component);
@@ -93,6 +101,12 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     myModuleName.setVisible(myWizardContext.getProject() == null);
     myAdditionalContentPanel.add(myModuleName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                                       GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+    component.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (myInSync) return;
+        myChangedByUser = true;
+      }
+    });
 
     final JLabel descriptionLabel = new JLabel(IdeBundle.message("label.description"));
     descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
