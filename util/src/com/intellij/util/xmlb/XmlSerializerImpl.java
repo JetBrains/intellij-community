@@ -88,6 +88,7 @@ class XmlSerializerImpl {
     if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this, accessor);
     if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
     if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
+    if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
 
     return new BeanBinding(aClass, this);
   }
@@ -114,6 +115,15 @@ class XmlSerializerImpl {
     if (float.class.isAssignableFrom(type) || Float.class.isAssignableFrom(type)) return (T)Float.valueOf(String.valueOf(value));
     if (long.class.isAssignableFrom(type) || Long.class.isAssignableFrom(type)) return (T)Long.valueOf(String.valueOf(value));
     if (boolean.class.isAssignableFrom(type) || Boolean.class.isAssignableFrom(type)) return (T)Boolean.valueOf(String.valueOf(value));
+
+    if (type.isEnum()) {
+      final T[] enumConstants = type.getEnumConstants();
+      for (T enumConstant : enumConstants) {
+        if (enumConstant.toString().equals(value.toString())) return enumConstant;
+      }
+
+      return null;
+    }
 
     throw new XmlSerializationException("Can't covert " + value.getClass() + " into " + type);
   }

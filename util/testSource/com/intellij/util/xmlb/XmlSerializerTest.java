@@ -844,6 +844,28 @@ public class XmlSerializerTest extends TestCase {
   }
 
 
+  public static enum TestEnum {
+    VALUE_1,
+    VALUE_2,
+    VALUE_3;
+  }
+
+  public static class BeanWithEnum {
+    public TestEnum FLD = TestEnum.VALUE_1;
+  }
+
+  public void testEnums() throws Exception {
+    BeanWithEnum bean = new BeanWithEnum();
+
+    doSerializerTest(
+      "<BeanWithEnum>\n" + "  <option name=\"FLD\" value=\"VALUE_1\" />\n" + "</BeanWithEnum>", bean);
+
+    bean.FLD = TestEnum.VALUE_3;
+
+    doSerializerTest(
+      "<BeanWithEnum>\n" + "  <option name=\"FLD\" value=\"VALUE_3\" />\n" + "</BeanWithEnum>", bean);
+  }
+
   public static class BeanWithSetKeysInMap {
     public Map<Collection<String>, String> myMap = new HashMap<Collection<String>, String>();
   }
