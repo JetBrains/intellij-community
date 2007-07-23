@@ -18,10 +18,10 @@ import com.intellij.util.containers.ContainerUtil;
  * To change this template use Options | File Templates.
  */
 public class ExpectedTypesGetter implements ContextGetter{
-  public Object[] get(PsiElement context, CompletionContext completionContext){
+  public PsiType[] get(PsiElement context, CompletionContext completionContext){
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
-    if(expression == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if(expression == null) return PsiType.EMPTY_ARRAY;
 
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 
