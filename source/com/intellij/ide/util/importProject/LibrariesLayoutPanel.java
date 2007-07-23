@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -85,5 +86,13 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
       }
     }
     return mainLib;
+  }
+
+  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Set<File> extractedData) {
+    return getInsight().splitLibrary(entry, newEntryName, extractedData);
+  }
+
+  protected Collection<File> getContent(final LibraryDescriptor entry) {
+    return entry.getJars();
   }
 }

@@ -11,14 +11,14 @@ import java.util.*;
 *         Date: Jul 13, 2007
 */
 public class ModuleDescriptor {
-  String myName;
-  final Map<File, Set<File>> myContentToSourceRoots = new HashMap<File, Set<File>>();
-  final Set<File> myLibraryFiles = new HashSet<File>();
-  final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
+  private String myName;
+  private final Map<File, Set<File>> myContentToSourceRoots = new HashMap<File, Set<File>>();
+  private final Set<File> myLibraryFiles = new HashSet<File>();
+  private final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
   
-  public ModuleDescriptor(final File contentRoot, final File sourceRoot) {
+  public ModuleDescriptor(final File contentRoot, final Set<File> sourceRoots) {
     myName = StringUtil.capitalize(contentRoot.getName());
-    myContentToSourceRoots.put(contentRoot, new HashSet<File>(Arrays.asList(sourceRoot)));
+    myContentToSourceRoots.put(contentRoot, sourceRoots);
   }
 
   public String getName() {
@@ -50,8 +50,8 @@ public class ModuleDescriptor {
     myContentToSourceRoots.put(contentRoot, new HashSet<File>());
   }
   
-  public void removeContentRoot(File contentRoot) {
-    myContentToSourceRoots.remove(contentRoot);
+  public Set<File> removeContentRoot(File contentRoot) {
+    return myContentToSourceRoots.remove(contentRoot);
   }
   
   public void addSourceRoot(final File contentRoot, File sourceRoot) {
@@ -94,5 +94,13 @@ public class ModuleDescriptor {
     }
     builder.append("]");
     return builder.toString();
+  }
+
+  public void clearModuleDependencies() {
+    myDependencies.clear();
+  }
+
+  public void clearLibraryFiles() {
+    myLibraryFiles.clear();
   }
 }

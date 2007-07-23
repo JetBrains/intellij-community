@@ -52,14 +52,11 @@ public final class AntInstrospector {
     try {
       return new AntInstrospector(c);
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
+    catch (ClassNotFoundException ignored) {
     }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
+    catch (NoSuchMethodException ignored) {
     }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
+    catch (IllegalAccessException ignored) {
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
@@ -69,7 +66,6 @@ public final class AntInstrospector {
       if (cause instanceof Error) {
         throw (Error)cause;
       }
-      LOG.error(e);
     }
     return null;
   }

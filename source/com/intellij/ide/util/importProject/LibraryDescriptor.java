@@ -21,7 +21,7 @@ public class LibraryDescriptor {
   public LibraryDescriptor(String name, Collection<File> jars) {
     myName = name;
     myJars = jars;
-    myLevel = Level.MODULE;
+    myLevel = jars.size() > 1? Level.PROJECT : Level.MODULE;
   }
 
   public String getName() {

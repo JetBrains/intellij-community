@@ -132,5 +132,12 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     }
     return mainDescr;
   }
-  
+
+  protected ModuleDescriptor split(final ModuleDescriptor entry, final String newEntryName, final Set<File> extractedData) {
+    return getInsight().splitModule(entry, newEntryName, extractedData);
+  }
+
+  protected Collection<File> getContent(final ModuleDescriptor entry) {
+    return entry.getContentRoots();
+  }
 }

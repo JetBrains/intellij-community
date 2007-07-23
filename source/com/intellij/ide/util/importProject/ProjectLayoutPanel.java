@@ -2,6 +2,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
@@ -26,6 +27,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private final ModuleInsight myInsight; 
   private static final Icon RENAME_ICON = IconLoader.getIcon("/toolbar/unknown.png"); 
   private static final Icon MERGE_ICON = IconLoader.getIcon("/toolbar/unknown.png");
+  private static final Icon SPLIT_ICON = IconLoader.getIcon("/toolbar/unknown.png");
 
   public ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
@@ -142,6 +144,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   @Nullable
   protected abstract T merge(List<T> entries);
   
+  @Nullable
+  protected abstract T split(T entry, String newEntryName, Set<File> extractedData);
+  
+  protected abstract Collection<File> getContent(T entry);
+  
   protected abstract String getElementName(T entry);
   
   protected abstract void setElementName(T entry, String name);
@@ -163,6 +170,35 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         setElementName(merged, newName);
         rebuild();
         myEntriesChooser.selectElements(Collections.singleton(merged));
+      }
+    }
+  }
+
+  private class SplitAction extends AnAction {
+    private SplitAction() {
+      super("split", "", SPLIT_ICON); // todo
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final List<T> elements = myEntriesChooser.getSelectedElements();
+      
+      if (elements.size() == 1) {
+        final T entry = elements.get(0);
+        final Collection<File> files = getContent(entry);
+        
+        final SplitDialog dialog = new SplitDialog(files);
+        dialog.show();
+
+        if (dialog.isOK()) {
+          final String newName = dialog.getName();
+          final Set<File> chosenFiles = dialog.getChosenFiles();
+          
+          final T extracted = split(entry, newName, chosenFiles);
+          if (extracted != null) {
+            rebuild();
+            myEntriesChooser.selectElements(Collections.singleton(extracted));
+          }
+        }
       }
     }
   }
@@ -222,5 +258,27 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     }
   }
   
+  private class SplitDialog extends DialogWrapper {
+    JTextField myNameField;
+
+    private SplitDialog(final Collection<File> files) {
+      super(myEntriesChooser, true);
+      init();
+    }
+
+    @Nullable
+  protected JComponent createCenterPanel() {
+      final JPanel panel = new JPanel(new BorderLayout());
+      return panel;
+    }
+
+    public String getName() {
+      return myNameField.getText().trim();
+    }
+
+    public Set<File> getChosenFiles() {
+      return null;
+    }
+  }
   
 }
