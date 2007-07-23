@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +101,11 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
 
   public boolean isOptional() {
     return getDefaultInitializer() != null;
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return new LocalSearchScope(getDeclarationScope());
   }
 
   @NotNull

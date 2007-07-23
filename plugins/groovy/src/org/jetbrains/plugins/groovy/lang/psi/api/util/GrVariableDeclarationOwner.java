@@ -4,13 +4,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.util;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author ilyas
  */
-public interface GrVariableDeclarationOwner {
+public interface GrVariableDeclarationOwner extends GroovyPsiElement {
 
   /**
    * Removes variable from its declaration. In case of alone variablein declaration,
