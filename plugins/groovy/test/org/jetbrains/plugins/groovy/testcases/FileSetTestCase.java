@@ -51,10 +51,10 @@ public abstract class FileSetTestCase extends TestSuite {
     addAllTests();
   }
 
-  protected void setUp() {
+  protected void setUp() throws Exception {
   }
 
-  protected void tearDown() {
+  protected void tearDown() throws Exception {
   }
 
   private void addAllTests() {
