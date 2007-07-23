@@ -59,11 +59,11 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     for (T element : getContext().getList()) {
       fileChooser.addElement(element, getContext().isMarked(element));
     }
+    fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 
   public boolean validate() throws ConfigurationException {
-    fileChooser.setBorder(BorderFactory.createTitledBorder(IdeBundle.message("project.import.select.title", getContext().getName())));
     getContext().setList(fileChooser.getMarkedElements());
     if (fileChooser.getMarkedElements().size() == 0) {
       throw new ConfigurationException("Nothing found to import", "Unable to proceed");
