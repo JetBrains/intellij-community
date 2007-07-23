@@ -470,7 +470,7 @@ public class BreakpointManager implements JDOMExternalizable {
   public void readExternal(final Element parentNode) throws InvalidDataException {
     myStartupManager.registerPostStartupActivity(new Runnable() {
       @SuppressWarnings({"HardCodedStringLiteral"}) public void run() {
-        PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
           @SuppressWarnings({"HardCodedStringLiteral"})
           public void run() {
             final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
