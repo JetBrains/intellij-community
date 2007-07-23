@@ -4,6 +4,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -16,8 +18,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +52,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
     try {
-      new CreatePropertyFix(psiElement, myKey, myPropertiesFiles).invoke(project, null, psiElement.getContainingFile());
+      invoke(project, null, psiElement.getContainingFile());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -70,7 +70,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
 
   public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     PsiLiteralExpression literalExpression = myElement instanceof PsiLiteralExpression ? (PsiLiteralExpression)myElement : null;
-    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, file, literalExpression, "", false, false) {
+    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, file, literalExpression, getDefaultPropertyValue(), false, false) {
       protected void init() {
         super.init();
         setTitle(NAME);
@@ -112,6 +112,10 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     final Collection<PropertiesFile> selectedPropertiesFiles = dialog.getAllPropertiesFiles();
     invokeAction(project, selectedPropertiesFiles, key, value);
 
+  }
+
+  protected String getDefaultPropertyValue() {
+    return "";
   }
 
   public void invokeAction(final Project project,
