@@ -121,4 +121,9 @@ public class ProjectNameStep extends ModuleWizardStep {
     return myNamePathComponent.getNameValue();
   }
 
+  public boolean isStepVisible() {
+    final ProjectBuilder builder = myWizardContext.getProjectBuilder();
+    if (builder != null && builder.isUpdate()) return false;
+    return super.isStepVisible();
+  }
 }
