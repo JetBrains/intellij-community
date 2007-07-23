@@ -39,7 +39,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   // IDEADEV-18844
   @Test
-  @Ignore
   public void testRenameReplace() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "old");
