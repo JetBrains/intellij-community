@@ -34,7 +34,7 @@ public class ModuleInsight {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");
   @NotNull private final ProgressIndicatorWrapper myProgress;
   
-  private final List<File> myContentRoots = new ArrayList<File>();
+  private final Set<File> myEntryPointRoots = new HashSet<File>();
   private final List<Pair<File, String>> mySourceRoots = new ArrayList<Pair<File, String>>(); // list of Pair: [sourceRoot-> package prefix]
   private final Set<String> myIgnoredNames = new HashSet<String>();
 
@@ -51,18 +51,18 @@ public class ModuleInsight {
     this(progress, Collections.<File>emptyList(), Collections.<Pair<File,String>>emptyList(), Collections.<String>emptySet());
   }
   
-  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> contentRoots, List<Pair<File,String>> sourceRoots, final Set<String> ignoredNames) {
+  public ModuleInsight(@Nullable final ProgressIndicator progress, List<File> entryPointRoots, List<Pair<File,String>> sourceRoots, final Set<String> ignoredNames) {
     myLexer = new JavaLexer(LanguageLevel.JDK_1_5);
     myProgress = new ProgressIndicatorWrapper(progress);
-    setRoots(contentRoots, sourceRoots, ignoredNames);
+    setRoots(entryPointRoots, sourceRoots, ignoredNames);
   }
 
   public final void setRoots(final List<File> contentRoots, final List<Pair<File, String>> sourceRoots, final Set<String> ignoredNames) {
     myModules = null;
     myLibraries = null;
     
-    myContentRoots.clear();
-    myContentRoots.addAll(contentRoots);
+    myEntryPointRoots.clear();
+    myEntryPointRoots.addAll(contentRoots);
     
     mySourceRoots.clear();
     mySourceRoots.addAll(sourceRoots);
@@ -112,7 +112,7 @@ public class ModuleInsight {
       myProgress.pushState();
       myProgress.setText("Building modules layout...");
       for (File srcRoot : mySourceRootToPackagesMap.keySet()) {
-        final File moduleContentRoot = srcRoot.getParentFile();
+        final File moduleContentRoot = myEntryPointRoots.contains(srcRoot)? srcRoot : srcRoot.getParentFile();
         ModuleDescriptor moduleDescriptor = contentRootToModules.get(moduleContentRoot);
         if (moduleDescriptor != null) { // if such module aready exists
           moduleDescriptor.addSourceRoot(moduleContentRoot, srcRoot);
@@ -188,7 +188,7 @@ public class ModuleInsight {
     myProgress.pushState();
     try {
       try {
-        for (File root : myContentRoots) {
+        for (File root : myEntryPointRoots) {
           myProgress.setText("Scanning for libraries " + root.getPath());
           scanRootForLibraries(root);
         }
