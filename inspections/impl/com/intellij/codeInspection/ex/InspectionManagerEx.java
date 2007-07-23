@@ -18,6 +18,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -44,7 +46,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public InspectionManagerEx(Project project) {
     myProject = project;
-    myCurrentProfileName = "Default";
   }
 
   @NotNull
@@ -243,6 +244,15 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public String getCurrentProfile() {
+    if (myCurrentProfileName == null) {
+      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
+      if (profileManager.useProjectLevelProfileSettings()) {
+        myCurrentProfileName = profileManager.getProjectProfile();
+      }
+      if (myCurrentProfileName == null) {
+        myCurrentProfileName = InspectionProfileManager.getInstance().getRootProfile().getName();
+      }
+    }
     return myCurrentProfileName;
   }
 
