@@ -67,7 +67,7 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Eclip
 
   public boolean validate() throws ConfigurationException {
     calcDuplicates();
-    if (duplicateNames.isEmpty()) {
+    if (!duplicateNames.isEmpty()) {
       throw new ConfigurationException("Duplicated names found:" + StringUtil.join(duplicateNames.toArray(new String[duplicateNames.size()]), ","), "Unable to proceed");
     }
     return super.validate();
