@@ -344,8 +344,11 @@ public class CreateFromUsageUtils {
             }
 
             if (superClassName != null) {
-              PsiJavaCodeReferenceElement superClass = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
-              targetClass.getExtendsList().add(superClass);
+              final PsiClass superClass = manager.findClass(superClassName, targetClass.getResolveScope());
+              final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
+              final PsiReferenceList list = classKind == INTERFACE || superClass == null || !superClass.isInterface() ?
+                targetClass.getExtendsList() : targetClass.getImplementsList();
+              list.add(superClassReference);
             }
 
             return targetClass;
