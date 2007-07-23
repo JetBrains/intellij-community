@@ -32,7 +32,21 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
  */
 public interface GroovyFile extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner {
   String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
-  
+
+  String[] IMPLICITLY_IMPORTED_PACKAGES = {
+      "java.lang",
+      "java.util",
+      "java.io",
+      "java.net",
+      "groovy.lang",
+      "groovy.util",
+  };
+
+  String[] IMPLICITLY_IMPORTED_CLASSES = {
+      "java.math.BigInteger",
+      "java.math.BigDecimal",
+  };
+
   GrTypeDefinition[] getTypeDefinitions();
 
   GrTopLevelDefintion[] getTopLevelDefinitions();

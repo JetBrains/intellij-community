@@ -170,20 +170,6 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     return true;
   }
 
-  private static final String[] IMPLICITLY_IMPORTED_PACKAGES = {
-      "java.lang",
-      "java.util",
-      "java.io",
-      "java.net",
-      "groovy.lang",
-      "groovy.util",
-  };
-
-  private static final String[] IMPLICITLY_IMPORTED_CLASSES = {
-      "java.math.BigInteger",
-      "java.math.BigDecimal",
-  };
-
   @Nullable
   public Icon getIcon(int flags) {
     return GroovyFileType.GROOVY_LOGO;

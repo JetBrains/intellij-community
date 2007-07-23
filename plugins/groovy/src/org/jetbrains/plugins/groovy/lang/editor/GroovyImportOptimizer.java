@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,9 +51,30 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         private void visitRefElement(GrReferenceElement refElement) {
           final GroovyResolveResult resolveResult = refElement.advancedResolve();
           final GrImportStatement importStatement = resolveResult.getImportStatementContext();
-          if (importStatement != null) {
+          if (importStatement != null && !isUnneeded(importStatement)) {
             importStatements.remove(importStatement);
           }
+        }
+
+        private boolean isUnneeded(GrImportStatement importStatement) {
+          if (!importStatement.isOnDemand()) return false;
+
+          final GrCodeReferenceElement ref = importStatement.getImportReference();
+          if (ref != null) {
+            String qName = PsiUtil.getQualifiedReferenceText(ref);
+            LOG.assertTrue(qName != null);
+
+
+            for (String implicitlyImportedPackage : GroovyFile.IMPLICITLY_IMPORTED_PACKAGES) {
+              if (qName.equals(implicitlyImportedPackage)) return true;
+            }
+
+            for (String implicitlyImportedClass : GroovyFile.IMPLICITLY_IMPORTED_CLASSES) {
+              if (qName.equals(implicitlyImportedClass)) return true;
+            }
+          }
+
+          return false;
         }
       });
 
