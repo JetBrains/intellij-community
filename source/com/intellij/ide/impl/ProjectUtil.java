@@ -11,7 +11,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -53,6 +55,12 @@ public class ProjectUtil {
   }
 
   public static void createNewProject(Project projectToClose, @Nullable final String defaultPath) {
+    final boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        ProjectManager.getInstance().getDefaultProject(); //warm up components
+      }
+    }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
+    if (!proceed) return;
     AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
     dialog.show();
     if (!dialog.isOK()) {

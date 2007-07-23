@@ -14,9 +14,7 @@ import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -63,11 +61,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   private void initModuleWizard(final Project project, final ModulesProvider modulesProvider, @Nullable final String defaultPath) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProjectManager.getInstance().getDefaultProject(); //warm up components
-      }
-    }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
     myWizardContext = new WizardContext(project);
     if (defaultPath != null) {
       myWizardContext.setProjectFileDirectory(defaultPath);
