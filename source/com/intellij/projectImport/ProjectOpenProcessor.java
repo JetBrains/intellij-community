@@ -64,7 +64,7 @@ public abstract class ProjectOpenProcessor {
       if (wizardContext.getProjectName() == null) {
         wizardContext.setProjectName(IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
       }
-      wizardContext.setProjectFileDirectory(virtualFile.getPath());
+      wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
       if (wizardContext.getProjectJdk() == null) {
         for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
           if (wizardContext.getProjectJdk() == null ||
