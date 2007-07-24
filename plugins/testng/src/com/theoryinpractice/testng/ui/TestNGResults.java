@@ -76,6 +76,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     private int count;
     private int total;
     private Set<TestProxy> failed = new HashSet<TestProxy>();
+    private Map<TestResultMessage, TestProxy> started = new HashMap<TestResultMessage, TestProxy>();
     private long start;
     private long end;
     private JLabel statusLabel;
@@ -203,8 +204,10 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         } else {
             classNode = getClassNodeFor(result);
         }
-        if (result.getResult() == MessageHelper.TEST_STARTED) {
+        //test started or failed to start
+        if (!started.containsKey(result)) {
             TestProxy proxy = new TestProxy();
+            started.put(result, proxy);
             proxy.setParent(classNode);
             proxy.setResultMessage(result);
             animator.setCurrentTestCase(proxy);
@@ -215,20 +218,22 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(consoleProperties)) {
                 selectTest(proxy);
             }
-        } else {
+        }
+        final TestProxy testCase = started.get(result);
+        if (testCase != null) {
+            testCase.setResultMessage(result);
+            testCase.setOutput(output);
+            testCase.setExceptionMark(exceptionMark);
+        }
+
+        if (result.getResult() != MessageHelper.TEST_STARTED) {
             model.addTestResult(result);
-            final TestProxy testCase = animator.getCurrentTestCase();
-            if (testCase != null) {
-              testCase.setResultMessage(result);
-              testCase.setOutput(output);
-              testCase.setExceptionMark(exceptionMark);
-            }
         }
 
         if (result.getResult() == MessageHelper.PASSED_TEST) {
             //passed++;
         } else if (result.getResult() == MessageHelper.FAILED_TEST) {
-            failed.add(animator.getCurrentTestCase());
+            failed.add(started.get(result));
             progress.setColor(ColorProgressBar.RED);
         }
         progress.setFraction((double) count / total);

@@ -22,12 +22,13 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,7 @@ public class TestNGConsoleView implements ConsoleView
     private final List<Printable> allOutput = new ArrayList<Printable>();
     private int mark;
     private TestNGConsoleProperties consoleProperties;
+    private Set<TestResultMessage> results = new HashSet<TestResultMessage>();
 
     public TestNGConsoleView(TestNGConfiguration config, final RunnerSettings runnerSettings,
                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
@@ -69,33 +71,30 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public void addTestResult(TestResultMessage result) {
-        if (testNGResults != null) {
-            List<Printable> list = null;
-            int exceptionMark = 0;
-            if (result.getResult() == MessageHelper.TEST_STARTED) {
-                mark();
-            } else {
-                String stackTrace = result.getStackTrace();
-                if (stackTrace != null && stackTrace.length() > 10) {
-                    //trim useless crud from stacktrace
-                  String trimmed = trimStackTrace(stackTrace);
-                  List<Printable> printables = getPrintables(result, trimmed);
-                  for (Printable printable : printables) {
-                      printable.print(console); //enable for root element
-                  }
-                  synchronized (allOutput) {
-                       exceptionMark = allOutput.size() - mark;
-                       allOutput.addAll(printables);
-                  }
-                }
-                list = getPrintablesSinceMark();
-            }
-
-            testNGResults.addTestResult(result, list, exceptionMark);
+      if (testNGResults != null) {
+        if (!results.contains(result)) {
+          mark();
+          results.add(result);
         }
+        int exceptionMark = 0;
+        final String stackTrace = result.getStackTrace();
+        if (stackTrace != null && stackTrace.length() > 10) {
+          //trim useless crud from stacktrace
+          String trimmed = trimStackTrace(stackTrace);
+          List<Printable> printables = getPrintables(result, trimmed);
+          for (Printable printable : printables) {
+            printable.print(console); //enable for root element
+          }
+          synchronized (allOutput) {
+            exceptionMark = allOutput.size() - mark;
+            allOutput.addAll(printables);
+          }
+        }
+        testNGResults.addTestResult(result, getPrintablesSinceMark(), exceptionMark);
+      }
     }
 
-    private String trimStackTrace(String stackTrace) {
+    private static String trimStackTrace(String stackTrace) {
         String[] lines = stackTrace.split("\n");
         StringBuilder builder = new StringBuilder();
 
