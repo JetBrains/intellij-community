@@ -80,26 +80,25 @@ public class SvnRenameTest extends SvnTestCase {
   public void testRenamePackageWithChildren() throws Exception {
     final VirtualFile child = prepareDirectoriesForRename();
 
-    renameFileInCommand(child, "newchild");
+    renameFileInCommand(child, "childnew");
     final RunResult result = runSvn("status");
-    verify(result, "D child", "D child\\grandChild", "D child\\grandChild\\b.txt", "D child\\a.txt", "A + newchild");
+    verify(result, "D child", "D child\\grandChild", "D child\\grandChild\\b.txt", "D child\\a.txt", "A + childnew");
 
     List<Change> changes = getAllChanges();
     Assert.assertEquals(4, changes.size());
     sortChanges(changes);
-    verifyChange(changes.get(0), "child", "newchild");
-    verifyChange(changes.get(1), "child\\a.txt", "newchild\\a.txt");
-    verifyChange(changes.get(2), "child\\grandChild", "newchild\\grandChild");
-    verifyChange(changes.get(3), "child\\grandChild\\b.txt", "newchild\\grandChild\\b.txt");
+    verifyChange(changes.get(0), "child", "childnew");
+    verifyChange(changes.get(1), "child\\a.txt", "childnew\\a.txt");
+    verifyChange(changes.get(2), "child\\grandChild", "childnew\\grandChild");
+    verifyChange(changes.get(3), "child\\grandChild\\b.txt", "childnew\\grandChild\\b.txt");
 
-    final VirtualFile newChild = myWorkingCopyDir.findChild("newchild");
-    assert newChild != null;
-    changes = getChangesForFile(newChild.findChild("a.txt"));
+    final VirtualFile childnew = myWorkingCopyDir.findChild("childnew");
+    assert childnew != null;
+    changes = getChangesForFile(childnew.findChild("a.txt"));
     Assert.assertEquals(1, changes.size());
-    verifyChange(changes.get(0), "child\\a.txt", "newchild\\a.txt");
+    verifyChange(changes.get(0), "child\\a.txt", "childnew\\a.txt");
 
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
     VirtualFile oldChild = myWorkingCopyDir.findChild("child");
@@ -191,16 +190,18 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned));
 
     renameFileInCommand(child, "newchild");
+    File childPath = new File(myWorkingCopyDir.getPath(), "child");
     File newChildPath = new File(myWorkingCopyDir.getPath(), "newchild");
     Assert.assertTrue(new File(newChildPath, "a.txt").exists());
     Assert.assertTrue(new File(newChildPath, "u.txt").exists());
+    Assert.assertFalse(new File(childPath, "u.txt").exists());
 
+    LocalFileSystem.getInstance().refresh(false);
     changeListManager.ensureUpToDate(false);
-    Change c = changeListManager.getChange(myWorkingCopyDir.findChild("newchild"));
-    Assert.assertTrue(c != null && c.getBeforeRevision() != null && c.getAfterRevision() != null);
+    final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
+    Assert.assertEquals(2, changes.size());
 
-    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(c));
-    File childPath = new File(myWorkingCopyDir.getPath(), "child");
+    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes);
     Assert.assertTrue(new File(childPath, "a.txt").exists());
     Assert.assertTrue(new File(childPath, "u.txt").exists());
   }
