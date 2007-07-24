@@ -265,7 +265,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public final void reload() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (getHighlighter().isValid()) {
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getHighlighter().getDocument());
       if(psiFile != null) {
