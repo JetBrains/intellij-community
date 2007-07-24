@@ -1,6 +1,6 @@
 class Package {
-    def getInt() {
-        0
+    def getPackage() {
+        ""
     }
 }
-print new Package().<caret>'int'
+print new Package().<caret>'package'
