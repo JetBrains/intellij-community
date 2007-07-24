@@ -1,8 +1,9 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -70,6 +71,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     List<SimpleNode> children = new ArrayList<SimpleNode>();
     final XmlTag tag = element.getXmlTag();
+    
+    if (tag != null && !(tag.getContainingFile() instanceof XmlFile)) return NO_CHILDREN;
     final XmlElementDescriptor xmlElementDescriptor = tag == null ? null : tag.getDescriptor();
     final XmlElementDescriptor[] xmlDescriptors = xmlElementDescriptor == null ? null : xmlElementDescriptor.getElementsDescriptors(tag);
 
