@@ -82,7 +82,12 @@ public class ActionMenuItem extends JMenuItem {
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myPresentation.getMnemonic());
     setText(myPresentation.getText());
-    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
+    final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
+
+    if (getText() != null && mnemonicIndex >= 0 && mnemonicIndex < getText().length()) {
+      setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+
     updateIcon();
     String id = ActionManager.getInstance().getId(myAction);
     if (id != null) {
