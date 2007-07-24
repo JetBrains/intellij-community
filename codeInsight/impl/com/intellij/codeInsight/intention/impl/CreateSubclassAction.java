@@ -11,6 +11,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,18 +22,19 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CreateSubclassAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
-  private static final @NonNls String IMPL_SUFFIX = "Impl";
+  @NonNls private static final String IMPL_SUFFIX = "Impl";
 
   @NotNull
   public String getText() {
@@ -52,11 +54,14 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
     if (lBrace == null) return false;
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
 
-    myText = psiClass.isInterface() ?
-             CodeInsightBundle.message("intention.implement.abstract.class.interface.text") :
-             (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)
+    TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
+    if (!declarationRange.contains(element.getTextRange())) return false;
+
+    myText = psiClass.isInterface()
+             ? CodeInsightBundle.message("intention.implement.abstract.class.interface.text")
+             : psiClass.hasModifierProperty(PsiModifier.ABSTRACT)
                ? CodeInsightBundle.message("intention.implement.abstract.class.default.text")
-               : CodeInsightBundle.message("intention.implement.abstract.class.subclass.text"));
+               : CodeInsightBundle.message("intention.implement.abstract.class.subclass.text");
     return true;
   }
 

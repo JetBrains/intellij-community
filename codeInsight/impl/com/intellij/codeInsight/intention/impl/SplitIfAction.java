@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class SplitIfAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SplitIfAction");
 
-  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
 
     if (!(element instanceof PsiJavaToken)) {

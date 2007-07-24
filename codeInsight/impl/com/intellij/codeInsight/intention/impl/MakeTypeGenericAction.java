@@ -31,7 +31,7 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
     return CodeInsightBundle.message("intention.make.type.generic.text", variableName, newTypeName);
   }
 
-  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
     if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
     if (!element.isWritable()) return false;

@@ -29,7 +29,7 @@ import java.util.List;
 public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.InvertIfConditionAction");
 
-  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
 
     int offset = editor.getCaretModel().getOffset();

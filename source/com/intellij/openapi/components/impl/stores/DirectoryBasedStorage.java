@@ -154,6 +154,14 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   @NotNull
   public ExternalizationSession startExternalization() {
+    if (myStorageData == null) {
+      try {
+        myStorageData = loadState();
+      }
+      catch (StateStorageException e) {
+        LOG.error(e);
+      }
+    }
     final ExternalizationSession session = new MyExternalizationSession(myPathMacroSubstitutor, myStorageData.clone());
 
     mySession = session;

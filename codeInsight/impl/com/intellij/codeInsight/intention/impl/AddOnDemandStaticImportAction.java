@@ -27,7 +27,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null || LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
     if (!element.isWritable()) return false;
 
