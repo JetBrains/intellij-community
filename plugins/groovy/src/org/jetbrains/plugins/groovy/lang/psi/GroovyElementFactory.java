@@ -68,7 +68,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal);
 
-  public abstract PsiElement createIdentifierFromText(String idText);
+  public abstract PsiElement createReferenceNameFromText(String idText);
 
   public abstract GrTopStatement createTopElementFromText(String text);
 

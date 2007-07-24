@@ -70,7 +70,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();
-      ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(newElementName).getNode();
+      ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
       assert newNameNode != null && node != null;
       node.getTreeParent().replaceChild(node, newNameNode);
     }

@@ -240,7 +240,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createIdentifierFromText(name).getNode();
+    ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createReferenceNameFromText(name).getNode();
     assert newNameNode != null && node != null;
     node.getTreeParent().replaceChild(node, newNameNode);
 

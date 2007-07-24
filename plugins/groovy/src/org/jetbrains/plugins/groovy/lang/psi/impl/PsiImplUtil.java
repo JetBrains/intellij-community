@@ -241,7 +241,7 @@ public class PsiImplUtil {
 
   public static void setName(String name, PsiElement nameElement) {
     ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyElementFactory.getInstance(nameElement.getProject()).createIdentifierFromText(name).getNode();
+    ASTNode newNameNode = GroovyElementFactory.getInstance(nameElement.getProject()).createReferenceNameFromText(name).getNode();
     assert newNameNode != null && node != null;
     node.getTreeParent().replaceChild(node, newNameNode);
   }

@@ -65,8 +65,8 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   private static String DUMMY = "dummy.";
 
-  public PsiElement createIdentifierFromText(String idText) {
-    PsiFile file = createGroovyFile(idText);
+  public PsiElement createReferenceNameFromText(String refName) {
+    PsiFile file = createGroovyFile("a." + refName);
     return ((GrReferenceExpression) ((GroovyFile) file).getTopStatements()[0]).getReferenceNameElement();
   }
 
