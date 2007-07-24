@@ -415,10 +415,15 @@ public class Messages {
       ourTestImplementation.show(title);
     }
     else {
-      JTextArea textArea = new JTextArea(10, 50);
+      final JTextArea textArea = new JTextArea(10, 50);
       textArea.setWrapStyleWord(true);
       textArea.setLineWrap(true);
-      textArea.setDocument(textField.getDocument());
+      textArea.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(final DocumentEvent e) {
+          textField.setText(textArea.getText());
+        }
+      });
+      textArea.setText(textField.getText().replaceAll("[\\ ]*=[\\ ]*", "=").replaceAll(" ", "\n"));
       InsertPathAction.copyFromTo(textField, textArea);
       DialogBuilder builder = new DialogBuilder(textField);
       JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
