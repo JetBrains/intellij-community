@@ -166,7 +166,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     frame.setExtendedState(myFrameExtendedState);
   }
 
-  @NotNull
   public IdeFrameImpl[] getAllFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
     return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
@@ -248,7 +247,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public final void initComponent() {
   }
 
-  public final void doNotSuggestAsParent(@NotNull final Window window) {
+  public final void doNotSuggestAsParent(final Window window) {
     myWindowWatcher.doNotSuggestAsParent(window);
   }
 
@@ -256,11 +255,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myWindowWatcher.dispatchComponentEvent(e);
   }
 
-  public final Window suggestParentWindow(@NotNull final Project project) {
+  public final Window suggestParentWindow(final Project project) {
     return myWindowWatcher.suggestParentWindow(project);
   }
 
-  public final StatusBar getStatusBar(@NotNull final Project project) {
+  public final StatusBar getStatusBar(final Project project) {
     if (!myProject2Frame.containsKey(project)) {
       return null;
     }
@@ -287,17 +286,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return frame;
   }
 
-  public final IdeFrameImpl getFrame(@NotNull final Project project) {
+  public final IdeFrameImpl getFrame(final Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return myProject2Frame.get(project);
   }
 
-  public IdeFrame getIdeFrame(@NotNull final Project project) {
+  public IdeFrame getIdeFrame(final Project project) {
     return getFrame(project);
   }
 
-  public final IdeFrameImpl allocateFrame(@NotNull final Project project) {
+  public final IdeFrameImpl allocateFrame(final Project project) {
     LOG.assertTrue(!myProject2Frame.containsKey(project));
 
     final IdeFrameImpl frame;
@@ -341,7 +340,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     dialogs.add(dialog);
   }
 
-  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
+  public final void releaseFrame(final IdeFrameImpl frame) {
     final Project project = frame.getProject();
     LOG.assertTrue(project != null);
 
@@ -473,7 +472,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myLayout;
   }
 
-  public final void setLayout(@NotNull final DesktopLayout layout) {
+  public final void setLayout(final DesktopLayout layout) {
     myLayout.copyFrom(layout);
   }
 
