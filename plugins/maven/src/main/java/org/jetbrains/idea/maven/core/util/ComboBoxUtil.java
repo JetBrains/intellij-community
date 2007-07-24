@@ -7,15 +7,15 @@ import javax.swing.*;
 public class ComboBoxUtil {
 
   private static class Item {
-    private final String value;
+    private final Object value;
     private final String label;
 
-    private Item(String value, String label) {
+    private Item(Object value, String label) {
       this.value = value;
       this.label = label;
     }
 
-    public String getValue() {
+    public Object getValue() {
       return value;
     }
 
@@ -25,7 +25,7 @@ public class ComboBoxUtil {
   }
 
   public static void addToModel(DefaultComboBoxModel model, Object value, String label) {
-    model.addElement(new Item(String.valueOf(value), label));
+    model.addElement(new Item(value, label));
   }
 
   public static void addToModel(DefaultComboBoxModel model, Object[][] array) {
@@ -44,7 +44,7 @@ public class ComboBoxUtil {
     comboBox.setModel(model);
   }
 
-  public static void select(DefaultComboBoxModel model, String value) {
+  public static void select(DefaultComboBoxModel model, Object value) {
     for (int i = 0; i < model.getSize(); i++) {
       Item comboBoxUtil = (Item)model.getElementAt(i);
       if (comboBoxUtil.getValue().equals(value)) {
@@ -59,6 +59,11 @@ public class ComboBoxUtil {
 
   @Nullable
   public static String getSelectedString(DefaultComboBoxModel model) {
+    return String.valueOf(getSelectedValue(model));
+  }
+
+  @Nullable
+  public static Object getSelectedValue(DefaultComboBoxModel model) {
     final Object item = model.getSelectedItem();
     return item != null ? ((Item)item).getValue() : null;
   }

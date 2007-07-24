@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.HashMap;
 import java.util.Map;
 
 class RootModelAdapter {
@@ -40,10 +41,21 @@ class RootModelAdapter {
   }
 
   public void commit() {
-    if (libraryTableModel != null) {
+    if (libraryTableModel != null && libraryTableModel.isChanged()) {
       libraryTableModel.commit();
     }
-    modifiableRootModel.commit();
+    if(modifiableRootModel.isChanged()){
+      modifiableRootModel.commit();
+    } else {
+      modifiableRootModel.dispose();
+    }
+  }
+
+  private LibraryTable.ModifiableModel getLibraryModel() {
+    if (libraryTableModel == null) {
+      libraryTableModel = modifiableRootModel.getModuleLibraryTable().getModifiableModel();
+    }
+    return libraryTableModel;
   }
 
   void createSrcDir(String path, boolean testSource) {
@@ -85,20 +97,45 @@ class RootModelAdapter {
   }
 
   void createModuleLibrary(String libraryName, String urlClasses, String urlSources, String urlJavadoc) {
-    if (libraryTableModel == null) {
-      libraryTableModel = modifiableRootModel.getModuleLibraryTable().getModifiableModel();
-    }
-    Library library = libraryTableModel.createLibrary(libraryName);
+    final Library library = getLibraryModel().createLibrary(libraryName);
     final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    libraryModel.addRoot(urlClasses, OrderRootType.CLASSES);
-    if (urlSources != null) {
-      libraryModel.addRoot(urlSources, OrderRootType.SOURCES);
-    }
-    if (urlJavadoc != null) {
-      libraryModel.addRoot(urlJavadoc, OrderRootType.JAVADOC);
-    }
+    setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
+    setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
+    setUrl(libraryModel, urlJavadoc, OrderRootType.JAVADOC);
     setExported(modifiableRootModel, library);
     libraryModel.commit();
+  }
+
+  Map<String,String> getModuleLibraries() {
+    Map<String,String> libraries = new HashMap<String,String>();
+    for (Library library : getLibraryModel().getLibraries()) {
+      if(library.getTable() == null){
+        final String[] urls = library.getUrls(OrderRootType.CLASSES);
+        if(urls.length==1){
+          libraries.put(library.getName(), urls[0]);
+        }
+      }
+    }
+    return libraries;
+  }
+
+  void updateModuleLibrary(String libraryName, String urlSources, String urlJavadoc) {
+    final Library library = getLibraryModel().getLibraryByName(libraryName);
+    if(library!=null){
+      final Library.ModifiableModel libraryModel = library.getModifiableModel();
+      setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
+      setUrl(libraryModel, urlJavadoc, OrderRootType.JAVADOC);
+      libraryModel.commit();
+    }
+  }
+
+  private void setUrl(final Library.ModifiableModel libraryModel, final String newUrl, final OrderRootType type) {
+    for ( String url : libraryModel.getUrls(type)){
+      libraryModel.removeRoot(url, type);
+    }
+    if (newUrl != null) {
+      libraryModel.addRoot(newUrl, type);
+    }
   }
 
   private static void setExported(ModuleRootModel moduleRootModel, final Library library) {

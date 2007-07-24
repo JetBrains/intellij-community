@@ -28,7 +28,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private Project projectToUpdate;
-  private MavenImporterPreferences preferences;
+
+  private MavenImporterPreferences importerPreferences;
+  private MavenArtifactPreferences artifactPreferences;
 
   private VirtualFile importRoot;
   private Collection<VirtualFile> myFiles;
@@ -55,10 +57,10 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public void commit(final Project project) {
     myImportProcessor.resolve(project, myProfiles);
 
-    myImportProcessor.commit(project, preferences.isAutoImportNew());
+    myImportProcessor.commit(project, getImporterPreferences().isAutoImportNew());
 
     final MavenImporterState importerState = project.getComponent(MavenImporter.class).getState();
-    if (preferences.isAutoImportNew()) {
+    if (getImporterPreferences().isAutoImportNew()) {
       // visit topmost non-linked projects
       myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorRoot() {
         public void visit(MavenProjectModel.Node node) {
@@ -81,7 +83,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         }
       });
     }
-    MavenImporterPreferencesComponent.getInstance(project).loadState(preferences);
+    final MavenWorkspacePreferencesComponent preferencesComponent = MavenWorkspacePreferencesComponent.getInstance(project);
+    preferencesComponent.getState().myImporterPreferences = getImporterPreferences();
+    preferencesComponent.getState().myArtifactPreferences = getArtifactPreferences();
   }
 
   public Project getUpdatedProject() {
@@ -100,7 +104,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         public void run(ProgressIndicator indicator) {
           indicator.setText(ProjectBundle.message("maven.locating.files"));
           myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(), MavenEnv.POM_FILE, new ArrayList<VirtualFile>(), null, indicator,
-                                               preferences.isLookForNested());
+                                               getImporterPreferences().isLookForNested());
           indicator.setText2("");
         }
 
@@ -130,7 +134,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     myProfiles = new ArrayList<String>(profiles);
     ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
       public void run(ProgressIndicator indicator) {
-        myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), preferences);
+        myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), getImporterPreferences(), getArtifactPreferences());
         myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
         indicator.setText2("");
       }
@@ -177,16 +181,28 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     openModulesConfigurator = on;
   }
 
-  public MavenImporterPreferences getPreferences() {
-    if (preferences == null) {
+  public MavenImporterPreferences getImporterPreferences() {
+    if (importerPreferences == null) {
       if (isUpdate()) {
-        preferences = MavenImporterPreferencesComponent.getInstance(getProjectToUpdate()).getState().clone();
+        importerPreferences = MavenWorkspacePreferencesComponent.getInstance(getProjectToUpdate()).getState().myImporterPreferences.clone();
       }
       else {
-        preferences = new MavenImporterPreferences();
+        importerPreferences = new MavenImporterPreferences();
       }
     }
-    return preferences;
+    return importerPreferences;
+  }
+
+  private MavenArtifactPreferences getArtifactPreferences() {
+    if (artifactPreferences == null) {
+      if (isUpdate()) {
+        artifactPreferences = MavenWorkspacePreferencesComponent.getInstance(getProjectToUpdate()).getState().myArtifactPreferences.clone();
+      }
+      else {
+        artifactPreferences = new MavenArtifactPreferences();
+      }
+    }
+    return artifactPreferences;
   }
 
   public void setFiles(final Collection<VirtualFile> files) {

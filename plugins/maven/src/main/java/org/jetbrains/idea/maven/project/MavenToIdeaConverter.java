@@ -196,10 +196,23 @@ public class MavenToIdeaConverter {
         rootModel.createModuleDependency(moduleName);
       }
       else {
-        rootModel.createModuleLibrary(mavenToIdeaMapping.getLibraryName(id), getUrl(artifact, null), getUrl(artifact, SOURCES_CLASSIFIER),
-                                      getUrl(artifact, JAVADOC_CLASSIFIER));
+        final String artifactPath = artifact.getFile().getPath();
+        rootModel.createModuleLibrary(mavenToIdeaMapping.getLibraryName(id), getUrl(artifactPath, null),
+                                      getUrl(artifactPath, SOURCES_CLASSIFIER), getUrl(artifactPath, JAVADOC_CLASSIFIER));
       }
     }
+  }
+
+  static void updateDependencies(Module module, MavenProject mavenProject) {
+    RootModelAdapter rootModel = new RootModelAdapter(module);
+    for( Map.Entry<String,String> entry : rootModel.getModuleLibraries().entrySet()){
+      final String url = entry.getValue();
+      if(url.startsWith(JarFileSystem.PROTOCOL) && url.endsWith(JarFileSystem.JAR_SEPARATOR)){
+        final String path = url.substring(JarFileSystem.PROTOCOL.length()+3, url.lastIndexOf(JarFileSystem.JAR_SEPARATOR));
+        rootModel.updateModuleLibrary(entry.getKey(), getUrl(path, SOURCES_CLASSIFIER), getUrl(path, JAVADOC_CLASSIFIER));
+      }
+    }
+    rootModel.commit();
   }
 
   private static List<Artifact> extractDependencies(final MavenProject mavenProject) {
@@ -218,10 +231,10 @@ public class MavenToIdeaConverter {
     return new ArrayList<Artifact>(projectIdToArtifact.values());
   }
 
-  private static String getUrl(final Artifact artifact, final String classifier) {
-    String path = artifact.getFile().getPath();
+  private static String getUrl(final String artifactPath, final String classifier) {
+    String path = artifactPath;
     if (classifier != null) {
-      path = MessageFormat.format("{0}-{1}.{2}", path.substring(0, path.lastIndexOf(".")), classifier, artifact.getType());
+      path = MessageFormat.format("{0}-{1}.jar", path.substring(0, path.lastIndexOf(".")), classifier);
       if (!new File(path).exists()) {
         return null;
       }

@@ -44,11 +44,7 @@ public class ImporterPreferencesConfigurable implements Configurable {
 
   private void createUIComponents() {
     projectChooser = new ElementsChooser<String>(true);
-    //projectChooser.setPreferredSize(new Dimension(-1, -1));
-    //projectChooser.setMinimumSize(new Dimension(-1, 80));
     profileChooser = new ElementsChooser<String>(true);
-    //profileChooser.setPreferredSize(new Dimension(-1, -1));
-    //profileChooser.setMinimumSize(new Dimension(-1, 80));
   }
 
   @Nls

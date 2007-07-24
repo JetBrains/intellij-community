@@ -19,15 +19,15 @@ public class ImporterPreferencesForm {
   private JRadioButton myTemporaryModulesButton;
   private JCheckBox myModuleDirCheckBox;
   private TextFieldWithBrowseButton myModuleDirControl;
-  private JCheckBox myCreateGroupsCheckBox;
   private JCheckBox myLookForNestedCheckBox;
-  private JCheckBox mySynchronizeOnStartCheckBox;
-  private JCheckBox myGenerateSourcesCheckBox;
-  private JCheckBox myDownloadSourcesCheckBox;
-  private JCheckBox myDownloadJavadocCheckBox;
+  private JCheckBox myCreateGroupsCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
 
   public ImporterPreferencesForm() {
+    this(false);
+  }
+
+  public ImporterPreferencesForm(boolean minimal) {
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -40,6 +40,11 @@ public class ImporterPreferencesForm {
 
     myModuleDirControl.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                new FileChooserDescriptor(false, true, false, false, false, false));
+
+    if(minimal){
+      myCreateGroupsCheckBox.setVisible(false);
+      myUseMavenOutputCheckBox.setVisible(false);
+    }
   }
 
   private void enableControls() {
@@ -59,10 +64,6 @@ public class ImporterPreferencesForm {
   }
 
   public void getData(final MavenImporterPreferences data) {
-    data.setSynchronizeOnStart(mySynchronizeOnStartCheckBox.isSelected());
-    data.setGenerateSources(myGenerateSourcesCheckBox.isSelected());
-    data.setDownloadSources(myDownloadSourcesCheckBox.isSelected());
-    data.setDownloadJavadoc(myDownloadJavadocCheckBox.isSelected());
     data.setAutoImportNew(myTemporaryModulesButton.isSelected());
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
@@ -71,11 +72,6 @@ public class ImporterPreferencesForm {
   }
 
   public void setData(final MavenImporterPreferences data) {
-    mySynchronizeOnStartCheckBox.setSelected(data.isSynchronizeOnStart());
-    myGenerateSourcesCheckBox.setSelected(data.isGenerateSources());
-    myDownloadSourcesCheckBox.setSelected(data.isDownloadSources());
-    myDownloadJavadocCheckBox.setSelected(data.isDownloadJavadoc());
-
     myTemporaryModulesButton.setSelected(data.isAutoImportNew());
     myRegularModulesButton.setSelected(!data.isAutoImportNew());
 

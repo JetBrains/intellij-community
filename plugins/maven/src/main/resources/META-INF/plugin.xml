@@ -53,7 +53,7 @@
       <implementation-class>org.jetbrains.idea.maven.project.MavenImporterComponent</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenImporterPreferencesComponent</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspacePreferencesComponent</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
@@ -162,6 +162,10 @@
               text="Synchronize with Maven projects" description="Synchronize project structure with Maven projects"
               icon="/actions/sync.png">
       </action>
+      <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsAction"
+              text="Download artifacts" description="Download artifacts (sources, javadoc, plugins)"
+              icon="/actions/install.png">
+      </action>
     </group>
 
     <group id="Maven.EventsGroup">
@@ -195,6 +199,7 @@
       <reference id="Maven.ToggleOffline"/>
       <separator/>
       <reference id="Maven.Synchronize"/>
+      <reference id="Maven.DownloadArtifacts"/>
     </group>
 
     <group id="Maven.PomMenu" popup="true">

@@ -28,7 +28,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   public MavenImportRootStep(WizardContext wizardContext) {
     super(wizardContext);
 
-    myImporterPreferencesForm = new ImporterPreferencesForm() {
+    myImporterPreferencesForm = new ImporterPreferencesForm(true) {
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }
@@ -94,7 +94,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
 
   public MavenImporterPreferences getImporterPreferences() {
     if (myImporterPreferences == null) {
-      myImporterPreferences = ((MavenImportBuilder)getBuilder()).getPreferences();
+      myImporterPreferences = ((MavenImportBuilder)getBuilder()).getImporterPreferences();
     }
     return myImporterPreferences;
   }

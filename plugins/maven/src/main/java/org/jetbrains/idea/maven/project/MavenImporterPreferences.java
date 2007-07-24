@@ -13,11 +13,6 @@ public class MavenImporterPreferences implements Cloneable {
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
 
-  private boolean synchronizeOnStart = false;
-  private boolean downloadSources = false;
-  private boolean downloadJavadoc = false;
-  private boolean generateSources = false;
-
   public boolean isAutoImportNew() {
     return autoImportNew;
   }
@@ -59,38 +54,6 @@ public class MavenImporterPreferences implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
-  public boolean isSynchronizeOnStart() {
-    return synchronizeOnStart;
-  }
-
-  public void setSynchronizeOnStart(final boolean synchronizeOnStart) {
-    this.synchronizeOnStart = synchronizeOnStart;
-  }
-
-  public boolean isDownloadSources() {
-    return downloadSources;
-  }
-
-  public void setDownloadSources(final boolean downloadSources) {
-    this.downloadSources = downloadSources;
-  }
-
-  public boolean isDownloadJavadoc() {
-    return downloadJavadoc;
-  }
-
-  public void setDownloadJavadoc(final boolean downloadJavadoc) {
-    this.downloadJavadoc = downloadJavadoc;
-  }
-
-  public boolean isGenerateSources() {
-    return generateSources;
-  }
-
-  public void setGenerateSources(final boolean generateSources) {
-    this.generateSources = generateSources;
-  }
-
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -99,11 +62,7 @@ public class MavenImporterPreferences implements Cloneable {
 
     if (autoImportNew != that.autoImportNew) return false;
     if (createModuleGroups != that.createModuleGroups) return false;
-    if (downloadJavadoc != that.downloadJavadoc) return false;
-    if (downloadSources != that.downloadSources) return false;
-    if (generateSources != that.generateSources) return false;
     if (lookForNested != that.lookForNested) return false;
-    if (synchronizeOnStart != that.synchronizeOnStart) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
 
@@ -117,10 +76,6 @@ public class MavenImporterPreferences implements Cloneable {
     result = 31 * result + (lookForNested ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
-    result = 31 * result + (synchronizeOnStart ? 1 : 0);
-    result = 31 * result + (downloadSources ? 1 : 0);
-    result = 31 * result + (downloadJavadoc ? 1 : 0);
-    result = 31 * result + (generateSources ? 1 : 0);
     return result;
   }
 

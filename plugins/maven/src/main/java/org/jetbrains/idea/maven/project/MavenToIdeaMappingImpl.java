@@ -134,6 +134,10 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
     return nameToModule.get(moduleName) != null || nameToProject.get(moduleName) != null ? moduleName : null;
   }
 
+  public Collection<MavenId> getMappedToModules() {
+    return projectIdToModuleName.keySet();
+  }
+
   public Collection<Module> getExistingModules() {
     return nameToModule.values();
   }

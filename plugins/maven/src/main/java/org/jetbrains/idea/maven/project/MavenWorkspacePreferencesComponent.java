@@ -10,23 +10,23 @@ import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
  * @author Vladislav.Kaznacheev
  */
 @State(name = "MavenImportPreferences", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenImporterPreferencesComponent extends DummyProjectComponent implements PersistentStateComponent<MavenImporterPreferences> {
+public class MavenWorkspacePreferencesComponent extends DummyProjectComponent implements PersistentStateComponent<MavenWorkspacePreferences> {
 
-  public MavenImporterPreferencesComponent() {
+  public MavenWorkspacePreferencesComponent() {
     super("MavenImportPreferences");
   }
 
-  public static MavenImporterPreferencesComponent getInstance(final Project project) {
-    return project.getComponent(MavenImporterPreferencesComponent.class);
+  public static MavenWorkspacePreferencesComponent getInstance(final Project project) {
+    return project.getComponent(MavenWorkspacePreferencesComponent.class);
   }
 
-  private MavenImporterPreferences preferences = new MavenImporterPreferences();
+  private MavenWorkspacePreferences preferences = new MavenWorkspacePreferences();
 
-  public MavenImporterPreferences getState() {
+  public MavenWorkspacePreferences getState() {
     return preferences;
   }
 
-  public void loadState(MavenImporterPreferences state) {
+  public void loadState(MavenWorkspacePreferences state) {
     preferences = state;
   }
 }
