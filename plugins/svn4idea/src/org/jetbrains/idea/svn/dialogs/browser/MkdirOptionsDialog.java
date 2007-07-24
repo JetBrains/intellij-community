@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.dialogs.browser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -10,7 +11,6 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,9 +21,10 @@ public class MkdirOptionsDialog extends DialogWrapper {
 
   private SVNURL myURL;
   private JTextArea myCommitMessage;
-  private Project myProject;
   private JTextField myNameField;
   private JLabel myURLLabel;
+  private JComboBox myMessagesBox;
+  private JPanel myMainPanel;
   private SVNURL myOriginalURL;
 
   public MkdirOptionsDialog(Project project, SVNURL url) {
@@ -34,9 +35,38 @@ public class MkdirOptionsDialog extends DialogWrapper {
     } catch (SVNException e) {
       //
     }
-    myProject = project;
     setTitle("New Remote Folder");
     init();
+    myURLLabel.setText(myURL.toString());
+    myNameField.selectAll();
+    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        updateURL();
+      }
+    });
+
+    ArrayList<String> messages = null;
+    if (!project.isDefault()) {
+      messages = VcsConfiguration.getInstance(project).getRecentMessages();
+    }
+    if (messages != null) {
+      Collections.reverse(messages);
+    }
+    Object[] model = messages != null ? messages.toArray() : new Object[] {""};
+    myMessagesBox.setModel(new DefaultComboBoxModel(model));
+    myMessagesBox.setRenderer(new MessageBoxCellRenderer());
+
+    String lastMessage = VcsConfiguration.getInstance(project).getLastNonEmptyCommitMessage();
+    if (lastMessage != null) {
+      myCommitMessage.setText(lastMessage);
+      myCommitMessage.selectAll();
+    }
+    myMessagesBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myCommitMessage.setText(myMessagesBox.getSelectedItem().toString());
+        myCommitMessage.selectAll();
+      }
+    });
   }
 
   @NonNls
@@ -61,110 +91,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    GridBagConstraints gc = new GridBagConstraints();
-    gc.insets = new Insets(2, 2, 2, 2);
-    gc.gridwidth = 1;
-    gc.gridheight = 1;
-    gc.gridx = 0;
-    gc.gridy = 0;
-    gc.anchor = GridBagConstraints.WEST;
-    gc.fill = GridBagConstraints.NONE;
-    gc.weightx = 0;
-    gc.weighty = 0;
-
-    panel.add(new JLabel("Remote Folder URL:"), gc);
-    gc.gridx += 1;
-    gc.gridwidth = 2;
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    myURLLabel = new JLabel(myURL.toString());
-    myURLLabel.setFont(myURLLabel.getFont().deriveFont(Font.BOLD));
-    panel.add(myURLLabel, gc);
-
-    gc.gridy += 1;
-    gc.gridwidth = 1;
-    gc.gridx = 0;
-    gc.weightx = 0;
-    gc.fill = GridBagConstraints.NONE;
-    panel.add(new JLabel("Remote Folder Name:"), gc);
-    gc.gridx += 1;
-    gc.gridwidth = 2;
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-
-    myNameField = new JTextField();
-    myNameField.setText("NewFolder");
-    myNameField.selectAll();
-    panel.add(myNameField, gc);
-
-    myNameField.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        updateURL();
-      }
-      public void removeUpdate(DocumentEvent e) {
-        updateURL();
-      }
-      public void changedUpdate(DocumentEvent e) {
-        updateURL();
-      }
-    });
-
-    gc.gridy += 1;
-    gc.gridx = 0;
-    gc.weightx = 0;
-    gc.gridwidth = 3;
-    gc.fill = GridBagConstraints.NONE;
-    panel.add(new JLabel("Commit Message:"), gc);
-    gc.gridy += 1;
-    gc.gridwidth = 3;
-    gc.gridx = 0;
-    gc.weightx = 1;
-    gc.weighty = 1;
-    gc.anchor = GridBagConstraints.NORTH;
-    gc.fill = GridBagConstraints.BOTH;
-
-    myCommitMessage = new JTextArea(10, 0);
-    panel.add(new JScrollPane(myCommitMessage), gc);
-
-    gc.gridy += 1;
-    gc.gridwidth = 3;
-    gc.gridx = 0;
-    gc.weightx = 0;
-    gc.weighty = 0;
-    gc.anchor = GridBagConstraints.NORTH;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(new JLabel("Recent Messages: "), gc);
-    gc.gridy += 1;
-
-    ArrayList<String> messages = null;
-    if (!myProject.isDefault()) {
-      messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
-    }
-    if (messages != null) {
-      Collections.reverse(messages);
-    }
-    Object[] model = messages != null ? messages.toArray() : new Object[] {""};
-    final JComboBox messagesBox = new JComboBox(model);
-    messagesBox.setRenderer(new MessageBoxCellRenderer());
-    panel.add(messagesBox, gc);
-
-    String lastMessage = VcsConfiguration.getInstance(myProject).getLastNonEmptyCommitMessage();
-    if (lastMessage != null) {
-      myCommitMessage.setText(lastMessage);
-      myCommitMessage.selectAll();
-    }
-    messagesBox.addActionListener(new ActionListener() {
-
-      public void actionPerformed(ActionEvent e) {
-        myCommitMessage.setText(messagesBox.getSelectedItem().toString());
-        myCommitMessage.selectAll();
-      }
-    });
-    return panel;
+    return myMainPanel;
   }
-
 
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
