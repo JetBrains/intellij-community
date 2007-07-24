@@ -90,7 +90,7 @@ class XmlSerializerImpl {
     if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
     if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
 
-    return new BeanBinding(aClass, this);
+    return new BeanBinding(aClass, this, accessor);
   }
 
   @Nullable

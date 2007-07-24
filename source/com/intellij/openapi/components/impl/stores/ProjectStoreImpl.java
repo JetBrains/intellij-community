@@ -334,11 +334,18 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final boolean[] result = new boolean[1];
 
     try {
-      SwingUtilities.invokeAndWait(new Runnable() {
+      final Runnable r = new Runnable() {
         public void run() {
           result[0] = ProjectManagerImpl.showMacrosConfigurationDialog(project, usedMacros);
         }
-      });
+      };
+
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
+        SwingUtilities.invokeAndWait(r);
+      }
+      else {
+        r.run();
+      }
     }
     catch (InterruptedException e) {
       LOG.error(e);

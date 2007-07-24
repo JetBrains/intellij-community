@@ -63,7 +63,7 @@ public class UrlClassLoader extends ClassLoader {
   protected final synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
     Class c = _loadClass(name, resolve);
 
-    if (c == null) throw new ClassNotFoundException();
+    if (c == null) throw new ClassNotFoundException(name);
     return c;
   }
 

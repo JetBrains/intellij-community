@@ -29,8 +29,10 @@ class BeanBinding implements Binding {
   private SerializationFilter filter;
   private XmlSerializerImpl serializer;
   @NonNls private static final String CLASS_PROPERTY = "class";
+  private final Accessor myAccessor;
 
-  public BeanBinding(Class<?> beanClass, XmlSerializerImpl serializer) {
+  public BeanBinding(Class<?> beanClass, XmlSerializerImpl serializer, final Accessor accessor) {
+    myAccessor = accessor;
     assert !beanClass.isArray() : "Bean is an array";
     assert !beanClass.isPrimitive() : "Bean is primitive type";
     myBeanClass = beanClass;
@@ -106,7 +108,7 @@ class BeanBinding implements Binding {
       nodes.add(aNode);
     }
 
-    assert nodes.size() == 1;
+    assert nodes.size() == 1 : "Wrong set of nodes: " + nodes + " for bean"  + myBeanClass + " in " + myAccessor;
     assert nodes.get(0) instanceof Element : "Wrong node: " + nodes;
     Element e = (Element)nodes.get(0);
 
