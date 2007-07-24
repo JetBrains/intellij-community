@@ -40,6 +40,10 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("pack1.Parent", "ParentXXX");
   }
 
+  public void testImplicitlyImported() throws Exception {
+    doTest("pack1.A", "Object");
+  }
+
   private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

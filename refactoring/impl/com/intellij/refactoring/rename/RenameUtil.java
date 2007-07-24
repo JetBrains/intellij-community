@@ -661,9 +661,6 @@ public class RenameUtil {
           postponedCollisions.add(usage);
         }
       }
-      else {
-        rename(usage, newName);
-      }
     }
 
     // do actual rename
@@ -671,6 +668,20 @@ public class RenameUtil {
     PsiFile psiFile = aClass.getContainingFile();
     Document document = psiFile == null ? null : PsiDocumentManager.getInstance(aClass.getProject()).getDocument(psiFile);
     aClass.setName(newName);
+
+    for (UsageInfo usage : usages) {
+      if (!(usage instanceof ResolvableCollisionUsageInfo)) {
+        final PsiReference ref = usage.getReference();
+        if (ref == null) continue;
+        try {
+          ref.bindToElement(aClass);
+        }
+        catch (IncorrectOperationException e) {//fall back to old scheme
+          ref.handleElementRename(newName);
+        }
+      }
+    }
+    
     ChangeContextUtil.decodeContextInfo(aClass, null, null); //to make refs to other classes from this one resolve to their old referent
 
     // resolve collisions
