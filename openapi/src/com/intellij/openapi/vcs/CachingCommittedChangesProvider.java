@@ -32,6 +32,13 @@ import java.util.Collection;
  * @since 7.0
  */
 public interface CachingCommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends CommittedChangesProvider<T, U> {
+  /**
+   * Returns the current version of the binary data format that is read/written by the caching provider.
+   * If the format version loaded from the cache stream does not match the format version returned by
+   * the provider, the cache stream is discarded and changes are reloaded from server.
+   *
+   * @return binary format version.
+   */
   int getFormatVersion();
   void writeChangeList(final DataOutput stream, final T list) throws IOException;
   T readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException;
