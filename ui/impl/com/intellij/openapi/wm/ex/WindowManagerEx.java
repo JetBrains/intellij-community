@@ -23,11 +23,11 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
 
-  public abstract IdeFrameImpl getFrame(@NotNull Project project);
+  public abstract IdeFrameImpl getFrame(Project project);
 
-  public abstract IdeFrameImpl allocateFrame(@NotNull Project project);
+  public abstract IdeFrameImpl allocateFrame(Project project);
 
-  public abstract void releaseFrame(@NotNull IdeFrameImpl frame);
+  public abstract void releaseFrame(IdeFrameImpl frame);
 
   /**
    * @return focus owner of the specified window.
@@ -41,7 +41,7 @@ public abstract class WindowManagerEx extends WindowManager {
    * the method returns focused component in window which has no project.
    * If there is no focused component at all then the method returns <code>null</code>.
    */
-  public abstract Component getFocusedComponent(@Nullable Project project);
+  public abstract Component getFocusedComponent(Project project);
 
   public abstract Window getMostRecentFocusedWindow();
 
@@ -57,7 +57,7 @@ public abstract class WindowManagerEx extends WindowManager {
   /**
    * Copies <code>layout</code> into internal default layout.
    */
-  public abstract void setLayout(@NotNull DesktopLayout layout);
+  public abstract void setLayout(DesktopLayout layout);
 
   /**
    * This method is invoked by <code>IdeEventQueue</code> to notify window manager that

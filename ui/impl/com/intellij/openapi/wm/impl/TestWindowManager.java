@@ -22,18 +22,18 @@ import java.awt.event.ComponentEvent;
 public final class TestWindowManager extends WindowManagerEx implements ApplicationComponent{
   private static final StatusBar ourStatusBar = new DummyStatusBar();
   
-  public final void doNotSuggestAsParent(@NotNull final Window window) {
+  public final void doNotSuggestAsParent(final Window window) {
   }
 
-  public final Window suggestParentWindow(@NotNull final Project project) {
+  public final Window suggestParentWindow(final Project project) {
     return null;
   }
 
-  public final StatusBar getStatusBar(@NotNull final Project project) {
+  public final StatusBar getStatusBar(final Project project) {
     return ourStatusBar;
   }
 
-  public IdeFrame getIdeFrame(@NotNull final Project project) {
+  public IdeFrame getIdeFrame(final Project project) {
     return null;
   }
 
@@ -84,20 +84,19 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
   }
 
-  @NotNull
   public IdeFrameImpl[] getAllFrames() {
     return new IdeFrameImpl[0];
   }
 
-  public final IdeFrameImpl getFrame(@NotNull final Project project) {
+  public final IdeFrameImpl getFrame(final Project project) {
     return null;
   }
 
-  public final IdeFrameImpl allocateFrame(@NotNull final Project project) {
+  public final IdeFrameImpl allocateFrame(final Project project) {
     throw new UnsupportedOperationException();
   }
 
-  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
+  public final void releaseFrame(final IdeFrameImpl frame) {
     throw new UnsupportedOperationException();
   }
 
@@ -125,7 +124,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     throw new UnsupportedOperationException();
   }
 
-  public final void setLayout(@NotNull final DesktopLayout layout) {
+  public final void setLayout(final DesktopLayout layout) {
     throw new UnsupportedOperationException();
   }
 
