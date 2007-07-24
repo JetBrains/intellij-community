@@ -47,7 +47,7 @@ public class MavenArtifactDownloader {
   }
 
   public static void download(final Project project) {
-    MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+    final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
     final MavenImporter importer = project.getComponent(MavenImporter.class);
 
     final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
@@ -98,7 +98,10 @@ public class MavenArtifactDownloader {
     });
   }
 
-  void download(Project project, Map<MavenProject, Collection<String>> mavenProjects, Collection<MavenId> mappedToModules, boolean demand) {
+  void download(Project project,
+                Map<MavenProject, Collection<String>> mavenProjects,
+                Collection<MavenId> mappedToModules,
+                boolean demand) {
     final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects.keySet(), mappedToModules);
 
     if (myProgressIndicator.isCanceled()) return;
@@ -116,7 +119,11 @@ public class MavenArtifactDownloader {
     if (myProgressIndicator.isCanceled()) return;
 
     if (isEnabled(myPreferences.getDownloadPlugins(), demand)) {
-      downloadPlugins(ProjectUtil.collectPlugins(mavenProjects));
+      final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+      final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(mavenProjects);
+      collectAttachedPlugins(projectsState, plugins);
+      downloadPlugins(plugins);
+      projectsState.updateAllFiles();
     }
 
     if (myProgressIndicator.isCanceled()) return;
@@ -126,18 +133,25 @@ public class MavenArtifactDownloader {
     }
   }
 
+  private void collectAttachedPlugins(final MavenProjectsState projectsState, final Map<Plugin, MavenProject> plugins) {
+    for(VirtualFile file : projectsState.getFiles()){
+      for(MavenId mavenId : projectsState.getAttachedPlugins(file)){
+        final Plugin plugin = new Plugin();
+        plugin.setGroupId(mavenId.groupId);
+        plugin.setArtifactId(mavenId.artifactId);
+        plugin.setVersion(mavenId.version);
+        plugins.put(plugin,projectsState.getMavenProject(file));
+      }
+    }
+  }
+
   private boolean isEnabled(final MavenArtifactPreferences.UPDATE_MODE level, final boolean demand) {
     return level == MavenArtifactPreferences.UPDATE_MODE.ALWAYS || (level == MavenArtifactPreferences.UPDATE_MODE.ON_DEMAND && demand);
   }
 
   static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(Collection<MavenProject> mavenProjects,
                                                                        Collection<MavenId> mappedToModules) {
-    final Map<MavenId, Set<ArtifactRepository>> repositoryArtifacts =
-      new TreeMap<MavenId, Set<ArtifactRepository>>(new Comparator<MavenId>() {
-        public int compare(MavenId o1, MavenId o2) {
-          return o1.toString().compareTo(o2.toString());
-        }
-      });
+    final Map<MavenId, Set<ArtifactRepository>> repositoryArtifacts = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
     for (MavenProject mavenProject : mavenProjects) {
       final List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
@@ -227,12 +241,12 @@ public class MavenArtifactDownloader {
 
     final Set<String> modulePaths = new HashSet<String>();
     for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
-      ProjectUtil.collectAbsoluteModulePaths(entry.getKey(), entry.getValue(), modulePaths );
+      ProjectUtil.collectAbsoluteModulePaths(entry.getKey(), entry.getValue(), modulePaths);
     }
 
     for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
       final File file = entry.getKey().getFile();
-      if(!modulePaths.contains(FileUtil.toSystemIndependentName(file.getParent()))) { // only for top-level projects
+      if (!modulePaths.contains(FileUtil.toSystemIndependentName(file.getParent()))) { // only for top-level projects
         commands.add(new MavenBuildParameters(file.getPath(), goals, entry.getValue()));
       }
     }

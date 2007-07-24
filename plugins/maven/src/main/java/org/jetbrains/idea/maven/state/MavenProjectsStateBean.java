@@ -15,4 +15,5 @@ public class MavenProjectsStateBean {
   public Set<String> ignoredFiles = new TreeSet<String>();
   public Map<String, Collection<String>> activeProfiles = new HashMap<String, Collection<String>>();
   public Map<String, Collection<MavenId>> attachedPlugins = new HashMap<String, Collection<MavenId>>();
+  public Set<MavenId> commonPlugins = new TreeSet<MavenId>();
 }

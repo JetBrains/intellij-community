@@ -154,13 +154,17 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
       return profiles;
     }
     if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) {
-      final List<PomTreeStructure.ExtraPluginNode> nodes = getSelectedNodes(PomTreeStructure.ExtraPluginNode.class);
+      final List<PomTreeStructure.PluginNode> nodes = getSelectedNodes(PomTreeStructure.PluginNode.class);
       if(PomTreeStructure.getCommonParent(nodes)==null) {
         return null;
       }
       final List<MavenId> ids = new ArrayList<MavenId>();
-      for (PomTreeStructure.ExtraPluginNode node : nodes) {
-        ids.add(node.getId());
+      for (PomTreeStructure.PluginNode node : nodes) {
+        if(node.isDetachable()){
+          ids.add(node.getId());
+        } else {
+          return null;
+        }
       }
       return ids;
     }

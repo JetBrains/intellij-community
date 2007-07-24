@@ -126,7 +126,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static Collection<String> getGoals(MavenProjectsState projectsState, MavenRepository repository, VirtualFile file) {
-    Collection<String> list = new ArrayList<String>();
+    Collection<String> list = new HashSet<String>();
     list.addAll(MavenEnv.getStandardGoalsList());
     for (MavenId mavenId : ProjectUtil
       .collectPluginIds(projectsState.getMavenProject(file), projectsState.getProfiles(file), new HashSet<MavenId>())) {
@@ -175,6 +175,10 @@ public class MavenKeymapExtension implements KeymapExtension {
           }
         }
       }
+    }
+
+    public String toString() {
+      return myId;
     }
   }
 }

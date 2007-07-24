@@ -593,16 +593,16 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     private void createPomPluginNodes() {
       pomPluginNodes.clear();
       for (MavenId mavenId : ProjectUtil.collectPluginIds(mavenProject, myProjectsState.getProfiles(virtualFile), new HashSet<MavenId>())) {
-        addPlugin(mavenId);
+        addPlugin(pomPluginNodes, mavenId, false);
       }
-      addPlugin(new MavenId("org.apache.maven.plugins", "maven-site-plugin", null));
     }
 
-    private void addPlugin(final MavenId mavenId) {
+    private void addPlugin(final List<PluginNode> pluginNodes, final MavenId mavenId, final boolean detachable) {
       if (!hasPlugin(mavenId)) {
         PluginDocument pluginDocument = getRepository().loadPlugin(mavenId);
-        insertSorted(pomPluginNodes,
-                     pluginDocument != null ? new ValidPluginNode(this, pluginDocument.getPlugin()) : new InvalidPluginNode(this, mavenId));
+        insertSorted(pluginNodes, pluginDocument == null
+                                  ? new InvalidPluginNode(this, mavenId, detachable)
+                                  : new ValidPluginNode(this, pluginDocument.getPlugin(), detachable));
       }
     }
 
@@ -612,13 +612,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public void attachPlugins(final Collection<MavenId> plugins) {
+      final Collection<MavenId> commonPlugins = myProjectsState.getCommonPlugins();
       for (MavenId pluginId : plugins) {
-        if (!hasPlugin(pluginId)) {
-          final PluginDocument pluginDocument = getRepository().loadPlugin(pluginId);
-          if (pluginDocument != null) {
-            insertSorted(extraPluginNodes, new ExtraPluginNode(this, pluginDocument.getPlugin()));
-          }
-        }
+        addPlugin(extraPluginNodes, pluginId, !commonPlugins.contains(pluginId));
       }
       updateSubTree();
     }
@@ -626,8 +622,11 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public void detachPlugins(final Collection<MavenId> plugins) {
       final Collection<PluginNode> toRemove = new ArrayList<PluginNode>();
       for (PluginNode pluginNode : extraPluginNodes) {
-        if (plugins.contains(pluginNode.getId())) {
-          toRemove.add(pluginNode);
+        for (MavenId plugin : plugins) {
+          if (plugin.matches(pluginNode.getId())) {
+            toRemove.add(pluginNode);
+            break;
+          }
         }
       }
       for (PluginNode pluginNode : toRemove) {
@@ -1016,28 +1015,40 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   public class PluginNode extends GoalGroupNode {
     private final MavenId myId;
+    private final boolean myDetachable;
 
-    public PluginNode(PomNode parent, final MavenId id) {
+    public PluginNode(PomNode parent, final MavenId id, boolean detachable) {
       super(parent);
       myId = id;
+      myDetachable = detachable;
       setUniformIcon(iconPlugin);
     }
 
     public MavenId getId() {
       return myId;
     }
+
+    public boolean isDetachable() {
+      return myDetachable;
+    }
+
+    @Nullable
+    @NonNls
+    protected String getMenuId() {
+      return myDetachable ? "Maven.PluginMenu" : null;
+    }
   }
 
   public class InvalidPluginNode extends PluginNode {
-    public InvalidPluginNode(PomNode parent, MavenId id) {
-      super(parent, id);
+    public InvalidPluginNode(PomNode parent, MavenId id, boolean detachable) {
+      super(parent, id, detachable);
       addColoredFragment(id.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.red));
     }
   }
 
   public class ValidPluginNode extends PluginNode {
-    public ValidPluginNode(PomNode parent, final PluginDocument.Plugin plugin) {
-      super(parent, new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()));
+    public ValidPluginNode(PomNode parent, final PluginDocument.Plugin plugin, boolean detachable) {
+      super(parent, new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()), detachable);
       addPlainText(plugin.getGoalPrefix());
       addColoredFragment(" (" + getId().toString() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       for (PluginDocument.Mojo mojo : plugin.getMojos().getMojoList()) {
@@ -1050,18 +1061,6 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     public PluginGoalNode(PluginNode parent, String pluginPrefix, String goal) {
       super(parent, pluginPrefix + ":" + goal);
       setUniformIcon(iconPluginGoal);
-    }
-  }
-
-  public class ExtraPluginNode extends ValidPluginNode {
-    public ExtraPluginNode(PomNode parent, final PluginDocument.Plugin plugin) {
-      super(parent, plugin);
-    }
-
-    @Nullable
-    @NonNls
-    protected String getMenuId() {
-      return "Maven.PluginMenu";
     }
   }
 }

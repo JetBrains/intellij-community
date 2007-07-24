@@ -5,11 +5,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
+import java.text.ParseException;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenId {
+public class MavenId implements Comparable<MavenId>{
   @NonNls public String groupId;
   @NonNls public String artifactId;
   @NonNls public String version;
@@ -51,11 +52,41 @@ public class MavenId {
   }
 
   public String toString() {
-    return MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, version);
+    return version != null
+           ? MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, version)
+           : MessageFormat.format("{0}:{1}", groupId, artifactId);
+  }
+
+  public static MavenId parse(final String text) throws ParseException {
+    final int colon1 = text.indexOf(":");
+    if (colon1 <= 0) {
+      throw new ParseException (text, 0);
+    }
+    final String groupId = text.substring(0, colon1);
+    final String artifactId;
+    final String version;
+    final int colon2 = text.indexOf(":", colon1 + 1);
+    if (colon2 <= 0) {
+      artifactId = text.substring(colon1 + 1);
+      version = null;
+    }
+    else {
+      artifactId = text.substring(colon1 + 1, colon2);
+      version = text.substring(colon2 + 1);
+      final int colon3 = text.indexOf(":", colon2 + 1);
+      if (colon3 > 0) {
+        throw new ParseException (text, colon3);
+      }
+    }
+    return new MavenId(groupId, artifactId, version);
   }
 
   public boolean matches(@NotNull final MavenId that) {
     return groupId.equals(that.groupId) && artifactId.equals(that.artifactId) &&
            (version == null || that.version == null || version.equals(that.version));
+  }
+
+  public int compareTo(final MavenId that) {
+    return toString().compareTo(that.toString());
   }
 }
