@@ -44,7 +44,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   }
 
   private static void envsFromString(final String envs, final Map<String, String> envsMap) {
-    if (envs == null) return;
+    if (envs == null || envs.length() == 0) return;
     final String[] envVars = envs.split(";");
     for (String envVar : envVars) {
       final String[] nameValue = envVar.split("=");
