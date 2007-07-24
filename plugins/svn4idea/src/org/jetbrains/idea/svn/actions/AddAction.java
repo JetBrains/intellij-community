@@ -106,7 +106,7 @@ public class AddAction extends BasicAction {
       try {
         SVNWCClient wcClient = vcs.createWCClient();
         wcClient.setEventHandler(new AddEventListener(project));
-        wcClient.doAdd(new File(file.getPath()), false, false, true, true);
+        wcClient.doAdd(new File(file.getPath()), true, false, true, true);
       }
       catch (SVNException e) {
         exceptions.add(e.getMessage());
