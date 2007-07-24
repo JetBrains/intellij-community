@@ -21,6 +21,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.ExceptionEvent;
@@ -162,12 +164,34 @@ public class ExceptionBreakpoint extends Breakpoint {
       catch (Exception e) {
       }
     }
-
+    final Location location = event.location();
+    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    String locationFileName = "";
+    try {
+      locationFileName = location.sourceName();
+    }
+    catch (AbsentInformationException e) {
+      locationFileName = "";
+    }
+    final int locationLine = Math.max(0, location.lineNumber());
     if (threadName != null) {
-      return DebuggerBundle.message("exception.breakpoint.console.message.with.thread.info", exceptionName, threadName);
+      return DebuggerBundle.message(
+        "exception.breakpoint.console.message.with.thread.info", 
+        exceptionName, 
+        threadName,
+        locationQName,
+        locationFileName,
+        locationLine
+      );
     }
     else {
-      return DebuggerBundle.message("exception.breakpoint.console.message", exceptionName);
+      return DebuggerBundle.message(
+        "exception.breakpoint.console.message", 
+        exceptionName,
+        locationQName,
+        locationFileName,
+        locationLine
+      );
     }
   }
 

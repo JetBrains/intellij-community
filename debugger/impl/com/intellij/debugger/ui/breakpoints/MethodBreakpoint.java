@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayUtil;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
@@ -159,15 +161,37 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
 
 
   public String getEventMessage(LocatableEvent event) {
+    final Location location = event.location();
+    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    String locationFileName = "";
+    try {
+      locationFileName = location.sourceName();
+    }
+    catch (AbsentInformationException e) {
+      locationFileName = getSourcePosition().getFile().getName();
+    }
+    final int locationLine = location.lineNumber();
     if (event instanceof MethodEntryEvent) {
       MethodEntryEvent entryEvent = (MethodEntryEvent)event;
       final Method method = entryEvent.method();
-      return DebuggerBundle.message("status.method.entry.breakpoint.reached", method.declaringType().name() + "." + method.name() + "()");
+      return DebuggerBundle.message(
+        "status.method.entry.breakpoint.reached", 
+        method.declaringType().name() + "." + method.name() + "()",
+        locationQName,
+        locationFileName,
+        locationLine
+      );
     }
-    else if (event instanceof MethodExitEvent) {
+    if (event instanceof MethodExitEvent) {
       MethodExitEvent exitEvent = (MethodExitEvent)event;
       final Method method = exitEvent.method();
-      return DebuggerBundle.message("status.method.exit.breakpoint.reached", method.declaringType().name() + "." + method.name() + "()");
+      return DebuggerBundle.message(
+        "status.method.exit.breakpoint.reached", 
+        method.declaringType().name() + "." + method.name() + "()",
+        locationQName,
+        locationFileName,
+        locationLine
+      );
     }
     return "";
   }

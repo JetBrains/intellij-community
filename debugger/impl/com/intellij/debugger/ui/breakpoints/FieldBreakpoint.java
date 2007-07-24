@@ -183,23 +183,68 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getEventMessage(final LocatableEvent event) {
+    final Location location = event.location();
+    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    String locationFileName = "";
+    try {
+      locationFileName = location.sourceName();
+    }
+    catch (AbsentInformationException e) {
+      locationFileName = getSourcePosition().getFile().getName();
+    }
+    final int locationLine = location.lineNumber();
+
     if (event instanceof ModificationWatchpointEvent) {
       final ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
       final ObjectReference object = modificationEvent.object();
       final Field field = modificationEvent.field();
       if (object != null) {
-        return DebuggerBundle.message("status.field.watchpoint.reached.modification", field.declaringType().name(), field.name(), modificationEvent.valueCurrent(), modificationEvent.valueToBe(), object.uniqueID());
+        return DebuggerBundle.message(
+          "status.field.watchpoint.reached.modification", 
+          field.declaringType().name(), 
+          field.name(), 
+          modificationEvent.valueCurrent(), 
+          modificationEvent.valueToBe(),
+          locationQName,
+          locationFileName,
+          locationLine,
+          object.uniqueID()
+        );
       }
-      return DebuggerBundle.message("status.static.field.watchpoint.reached.modification", field.declaringType().name(), field.name(), modificationEvent.valueCurrent(), modificationEvent.valueToBe());
+      return DebuggerBundle.message(
+        "status.static.field.watchpoint.reached.modification", 
+        field.declaringType().name(), 
+        field.name(), 
+        modificationEvent.valueCurrent(), 
+        modificationEvent.valueToBe(),
+        locationQName,
+        locationFileName,
+        locationLine
+      );
     }
     else if (event instanceof AccessWatchpointEvent) {
       AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
       final ObjectReference object = accessEvent.object();
       final Field field = accessEvent.field();
       if (object != null) {
-        return DebuggerBundle.message("status.field.watchpoint.reached.access", field.declaringType().name(), field.name(), object.uniqueID());
+        return DebuggerBundle.message(
+          "status.field.watchpoint.reached.access", 
+          field.declaringType().name(), 
+          field.name(), 
+          locationQName,
+          locationFileName,
+          locationLine,
+          object.uniqueID()
+        );
       }
-      return DebuggerBundle.message("status.static.field.watchpoint.reached.access", field.declaringType().name(), field.name());
+      return DebuggerBundle.message(
+        "status.static.field.watchpoint.reached.access", 
+        field.declaringType().name(), 
+        field.name(),
+        locationQName,
+        locationFileName,
+        locationLine
+      );
     }
     return null;
   }

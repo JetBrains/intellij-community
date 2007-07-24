@@ -228,7 +228,24 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getEventMessage(LocatableEvent event) {
-    return DebuggerBundle.message("status.line.breakpoint.reached", event.location().declaringType().name(), getLineIndex() + 1);
+    final Location location = event.location();
+    try {
+      return DebuggerBundle.message(
+        "status.line.breakpoint.reached", 
+        location.declaringType().name() + "." + location.method().name(), 
+        location.sourceName(), 
+        getLineIndex() + 1
+      );
+    }
+    catch (AbsentInformationException e) {
+      final String sourceName = getSourcePosition().getFile().getName();
+      return DebuggerBundle.message(
+        "status.line.breakpoint.reached", 
+        location.declaringType().name() + "." + location.method().name(), 
+        sourceName, 
+        getLineIndex() + 1
+      );
+    }
   }
 
   public PsiElement getEvaluationElement() {

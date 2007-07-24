@@ -18,7 +18,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.sun.jdi.*;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodExitRequest;
@@ -61,8 +64,22 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   public String getEventText(Pair<Breakpoint, Event> descriptor) {
     String text = "";
-    Event event = descriptor.getSecond();
-    if (event instanceof VMStartEvent) {
+    final Event event = descriptor.getSecond();
+    final Breakpoint breakpoint = descriptor.getFirst();
+    if (event instanceof LocatableEvent) {
+      if (breakpoint instanceof LineBreakpoint && !((LineBreakpoint)breakpoint).isVisible()) {
+        text = DebuggerBundle.message("status.stopped.at.cursor");
+      }
+      else {
+        try {
+          text = breakpoint != null? breakpoint.getEventMessage(((LocatableEvent)event)) : DebuggerBundle.message("status.generic.breakpoint.reached");
+        }
+        catch (InternalException e) {
+          text = DebuggerBundle.message("status.generic.breakpoint.reached");
+        }
+      }
+    }
+    else if (event instanceof VMStartEvent) {
       text = DebuggerBundle.message("status.process.started");
     }
     else if (event instanceof VMDeathEvent) {
@@ -73,76 +90,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
       final String transportName = DebuggerBundle.getTransportName(connection);
       text = DebuggerBundle.message("status.disconnected", addressDisplayName, transportName);
-    }
-    else if (event instanceof ExceptionEvent) {
-      ExceptionEvent exceptionEvent = (ExceptionEvent)event;
-      ObjectReference objectReference = exceptionEvent.exception();
-      try {
-        text = DebuggerBundle.message("status.exception.breakpoint.reached") + "." +
-               DebuggerBundle.message(
-                 "status.exception.breakpoint.reached.details", objectReference.referenceType().name(), exceptionEvent.thread().name()
-               );
-      }
-      catch (Exception e) {
-        text = DebuggerBundle.message("status.exception.breakpoint.reached");
-      }
-    }
-    else if (event instanceof AccessWatchpointEvent) {
-      AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
-      final StringBuffer message = new StringBuffer(32);
-      message.append(DebuggerBundle.message("status.field.watchpoint.reached")).append(". ");
-      final Field field = accessEvent.field();
-      final ObjectReference object = accessEvent.object();
-      if (object != null) {
-        message.append(DebuggerBundle.message("status.field.watchpoint.reached.access", field.declaringType().name(), field.name(), object.uniqueID()));
-      }
-      else {
-        message.append(DebuggerBundle.message("status.static.field.watchpoint.reached.access", field.declaringType().name(), field.name()));
-      }
-      text = message.toString();
-    }
-    else if (event instanceof ModificationWatchpointEvent) {
-      ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
-      StringBuffer message = new StringBuffer(64);
-      message.append(DebuggerBundle.message("status.field.watchpoint.reached")).append(". ");
-      final Field field = modificationEvent.field();
-      final ObjectReference object = modificationEvent.object();
-      if (object != null) {
-        message.append(DebuggerBundle.message("status.field.watchpoint.reached.modification", field.declaringType().name(), field.name(), modificationEvent.valueCurrent(), modificationEvent.valueToBe(), object.uniqueID()));
-      }
-      else {
-        message.append(DebuggerBundle.message("status.static.field.watchpoint.reached.modification", field.declaringType().name(), field.name(), modificationEvent.valueCurrent(), modificationEvent.valueToBe()));
-      }
-      text = message.toString();
-    }
-    else if (event instanceof BreakpointEvent) {
-      BreakpointEvent breakpointEvent = (BreakpointEvent)event;
-      Breakpoint breakpoint = descriptor.getFirst();
-      if (breakpoint instanceof LineBreakpoint && !((LineBreakpoint)breakpoint).isVisible()) {
-        text = DebuggerBundle.message("status.stopped.at.cursor");
-      }
-      else {
-        Location location = breakpointEvent.location();
-        try {
-          text = DebuggerBundle.message("status.line.breakpoint.reached", location.sourceName(), location.lineNumber());
-        }
-        catch (AbsentInformationException e) {
-          text = DebuggerBundle.message("status.generic.breakpoint.reached");
-        }
-        catch (InternalException e) {
-          text = DebuggerBundle.message("status.generic.breakpoint.reached");
-        }
-      }
-    }
-    else if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent entryEvent = (MethodEntryEvent)event;
-      Method method = entryEvent.method();
-      text = DebuggerBundle.message("status.method.entry.breakpoint.reached", method.declaringType().name() + "." + method.name() + "()");
-    }
-    else if (event instanceof MethodExitEvent) {
-      MethodExitEvent exitEvent = (MethodExitEvent)event;
-      Method method = exitEvent.method();
-      text = DebuggerBundle.message("status.method.exit.breakpoint.reached", method.declaringType().name() + "." + method.name() + "()");
     }
     return text;
   }
