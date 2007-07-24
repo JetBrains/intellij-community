@@ -7,8 +7,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -115,16 +113,7 @@ public class ActionMenuItem extends JMenuItem {
    */
   public void menuSelectionChanged(boolean isIncluded) {
     super.menuSelectionChanged(isIncluded);
-    IdeFrameImpl frame = (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, this);
-    if (frame != null) {
-      StatusBar statusBar = frame.getStatusBar();
-      if (isIncluded) {
-        statusBar.setInfo(myPresentation.getDescription());
-      }
-      else {
-        statusBar.setInfo(null);
-      }
-    }
+    ActionMenu.showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
   }
 
   public String getFirstShortcutText() {

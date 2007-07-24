@@ -7,6 +7,7 @@ package com.intellij.ui.popup;
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -28,6 +30,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,17 +42,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
 
-  private static final Runnable EMPTY = new Runnable() {
-    public void run() {
-    }
-  };
-
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(), onYes, defaultOptionIndex);
   }
 
   public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, int defaultOptionIndex) {
-    return createConfirmation(title, yesText, noText, onYes, EMPTY, defaultOptionIndex);
+    return createConfirmation(title, yesText, noText, onYes, EmptyRunnable.getInstance(), defaultOptionIndex);
   }
 
   public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, final Runnable onNo, int defaultOptionIndex) {
@@ -83,7 +82,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
 
   public ListPopup createActionGroupPopup(final String title,
-                                          ActionGroup actionGroup,
+                                          final ActionGroup actionGroup,
                                           DataContext dataContext,
                                           boolean showNumbers,
                                           boolean showDisabledActions,
@@ -95,7 +94,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     ListPopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
 
-    return new ListPopupImpl(step, maxRowCount){
+    final ListPopupImpl popup = new ListPopupImpl(step, maxRowCount) {
       public void dispose() {
         if (disposeCallback != null) {
           disposeCallback.run();
@@ -103,6 +102,20 @@ public class PopupFactoryImpl extends JBPopupFactory {
         super.dispose();
       }
     };
+    popup.addListSelectionListener(new ListSelectionListener(){
+      public void valueChanged(ListSelectionEvent e) {
+        JList list = (JList)e.getSource();
+        ActionItem actionItem = (ActionItem)list.getSelectedValue();
+        if (actionItem == null) return;
+        AnAction action = actionItem.getAction();
+        Presentation presentation = new Presentation();
+        presentation.setDescription(action.getTemplatePresentation().getDescription());
+        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(list), ActionPlaces.UNKNOWN, presentation,
+                                        ActionManager.getInstance(), 0));
+        ActionMenu.showDescriptionInStatusBar(true, list, presentation.getDescription());
+      }
+    });
+    return popup;
   }
 
   public ListPopup createActionGroupPopup(String title,
@@ -149,7 +162,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     fillModel(items, actionGroup, dataContext, showNumbers, showDisabledActions, new HashMap<AnAction, Presentation>(), 0, false, null, honorActionMnemonics);
 
     return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
-                               autoSelectionEnabled) {};
+                               autoSelectionEnabled);
   }
 
   private static boolean itemsHaveMnemonics(final ArrayList<ActionItem> items) {
@@ -506,8 +519,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean hasSubstep(final ActionItem selectedValue) {
-      if (selectedValue == null) return false;
-      return selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
+      return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
     }
 
     public void canceled() {

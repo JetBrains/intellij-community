@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * extended by fabrique
  */
 public class ButtonToolbarImpl extends JPanel {
-  private final ButtonToolbarImpl.MyTimerListener myTimerListener;
+  private final MyTimerListener myTimerListener;
 
   private DataManager myDataManager;
   private String myPlace;
@@ -47,7 +47,7 @@ public class ButtonToolbarImpl extends JPanel {
     super(new GridBagLayout());
     myPlace = place;
     myPresentationFactory = new PresentationFactory();
-    myTimerListener = new ButtonToolbarImpl.MyTimerListener();
+    myTimerListener = new MyTimerListener();
     myDataManager = dataManager;
 
     initButtons(actionGroup);
@@ -138,7 +138,6 @@ public class ButtonToolbarImpl extends JPanel {
       setVisible(event.getPresentation().isVisible());
       setEnabled(event.getPresentation().isEnabled());
     }
-
   }
 
   private final class MyTimerListener implements TimerListener {

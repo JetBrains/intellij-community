@@ -142,11 +142,16 @@ public final class ActionMenu extends JMenu {
 
   public void menuSelectionChanged(boolean isIncluded) {
     super.menuSelectionChanged(isIncluded);
-    IdeFrameImpl frame = (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, this);
+    showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
+  }
+
+  public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
+    IdeFrameImpl frame = component instanceof IdeFrameImpl ? (IdeFrameImpl)component :
+                         (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, component);
     if (frame != null) {
       StatusBar statusBar = frame.getStatusBar();
       if (isIncluded) {
-        statusBar.setInfo(myPresentation.getDescription());
+        statusBar.setInfo(description);
       }
       else {
         statusBar.setInfo(null);
@@ -196,22 +201,22 @@ public final class ActionMenu extends JMenu {
     public void propertyChange(PropertyChangeEvent e) {
       String name = e.getPropertyName();
       if (Presentation.PROP_VISIBLE.equals(name)) {
-        ActionMenu.this.setVisible(myPresentation.isVisible());
+        setVisible(myPresentation.isVisible());
         if (SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
           validateTree();
         }
       }
       else if (Presentation.PROP_ENABLED.equals(name)) {
-        ActionMenu.this.setEnabled(myPresentation.isEnabled());
+        setEnabled(myPresentation.isEnabled());
       }
       else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
-        ActionMenu.this.setMnemonic(myPresentation.getMnemonic());
+        setMnemonic(myPresentation.getMnemonic());
       }
       else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
-        ActionMenu.this.setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
+        setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
       }
       else if (Presentation.PROP_TEXT.equals(name)) {
-        ActionMenu.this.setText(myPresentation.getText());
+        setText(myPresentation.getText());
       }
       else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
         updateIcon();

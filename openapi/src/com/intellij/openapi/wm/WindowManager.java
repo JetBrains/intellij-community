@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +29,7 @@ public abstract class WindowManager {
 
   /**
    */
-  public abstract void doNotSuggestAsParent(Window window);
+  public abstract void doNotSuggestAsParent(@NotNull Window window);
 
   /**
    * Gets first window (starting from the active one) that can be parent for other windows.
@@ -36,13 +37,13 @@ public abstract class WindowManager {
    * @return <code>null</code> if there is no currently active window or there are any window
    * that can be parent.
    */
-  public abstract Window suggestParentWindow(Project project);
+  public abstract Window suggestParentWindow(@NotNull Project project);
   
-  public abstract StatusBar getStatusBar(Project project);
+  public abstract StatusBar getStatusBar(@NotNull Project project);
 
-  public abstract JFrame getFrame(Project project);
+  public abstract JFrame getFrame(@NotNull Project project);
 
-  public abstract IdeFrame getIdeFrame(Project project);
+  public abstract IdeFrame getIdeFrame(@NotNull Project project);
 
   /**
    * Tests whether the specified rectangle is inside of screen bounds. Method uses its own heuristic test.
@@ -59,5 +60,6 @@ public abstract class WindowManager {
    */
   public abstract boolean isInsideScreenBounds(int x,int y);
 
+  @NotNull
   public abstract IdeFrame[] getAllFrames();
 }

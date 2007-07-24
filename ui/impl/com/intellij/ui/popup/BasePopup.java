@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.BoldLabel;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -24,11 +24,9 @@ import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.popup.util.SpeedSearch;
 import com.intellij.util.ui.BlockBorder;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.Popup;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Method;
@@ -47,11 +45,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   protected JPanel myContainer;
 
-  protected PopupStep myStep;
+  protected final PopupStep<Object> myStep;
   protected BasePopup myChild;
 
   private JScrollPane myScrollPane;
-  @Nullable
+  @NotNull
   private JLabel myTitle;
 
   protected JComponent myContent;
@@ -74,14 +72,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   private Component myOwner;
   private Point myLastOwnerPoint;
   private Window myOwnerWindow;
-  private BasePopup.MyComponentAdapter myOwnerListener;
+  private MyComponentAdapter myOwnerListener;
 
   public BasePopup(PopupStep aStep) {
     this(null, aStep);
   }
 
   public BasePopup(JBPopup aParent, PopupStep aStep) {
-    myParent = (BasePopup)aParent;
+    myParent = (BasePopup) aParent;
     myStep = aStep;
 
     if (myStep.isSpeedSearchEnabled() && myStep.isMnemonicsNavigationEnabled()) {
@@ -112,14 +110,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     }
 
     final String title = aStep.getTitle();
-    if (title != null) {
+    if (title == null) {
+      myTitle = new JLabel();
+    }
+    else {
       myTitle = new BoldLabel(title);
       myTitle.setHorizontalAlignment(SwingConstants.CENTER);
       myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
       //myTitle.setBackground(TITLE_BACKGROUND);
-    }
-    else {
-      myTitle = new JLabel();
     }
     myTitle.setOpaque(true);
     myContainer.add(myTitle, BorderLayout.NORTH);
@@ -148,6 +146,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
         onSelectByMnemonic(value);
       }
     };
+
 
 
   }
@@ -537,8 +536,9 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   public boolean shouldBeShowing(Object value) {
     if (!myStep.isSpeedSearchEnabled()) return true;
-    if (!myStep.getSpeedSearchFilter().canBeHidden(value)) return true;
-    String text = myStep.getSpeedSearchFilter().getIndexedString(value);
+    SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
+    if (!filter.canBeHidden(value)) return true;
+    String text = filter.getIndexedString(value);
     return mySpeedSearch.shouldBeShowing(text);
   }
 
@@ -546,6 +546,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     return mySpeedSearch;
   }
 
+  @NotNull
   JLabel getTitle() {
     return myTitle;
   }

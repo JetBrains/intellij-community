@@ -24,7 +24,7 @@ public class RunConfigurationAction extends ComboBoxAction {
   private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
   public void actionPerformed(final AnActionEvent e) {
-    final IdeFrameImpl ideFrame = findFrame(e.getDataContext());
+    final IdeFrameImpl ideFrame = findFrame(e.getData(DataKeys.CONTEXT_COMPONENT));
     final ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
     if (button == null || !button.isShowing()) return;
     button.showPopup();
@@ -34,17 +34,12 @@ public class RunConfigurationAction extends ComboBoxAction {
     return IJSwingUtilities.findParentOfType(component, IdeFrameImpl.class);
   }
 
-  private static IdeFrameImpl findFrame(final DataContext dataContext) {
-    return findFrame((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
-  }
-
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
-      presentation.setEnabled(findFrame(dataContext) != null);
+      presentation.setEnabled(findFrame(e.getData(DataKeys.CONTEXT_COMPONENT)) != null);
       return;
     }
 
@@ -67,7 +62,7 @@ public class RunConfigurationAction extends ComboBoxAction {
 
   private static void updateButton(final RunConfiguration configuration, final Project project, final Presentation presentation) {
     if (project != null && configuration != null) {
-      presentation.setText(getConfigurationDescription(configuration), false);
+      presentation.setText(configuration.getName(), false);
       setConfigurationIcon(presentation, configuration, project);
     }
     else {
@@ -137,7 +132,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final Project project = getProject(e);
+      final Project project = e.getData(DataKeys.PROJECT);
       if (project != null) {
         final RunManager runManager = RunManager.getInstance(project);
         runManager.makeStable(runManager.getTempConfiguration());
@@ -146,7 +141,7 @@ public class RunConfigurationAction extends ComboBoxAction {
 
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = getProject(e);
+      final Project project = e.getData(DataKeys.PROJECT);
       if (project == null) {
         disable(presentation);
         return;
@@ -157,12 +152,9 @@ public class RunConfigurationAction extends ComboBoxAction {
         return;
       }
       presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", tempConfiguration.getName()));
+      presentation.setDescription(presentation.getText());
       presentation.setVisible(true);
       presentation.setEnabled(true);
-    }
-
-    private static Project getProject(final AnActionEvent e) {
-      return (Project)e.getDataContext().getData(DataConstants.PROJECT);
     }
 
     private static void disable(final Presentation presentation) {
@@ -171,19 +163,20 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
   }
 
-  static class MenuAction extends AnAction {
+  private static class MenuAction extends AnAction {
     private RunnerAndConfigurationSettingsImpl myConfiguration;
     private Project myProject;
 
     public MenuAction(final RunnerAndConfigurationSettingsImpl configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
-      String description = getConfigurationDescription(configuration.getConfiguration());
-      if (description == null || description.length() == 0) {
-        description = " ";
+      String name = configuration.getName();
+      if (name == null || name.length() == 0) {
+        name = " ";
       }
       final Presentation presentation = getTemplatePresentation();
-      presentation.setText(description, false);
+      presentation.setText(name, false);
+      presentation.setDescription("Start "+configuration.getType().getConfigurationTypeDescription()+" '"+name+"'");
       updateIcon(presentation);
     }
 
@@ -200,9 +193,5 @@ public class RunConfigurationAction extends ComboBoxAction {
       super.update(e);
       updateIcon(e.getPresentation());
     }
-  }
-
-  private static String getConfigurationDescription(final RunConfiguration configuration) {
-    return configuration.getName();
   }
 }

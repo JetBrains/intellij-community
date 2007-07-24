@@ -84,7 +84,7 @@ class ListPopupModel extends AbstractListModel {
 
   public void refilter() {
     rebuildLists();
-    if (myFilteredList.size() == 0 && myOriginalList.size() > 0) {
+    if (myFilteredList.isEmpty() && !myOriginalList.isEmpty()) {
       myFilter.getSpeedSearch().backspace();
       refilter();
     }
@@ -94,7 +94,7 @@ class ListPopupModel extends AbstractListModel {
   }
 
   public boolean isVisible(Object object) {
-    return myFilteredList.indexOf(object) != -1;
+    return myFilteredList.contains(object);
   }
 
   public int getClosestMatchIndex() {

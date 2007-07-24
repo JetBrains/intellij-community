@@ -40,7 +40,7 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
   }
 
   protected void prepareItemComponent(JList list, Object value, boolean isSelected) {
-    ListPopupStep step = myPopup.getListStep();
+    ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
 

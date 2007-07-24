@@ -12,6 +12,7 @@ import com.intellij.ui.popup.BasePopup;
 import com.intellij.ui.popup.PopupIcons;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -53,7 +54,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     }
   }
 
-  public ListPopupModel getListModel() {
+  ListPopupModel getListModel() {
     return myListModel;
   }
 
@@ -188,8 +189,8 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     return new PopupListElementRenderer(this);
   }
 
-  public ListPopupStep getListStep() {
-    return (ListPopupStep) myStep;
+  public ListPopupStep<Object> getListStep() {
+    return (ListPopupStep<Object>) myStep;
   }
 
   public void dispose() {
@@ -245,6 +246,11 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
       final Point point = myList.indexToLocation(myList.getSelectedIndex());
       SwingUtilities.convertPointToScreen(point, myList);
       myChild = createPopup(this, nextStep, parentValue);
+      if (myChild instanceof ListPopupImpl) {
+        for (ListSelectionListener listener : myList.getListSelectionListeners()) {
+          ((ListPopupImpl)myChild).addListSelectionListener(listener);
+        }
+      }
       final JComponent container = getContainer();
       assert container != null : "container == null";
       myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, point.y);
@@ -258,12 +264,11 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     }
   }
 
-  public PopupStep getStep() {
-    return myStep;
+  public void addListSelectionListener(ListSelectionListener listSelectionListener) {
+    myList.addListSelectionListener(listSelectionListener);
   }
 
   private class MyMouseMotionListener extends MouseMotionAdapter {
-
     public void mouseMoved(MouseEvent e) {
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
@@ -281,7 +286,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     public void mouseClicked(MouseEvent e) {
       boolean handleFinalChoices = true;
       final Object selectedValue = myList.getSelectedValue();
-      final ListPopupStep listStep = getListStep();
+      final ListPopupStep<Object> listStep = getListStep();
       if (listStep.hasSubstep(selectedValue) && listStep.isSelectable(selectedValue)) {
         final int index = myList.getSelectedIndex();
         final Rectangle bounds = myList.getCellBounds(index, index);

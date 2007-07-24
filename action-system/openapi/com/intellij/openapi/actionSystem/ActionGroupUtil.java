@@ -43,6 +43,7 @@ public class ActionGroupUtil {
           return false;
         }
       }
-    }    return true;
+    }
+    return true;
   }
 }
