@@ -189,12 +189,12 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @Nullable
   public PsiMethod findDeepestSuperMethod() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
-    return new PsiMethod[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return PsiMethod.EMPTY_ARRAY;
   }
 
   public PomMethod getPom() {
