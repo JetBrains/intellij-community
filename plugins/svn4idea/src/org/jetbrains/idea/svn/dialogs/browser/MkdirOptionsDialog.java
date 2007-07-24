@@ -52,7 +52,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
     if (messages != null) {
       Collections.reverse(messages);
     }
-    Object[] model = messages != null ? messages.toArray() : new Object[] {""};
+    Object[] model = messages != null ? messages.toArray() : new Object[] {};
     myMessagesBox.setModel(new DefaultComboBoxModel(model));
     myMessagesBox.setRenderer(new MessageBoxCellRenderer());
 
