@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.Popup;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.InputEvent;
+import java.awt.event.*;
 import java.lang.reflect.Method;
 
 public abstract class BasePopup implements ActionListener, ElementFilter, JBPopup {
@@ -74,13 +71,17 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   private Object myParentValue;
 
   private FocusTrackback myFocusTrackback;
+  private Component myOwner;
+  private Point myLastOwnerPoint;
+  private Window myOwnerWindow;
+  private BasePopup.MyComponentAdapter myOwnerListener;
 
   public BasePopup(PopupStep aStep) {
     this(null, aStep);
   }
 
   public BasePopup(JBPopup aParent, PopupStep aStep) {
-    myParent = (BasePopup) aParent;
+    myParent = (BasePopup)aParent;
     myStep = aStep;
 
     if (myStep.isSpeedSearchEnabled() && myStep.isMnemonicsNavigationEnabled()) {
@@ -116,7 +117,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       myTitle.setHorizontalAlignment(SwingConstants.CENTER);
       myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
       //myTitle.setBackground(TITLE_BACKGROUND);
-    } else {
+    }
+    else {
       myTitle = new JLabel();
     }
     myTitle.setOpaque(true);
@@ -146,7 +148,6 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
         onSelectByMnemonic(value);
       }
     };
-
 
 
   }
@@ -193,6 +194,10 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
     if (myParent == null) {
       myFocusTrackback.restoreFocus();
+    }
+
+    if (myOwnerWindow != null && myOwnerListener != null) {
+      myOwnerWindow.removeComponentListener(myOwnerListener);
     }
   }
 
@@ -264,18 +269,48 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
     myPopup = setupPopupFactory().getPopup(owner, myContainer, targetBounds.x, targetBounds.y);
 
+
+    myOwner = owner;
+
     if (shouldShow) {
       myPopup.show();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           requestFocus();
           myFocusTrackback.registerFocusComponent(getPreferredFocusableComponent());
+          registerAutoMove();
           afterShow();
         }
       });
-    } else {
+    }
+    else {
       cancel();
     }
+  }
+
+  private void registerAutoMove() {
+    if (myOwner != null) {
+      myOwnerWindow = SwingUtilities.getWindowAncestor(myOwner);
+      if (myOwnerWindow != null) {
+        myLastOwnerPoint = myOwnerWindow.getLocationOnScreen();
+        myOwnerListener = new MyComponentAdapter();
+        myOwnerWindow.addComponentListener(myOwnerListener);
+      }
+    }
+  }
+
+  private void processParentWindowMoved() {
+    final Point newOwnerPoint = myOwnerWindow.getLocationOnScreen();
+
+    int deltaX = myLastOwnerPoint.x - newOwnerPoint.x;
+    int deltaY = myLastOwnerPoint.y - newOwnerPoint.y;
+
+    myLastOwnerPoint = newOwnerPoint;
+
+    final Window wnd = SwingUtilities.getWindowAncestor(myContainer);
+    final Point current = wnd.getLocationOnScreen();
+
+    setLocation(new Point(current.x - deltaX, current.y - deltaY));
   }
 
   private static PopupFactory setupPopupFactory() {
@@ -321,19 +356,20 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     Point containerScreenPoint = component.getVisibleRect().getLocation();
     SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
 
-    final Point popupPoint = getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), myContainer.getPreferredSize());
+    final Point popupPoint =
+      getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), myContainer.getPreferredSize());
     show(aContainer, popupPoint.x, popupPoint.y);
   }
 
   private static JComponent getTargetComponent(Component aComponent) {
     if (aComponent instanceof JComponent) {
-      return (JComponent) aComponent;
+      return (JComponent)aComponent;
     }
     else if (aComponent instanceof JFrame) {
-      return ((JFrame) aComponent).getRootPane();
+      return ((JFrame)aComponent).getRootPane();
     }
     else {
-      return ((JDialog) aComponent).getRootPane();
+      return ((JDialog)aComponent).getRootPane();
     }
   }
 
@@ -341,11 +377,12 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     Window window = null;
 
     Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-    if(focusedComponent!=null){
-      if(focusedComponent instanceof Window){
-        window=(Window)focusedComponent;
-      }else{
-        window=SwingUtilities.getWindowAncestor(focusedComponent);
+    if (focusedComponent != null) {
+      if (focusedComponent instanceof Window) {
+        window = (Window)focusedComponent;
+      }
+      else {
+        window = SwingUtilities.getWindowAncestor(focusedComponent);
       }
     }
     if (window == null) {
@@ -353,13 +390,13 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     }
 
     showInCenterOf(window);
-  }  
+  }
 
   public void showUnderneathOf(@NotNull Component aComponent) {
     final JComponent component = getTargetComponent(aComponent);
 
     final Point point = aComponent.getLocationOnScreen();
-    point.y += component.getVisibleRect().height ;
+    point.y += component.getVisibleRect().height;
     show(aComponent, point.x, point.y);
   }
 
@@ -388,6 +425,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   protected abstract InputMap getInputMap();
+
   protected abstract ActionMap getActionMap();
 
   protected final void setParentValue(Object parentValue) {
@@ -460,10 +498,10 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   protected static BasePopup createPopup(BasePopup parent, PopupStep step, Object parentValue) {
     if (step instanceof ListPopupStep) {
-      return new ListPopupImpl(parent, (ListPopupStep) step, parentValue);
+      return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
     }
     else if (step instanceof TreePopupStep) {
-      return new TreePopupImpl(parent, (TreePopupStep) step, parentValue);
+      return new TreePopupImpl(parent, (TreePopupStep)step, parentValue);
     }
     else {
       throw new IllegalArgumentException(step.getClass().toString());
@@ -529,5 +567,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   public void setSize(@NotNull final Dimension size) {
     JBPopupImpl.setSize(myContainer, size);
+  }
+
+  private class MyComponentAdapter extends ComponentAdapter {
+    public void componentMoved(final ComponentEvent e) {
+      processParentWindowMoved();
+    }
   }
 }
