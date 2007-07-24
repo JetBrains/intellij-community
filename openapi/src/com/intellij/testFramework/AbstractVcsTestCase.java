@@ -300,7 +300,7 @@ public class AbstractVcsTestCase {
     File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
     final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
-    Assert.assertEquals(beforeFullPath, beforeRevPath);
+    Assert.assertTrue(beforeFullPath.equalsIgnoreCase(beforeRevPath));
   }
 
   protected static class RunResult {
