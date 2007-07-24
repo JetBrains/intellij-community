@@ -48,7 +48,7 @@ public class SvnRenameTest extends SvnTestCase {
     renameFileInCommand(a, "aOld.txt");
     renameFileInCommand(aNew, "a.txt");
     final RunResult result = runSvn("status");
-    verify(result, "R + a.txt", "D aNew.txt", "A + aOld.txt");
+    verifySorted(result, "A + aOld.txt", "D aNew.txt", "R + a.txt");
   }
 
   // IDEADEV-16251
