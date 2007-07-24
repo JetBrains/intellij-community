@@ -112,7 +112,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       LOG.assertTrue(resourceBundle != null);
       myResourceBundleType = factory.createType(resourceBundle);
       @NonNls String defaultVarName = "resourceBundle";
-      PsiExpressionCodeFragment expressionCodeFragment = factory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
+      PsiExpressionCodeFragment expressionCodeFragment =
+        factory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
       myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
@@ -165,7 +166,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
         public void hyperlinkUpdate(HyperlinkEvent e) {
           final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
           final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-          SwingUtilities.invokeLater(new Runnable(){
+          SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               configurable.setTemplate(template, null);
             }
@@ -189,7 +190,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       myPreviewPanel.setVisible(false);
     }
     @NonNls final String KEY = "I18NIZE_DIALOG_USE_RESOURCE_BUNDLE";
-    final boolean useBundleByDefault = !PropertiesComponent.getInstance().isValueSet(KEY) || PropertiesComponent.getInstance().isTrueValue(KEY);
+    final boolean useBundleByDefault =
+      !PropertiesComponent.getInstance().isValueSet(KEY) || PropertiesComponent.getInstance().isTrueValue(KEY);
     myUseResourceBundle.setSelected(useBundleByDefault);
     myUseResourceBundle.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -208,13 +210,12 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     final Project project = file.getProject();
     final String title = CodeInsightBundle.message("i18nize.dialog.error.jdk.title");
     try {
-      return ResourceBundleManager.getManager(file) != null;      
+      return ResourceBundleManager.getManager(file) != null;
     }
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
       final IntentionAction fix = e.getFix();
       if (fix != null) {
-        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) ==
-            DialogWrapper.OK_EXIT_CODE) {
+        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
           try {
             fix.invoke(project, null, file);
             return false;
@@ -265,7 +266,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     });
   }
 
-  @NotNull protected List<String> getExistingValueKeys(String value) {
+  @NotNull
+  protected List<String> getExistingValueKeys(String value) {
     final ArrayList<String> result = new ArrayList<String>();
 
     // check if property value already exists among properties file values and suggest corresponding key
@@ -303,7 +305,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
         }
         insertDotBeforeNextWord = true;
       }
-      else  {
+      else {
         if (result.length() > 0) {
           insertDotBeforeNextWord = true;
         }
@@ -315,19 +317,21 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     if (propertiesFile != null) {
       if (propertiesFile.findPropertyByKey(value) == null) return value;
 
-      int suffix=1;
+      int suffix = 1;
       while (propertiesFile.findPropertyByKey(value + suffix) != null) {
         suffix++;
       }
       return value + suffix;
-    } else {
+    }
+    else {
       return value;
     }
   }
 
   private void propertiesFileChanged() {
     PropertiesFile propertiesFile = getPropertiesFile();
-    boolean hasResourceBundle = propertiesFile != null && propertiesFile.getResourceBundle().getPropertiesFiles(propertiesFile.getProject()).size() > 1;
+    boolean hasResourceBundle =
+      propertiesFile != null && propertiesFile.getResourceBundle().getPropertiesFiles(propertiesFile.getProject()).size() > 1;
     myUseResourceBundle.setEnabled(hasResourceBundle);
   }
 
@@ -352,6 +356,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     if (myShowPreview) {
       myPreviewLabel.setText(getI18nizedText());
     }
+    setOKActionEnabled(!StringUtil.isEmptyOrSpaces(getKey()));
   }
 
   public String getI18nizedText() {
@@ -364,7 +369,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-    Map<String,String> attributes = new THashMap<String,String>();
+    Map<String, String> attributes = new THashMap<String, String>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     addAdditionalAttributes(attributes);
@@ -379,7 +384,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     return text;
   }
 
-  protected String generateText(final I18nizedTextGenerator textGenerator, final String propertyKey, final PropertiesFile propertiesFile,
+  protected String generateText(final I18nizedTextGenerator textGenerator,
+                                final String propertyKey,
+                                final PropertiesFile propertiesFile,
                                 final PsiLiteralExpression literalExpression) {
     return textGenerator.getI18nizedText(propertyKey, propertiesFile, literalExpression);
   }
@@ -404,6 +411,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   private String suggestLastSelectedFileUrl() {
     return LastSelectedPropertiesFileStore.getInstance().suggestLastSelectedPropertiesFileUrl(myContext);
   }
+
   private void saveLastSelectedFile() {
     PropertiesFile propertiesFile = getPropertiesFile();
     if (propertiesFile != null) {
@@ -441,7 +449,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       final File file = new File(path).getCanonicalFile();
       FileUtil.createParentDirs(file);
       final IOException[] e = new IOException[1];
-      virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>(){
+      virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
         public VirtualFile compute() {
           VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
           try {
@@ -497,8 +505,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  protected Action[] createActions(){
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   public void doHelpAction() {
@@ -509,6 +517,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   public JComponent getValueComponent() {
     return myValue;
   }
+
   public String getValue() {
     return myValue.getText();
   }
