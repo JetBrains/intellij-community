@@ -137,8 +137,14 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause){
+    if (!isFocusedComponentChangeValid(component, cause)) return;
+
     myFocusedComponent=component;
     focusedComponentChanged(component, cause);
+  }
+
+  protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
+    return true;
   }
 
   /**

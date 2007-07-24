@@ -1192,6 +1192,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       install(toolWindow.getComponent());
     }
 
+    protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
+      return myWindowManager.getCommandProcessor().getCommandCount() == 0 && comp != null;
+    }
+
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
