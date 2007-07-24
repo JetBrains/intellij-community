@@ -28,7 +28,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     Project p = createProject("projectLocationHash");
     LocalHistoryComponent c = new MyLocalHistoryComponent("c:/idea/system", p, null);
 
-    File expected = new File("c:/idea/system/vcs_new/projectLocationHash");
+    File expected = new File("c:/idea/system/LocalHistory/projectLocationHash");
     assertEquals(expected, c.getStorageDir());
   }
 
