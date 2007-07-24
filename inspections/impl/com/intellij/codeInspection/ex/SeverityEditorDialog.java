@@ -265,13 +265,12 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   protected void doOKAction() {
     final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
-    final EditorColorsScheme colorsScheme = editorColorsManager.getGlobalScheme();
-    if (colorsScheme instanceof DefaultColorsScheme) {
+    if (editorColorsManager.getGlobalScheme() instanceof DefaultColorsScheme) {
       final int res = Messages.showOkCancelDialog(myPanel, InspectionsBundle.message("highlight.severity.default.color.scheme.warning"), ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getQuestionIcon());
       if (res == DialogWrapper.OK_EXIT_CODE){
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class));
       } else {
-        super.doOKAction();
+        super.doCancelAction();
         return;
       }
     }
@@ -289,7 +288,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
         SeverityRegistrar.registerSeverity(info.getHighlightInfoType(), stripeColor != null ? stripeColor : LightColors.YELLOW);
       }
-      colorsScheme.setAttributes(info.getHighlightInfoType().getAttributesKey(), info.getAttributes());
+      editorColorsManager.getGlobalScheme().setAttributes(info.getHighlightInfoType().getAttributesKey(), info.getAttributes());
     }
     infoTypes.removeAll(currentTypes);
     for (HighlightInfoType.HighlightInfoTypeImpl info : infoTypes) {
