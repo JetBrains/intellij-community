@@ -164,7 +164,7 @@
       </action>
       <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.action.DownloadArtifactsAction"
               text="Download artifacts" description="Download artifacts (sources, javadoc, plugins)"
-              icon="/actions/install.png">
+              icon="/images/download.png">
       </action>
     </group>
 
