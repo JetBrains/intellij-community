@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -71,6 +72,9 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
       };
     }
     else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return new SVNUserNameAuthentication(userName, false);
+      }
       command = new Runnable() {
         public void run() {
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);

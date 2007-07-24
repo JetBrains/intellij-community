@@ -216,15 +216,14 @@ public class SvnRenameTest extends SvnTestCase {
 
   // IDEA-13824
   @Test
-  @Ignore
   public void testRenameFileRenameDir() throws Exception {
     final VirtualFile child = prepareDirectoriesForRename();
     final VirtualFile f = child.findChild("a.txt");
     renameFileInCommand(f, "anew.txt");
     renameFileInCommand(child, "newchild");
 
-    verifySorted(runSvn("status"), "A + newchild", "A + newchild\\anew.txt", "D + newchild\\a.txt",
-                 "D child", "D child\\a.txt");
+    verifySorted(runSvn("status"), "A + newchild", "A + newchild\\anew.txt",
+                 "D child", "D child\\a.txt", "D child\\grandChild", "D child\\grandChild\\b.txt", "D + newchild\\a.txt");
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
