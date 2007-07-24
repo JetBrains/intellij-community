@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.actions;
 
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -80,7 +81,7 @@ public class CleanupInspectionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != null;
+    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class;
   }
 
   public boolean startInWriteAction() {
