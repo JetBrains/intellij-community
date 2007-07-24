@@ -242,7 +242,9 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       public void run() {
-        EditorFactory.getInstance().releaseEditor(editor);
+        if (!editor.isDisposed()) {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
       }
     };
 
