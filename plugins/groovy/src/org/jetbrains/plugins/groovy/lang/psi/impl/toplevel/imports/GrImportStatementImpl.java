@@ -22,11 +22,11 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
@@ -142,6 +142,10 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   public boolean isStatic() {
     return findChildByType(GroovyTokenTypes.kSTATIC) != null;
+  }
+
+  public boolean isAliasedImport() {
+    return findChildByType(GroovyTokenTypes.mIDENT) != null;
   }
 
   public boolean isOnDemand() {

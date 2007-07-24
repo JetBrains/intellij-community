@@ -15,9 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
 
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -32,4 +29,6 @@ public interface GrImportStatement extends GrTopStatement {
   boolean isOnDemand();
 
   boolean isStatic();
+
+  boolean isAliasedImport();
 }
