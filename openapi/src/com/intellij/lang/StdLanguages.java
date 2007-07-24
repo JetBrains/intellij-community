@@ -72,6 +72,9 @@ public class StdLanguages {
    */
   public static Language PROPERTIES = StdFileTypes.PROPERTIES.getLanguage();
 
+  /**
+   * @deprecated use CssSupportLoader
+   */
   @Deprecated
   public static Language CSS;
 
