@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopupStep;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +60,7 @@ public class BaseTreePopupStep<T> extends BaseStep<T> implements TreePopupStep<T
     return value.toString();
   }
 
+  @NotNull
   public List<T> getValues() {
     return Collections.emptyList();
   }

@@ -63,8 +63,7 @@ public class OverrideImplementUtil {
   }
 
   @NotNull
-  private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
-                                                                               boolean toImplement) {
+  private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement) {
     final PsiSubstitutor contextSubstitutor = getContextSubstitutor(aClass);
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> finals = new HashMap<MethodSignature,PsiMethod>();
@@ -101,11 +100,9 @@ public class OverrideImplementUtil {
         continue;
       }
 
-      Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)
-                                            ? abstracts
-                                            : concretes;
+      Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ? abstracts : concretes;
       PsiMethod other = map.get(signature);
-      if (other == null || PsiUtil.getAccessLevel(method.getModifierList()) > PsiUtil.getAccessLevel(other.getModifierList())) {
+      if (other == null || preferLeftForImplement(method, other)) {
         map.put(signature, method);
       }
     }
@@ -116,12 +113,9 @@ public class OverrideImplementUtil {
         MethodSignature signature = entry.getKey();
         PsiMethod abstractOne = entry.getValue();
         PsiMethod concrete = concretes.get(signature);
-        if (concrete == null ||
-            PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil
-              .getAccessLevel(abstractOne.getModifierList()) ||
-                                                             (!abstractOne.getContainingClass().isInterface() &&
-                                                              abstractOne.getContainingClass()
-                                                                .isInheritor(concrete.getContainingClass(), true))) {
+        if (concrete == null
+            || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
+            || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)) {
           if (finals.get(signature) == null) {
             PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne,
                                                                           substitutors.get(abstractOne.getContainingClass()));
@@ -139,7 +133,8 @@ public class OverrideImplementUtil {
           result.put(signature, info);
         }
       }
-    } else {
+    }
+    else {
       for (Map.Entry<MethodSignature, PsiMethod> entry : concretes.entrySet()) {
         MethodSignature signature = entry.getKey();
         PsiMethod concrete = entry.getValue();
@@ -156,6 +151,14 @@ public class OverrideImplementUtil {
     }
 
     return result;
+  }
+
+  private static boolean preferLeftForImplement(PsiMethod left, PsiMethod right) {
+    if (PsiUtil.getAccessLevel(left.getModifierList()) > PsiUtil.getAccessLevel(right.getModifierList())) return true;
+    // implement annotated method
+    PsiAnnotation[] leftAnnotations = left.getModifierList().getAnnotations();
+    PsiAnnotation[] rightAnnotations = right.getModifierList().getAnnotations();
+    return leftAnnotations.length > rightAnnotations.length;
   }
 
   private static MethodImplementor[] getImplementors() {
@@ -512,7 +515,8 @@ public class OverrideImplementUtil {
     while (element instanceof PsiTypeParameter);
 
     final PsiClass aClass = (PsiClass)element;
-    return aClass == null || (!allowInterface && aClass.isInterface()) ? null : aClass;
+    return aClass == null ||
+           !allowInterface && aClass.isInterface() ? null : aClass;
   }
 
   private static PsiSubstitutor getContextSubstitutor(PsiClass aClass) {
