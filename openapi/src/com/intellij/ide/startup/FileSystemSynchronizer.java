@@ -20,7 +20,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * @author max
  */
 public class FileSystemSynchronizer {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileSystemSynchronizer");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileSystemSynchronizer");
 
   private ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
   private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
@@ -107,7 +107,7 @@ public class FileSystemSynchronizer {
       indicator.popState();
     }
 
-    if (myFilesToUpdate.size() == 0) {
+    if (myFilesToUpdate.isEmpty()) {
       updatingDone();
     }
 
@@ -122,7 +122,6 @@ public class FileSystemSynchronizer {
     }
 
     int totalFiles = myFilesToUpdate.size();
-    int count = 0;
     final MyContentQueue contentQueue = new MyContentQueue();
 
     final Runnable contentLoadingRunnable = new Runnable() {
@@ -132,7 +131,6 @@ public class FileSystemSynchronizer {
             if (indicator != null) indicator.checkCanceled();
             contentQueue.put(file);
           }
-          contentQueue.put(new FileContent(null));
         }
         catch (ProcessCanceledException e) {
           // Do nothing, exit the thread.
@@ -140,11 +138,20 @@ public class FileSystemSynchronizer {
         catch (InterruptedException e) {
           LOG.error(e);
         }
+        finally {
+          try {
+            contentQueue.put(new FileContent(null));
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
+        }
       }
     };
 
     ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
 
+    int count = 0;
     while (true) {
       FileContent content = null;
       try {
@@ -158,7 +165,7 @@ public class FileSystemSynchronizer {
       if (file == null) break;
       if (indicator != null) {
         indicator.checkCanceled();
-        indicator.setFraction(((double)++count) / totalFiles);
+        indicator.setFraction((double)++count / totalFiles);
         indicator.setText2(file.getPresentableUrl());
       }
       for (int i = 0; i < myUpdaters.size(); i++) {
