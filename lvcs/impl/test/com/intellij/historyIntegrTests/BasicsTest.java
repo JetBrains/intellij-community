@@ -1,23 +1,25 @@
 package com.intellij.historyIntegrTests;
 
 
+import com.intellij.history.Clock;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.RevisionTimestampComparator;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.TestTimestampComparator;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.Storage;
-import com.intellij.history.Clock;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.RevisionTimestampComparator;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ProfilingUtil;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class BasicsTest extends IntegrationTestCase {

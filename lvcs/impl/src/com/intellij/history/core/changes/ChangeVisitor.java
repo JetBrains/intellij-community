@@ -5,7 +5,10 @@ import com.intellij.history.core.tree.Entry;
 import java.io.IOException;
 
 public abstract class ChangeVisitor {
+  protected Entry myRoot;
+
   public void started(Entry root) throws IOException {
+    myRoot = root;
   }
 
   public void finished() throws IOException {

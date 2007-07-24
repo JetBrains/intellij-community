@@ -16,17 +16,11 @@ import java.util.List;
 import java.util.Map;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
-  private Entry myRoot;
   private IdeaGateway myGateway;
   private Map<VirtualFile, ContentToApply> myContentsToApply = new HashMap<VirtualFile, ContentToApply>();
 
   public ChangeRevertionVisitor(IdeaGateway gw) {
     myGateway = gw;
-  }
-
-  @Override
-  public void started(Entry root) throws IOException {
-    myRoot = root;
   }
 
   @Override

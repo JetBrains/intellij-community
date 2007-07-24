@@ -60,10 +60,6 @@ public abstract class LocalVcs implements ILocalVcs {
     return myRoot.findEntry(path);
   }
 
-  public Entry getRootEntry() {
-    return myRoot;
-  }
-
   public List<Entry> getRoots() {
     return myRoot.getChildren();
   }

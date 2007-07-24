@@ -1,18 +1,13 @@
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.core.ILocalVcs;
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.changes.*;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class ChangeReverter extends Reverter {
   private ILocalVcs myVcs;
@@ -21,7 +16,7 @@ public class ChangeReverter extends Reverter {
   private List<Change> myChainCache;
 
   public ChangeReverter(ILocalVcs vcs, IdeaGateway gw, Change c) {
-    super(gw);
+    super(vcs, gw);
     myVcs = vcs;
     myGateway = gw;
     myChange = c;
@@ -46,44 +41,10 @@ public class ChangeReverter extends Reverter {
   }
 
   @Override
-  public List<String> checkCanRevert() throws IOException {
-    List<String> errors = new ArrayList<String>();
-    if (!askForReadOnlyStatusClearing()) {
-      errors.add("some files are read-only");
-    }
-    doCheckCanRevert(errors);
-    return errors;
-  }
-
-  private boolean askForReadOnlyStatusClearing() throws IOException {
-    return myGateway.ensureFilesAreWritable(getFilesToClearROStatus());
-  }
-
-  private ArrayList<VirtualFile> getFilesToClearROStatus() throws IOException {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+  protected void doCheckCanRevert(final List<String> errors) throws IOException {
+    super.doCheckCanRevert(errors);
 
     myVcs.accept(selective(new ChangeVisitor() {
-      @Override
-      public void visit(StructuralChange c) {
-        for (IdPath p : c.getAffectedIdPaths()) {
-          Entry e = myVcs.getRootEntry().findEntry(p);
-          if (e == null) continue;
-          files.addAll(myGateway.getAllFilesFrom(e.getPath()));
-        }
-      }
-    }));
-
-    return new ArrayList<VirtualFile>(files);
-  }
-
-  private void doCheckCanRevert(final List<String> errors) throws IOException {
-    myVcs.accept(selective(new ChangeVisitor() {
-      private Entry myRoot;
-
-      public void started(Entry root) {
-        myRoot = root;
-      }
-
       @Override
       public void visit(StructuralChange c) {
         if (!c.canRevertOn(myRoot)) {
@@ -109,7 +70,8 @@ public class ChangeReverter extends Reverter {
     myVcs.accept(selective(new ChangeRevertionVisitor(myGateway)));
   }
 
-  private ChangeVisitor selective(ChangeVisitor v) {
+  @Override
+  protected ChangeVisitor selective(ChangeVisitor v) {
     return new SelectiveChangeVisitor(v) {
       @Override
       protected boolean isFinished(ChangeSet c) {

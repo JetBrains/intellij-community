@@ -1,15 +1,12 @@
 package com.intellij.history.integration.revertion;
 
+import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 public abstract class RevisionReverter extends Reverter {
@@ -17,39 +14,25 @@ public abstract class RevisionReverter extends Reverter {
   protected Entry myLeftEntry;
   protected Entry myRightEntry;
 
-  public RevisionReverter(IdeaGateway gw, Revision leftRevision, Entry leftEntry, Entry rightEntry) {
-    super(gw);
+  public RevisionReverter(ILocalVcs vcs, IdeaGateway gw, Revision leftRevision, Entry leftEntry, Entry rightEntry) {
+    super(vcs, gw);
     myLeftRevision = leftRevision;
     myLeftEntry = leftEntry;
     myRightEntry = rightEntry;
   }
 
-  public List<String> checkCanRevert() throws IOException {
-    List<String> errors = new ArrayList<String>();
-    if (!askForReadOnlyStatusClearing()) {
-      errors.add("some files are read-only");
-    }
+  @Override
+  protected void doCheckCanRevert(List<String> errors) throws IOException {
+    super.doCheckCanRevert(errors);
     if (myLeftEntry != null && myLeftEntry.hasUnavailableContent()) {
       errors.add("some of the files have big content");
     }
-
-    doCheckCanRevert(errors);
-    return removeDuplicatesAndSort(errors);
   }
 
-  private boolean askForReadOnlyStatusClearing() {
+  @Override
+  protected boolean askForReadOnlyStatusClearing() throws IOException {
     if (!hasCurrentVersion()) return true;
-    return myGateway.ensureFilesAreWritable(getFilesToClearROStatus());
-  }
-
-  protected abstract List<VirtualFile> getFilesToClearROStatus();
-
-  protected abstract void doCheckCanRevert(List<String> errors) throws IOException;
-
-  private List<String> removeDuplicatesAndSort(List<String> list) {
-    List<String> result = new ArrayList<String>(new HashSet<String>(list));
-    Collections.sort(result);
-    return result;
+    return super.askForReadOnlyStatusClearing();
   }
 
   @Override

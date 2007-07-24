@@ -163,7 +163,6 @@ public class ChangeList {
 
   private static class ChangeCollectingVisitor extends ChangeVisitor {
     private String myPath;
-    private Entry myRoot;
     private Entry myEntry;
     private IdPath myIdPath;
     private Change myChangeToAdd;
@@ -176,8 +175,8 @@ public class ChangeList {
     }
 
     @Override
-    public void started(Entry root) {
-      myRoot = root;
+    public void started(Entry root) throws IOException {
+      super.started(root);
       myEntry = myRoot.getEntry(myPath);
       myIdPath = myEntry.getIdPath();
     }

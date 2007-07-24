@@ -90,7 +90,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   public File getStorageDir() {
     // todo dont forget to change folder name
-    File vcsDir = new File(getSystemPath(), "vcs_new");
+    File vcsDir = new File(getSystemPath(), "LocalHistory");
     return new File(vcsDir, myProject.getLocationHash());
   }
 

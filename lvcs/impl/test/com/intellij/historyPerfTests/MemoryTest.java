@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import java.util.Calendar;
 
-@Bombed(month = Calendar.AUGUST, day = 31, user = "anton")
+@Bombed(month = Calendar.NOVEMBER, day = 31, user = "anton")
 public class MemoryTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testMemoryAfterFirstBuild() {

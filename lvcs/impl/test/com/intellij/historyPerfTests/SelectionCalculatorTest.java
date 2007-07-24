@@ -11,7 +11,7 @@ import org.junit.Test;
 import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.AUGUST, day = 31, user = "anton")
+@Bombed(month = Calendar.NOVEMBER, day = 31, user = "anton")
 public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
   private List<Revision> rr;
   private SelectionCalculator c;

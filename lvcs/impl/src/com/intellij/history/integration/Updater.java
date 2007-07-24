@@ -96,7 +96,7 @@ public class Updater implements CacheUpdater {
 
   private void deleteObsoleteRoots() {
     List<Entry> obsolete = new ArrayList<Entry>();
-    for (Entry r : myVcs.getRootEntry().getChildren()) {
+    for (Entry r : myVcs.getRoots()) {
       if (!hasVfsRoot(r)) obsolete.add(r);
     }
     for (Entry e : obsolete) myVcs.delete(e.getPath());
@@ -110,7 +110,7 @@ public class Updater implements CacheUpdater {
   }
 
   private boolean hasVcsRoot(VirtualFile f) {
-    for (Entry e : myVcs.getRootEntry().getChildren()) {
+    for (Entry e : myVcs.getRoots()) {
       if (e.pathEquals(f.getPath())) return true;
     }
     return false;
