@@ -1,8 +1,8 @@
 package com.intellij.historyPerfTests;
 
-import com.intellij.idea.Bombed;
 import com.intellij.history.core.storage.ContentStorage;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.idea.Bombed;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -95,7 +95,6 @@ public class ContentStorageTest extends PerformanceTestCase {
     for (int i = 0; i < ITERATIONS_COUNT; i++) {
       result.add(s.store(arrayOfSize(randomSize())));
     }
-    s.save();
     return result;
   }
 

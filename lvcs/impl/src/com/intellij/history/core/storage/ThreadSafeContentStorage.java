@@ -13,10 +13,6 @@ public class ThreadSafeContentStorage implements IContentStorage {
     mySubject.close();
   }
 
-  public synchronized void save() {
-    mySubject.save();
-  }
-
   public synchronized int store(byte[] content) throws IOException {
     return mySubject.store(content);
   }
@@ -29,7 +25,11 @@ public class ThreadSafeContentStorage implements IContentStorage {
     mySubject.remove(id);
   }
 
-  public synchronized boolean isRemoved(int id) {
-    return mySubject.isRemoved(id);
+  public synchronized void setVersion(final int version) {
+    mySubject.setVersion(version);
+  }
+
+  public synchronized int getVersion() {
+    return mySubject.getVersion();
   }
 }

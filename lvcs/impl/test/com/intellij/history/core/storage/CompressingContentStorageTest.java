@@ -13,8 +13,6 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
     IContentStorage subject = createStrictMock(IContentStorage.class);
 
     subject.remove(1);
-    expect(subject.isRemoved(2)).andReturn(true);
-    subject.save();
     subject.close();
 
     replay(subject);
@@ -22,8 +20,6 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
     CompressingContentStorage s = new CompressingContentStorage(subject);
 
     s.remove(1);
-    assertTrue(s.isRemoved(2));
-    s.save();
     s.close();
 
     verify(subject);

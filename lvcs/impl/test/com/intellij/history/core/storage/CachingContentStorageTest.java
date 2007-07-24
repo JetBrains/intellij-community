@@ -58,16 +58,4 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
 
     verify(subject);
   }
-
-  @Test
-  public void testSaveAndClose() {
-    subject.save();
-    subject.close();
-    replay(subject);
-
-    s.save();
-    s.close();
-
-    verify(subject);
-  }
 }

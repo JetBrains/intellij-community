@@ -21,10 +21,6 @@ public class CompressingContentStorage implements IContentStorage {
     mySubject.close();
   }
 
-  public void save() {
-    mySubject.save();
-  }
-
   public int store(byte[] content) throws IOException {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -59,7 +55,11 @@ public class CompressingContentStorage implements IContentStorage {
     mySubject.remove(id);
   }
 
-  public boolean isRemoved(int id) {
-    return mySubject.isRemoved(id);
+  public void setVersion(final int version) {
+    mySubject.setVersion(version);
   }
+
+  public int getVersion() {
+    return mySubject.getVersion();
+  }  
 }

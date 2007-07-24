@@ -121,7 +121,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return ApplicationManagerEx.getApplicationEx().isUnitTestMode();
   }
 
-  protected void closeVcs() {
+  public void closeVcs() {
     if (myStorage != null) {
       myStorage.close();
     }

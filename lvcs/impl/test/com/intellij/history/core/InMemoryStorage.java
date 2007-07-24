@@ -20,10 +20,6 @@ public class InMemoryStorage extends Storage {
   }
 
   @Override
-  public void save() {
-  }
-
-  @Override
   public LocalVcs.Memento load() {
     return new LocalVcs.Memento();
   }

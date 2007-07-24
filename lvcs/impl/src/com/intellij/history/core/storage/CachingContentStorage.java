@@ -18,10 +18,6 @@ public class CachingContentStorage implements IContentStorage {
     mySubject.close();
   }
 
-  public void save() {
-    mySubject.save();
-  }
-
   public int store(byte[] content) throws IOException {
     int id = mySubject.store(content);
     cacheContent(content, id);
@@ -46,8 +42,12 @@ public class CachingContentStorage implements IContentStorage {
     myCache.remove(id);
   }
 
-  public boolean isRemoved(int id) {
-    return mySubject.isRemoved(id);
+  public void setVersion(int version) {
+    mySubject.setVersion(version);
+  }
+
+  public int getVersion() {
+    return mySubject.getVersion();
   }
 
   private void cacheContent(byte[] content, int id) {

@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.List;
 
 public class Storage {
-  private static final int VERSION = 16;
+  private static final int VERSION = 17;
   private static final String BROKEN_MARK_FILE = ".broken";
   private static final String VERSION_FILE = "version";
   private static final String STORAGE_FILE = "storage";
@@ -24,34 +24,42 @@ public class Storage {
   }
 
   protected void initStorage() {
-    validate();
     initContentStorage();
+    validate();
   }
 
   private void validate() {
-    if (wasMarkedAsBroken() || notValidVersion()) {
+    if (wasMarkedAsBroken() || !isValidVersion()) {
       deleteStorage();
-      myDir.mkdirs();
-      storeVersion();
+      recreateStorage();
     }
   }
 
   private void deleteStorage() {
+    close();
     FileUtil.delete(myDir);
+  }
+
+  private void recreateStorage() {
+    myDir.mkdirs();
+    initContentStorage();
+    storeVersion();
   }
 
   private boolean wasMarkedAsBroken() {
     return new File(myDir, BROKEN_MARK_FILE).exists();
   }
 
-  private boolean notValidVersion() {
-    int version = load(VERSION_FILE, -1, new Loader<Integer>() {
+  private boolean isValidVersion() {
+    int storageVersion = load(VERSION_FILE, -1, new Loader<Integer>() {
       public Integer load(Stream s) throws IOException {
         return s.readInteger();
       }
     });
 
-    return version != getVersion();
+    int contentVersion = myContentStorage.getVersion();
+
+    return storageVersion == getVersion() && contentVersion == getVersion();
   }
 
   private void storeVersion() {
@@ -60,6 +68,8 @@ public class Storage {
         s.writeInteger(getVersion());
       }
     });
+
+    myContentStorage.setVersion(getVersion());
   }
 
   private void initContentStorage() {
@@ -103,10 +113,6 @@ public class Storage {
 
   public void close() {
     myContentStorage.close();
-  }
-
-  public void save() {
-    myContentStorage.save();
   }
 
   private <T> T load(String fileName, T def, Loader<T> loader) {
@@ -186,10 +192,6 @@ public class Storage {
 
   protected void purgeContent(StoredContent c) {
     myContentStorage.remove(c.getId());
-  }
-
-  public boolean isContentPurged(StoredContent c) {
-    return myContentStorage.isRemoved(c.getId());
   }
 
   private static interface Loader<T> {

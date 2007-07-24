@@ -13,9 +13,7 @@ import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ProfilingUtil;
 
 import java.io.File;
@@ -31,6 +29,10 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile f = root.createChildData(null, "file.java");
     File dir = getVcsComponent().getStorageDir();
     myProject.save();
+    getVcsComponent().closeVcs();
+
+    //File temp = createTempDirectory();
+    //FileUtil.copyDir(dir, temp);
 
     Storage s = new Storage(dir);
     LocalVcs vcs = new TestLocalVcs(s);

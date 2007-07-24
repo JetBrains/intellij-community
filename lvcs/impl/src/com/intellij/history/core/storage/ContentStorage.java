@@ -1,17 +1,16 @@
 package com.intellij.history.core.storage;
 
-import com.intellij.util.io.PagedMemoryMappedFile;
-import com.intellij.util.io.RandomAccessPagedDataInput;
 import com.intellij.util.io.RecordDataOutput;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 
 public class ContentStorage implements IContentStorage {
-  private PagedMemoryMappedFile myStore;
+  private com.intellij.util.io.storage.Storage myStore;
 
   public ContentStorage(File f) throws IOException {
-    myStore = new PagedMemoryMappedFile(f);
+    myStore = com.intellij.util.io.storage.Storage.create(f.getPath());
   }
 
   public static IContentStorage createContentStorage(File f) throws IOException {
@@ -26,13 +25,9 @@ public class ContentStorage implements IContentStorage {
     myStore.dispose();
   }
 
-  public void save() {
-    myStore.immediateForce();
-  }
-
   public int store(byte[] content) throws IOException {
     try {
-      RecordDataOutput r = myStore.createRecord();
+      RecordDataOutput r = myStore.createStream();
       r.writeInt(content.length);
       r.write(content);
       r.close();
@@ -46,7 +41,7 @@ public class ContentStorage implements IContentStorage {
 
   public byte[] load(int id) throws IOException {
     try {
-      RandomAccessPagedDataInput r = myStore.getReader(id);
+      DataInputStream r = myStore.readStream(id);
       byte[] buffer = new byte[r.readInt()];
       r.readFully(buffer);
       r.close();
@@ -59,10 +54,14 @@ public class ContentStorage implements IContentStorage {
   }
 
   public void remove(int id) {
-    myStore.delete(id);
+    myStore.deleteRecord(id);
   }
 
-  public boolean isRemoved(int id) {
-    return myStore.isPageFree(id);
+  public int getVersion() {
+    return myStore.getVersion();
+  }
+
+  public void setVersion(final int version) {
+    myStore.setVersion(version);
   }
 }

@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 public class ContentStorageTest extends TempDirTestCase {
@@ -54,11 +53,11 @@ public class ContentStorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testSaving() throws Exception {
+  public void testSavingOnClose() throws Exception {
     byte[] c = new byte[]{1, 2, 3};
 
     int id = s.store(c);
-    s.save();
+    s.close();
 
     IContentStorage another = createStorage();
     try {
@@ -84,36 +83,5 @@ public class ContentStorageTest extends TempDirTestCase {
     }
     catch (IOException e) {
     }
-  }
-
-  @Test
-  public void testThrowingIOExceptionWhenStorageIsCorrupted() throws IOException {
-    int id = s.store("abc".getBytes());
-    s.close();
-
-    corruptStorageFile();
-
-    try {
-      s.load(id);
-      fail();
-    }
-    catch (IOException e) {
-    }
-
-    try {
-      s.store("abc".getBytes());
-      fail();
-    }
-    catch (IOException e) {
-    }
-  }
-
-  private void corruptStorageFile() throws IOException {
-    File f = getStorageFile();
-    f.delete();
-    f.createNewFile();
-    FileWriter w = new FileWriter(f);
-    w.write("bla-bla-bla");
-    w.close();
   }
 }

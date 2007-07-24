@@ -1,9 +1,9 @@
 package com.intellij.historyPerfTests;
 
-import com.intellij.idea.Bombed;
 import com.intellij.history.core.storage.CompressingContentStorage;
 import com.intellij.history.core.storage.IContentStorage;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.idea.Bombed;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,15 +59,15 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
       throw new UnsupportedOperationException();
     }
 
-    public void save() {
-      throw new UnsupportedOperationException();
-    }
-
     public void remove(int id) {
       throw new UnsupportedOperationException();
     }
 
-    public boolean isRemoved(int id) {
+    public int getVersion() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void setVersion(final int version) {
       throw new UnsupportedOperationException();
     }
   }

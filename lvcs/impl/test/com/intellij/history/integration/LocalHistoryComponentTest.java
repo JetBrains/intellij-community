@@ -1,12 +1,12 @@
 package com.intellij.history.integration;
 
-import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.TempDirTestCase;
 import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.integration.stubs.StubStartupManagerEx;
-import com.intellij.history.LocalHistoryConfiguration;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.project.Project;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.After;
@@ -61,6 +61,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
 
     c.getLocalVcs().createFile("file", cf(""), -1);
     c.save();
+    c.closeVcs();
 
     Storage s = new Storage(c.getStorageDir());
     LocalVcs vcs = new TestLocalVcs(s);
@@ -180,7 +181,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     }
 
     @Override
-    protected void closeVcs() {
+    public void closeVcs() {
       if (isVcsInitialized) super.closeVcs();
     }
 

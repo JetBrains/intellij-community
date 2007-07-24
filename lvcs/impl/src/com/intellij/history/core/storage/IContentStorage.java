@@ -2,11 +2,8 @@ package com.intellij.history.core.storage;
 
 import java.io.IOException;
 
-// todo get rid of isRemoved()
 public interface IContentStorage {
   void close();
-
-  void save();
 
   int store(byte[] content) throws IOException;
 
@@ -14,5 +11,7 @@ public interface IContentStorage {
 
   void remove(int id);
 
-  boolean isRemoved(int id);
+  void setVersion(int version);
+
+  int getVersion();
 }

@@ -61,9 +61,6 @@ public class StorageChecker {
     public void close() {
     }
 
-    public void save() {
-    }
-
     public int store(byte[] content) throws IOException {
       return 0;
     }
@@ -75,8 +72,11 @@ public class StorageChecker {
     public void remove(int id) {
     }
 
-    public boolean isRemoved(int id) {
-      return false;
+    public int getVersion() {
+      return 1;
+    }
+
+    public void setVersion(final int version) {
     }
   }
 }
