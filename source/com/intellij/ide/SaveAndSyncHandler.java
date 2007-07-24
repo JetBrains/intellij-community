@@ -9,7 +9,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +137,12 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     final RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
 
     for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
-      session.addAllFiles(FileEditorManager.getInstance(project).getSelectedFiles());
+      VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+      for (VirtualFile file : files) {
+        if (file instanceof NewVirtualFile) {
+          session.addFile(file);
+        }
+      }
     }
 
     session.launch();
