@@ -196,7 +196,7 @@ public class AbstractVcsTestCase {
     if (sorted) {
       Arrays.sort(lines);
     }
-    Assert.assertEquals(stdoutLines.length, lines.length); 
+    Assert.assertEquals(runResult.stdOut, stdoutLines.length, lines.length); 
     for(int i=0; i<stdoutLines.length; i++) {
       Assert.assertEquals(stdoutLines [i], compressWhitespace(lines [i]));
     }
