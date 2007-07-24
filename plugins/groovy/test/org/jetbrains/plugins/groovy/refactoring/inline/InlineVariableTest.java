@@ -50,8 +50,6 @@ public class InlineVariableTest extends CommonRefactoringTestCase {
 
   private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/local";
 
-  protected static final String TEST_FILE_PATTERN = "(.*)\\.test";
-
   public InlineVariableTest() {
     super(System.getProperty("path") != null ?
         System.getProperty("path") :
