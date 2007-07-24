@@ -72,6 +72,11 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
+    final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder);
+    processFile(path, context, null, recursive, context.getClient());
+  }
+
   private void processCopiedFile(SvnChangedFile copiedFile, ChangelistBuilder builder, SvnChangeProviderContext context) throws SVNException {
     boolean foundRename = false;
     final SVNStatus copiedStatus = copiedFile.getStatus();

@@ -191,6 +191,7 @@ public class SvnVcs extends AbstractVcs {
     return myEditFilesProvider;
   }
 
+  @NotNull
   public ChangeProvider getChangeProvider() {
     if (myChangeProvider == null) {
       myChangeProvider = new SvnChangeProvider(this);

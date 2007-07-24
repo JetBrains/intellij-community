@@ -6,7 +6,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,9 +43,20 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       if (afterRevision != null) {
         File afterPath = afterRevision.getFile().getIOFile();
         if (!afterPath.equals(beforePath)) {
+          UnversionedFilesCollector collector = new UnversionedFilesCollector();
+          try {
+            ((SvnChangeProvider) mySvnVcs.getChangeProvider()).getChanges(afterRevision.getFile(), false, collector);
+          }
+          catch (SVNException e) {
+            exceptions.add(new VcsException(e));
+          }
           checkRevertFile(afterPath, exceptions);
           // rolling back a rename should delete the after file
           if (beforePath != null) {
+            for(VirtualFile f: collector.getUnversionedFiles()) {
+              File ioFile = new File(f.getPath());
+              ioFile.renameTo(new File(beforePath, ioFile.getName()));
+            }
             FileUtil.delete(afterPath);
           }
         }
@@ -96,5 +110,17 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
 
     return exceptions;
+  }
+
+  private static class UnversionedFilesCollector extends EmptyChangelistBuilder {
+    private List<VirtualFile> myUnversionedFiles = new ArrayList<VirtualFile>();
+
+    public void processUnversionedFile(final VirtualFile file) {
+      myUnversionedFiles.add(file);
+    }
+
+    public List<VirtualFile> getUnversionedFiles() {
+      return myUnversionedFiles;
+    }
   }
 }

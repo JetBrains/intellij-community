@@ -178,6 +178,7 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   // IDEADEV-19223
+  @Test
   public void testRollbackRenameWithUnversioned() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
@@ -185,6 +186,9 @@ public class SvnRenameTest extends SvnTestCase {
     checkin();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile unversioned = createFileInCommand(child, "u.txt", "u");
+    final VirtualFile unversionedDir = createDirInCommand(child, "uc");
+    createFileInCommand(unversionedDir, "c.txt", "c");
+    
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
     Assert.assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned));
@@ -198,15 +202,21 @@ public class SvnRenameTest extends SvnTestCase {
 
     LocalFileSystem.getInstance().refresh(false);
     changeListManager.ensureUpToDate(false);
-    final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
-    Assert.assertEquals(2, changes.size());
+    final List<Change> changes = new ArrayList<Change>();
+    changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
+    changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
 
     SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes);
     Assert.assertTrue(new File(childPath, "a.txt").exists());
     Assert.assertTrue(new File(childPath, "u.txt").exists());
+    final File unversionedDirFile = new File(childPath, "uc");
+    Assert.assertTrue(unversionedDirFile.exists());
+    Assert.assertTrue(new File(unversionedDirFile, "c.txt").exists());
   }
 
   // IDEA-13824
+  @Test
+  @Ignore
   public void testRenameFileRenameDir() throws Exception {
     final VirtualFile child = prepareDirectoriesForRename();
     final VirtualFile f = child.findChild("a.txt");
