@@ -42,6 +42,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
@@ -127,11 +129,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
     final VirtualFile oldParent = file.getParent();
     myFilesToRefresh.add(oldParent);
-    final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
-    final boolean result = move(vcs, srcFile, dstFile);
-    dirtyScopeManager.dirDirtyRecursively(toDir, true);
-    dirtyScopeManager.dirDirtyRecursively(oldParent, true);
-    return result;
+    myFilesToRefresh.add(toDir);
+    return move(vcs, srcFile, dstFile);
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
@@ -139,7 +138,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
     if (vcs != null) {
-      myFilesToRefresh.add(file.getParent());
       return move(vcs, srcFile, dstFile);
     }
     return false;
@@ -323,10 +321,25 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (myDeletedFiles.size() > 0) {
       processDeletedFiles(project);
     }
-    for(VirtualFile file: myFilesToRefresh) {
-      file.refresh(true, true);
+    if (myFilesToRefresh.size() > 0) {
+      final List<VirtualFile> toRefresh = new ArrayList<VirtualFile>(myFilesToRefresh);
+      final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
+        public void run() {
+          for(VirtualFile f: toRefresh) {
+            if (!f.isValid()) continue;
+            if (f.isDirectory()) {
+              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(f, true);
+            }
+            else {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(f);
+            }
+          }
+        }
+      });
+      session.addAllFiles(myFilesToRefresh);
+      session.launch();
+      myFilesToRefresh.clear();
     }
-    myFilesToRefresh.clear();
   }
 
   private void processAddedFiles(Project project) {

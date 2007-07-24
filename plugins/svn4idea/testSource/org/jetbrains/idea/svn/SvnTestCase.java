@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
@@ -74,7 +75,11 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   }
 
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    enableSilentOperation(SvnVcs.VCS_NAME, op);
+    setStandardConfirmation(SvnVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+  }
+
+  protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
+    setStandardConfirmation(SvnVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
   }
 
   protected void checkin() throws IOException {

@@ -266,7 +266,6 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
                              final FileStatus parentStatus) throws SVNException {
-    loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = convertStatus(status, filePath.getIOFile());
 
@@ -405,37 +404,6 @@ public class SvnChangeProvider implements ChangeProvider {
         }
     }
     return FileStatus.NOT_CHANGED;
-  }
-
-  private void loadEntriesFile(final FilePath filePath) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myVcs.getProject().isDisposed()) {
-
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final FilePath parentPath = filePath.getParentPath();
-            if (parentPath == null) {
-              return;
-            }
-            File svnSubdirectory = new File(parentPath.getIOFile(), SvnUtil.SVN_ADMIN_DIR_NAME);
-            LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-            VirtualFile file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
-            if (file != null) {
-              localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
-            }
-            if (filePath.isDirectory()) {
-              svnSubdirectory = new File(filePath.getPath(), SvnUtil.SVN_ADMIN_DIR_NAME);
-              file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
-              if (file != null) {
-                localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
-              }
-            }
-          }
-        });
-      }
-    });
   }
 
   private static class SvnChangedFile {
