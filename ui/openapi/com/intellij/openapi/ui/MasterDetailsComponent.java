@@ -429,7 +429,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   @Nullable
   public Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null) {
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
       final NamedConfigurable configurable = node.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
