@@ -18,10 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -125,7 +122,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private void refreshChangesFromCache(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     if (!cache.hasCachesForAnyRoot()) {
-      if (cacheOnly) return;
+      if (cacheOnly) {
+        myBrowser.setEmptyText(VcsBundle.message("committed.changes.not.loaded.message"));
+        return;
+      }
       if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
     }
     cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
@@ -146,6 +146,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     if (myChangesFromProvider == null) {
       return;
     }
+    myBrowser.setEmptyText(VcsBundle.message("committed.changes.empty.message"));
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
       myBrowser.setItems(myChangesFromProvider, keepFilter);
     }

@@ -44,6 +44,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,6 +71,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private CopyProvider myCopyProvider;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
+  private String myEmptyText = "";
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -80,6 +82,19 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       @Override
       public boolean getScrollableTracksViewportWidth() {
         return true;
+      }
+
+      protected void paintComponent(final Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        final TreeModel model = getModel();
+        if (model.getChildCount(model.getRoot()) == 0 && myEmptyText.length() > 0) {
+          final Rectangle bounds = getBounds();
+          final Rectangle2D stringBounds = g.getFont().getStringBounds(myEmptyText, g2d.getFontRenderContext());
+          int x = ((bounds.width - (int) stringBounds.getWidth())) / 2;
+          g.drawString(myEmptyText, bounds.x + x, bounds.y + 20);
+
+        }
       }
     };
     myChangesTree.setRootVisible(false);
@@ -149,6 +164,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       lastGroupNode.add(new DefaultMutableTreeNode(list));
     }
     return model;
+  }
+
+  public void setEmptyText(final String emptyText) {
+    myEmptyText = emptyText;
   }
 
   public void addToolBar(JComponent toolBar) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -35,6 +36,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
   public JComponent initContent() {
     myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myBrowser.setEmptyText(VcsBundle.message("incoming.changes.not.loaded.message"));
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
     final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null);
     myBrowser.addToolBar(toolbar.getComponent());
@@ -68,12 +70,15 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
   private void loadChangesToBrowser() {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
-    if (list != null) {
-      myBrowser.setItems(list, false);
-    }
-    else {
-      cache.loadIncomingChangesAsync(null);
+    if (cache.hasCachesForAnyRoot()) {
+      final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
+      if (list != null) {
+        myBrowser.setEmptyText(VcsBundle.message("incoming.changes.empty.message"));
+        myBrowser.setItems(list, false);
+      }
+      else {
+        cache.loadIncomingChangesAsync(null);
+      }
     }
   }
 
