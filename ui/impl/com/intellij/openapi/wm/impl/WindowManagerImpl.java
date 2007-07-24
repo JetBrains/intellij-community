@@ -156,7 +156,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public void showFrame() {
     IdeEventQueue.getInstance().setWindowManager(this);
-    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager);
+    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager,
+                                                ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
     if (myFrameBounds != null) {
       frame.setBounds(myFrameBounds);
@@ -307,7 +308,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
     else {
       frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(), DataManager.getInstance(),
-                               KeymapManager.getInstance());
+                               KeymapManager.getInstance(), ApplicationManager.getApplication());
       if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }

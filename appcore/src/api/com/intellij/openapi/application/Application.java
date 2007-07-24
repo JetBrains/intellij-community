@@ -255,4 +255,10 @@ public interface Application extends ComponentManager {
    * @return future result
    */
   Future<?> executeOnPooledThread(Runnable action);
+
+  /**
+   * Checks if application is currently disposing (but not yet disposed completely) 
+   * @return
+   */
+  boolean isDisposeInProgress();
 }

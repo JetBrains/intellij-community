@@ -3,11 +3,11 @@ package com.intellij.mock;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
@@ -92,6 +92,10 @@ public class MockApplication extends MockComponentManager implements Application
   public Future<?> executeOnPooledThread(Runnable action) {
     new Thread(action).start();
     return null; // ?
+  }
+
+  public boolean isDisposeInProgress() {
+    return false;
   }
 
 

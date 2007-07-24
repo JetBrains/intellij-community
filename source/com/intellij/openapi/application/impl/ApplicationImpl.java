@@ -83,6 +83,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myDoNotSave = false;
   private boolean myIsWaitingForWriteAction = false;
   @NonNls private static final String NULL_STR = "null";
+  private boolean myDisposeInProgress = false;
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -312,6 +313,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   public void dispose() {
+    myDisposeInProgress = true;
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
     final boolean[] canClose = new boolean[]{true};
     for (final Project project : openProjects) {
@@ -869,5 +871,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
+  }
+
+  public boolean isDisposeInProgress() {
+    return myDisposeInProgress;
   }
 }

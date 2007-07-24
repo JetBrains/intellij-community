@@ -8,13 +8,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +56,10 @@ public class IdeRootPane extends JRootPane{
   private IdeGlassPaneImpl myGlassPane;
 
   private static final Icon CROSS_ICON = IconLoader.getIcon("/actions/cross.png");
+  private Application myApplication;
 
-  IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager){
+  IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager,
+              final Application application){
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
@@ -82,6 +85,7 @@ public class IdeRootPane extends JRootPane{
     myGlassPaneInitialized = true;
 
     myGlassPane.setVisible(false);
+    myApplication = application;
   }
 
 
@@ -126,7 +130,7 @@ public class IdeRootPane extends JRootPane{
     if(myToolWindowsPane != null) {
       contentPane.add(myToolWindowsPane,BorderLayout.CENTER);
     }
-    else {
+    else if (!myApplication.isDisposeInProgress()) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       contentPane.add(myWelcomePane);
     }
