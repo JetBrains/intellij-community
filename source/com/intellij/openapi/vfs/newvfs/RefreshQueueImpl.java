@@ -74,9 +74,11 @@ public class RefreshQueueImpl extends RefreshQueue {
           }
         }
         finally {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          final Application app = ApplicationManager.getApplication();
+          app.invokeLater(new Runnable() {
             public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              if (app.isDisposed()) return;
+              app.runWriteAction(new Runnable() {
                 public void run() {
                   session.fireEvents();
                 }
