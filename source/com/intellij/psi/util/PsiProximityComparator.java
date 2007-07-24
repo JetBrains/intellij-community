@@ -6,6 +6,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.ArrayUtil;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,7 +44,7 @@ public class PsiProximityComparator implements Comparator<Object> {
   // 'distance' from the myContext, like in the following (closest to farthest):
   // -in the same method: distance=0
   // -in the same class: distance=1
-  // -in the same package and module: distance=2
+  // -in the neighboring opened editor distance=2
   // -in the same module: distance=3
   // -in the same project: distance=4
   // -in the other project source: distance=5
@@ -56,21 +58,28 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (!element.isPhysical()) return -1;
 
     final PsiElement context = PsiTreeUtil.findCommonContext(myContext, element);
-    if (PsiTreeUtil.getParentOfType(context, PsiMethod.class) != null) return 0;
-    if (PsiTreeUtil.getParentOfType(context, PsiClass.class) != null) return 1;
+    if (PsiTreeUtil.getParentOfType(context, PsiMethod.class, false) != null) return 0;
+    if (PsiTreeUtil.getParentOfType(context, PsiClass.class, false) != null) return 1;
 
+    VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
+    if (isOpenedInEditor(virtualFile)) return 2;
 
     Module elementModule = ModuleUtil.findModuleForPsiElement(element);
-    if (contextModule == elementModule) return 2;
+    if (contextModule == elementModule) return 3;
     if (elementModule != null) {
-      return elementModule.getProject() == contextModule.getProject() ? 3 : 4;
+      return elementModule.getProject() == contextModule.getProject() ? 4 : 5;
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
     List<OrderEntry> orderEntries = virtualFile == null ? Collections.<OrderEntry>emptyList() : fileIndex.getOrderEntriesForFile(virtualFile);
 
-    if (orderEntries.isEmpty()) return 7;
+    if (orderEntries.isEmpty()) return 8;
     OrderEntry orderEntry = orderEntries.get(0);
-    return orderEntry instanceof JdkOrderEntry ? 6 : 5;
+    return orderEntry instanceof JdkOrderEntry ? 7 : 6;
+  }
+
+  private boolean isOpenedInEditor(VirtualFile element) {
+    if (element == null) return false;
+    VirtualFile[] files = FileEditorManager.getInstance(myProject).getOpenFiles();
+    return ArrayUtil.find(files, element) != -1;
   }
 }
