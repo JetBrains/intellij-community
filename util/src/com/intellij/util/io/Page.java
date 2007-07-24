@@ -32,6 +32,7 @@ public class Page {
   public void flush() {
     if (dirty) {
       owner.flushPage(this);
+      dirty = false;
     }
   }
 

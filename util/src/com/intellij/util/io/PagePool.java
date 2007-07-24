@@ -3,11 +3,15 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings({"NestedSynchronizedStatement"})
 public class PagePool {
   private final static int PAGES_COUNT = 50;
 
@@ -36,73 +40,126 @@ public class PagePool {
     }
   }
 
-  private final Object lock = new Object();
+  private final Object nonIOlock = new Object(); // locks are ordered. iolock must never be taken with nonIOlock in hands
+  private final Object iolock = new Object();
+
   private final PoolKey keyInstance = new PoolKey(null, -1);
   private final Map<PoolKey, Page> myPages = new HashMap<PoolKey, Page>();
+
+  @NotNull
   public Page alloc(RandomAccessDataFile owner, long offset) {
-    synchronized (lock) {
+    Page page = hitCache(owner, offset);
+    if (page != null) return page;
+
+    synchronized (iolock) {
+      page = hitCache(owner, offset);
+      if (page != null) return page; // Double checking locking (in regards to iolock)
+
+      dropLeastUsed();
+
+      offset -= offset % Page.PAGE_SIZE;
+      page = new Page(owner, offset);
+
+      synchronized (nonIOlock) {
+        myPages.put(new PoolKey(owner, offset), page);
+        page.lock();
+      }
+
+      return page;
+    }
+  }
+
+  @Nullable
+  private Page hitCache(RandomAccessDataFile owner, long offset) {
+    synchronized (nonIOlock) {
       offset -= offset % Page.PAGE_SIZE;
       keyInstance.setup(owner, offset);
-      Page page = myPages.get(keyInstance);
-      if (page == null) {
-        page = new Page(owner, offset);
-        if (myPages.size() + 1 > PAGES_COUNT) {
-          dropLeastUsed();
-        }
 
-        myPages.put(new PoolKey(owner, offset), page);
+      final Page page = myPages.get(keyInstance);
+      if (page != null) {
+        if (page.isLocked()) return null;
+
+        page.lock();
       }
-      page.lock();
 
       return page;
     }
   }
 
   private void dropLeastUsed() {
-    Page minPage = null;
-    long minUsageCount = Long.MAX_VALUE;
+    while (true) {
+      Page minPage = null;
+      synchronized (nonIOlock) {
+        if (myPages.size() < PAGES_COUNT) return;
+        long minUsageCount = Long.MAX_VALUE;
 
-    for (Page page : myPages.values()) {
-      if (!page.isLocked() && page.getPageAccessCount() < minUsageCount) {
-        minUsageCount = page.getPageAccessCount();
-        minPage = page;
+        for (Page page : myPages.values()) {
+          if (!page.isLocked() && page.getPageAccessCount() < minUsageCount) {
+            minUsageCount = page.getPageAccessCount();
+            minPage = page;
+          }
+        }
       }
-    }
 
-    if (minPage != null) {
-      dropPage(minPage);
+      if (minPage != null) {
+        dropPage(minPage);
+      }
     }
   }
 
   private void dropPage(final Page page) {
-    page.flush();
-    myPages.remove(new PoolKey(page.getOwner(), page.getOffset()));
+    synchronized (iolock) {
+      synchronized (nonIOlock) {
+        if (page.isLocked()) return;
+        page.lock();
+      }
+
+      page.flush();
+
+      synchronized (nonIOlock) {
+        keyInstance.setup(page.getOwner(), page.getOffset());
+        myPages.remove(keyInstance);
+        page.unlock();
+      }
+    }
   }
 
   public void flushPagesInRange(RandomAccessDataFile owner, long start, int length) {
-    synchronized (lock) {
-      final Collection<Page> pages = new ArrayList<Page>(myPages.values());
-      for (Page page : pages) {
-        if (page.intersects(owner, start, length)) {
-          dropPage(page);
+    List<Page> pagesToDrop = new ArrayList<Page>();
+    synchronized (nonIOlock) {
+      for (Page page : myPages.values()) {
+          if (page.intersects(owner, start, length)) {
+            pagesToDrop.add(page);
+          }
         }
+    }
+
+    synchronized (iolock) {
+      for (Page page : pagesToDrop) {
+        dropPage(page);
       }
     }
   }
 
   public void flushPages(final RandomAccessDataFile owner) {
-    synchronized (lock) {
-      final Collection<Page> pages = new ArrayList<Page>(myPages.values());
-      for (Page page : pages) {
+    List<Page> pagesToDrop = new ArrayList<Page>();
+    synchronized (nonIOlock) {
+      for (Page page : myPages.values()) {
         if (page.getOwner() == owner) {
-          dropPage(page);
+            pagesToDrop.add(page);
+          }
         }
+    }
+
+    synchronized (iolock) {
+      for (Page page : pagesToDrop) {
+        dropPage(page);
       }
     }
   }
 
   public void reclaim(final Page page) {
-    synchronized (lock) {
+    synchronized (nonIOlock) {
       page.unlock();
     }
   }
