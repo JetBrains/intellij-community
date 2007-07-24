@@ -292,8 +292,18 @@ public class AbstractVcsTestCase {
   }
 
   protected void verifyChange(final Change c, final String beforePath, final String afterPath) {
-    verifyRevision(c.getBeforeRevision(), beforePath);
-    verifyRevision(c.getAfterRevision(), afterPath);
+    if (beforePath == null) {
+      Assert.assertNull(c.getBeforeRevision());
+    }
+    else {
+      verifyRevision(c.getBeforeRevision(), beforePath);
+    }
+    if (afterPath == null) {
+      Assert.assertNull(c.getAfterRevision());
+    }
+    else {
+      verifyRevision(c.getAfterRevision(), afterPath);
+    }
   }
 
   private void verifyRevision(final ContentRevision beforeRevision, final String beforePath) {
