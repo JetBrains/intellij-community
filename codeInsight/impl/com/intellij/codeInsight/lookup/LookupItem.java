@@ -56,6 +56,9 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   public static final Object TYPE = Key.create("TYPE");
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
 
+  public static final Key<Object> DONT_PREFER = Key.create("DONT_PREFER");
+  public static final Key<int[]> WEIGHT = Key.create("WEIGHT");
+
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
   public static final Key<TailType> TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface

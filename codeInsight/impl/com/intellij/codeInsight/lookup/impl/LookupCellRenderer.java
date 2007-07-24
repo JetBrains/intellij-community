@@ -30,6 +30,9 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicBorders;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 
 class LookupCellRenderer implements ListCellRenderer {
@@ -138,6 +141,9 @@ class LookupCellRenderer implements ListCellRenderer {
     LookupItem item = (LookupItem)value;
     Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
     Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
+    if (index <= myLookup.getPreferredItemsCount() - 1) {
+      background = isSelected ? SELECTED_BACKGROUND_COLOR : new Color(220, 245, 220);
+    }
     getLabel0(item, background, isSelected);
     getLabel1(item, background, foreground);
     getLabel2(item, background, foreground, isSelected);

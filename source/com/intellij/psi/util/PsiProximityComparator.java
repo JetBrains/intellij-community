@@ -14,7 +14,9 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,28 +40,37 @@ public class PsiProximityComparator implements Comparator<Object> {
     return getProximity(element1) - getProximity(element2);
   }
   // 'distance' from the myContext, like in the following (closest to farthest):
-  // -in the same module: distance=0
-  // -in the same project: distance=1
-  // -in the other project source: distance=2
-  // -in the library: distance=3
-  // -in the jdk: distance=4
-  // -otherwise, distance=5
-  private int getProximity(final PsiElement element) {
+  // -in the same method: distance=0
+  // -in the same class: distance=1
+  // -in the same package and module: distance=2
+  // -in the same module: distance=3
+  // -in the same project: distance=4
+  // -in the other project source: distance=5
+  // -in the library: distance=6
+  // -in the jdk: distance=7
+  // -otherwise, distance=8
+  public int getProximity(final PsiElement element) {
     if (myContext == null) return -1;
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
     if (contextModule == null) return -1;
     if (!element.isPhysical()) return -1;
+
+    final PsiElement context = PsiTreeUtil.findCommonContext(myContext, element);
+    if (PsiTreeUtil.getParentOfType(context, PsiMethod.class) != null) return 0;
+    if (PsiTreeUtil.getParentOfType(context, PsiClass.class) != null) return 1;
+
+
     Module elementModule = ModuleUtil.findModuleForPsiElement(element);
-    if (contextModule == elementModule) return 0;
+    if (contextModule == elementModule) return 2;
     if (elementModule != null) {
-      return elementModule.getProject() == contextModule.getProject() ? 1 : 2;
+      return elementModule.getProject() == contextModule.getProject() ? 3 : 4;
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
     List<OrderEntry> orderEntries = virtualFile == null ? Collections.<OrderEntry>emptyList() : fileIndex.getOrderEntriesForFile(virtualFile);
 
-    if (orderEntries.isEmpty()) return 5;
+    if (orderEntries.isEmpty()) return 7;
     OrderEntry orderEntry = orderEntries.get(0);
-    return orderEntry instanceof JdkOrderEntry ? 4 : 3;
+    return orderEntry instanceof JdkOrderEntry ? 6 : 5;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
+import com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
@@ -16,15 +17,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class LookupManagerImpl extends LookupManager implements ProjectComponent {
   private final Project myProject;
@@ -148,9 +148,36 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
+  private static boolean hasFewAbstractMethods(final PsiClass psiClass) {
+    int count = 0;
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        count++;
+        if (count > 2) return false;
+      }
+    }
+    return count != 0;
+  }
+  
+
   protected void sortItems(PsiFile containingFile, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
     if (shouldSortItems(containingFile, items)) {
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(containingFile, myProject);
+      if (isUseNewSorting()) {
+        if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
+          final ExpectedTypeInfo[] expectedInfos = ((CompletionPreferencePolicy)itemPreferencePolicy).getExpectedInfos();
+          if (expectedInfos != null) {
+            final THashSet<PsiClass> set = getFirstClasses(expectedInfos);
+            for (final LookupItem item : items) {
+              final Object o = item.getObject();
+              if (set.contains(o) && !hasFewAbstractMethods((PsiClass)o)) {
+                item.setAttribute(LookupItem.DONT_PREFER, "");
+              }
+            }
+          }
+        }
+      }
+
       final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
         public int compare(LookupItem o1, LookupItem o2) {
           double priority1 = o1.getPriority();
@@ -158,31 +185,18 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
           if (priority1 > priority2) return -1;
           if (priority2 > priority1) return 1;
 
-          if ("true".equals(System.getProperty("sort.lookup.items.by.proximity"))) {
-            if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
-              final ExpectedTypeInfo[] expectedInfos = ((CompletionPreferencePolicy)itemPreferencePolicy).getExpectedInfos();
-              if (expectedInfos != null) {
-                final THashSet<PsiClass> set = getFirstClasses(expectedInfos);
-                final boolean contains1 = set.contains(o1.getObject());
-                final boolean contains2 = set.contains(o2.getObject());
-                if (contains1 && !contains2) return -1;
-                if (!contains1 && contains2) return 1;
-              }
-            }
-
-            final int i = proximityComparator.compare(o1.getObject(), o2.getObject());
-            return i != 0 ? i : o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-          }
-
           int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
           return stringCompare != 0 ? stringCompare : proximityComparator.compare(o1.getObject(), o2.getObject());
-
         }
 
 
       };
       Arrays.sort(items, comparator);
     }
+  }
+
+  public static boolean isUseNewSorting() {
+    return SmartCodeCompletionAction.isDoingSmartCodeCompleteAction() && "true".equals(System.getProperty("sort.lookup.items.by.proximity"));
   }
 
   protected boolean shouldSortItems(final PsiFile containingFile, final LookupItem[] items) {

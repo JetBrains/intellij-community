@@ -382,7 +382,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
     final LookupData data = new LookupData(items, context.getPrefix());
     if (myPreferencePolicy == null) {
-      myPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.getPrefix());
+      myPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.getPrefix(), context.file);
     }
     data.itemPreferencePolicy = myPreferencePolicy;
     myPreferencePolicy = null;

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionBundle;
+import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -16,9 +17,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -29,9 +36,11 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 public class LookupImpl extends LightweightHint implements Lookup {
+  private static final int MAX_PREFERRED_COUNT = 7;
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
   static final Object ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
@@ -40,7 +49,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private final Project myProject;
   private final Editor myEditor;
   private final LookupItem[] myItems;
+  private final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> myItemsMap;
   private String myPrefix;
+  private int myPreferredItemsCount;
   private final LookupItemPreferencePolicy myItemPreferencePolicy;
   private final CharFilter myCharFilter;
 
@@ -87,6 +98,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    myItemsMap = initWeightMap(itemPreferencePolicy);
+
     updateList();
 
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
@@ -172,6 +186,31 @@ public class LookupImpl extends LightweightHint implements Lookup {
     }
   }
 
+  public int getPreferredItemsCount() {
+    return myPreferredItemsCount;
+  }
+
+  private SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {
+    final Document document = myEditor.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
+    final PsiProximityComparator proximityComparator = new PsiProximityComparator(element, myProject);
+
+    final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> map = new TreeMap<LookupItemWeightComparable, SortedSet<LookupItem>>();
+    for (final LookupItem item : myItems) {
+        final int[] weight = itemPreferencePolicy instanceof CompletionPreferencePolicy
+                             ? ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item)
+                             : item.getObject() instanceof PsiElement
+                               ? new int[]{proximityComparator.getProximity((PsiElement)item.getObject())}
+                               : ArrayUtil.EMPTY_INT_ARRAY;
+        final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
+        SortedSet<LookupItem> sortedSet = map.get(key);
+        if (sortedSet == null) map.put(key, sortedSet = new TreeSet<LookupItem>());
+        sortedSet.add(item);
+    }
+    return map;
+  }
+
 
   Project getProject(){
     return myProject;
@@ -197,20 +236,48 @@ public class LookupImpl extends LightweightHint implements Lookup {
     return myItems;
   }
 
+  private boolean suits(LookupItem<?> item, PatternMatcher matcher, Pattern pattern) {
+    for (final String text : item.getAllLookupStrings()) {
+        if (StringUtil.startsWithIgnoreCase(text, myPrefix) || matcher.matches(text, pattern)) {
+          return true;
+        }
+    }
+    return false;
+  }
+
   void updateList(){
     final PatternMatcher matcher = new Perl5Matcher();
     final Pattern pattern = CompletionUtil.createCamelHumpsMatcher(myPrefix);
     Object oldSelected = myList.getSelectedValue();
     DefaultListModel model = new DefaultListModel();
+
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
-    final String prefix = myPrefix;
-    for (LookupItem<?> item : myItems) {
-      for (final String text : item.getAllLookupStrings()) {
-        if (StringUtil.startsWithIgnoreCase(text, prefix) || matcher.matches(text, pattern)) {
-          model.addElement(item);
-          array.add(item);
-          break;
+    Set<LookupItem> first = new THashSet<LookupItem>();
+    if (LookupManagerImpl.isUseNewSorting()) {
+      for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
+        final SortedSet<LookupItem> items = myItemsMap.get(comparable);
+        final List<LookupItem> suitable = new SmartList<LookupItem>();
+        for (final LookupItem item : items) {
+          if (suits(item, matcher, pattern)) {
+            suitable.add(item);
+          }
         }
+
+        if (array.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
+        for (final LookupItem item : suitable) {
+          array.add(item);
+          first.add(item);
+          model.addElement(item);
+        }
+      }
+      myPreferredItemsCount = array.size();
+    }
+
+
+    for (LookupItem<?> item : myItems) {
+      if (!first.contains(item) && suits(item, matcher, pattern)) {
+        model.addElement(item);
+        array.add(item);
       }
     }
     boolean isEmpty = array.isEmpty();

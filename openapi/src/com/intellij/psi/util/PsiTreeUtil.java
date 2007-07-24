@@ -70,7 +70,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement findCommonParent (@NotNull PsiElement... elements) {
+  public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0)  return null;
     PsiElement toReturn = elements[0];
     for (int i = 1; i < elements.length; i++) {
@@ -106,6 +106,47 @@ public class PsiTreeUtil {
     while (parent != topLevel && parent != null) {
       parents.add(parent);
       parent = parent.getParent();
+    }
+    return parents;
+  }
+
+  @Nullable
+  public static PsiElement findCommonContext(@NotNull PsiElement... elements) {
+    if (elements.length == 0)  return null;
+    PsiElement toReturn = elements[0];
+    for (int i = 1; i < elements.length; i++) {
+      toReturn = findCommonContext(toReturn, elements[i]);
+      if (toReturn == null) return null;
+    }
+
+    return toReturn;
+  }
+
+  public static @Nullable PsiElement findCommonContext(@NotNull PsiElement element1, @NotNull PsiElement element2) {
+    // optimization
+    if(element1 == element2) return element1;
+    final PsiFile containingFile = element1.getContainingFile();
+    final PsiElement topLevel = containingFile == element2.getContainingFile() ? containingFile : null;
+
+    ArrayList<PsiElement> parents1 = getContexts(element1, topLevel);
+    ArrayList<PsiElement> parents2 = getContexts(element2, topLevel);
+    int size = Math.min(parents1.size(), parents2.size());
+    PsiElement parent = topLevel;
+    for (int i = 1; i <= size; i++) {
+      PsiElement parent1 = parents1.get(parents1.size() - i);
+      PsiElement parent2 = parents2.get(parents2.size() - i);
+      if (!parent1.equals(parent2)) break;
+      parent = parent1;
+    }
+    return parent;
+  }
+
+  private static @NotNull ArrayList<PsiElement> getContexts(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+    ArrayList<PsiElement> parents = new ArrayList<PsiElement>();
+    PsiElement parent = element;
+    while (parent != topLevel && parent != null) {
+      parents.add(parent);
+      parent = parent.getContext();
     }
     return parents;
   }
