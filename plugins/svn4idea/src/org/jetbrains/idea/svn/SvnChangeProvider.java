@@ -86,7 +86,7 @@ public class SvnChangeProvider implements ChangeProvider {
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
           final String childURL = deletedChild.getStatus().getURL().toString();
-          if (childURL.startsWith(copyFromURL)) {
+          if (childURL.startsWith(copyFromURL + "/")) {
             String relativePath = childURL.substring(copyFromURL.length());
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(newPath);
