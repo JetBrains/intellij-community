@@ -409,10 +409,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
         final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
-        config.select(facet.getModule().getName(), ManageFacetsEditor.DISPLAY_NAME).doWhenDone(new Runnable() {
+        config.select(facet).doWhenDone(new Runnable() {
           public void run() {
             modulesConfig.setStartModuleWizard(false);
-            modulesConfig.selectFacetTab(facet, tabNameToSelect);
           }
         });
       }

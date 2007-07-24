@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.find.FindBundle;
+import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
@@ -22,16 +23,20 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.navigation.Place;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -41,7 +46,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Configurable.Assistant {
+public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Configurable.Assistant, Place.Navigator {
 
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
   protected StructureConfigrableContext myContext;
@@ -52,12 +57,54 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   private boolean myWasTreeInitialized;
 
+  @NonNls public static final String TREE_OBJECT = "treeObject";
+
+  protected boolean myAutoScrollEnabled = true;
+
   protected BaseStructureConfigurable(final Project project) {
     myProject = project;
   }
 
   public void init(StructureConfigrableContext context) {
     myContext = context;
+  }
+
+
+  public ActionCallback navigateTo(@Nullable final Place place) {
+    if (place == null) return new ActionCallback.Done();
+
+    final Object object = place.getPath(TREE_OBJECT);
+    if (object == null) return new ActionCallback.Done();
+
+    final MyNode node = findNodeByObject(myRoot, object);
+    if (node == null) return new ActionCallback.Done();
+
+    final NamedConfigurable config = node.getConfigurable();
+
+    final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
+      public void run() {
+        myAutoScrollEnabled = true;
+      }
+    });
+
+    myAutoScrollEnabled = false;
+    myAutoScrollHandler.cancelAllRequests();
+    selectNodeInTree(node).doWhenDone(new Runnable() {
+      public void run() {
+        updateSelection(config);
+        Place.goFurther(config, place).markDone(result);
+      }
+    });
+
+    return result;
+  }
+
+
+  public void queryPlace(@NotNull final Place place) {
+    if (myCurrentConfigurable != null) {
+      place.putPath(TREE_OBJECT, myCurrentConfigurable.getEditableObject());
+      Place.queryFurther(myCurrentConfigurable, place);
+    }
   }
 
   protected void initTree() {
@@ -303,10 +350,10 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected boolean removeFacet(final Facet facet) {
-    //if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId())) {
-    //  return true;
-    //}
-    //getFacetConfigurator().removeFacet(facet);
+    if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId())) {
+      return true;
+    }
+    myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
     return false;
   }
 

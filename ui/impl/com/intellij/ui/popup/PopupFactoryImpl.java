@@ -146,7 +146,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                          String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
                                          final boolean autoSelectionEnabled) {
     final ArrayList<ActionItem> items = new ArrayList<ActionItem>();
-    fillModel(items, actionGroup, dataContext, showNumbers, showDisabledActions, new HashMap<AnAction, Presentation>(), 0, false, honorActionMnemonics);
+    fillModel(items, actionGroup, dataContext, showNumbers, showDisabledActions, new HashMap<AnAction, Presentation>(), 0, false, null, honorActionMnemonics);
 
     return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
                                autoSelectionEnabled) {};
@@ -260,7 +260,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                boolean showNumbers,
                                boolean showDisabled,
                                HashMap<AnAction, Presentation> action2presentation,
-                               int startNumberingFrom, boolean prependWithSeparator,
+                               int startNumberingFrom, boolean prependWithSeparator, String separatorText,
                                final boolean honorActionMnemonics) {
     int n = startNumberingFrom;
     AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null,
@@ -288,9 +288,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
     Icon emptyIcon = maxHeight != -1 && maxWidth != -1 ? new EmptyIcon(maxWidth, maxHeight) : null;
 
+    String sepText = separatorText;
     for (AnAction action : actions) {
       if (action instanceof Separator) {
         prependWithSeparator = true;
+        sepText = ((Separator)action).getText();
       }
       else {
         if (action instanceof ActionGroup) {
@@ -298,14 +300,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
           ActionGroup group = (ActionGroup)action;
           n = group.isPopup()
               ? appendAction(group, action2presentation, dataContext, showDisabled, showNumbers, n, listModel, emptyIcon,
-                             prependWithSeparator, honorActionMnemonics)
-              : fillModel(listModel, group, dataContext, showNumbers, showDisabled, action2presentation, n, prependWithSeparator, honorActionMnemonics);
+                             prependWithSeparator, sepText, honorActionMnemonics)
+              : fillModel(listModel, group, dataContext, showNumbers, showDisabled, action2presentation, n, prependWithSeparator, separatorText, honorActionMnemonics);
         }
         else {
           n = appendAction(action, action2presentation, dataContext, showDisabled, showNumbers, n, listModel, emptyIcon,
-                           prependWithSeparator, honorActionMnemonics);
+                           prependWithSeparator, sepText, honorActionMnemonics);
         }
         prependWithSeparator = false;
+        separatorText = null;
       }
     }
 
@@ -321,6 +324,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                   List<ActionItem> listModel,
                                   Icon emptyIcon,
                                   final boolean prependWithSeparator,
+                                  final String separatorText,
                                   final boolean honorActionMnemonics) {
     Presentation presentation = getPresentation(action, action2presentation);
     AnActionEvent event = new AnActionEvent(null,
@@ -360,7 +364,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
 
       }
-      listModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependWithSeparator));
+      listModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependWithSeparator, separatorText));
     }
     return n;
   }
@@ -380,13 +384,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private boolean myIsEnabled;
     private Icon myIcon;
     private boolean myPrependWithSeparator;
+    private String mySeparatorText;
 
-    public ActionItem(AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator) {
+    public ActionItem(AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
       myIcon = icon;
       myPrependWithSeparator = prependWithSeparator;
+      mySeparatorText = separatorText;
     }
 
     public AnAction getAction() {
@@ -404,6 +410,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public boolean isPrependWithSeparator() {
       return myPrependWithSeparator;
+    }
+
+    public String getSeparatorText() {
+      return mySeparatorText;
     }
 
     public boolean isEnabled() { return myIsEnabled; }
@@ -461,7 +471,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public ListSeparator getSeparatorAbove(final ActionItem value) {
-      return value.isPrependWithSeparator() ? new ListSeparator() : null;
+      return value.isPrependWithSeparator() ? new ListSeparator(value.getSeparatorText()) : null;
     }
 
     public int getDefaultOptionIndex() {

@@ -103,7 +103,7 @@ class JdkComboBox extends JComboBox{
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ProjectJdk projectJdk = retrieveJDK.compute();
-        ModuleStructureConfigurable.getInstance(project).selectNodeInTree(projectJdk);
+        ProjectStructureConfigurable.getInstance(project).select(projectJdk);
       }
     });
     addActionListener(new ActionListener(){

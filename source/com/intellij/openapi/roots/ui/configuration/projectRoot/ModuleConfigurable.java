@@ -117,7 +117,4 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
     getModuleEditor().queryPlace(place);
   }
 
-  public void swithToFacetEditor(final Facet facet) {
-    getModuleEditor().swithToFacetEditor(facet);  
-  }
 }

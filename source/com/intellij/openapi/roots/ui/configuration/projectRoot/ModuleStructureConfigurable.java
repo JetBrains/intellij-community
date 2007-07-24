@@ -4,8 +4,8 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.ide.CommonActionsManager;
@@ -78,8 +78,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private ProjectConfigurable myProjectConfigurable;
 
   private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
-  @NonNls public static final String MODULE_TREE_OBJECT = "moduleTreeElement";
-  private boolean myAutoScrollEnabled = true;
+
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
@@ -143,48 +142,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     updateSelection(configurable, selectedTab);
 
     if (configurable != null) {
-      myHistory.pushPlaceForElement(MODULE_TREE_OBJECT, configurable.getEditableObject());
+      myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
     }
   }
 
-  public ActionCallback navigateTo(@Nullable final Place place) {
-    if (place == null) return new ActionCallback.Done();
-
-    final Object object = place.getPath(MODULE_TREE_OBJECT);
-    if (object == null) return new ActionCallback.Done();
-
-    final MyNode node = findNodeByObject(myRoot, object);
-    if (node == null) return new ActionCallback.Done();
-
-    final NamedConfigurable config = node.getConfigurable();
-
-    final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
-      public void run() {
-        myAutoScrollEnabled = true;
-      }
-    });
-
-    myAutoScrollEnabled = false;
-    myAutoScrollHandler.cancelAllRequests();
-    selectNodeInTree(node).doWhenDone(new Runnable() {
-      public void run() {
-        updateSelection(config);
-        Place.goFurther(config, place).markDone(result);
-      }
-    });
-
-    return result;
-  }
 
   protected boolean isAutoScrollEnabled() {
     return myAutoScrollEnabled;
-  }
-
-  public void queryPlace(@NotNull final Place place) {
-    if (myCurrentConfigurable != null) {
-      place.putPath(MODULE_TREE_OBJECT, myCurrentConfigurable.getEditableObject());
-      Place.queryFurther(myCurrentConfigurable, place);
-    }
   }
 
   private void updateSelection(final NamedConfigurable configurable, final String selectedTab) {
@@ -196,9 +160,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
-      editor.init(selectedTab, getDetailsComponent().getChooseView(), myHistory);
-    } else {
-      getDetailsComponent().getChooseView().clear();
+      editor.init(selectedTab, myHistory);
     }
   }
 
@@ -210,7 +172,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
-      //myFacetEditorFacade.addFacetsNodes(module, moduleNode);
+      myFacetEditorFacade.addFacetsNodes(module, moduleNode);
       final String[] groupPath = myPlainMode ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
         addNode(moduleNode, myRoot);
@@ -277,6 +239,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           });
         addNode(moduleNode, moduleGroupNode);
       }
+      myFacetEditorFacade.addFacetsNodes((Module)moduleNode.getConfigurable().getEditableObject(), moduleNode);
     }
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
     return true;
@@ -428,33 +391,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
 
-  public void selectFacetTab(@NotNull final Facet facet, @Nullable final String tabName) {
-    NamedConfigurable confugurable = getSelectedConfugurable();
-    if (confugurable instanceof ModuleConfigurable) {
-      final ModuleEditor moduleEditor = ((ModuleConfigurable)confugurable).getModuleEditor();
-      moduleEditor.navigateTo(
-        new Place().putPath(ModuleEditor.MODULE_VIEW_KEY, facet.getName())
-      ).doWhenDone(new Runnable() {
-        public void run() {
-          if (tabName != null) {
-            moduleEditor.getOrCreateFacetEditor(facet).setSelectedTabName(tabName);
-          }
-        }
-      });
-    }
-
-    final MyNode node = findNodeByObject(myRoot, facet);
-    if (node != null) {
-      selectNodeInTree(node);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          FacetConfigurable moduleConfigurable = (FacetConfigurable)node.getConfigurable();
-          moduleConfigurable.getEditor().setSelectedTabName(tabName);
-        }
-      });
-    }
-  }
-
   public void selectModuleTab(@NotNull final String moduleName, final String tabName) {
     final MyNode node = findModuleNode(ModuleManager.getInstance(myProject).findModuleByName(moduleName));
     if (node != null) {
@@ -536,7 +472,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
       if (parent == null) parent = myRoot;
       addNode(node, parent);
-      //myFacetEditorFacade.addFacetsNodes(module, node);
+      myFacetEditorFacade.addFacetsNodes(module, node);
       ((DefaultTreeModel)myTree.getModel()).reload(parent);
       selectNodeInTree(node);
       myContext.myValidityCache.clear(); //missing modules added
@@ -682,15 +618,27 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   protected AbstractAddGroup createAddAction() {
-    return new AbstractAddGroup(ProjectBundle.message("add.new.module.text.full")) {
+    final AddFacetActionGroup addFacetGroup = new AddFacetActionGroup("", true, myFacetEditorFacade);
+
+    return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        return new AnAction[] {
-          new AnAction(ProjectBundle.message("add.new.module.text.full")) {
-            public void actionPerformed(final AnActionEvent e) {
-              addModule();
-            }
+        AnAction module = new AnAction(ProjectBundle.message("add.new.module.text.full"), null, IconLoader.getIcon("/actions/modul.png")) {
+          public void actionPerformed(final AnActionEvent e) {
+            addModule();
           }
         };
+
+        ArrayList<AnAction> result = new ArrayList<AnAction>();
+        result.add(module);
+
+        final AnAction[] facets = addFacetGroup.getChildren(e);
+        if (facets.length > 0) {
+          result.add(new Separator("Facet"));
+        }
+
+        result.addAll(Arrays.asList(facets));
+
+        return result.toArray(new AnAction[result.size()]);
       }
     };
   }

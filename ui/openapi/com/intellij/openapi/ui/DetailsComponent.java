@@ -23,7 +23,6 @@ public class DetailsComponent  {
 
   private JLabel myEmptyContentLabel;
   private NonOpaquePanel myBanner;
-  private ChooseView myChooseView;
 
   public DetailsComponent() {
     myComponent = new JPanel(new BorderLayout()) {
@@ -78,11 +77,7 @@ public class DetailsComponent  {
     myBanner = new NonOpaquePanel(new BorderLayout());
     myBannerLabel = new Banner();
 
-    myChooseView = new ChooseView();
-    myChooseView.setBorder(new EmptyBorder(0, 2, 0, 8));
-
     myBanner.add(myBannerLabel, BorderLayout.CENTER);
-    myBanner.add(myChooseView, BorderLayout.EAST);
 
     myComponent.add(myBanner, BorderLayout.NORTH);
     myEmptyContentLabel = new JLabel("", JLabel.CENTER);
@@ -121,10 +116,6 @@ public class DetailsComponent  {
 
   public void setBannerMinHeight(final int height) {
     myBannerLabel.setMinHeight(height);
-  }
-
-  public ChooseView getChooseView() {
-    return myChooseView;
   }
 
   public void disposeUIResources() {

@@ -21,7 +21,17 @@ package com.intellij.openapi.actionSystem;
 public final class Separator extends AnAction {
   private static final Separator ourInstance = new Separator();
 
-  private Separator() {
+  private String myText;
+
+  public Separator() {
+  }
+
+  public Separator(String text) {
+    myText = text;
+  }
+
+  public String getText() {
+    return myText;
   }
 
   public static Separator getInstance() {

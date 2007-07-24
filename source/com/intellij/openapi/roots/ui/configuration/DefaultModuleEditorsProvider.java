@@ -32,7 +32,6 @@ public class DefaultModuleEditorsProvider implements ModuleComponent, ModuleConf
     editors.add(new ContentEntriesEditor(project, moduleName, rootModel, provider));
     editors.add(new OutputEditor(project, rootModel));
     editors.add(new ClasspathEditor(project, rootModel, provider));
-    editors.add(new ManageFacetsEditor(project, rootModel));
     return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
   }
 }

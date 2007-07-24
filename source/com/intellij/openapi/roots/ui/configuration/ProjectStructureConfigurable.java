@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.facet.Facet;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -12,6 +13,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.actions.BackAction;
@@ -278,15 +280,27 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     Place.queryFurther(mySelectedConfigurable, place);
   }
 
-  public ActionCallback select(@Nullable final String moduleToSelect, @Nullable final String tabNameToSelect) {
+  public ActionCallback select(@Nullable final String moduleToSelect, String tab) {
     Place place = new Place().putPath(CATEGORY, myModulesConfig);
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
-      place = place.putPath(ModuleStructureConfigurable.MODULE_TREE_OBJECT, module)
-        .putPath(ModuleEditor.MODULE_VIEW_KEY, ModuleEditor.GENERAL_VIEW)
-        .putPath(ModuleEditor.MODULE_VIEW_GENERAL_TAB, tabNameToSelect);
+      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module);
     }
+    return navigateTo(place);
+  }
+
+  public ActionCallback select(@Nullable final Facet facetToSelect) {
+    Place place = new Place().putPath(CATEGORY, myModulesConfig);
+    if (facetToSelect != null) {
+      place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, facetToSelect);
+    }
+    return navigateTo(place);
+  }
+
+  public ActionCallback select(Sdk sdk) {
+    Place place = new Place().putPath(CATEGORY, myJdkListConfig);
+    place.putPath(BaseStructureConfigurable.TREE_OBJECT, sdk);
     return navigateTo(place);
   }
 
