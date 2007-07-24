@@ -170,11 +170,12 @@ public class AbstractVcsTestCase {
     }
   }
 
-  protected void enableSilentOperation(final String vcsName, final VcsConfiguration.StandardConfirmation op) {
+  protected void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
+                                         final VcsShowConfirmationOption.Value value) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
     VcsShowConfirmationOption option = vcsManager.getStandardConfirmation(op, vcs);
-    option.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+    option.setValue(value);
   }
 
   protected static void verify(final RunResult runResult) {
