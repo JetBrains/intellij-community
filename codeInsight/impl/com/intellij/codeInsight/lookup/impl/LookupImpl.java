@@ -191,22 +191,25 @@ public class LookupImpl extends LightweightHint implements Lookup {
   }
 
   private SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {
-    final Document document = myEditor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
-    final PsiProximityComparator proximityComparator = new PsiProximityComparator(element, myProject);
-
     final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> map = new TreeMap<LookupItemWeightComparable, SortedSet<LookupItem>>();
-    for (final LookupItem item : myItems) {
-        final int[] weight = itemPreferencePolicy instanceof CompletionPreferencePolicy
-                             ? ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item)
-                             : item.getObject() instanceof PsiElement
-                               ? new int[]{proximityComparator.getProximity((PsiElement)item.getObject())}
-                               : ArrayUtil.EMPTY_INT_ARRAY;
-        final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
-        SortedSet<LookupItem> sortedSet = map.get(key);
-        if (sortedSet == null) map.put(key, sortedSet = new TreeSet<LookupItem>());
-        sortedSet.add(item);
+
+    if (LookupManagerImpl.isUseNewSorting()) {
+      final Document document = myEditor.getDocument();
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
+      final PsiProximityComparator proximityComparator = new PsiProximityComparator(element, myProject);
+
+      for (final LookupItem item : myItems) {
+          final int[] weight = itemPreferencePolicy instanceof CompletionPreferencePolicy
+                               ? ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item)
+                               : item.getObject() instanceof PsiElement
+                                 ? new int[]{proximityComparator.getProximity((PsiElement)item.getObject())}
+                                 : ArrayUtil.EMPTY_INT_ARRAY;
+          final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
+          SortedSet<LookupItem> sortedSet = map.get(key);
+          if (sortedSet == null) map.put(key, sortedSet = new TreeSet<LookupItem>());
+          sortedSet.add(item);
+      }
     }
     return map;
   }
