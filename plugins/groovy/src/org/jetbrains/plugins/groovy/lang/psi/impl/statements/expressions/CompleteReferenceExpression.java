@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -46,12 +47,15 @@ public class CompleteReferenceExpression {
         if (clazz != null) {
           List<LookupElement> props = new ArrayList<LookupElement>();
           final LookupElementFactory factory = LookupElementFactory.getInstance();
+          final PsiClass eventListener = refExpr.getManager().findClass("java.util.EventListener", refExpr.getResolveScope());
           for (PsiMethod method : clazz.getAllMethods()) {
             if (PsiUtil.isSimplePropertySetter(method)) {
               String prop = PropertyUtil.getPropertyName(method);
               if (prop != null) {
                 props.add(factory.createLookupElement(prop).setIcon(Icons.PROPERTY));
               }
+            } else if (eventListener != null) {
+              addListenerProperties(method, eventListener, props, factory);
             }
           }
 
@@ -75,6 +79,28 @@ public class CompleteReferenceExpression {
 
     return propertyVariants;
   }
+
+  private static void addListenerProperties(PsiMethod method, PsiClass eventListenerClass,
+                                            List<LookupElement> result, LookupElementFactory factory) {
+    if (method.getName().startsWith("add") &&
+        method.getParameterList().getParametersCount() == 1) {
+      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      final PsiType type = parameter.getType();
+      if (type instanceof PsiClassType) {
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass listenerClass = classType.resolve();
+        if (listenerClass != null) {
+          final PsiMethod[] listenerMethods = listenerClass.getMethods();
+          if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
+            for (PsiMethod listenerMethod : listenerMethods) {
+              result.add(factory.createLookupElement(listenerMethod.getName()).setIcon(Icons.PROPERTY));
+            }
+          }
+        }
+      }
+    }
+  }
+
 
   private static Object[] getVariantsImpl(GrReferenceExpression refExpr, ResolverProcessor processor) {
     GrExpression qualifier = refExpr.getQualifierExpression();
