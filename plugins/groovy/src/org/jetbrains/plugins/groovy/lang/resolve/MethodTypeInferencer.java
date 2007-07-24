@@ -1,12 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,18 +18,23 @@ import java.util.List;
 /**
  * @author ven
  */
-public class MethodTypeInferencer {
+public class MethodTypeInferencer implements Computable<PsiType> {
+  private GrMethod myMethod;
+
+  public MethodTypeInferencer(GrMethod method) {
+    myMethod = method;
+  }
+
   @Nullable
-  public static PsiType inferMethodReturnType (GrMethod method) {
-    GrOpenBlock body = method.getBlock();
+  public PsiType compute () {
+    GrOpenBlock body = myMethod.getBlock();
     if (body == null) return null;
-    method.putCopyableUserData(ResolveUtil.IS_BEING_RESOLVED, true);
 
     List<GrReturnStatement> returns = new ArrayList<GrReturnStatement>();
     collectReturns(body, returns);
 
     PsiType result = null;
-    PsiManager manager = method.getManager();
+    PsiManager manager = myMethod.getManager();
     for (GrReturnStatement returnStatement : returns) {
       GrExpression value = returnStatement.getReturnValue();
       if (value != null) {
@@ -44,7 +53,6 @@ public class MethodTypeInferencer {
       }
     }
 
-    method.putCopyableUserData(ResolveUtil.IS_BEING_RESOLVED, null);
     if (isVoid) return PsiType.VOID;
     
     return result;

@@ -115,7 +115,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     public PsiType fun(GrMethod method) {
       GrTypeElement element = method.getReturnTypeElementGroovy();
       if (element == null) {
-        return MethodTypeInferencer.inferMethodReturnType(method);
+        return GroovyPsiManager.getInstance(method.getProject()).inferType(element, new MethodTypeInferencer(method)); 
       }
       return element.getType();
     }

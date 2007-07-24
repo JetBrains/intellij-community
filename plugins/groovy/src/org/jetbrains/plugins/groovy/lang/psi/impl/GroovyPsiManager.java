@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -321,4 +322,23 @@ public class GroovyPsiManager implements ProjectComponent {
     return myArrayClass;
   }
 
+  ThreadLocal<List<PsiElement>> myElementsWithInferredTypes = new ThreadLocal<List<PsiElement>>(){
+    protected List<PsiElement> initialValue() {
+      return new ArrayList<PsiElement>();
+    }
+  };
+
+  public PsiType inferType(PsiElement element, Computable<PsiType> computable) {
+    final List<PsiElement> curr = myElementsWithInferredTypes.get();
+    try{
+      curr.add(element);
+      return computable.compute();
+    } finally {
+      curr.remove(element);
+    }
+  }
+
+  public boolean isTypeBeingInferred(PsiElement element) {
+    return myElementsWithInferredTypes.get().contains(element);
+  }
 }
