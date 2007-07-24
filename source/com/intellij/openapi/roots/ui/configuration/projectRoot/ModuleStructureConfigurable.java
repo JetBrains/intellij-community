@@ -407,7 +407,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
 
   public Module[] getModules() {
-    return myContext.myModulesConfigurator != null ? myContext.myModulesConfigurator.getModuleModel().getModules() : myModuleManager.getModules();
+    if (myContext.myModulesConfigurator != null) {
+      final ModifiableModuleModel model = myContext.myModulesConfigurator.getModuleModel();
+      return model.getModules();
+    } else {
+      return myModuleManager.getModules();
+    }
   }
 
   public void addLibraryOrderEntry(final Module module, final Library library) {
