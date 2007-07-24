@@ -211,17 +211,18 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.threadAction();
       DebuggerTreeNodeImpl rootNode;
 
-      final ThreadReferenceProxyImpl currentThread = getDebuggerContext().getThreadProxy();
+      final DebuggerContextImpl debuggerContext = getDebuggerContext();
+      final ThreadReferenceProxyImpl currentThread = debuggerContext.getThreadProxy();
       if (currentThread == null) {
         return;
       }
 
       try {
-        StackFrameProxyImpl frame = getDebuggerContext().getFrameProxy();
+        StackFrameProxyImpl frame = debuggerContext.getFrameProxy();
 
         if (frame != null) {
           NodeManagerImpl nodeManager = getNodeFactory();
-          rootNode = nodeManager.createNode(nodeManager.getStackFrameDescriptor(null, frame), getDebuggerContext().createEvaluationContext());
+          rootNode = nodeManager.createNode(nodeManager.getStackFrameDescriptor(null, frame), debuggerContext.createEvaluationContext());
         }
         else {
           rootNode = getNodeFactory().getDefaultNode();
@@ -290,8 +291,8 @@ public class FrameDebuggerTree extends DebuggerTree {
         }
 
         private void autoscrollToNewLocals(DebuggerTreeNodeImpl frameNode) {
-          final DebuggerSession debuggerSession = getDebuggerContext().getDebuggerSession();
-          final boolean isSteppingThrough = debuggerSession.isSteppingThrough(getDebuggerContext().getThreadProxy());
+          final DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
+          final boolean isSteppingThrough = debuggerSession.isSteppingThrough(debuggerContext.getThreadProxy());
           for (Enumeration e = frameNode.rawChildren(); e.hasMoreElements();) {
             final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
             final NodeDescriptorImpl descriptor = child.getDescriptor();

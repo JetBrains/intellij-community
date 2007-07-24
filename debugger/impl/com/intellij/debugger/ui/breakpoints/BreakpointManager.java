@@ -336,7 +336,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   @Nullable
   public LineBreakpoint addLineBreakpoint(Document document, int lineIndex) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
       return null;
     }
@@ -351,7 +351,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public FieldBreakpoint addFieldBreakpoint(Field field, ObjectReference object) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, field, object);
     if (fieldBreakpoint != null) {
       addBreakpoint(fieldBreakpoint);
@@ -375,7 +375,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, document, lineIndex, fieldName);
     if (fieldBreakpoint != null) {
       addBreakpoint(fieldBreakpoint);
@@ -384,7 +384,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public ExceptionBreakpoint addExceptionBreakpoint(String exceptionClassName, String packageName) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(exceptionClassName != null);
     ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName);
     addBreakpoint(breakpoint);
@@ -395,7 +395,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MethodBreakpoint breakpoint = MethodBreakpoint.create(myProject, document, lineIndex);
     if (breakpoint == null) {
       return null;
@@ -405,7 +405,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public WildcardMethodBreakpoint addMethodBreakpoint(String classPattern, String methodName) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     WildcardMethodBreakpoint breakpoint = WildcardMethodBreakpoint.create(myProject, classPattern, methodName);
     if (breakpoint == null) {
       return null;
@@ -420,7 +420,7 @@ public class BreakpointManager implements JDOMExternalizable {
   public List<BreakpointWithHighlighter> findBreakpoints(final Document document, final int offset) {
     LinkedList<BreakpointWithHighlighter> result = new LinkedList<BreakpointWithHighlighter>();
 
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
         result.add((BreakpointWithHighlighter)breakpoint);
@@ -431,8 +431,8 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public List<BreakpointWithHighlighter> findBreakpoints(Document document, TextRange textRange) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<BreakpointWithHighlighter> result = new ArrayList<BreakpointWithHighlighter>();
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     int startLine = document.getLineNumber(textRange.getStartOffset());
     int endLine = document.getLineNumber(textRange.getEndOffset())+1;
     TextRange lineRange = new TextRange(startLine, endLine);
@@ -455,8 +455,7 @@ public class BreakpointManager implements JDOMExternalizable {
    */
   @Nullable
   public <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, final @Nullable Key<T> category) {
-
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
@@ -581,7 +580,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public synchronized void removeBreakpoint(final Breakpoint breakpoint) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (breakpoint == null) {
       return;
     }
@@ -685,7 +684,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   private void removeInvalidBreakpoints() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ArrayList<Breakpoint> toDelete = new ArrayList<Breakpoint>();
 
     for (Iterator it = getBreakpoints().listIterator(); it.hasNext();) {
@@ -705,7 +704,7 @@ public class BreakpointManager implements JDOMExternalizable {
    *         LINE_BREAKPOINTS, EXCEPTION_BREKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
    */
   public <T extends Breakpoint> Breakpoint[] getBreakpoints(final Key<T> category) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     removeInvalidBreakpoints();
 
     final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
@@ -817,7 +816,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public void updateAllRequests() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     List<Breakpoint> breakpoints = getBreakpoints();
     for (Breakpoint breakpoint : breakpoints) {
@@ -826,14 +825,14 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public void updateBreakpointsUI() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (Breakpoint breakpoint : getBreakpoints()) {
       breakpoint.updateUI();
     }
   }
 
   public void reloadBreakpoints() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     for (Breakpoint breakpoint : getBreakpoints()) {
       breakpoint.reload();

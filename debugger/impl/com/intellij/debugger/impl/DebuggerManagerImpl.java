@@ -38,7 +38,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -121,7 +120,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   public DebuggerSession getSession(DebugProcess process) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (final DebuggerSession debuggerSession : getSessions()) {
       if (process == debuggerSession.getProcess()) return debuggerSession;
     }
@@ -161,7 +160,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
                                               RemoteConnection remoteConnection,
                                               boolean pollConnection
   ) throws ExecutionException {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
       public void processAttached(final DebugProcess process) {
@@ -444,7 +443,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
 
     public void setState(final DebuggerContextImpl context, int state, int event, String description) {
-      LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {
         myDebuggerSession.getContextManager().setState(context, state, event, description);

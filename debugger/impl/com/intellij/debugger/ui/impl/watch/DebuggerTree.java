@@ -35,7 +35,6 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
 import com.sun.jdi.*;
 
-import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
@@ -333,7 +332,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   public void rebuild(final DebuggerContextImpl context) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final DebugProcessImpl process = context.getDebugProcess();
     if (process == null) {
       return; // empty context, no process available yet
@@ -414,6 +413,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         final ObjectReference thisObjectReference = frame.thisObject();
 
         final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
+
+        if (!debuggerContext.isEvaluationPossible()) {
+          myChildren.add(myNodeManager.createNode(MessageDescriptor.EVALUATION_NOT_POSSIBLE, evaluationContext));
+        }
 
         final NodeDescriptor descriptor;
         if (thisObjectReference != null) {

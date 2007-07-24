@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -110,7 +111,7 @@ public class DebuggerSession {
      * since the thread was resumed
      */
     public void setState(final DebuggerContextImpl context, final int state, final int event, final String description) {
-      LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       LOG.assertTrue(context.getDebuggerSession() == DebuggerSession.this || context.getDebuggerSession() == null);
       final Runnable setStateRunnable = new Runnable() {
         public void run() {
@@ -270,7 +271,7 @@ public class DebuggerSession {
   }
 
   public void dispose() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     getProcess().dispose();
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_DISPOSED, EVENT_DISPOSE, null);
   }
@@ -301,7 +302,7 @@ public class DebuggerSession {
   }
 
   private SuspendContextImpl getSuspendContext() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return getContextManager().getContext().getSuspendContext();
   }
 

@@ -177,7 +177,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final Value value = descriptor.getValue();
     Type type = value != null ? value.type() : null;
-
+    
+    // in case evaluation is not possible, force default renderer
+    if (!DebuggerManagerEx.getInstanceEx(getProject()).getContext().isEvaluationPossible()) {
+      return getDefaultRenderer(type);
+    }
+    
     NodeRenderer renderer = myNodeRederersMap.get(type);
     if(renderer == null) {
       for (final NodeRenderer nodeRenderer : myRenderers) {
@@ -1559,7 +1564,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     mySession = session;
     myWaitFor.down();
 
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(isInInitialState());
 
     myConnection = remoteConnection;

@@ -5,10 +5,10 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
@@ -43,7 +43,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   }
 
   public DebuggerTreeNodeImpl addWatch(WatchItemDescriptor descriptor) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
     WatchItemDescriptor watchDescriptor = new WatchItemDescriptor(getProject(), descriptor.getEvaluationText());
     watchDescriptor.displayAs(descriptor);
@@ -60,7 +60,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   }
 
   public DebuggerTreeNodeImpl addWatch(TextWithImports text) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
     DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, new WatchItemDescriptor(getProject(), text));
     root.add(node);
@@ -72,7 +72,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   }
 
   public void removeWatch(DebuggerTreeNodeImpl node) {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(node.getDescriptor() instanceof WatchItemDescriptor);
 
     DebuggerTreeNodeImpl root          = (DebuggerTreeNodeImpl) getModel().getRoot();

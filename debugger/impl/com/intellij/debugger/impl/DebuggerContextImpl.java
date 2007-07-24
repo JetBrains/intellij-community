@@ -161,4 +161,8 @@ public final class DebuggerContextImpl implements DebuggerContext {
   public boolean isInitialised() {
     return myInitialized;
   }
+
+  public boolean isEvaluationPossible() {
+    return !myDebugProcess.getVirtualMachineProxy().isPausePressed();
+  }
 }

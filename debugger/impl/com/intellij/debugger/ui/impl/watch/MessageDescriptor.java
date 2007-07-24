@@ -1,10 +1,10 @@
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 
 public class MessageDescriptor extends NodeDescriptorImpl {
   public static final int ERROR = 0;
@@ -28,6 +28,7 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   public static MessageDescriptor EVALUATING = new MessageDescriptor(NodeDescriptorImpl.EVALUATING_MESSAGE);
   public static MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(DebuggerBundle.message("message.node.thread.running"));
   public static MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.thread.has.no.frames"));
+  public static MessageDescriptor EVALUATION_NOT_POSSIBLE = new MessageDescriptor(DebuggerBundle.message("message.node.evaluation.not.possible", WARNING));
 
   public MessageDescriptor(String message) {
     this(message, INFORMATION);

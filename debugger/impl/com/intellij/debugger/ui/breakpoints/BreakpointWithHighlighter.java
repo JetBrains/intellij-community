@@ -170,7 +170,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public RangeHighlighter getHighlighter() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighter;
   }
 

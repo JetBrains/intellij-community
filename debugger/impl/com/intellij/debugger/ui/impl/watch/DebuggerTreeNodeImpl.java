@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
@@ -164,7 +165,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   private void invoke(Runnable r) {
-    if(SwingUtilities.isEventDispatchThread()) {
+    if(ApplicationManager.getApplication().isDispatchThread()) {
       r.run();
     }
     else {
