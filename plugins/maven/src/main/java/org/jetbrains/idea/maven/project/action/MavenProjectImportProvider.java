@@ -33,6 +33,11 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           }
           return stringBuilder.toString();
         }
+
+        public void updateDataModel() {
+          super.updateDataModel();
+          getWizardContext().setProjectName(((MavenImportBuilder)getBuilder()).getSuggestedProjectName());
+        }
       }, stepFactory.createProjectJdkStep(wizardContext), stepFactory.createNameAndLocationStep(wizardContext)};
   }
 }

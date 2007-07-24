@@ -197,7 +197,6 @@
       <separator/>
       <reference id="Maven.ShowSettings"/>
       <reference id="Maven.ToggleOffline"/>
-      <separator/>
       <reference id="Maven.Synchronize"/>
       <reference id="Maven.DownloadArtifacts"/>
     </group>

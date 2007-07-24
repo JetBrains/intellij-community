@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -15,6 +16,18 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
 
   public SelectProfilesStep(final WizardContext context) {
     super(context);
+  }
+
+  public boolean isStepVisible() {
+    if (!super.isStepVisible()) {
+      return false;
+    }
+    final MavenImportBuilder importBuilder = getBuilder();
+    if (importBuilder != null) {
+      final List<String> list = importBuilder.getProfiles();
+      return list != null && !list.isEmpty();
+    }
+    return false;
   }
 
   protected MavenImportBuilder getBuilder() {

@@ -48,7 +48,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessor {
       return false;
     }
 
-    wizardContext.setProjectName(projects.get(0).getMavenProject().getArtifactId());
+    wizardContext.setProjectName(getBuilder().getSuggestedProjectName());
     return true;
   }
 }

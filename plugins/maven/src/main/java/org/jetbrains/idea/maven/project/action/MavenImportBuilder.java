@@ -98,6 +98,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   public boolean setRootDirectory(final String root) {
     myFiles = null;
+    myProfiles = null;
+    myImportProcessor = null;
+
     importRoot = FileFinder.refreshRecursively(root);
     if (getImportRoot() != null) {
       ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
@@ -105,23 +108,29 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
           indicator.setText(ProjectBundle.message("maven.locating.files"));
           myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(), MavenEnv.POM_FILE, new ArrayList<VirtualFile>(), null, indicator,
                                                getImporterPreferences().isLookForNested());
+          myProfiles = collectProfiles(getProjectToUpdate(), myFiles);
+          if(myProfiles.isEmpty()){
+            createImportProcessor();
+          }
           indicator.setText2("");
         }
 
         public void onCancel() {
           myFiles = null;
+          myProfiles = null;
+          myImportProcessor = null;
         }
       });
     }
     return myFiles != null;
   }
 
-  public List<String> getProfiles() {
+  private static List<String> collectProfiles(final Project project, final Collection<VirtualFile> files) {
     final SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(getProjectToUpdate());
+    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(project);
     final MavenProjectReader reader = new MavenProjectReader(embedder);
-    for (VirtualFile file : myFiles) {
+    for (VirtualFile file : files) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);
     }
     MavenEnv.releaseEmbedder(embedder);
@@ -129,13 +138,16 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return new ArrayList<String>(profiles);
   }
 
+  public List<String> getProfiles() {
+    return myProfiles;
+  }
+
   public boolean setProfiles(final List<String> profiles) {
     myImportProcessor = null;
     myProfiles = new ArrayList<String>(profiles);
     ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
       public void run(ProgressIndicator indicator) {
-        myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), getImporterPreferences(), getArtifactPreferences());
-        myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
+        createImportProcessor();
         indicator.setText2("");
       }
 
@@ -144,6 +156,11 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       }
     });
     return myImportProcessor != null;
+  }
+
+  private void createImportProcessor() {
+    myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), getImporterPreferences(), getArtifactPreferences());
+    myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
   }
 
   public List<MavenProjectModel.Node> getList() {
@@ -225,5 +242,13 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       importRoot = project.getBaseDir();
     }
     return importRoot;
+  }
+
+  public String getSuggestedProjectName() {
+    final List<MavenProjectModel.Node> list = myImportProcessor.getMavenProjectModel().getRootProjects();
+    if(list.size()==1){
+      return list.get(0).getMavenProject().getArtifactId();      
+    }
+    return null;
   }
 }

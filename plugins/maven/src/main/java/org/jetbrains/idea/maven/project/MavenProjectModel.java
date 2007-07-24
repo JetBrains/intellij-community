@@ -90,7 +90,7 @@ public class MavenProjectModel {
 
     final Node node = new Node(pomFile, mavenProject, imported ? null : linkedModule);
 
-    for (String modulePath : ProjectUtil.collectModuleNames(mavenProject, profiles, new HashSet<String>())) {
+    for (String modulePath : ProjectUtil.collectRelativeModulePaths(mavenProject, profiles, new HashSet<String>())) {
       if (indicator != null && indicator.isCanceled()) {
         return null;
       }

@@ -711,7 +711,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
           FileUtil.getRelativePath(new File(virtualFile.getPath()).getParentFile(), new File(node.virtualFile.getPath()).getParentFile());
         if (relPath != null) {
           for (String moduleName : ProjectUtil
-            .collectModuleNames(mavenProject, myProjectsState.getProfiles(virtualFile), new HashSet<String>())) {
+            .collectRelativeModulePaths(mavenProject, myProjectsState.getProfiles(virtualFile), new HashSet<String>())) {
             if (relPath.equals(moduleName)) {
               return true;
             }
