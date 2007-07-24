@@ -180,9 +180,9 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
       // Calculating position
       Project project = aClass.getProject();
       GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-      GrImportStatement ourImportStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false);
+      GrImportStatement importStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false);
       PsiElement anchor = getAnchorToInsertImportAfter();
-      return (GrImportStatement) addAfter(ourImportStatement, anchor);
+      return (GrImportStatement) addAfter(importStatement, anchor);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
       return null;
@@ -191,7 +191,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
   private PsiElement getAnchorToInsertImportAfter() {
     GrImportStatement[] importStatements = getImportStatements();
-    PsiElement psiElementAfter = getFirstChild();
+    PsiElement psiElementAfter = null;
     if (importStatements.length > 0) {
       psiElementAfter = importStatements[importStatements.length - 1];
     } else if (getPackageDefinition() != null) {
