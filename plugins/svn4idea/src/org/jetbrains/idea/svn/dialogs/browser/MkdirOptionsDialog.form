@@ -70,7 +70,7 @@
           </component>
         </children>
       </scrollpane>
-      <component id="57563" class="javax.swing.JLabel">
+      <component id="57563" class="javax.swing.JLabel" binding="myRecentMessagesLabel">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>

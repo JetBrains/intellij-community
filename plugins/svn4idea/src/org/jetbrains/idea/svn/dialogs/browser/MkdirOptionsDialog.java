@@ -25,6 +25,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
   private JLabel myURLLabel;
   private JComboBox myMessagesBox;
   private JPanel myMainPanel;
+  private JLabel myRecentMessagesLabel;
   private SVNURL myOriginalURL;
 
   public MkdirOptionsDialog(Project project, SVNURL url) {
@@ -45,16 +46,17 @@ public class MkdirOptionsDialog extends DialogWrapper {
       }
     });
 
-    ArrayList<String> messages = null;
     if (!project.isDefault()) {
-      messages = VcsConfiguration.getInstance(project).getRecentMessages();
-    }
-    if (messages != null) {
+      ArrayList<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
       Collections.reverse(messages);
+      Object[] model = messages.toArray();
+      myMessagesBox.setModel(new DefaultComboBoxModel(model));
+      myMessagesBox.setRenderer(new MessageBoxCellRenderer());
     }
-    Object[] model = messages != null ? messages.toArray() : new Object[] {};
-    myMessagesBox.setModel(new DefaultComboBoxModel(model));
-    myMessagesBox.setRenderer(new MessageBoxCellRenderer());
+    else {
+      myRecentMessagesLabel.setVisible(false);
+      myMessagesBox.setVisible(false);
+    }
 
     String lastMessage = VcsConfiguration.getInstance(project).getLastNonEmptyCommitMessage();
     if (lastMessage != null) {
