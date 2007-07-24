@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -181,8 +182,19 @@ public class AbstractVcsTestCase {
   }
 
   protected static void verify(final RunResult runResult, final String... stdoutLines) {
+    verify(runResult, false, stdoutLines);
+  }
+
+  protected static void verifySorted(final RunResult runResult, final String... stdoutLines) {
+    verify(runResult, true, stdoutLines);
+  }
+
+  private static void verify(final RunResult runResult, final boolean sorted, final String... stdoutLines) {
     verify(runResult);
     final String[] lines = new LineTokenizer(runResult.stdOut).execute();
+    if (sorted) {
+      Arrays.sort(lines);
+    }
     Assert.assertEquals(stdoutLines.length, lines.length); 
     for(int i=0; i<stdoutLines.length; i++) {
       Assert.assertEquals(stdoutLines [i], compressWhitespace(lines [i]));
