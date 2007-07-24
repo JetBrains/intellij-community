@@ -231,7 +231,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     return myInitialPrefix;
   }
 
-  JList getList(){
+  public JList getList(){
     return myList;
   }
 
