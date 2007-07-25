@@ -16,14 +16,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider {
   @NotNull
-  public abstract PerspectiveFileEditor createEditor(Project project, VirtualFile file);
+  public abstract PerspectiveFileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file);
 
   public void disposeEditor(@NotNull FileEditor editor) {
     Disposer.dispose(editor);
   }
 
   @NotNull
-  public FileEditorState readState(Element sourceElement, Project project, VirtualFile file) {
+  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return new FileEditorState() {
       public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
         return true;
@@ -31,7 +31,7 @@ public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorPro
     };
   }
 
-  public void writeState(FileEditorState state, Project project, Element targetElement) {
+  public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
   }
 
   @NotNull
