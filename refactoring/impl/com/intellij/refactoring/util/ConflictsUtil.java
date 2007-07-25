@@ -89,7 +89,7 @@ public class ConflictsUtil {
     PsiMethod method = aClass.findMethodBySignature(prototype, true);
 
     if (method != null && method != refactoredMethod) {
-      if (method.getContainingClass().equals(aClass)) {
+      if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   RefactoringBundle.message("current.class") :
                                   getDescription(aClass, false);
@@ -129,7 +129,7 @@ public class ConflictsUtil {
   public static void checkFieldConflicts(PsiClass aClass, String newName, final Collection<String> conflicts) {
     PsiField existingField = aClass.findFieldByName(newName, true);
     if (existingField != null) {
-      if (existingField.getContainingClass().equals(aClass)) {
+      if (aClass.equals(existingField.getContainingClass())) {
         String className = aClass instanceof PsiAnonymousClass ?
                            RefactoringBundle.message("current.class") :
                            getDescription(aClass, false);
