@@ -16,11 +16,6 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
-  public FacetLibrariesEditor createLibrariesEditor(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager,
-                                                    final FacetLibrariesConfiguration configuration,
-                                                    FacetLibrariesEditorDescription editorDescription, final LibraryInfo[] libraryInfos) {
-    return new FacetLibrariesEditorImpl(editorContext, validatorsManager, configuration, editorDescription, libraryInfos);
-  }
 
   public FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries, final FacetLibrariesValidatorDescription description,
                                                           final FacetEditorContext context,
@@ -33,7 +28,4 @@ public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
     return new LibrariesValidationComponentImpl(libraryInfos, module, defaultLibraryName);
   }
 
-  public FacetLibrariesConfiguration createLibrariesConfiguration() {
-    return new FacetLibrariesConfigurationImpl();
-  }
 }
