@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -58,7 +59,11 @@ public class LineTooltipRenderer implements TooltipRenderer {
           return;
         } 
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          showDescription(e.getDescription(), editor, pane);
+          if (e.getURL() == null) {
+            showDescription(e.getDescription(), editor, pane);
+          } else {
+            BrowserUtil.launchBrowser(e.getURL().toString());
+          }
         }
       }
     });
