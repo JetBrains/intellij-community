@@ -1,6 +1,6 @@
-import javax.swing.*
-
 import javax.swing.JButton as JB
+
+import javax.swing.*
 
 def frame = new JFrame()
 def table = new JTable()

@@ -89,7 +89,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     return "";
   }
 
-  public GrPackageDefinition getPackageDefinition(){
+  public GrPackageDefinition getPackageDefinition() {
     return findChildByClass(GrPackageDefinition.class);
   }
 
@@ -145,7 +145,8 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
     String currentPackageName = getPackageName();
     PsiPackage currentPackage = manager.findPackage(currentPackageName);
-    if (currentPackage != null &&  !currentPackage.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place))
+      return false;
 
     if (currentPackageName.length() > 0) { //otherwise already processed default package
       PsiPackage defaultPackage = manager.findPackage("");
@@ -160,9 +161,9 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   }
 
   private static boolean processChildrenScopes(PsiElement element, PsiScopeProcessor processor,
-                                        PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+                                               PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
-    while(run != null) {
+    while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
           !run.processDeclarations(processor, substitutor, null, place)) return false;
       run = run.getPrevSibling();
@@ -176,7 +177,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     return GroovyFileType.GROOVY_LOGO;
   }
 
-  public GrImportStatement addImportForClass(PsiClass aClass)  {
+  public GrImportStatement addImportForClass(PsiClass aClass) {
     try {
       // Calculating position
       Project project = aClass.getProject();
@@ -213,7 +214,15 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
     PsiElement anchor = getAnchorToInsertImportAfter();
     final PsiElement result = addAfter(statement, anchor);
-    if (anchor != null) {
+
+    boolean isAliasedImport = false;
+    if (anchor instanceof GrImportStatement) {
+      isAliasedImport = !((GrImportStatement) anchor).isAliasedImport() && statement.isAliasedImport() ||
+          ((GrImportStatement) anchor).isAliasedImport() && !statement.isAliasedImport();
+    }
+
+    if (anchor != null &&
+        (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
     return (GrImportStatement) result;
@@ -225,11 +234,10 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
     return (GrStatement) result;
   }
 
-  public boolean isScript()
-  {
+  public boolean isScript() {
     GrTopStatement[] top = findChildrenByClass(GrTopStatement.class);
     for (GrTopStatement st : top)
-      if ( !(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition))
+      if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition))
         return true;
 
     return false;

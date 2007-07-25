@@ -17,20 +17,27 @@ package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * @author ilyas
@@ -38,21 +45,27 @@ import java.io.*;
 public class OptimizeImportsTest extends IdeaTestCase {
   protected CodeInsightTestFixture myFixture;
 
-
   protected void setUp() throws Exception {
     super.setUp();
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
-    myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
-    builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome()).addContentRoot(myFixture.getTempDirPath() + "/" + getTestName(true)).addSourceRoot("");
-    myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/optimizeImports");
-    myFixture.setUp();
-    GroovyPsiManager.getInstance(myFixture.getProject()).buildGDK();
+    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(TestUtils.getTestDataPath() + "/optimizeImports");
+    assertNotNull(root);
+    ContentEntry contentEntry = rootModel.addContentEntry(root);
+    rootModel.setJdk(JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false));
+    final VirtualFile sourceRoot = root.findChild(getTestName(true));
+    assertNotNull(sourceRoot);
+    contentEntry.addSourceFolder(sourceRoot, false);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        rootModel.commit();
+      }
+    });
+
+    GroovyPsiManager.getInstance(getProject()).buildGDK();
   }
 
+
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
     super.tearDown();
   }
 
@@ -60,7 +73,6 @@ public class OptimizeImportsTest extends IdeaTestCase {
     doTest("simpleOptimize", "A.groovy");
   }
 
-/*
   public void testOptimizeExists() throws Throwable {
     doTest("optimizeExists", "A.groovy");
   }
@@ -88,7 +100,6 @@ public class OptimizeImportsTest extends IdeaTestCase {
   public void testFoldImports5() throws Throwable {
     doTest("foldImports5", "A.groovy");
   }
-*/
 
   private void doTest(String folder, String filePath) throws Throwable {
     setImportSettings();
@@ -133,6 +144,9 @@ public class OptimizeImportsTest extends IdeaTestCase {
     File aFile = new File(basePath + "/" + "result.test");
     BufferedReader input = new BufferedReader(new FileReader(aFile));
     while ((line = input.readLine()) != null) {
+      if (contents.length() != 0) {
+        contents.append("\n");
+      }
       contents.append(line);
     }
     return contents.toString();

@@ -21,10 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @authopr ven
@@ -188,7 +185,15 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         result.add(factory.createImportStatementFromText(importedMember, true, false));
       }
 
-      return result.toArray(new GrImportStatement[result.size()]);
+      GrImportStatement[] statements = result.toArray(new GrImportStatement[result.size()]);
+      Arrays.sort(statements, new Comparator<GrImportStatement>() {
+        public int compare(GrImportStatement statement1, GrImportStatement statement2) {
+          String name1 = statement1.getImportReference().getText();
+          String name2 = statement2.getImportReference().getText();
+          return name1.compareTo(name2);
+        }
+      });
+      return statements;
     }
 
     private boolean isClassImplicitlyImported(String importedClass) {

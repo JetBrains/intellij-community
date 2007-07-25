@@ -1,5 +1,4 @@
 import java.security.Policy
-
 import javax.swing.*
 
 def frame = new JFrame()
