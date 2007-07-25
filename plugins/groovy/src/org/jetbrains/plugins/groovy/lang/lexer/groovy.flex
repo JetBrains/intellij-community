@@ -184,12 +184,18 @@ mGSTRING_TRIPLE_CTOR_END = ( {mSTRING_ESC}
     | \'
     | \" (\")? [^\"]
     | [^\""$"]
-    | {mSTRING_NL} )* (\"\"\" | \\)?
+    | {mSTRING_NL} )* \"\"\"
 
 
 mGSTRING_LITERAL = \"\"
     | \" ([^\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
     | \"\"\" {mGSTRING_TRIPLE_CTOR_END}
+
+mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
+    | \'
+    | \" (\")? [^\"]
+    | [^\""$"]
+    | {mSTRING_NL} )*
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -499,7 +505,8 @@ mGSTRING_LITERAL = \"\"
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
 
 \" ([^\""$"\n] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
-| \"\"\"[^"$"]                                             {  return mWRONG_GSTRING_LITERAL; }
+| \"\"\"[^"$"]
+| {mWRONG_TRIPLE_GSTRING}                                  {  return mWRONG_GSTRING_LITERAL; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////

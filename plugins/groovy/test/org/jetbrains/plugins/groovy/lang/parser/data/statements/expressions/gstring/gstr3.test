@@ -1,0 +1,12 @@
+println """ preved " " 42
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Literal
+        PsiElement(wrong gstring)('""" preved " " 42')
+        PsiErrorElement:Wrong string literal
+          <empty list>
