@@ -171,9 +171,16 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected void copyCopyableDataTo(UserDataHolderBase clone) {
-    Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-    if (copyableMap != null) {
-      copyableMap = ((THashMap)copyableMap).clone();
+    r.lock();
+    Map<Key, Object> copyableMap;
+    try {
+      copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+      if (copyableMap != null) {
+        copyableMap = ((THashMap)copyableMap).clone();
+      }
+    }
+    finally {
+      r.unlock();
     }
     clone.putUserData(COPYABLE_USER_MAP_KEY, copyableMap);
   }
