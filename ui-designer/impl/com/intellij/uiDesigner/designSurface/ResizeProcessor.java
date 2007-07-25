@@ -27,7 +27,6 @@ public final class ResizeProcessor extends EventProcessor {
   private RadComponent myComponent;
   private int myResizeMask;
   private Point myLastPoint;
-  private Point myPressPoint;
   private Rectangle myBounds;
   private Rectangle myOriginalBounds;
   private RadContainer myOriginalParent;
@@ -69,7 +68,6 @@ public final class ResizeProcessor extends EventProcessor {
   protected void processMouseEvent(final MouseEvent e){
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       myLastPoint = e.getPoint();
-      myPressPoint = myLastPoint;
       myBounds = myOriginalParent.getLayoutManager().isGrid() ? myResizedCopy.getBounds() : myComponent.getBounds();
       myOriginalBounds = new Rectangle(myBounds);
     }
@@ -184,7 +182,9 @@ public final class ResizeProcessor extends EventProcessor {
       myEditor.getActiveDecorationLayer().removeFeedback();
       myComponent.setDragging(false);
       if (modified) {
-        myEditor.refreshAndSave(true);
+        if (myEditor.ensureEditable()) {
+          myEditor.refreshAndSave(true);
+        }
       }
     }
   }
