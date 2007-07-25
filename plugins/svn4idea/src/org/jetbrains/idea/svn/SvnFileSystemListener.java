@@ -326,6 +326,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       final List<VirtualFile> toRefresh = new ArrayList<VirtualFile>(myFilesToRefresh);
       final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
         public void run() {
+          if (project.isDisposed()) return;
           for(VirtualFile f: toRefresh) {
             if (!f.isValid()) continue;
             if (f.isDirectory()) {
