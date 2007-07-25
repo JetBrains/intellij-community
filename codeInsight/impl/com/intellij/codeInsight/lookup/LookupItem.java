@@ -66,6 +66,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   private Object myObject;
   private String myLookupString;
   private double myPriority;
+  private int myGrouping;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
   private static final OverwriteHandler DEFAULT_OVERWRITE_HANDLER = new OverwriteHandler() {
@@ -236,8 +237,18 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     return this;
   }
 
-  public double getPriority() {
+  @NotNull
+  public LookupElement<T> setGrouping(final int grouping) {
+    myGrouping = grouping;
+    return this;
+  }
+
+  public final double getPriority() {
     return myPriority;
+  }
+
+  public final int getGrouping() {
+    return myGrouping;
   }
 
   @NotNull

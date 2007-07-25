@@ -17,14 +17,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class LookupManagerImpl extends LookupManager implements ProjectComponent {
   private final Project myProject;
@@ -184,6 +185,11 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
           double priority2 = o2.getPriority();
           if (priority1 > priority2) return -1;
           if (priority2 > priority1) return 1;
+
+          int grouping1 = o1.getGrouping();
+          int grouping2 = o2.getGrouping();
+          if (grouping1 > grouping2) return -1;
+          if (grouping2 > grouping1) return 1;
 
           int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
           return stringCompare != 0 ? stringCompare : proximityComparator.compare(o1.getObject(), o2.getObject());
