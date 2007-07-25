@@ -28,6 +28,7 @@ public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
 
   private final PsiElement[] myScope;
+  private final boolean myIgnoreInjectedPsi;
 
   public static final LocalSearchScope EMPTY = new LocalSearchScope(PsiElement.EMPTY_ARRAY);
   private String myDisplayName;
@@ -46,6 +47,11 @@ public class LocalSearchScope extends SearchScope {
   }
 
   public LocalSearchScope(PsiElement[] scope, String displayName) {
+    this(scope, displayName, false);
+  }
+
+  public LocalSearchScope(final PsiElement[] scope, final String displayName, final boolean ignoreInjectedPsi) {
+    myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
     Set<PsiElement> localScope = new HashSet<PsiElement>(scope.length);
 
@@ -59,6 +65,10 @@ public class LocalSearchScope extends SearchScope {
       }
     }
     myScope = localScope.toArray(new PsiElement[localScope.size()]);
+  }
+
+  public boolean isIgnoreInjectedPsi() {
+    return myIgnoreInjectedPsi;
   }
 
   public String getDisplayName() {
@@ -75,6 +85,7 @@ public class LocalSearchScope extends SearchScope {
 
     final LocalSearchScope localSearchScope = (LocalSearchScope)o;
 
+    if (localSearchScope.myIgnoreInjectedPsi != myIgnoreInjectedPsi) return false;
     if (localSearchScope.myScope.length != myScope.length) return false;
     for (final PsiElement scopeElement : myScope) {
       final PsiElement[] thatScope = localSearchScope.myScope;
@@ -89,6 +100,7 @@ public class LocalSearchScope extends SearchScope {
 
   public int hashCode() {
     int result = 0;
+    result += myIgnoreInjectedPsi? 1 : 0;
     for (final PsiElement element : myScope) {
       result += element.hashCode();
     }
@@ -111,7 +123,7 @@ public class LocalSearchScope extends SearchScope {
         }
       }
     }
-    return new LocalSearchScope(result.toArray(new PsiElement [result.size()]));
+    return new LocalSearchScope(result.toArray(new PsiElement [result.size()]), null, scope1.myIgnoreInjectedPsi || scope2.myIgnoreInjectedPsi);
   }
 
   private static PsiElement intersectScopeElements(PsiElement element1, PsiElement element2) {

@@ -63,7 +63,7 @@ public abstract class SearchScope {
           result.add(element2);
         }
       }
-      return new LocalSearchScope(result.toArray(new PsiElement[result.size()]));
+      return new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, _scope2.isIgnoreInjectedPsi());
     }
     else {
       return ((GlobalSearchScope)scope1).intersectWith((GlobalSearchScope)scope2);

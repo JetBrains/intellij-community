@@ -477,9 +477,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else {
       LocalSearchScope _scope = (LocalSearchScope)searchScope;
       PsiElement[] scopeElements = _scope.getScope();
+      final boolean ignoreInjectedPsi = _scope.isIgnoreInjectedPsi();
 
       for (final PsiElement scopeElement : scopeElements) {
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively)) return false;
+        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi)) return false;
       }
       return true;
     }
@@ -488,13 +489,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processElementsWithWordInScopeElement(final PsiElement scopeElement,
                                                                final TextOccurenceProcessor processor,
                                                                final String word,
-                                                               final boolean caseSensitive) {
+                                                               final boolean caseSensitive,
+                                                               final boolean ignoreInjectedPsi) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         StringSearcher searcher = new StringSearcher(word);
         searcher.setCaseSensitive(caseSensitive);
 
-        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher);
+        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, ignoreInjectedPsi);
       }
     });
   }
@@ -559,7 +561,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                         }
                         ProgressManager.getInstance().checkCanceled();
                         if (!processed.add(psiRoot)) continue;
-                        if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
+                        if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
                           if (CachesBasedRefSearcher.DEBUG) System.out.println(" cancelling subsequent file scan");
                           processFilesJob.cancel();
                           return;
