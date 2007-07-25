@@ -90,9 +90,12 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
-      if (!myModifierListOwner.isValid() || !PsiManager.getInstance(project).isInProject(myModifierListOwner) ||
-          myModifierListOwner.getModifierList() == null) {
-        return false;
+      if (!myModifierListOwner.isValid()
+          || !PsiManager.getInstance(project).isInProject(myModifierListOwner)
+          || myModifierListOwner.getModifierList() == null) {
+        if (myModifierListOwner.isPhysical()) { //we might want to apply fix to just created method
+          return false;
+        }
       }
       owner = myModifierListOwner;
     }
@@ -102,15 +105,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     else {
       owner = null;
     }
-    PsiType type = null;
-    if (owner instanceof PsiMethod) {
-      type = ((PsiMethod)owner).getReturnType();
-
-    }
-    else if (owner instanceof PsiVariable) {
-      type = ((PsiVariable)owner).getType();
-    }
-    return owner != null && !(type instanceof PsiPrimitiveType) && !AnnotationUtil.isAnnotated(owner, myAnnotation, false);
+    return owner != null  && !AnnotationUtil.isAnnotated(owner, myAnnotation, false);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

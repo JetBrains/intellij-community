@@ -97,7 +97,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             if (Comparing.strEqual(className, externalName)) {
               for (XmlTag annotationTag : tag.getSubTags()) {
                 final String annotationFQN = annotationTag.getAttributeValue("name");
-                final StringBuffer buf = new StringBuffer();
+                final StringBuilder buf = new StringBuilder();
                 for (XmlTag annotationaParameter : annotationTag.getSubTags()) {
                   buf.append(",").append(annotationaParameter.getAttributeValue("name")).append("=")
                     .append(annotationaParameter.getAttributeValue("value"));
@@ -213,6 +213,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   }
 
   public boolean useExternalAnnotations(@NotNull final PsiElement element) {
+    if (!element.isPhysical()) return false; //element just created
     if (!element.getManager().isInProject(element)) return true;
     final Project project = element.getProject();
     final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
@@ -263,7 +264,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   private static void annotateExternally(final PsiModifierListOwner listOwner,
                                          final String annotationFQName,
-                                         final @Nullable XmlFile xmlFile) {
+                                         @Nullable final XmlFile xmlFile) {
     if (xmlFile == null) return;
     try {
       final XmlDocument document = xmlFile.getDocument();
@@ -277,7 +278,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
               return;
             }
           }
-          final @NonNls String text =
+          @NonNls final String text =
             "<item name=\'" + externalName + "\'>\n" + "  <annotation name=\'" + annotationFQName + "\'/>\n" + "</item>";
           rootTag.add(xmlFile.getManager().getElementFactory().createTagFromText(text));
         }

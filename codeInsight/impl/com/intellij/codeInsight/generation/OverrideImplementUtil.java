@@ -282,7 +282,7 @@ public class OverrideImplementUtil {
   public static PsiGenerationInfo<PsiMethod>[] convert2GenerationInfos(final Collection<PsiMethod> methods) {
     return ContainerUtil.map2Array(methods, PsiGenerationInfo.class, new Function<PsiMethod, PsiGenerationInfo>() {
       public PsiGenerationInfo fun(final PsiMethod s) {
-        return new PsiGenerationInfo(s);
+        return new PsiGenerationInfo<PsiMethod>(s);
       }
     });
   }
@@ -432,14 +432,14 @@ public class OverrideImplementUtil {
       int offset = editor.getCaretModel().getOffset();
       int lbraceOffset = aClass.getLBrace().getTextOffset();
       if (offset <= lbraceOffset || aClass.isEnum()) {
-        ArrayList<PsiGenerationInfo> list = new ArrayList<PsiGenerationInfo>();
+        ArrayList<PsiGenerationInfo<PsiMethod>> list = new ArrayList<PsiGenerationInfo<PsiMethod>>();
         for (PsiMethodMember candidate : candidates) {
           Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
                                                              copyJavadoc, insertAtOverride);
           for (PsiMethod prototype : prototypes) {
             PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
             PsiElement result = GenerateMembersUtil.insert(aClass, prototype, anchor, true);
-            list.add(new PsiGenerationInfo((PsiMethod)result));
+            list.add(new PsiGenerationInfo<PsiMethod>((PsiMethod)result));
           }
         }
         resultMembers = list.toArray(new PsiGenerationInfo[list.size()]);

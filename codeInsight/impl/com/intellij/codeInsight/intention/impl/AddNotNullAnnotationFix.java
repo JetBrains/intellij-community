@@ -9,8 +9,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class AddNotNullAnnotationFix extends AddAnnotationFix {
@@ -22,7 +21,15 @@ public class AddNotNullAnnotationFix extends AddAnnotationFix {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return super.isAvailable(project, editor, file) &&
-           !AnnotationUtil.isAnnotated(getContainer(editor, file), AnnotationUtil.NULLABLE, false);
+    if (!super.isAvailable(project, editor, file)) {
+      return false;
+    }
+    PsiModifierListOwner owner = getContainer(editor, file);
+    if (owner == null || AnnotationUtil.isAnnotated(owner, AnnotationUtil.NULLABLE, false)) {
+      return false;
+    }
+    PsiType returnType = ((PsiMethod)owner).getReturnType();
+
+    return returnType != null && !(returnType instanceof PsiPrimitiveType);
   }
 }
