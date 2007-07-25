@@ -80,6 +80,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public int getLineNumber() {
     PsiElement psiElement = getPsiElement();
     if (psiElement == null) return -1;
+    if (!psiElement.isValid()) return -1;
     LOG.assertTrue(psiElement.isPhysical());
     Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiElement.getContainingFile());
     if (document == null) return -1;
