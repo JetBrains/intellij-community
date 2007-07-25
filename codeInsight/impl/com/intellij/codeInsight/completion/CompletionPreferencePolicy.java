@@ -117,7 +117,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       result[4] = getMatchedWordCount(object, item);
     }
 
-    result[5] = object instanceof String || object instanceof PsiKeyword ? 1 : 0;
+    result[5] = object instanceof String ? 1 : object instanceof PsiKeyword ? -1 : 0;
 
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
       synchronized(myItemToIndexMap){
