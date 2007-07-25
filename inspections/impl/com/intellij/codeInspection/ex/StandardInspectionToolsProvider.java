@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.testOnly.TestOnlyInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
@@ -88,6 +89,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       DependencyInspection.class,
       FieldCanBeLocalInspection.class,
       NullableStuffInspection.class,
+      TestOnlyInspection.class,
 
       DuplicateStringLiteralInspection.class,
       DuplicatePropertyInspection.class,

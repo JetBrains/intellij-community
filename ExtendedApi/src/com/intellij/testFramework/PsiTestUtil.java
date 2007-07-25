@@ -92,6 +92,10 @@ import java.util.Collection;
   }
 
   public static void addSourceRoot(Module module, final VirtualFile vDir) {
+    addSourceRoot(module, vDir, false);
+  }
+
+  public static void addSourceRoot(final Module module, final VirtualFile vDir, final boolean isTestSource) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     final ContentEntry[] contentEntries = rootModel.getContentEntries();
@@ -101,10 +105,10 @@ import java.util.Collection;
       }
     });
     if (entry == null) entry = rootModel.addContentEntry(vDir);
-    entry.addSourceFolder(vDir, false);
+    entry.addSourceFolder(vDir, isTestSource);
     rootModel.commit();
   }
-  
+
   public static ContentEntry addContentRoot(Module module, VirtualFile vDir) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();

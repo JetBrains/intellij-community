@@ -106,9 +106,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
         }
       }
     });
+    AnalysisScope scope = createAnalysisScope(sourceDir[0]);
 
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    AnalysisScope scope = new AnalysisScope(psiManager.findDirectory(sourceDir[0]));
     InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(myProject);
     final GlobalInspectionContextImpl globalContext = inspectionManager.createNewGlobalContext(true);
     globalContext.setCurrentScope(scope);
@@ -117,6 +116,11 @@ public abstract class InspectionTestCase extends PsiTestCase {
       runTool(new DeadCodeInspection(), scope, globalContext, inspectionManager);
     }
     runTool(tool, scope, globalContext, inspectionManager);
+  }
+
+  protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    return new AnalysisScope(psiManager.findDirectory(sourceDir));
   }
 
   private static void runTool(final InspectionTool tool,

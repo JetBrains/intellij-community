@@ -54,6 +54,9 @@ public class AnnotationUtil {
   @NonNls public static final String NON_NLS_SIMPLE_NAME = "NonNls";
   @NonNls public static final String PROPERTY_KEY_SIMPLE_NAME = "PropertyKey";
 
+  public static final String TEST_ONLY = "org.jetbrains.annotations.TestOnly";
+  @NonNls public static final String TEST_ONLY_SIMPLE_NAME = "TestOnly";
+
   public static final Set<String> ALL_ANNOTATIONS;
 
   static {
@@ -203,6 +206,7 @@ public class AnnotationUtil {
 
   public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {
     return NOT_NULL_SIMPLE_NAME.equals(simpleName) || NULLABLE_SIMPLE_NAME.equals(simpleName) ||
-           NON_NLS_SIMPLE_NAME.equals(simpleName) || PROPERTY_KEY_SIMPLE_NAME.equals(simpleName);
+           NON_NLS_SIMPLE_NAME.equals(simpleName) || PROPERTY_KEY_SIMPLE_NAME.equals(simpleName) ||
+           TEST_ONLY_SIMPLE_NAME.equals(simpleName);
   }
 }
