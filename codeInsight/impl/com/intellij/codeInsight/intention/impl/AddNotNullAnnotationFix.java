@@ -28,8 +28,11 @@ public class AddNotNullAnnotationFix extends AddAnnotationFix {
     if (owner == null || AnnotationUtil.isAnnotated(owner, AnnotationUtil.NULLABLE, false)) {
       return false;
     }
-    PsiType returnType = ((PsiMethod)owner).getReturnType();
+    if (owner instanceof PsiMethod) {
+      PsiType returnType = ((PsiMethod)owner).getReturnType();
 
-    return returnType != null && !(returnType instanceof PsiPrimitiveType);
+      return returnType != null && !(returnType instanceof PsiPrimitiveType);
+    }
+    return true;
   }
 }
