@@ -28,7 +28,7 @@ public class CvsInfo {
 
   private static CvsConnectionSettings ABSENT_SETTINGS;
 
-  private IgnoredFilesInfo myIgnoreFilter;
+  private volatile IgnoredFilesInfo myIgnoreFilter;
   private CvsConnectionSettings myConnectionSettings;
 
   private String myRepository;
@@ -152,7 +152,7 @@ public class CvsInfo {
   }
 
 
-  public synchronized void clearFilter() {
+  public void clearFilter() {
     myIgnoreFilter = null;
   }
 

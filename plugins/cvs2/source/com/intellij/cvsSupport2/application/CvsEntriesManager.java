@@ -279,13 +279,9 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   public void watchForCvsAdminFiles(final VirtualFile parent) {
     if (parent == null) return;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        synchronized (myFilesToRefresh) {
-          myFilesToRefresh.add(parent.getPath() + "/" + CVS_ADMIN_DIRECTORY_NAME);
-        }
-      }
-    });
+    synchronized (myFilesToRefresh) {
+      myFilesToRefresh.add(parent.getPath() + "/" + CVS_ADMIN_DIRECTORY_NAME);
+    }
   }
 
 
