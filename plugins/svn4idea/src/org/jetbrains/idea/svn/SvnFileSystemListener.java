@@ -130,7 +130,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     final VirtualFile oldParent = file.getParent();
     myFilesToRefresh.add(oldParent);
     myFilesToRefresh.add(toDir);
-    return move(vcs, srcFile, dstFile);
+    return doMove(vcs, srcFile, dstFile);
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
@@ -138,12 +138,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
     if (vcs != null) {
-      return move(vcs, srcFile, dstFile);
+      myFilesToRefresh.add(file.getParent());
+      return doMove(vcs, srcFile, dstFile);
     }
     return false;
   }
 
-  private static boolean move(@NotNull SvnVcs vcs, final File src, final File dst) {
+  private static boolean doMove(@NotNull SvnVcs vcs, final File src, final File dst) {
     SVNMoveClient mover = vcs.createMoveClient();
     long srcTime = src.lastModified();
     try {
