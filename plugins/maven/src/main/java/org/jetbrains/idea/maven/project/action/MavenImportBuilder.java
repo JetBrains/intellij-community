@@ -57,7 +57,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public void commit(final Project project) {
     myImportProcessor.resolve(project, myProfiles);
 
-    myImportProcessor.commit(project, getImporterPreferences().isAutoImportNew());
+    myImportProcessor.commit(project, myProfiles, getImporterPreferences().isAutoImportNew());
 
     final MavenImporterState importerState = project.getComponent(MavenImporter.class).getState();
     if (getImporterPreferences().isAutoImportNew()) {

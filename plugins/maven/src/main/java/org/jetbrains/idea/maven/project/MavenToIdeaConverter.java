@@ -5,15 +5,20 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectUtil;
 
 import java.io.File;
 import java.text.MessageFormat;
@@ -34,8 +39,11 @@ public class MavenToIdeaConverter {
 
   private final static String JAR_PREFIX = JarFileSystem.PROTOCOL + "://";
 
+  private static Map<String, LanguageLevel> stringToLanguageLevel;
+
   public static void convert(final ModifiableModuleModel modifiableModel,
                              final MavenProjectModel projectModel,
+                             final Collection<String> profiles,
                              final MavenToIdeaMapping mapping,
                              final MavenImporterPreferences preferences,
                              final boolean markSynthetic) {
@@ -43,7 +51,7 @@ public class MavenToIdeaConverter {
     final MavenToIdeaConverter mavenToIdeaConverter = new MavenToIdeaConverter(modifiableModel, mapping, preferences, markSynthetic);
 
     for (MavenProjectModel.Node project : sortProjectsByDependencies(projectModel)) {
-      mavenToIdeaConverter.convert(project);
+      mavenToIdeaConverter.convert(project, profiles);
     }
 
     createModuleGroups(modifiableModel, projectModel, mapping, preferences.isCreateModuleGroups());
@@ -125,20 +133,23 @@ public class MavenToIdeaConverter {
     this.preferences = preferences;
   }
 
-  public void convert(MavenProjectModel.Node node) {
+  public void convert(MavenProjectModel.Node node, Collection<String> profiles) {
+    final MavenProject mavenProject = node.getMavenProject();
+
     Module module = mavenToIdeaMapping.getModule(node);
     if (module == null) {
       module = modifiableModuleModel.newModule(mavenToIdeaMapping.getModuleFilePath(node));
     }
+//    setLanguageLevel(module, getLanguageLevel(mavenProject, profiles));
 
-    convertRootModel(module, node.getMavenProject());
+    convertRootModel(module, mavenProject, profiles);
 
-    createFacets(module, node.getMavenProject());
+    createFacets(module, mavenProject);
 
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
   }
 
-  void convertRootModel(Module module, MavenProject mavenProject) {
+  void convertRootModel(Module module, MavenProject mavenProject, Collection<String> profiles) {
     RootModelAdapter rootModel = new RootModelAdapter(module);
     rootModel.init(mavenProject.getFile().getParent());
     createRoots(rootModel, mavenProject);
@@ -156,6 +167,22 @@ public class MavenToIdeaConverter {
         }
       }
     }
+  }
+
+  private String getLanguageLevel(MavenProject mavenProject, final Collection<String> profiles) {
+    for (Plugin plugin : ProjectUtil.collectPlugins(mavenProject, profiles, new HashMap<Plugin, MavenProject>()).keySet()) {
+      if (plugin.getGroupId().equals("org.apache.maven.plugins") && plugin.getArtifactId().equals("maven-compiler-plugin")) {
+        final Xpp3Dom configuration = (Xpp3Dom)plugin.getConfiguration();
+        if (configuration != null) {
+          final Xpp3Dom source = configuration.getChild("source");
+          if (source != null) {
+            return source.getValue();
+          }
+        }
+        break;
+      }
+    }
+    return null;
   }
 
   private static void createRoots(final RootModelAdapter rootModel, final MavenProject mavenProject) {
@@ -182,14 +209,15 @@ public class MavenToIdeaConverter {
   private static void createGeneratedSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
     // TODO: do this properly
     final File targetDir = new File(mavenProject.getFile().getParent(), TARGET);
-    if(targetDir.isDirectory()){
+    if (targetDir.isDirectory()) {
       for (File file : targetDir.listFiles()) {
-        if(file.isDirectory()){
-          if (file.getName().equals(GENERATED_SOURCES)){
+        if (file.isDirectory()) {
+          if (file.getName().equals(GENERATED_SOURCES)) {
             for (File genSrcDir : file.listFiles()) {
               rootModel.createSrcDir(genSrcDir.getPath(), false);
             }
-          } else {
+          }
+          else {
             rootModel.excludeRoot(file.getPath());
           }
         }
@@ -233,9 +261,9 @@ public class MavenToIdeaConverter {
   }
 
   private static void updateSourcesAndJavadoc(final RootModelAdapter rootModel) {
-    for( Map.Entry<String,String> entry : rootModel.getModuleLibraries().entrySet()){
+    for (Map.Entry<String, String> entry : rootModel.getModuleLibraries().entrySet()) {
       final String url = entry.getValue();
-      if(url.startsWith(JAR_PREFIX) && url.endsWith(JarFileSystem.JAR_SEPARATOR)){
+      if (url.startsWith(JAR_PREFIX) && url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
         final String path = url.substring(JAR_PREFIX.length(), url.lastIndexOf(JarFileSystem.JAR_SEPARATOR));
         rootModel.updateModuleLibrary(entry.getKey(), getUrl(path, SOURCES_CLASSIFIER), getUrl(path, JAVADOC_CLASSIFIER));
       }
@@ -267,5 +295,15 @@ public class MavenToIdeaConverter {
       }
     }
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;
+  }
+
+  public static void setLanguageLevel(final Module module, final String level) {
+    if(stringToLanguageLevel==null){
+      stringToLanguageLevel = new HashMap<String, LanguageLevel>();
+      stringToLanguageLevel.put("1.3", LanguageLevel.JDK_1_3);
+      stringToLanguageLevel.put("1.4", LanguageLevel.JDK_1_4);
+      stringToLanguageLevel.put("1.5", LanguageLevel.JDK_1_5);
+    }
+    ModuleRootManager.getInstance(module).setLanguageLevel(stringToLanguageLevel.get(level));
   }
 }
