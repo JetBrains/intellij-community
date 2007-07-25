@@ -57,8 +57,4 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
 
     return getName();
   }
-
-  public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
-    return myType.canContainTag("aa",namespace);
-  }
 }

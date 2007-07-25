@@ -417,7 +417,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     
     if (type instanceof ComplexTypeDescriptor) {
       return ((ComplexTypeDescriptor)type).canContainTag("a", namespace) ||
-             XmlUtil.tagFromTemplateFramework(context) ||
              XmlUtil.nsFromTemplateFramework(namespace)
         ;
     }
