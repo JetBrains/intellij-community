@@ -1,5 +1,8 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -8,9 +11,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -84,7 +87,10 @@ public class SvnRenameTest extends SvnTestCase {
     final RunResult result = runSvn("status");
     verify(result, "D child", "D child\\grandChild", "D child\\grandChild\\b.txt", "D child\\a.txt", "A + childnew");
 
-    List<Change> changes = getAllChanges();
+    LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    changeListManager.ensureUpToDate(false);
+    List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
     Assert.assertEquals(4, changes.size());
     sortChanges(changes);
     verifyChange(changes.get(0), "child", "childnew");
@@ -98,9 +104,6 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertEquals(1, changes.size());
     verifyChange(changes.get(0), "child\\a.txt", "childnew\\a.txt");
 
-    LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.ensureUpToDate(false);
     VirtualFile oldChild = myWorkingCopyDir.findChild("child");
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));
   }
@@ -171,10 +174,18 @@ public class SvnRenameTest extends SvnTestCase {
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false);
     final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
-    Assert.assertEquals(2, changes.size());
+    Assert.assertEquals(listToString(changes), 2, changes.size());
     sortChanges(changes);
     verifyChange(changes.get(0), "child\\grandChild", "grandChild");
     verifyChange(changes.get(1), "child\\grandChild\\a.txt", "grandChild\\a.txt");
+  }
+
+  private String listToString(final List<Change> changes) {
+    return "{" + StringUtil.join(changes, new Function<Change, String>() {
+      public String fun(final Change change) {
+        return change.toString();
+      }
+    }, ",") + "}";
   }
 
   // IDEADEV-19223
@@ -231,5 +242,30 @@ public class SvnRenameTest extends SvnTestCase {
     final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
     final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
     Assert.assertEquals(0, list.size());
+  }
+
+  // IDEADEV-19364
+  @Test
+  @Ignore("svnkit bug, waiting for fix from Alex")
+  public void testUndoMovePackage() throws Exception {
+    final TestDialog oldTestDialog = Messages.setTestDialog(new TestDialog() {
+      public int show(final String message) {
+        return 0;
+      }
+    });
+    try {
+      enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+      final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
+      final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
+      final VirtualFile child = createDirInCommand(parent1, "child");
+      checkin();
+
+      moveFileInCommand(child, parent2);
+      UndoManager.getInstance(myProject).undo(null);
+      Assert.assertTrue(new File(parent1.getPath(), "child").exists());
+    }
+    finally {
+      Messages.setTestDialog(oldTestDialog);
+    }
   }
 }
