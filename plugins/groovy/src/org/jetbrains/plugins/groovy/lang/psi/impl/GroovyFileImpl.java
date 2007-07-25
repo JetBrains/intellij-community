@@ -212,7 +212,9 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
     PsiElement anchor = getAnchorToInsertImportAfter();
     final PsiElement result = addBefore(statement, anchor);
-    getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+    if (anchor != null) {
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+    }
     return (GrImportStatement) result;
   }
 
