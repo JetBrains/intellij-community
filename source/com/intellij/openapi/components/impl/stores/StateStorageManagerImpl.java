@@ -296,7 +296,10 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException {
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-      pair.second.reload(changedComponents);
+      assert pair != null;
+      final StateStorage storage = pair.second;
+      assert storage != null : "Null storage for: " + pair.first;
+      storage.reload(changedComponents);
     }
   }
 }
