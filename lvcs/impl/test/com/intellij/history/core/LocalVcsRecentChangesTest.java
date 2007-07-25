@@ -95,7 +95,7 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.createFile("f", null, -1);
     vcs.endChangeSet("change");
-    vcs.putLabel("label");
+    vcs.putUserLabel("label");
 
     List<RecentChange> cc = vcs.getRecentChanges();
     assertEquals(1, cc.size());

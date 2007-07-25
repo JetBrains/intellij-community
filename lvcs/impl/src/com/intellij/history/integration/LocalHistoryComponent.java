@@ -148,13 +148,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
-  protected void putLabel(String name) {
-    myVcs.putLabel(name);
-  }
-
-  @Override
-  protected void putLabel(String path, String name) {
-    myVcs.putLabel(path, name);
+  protected void putSystemLabel(String name) {
+    myVcs.putSystemLabel(name);
   }
 
   @Override

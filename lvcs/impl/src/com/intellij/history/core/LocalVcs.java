@@ -131,11 +131,15 @@ public abstract class LocalVcs implements ILocalVcs {
     applyChange(new DeleteChange(path));
   }
 
-  public void putLabel(String name) {
+  public void putSystemLabel(String name) {
+    applyLabel(new PutSystemLabelChange(name, getCurrentTimestamp()));
+  }
+
+  public void putUserLabel(String name) {
     applyLabel(new PutLabelChange(name, getCurrentTimestamp()));
   }
 
-  public void putLabel(String path, String name) {
+  public void putUserLabel(String path, String name) {
     applyLabel(new PutEntryLabelChange(path, name, getCurrentTimestamp()));
   }
 
@@ -145,7 +149,6 @@ public abstract class LocalVcs implements ILocalVcs {
   }
 
   private void applyChange(Change c) {
-    // todo forbid the ability of making changes outside of changeset
     c.applyTo(myRoot);
 
     // todo get rid of wrapping changeset here

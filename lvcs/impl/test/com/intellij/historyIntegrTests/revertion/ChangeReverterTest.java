@@ -5,12 +5,9 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.utils.RunnableAdapter;
-import com.intellij.historyIntegrTests.ActionsTest;
-import com.intellij.historyIntegrTests.DirectoryHistoryDialogTest;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import junit.framework.TestSuite;
 
 import java.io.IOException;
 import java.util.Date;
@@ -266,7 +263,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
 
   public void testRevertLabelChange() throws IOException {
     VirtualFile f = root.createChildData(null, "f.java");
-    getVcs().putLabel("abc");
+    getVcs().putUserLabel("abc");
     f.rename(null, "ff.java");
 
     revertChange(f, 1);

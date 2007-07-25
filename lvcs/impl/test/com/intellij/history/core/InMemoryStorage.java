@@ -7,6 +7,7 @@ import com.intellij.history.core.storage.StoredContent;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class InMemoryStorage extends Storage {
   private Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
@@ -38,5 +39,9 @@ public class InMemoryStorage extends Storage {
   @Override
   protected byte[] loadContentData(int id) throws IOException {
     return myContents.get(id);
+  }
+
+  @Override
+  protected void purgeContent(StoredContent c) {
   }
 }

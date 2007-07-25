@@ -20,7 +20,7 @@ public class LabeledRevision extends RevisionAfterChange {
   }
 
   @Override
-  public boolean wasChanged() {
-    return false;
+  public boolean isImportant() {
+    return !myChange.isSystemLabel();
   }
 }

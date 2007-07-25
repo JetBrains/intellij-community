@@ -4,8 +4,6 @@ package com.intellij.historyIntegrTests;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -83,8 +81,8 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     // this test means for ensuring that change list contains
     // root creation change which could be missed due to
     // vfs architecture
-    LocalHistory.putLabel(myProject, "a");
-    LocalHistory.putLabel(myProject, "b");
+    LocalHistory.putSystemLabel(myProject, "a");
+    LocalHistory.putSystemLabel(myProject, "b");
 
     VirtualFile newRoot = addContentRootWithFiles(myModule, "f.java");
     assertEquals(1, getVcsRevisionsFor(newRoot).size());

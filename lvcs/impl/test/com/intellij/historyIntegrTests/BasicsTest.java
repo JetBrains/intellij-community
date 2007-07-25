@@ -14,7 +14,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ProfilingUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,24 +55,18 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testUpdatingOnFileTypesChange() throws Exception {
-    try {
-      VirtualFile f = root.createChildData(null, "file.xxx");
+    VirtualFile f = root.createChildData(null, "file.xxx");
 
-      assertFalse(hasVcsEntry(f));
+    assertFalse(hasVcsEntry(f));
 
-      FileTypeManager tm = FileTypeManager.getInstance();
-      tm.registerFileType(StdFileTypes.PLAIN_TEXT, "xxx");
+    FileTypeManager tm = FileTypeManager.getInstance();
+    tm.registerFileType(StdFileTypes.PLAIN_TEXT, "xxx");
 
-      assertTrue(hasVcsEntry(f));
+    assertTrue(hasVcsEntry(f));
 
-      tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
+    tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
 
-      assertFalse(hasVcsEntry(f));
-    }
-    catch (Error e) {
-      ProfilingUtil.forceCaptureMemorySnapshot();
-      throw e;
-    }
+    assertFalse(hasVcsEntry(f));
   }
 
   public void testPuttingLabel() throws IOException {
@@ -82,17 +75,17 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals(1, getVcsRevisionsFor(f).size());
     assertEquals(2, getVcsRevisionsFor(root).size());
 
-    LocalHistory.putLabel(myProject, f.getPath(), "file");
-    LocalHistory.putLabel(myProject, "global");
+    LocalHistory.putSystemLabel(myProject, "label");
 
     List<Revision> rr = getVcsRevisionsFor(f);
-    assertEquals(3, rr.size());
-    assertEquals("global", rr.get(0).getName());
-    assertEquals("file", rr.get(1).getName());
+    assertEquals(2, rr.size());
+    assertEquals("label", rr.get(0).getName());
+    assertTrue(rr.get(0).getCauseChange().isSystemLabel());
 
     rr = getVcsRevisionsFor(root);
     assertEquals(3, rr.size());
-    assertEquals("global", rr.get(0).getName());
+    assertEquals("label", rr.get(0).getName());
+    assertTrue(rr.get(0).getCauseChange().isSystemLabel());
   }
 
   public void testIsUnderControl() throws Exception {

@@ -85,12 +85,7 @@ public class DeprecatedLVCS extends LocalVcs implements ProjectComponent {
   }
 
   private LvcsLabel doPutLabel(String name, String path) {
-    if (path.equals("")) {
-      LocalHistory.putLabel(myProject, name);
-    }
-    else {
-      LocalHistory.putLabel(myProject, path, name);
-    }
+    LocalHistory.putSystemLabel(myProject, name);
     return null;
   }
 

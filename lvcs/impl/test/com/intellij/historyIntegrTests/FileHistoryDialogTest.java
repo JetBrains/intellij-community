@@ -74,7 +74,7 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
 
   public void testRevertLabelChange() throws Exception {
     VirtualFile f = root.createChildDirectory(null, "f.java");
-    getVcs().putLabel("abc");
+    getVcs().putUserLabel("abc");
 
     FileHistoryDialogModel m = createFileModelFor(f);
     m.selectChanges(0, 0);

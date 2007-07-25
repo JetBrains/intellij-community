@@ -79,7 +79,7 @@ public class LocalHistoryService {
     public void updatingDone() {
       super.updatingDone();
       if (myConfiguration.ADD_LABEL_ON_PROJECT_OPEN) {
-        myVcs.putLabel("Project open");
+        myVcs.putUserLabel("Project open");
       }
     }
   }

@@ -28,7 +28,7 @@ public abstract class Revision {
     return leftEntry.getDifferenceWith(rightEntry);
   }
 
-  public boolean wasChanged() {
+  public boolean isImportant() {
     return true;
   }
 

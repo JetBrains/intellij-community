@@ -52,6 +52,10 @@ public abstract class Change {
     return false;
   }
 
+  public boolean isSystemLabel() {
+    return false;
+  }
+
   public boolean isLocal() {
     return false;
   }

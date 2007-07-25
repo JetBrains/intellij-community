@@ -44,8 +44,11 @@ public abstract class HistoryDialogModel {
 
     List<Revision> result = new ArrayList<Revision>();
     for (Revision r : all) {
-      if (r.wasChanged()) result.add(r);
+      if (r.isImportant()) result.add(r);
     }
+
+    if (result.isEmpty()) result.add(all.get(0));
+
     return result;
   }
 

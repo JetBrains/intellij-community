@@ -96,10 +96,10 @@ public class PutLabelDialog extends DialogWrapper {
   public void doOKAction() {
     ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
     if (canPutLabelOnSelectedFile() && myFileButton.isSelected()) {
-      vcs.putLabel(myFile.getPath(), getLabelName());
+      vcs.putUserLabel(myFile.getPath(), getLabelName());
     }
     else {
-      vcs.putLabel(getLabelName());
+      vcs.putUserLabel(getLabelName());
     }
     close(0);
   }

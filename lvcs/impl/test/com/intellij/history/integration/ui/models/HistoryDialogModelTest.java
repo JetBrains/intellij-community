@@ -21,15 +21,15 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, -1);
+    vcs.createFile("f", cf("1"), -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, -1);
+    vcs.changeFileContent("f", cf("2"), -1);
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, -1);
+    vcs.changeFileContent("f", cf("3"), -1);
     vcs.endChangeSet("3");
 
     initModelFor("f");
@@ -54,20 +54,38 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testDisplayingOnlyChanges() {
-    vcs.putLabel("label");
+  public void testDisplayingOnlyChangesDoesNotShowSystemLabels() {
+    vcs.putUserLabel("user");
+    vcs.putSystemLabel("system");
 
     m.showChangesOnly(false);
     List<Revision> rr = m.getRevisions();
 
-    assertEquals(4, rr.size());
-    assertEquals("label", rr.get(0).getName());
+    assertEquals(5, rr.size());
 
     m.showChangesOnly(true);
     rr = m.getRevisions();
 
-    assertEquals(3, rr.size());
-    assertEquals("3", rr.get(0).getCauseChangeName());
+    assertEquals(4, rr.size());
+    assertEquals("user", rr.get(0).getName());
+  }
+
+  @Test
+  public void testDisplayingOnlyChangesIfTheyWerePurged() {
+    vcs.purgeObsolete(0);
+    assertEquals(0, vcs.getChangeList().getChanges().size());
+
+    // and some changes that normally are exclueed on "ShowChangesOnly"
+    // overwise revisions will contain CurrentRevision
+    vcs.putSystemLabel("label1");
+    vcs.putSystemLabel("label2");
+
+    initModelFor("f");
+    m.showChangesOnly(true);
+
+    List<Revision> rr = m.getRevisions();
+    assertEquals(1, rr.size());
+    assertEquals("label2", rr.get(0).getName());
   }
 
   @Test
