@@ -64,7 +64,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass) throws StateStorageException {
     final StorageData storageData = getStorageData();
-    return storageData.getState(componentName) != null;
+    return storageData.hasState(componentName);
   }
 
   @Nullable
@@ -294,6 +294,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
           element.detach();
 
           if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
+            assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
             myComponentStates.put(name, element);
           }
         }
@@ -320,13 +321,14 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       final Element e = myComponentStates.get(name);
 
       if (e != null) {
-        //assert e.getAttribute(NAME) != null : "No name attribute for component: " + name + " in " + this;
+        assert e.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
         e.removeAttribute(NAME);
       }
+
       return e;
     }
 
-    public void removeState(final String componentName) {
+    private void removeState(final String componentName) {
       myComponentStates.remove(componentName);
       clearHash();
     }
@@ -398,6 +400,10 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
 
       return diffs;
+    }
+
+    public boolean hasState(final String componentName) {
+        return myComponentStates.containsKey(componentName);
     }
   }
 
