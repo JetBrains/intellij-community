@@ -204,7 +204,9 @@ public class CvsEntriesManager extends VirtualFileAdapter {
       cvsInfo.clearAll();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          onEntriesChanged(parent);
+          if (parent.isValid()) {
+            onEntriesChanged(parent);
+          }
         }
       });
     }
