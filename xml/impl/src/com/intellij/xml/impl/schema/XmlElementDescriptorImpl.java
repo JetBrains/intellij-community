@@ -390,7 +390,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public boolean isAbstract() {
-    return Boolean.valueOf(myDescriptorTag.getAttributeValue("abstract")).booleanValue();
+    return isAbstractDeclaration(myDescriptorTag);
+  }
+
+  public static Boolean isAbstractDeclaration(final XmlTag descriptorTag) {
+    return Boolean.valueOf(descriptorTag.getAttributeValue("abstract"));
   }
 
   public void setName(String name) throws IncorrectOperationException {

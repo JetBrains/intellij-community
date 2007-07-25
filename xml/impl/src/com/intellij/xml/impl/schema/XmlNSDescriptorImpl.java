@@ -554,7 +554,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       }
     }
     
-    CollectElementsProcessor processor = new CollectElementsProcessor();
+    CollectElementsProcessor processor = new CollectElementsProcessor() {
+      public boolean execute(final XmlTag element) {
+        if (!XmlElementDescriptorImpl.isAbstractDeclaration(element)) return super.execute(element);
+        return true;
+      }
+    };
     processTagsInNamespace(myTag, new String[] {ELEMENT_TAG_NAME}, processor);
 
     return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
