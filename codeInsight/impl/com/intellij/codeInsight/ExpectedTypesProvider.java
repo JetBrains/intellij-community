@@ -31,9 +31,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -62,11 +64,11 @@ public class ExpectedTypesProvider {
   private static PsiType[] PRIMITIVE_TYPES = new PsiType [] {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG,
     PsiType.FLOAT, PsiType.DOUBLE};
 
-  public ExpectedTypeInfo createInfo(PsiType type, int kind, PsiType defaultType, TailType tailType) {
+  public ExpectedTypeInfo createInfo(@NotNull  PsiType type, int kind, PsiType defaultType, TailType tailType) {
     return createInfoImpl(type, kind, defaultType, tailType);
   }
 
-  private static ExpectedTypeInfoImpl createInfoImpl(PsiType type, int kind, PsiType defaultType, TailType tailType) {
+  private static ExpectedTypeInfoImpl createInfoImpl(@NotNull  PsiType type, int kind, PsiType defaultType, TailType tailType) {
     int dims = 0;
     while (type instanceof PsiArrayType) {
       type = ((PsiArrayType) type).getComponentType();
@@ -224,6 +226,7 @@ public class ExpectedTypesProvider {
 
     public void visitNameValuePair(PsiNameValuePair pair) {
       final PsiType type = getAnnotationMethodType(pair);
+      if (type == null) return;
       final ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN);
       if (type instanceof PsiArrayType) {
         myResult = new ExpectedTypeInfo[]{info, createInfoImpl(((PsiArrayType)type).getComponentType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN)};
@@ -436,11 +439,17 @@ public class ExpectedTypesProvider {
       if (newType instanceof PsiClassType) {
         JavaResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(newType);
         PsiClass newClass = (PsiClass)resolveResult.getElement();
+        final PsiSubstitutor substitutor;
         if (newClass instanceof PsiAnonymousClass) {
-          newClass = ((PsiAnonymousClass)newClass).getBaseClassType().resolve();
+          final PsiAnonymousClass anonymous = (PsiAnonymousClass)newClass;
+          newClass = anonymous.getBaseClassType().resolve();
+          substitutor = TypeConversionUtil.getSuperClassSubstitutor(newClass, anonymous, PsiSubstitutor.EMPTY);
+        } else if (newClass != null) {
+          substitutor = resolveResult.getSubstitutor();
         }
-        if (newClass == null) return;
-        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        else {
+          return;
+        }
         getExpectedTypesForConstructorCall(newClass, helper, list, substitutor);
       }
     }
