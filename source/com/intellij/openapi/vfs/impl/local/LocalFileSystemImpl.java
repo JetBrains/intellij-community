@@ -1,5 +1,6 @@
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -368,8 +369,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     public void run() {
       updateFileWatcher();
       try {
-        //noinspection InfiniteLoopStatement
         while (true) {
+          if (ApplicationManager.getApplication().isDisposeInProgress()) return;
+
           FileWatcher.ChangeInfo[] infos = FileWatcher.waitForChange();
 
           if (infos == null) {
@@ -410,8 +412,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   private void setUpFileWatcher() {
+    final Application application = ApplicationManager.getApplication();
+
+    if (application.isDisposeInProgress()) return;
+
     if (FileWatcher.isAvailable()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      application.runReadAction(new Runnable() {
         public void run() {
           WRITE_LOCK.lock();
           try {
