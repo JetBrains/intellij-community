@@ -23,14 +23,14 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   FixedHeightLabel myText = new FixedHeightLabel();
   FixedHeightLabel myText2 = new FixedHeightLabel();
 
-  MyProgressBar myProgress = new MyProgressBar(JProgressBar.HORIZONTAL);
+  MyProgressBar myProgress;
 
   JPanel myComponent = new MyComponent();
 
   InplaceButton myCancelButton;
 
-  private boolean myCompact;
-  private TaskInfo myInfo;
+  private final boolean myCompact;
+  private final TaskInfo myInfo;
 
   private FixedHeightLabel myProcessName = new FixedHeightLabel();
 
@@ -50,6 +50,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     myCancelButton.setVisible(myInfo.isCancellable());
     myCancelButton.setOpaque(true);
     myCancelButton.setToolTipText(processInfo.getCancelTooltipText());
+
+    myProgress = new MyProgressBar(JProgressBar.HORIZONTAL, compact);
 
     if (myCompact) {
       myComponent.setOpaque(true);
@@ -226,12 +228,14 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
-  private class MyProgressBar extends JProgressBar {
+  private static class MyProgressBar extends JProgressBar {
 
     private boolean myActive = true;
+    private final boolean myCompact;
 
-    public MyProgressBar(final int orient) {
+    public MyProgressBar(final int orient, boolean compact) {
       super(orient);
+      myCompact = compact;
     }
 
 
