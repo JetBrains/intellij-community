@@ -302,7 +302,11 @@ public class FileReference
         }
       }
       if (root == null) return element;
-      newName = "/" + PsiFileSystemItemUtil.getNotNullRelativePath(root, dstItem);
+      final String relativePath = PsiFileSystemItemUtil.getRelativePath(root, dstItem);
+      if (relativePath == null) {
+        return element;
+      }
+      newName = "/" + relativePath;
 
     } else { // relative path
       PsiFileSystemItem curItem = null;
