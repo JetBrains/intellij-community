@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -39,5 +40,10 @@ class SvnBinaryContentRevision extends SvnContentRevision implements BinaryConte
     catch(Exception ex) {
       throw new VcsException(ex);
     }
+  }
+
+  @NonNls
+  public String toString() {
+    return "SvnBinaryContentRevision:" + myFile;
   }
 }

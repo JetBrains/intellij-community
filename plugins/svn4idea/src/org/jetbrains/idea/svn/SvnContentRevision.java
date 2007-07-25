@@ -16,26 +16,27 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.SVNException;
 
-import java.io.IOException;
-import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author yole
 */
 class SvnContentRevision implements ContentRevision {
   private final SvnVcs myVcs;
-  private final FilePath myFile;
+  protected final FilePath myFile;
   private String myContent = null;
   private final SVNRevision myRevision;
   private boolean myUseBaseRevision;
@@ -96,5 +97,10 @@ class SvnContentRevision implements ContentRevision {
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return new SvnRevisionNumber(myRevision);
+  }
+
+  @NonNls
+  public String toString() {
+    return "SvnContentRevision:" + myFile.toString();
   }
 }

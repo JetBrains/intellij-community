@@ -112,7 +112,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
 
   private static Project findProject(final File path) {
     final Project[] p = new Project[1];
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (SwingUtilities.isEventDispatchThread() || ApplicationManager.getApplication().isUnitTestMode()) {
       doFindProject(path, p);
     } else {
       try {
