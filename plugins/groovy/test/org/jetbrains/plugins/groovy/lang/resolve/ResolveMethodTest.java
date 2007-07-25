@@ -272,6 +272,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testAliasedConstructor() throws Exception {
+    PsiReference ref = configureByFile("aliasedConstructor/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertEquals("JFrame", ((PsiMethod) resolved).getName());
+  }
+
+
   public void testFixedVsVarargs1() throws Exception {
     PsiReference ref = configureByFile("fixedVsVarargs1/A.groovy");
     PsiElement resolved = ref.resolve();

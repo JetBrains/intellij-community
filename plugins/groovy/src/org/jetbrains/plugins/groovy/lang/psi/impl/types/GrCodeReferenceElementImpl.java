@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -351,17 +352,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
           final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(ref, true) : null;
-          final MethodResolverProcessor processor = new MethodResolverProcessor(refName, ref, false, true, argTypes);
+          List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
           for (GroovyResolveResult classResult : classResults) {
             final PsiElement element = classResult.getElement();
             if (element instanceof PsiClass) {
-              processor.setImportStatementContext(classResult.getImportStatementContext());
-              if (!element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref)) break;
+              final GrImportStatement statement = classResult.getImportStatementContext();
+              String className = ((PsiClass) element).getName();
+              final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, argTypes);
+              processor.setImportStatementContext(statement);
+              final boolean toBreak = element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref);
+              constructorResults.addAll(Arrays.asList(processor.getCandidates()));
+              if (!toBreak) break;
             }
           }
 
-          final GroovyResolveResult[] constructorResults = processor.getCandidates();
-          return constructorResults.length > 0 ? constructorResults : classResults;
+          return constructorResults.isEmpty() ? classResults : constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
 
         case STATIC_MEMBER_FQ:
         {
