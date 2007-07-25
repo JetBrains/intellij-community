@@ -1,14 +1,15 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -157,5 +158,10 @@ public class Change {
         myMoveRelativePath = FileUtil.getRelativePath(myAfterRevision.getFile().getIOFile(), myBeforeRevision.getFile().getIOFile());
       }
     }
+  }
+
+  @NonNls
+  public String toString() {
+    return "Change:" + myBeforeRevision + " -> " + myAfterRevision; 
   }
 }

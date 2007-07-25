@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -42,5 +43,10 @@ public class CurrentBinaryContentRevision extends CurrentContentRevision impleme
     catch (IOException e) {
       throw new VcsException(e);
     }
+  }
+
+  @NonNls
+  public String toString() {
+    return "CurrentBinaryContentRevision:" + myFile;
   }
 }
