@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.css.CssFile;
 import com.intellij.psi.xml.XmlFile;
@@ -54,7 +55,7 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
 
     private static boolean isSuitable(final Project project, final VirtualFile file) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      return psiFile != null && (psiFile instanceof XmlFile || psiFile instanceof CssFile);
+      return psiFile != null && (psiFile instanceof XmlFile || psiFile instanceof CssFile || psiFile instanceof PsiJavaFile);
     }
 
     public void fileClosed(final FileEditorManager source, final VirtualFile file) {

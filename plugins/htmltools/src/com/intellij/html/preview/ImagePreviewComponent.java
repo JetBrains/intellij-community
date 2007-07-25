@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.css.CssTerm;
 import com.intellij.psi.css.impl.CssTermTypes;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,6 +13,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.patterns.impl.StandardPatterns;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,6 +119,13 @@ public class ImagePreviewComponent extends JPanel {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static JComponent getPreviewComponent(@NotNull final PsiElement element) {
+    if (StandardPatterns.psiElement().withParent(StandardPatterns.psiElement(PsiLiteralExpression.class)).accepts(element)) {
+      final PsiLiteralExpression psiLiteralExpression = (PsiLiteralExpression) element.getParent();
+      if (psiLiteralExpression != null) {
+        return _getPreviewComponent(psiLiteralExpression);
+      }
+    }
+
     CssTerm term = PsiTreeUtil.getParentOfType(element, CssTerm.class, false);
     if (term != null && CssTermTypes.URI == term.getTermType()) {
       PsiElement parent = element;
@@ -134,7 +143,7 @@ public class ImagePreviewComponent extends JPanel {
       if (attributeValue.getParent() instanceof XmlAttribute) {
         XmlAttribute attribute = (XmlAttribute)attributeValue.getParent();
         String attrName = attribute.getName();
-        if ("background".equals(attrName) || "src".equals(attrName)) {
+        if ("background".equals(attrName) || "src".equals(attrName) || "href".equals(attrName)) {
           PsiElement parent = element;
           while (parent != attribute) {
             final JComponent c = _getPreviewComponent(parent);
