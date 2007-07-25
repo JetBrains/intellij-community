@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -58,8 +60,38 @@ public class OptimizeImportsTest extends IdeaTestCase {
     doTest("simpleOptimize", "A.groovy");
   }
 
-  private void doTest(String folder, String filePath) throws Throwable {
+/*
+  public void testOptimizeExists() throws Throwable {
+    doTest("optimizeExists", "A.groovy");
+  }
 
+  public void testOptimizeAlias() throws Throwable {
+    doTest("optimizeAlias", "A.groovy");
+  }
+
+  public void testFoldImports() throws Throwable {
+    doTest("foldImports", "A.groovy");
+  }
+
+  public void testFoldImports2() throws Throwable {
+    doTest("foldImports2", "A.groovy");
+  }
+
+  public void testFoldImports3() throws Throwable {
+    doTest("foldImports3", "A.groovy");
+  }
+
+  public void testFoldImports4() throws Throwable {
+    doTest("foldImports4", "A.groovy");
+  }
+
+  public void testFoldImports5() throws Throwable {
+    doTest("foldImports5", "A.groovy");
+  }
+*/
+
+  private void doTest(String folder, String filePath) throws Throwable {
+    setImportSettings();
     String basePath = TestUtils.getTestDataPath() + "/optimizeImports/";
     String resultText = getResultFromFile(basePath + folder);
     VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + basePath + folder + "/" + filePath);
@@ -82,9 +114,17 @@ public class OptimizeImportsTest extends IdeaTestCase {
           }
         }, "Optimize imports", null);
 
-    
-    assertEquals("Results are not equal", file.getText() , resultText);
+    String text = file.getText();
+    System.out.println("---------------------------- " + folder + " ----------------------------");
+    System.out.println(text);
+    assertEquals("Results are not equal", text, resultText);
 
+  }
+
+  private void setImportSettings() {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   }
 
   private String getResultFromFile(String basePath) throws IOException {

@@ -269,7 +269,7 @@ mGSTRING_LITERAL = \"\"
   "{"                                     {  blockStack.push(mLPAREN);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
+  ([^{[:jletter:]\n\r] | "$") [^\n\r]*    {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
   {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
@@ -344,7 +344,8 @@ mGSTRING_LITERAL = \"\"
   "{"                                     {  blockStack.push(mLBRACK);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  [^{[:jletter:]](. | mONE_NL)*           {  clearStacks();
+  ([^{[:jletter:]] | "$")
+      (. | mONE_NL)*                      {  clearStacks();
                                              return mWRONG_GSTRING_LITERAL; }
 }
 
@@ -358,7 +359,7 @@ mGSTRING_LITERAL = \"\"
                                                yybegin(IN_INNER_BLOCK);
                                              }
                                              return mGSTRING_SINGLE_END; }
-  (.|{mNLS})                               {  clearStacks();
+  (.|{mNLS})                              {  clearStacks();
                                              yybegin(WRONG_STRING);
                                              return mWRONG_GSTRING_LITERAL; }
 }
