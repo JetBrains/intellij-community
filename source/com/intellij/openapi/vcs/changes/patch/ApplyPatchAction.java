@@ -81,9 +81,7 @@ public class ApplyPatchAction extends AnAction {
     }
     final List<FilePath> affectedPaths = new ArrayList<FilePath>();
     final ApplyPatchStatus patchStatus = applyFilePatches(project, patches, context, affectedPaths);
-    if (patchStatus != ApplyPatchStatus.FAILURE) {
-      moveChangesToList(project, affectedPaths, targetChangeList);
-    }
+    moveChangesToList(project, affectedPaths, targetChangeList);
     return patchStatus;
   }
 
