@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author cdr
@@ -443,10 +444,9 @@ public class InjectedLanguageUtil {
   public static List<DocumentRange> getCachedInjectedDocuments(Document hostDocument) {
     List<DocumentRange> injected = hostDocument.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
-      injected = new ArrayList<DocumentRange>();
+      injected = new CopyOnWriteArrayList<DocumentRange>();
       hostDocument.putUserData(INJECTED_DOCS_KEY, injected);
     }
-
     return injected;
   }
 
