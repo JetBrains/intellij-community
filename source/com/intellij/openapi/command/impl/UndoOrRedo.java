@@ -164,6 +164,9 @@ abstract class UndoOrRedo {
   }
 
   private boolean canceledByUser() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return false;
+    }
     String actionText = getActionName(myUndoableGroup.getCommandName());
 
     if (actionText.length() > 80) {

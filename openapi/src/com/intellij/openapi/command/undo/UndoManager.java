@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoManager {
   public static UndoManager getInstance(Project project) {
@@ -36,10 +37,10 @@ public abstract class UndoManager {
   public abstract boolean isUndoInProgress();
   public abstract boolean isRedoInProgress();
 
-  public abstract void undo(FileEditor editor);
-  public abstract void redo(FileEditor editor);
-  public abstract boolean isUndoAvailable(FileEditor editor);
-  public abstract boolean isRedoAvailable(FileEditor editor);
+  public abstract void undo(@Nullable FileEditor editor);
+  public abstract void redo(@Nullable FileEditor editor);
+  public abstract boolean isUndoAvailable(@Nullable FileEditor editor);
+  public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
   public abstract void clearUndoRedoQueue(VirtualFile file);
   public abstract void clearUndoRedoQueue(FileEditor editor);

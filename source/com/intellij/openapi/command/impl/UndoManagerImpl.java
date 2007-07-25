@@ -18,9 +18,9 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -366,13 +367,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myCurrentOperationState == REDO;
   }
 
-  public void undo(FileEditor editor) {
+  public void undo(@Nullable FileEditor editor) {
     LOG.assertTrue(isUndoAvailable(editor));
     myCurrentOperationState = UNDO;
     undoOrRedo(editor);
   }
 
-  public void redo(FileEditor editor) {
+  public void redo(@Nullable FileEditor editor) {
     LOG.assertTrue(isRedoAvailable(editor));
     myCurrentOperationState = REDO;
     undoOrRedo(editor);
@@ -405,7 +406,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (exception[0] != null) throw exception[0];
   }
 
-  public boolean isUndoAvailable(FileEditor editor) {
+  public boolean isUndoAvailable(@Nullable FileEditor editor) {
     if (editor instanceof TextEditor) {
       Editor activeEditor = ((TextEditor)editor).getEditor();
       if (activeEditor.isViewer()) {
@@ -434,7 +435,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
   }
 
-  public boolean isRedoAvailable(FileEditor editor) {
+  public boolean isRedoAvailable(@Nullable FileEditor editor) {
     if (editor instanceof TextEditor) {
       Editor activeEditor = ((TextEditor)editor).getEditor();
       if (activeEditor.isViewer()) {
