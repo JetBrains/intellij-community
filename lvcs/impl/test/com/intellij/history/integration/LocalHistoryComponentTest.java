@@ -42,7 +42,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     vcs.save();
     s.close();
 
-    sm.runPreStartupActivity();
+    startUp();
 
     assertTrue(c.getLocalVcs().hasEntry("file"));
   }
@@ -57,16 +57,31 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
   @Test
   public void testSaving() {
     initComponent();
-    sm.runPreStartupActivity();
+    startUp();
 
     c.getLocalVcs().createFile("file", cf(""), -1);
     c.save();
     c.closeVcs();
 
+    assertHasSavedEntry("file");
+  }
+
+  @Test
+  public void testSavingOnDispose() {
+    initComponent();
+    startUp();
+
+    c.getLocalVcs().createFile("file", cf(""), -1);
+    c.disposeComponent();
+
+    assertHasSavedEntry("file");
+  }
+
+  private void assertHasSavedEntry(String path) {
     Storage s = new Storage(c.getStorageDir());
     LocalVcs vcs = new TestLocalVcs(s);
     s.close();
-    assertTrue(vcs.hasEntry("file"));
+    assertTrue(vcs.hasEntry(path));
   }
 
   @Test
@@ -146,6 +161,10 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     expect(p.getLocationHash()).andStubReturn(locationHash);
     replay(p);
     return p;
+  }
+
+  private void startUp() {
+    sm.runPreStartupActivity();
   }
 
   private static class MyStartupManager extends StubStartupManagerEx {

@@ -46,6 +46,14 @@ public class UpdaterTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testSelectingOnlyUniqueRoots() {
+    VirtualFile root = new TestVirtualFile("root");
+    Updater u = new Updater(vcs, gw);
+    VirtualFile[] result = u.selectParentlessRootsAndSort(list(root, root));
+    assertArrayEquals(array(root), result);
+  }
+
+  @Test
   public void testDoesNotAddExistentRoots() {
     vcs.createDirectory("root");
 

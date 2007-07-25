@@ -6,7 +6,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class LocalVcsStoringTest extends TempDirTestCase {
+import java.io.File;
+
+public class LocalVcsSavingTest extends TempDirTestCase {
   private LocalVcs vcs;
   private Storage s;
 
@@ -23,7 +25,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  public void testStoringEntries() {
+  public void testSavingEntries() {
     vcs.createFile("file", cf("content"), 123L);
 
     vcs.save();
@@ -36,7 +38,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  public void testStoringChangeList() {
+  public void testSavingChangeList() {
     vcs.createFile("file", cf("content"), -1);
     vcs.changeFileContent("file", cf("new content"), -1);
 
@@ -47,7 +49,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  public void testStoringObjectsCounter() {
+  public void testSavingObjectsCounter() {
     vcs.createFile("file1", cf("content1"), -1);
     vcs.createFile("file2", cf("content2"), -1);
 
@@ -71,5 +73,21 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     initVcs();
     assertTrue(vcs.hasEntry("file"));
     assertEquals(1, vcs.getRevisionsFor("file").size());
+  }
+  
+  @Test
+  public void testDoesNotSaveIfNoChangesWereMade() {
+    vcs.createFile("f1", cf(""), -1);
+    vcs.save();
+    File f = new File(tempDir, "storage");
+    f.setLastModified(123);
+
+    vcs.save();
+    assertTrue(123 == f.lastModified());
+
+    vcs.createFile("f2", cf(""), -1);
+    vcs.save();
+
+    assertTrue(123 != f.lastModified());
   }
 }

@@ -1,12 +1,13 @@
 package com.intellij.history.integration;
 
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,13 +29,18 @@ public class Updater implements CacheUpdater {
     myVfsRoots = selectParentlessRootsAndSort(gw.getContentRoots());
   }
 
-  private VirtualFile[] selectParentlessRootsAndSort(List<VirtualFile> roots) {
+  protected VirtualFile[] selectParentlessRootsAndSort(List<VirtualFile> roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile r : roots) {
       if (parentIsNotUnderContentRoot(r)) result.add(r);
     }
+    removeDupplicates(result);
     sortRoots(result);
     return result.toArray(new VirtualFile[0]);
+  }
+
+  private void removeDupplicates(List<VirtualFile> roots) {
+    ContainerUtil.removeDuplicates(roots);
   }
 
   private void sortRoots(List<VirtualFile> roots) {

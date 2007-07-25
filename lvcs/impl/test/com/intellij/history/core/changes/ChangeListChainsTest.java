@@ -10,7 +10,7 @@ public class ChangeListChainsTest extends ChangeListTestCase {
 
     applyAndAdd(c1, c2);
 
-    assertEquals(list(c1, c2), cl.getChain(c1));
+    assertEquals(array(c1, c2), cl.getChain(c1));
   }
 
   @Test
@@ -20,8 +20,8 @@ public class ChangeListChainsTest extends ChangeListTestCase {
 
     applyAndAdd(c1, c2);
 
-    assertEquals(list(c1), cl.getChain(c1));
-    assertEquals(list(c2), cl.getChain(c2));
+    assertEquals(array(c1), cl.getChain(c1));
+    assertEquals(array(c2), cl.getChain(c2));
   }
 
   @Test
@@ -32,9 +32,9 @@ public class ChangeListChainsTest extends ChangeListTestCase {
 
     applyAndAdd(c1, c2, c3);
 
-    assertEquals(list(c1, c2, c3), cl.getChain(c1));
-    assertEquals(list(c2), cl.getChain(c2));
-    assertEquals(list(c3), cl.getChain(c3));
+    assertEquals(array(c1, c2, c3), cl.getChain(c1));
+    assertEquals(array(c2), cl.getChain(c2));
+    assertEquals(array(c3), cl.getChain(c3));
   }
 
   @Test
@@ -45,13 +45,13 @@ public class ChangeListChainsTest extends ChangeListTestCase {
 
     applyAndAdd(c1, c2, c3);
 
-    assertEquals(list(c1, c3), cl.getChain(c1));
-    assertEquals(list(c2), cl.getChain(c2));
+    assertEquals(array(c1, c3), cl.getChain(c1));
+    assertEquals(array(c2), cl.getChain(c2));
 
     Change c4 = new MoveChange("dir1/f", "dir2");
     applyAndAdd(c4);
 
-    assertEquals(list(c1, c3, c4), cl.getChain(c1));
-    assertEquals(list(c2, c4), cl.getChain(c2));
+    assertEquals(array(c1, c3, c4), cl.getChain(c1));
+    assertEquals(array(c2, c4), cl.getChain(c2));
   }
 }

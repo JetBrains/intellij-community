@@ -161,8 +161,8 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     Change cs3 = cs(new MoveChange("file", "dir"));
     applyAndAdd(cs1, cs2, cs3);
 
-    assertEquals(list(cs3, cs1), getChangesFor("dir/file"));
-    assertEquals(list(cs3, cs2), getChangesFor("dir"));
+    assertEquals(array(cs3, cs1), getChangesFor("dir/file"));
+    assertEquals(array(cs3, cs2), getChangesFor("dir"));
   }
 
   @Test
@@ -175,7 +175,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3, cs4, cs5);
 
-    assertEquals(list(cs5, cs4, cs2, cs1), getChangesFor("file"));
+    assertEquals(array(cs5, cs4, cs2, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -188,7 +188,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3, cs4, cs5);
 
-    assertEquals(list(cs5, cs3, cs1), getChangesFor("file"));
+    assertEquals(array(cs5, cs3, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -199,7 +199,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3);
 
-    assertEquals(list(cs3, cs1), getChangesFor("dir"));
+    assertEquals(array(cs3, cs1), getChangesFor("dir"));
   }
 
   @Test
@@ -212,8 +212,8 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3, cs4, cs5);
 
-    assertEquals(list(cs5, cs4, cs2, cs1), getChangesFor("dir"));
-    assertEquals(list(cs5, cs2), getChangesFor("dir/file"));
+    assertEquals(array(cs5, cs4, cs2, cs1), getChangesFor("dir"));
+    assertEquals(array(cs5, cs2), getChangesFor("dir/file"));
   }
 
   @Test
@@ -224,7 +224,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3);
 
-    assertEquals(list(cs3), getChangesFor("f2"));
+    assertEquals(array(cs3), getChangesFor("f2"));
   }
 
   @Test
@@ -236,7 +236,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3, cs4);
 
-    assertEquals(list(cs4, cs1), getChangesFor("f"));
+    assertEquals(array(cs4, cs1), getChangesFor("f"));
   }
 
   @Test
@@ -248,8 +248,8 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3, cs4);
 
-    assertEquals(list(cs4, cs3, cs1), getChangesFor("f1"));
-    assertEquals(list(cs4, cs2), getChangesFor("f2"));
+    assertEquals(array(cs4, cs3, cs1), getChangesFor("f1"));
+    assertEquals(array(cs4, cs2), getChangesFor("f2"));
   }
 
   @Test
@@ -258,7 +258,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     Change cs2 = cs(new PutLabelChange("label", -1));
 
     applyAndAdd(cs1, cs2);
-    assertEquals(list(cs2, cs1), getChangesFor("f"));
+    assertEquals(array(cs2, cs1), getChangesFor("f"));
   }
 
   @Test
@@ -268,7 +268,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
       cs(new ChangeFileContentChange("f", null, -1), new PutLabelChange("label", -1), new ChangeFileContentChange("f", null, -1));
 
     applyAndAdd(cs1, cs2);
-    assertEquals(list(cs2, cs1), getChangesFor("f"));
+    assertEquals(array(cs2, cs1), getChangesFor("f"));
   }
 
   @Test
@@ -280,7 +280,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3, cs4);
 
-    assertEquals(list(cs4, cs1), getChangesFor("file"));
+    assertEquals(array(cs4, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -291,7 +291,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
     applyAndAdd(cs1, cs2, cs3);
 
-    assertEquals(list(cs3, cs2, cs1), getChangesFor("dir"));
+    assertEquals(array(cs3, cs2, cs1), getChangesFor("dir"));
   }
 
   private List<Change> getChangesFor(String path) {

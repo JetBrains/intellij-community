@@ -22,6 +22,7 @@ public abstract class LocalVcs implements ILocalVcs {
   private int myEntryCounter;
 
   private Change myLastChange;
+  private boolean wasModifiedAfterLastSave;
 
   public LocalVcs(Storage s) {
     myStorage = s;
@@ -37,6 +38,8 @@ public abstract class LocalVcs implements ILocalVcs {
   }
 
   public void save() {
+    if (!wasModifiedAfterLastSave) return;
+
     purgeObsolete(getPurgingPeriod());
 
     Memento m = new Memento();
@@ -45,6 +48,8 @@ public abstract class LocalVcs implements ILocalVcs {
     m.myChangeList = myChangeList;
 
     myStorage.store(m);
+
+    wasModifiedAfterLastSave = false;
   }
 
   public boolean hasEntry(String path) {
@@ -136,7 +141,7 @@ public abstract class LocalVcs implements ILocalVcs {
 
   private void applyLabel(PutLabelChange c) {
     c.applyTo(myRoot);
-    myChangeList.addChange(c);
+    addChangeToChangeList(c);
   }
 
   private void applyChange(Change c) {
@@ -145,10 +150,15 @@ public abstract class LocalVcs implements ILocalVcs {
 
     // todo get rid of wrapping changeset here
     myChangeList.beginChangeSet();
-    myChangeList.addChange(c);
+    addChangeToChangeList(c);
     myChangeList.endChangeSet(null);
 
     myLastChange = c;
+  }
+
+  private void addChangeToChangeList(Change c) {
+    myChangeList.addChange(c);
+    wasModifiedAfterLastSave = true;
   }
 
   // test-support

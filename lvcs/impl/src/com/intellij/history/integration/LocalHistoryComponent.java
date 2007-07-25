@@ -107,6 +107,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   public void disposeComponent() {
     if (isDefaultProject()) return;
 
+    // save could not be called if user had canceled save of project files
+    // so we have to force save. But that will be ignored if where were
+    // no changes since last save, so there is no performance issues here
+    save();
+
     closeVcs();
     closeService();
 

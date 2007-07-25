@@ -1,16 +1,17 @@
 package com.intellij.history.core;
 
+import com.intellij.history.Clock;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.storage.ByteContent;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.Clock;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 public abstract class LocalVcsTestCase extends Assert {
@@ -62,8 +63,12 @@ public abstract class LocalVcsTestCase extends Assert {
     };
   }
 
-  protected static <T> T[] list(T... objects) {
+  protected static <T> T[] array(T... objects) {
     return objects;
+  }
+
+  protected static <T> List<T> list(T... objects) {
+    return Arrays.asList(objects);
   }
 
   protected static IdPath idp(int... parts) {

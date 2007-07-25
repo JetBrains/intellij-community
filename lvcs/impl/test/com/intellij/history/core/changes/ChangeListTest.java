@@ -52,7 +52,7 @@ public class ChangeListTest extends ChangeListTestCase {
     assertEquals(1, cc.size());
     assertEquals("changeSet", cc.get(0).getName());
     assertEquals(ChangeSet.class, cc.get(0).getClass());
-    assertEquals(list(c1, c2), cc.get(0).getChanges());
+    assertEquals(array(c1, c2), cc.get(0).getChanges());
   }
 
   @Test
@@ -89,6 +89,6 @@ public class ChangeListTest extends ChangeListTestCase {
     assertEquals(1, cc.size());
     assertEquals("outer", cc.get(0).getName());
     assertEquals(ChangeSet.class, cc.get(0).getClass());
-    assertEquals(list(c1, c2), cc.get(0).getChanges());
+    assertEquals(array(c1, c2), cc.get(0).getChanges());
   }
 }

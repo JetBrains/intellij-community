@@ -20,7 +20,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new CreateFileChange(1, "dir/name", null, -1);
     c.applyTo(root);
 
-    assertEquals(list(idp(-1, 99, 1)), c.getAffectedIdPaths());
+    assertEquals(array(idp(-1, 99, 1)), c.getAffectedIdPaths());
 
   }
 
@@ -29,7 +29,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new CreateDirectoryChange(2, "name");
     c.applyTo(root);
 
-    assertEquals(list(idp(-1, 2)), c.getAffectedIdPaths());
+    assertEquals(array(idp(-1, 2)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -39,7 +39,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new ChangeFileContentChange("file", c("new content"), -1);
     c.applyTo(root);
 
-    assertEquals(list(idp(-1, 16)), c.getAffectedIdPaths());
+    assertEquals(array(idp(-1, 16)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -49,7 +49,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new RenameChange("name", "new name");
     c.applyTo(root);
 
-    assertEquals(list(idp(-1, 42)), c.getAffectedIdPaths());
+    assertEquals(array(idp(-1, 42)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -61,7 +61,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
 
-    assertEquals(list(idp(-1, 1, 13), idp(-1, 2, 13)), c.getAffectedIdPaths());
+    assertEquals(array(idp(-1, 1, 13), idp(-1, 2, 13)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -72,7 +72,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
     StructuralChange c = new DeleteChange("dir/file");
     c.applyTo(root);
 
-    assertEquals(list(idp(-1, 99, 7)), c.getAffectedIdPaths());
+    assertEquals(array(idp(-1, 99, 7)), c.getAffectedIdPaths());
   }
 
   @Test
