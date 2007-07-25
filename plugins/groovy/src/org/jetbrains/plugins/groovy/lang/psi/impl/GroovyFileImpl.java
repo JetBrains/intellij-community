@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,7 +202,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   }
 
   public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
-    PsiElement next = importStatement.getNextSibling();
+    PsiElement next = PsiTreeUtil.skipSiblingsForward(importStatement, PsiWhiteSpace.class);
     if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) {
       deleteChildRange(importStatement, next);
     } else {
@@ -211,9 +212,9 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
     PsiElement anchor = getAnchorToInsertImportAfter();
-    final PsiElement result = addBefore(statement, anchor);
+    final PsiElement result = addAfter(statement, anchor);
     if (anchor != null) {
-      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
     return (GrImportStatement) result;
   }
