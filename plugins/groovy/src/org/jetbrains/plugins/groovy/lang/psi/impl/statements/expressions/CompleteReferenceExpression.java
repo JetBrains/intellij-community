@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -215,7 +216,8 @@ public class CompleteReferenceExpression {
                                                    GrReferenceExpression patternExpression,
                                                    GrExpression patternQualifier,
                                                    List<String> result) {
-    if (element instanceof GrReferenceExpression && element != patternExpression) {
+    if (element instanceof GrReferenceExpression && element != patternExpression
+        && !PsiUtil.isLValue((GroovyPsiElement) element)) {
       final GrReferenceExpression refExpr = (GrReferenceExpression) element;
       final String refName = refExpr.getReferenceName();
       if (refName != null && refExpr.resolve() == null) {
