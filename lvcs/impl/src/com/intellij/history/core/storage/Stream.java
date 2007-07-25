@@ -100,6 +100,8 @@ public class Stream {
         return new PutLabelChange(this);
       case 8:
         return new PutEntryLabelChange(this);
+      case 9:
+        return new PutSystemLabelChange(this);
     }
     throw new IOException();
   }
@@ -117,6 +119,7 @@ public class Stream {
     if (c.equals(DeleteChange.class)) id = 6;
     if (c.equals(PutLabelChange.class)) id = 7;
     if (c.equals(PutEntryLabelChange.class)) id = 8;
+    if (c.equals(PutSystemLabelChange.class)) id = 9;
 
     myOs.writeInt(id);
     change.write(this);

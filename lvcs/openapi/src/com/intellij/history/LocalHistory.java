@@ -10,7 +10,11 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   }
 
   public static void putSystemLabel(Project p, String name) {
-    getInstance(p).putSystemLabel(name);
+    getInstance(p).putSystemLabel(name, -1);
+  }
+
+  public static void putSystemLabel(Project p, String name, int color) {
+    getInstance(p).putSystemLabel(name, color);
   }
 
   public static Checkpoint putCheckpoint(Project p) {
@@ -29,14 +33,13 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).hasUnavailableContent(f);
   }
 
-  // todo make it private
-  protected static LocalHistory getInstance(Project p) {
+  private static LocalHistory getInstance(Project p) {
     return p.getComponent(LocalHistory.class);
   }
 
   protected abstract LocalHistoryAction startAction(String name);
 
-  protected abstract void putSystemLabel(String name);
+  protected abstract void putSystemLabel(String name, int color);
 
   protected abstract Checkpoint putCheckpoint();
 

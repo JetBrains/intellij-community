@@ -1,6 +1,7 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.PutLabelChange;
+import com.intellij.history.core.changes.PutSystemLabelChange;
 import com.intellij.history.core.revisions.Revision;
 import org.junit.Test;
 
@@ -132,7 +133,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     vcs.createFile("f2", null, -1);
 
     setCurrentTimestamp(123);
-    vcs.putSystemLabel("label");
+    vcs.putSystemLabel("label", 456);
 
     List<Revision> rr1 = vcs.getRevisionsFor("f1");
     List<Revision> rr2 = vcs.getRevisionsFor("f2");
@@ -145,5 +146,6 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     PutLabelChange l = (PutLabelChange)rr1.get(0).getCauseChange();
     assertTrue(l.isSystemLabel());
     assertEquals(123, l.getTimestamp());
+    assertEquals(456, ((PutSystemLabelChange)l).getColor());
   }
 }

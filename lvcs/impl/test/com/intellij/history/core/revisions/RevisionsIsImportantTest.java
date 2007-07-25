@@ -16,7 +16,7 @@ public class RevisionsIsImportantTest extends LocalVcsTestCase {
   @Test
   public void testLabeledRevision() {
     Revision r1 = createLabeledRevision(new PutLabelChange(null, -1));
-    Revision r2 = createLabeledRevision(new PutSystemLabelChange(null, -1));
+    Revision r2 = createLabeledRevision(new PutSystemLabelChange(null, -1, -1));
     assertTrue(r1.isImportant());
     assertFalse(r2.isImportant());
   }

@@ -131,8 +131,8 @@ public abstract class LocalVcs implements ILocalVcs {
     applyChange(new DeleteChange(path));
   }
 
-  public void putSystemLabel(String name) {
-    applyLabel(new PutSystemLabelChange(name, getCurrentTimestamp()));
+  public void putSystemLabel(String name, int color) {
+    applyLabel(new PutSystemLabelChange(name, color, getCurrentTimestamp()));
   }
 
   public void putUserLabel(String name) {

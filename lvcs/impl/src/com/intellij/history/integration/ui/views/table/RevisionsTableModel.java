@@ -30,10 +30,14 @@ public class RevisionsTableModel extends AbstractTableModel {
   }
 
   public Object getValueAt(int row, int column) {
-    Revision r = myModel.getRevisions().get(row);
+    Revision r = getRevisionAt(row);
     if (column == 0) return FormatUtil.formatTimestamp(r.getTimestamp());
     if (column == 1) return r.getName();
     if (column == 2) return r.getCauseChangeName();
     return null;
+  }
+
+  public Revision getRevisionAt(int row) {
+    return myModel.getRevisions().get(row);
   }
 }

@@ -56,7 +56,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testDisplayingOnlyChangesDoesNotShowSystemLabels() {
     vcs.putUserLabel("user");
-    vcs.putSystemLabel("system");
+    vcs.putSystemLabel("system", -1);
 
     m.showChangesOnly(false);
     List<Revision> rr = m.getRevisions();
@@ -77,8 +77,8 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
     // and some changes that normally are exclueed on "ShowChangesOnly"
     // overwise revisions will contain CurrentRevision
-    vcs.putSystemLabel("label1");
-    vcs.putSystemLabel("label2");
+    vcs.putSystemLabel("label1", -1);
+    vcs.putSystemLabel("label2", -1);
 
     initModelFor("f");
     m.showChangesOnly(true);

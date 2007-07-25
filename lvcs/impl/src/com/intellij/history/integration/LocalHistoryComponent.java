@@ -35,7 +35,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   // todo test-support
   public static LocalHistoryComponent getComponentInstance(Project p) {
-    return (LocalHistoryComponent)getInstance(p);
+    return (LocalHistoryComponent)p.getComponent(LocalHistory.class);
   }
 
   // todo bad method - extend interface instead
@@ -148,8 +148,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
-  protected void putSystemLabel(String name) {
-    myVcs.putSystemLabel(name);
+  protected void putSystemLabel(String name, int color) {
+    myVcs.putSystemLabel(name, color);
   }
 
   @Override

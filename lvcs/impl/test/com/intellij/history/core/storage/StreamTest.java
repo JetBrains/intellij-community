@@ -347,6 +347,24 @@ public class StreamTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testPutSystemLabelChange() throws IOException {
+    Entry r = new RootEntry();
+    createDirectory(r, 1, "dir");
+
+    Change c = new PutSystemLabelChange("name", 123, 456);
+    c.applyTo(r);
+
+    os.writeChange(c);
+    Change read = is.readChange();
+
+    assertEquals(PutSystemLabelChange.class, read.getClass());
+    assertEquals("name", read.getName());
+    assertEquals(123, ((PutSystemLabelChange)read).getColor());
+    assertEquals(456, read.getTimestamp());
+    assertTrue(read.affects(r.getEntry("dir")));
+  }
+
+  @Test
   public void testChangeSet() throws IOException {
     ChangeSet cs = cs(123, "name", new CreateFileChange(1, "file", new UnavailableContent(), -1));
 
