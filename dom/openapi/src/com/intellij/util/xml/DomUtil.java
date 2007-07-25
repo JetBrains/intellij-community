@@ -230,8 +230,11 @@ public class DomUtil {
   @Nullable
   public static DomElement getContextElement(@Nullable final Editor editor) {
     if(editor == null) return null;
-    
-    final PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
+
+    final Project project = editor.getProject();
+    if (project == null) return null;
+
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (!(file instanceof XmlFile)) {
       return null;
     }
