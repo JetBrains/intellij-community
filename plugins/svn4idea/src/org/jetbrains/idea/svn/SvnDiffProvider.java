@@ -15,17 +15,17 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 import java.io.File;
 
@@ -44,7 +44,7 @@ public class SvnDiffProvider implements DiffProvider {
       if (svnStatus.getCommittedRevision().equals(SVNRevision.UNDEFINED) && svnStatus.isCopied()) {
         return new SvnRevisionNumber(svnStatus.getCopyFromRevision());
       }
-      return new SvnRevisionNumber(svnStatus.getCommittedRevision());
+      return new SvnRevisionNumber(svnStatus.getRevision());
     }
     catch (SVNException e) {
       LOG.debug(e);    // most likely the file is unversioned
@@ -53,7 +53,19 @@ public class SvnDiffProvider implements DiffProvider {
   }
 
   public VcsRevisionNumber getLastRevision(VirtualFile file) {
-    return new SvnRevisionNumber(SVNRevision.HEAD);
+    final SVNStatusClient client = myVcs.createStatusClient();
+    try {
+      final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), true, false);
+      final SVNRevision remoteRevision = svnStatus.getRemoteRevision();
+      if (remoteRevision != null) {
+        return new SvnRevisionNumber(remoteRevision);
+      }
+      return new SvnRevisionNumber(svnStatus.getRevision());
+    }
+    catch (SVNException e) {
+      LOG.debug(e);    // most likely the file is unversioned
+      return new SvnRevisionNumber(SVNRevision.HEAD);
+    }
   }
 
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
