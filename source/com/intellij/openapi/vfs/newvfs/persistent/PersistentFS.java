@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DupOutputStream;
-import com.intellij.util.io.LimitedInputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -29,8 +28,6 @@ import java.util.*;
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
   private final static FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
-
-  private static final int LOAD_THROUGH_BUFFER_THRESHOULD = 1024 * 1024; // megabyte
 
   private static final int CHILDREN_CACHED_FLAG = 0x01;
   private static final int IS_DIRECTORY_FLAG = 0x02;
@@ -326,42 +323,31 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final NewVirtualFileSystem delegate = getDelegate(file);
       final int len = (int)delegate.getLength(file);
       final InputStream nativeStream = delegate.getInputStream(file);
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      ReplicatorInputStream result = new ReplicatorInputStream(nativeStream, new BufferedOutputStream(FILE_CONTENT.writeAttribute(file))) {
-          public void close() throws IOException {
-            super.close();
+
+      final ByteArrayOutputStream cache = new ByteArrayOutputStream(len);
+      return new ReplicatorInputStream(nativeStream, cache) {
+        public void close() throws IOException {
+          super.close();
+
+          if (getBytesRead() == len) {
+            DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
+            try {
+              FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
+            }
+            finally {
+              sink.close();
+            }
 
             myRecords.setLength(getFileId(file), len);
-
-            if (getBytesRead() != len) {
-              setFlag(file, MUST_RELOAD_CONTENT, true);
-            }
           }
-        };
-
-      if (len < LOAD_THROUGH_BUFFER_THRESHOULD) {
-        try {
-          return new ByteArrayInputStream(FileUtil.loadBytes(result, len));
+          else {
+            setFlag(file, MUST_RELOAD_CONTENT, true);
+          }
         }
-        finally {
-          result.close();
-        }
-      }
-
-      return result;
+      };
     }
     else {
-      final int len = myRecords.getLength(getFileId(file));
-      final BufferedInputStream stream = new BufferedInputStream(new LimitedInputStream(contentStream, len));
-      if (len < LOAD_THROUGH_BUFFER_THRESHOULD) {
-        try {
-          return new ByteArrayInputStream(FileUtil.loadBytes(stream, len));
-        }
-        finally {
-          stream.close();
-        }
-      }
-      return stream;
+      return contentStream;
     }
   }
 
