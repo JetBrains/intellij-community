@@ -18,8 +18,6 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
-import com.intellij.codeInsight.hint.api.ParameterInfoProvider;
-import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
@@ -38,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
-import org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher;
-import org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher;
-import org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher;
-import org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher;
+import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoProvider;
@@ -104,6 +99,7 @@ public class GroovyLoader implements ApplicationComponent {
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
 
     ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferencesSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new TypeAliasReferenceSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
 
     TypedHandler.registerQuoteHandler(GroovyFileType.GROOVY_FILE_TYPE, new GroovyQuoteHandler());

@@ -76,6 +76,11 @@ public class FindUsagesTest extends IdeaTestCase {
     doTest("keywordPropertyName/A.groovy", 1);
   }
 
+  public void testTypeAlias() throws Throwable {
+    doTest("typeAlias/A.groovy", 1);
+  }
+
+
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition(filePath);
