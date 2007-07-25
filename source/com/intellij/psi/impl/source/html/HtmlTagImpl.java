@@ -69,6 +69,11 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return super.getNamespace();
   }
 
+  protected String getRealNs(final String value) {
+    if (XmlUtil.XHTML_URI.equals(value)) return XmlUtil.HTML_URI;
+    return value;
+  }
+
   public String toString() {
     return "HtmlTag:" + getName();
   }

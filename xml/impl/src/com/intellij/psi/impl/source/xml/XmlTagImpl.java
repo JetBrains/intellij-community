@@ -208,6 +208,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
             if (attribute.isNamespaceDeclaration()) {
               String ns = attribute.getValue();
               if (ns == null) ns = XmlUtil.EMPTY_URI;
+              ns = getRealNs(ns);
 
               if (map == null || !map.containsKey(ns)) {
                 map = initializeSchema(ns, getNSVersion(ns, this),ns,map);
@@ -609,7 +610,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         if (attribute.isNamespaceDeclaration()) {
           final String name = attribute.getName();
           int splitIndex = name.indexOf(':');
-          final String value = attribute.getValue();
+          final String value = getRealNs(attribute.getValue());
 
           if (value != null) {
             if (splitIndex < 0) {
@@ -635,6 +636,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       myNamespaceMap = map = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
     return map;
+  }
+
+  protected String getRealNs(final String value) {
+    return value;
   }
 
   @NotNull
