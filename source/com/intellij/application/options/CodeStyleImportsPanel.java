@@ -584,6 +584,8 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbInsertInnerClassImports.setSelected(mySettings.INSERT_INNER_CLASS_IMPORTS);
     myClassCountField.setText(Integer.toString(mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
     myNamesCountField.setText(Integer.toString(mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND));
+    myCbAddUnambiguousImportsOnTheFly.setSelected(mySettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+    myCbOptimizeImportsOnTheFly.setSelected(mySettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
 
     myImportLayoutList.copyFrom(mySettings.IMPORT_LAYOUT_TABLE);
     CodeStyleSettings.ImportLayoutTable.Entry[] entries = myImportLayoutList.getEntries();
