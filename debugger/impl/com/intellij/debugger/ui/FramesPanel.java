@@ -332,9 +332,10 @@ public class FramesPanel extends UpdatableDebuggerView {
       final MethodsTracker tracker = new MethodsTracker();
       final int totalFramesCount = frames.size();
       int index = 0;
+      final long timestamp = System.currentTimeMillis();
       for (StackFrameProxyImpl stackFrameProxy : frames) {
         managerThread.invokeLater(
-          new AppendFrameCommand(getSuspendContext(), stackFrameProxy, evaluationContext, tracker, index++, stackFrameProxy.equals(contextFrame), totalFramesCount)
+          new AppendFrameCommand(getSuspendContext(), stackFrameProxy, evaluationContext, tracker, index++, stackFrameProxy.equals(contextFrame), totalFramesCount, timestamp)
         );
       }
     }
@@ -374,6 +375,8 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
 
+  
+  private volatile long myFramesLastUpdateTime = 0;
   private class AppendFrameCommand extends SuspendContextCommandImpl {
     private final StackFrameProxyImpl myFrame;
     private final EvaluationContextImpl myEvaluationContext;
@@ -381,9 +384,11 @@ public class FramesPanel extends UpdatableDebuggerView {
     private final int myIndexToInsert;
     private final boolean myIsContextFrame;
     private final int myTotalFramesCount;
+    private final long myTimestamp;
 
     public AppendFrameCommand(SuspendContextImpl suspendContext, StackFrameProxyImpl frame, EvaluationContextImpl evaluationContext,
-                              MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final int totalFramesCount) {
+                              MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final int totalFramesCount,
+                              final long timestamp) {
       super(suspendContext);
       myFrame = frame;
       myEvaluationContext = evaluationContext;
@@ -391,6 +396,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       myIndexToInsert = indexToInsert;
       myIsContextFrame = isContextFrame;
       myTotalFramesCount = totalFramesCount;
+      myTimestamp = timestamp;
     }
 
     public void contextAction() throws Exception {
@@ -403,7 +409,9 @@ public class FramesPanel extends UpdatableDebuggerView {
             myFramesListener.setEnabled(false);
             synchronized (myFramesList) {
               final DefaultListModel model = myFramesList.getModel();
-              if (model.size() == 0) {
+              if (model.size() == 0 || myFramesLastUpdateTime < myTimestamp) {
+                myFramesLastUpdateTime = myTimestamp;
+                model.clear();
                 for (int idx = 0; idx < myTotalFramesCount; idx++) {
                   final String label = "<frame " + idx + ">";
                   model.addElement(new Object() {
@@ -413,7 +421,10 @@ public class FramesPanel extends UpdatableDebuggerView {
                   });
                 }
               }
-              model.remove(myIndexToInsert); // remove placeholder
+              if (myTimestamp != myFramesLastUpdateTime) {
+                return;  // the command has expired
+              }
+              model.removeElementAt(myIndexToInsert); // remove placeholder
               model.insertElementAt(descriptor, myIndexToInsert);
               if (myIsContextFrame) {
                 myFramesList.setSelectedIndex(myIndexToInsert);
