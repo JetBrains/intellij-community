@@ -105,7 +105,7 @@
   <description>Plugin for Groovy language support</description>
   <version>0.1</version>
   <vendor>JetBrains Inc.</vendor>
-  <idea-version since-build="7074"/>
+  <idea-version since-build="7065"/>
 
   <application-components>
     <component>
