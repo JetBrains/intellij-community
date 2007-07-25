@@ -693,7 +693,10 @@ public abstract class ChooseByNameBase{
           }
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-          ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
+          if (myListModel.size() > 0) {
+            ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
+          }
+          
           if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
           }
