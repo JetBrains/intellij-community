@@ -77,7 +77,7 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testTypeAlias() throws Throwable {
-    doTest("typeAlias/A.groovy", 1);
+    doTest("typeAlias/A.groovy", 2);
   }
 
 
