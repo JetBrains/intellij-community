@@ -137,7 +137,7 @@ public class ColorPreviewComponent extends JComponent {
             "bgcolor".equals(attrName) || "color".equals(attrName)) {
           String s = element.getText();
           if (s.length() > 0) {
-            final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s);
+            final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s.toLowerCase());
             if (hexColor != null) {
               try {
                 return new ColorPreviewComponent(null, Color.decode("0x" + hexColor.substring(1)));
