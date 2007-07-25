@@ -20,7 +20,7 @@ public class ModelMergerUtil {
   public static <T> T getFirstImplementation(final T t) {
     T cur = t;
     while (cur instanceof MergedObject) {
-      final List<T> implementations = ((MergedObject<T>)t).getImplementations();
+      final List<T> implementations = ((MergedObject<T>)cur).getImplementations();
       cur = implementations.isEmpty()? null : implementations.get(0);
     }
     return cur;
