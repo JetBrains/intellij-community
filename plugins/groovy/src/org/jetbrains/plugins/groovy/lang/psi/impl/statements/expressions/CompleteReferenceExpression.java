@@ -71,9 +71,8 @@ public class CompleteReferenceExpression {
 
     if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), refExpr, true, PsiType.EMPTY_ARRAY);
-      getVariantsImpl(refExpr, classVariantsCollector);
-      GroovyResolveResult[] classVariants = classVariantsCollector.getCandidates();
-      return ArrayUtil.mergeArrays(propertyVariants, ResolveUtil.mapToElements(classVariants), Object.class);
+      final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
+      return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
     }
 
 
