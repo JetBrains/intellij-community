@@ -82,7 +82,7 @@ public class MavenIgnoreConfigurable implements Configurable {
       myState.setIgnoredFlag(file, marked.contains(file));
     }
 
-    myState.setIgnoredPathMasks(Strings.tokenize(myMaskEditor.getText(), " \t\n\r\f" + SEPARATOR));
+    myState.setIgnoredPathMasks(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
   public void reset() {

@@ -2,6 +2,9 @@ package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Vladislav.Kaznacheev
  */
@@ -12,6 +15,7 @@ public class MavenImporterPreferences implements Cloneable {
   private boolean lookForNested = false;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
+  private List<String> myIgnoredDependencies = new ArrayList<String>();
 
   public boolean isAutoImportNew() {
     return autoImportNew;
@@ -65,6 +69,9 @@ public class MavenImporterPreferences implements Cloneable {
     if (lookForNested != that.lookForNested) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
+    if (myIgnoredDependencies != null ? !myIgnoredDependencies.equals(that.myIgnoredDependencies) : that.myIgnoredDependencies != null) {
+      return false;
+    }
 
     return true;
   }
@@ -76,6 +83,7 @@ public class MavenImporterPreferences implements Cloneable {
     result = 31 * result + (lookForNested ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
+    result = 31 * result + (myIgnoredDependencies != null ? myIgnoredDependencies.hashCode() : 0);
     return result;
   }
 
@@ -87,5 +95,13 @@ public class MavenImporterPreferences implements Cloneable {
     catch (CloneNotSupportedException e) {
       throw new Error(e);
     }
+  }
+
+  public List<String> getIgnoredDependencies() {
+    return myIgnoredDependencies;
+  }
+
+  public void setIgnoredDependencies(List<String> ignoredDependencies) {
+    myIgnoredDependencies = ignoredDependencies;
   }
 }

@@ -19,10 +19,12 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
+import org.jetbrains.idea.maven.core.util.Strings;
 
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -122,15 +124,17 @@ public class MavenToIdeaConverter {
   final private MavenToIdeaMapping mavenToIdeaMapping;
   final private MavenImporterPreferences preferences;
   final private boolean markSynthetic;
+  final private Pattern ignorePattern;
 
   private MavenToIdeaConverter(ModifiableModuleModel model,
                                final MavenToIdeaMapping mavenToIdeaMapping,
                                final MavenImporterPreferences preferences,
                                final boolean markSynthetic) {
-    this.markSynthetic = markSynthetic;
-    this.mavenToIdeaMapping = mavenToIdeaMapping;
     this.modifiableModuleModel = model;
+    this.mavenToIdeaMapping = mavenToIdeaMapping;
     this.preferences = preferences;
+    this.markSynthetic = markSynthetic;
+    this.ignorePattern = Pattern.compile(Strings.translateMasks(preferences.getIgnoredDependencies()));
   }
 
   public void convert(MavenProjectModel.Node node, Collection<String> profiles) {
@@ -142,14 +146,14 @@ public class MavenToIdeaConverter {
     }
 //    setLanguageLevel(module, getLanguageLevel(mavenProject, profiles));
 
-    convertRootModel(module, mavenProject, profiles);
+    convertRootModel(module, mavenProject);
 
     createFacets(module, mavenProject);
 
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
   }
 
-  void convertRootModel(Module module, MavenProject mavenProject, Collection<String> profiles) {
+  void convertRootModel(Module module, MavenProject mavenProject) {
     RootModelAdapter rootModel = new RootModelAdapter(module);
     rootModel.init(mavenProject.getFile().getParent());
     createRoots(rootModel, mavenProject);
@@ -240,6 +244,9 @@ public class MavenToIdeaConverter {
   void createDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
     for (Artifact artifact : extractDependencies(mavenProject)) {
       MavenId id = new MavenId(artifact);
+      if(ignorePattern.matcher(id.toString()).matches()){
+        continue;
+      }
       final String moduleName = mavenToIdeaMapping.getModuleName(id);
       if (moduleName != null) {
         rootModel.createModuleDependency(moduleName);
