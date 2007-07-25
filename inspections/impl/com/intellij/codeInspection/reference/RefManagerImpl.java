@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -441,23 +442,28 @@ public class RefManagerImpl extends RefManager {
           //LOG.assertTrue(true, "References may become invalid after process is finished");
           return null;
         }
-        
-        RefElementImpl refElement;
-        if (elem instanceof PsiClass) {
-          refElement = new RefClassImpl((PsiClass)elem, this);
-        }
-        else if (elem instanceof PsiMethod) {
-          refElement = new RefMethodImpl((PsiMethod)elem, this);
-        }
-        else if (elem instanceof PsiField) {
-          refElement = new RefFieldImpl((PsiField)elem, this);
-        }
-        else if (elem instanceof PsiFile) {
-          refElement = new RefFileImpl((PsiFile)elem, this);
-        }
-        else {
-          return null;
-        }
+
+        RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+          @Nullable
+          public RefElementImpl compute() {
+            if (elem instanceof PsiClass) {
+              return new RefClassImpl((PsiClass)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiMethod) {
+              return new RefMethodImpl((PsiMethod)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiField) {
+              return new RefFieldImpl((PsiField)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiFile) {
+              return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+            }
+            else {
+              return null;
+            }
+          }
+        });
+        if (refElement == null) return null;
 
         putToRefTable(elem, refElement);
         refElement.initialize();
