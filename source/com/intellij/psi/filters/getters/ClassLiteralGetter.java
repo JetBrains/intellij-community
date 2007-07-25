@@ -1,6 +1,7 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
@@ -21,21 +22,21 @@ public class ClassLiteralGetter implements ContextGetter {
       if (element instanceof PsiClassType) {
         PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)element).resolveGenerics();
         PsiClass psiClass = resolveResult.getElement();
-        if (psiClass != null && "java.lang.Class".equals(psiClass.getQualifiedName())) {
+        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
           final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
           if (typeParameters.length == 1) {
             PsiType substitution = resolveResult.getSubstitutor().substitute(typeParameters[0]);
             if (substitution instanceof PsiWildcardType) {
               substitution = ((PsiWildcardType)substitution).getBound();
             }
-            if (substitution instanceof PsiClassType && !((PsiClassType)substitution).hasParameters()) {
+            if (substitution instanceof PsiClassType && !((PsiClassType)substitution).hasParameters() && !(((PsiClassType) substitution).resolve() instanceof PsiTypeParameter)) {
               final @NonNls String suffix = ".class";
               try {
                 final PsiManager manager = psiClass.getManager();
                 PsiExpression expr =
                   manager.getElementFactory().createExpressionFromText(substitution.getCanonicalText() + suffix, context);
                 expr = (PsiExpression)manager.getCodeStyleManager().shortenClassReferences(expr);
-                return new Object[]{expr};
+                return new Object[]{LookupElementFactory.getInstance().createLookupElement(expr, expr.getText()).setPriority(1)};
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);

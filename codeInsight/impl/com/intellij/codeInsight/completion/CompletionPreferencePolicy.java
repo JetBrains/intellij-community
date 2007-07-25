@@ -8,13 +8,14 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -26,25 +27,17 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   private final TObjectIntHashMap<LookupItem> myItemToIndexMap = new TObjectIntHashMap<LookupItem>();
 
-  private PsiProximityComparator myProximityComparator;
+  private final PsiProximityComparator myProximityComparator;
+  private final PsiElement myPosition;
   private CodeStyleManager myCodeStyleManager;
   private String myPrefix;
   private String myPrefixLowered;
   private String myPrefixCapitals;
 
-  public void setPrefix(String prefix) {
-    myPrefix = prefix;
-    myPrefixLowered = prefix.toLowerCase();
-  }
-
-  @Nullable
-  public ExpectedTypeInfo[] getExpectedInfos() {
-    return myExpectedInfos;
-  }
-
-  public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix, PsiFile containingFile) {
+  public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix, @NotNull PsiElement position) {
     setPrefix( prefix );
-    myProximityComparator = new PsiProximityComparator(containingFile, manager.getProject());
+    myProximityComparator = new PsiProximityComparator(position, manager.getProject());
+    myPosition = position;
     myPrefixCapitals = capitalsOnly(prefix);
     myCodeStyleManager = manager.getCodeStyleManager();
     if(expectedInfos != null){
@@ -62,6 +55,16 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
         myItemToIndexMap.put(allItems[i], i + 1);
       }
     }
+  }
+
+  public void setPrefix(String prefix) {
+    myPrefix = prefix;
+    myPrefixLowered = prefix.toLowerCase();
+  }
+
+  @Nullable
+  public ExpectedTypeInfo[] getExpectedInfos() {
+    return myExpectedInfos;
   }
 
   public static String capitalsOnly(String s) {
@@ -111,7 +114,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
 
     if (myExpectedInfos != null) {
-      result[4] = getMatchedWordCount(object);
+      result[4] = getMatchedWordCount(object, item);
     }
 
     result[5] = object instanceof String || object instanceof PsiKeyword ? 1 : 0;
@@ -149,6 +152,11 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       return 0;
     }
 
+    double priority1 = item1.getPriority();
+    double priority2 = item2.getPriority();
+    if (priority1 > priority2) return -1;
+    if (priority2 > priority1) return 1;
+
     String item1StringCap = capitalsOnly(item1.getLookupString());
     String item2StringCap = capitalsOnly(item2.getLookupString());
 
@@ -178,8 +186,8 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     Object o2 = item2.getObject();
 
     if (myExpectedInfos != null) {
-      int matchSize1 = getMatchedWordCount(o1);
-      int matchSize2 = getMatchedWordCount(o2);
+      int matchSize1 = getMatchedWordCount(o1, item1);
+      int matchSize2 = getMatchedWordCount(o2, item2);
       if (matchSize1 != matchSize2){
         return matchSize2 - matchSize1;
       }
@@ -259,7 +267,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     return 0;
   }
 
-  private int getMatchedWordCount(Object o) {
+  private int getMatchedWordCount(Object o, final LookupItem item) {
     String name;
     if (o instanceof PsiVariable) {
       name = ((PsiVariable)o).getName();
@@ -267,7 +275,17 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       name = myCodeStyleManager.variableNameToPropertyName(name, variableKind);
     }
     else if (o instanceof PsiMethod) {
-      name = ((PsiMethod)o).getName();
+      final PsiMethod method = (PsiMethod)o;
+      if (myExpectedInfos != null) {
+        PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+        if (substitutor != null) {
+          final PsiType type = substitutor.substitute(method.getReturnType());
+          if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) {
+            return -1;
+          }
+        }
+      }
+      name = method.getName();
     }
     else if (o instanceof PsiClass && myExpectedInfos.length == 1) {
       final PsiClass psiClass = (PsiClass)o;

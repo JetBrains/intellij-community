@@ -53,7 +53,7 @@ public interface PsiSubstitutor {
    * @param type the type to substitute the type parameters for.
    * @return the result of the substitution.
    */
-  PsiType substitute(PsiType type);
+  PsiType substitute(@Nullable PsiType type);
 
   //Should be used with great care, be sure to prevent infinite recursion that could arise
   // from the use of recursively bounded type parameters
