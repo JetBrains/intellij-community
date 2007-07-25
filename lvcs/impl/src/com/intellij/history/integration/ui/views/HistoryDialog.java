@@ -69,11 +69,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     mySplitter.setFirstComponent(diff);
     mySplitter.setSecondComponent(revisions);
 
-    mySplitter.setPreferredSize(new Dimension(700, 600));
+    mySplitter.setPreferredSize(getInitialSize());
     restoreSplitterProportion();
 
     return mySplitter;
   }
+
+  protected abstract Dimension getInitialSize();
 
   @Override
   protected void dispose() {

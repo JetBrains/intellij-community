@@ -41,6 +41,12 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
+  protected Dimension getInitialSize() {
+    Dimension ss = Toolkit.getDefaultToolkit().getScreenSize();
+    return new Dimension(ss.width - 40, ss.height - 40);
+  }
+
+  @Override
   protected JComponent createDiffPanel() {
     String message = "The difference cannot be shown<br>because one of the selected revisions has very long file content";
     myCanNotShowDifferenceLabel =

@@ -46,6 +46,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   @Override
+  protected Dimension getInitialSize() {
+    return new Dimension(700, 600);
+  }
+
+  @Override
   protected JComponent createDiffPanel() {
     initChangesTree();
 
