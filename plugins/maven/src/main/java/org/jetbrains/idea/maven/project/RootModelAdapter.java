@@ -22,21 +22,37 @@ class RootModelAdapter {
     modifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  public void resetRoots(String root) {
+  public void init(String root) {
     for (ContentEntry contentEntry : modifiableRootModel.getContentEntries()) {
       modifiableRootModel.removeContentEntry(contentEntry);
     }
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+    if (virtualFile != null) {
+      modifiableRootModel.addContentEntry(virtualFile);
+    }
+
     modifiableRootModel.inheritJdk(); // TODO should be able to import
     modifiableRootModel.setExcludeOutput(true);
+
     for (OrderEntry entry : modifiableRootModel.getOrderEntries()) {
       if (!(entry instanceof ModuleSourceOrderEntry) && !(entry instanceof JdkOrderEntry)) {
         modifiableRootModel.removeOrderEntry(entry);
       }
     }
+  }
 
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
-    if (virtualFile != null) {
-      modifiableRootModel.addContentEntry(virtualFile);
+  public void resetRoots() {
+    for (ContentEntry contentEntry : modifiableRootModel.getContentEntries()) {
+      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+        if (!sourceFolder.isSynthetic()) {
+          contentEntry.removeSourceFolder(sourceFolder);
+        }
+      }
+      for (ExcludeFolder excludeFolder : contentEntry.getExcludeFolders()) {
+        if (!excludeFolder.isSynthetic()) {
+          contentEntry.removeExcludeFolder(excludeFolder);
+        }
+      }
     }
   }
 
@@ -44,9 +60,10 @@ class RootModelAdapter {
     if (libraryTableModel != null && libraryTableModel.isChanged()) {
       libraryTableModel.commit();
     }
-    if(modifiableRootModel.isChanged()){
+    if (modifiableRootModel.isChanged()) {
       modifiableRootModel.commit();
-    } else {
+    }
+    else {
       modifiableRootModel.dispose();
     }
   }
@@ -106,12 +123,12 @@ class RootModelAdapter {
     libraryModel.commit();
   }
 
-  Map<String,String> getModuleLibraries() {
-    Map<String,String> libraries = new HashMap<String,String>();
+  Map<String, String> getModuleLibraries() {
+    Map<String, String> libraries = new HashMap<String, String>();
     for (Library library : getLibraryModel().getLibraries()) {
-      if(library.getTable() == null){
+      if (library.getTable() == null) {
         final String[] urls = library.getUrls(OrderRootType.CLASSES);
-        if(urls.length==1){
+        if (urls.length == 1) {
           libraries.put(library.getName(), urls[0]);
         }
       }
@@ -121,7 +138,7 @@ class RootModelAdapter {
 
   void updateModuleLibrary(String libraryName, String urlSources, String urlJavadoc) {
     final Library library = getLibraryModel().getLibraryByName(libraryName);
-    if(library!=null){
+    if (library != null) {
       final Library.ModifiableModel libraryModel = library.getModifiableModel();
       setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
       setUrl(libraryModel, urlJavadoc, OrderRootType.JAVADOC);
@@ -130,7 +147,7 @@ class RootModelAdapter {
   }
 
   private void setUrl(final Library.ModifiableModel libraryModel, final String newUrl, final OrderRootType type) {
-    for ( String url : libraryModel.getUrls(type)){
+    for (String url : libraryModel.getUrls(type)) {
       libraryModel.removeRoot(url, type);
     }
     if (newUrl != null) {

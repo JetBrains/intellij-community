@@ -92,7 +92,7 @@ public class MavenArtifactDownloader {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (Map.Entry<MavenProject, Module> entry : projectsToModules.entrySet()) {
-          MavenToIdeaConverter.updateDependencies(entry.getValue(), entry.getKey());
+          MavenToIdeaConverter.updateModel(entry.getValue(), entry.getKey());
         }
       }
     });

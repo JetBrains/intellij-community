@@ -29,6 +29,11 @@ public class MavenToIdeaConverter {
   @NonNls public static final String JAVADOC_CLASSIFIER = "javadoc";
   @NonNls public static final String SOURCES_CLASSIFIER = "sources";
 
+  @NonNls private static final String TARGET = "target";
+  @NonNls private static final String GENERATED_SOURCES = "generated-sources";
+
+  private final static String JAR_PREFIX = JarFileSystem.PROTOCOL + "://";
+
   public static void convert(final ModifiableModuleModel modifiableModel,
                              final MavenProjectModel projectModel,
                              final MavenToIdeaMapping mapping,
@@ -126,38 +131,36 @@ public class MavenToIdeaConverter {
       module = modifiableModuleModel.newModule(mavenToIdeaMapping.getModuleFilePath(node));
     }
 
-    convertRootModel(module, node);
+    convertRootModel(module, node.getMavenProject());
 
-    createFacets(module, node);
+    createFacets(module, node.getMavenProject());
 
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
   }
 
-  void convertRootModel(Module module, MavenProjectModel.Node node) {
+  void convertRootModel(Module module, MavenProject mavenProject) {
     RootModelAdapter rootModel = new RootModelAdapter(module);
-    rootModel.resetRoots(node.getDirectory());
-
-    // TODO: do this properly
-    rootModel.createSrcDir(new File(node.getDirectory(), "target/generated-sources/modello").getPath(), false);
-    rootModel.createSrcDir(new File(node.getDirectory(), "target/generated-sources/antlr").getPath(), false);
-
-    final MavenProject mavenProject = node.getMavenProject();
-    createSourceRoots(rootModel, mavenProject);
+    rootModel.init(mavenProject.getFile().getParent());
+    createRoots(rootModel, mavenProject);
     createOutput(rootModel, mavenProject);
     createDependencies(rootModel, mavenProject);
-
     rootModel.commit();
   }
 
-  private void createFacets(final Module module, final MavenProjectModel.Node node) {
-    final String packaging = node.getMavenProject().getPackaging();
+  private void createFacets(Module module, MavenProject mavenProject) {
+    final String packaging = mavenProject.getPackaging();
     if (!packaging.equals("jar")) {
       for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
         if (converter.isApplicable(packaging)) {
-          converter.convert(module, node, mavenToIdeaMapping, modifiableModuleModel);
+          converter.convert(module, mavenProject, mavenToIdeaMapping, modifiableModuleModel);
         }
       }
     }
+  }
+
+  private static void createRoots(final RootModelAdapter rootModel, final MavenProject mavenProject) {
+    createSourceRoots(rootModel, mavenProject);
+    createGeneratedSourceRoots(rootModel, mavenProject);
   }
 
   static void createSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
@@ -173,6 +176,24 @@ public class MavenToIdeaConverter {
     }
     for (Object o : mavenProject.getTestResources()) {
       rootModel.createSrcDir(((Resource)o).getDirectory(), true);
+    }
+  }
+
+  private static void createGeneratedSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
+    // TODO: do this properly
+    final File targetDir = new File(mavenProject.getFile().getParent(), TARGET);
+    if(targetDir.isDirectory()){
+      for (File file : targetDir.listFiles()) {
+        if(file.isDirectory()){
+          if (file.getName().equals(GENERATED_SOURCES)){
+            for (File genSrcDir : file.listFiles()) {
+              rootModel.createSrcDir(genSrcDir.getPath(), false);
+            }
+          } else {
+            rootModel.excludeRoot(file.getPath());
+          }
+        }
+      }
     }
   }
 
@@ -203,16 +224,22 @@ public class MavenToIdeaConverter {
     }
   }
 
-  static void updateDependencies(Module module, MavenProject mavenProject) {
+  static void updateModel(Module module, MavenProject mavenProject) {
     RootModelAdapter rootModel = new RootModelAdapter(module);
+    rootModel.resetRoots();
+    createRoots(rootModel, mavenProject);
+    updateSourcesAndJavadoc(rootModel);
+    rootModel.commit();
+  }
+
+  private static void updateSourcesAndJavadoc(final RootModelAdapter rootModel) {
     for( Map.Entry<String,String> entry : rootModel.getModuleLibraries().entrySet()){
       final String url = entry.getValue();
-      if(url.startsWith(JarFileSystem.PROTOCOL) && url.endsWith(JarFileSystem.JAR_SEPARATOR)){
-        final String path = url.substring(JarFileSystem.PROTOCOL.length()+3, url.lastIndexOf(JarFileSystem.JAR_SEPARATOR));
+      if(url.startsWith(JAR_PREFIX) && url.endsWith(JarFileSystem.JAR_SEPARATOR)){
+        final String path = url.substring(JAR_PREFIX.length(), url.lastIndexOf(JarFileSystem.JAR_SEPARATOR));
         rootModel.updateModuleLibrary(entry.getKey(), getUrl(path, SOURCES_CLASSIFIER), getUrl(path, JAVADOC_CLASSIFIER));
       }
     }
-    rootModel.commit();
   }
 
   private static List<Artifact> extractDependencies(final MavenProject mavenProject) {
