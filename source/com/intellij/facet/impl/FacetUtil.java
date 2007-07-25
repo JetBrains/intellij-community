@@ -4,10 +4,7 @@
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetTypeId;
-import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.facet.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -22,6 +19,10 @@ import java.util.Collection;
  */
 public class FacetUtil {
   private FacetUtil() {
+  }
+
+  public static <F extends Facet, C extends FacetConfiguration> F createFacet(FacetType<F, C> type, Module module, final Facet underlying) {
+    return type.createFacet(module, type.getDefaultFacetName(), type.createDefaultConfiguration(), underlying);
   }
 
   public static void deleteFacet(final Facet facet) {

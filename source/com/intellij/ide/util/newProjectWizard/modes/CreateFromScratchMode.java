@@ -6,6 +6,7 @@ package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -48,6 +49,9 @@ public class CreateFromScratchMode extends WizardMode {
         final ModuleWizardStep[] steps = type.createWizardSteps(context, builder, modulesProvider);
         for (ModuleWizardStep step : steps) {
           sequence.addCommonStep(step);
+        }
+        if (AddSupportForFrameworksStep.hasProviders(type)) {
+          sequence.addCommonStep(new AddSupportForFrameworksStep(builder));
         }
       }
     return myStepSequence;

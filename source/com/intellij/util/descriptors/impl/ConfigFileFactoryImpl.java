@@ -57,12 +57,12 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   }
 
   @Nullable
-  public VirtualFile createFile(Project project, String url, ConfigFileVersion version, final boolean forceNew) {
+  public VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew) {
     return createFileFromTemplate(project, url, version.getTemplateName(), forceNew);
   }
 
   @Nullable
-  private VirtualFile createFileFromTemplate(final Project project, String url, final String templateName, final boolean forceNew) {
+  private VirtualFile createFileFromTemplate(final @Nullable Project project, String url, final String templateName, final boolean forceNew) {
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final File file = new File(VfsUtil.urlToPath(url));
     final VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);

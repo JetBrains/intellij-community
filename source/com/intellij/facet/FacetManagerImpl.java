@@ -157,14 +157,14 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   public static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, final String name,
                                                                   final C configuration, final Facet underlyingFacet) {
     final Facet facet = type.createFacet(module, name, configuration, underlyingFacet);
-    assertTure(facet.getModule() == module, facet, "module");
-    assertTure(facet.getConfiguration() == configuration, facet, "configuration");
-    assertTure(Comparing.equal(facet.getName(), name), facet, "module");
-    assertTure(facet.getUnderlyingFacet() == underlyingFacet, facet, "underlyingFacet");
+    assertTrue(facet.getModule() == module, facet, "module");
+    assertTrue(facet.getConfiguration() == configuration, facet, "configuration");
+    assertTrue(Comparing.equal(facet.getName(), name), facet, "module");
+    assertTrue(facet.getUnderlyingFacet() == underlyingFacet, facet, "underlyingFacet");
     return facet;
   }
 
-  private static void assertTure(final boolean value, final Facet facet, final String parameter) {
+  private static void assertTrue(final boolean value, final Facet facet, final String parameter) {
     if (!value) {
       LOG.error("Facet type " + facet.getType().getClass().getName() + " violates the contract of FacetType.createFacet method about '" +
                 parameter + "' parameter");

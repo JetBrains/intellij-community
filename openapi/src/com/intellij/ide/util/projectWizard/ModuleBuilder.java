@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 public abstract class ModuleBuilder extends ProjectBuilder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
@@ -45,6 +47,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   @NonNls private String myModuleFilePath;
   @Nullable
   private FacetInfo[] myFacetInfos = FacetInfo.EMPTY_ARRAY;
+  private List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
   private EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
   @Nullable
@@ -62,6 +65,10 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public String getModuleFilePath() {
     return myModuleFilePath;
+  }
+
+  public void addModuleConfigurationUpdater(ModuleConfigurationUpdater updater) {
+    myUpdaters.add(updater);
   }
 
   public void setModuleFilePath(String path) {
@@ -90,6 +97,9 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     final Module module = moduleModel.newModule(myModuleFilePath, moduleType);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(modifiableModel);
+    for (ModuleConfigurationUpdater updater : myUpdaters) {
+      updater.update(module, modifiableModel);
+    }
     modifiableModel.commit();
 
     module.setSavePathsRelative(true); // default setting
@@ -176,5 +186,11 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
       }
     }
+  }
+
+  public static abstract class ModuleConfigurationUpdater {
+
+    public abstract void update(Module module, ModifiableRootModel rootModel);
+
   }
 }

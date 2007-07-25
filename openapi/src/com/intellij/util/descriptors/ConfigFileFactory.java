@@ -44,7 +44,7 @@ public abstract class ConfigFileFactory {
   public abstract CustomConfigFileSet createCustomConfigFileSet();
 
   @Nullable
-  public abstract VirtualFile createFile(Project project, String url, ConfigFileVersion version, final boolean forceNew);
+  public abstract VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew);
 
   public abstract ConfigFileContainer createSingleFileContainer(Project project, ConfigFileMetaData metaData);
 }
