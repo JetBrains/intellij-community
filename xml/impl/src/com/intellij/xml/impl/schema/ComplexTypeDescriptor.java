@@ -254,10 +254,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
                                      myDocumentDescriptor.getDefaultNamespace() :
                                      tag.getNamespaceByPrefix(namespacePrefix);
 
-            final XmlAttributeDescriptorImpl attributeDescriptor = myDocumentDescriptor.getAttribute(local, namespace);
-            if (attributeDescriptor != null) {
+            final XmlAttributeDescriptor attributeDescriptor = myDocumentDescriptor.getAttribute(local, namespace, tag);
+            if (attributeDescriptor instanceof XmlAttributeDescriptorImpl) {
               if (use != null) {
-                attributeDescriptor.myUse = use;
+                ((XmlAttributeDescriptorImpl)attributeDescriptor).myUse = use;
               }
               addAttributeDescriptor(result, attributeDescriptor);
             }
@@ -403,17 +403,24 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return false;
   }
 
-  public boolean canContainAttribute(String attributeName, String namespace) {
+  public CanContainAttributeType canContainAttribute(String attributeName, String namespace) {
     return _canContainAttribute(attributeName, namespace, myTag, new THashSet<String>());
   }
+  
+  enum CanContainAttributeType {
+    CanContainButSkip, CanContainButDoNotSkip, CanNotContain
+  }
 
-  private boolean _canContainAttribute(String name, String namespace, XmlTag tag, Set<String> visited) {
+  private CanContainAttributeType _canContainAttribute(String name, String namespace, XmlTag tag, Set<String> visited) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "anyAttribute")) {
       String ns = tag.getAttributeValue("namespace");
+      CanContainAttributeType canContainAttributeType = CanContainAttributeType.CanContainButDoNotSkip;
+      if ("skip".equals(tag.getAttributeValue("processContents"))) canContainAttributeType= CanContainAttributeType.CanContainButSkip;
+      
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(ns)) {
-        return !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
+        return !namespace.equals(myDocumentDescriptor.getDefaultNamespace()) ? canContainAttributeType : CanContainAttributeType.CanNotContain;
       }
-      return true;
+      return canContainAttributeType;
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "attributeGroup")) {
       String ref = tag.getAttributeValue(REF_ATTR_NAME);
@@ -423,7 +430,8 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         XmlTag groupTag = myDocumentDescriptor.findAttributeGroup(ref);
 
         if (groupTag != null) {
-          if (_canContainAttribute(name, namespace, groupTag,visited)) return true;
+          final CanContainAttributeType containAttributeType = _canContainAttribute(name, namespace, groupTag, visited);
+          if (containAttributeType != CanContainAttributeType.CanNotContain) return containAttributeType;
         }
       }
     }
@@ -439,17 +447,20 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          if (complexTypeDescriptor._canContainAttribute(name, namespace,complexTypeDescriptor.getDeclaration(), visited)) return true;
+          final CanContainAttributeType containAttributeType =
+            complexTypeDescriptor._canContainAttribute(name, namespace, complexTypeDescriptor.getDeclaration(), visited);
+          if (containAttributeType != CanContainAttributeType.CanNotContain) return containAttributeType;
         }
       }
     }
 
     final XmlTag[] subTags = tag.getSubTags();
     for (XmlTag subTag : subTags) {
-      if (_canContainAttribute(name, namespace, subTag, visited)) return true;
+      final CanContainAttributeType containAttributeType = _canContainAttribute(name, namespace, subTag, visited);
+      if (containAttributeType != CanContainAttributeType.CanNotContain) return containAttributeType;
     }
 
-    return false;
+    return CanContainAttributeType.CanNotContain;
   }
 
   public boolean hasAnyInContentModel() {

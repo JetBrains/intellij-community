@@ -295,7 +295,8 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(canonicalText);
             XmlAttributeDescriptor descriptor = nsDescriptor.getAttribute(
               localNameByQualifiedName,
-              getNamespace(tag, canonicalText)
+              getNamespace(tag, canonicalText),
+              tag
             );
 
             if (descriptor != null) return descriptor.getDeclaration();

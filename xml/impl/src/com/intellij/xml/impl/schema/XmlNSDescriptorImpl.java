@@ -168,11 +168,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return false;
   }
 
-  public XmlAttributeDescriptorImpl getAttribute(String localName, String namespace) {
+  public XmlAttributeDescriptor getAttribute(String localName, String namespace, final XmlTag context) {
     return getAttributeImpl(localName, namespace,null);
   }
 
-  private XmlAttributeDescriptorImpl getAttributeImpl(String localName, String namespace, Set<XmlTag> visited) {
+  private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, Set<XmlTag> visited) {
     if (myTag == null) return null;
 
     XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)myTag.getNSDescriptor(namespace, true);
@@ -216,13 +216,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
               final PsiMetaDataBase data = includedDocument.getMetaData();
 
               if(data instanceof XmlNSDescriptorImpl){
-                final XmlAttributeDescriptorImpl attributeDescriptor = ((XmlNSDescriptorImpl)data).getAttributeImpl(localName, namespace,visited);
+                final XmlAttributeDescriptor attributeDescriptor = ((XmlNSDescriptorImpl)data).getAttributeImpl(localName, namespace,visited);
 
                 if(attributeDescriptor != null){
-                  final CachedValue<XmlAttributeDescriptorImpl> value = includedDocument.getManager().getCachedValuesManager().createCachedValue(
-                    new CachedValueProvider<XmlAttributeDescriptorImpl>(){
-                      public Result<XmlAttributeDescriptorImpl> compute() {
-                        return new Result<XmlAttributeDescriptorImpl>(attributeDescriptor, attributeDescriptor.getDependences());
+                  final CachedValue<XmlAttributeDescriptor> value = includedDocument.getManager().getCachedValuesManager().createCachedValue(
+                    new CachedValueProvider<XmlAttributeDescriptor>(){
+                      public Result<XmlAttributeDescriptor> compute() {
+                        return new Result<XmlAttributeDescriptor>(attributeDescriptor, attributeDescriptor.getDependences());
                       }
                     },
                     false
@@ -565,7 +565,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
   }
 
-  public XmlAttributeDescriptor[] getRootAttributeDescriptors(final XmlDocument doc) {
+  public XmlAttributeDescriptor[] getRootAttributeDescriptors(final XmlTag context) {
     class CollectAttributesProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
 

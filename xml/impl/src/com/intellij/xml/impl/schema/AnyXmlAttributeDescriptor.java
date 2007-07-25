@@ -17,9 +17,15 @@ import com.intellij.util.ArrayUtil;
 
 public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myAttributeName;
+  private final ComplexTypeDescriptor.CanContainAttributeType myCanContainAttributeType;
 
   public AnyXmlAttributeDescriptor(String attributeName) {
+    this(attributeName, ComplexTypeDescriptor.CanContainAttributeType.CanContainButDoNotSkip);
+  }
+
+  public AnyXmlAttributeDescriptor(String attributeName, ComplexTypeDescriptor.CanContainAttributeType canContainAttributeType) {
     myAttributeName = attributeName;
+    myCanContainAttributeType = canContainAttributeType;
   }
 
   public PsiElement getDeclaration(){
@@ -84,5 +90,9 @@ public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
 
   public String validateValue(XmlElement context, String value) {
     return null;
+  }
+
+  public ComplexTypeDescriptor.CanContainAttributeType getCanContainAttributeType() {
+    return myCanContainAttributeType;
   }
 }

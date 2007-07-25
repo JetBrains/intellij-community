@@ -211,13 +211,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
         for(String ns:context.knownNamespaces()) {
           if (!contextNs.equals(ns) && ns.length() > 0) {
-            if (typeDescriptor.canContainAttribute("any",ns)) {
+            if (typeDescriptor.canContainAttribute("any",ns) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
               final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
 
               if (descriptor instanceof XmlNSDescriptorImpl) {
                 attributeDescriptors = ArrayUtil.mergeArrays(
                   attributeDescriptors,
-                  ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(doc),
+                  ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(context),
                   XmlAttributeDescriptor.class
                 );
               }
@@ -243,7 +243,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
                              ((xmlNSDescriptor != null)?xmlNSDescriptor.getDefaultNamespace():"") :
                              context.getNamespaceByPrefix(namespacePrefix);
 
-    final XmlAttributeDescriptor attribute = getAttribute(localName, namespace, context);
+    XmlAttributeDescriptor attribute = getAttribute(localName, namespace, context);
     
     if (attribute instanceof AnyXmlAttributeDescriptor && namespace.length() > 0) {
       final XmlNSDescriptor candidateNSDescriptor = context.getNSDescriptor(namespace, true);
@@ -251,8 +251,15 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       if (candidateNSDescriptor instanceof XmlNSDescriptorImpl) {
         final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)candidateNSDescriptor;
 
-        final XmlAttributeDescriptorImpl xmlAttributeDescriptor = nsDescriptor.getAttribute(localName, namespace);
+        final XmlAttributeDescriptor xmlAttributeDescriptor = nsDescriptor.getAttribute(localName, namespace, context);
         if (xmlAttributeDescriptor != null) return xmlAttributeDescriptor;
+        else {
+          final ComplexTypeDescriptor.CanContainAttributeType containAttributeType =
+            ((AnyXmlAttributeDescriptor)attribute).getCanContainAttributeType();
+          if (containAttributeType == ComplexTypeDescriptor.CanContainAttributeType.CanContainButDoNotSkip) {
+            attribute = null;
+          }
+        }
       }
     }
     return attribute;
@@ -274,8 +281,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType();
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
-      if (descriptor.canContainAttribute(attributeName, namespace)) {
-        return new AnyXmlAttributeDescriptor(attributeName);
+      final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(attributeName, namespace);
+
+      if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
+        return new AnyXmlAttributeDescriptor(attributeName, containAttributeType);
       }
     }
 

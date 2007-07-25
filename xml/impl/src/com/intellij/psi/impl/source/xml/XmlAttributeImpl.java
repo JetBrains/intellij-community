@@ -22,22 +22,22 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Mike
@@ -301,17 +301,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     private XmlAttributeDescriptor getAttributeDescriptor() {
-      final XmlTag tag = getParent();
-      if (tag instanceof XmlTagImpl) {
-        final XmlNSDescriptor descriptor = tag.getNSDescriptor(getNamespace(), false);
-        if (descriptor instanceof XmlNSDescriptorEx) {
-          for (final XmlAttributeDescriptor attributeDescriptor : ((XmlNSDescriptorEx)descriptor).getAttributeDescriptors(tag)) {
-            if (attributeDescriptor.getName().equals(getName())) {
-              return attributeDescriptor;
-            }
-          }
-        }
-      }
       return myTagDescr.getAttributeDescriptor(XmlAttributeImpl.this);
     }
 
@@ -373,23 +362,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         descriptors = HtmlUtil.appendHtmlSpecificAttributeCompletions(declarationTag, descriptors, XmlAttributeImpl.this);
 
         addVariants(variants, attributes, descriptors);
-        XmlTag tag = declarationTag;
-        final Set<String> processed = new THashSet<String>();
-        while (tag != null) {
-          if (tag instanceof XmlTagImpl) {
-            final Map<String,CachedValue<XmlNSDescriptor>> map = ((XmlTagImpl)tag).initNSDescriptorsMap();
-            for (final String s : map.keySet()) {
-              if (!processed.contains(s)) {
-                processed.add(s);
-                final XmlNSDescriptor descriptor = map.get(s).getValue();
-                if (descriptor instanceof XmlNSDescriptorEx) {
-                  addVariants(variants, attributes, ((XmlNSDescriptorEx)descriptor).getAttributeDescriptors(declarationTag));
-                }
-              }
-            }
-          }
-          tag = tag.getParentTag();
-        }
       }
       return variants.toArray();
     }
