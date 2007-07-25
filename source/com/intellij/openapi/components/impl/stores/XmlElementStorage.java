@@ -318,7 +318,9 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     @Nullable
     public Element getState(final String name) {
       final Element e = myComponentStates.get(name);
+
       if (e != null) {
+        assert e.getAttribute(NAME) != null : "No name attribute for component: " + name;
         e.removeAttribute(NAME);
       }
       return e;
