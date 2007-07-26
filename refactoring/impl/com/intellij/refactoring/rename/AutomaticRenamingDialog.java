@@ -51,6 +51,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private JSplitPane mySplitPane;
   private final Project myProject;
   private final UsagePreviewPanel myUsagePreviewPanel;
+  private ListSelectionListener myListSelectionListener;
 
   public AutomaticRenamingDialog(Project project, AutomaticRenamer renamer) {
     super(project, true);
@@ -133,7 +134,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         for (int i = 0; i < myShouldRename.length; i++) {
           myShouldRename[i] = true;
         }
-        myTableModel.fireTableDataChanged();
+        fireDataChanged();
       }
     });
 
@@ -142,10 +143,10 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         for (int i = 0; i < myShouldRename.length; i++) {
           myShouldRename[i] = false;
         }
-        myTableModel.fireTableDataChanged();
+        fireDataChanged();
       }
     });
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    myListSelectionListener = new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
@@ -157,7 +158,8 @@ public class AutomaticRenamingDialog extends DialogWrapper {
           myUsagePreviewPanel.updateLayout(null);
         }
       }
-    });
+    };
+    myTable.getSelectionModel().addListSelectionListener(myListSelectionListener);
 
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
     myUsagePreviewPanel.updateLayout(null);
@@ -169,6 +171,17 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       myTable.getSelectionModel().addSelectionInterval(0,0);
     }
     return myPanel;
+  }
+
+  private void fireDataChanged() {
+    int[] selectedRows = myTable.getSelectedRows();
+    myTable.getSelectionModel().removeListSelectionListener(myListSelectionListener);
+
+    myTableModel.fireTableDataChanged();
+    for (int selectedRow : selectedRows) {
+      myTable.addRowSelectionInterval(selectedRow, selectedRow);
+    }
+    myTable.getSelectionModel().addListSelectionListener(myListSelectionListener);
   }
 
   public JComponent getPreferredFocusedComponent() {
