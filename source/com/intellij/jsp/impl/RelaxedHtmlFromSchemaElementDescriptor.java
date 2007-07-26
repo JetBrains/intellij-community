@@ -1,7 +1,5 @@
 package com.intellij.jsp.impl;
 
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -36,7 +34,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
     return ArrayUtil.mergeArrays(
       super.getElementsDescriptors(context),
-      HtmlUtil.getCustomTagDescriptors(PsiTreeUtil.getParentOfType(context, XmlDocument.class)), 
+      HtmlUtil.getCustomTagDescriptors(context), 
       XmlElementDescriptor.class
     );
   }
