@@ -25,6 +25,9 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.builder.execution.MavenRunConfigurationType</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.core.MavenApplicationComponent</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>
