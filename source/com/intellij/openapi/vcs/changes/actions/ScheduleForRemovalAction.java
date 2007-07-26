@@ -22,6 +22,8 @@ public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
   protected List<VcsException> processFiles(final AbstractVcs vcs, final List<FilePath> files) {
     CheckinEnvironment environment = vcs.getCheckinEnvironment();
     if (environment == null) return Collections.emptyList();
-    return environment.scheduleMissingFileForDeletion(files);
+    final List<VcsException> result = environment.scheduleMissingFileForDeletion(files);
+    if (result == null) return Collections.emptyList();
+    return result;
   }
 }

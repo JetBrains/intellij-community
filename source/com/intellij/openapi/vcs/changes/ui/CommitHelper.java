@@ -121,7 +121,7 @@ public class CommitHelper {
             Collection<FilePath> paths = ChangesUtil.getPaths(changes);
             pathsToRefresh.addAll(paths);
             final List<VcsException> exceptions = environment.commit(changes, myCommitMessage);
-            if (exceptions.size() > 0) {
+            if (exceptions != null && exceptions.size() > 0) {
               vcsExceptions.addAll(exceptions);
               changesFailedToCommit.addAll(changes);
             }

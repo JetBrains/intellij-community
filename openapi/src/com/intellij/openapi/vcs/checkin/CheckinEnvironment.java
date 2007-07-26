@@ -52,7 +52,12 @@ public interface CheckinEnvironment {
    */
   boolean showCheckinDialogInAnyCase();
 
+  @Nullable
   List<VcsException> commit(List<Change> changes, String preparedComment);
+
+  @Nullable
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
+
+  @Nullable
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
 }

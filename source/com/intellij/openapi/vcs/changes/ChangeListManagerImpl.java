@@ -816,7 +816,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          exceptions.addAll(environment.scheduleUnversionedFilesForAddition(items));
+          final List<VcsException> result = environment.scheduleUnversionedFilesForAddition(items);
+          if (result != null) {
+            exceptions.addAll(result);
+          }
         }
       }
     });
