@@ -25,6 +25,7 @@
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
+  <property name="resources.file" value="resources_en.jar"/>
 
   <property name="build.vcs.number.1" value="unknown"/>
   <property name="plugin.revision" value="${build.vcs.number.1}"/>
@@ -77,7 +78,9 @@
     </copy>
 
     <copy todir="${production.dest.groovy}">
-      <fileset dir="${project.dir}/resources"/>
+      <fileset dir="${project.dir}/resources">
+        <exclude name="inspectionDescriptions/**"/>
+      </fileset>
     </copy>
 
     <copy file="${project.dir}/src/org/jetbrains/plugins/grails/GrailsBundle.properties"
@@ -87,10 +90,10 @@
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"/>
 
-   <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
 
     <javac2 srcdir="."
-           destdir="${production.dest.groovy}">
+            destdir="${production.dest.groovy}">
       <classpath refid="base.path"/>
       <classpath refid="groovy.path"/>
     </javac2>
@@ -107,11 +110,11 @@
     <mkdir dir="${project.dir}/tempjar/lib/"/>
 
     <!--<copy todir="${project.dir}/tempjar/lib">-->
-      <!--<fileset dir="${groovy.lib}">-->
-        <!--<include name="**/*antlr*.jar"/>-->
-        <!--<include name="**/*asm*.jar"/>-->
-        <!--<include name="**/*.jar"/>-->
-      <!--</fileset>-->
+    <!--<fileset dir="${groovy.lib}">-->
+    <!--<include name="**/*antlr*.jar"/>-->
+    <!--<include name="**/*asm*.jar"/>-->
+    <!--<include name="**/*.jar"/>-->
+    <!--</fileset>-->
     <!--</copy>-->
 
     <jar destfile="${project.dir}/tempzip/Groovy/lib/Groovy.jar">
@@ -119,7 +122,7 @@
       </fileset>
 
       <!--<fileset dir="${plugin.libs}">-->
-        <!--<include id="**/*.jar"/>-->
+      <!--<include id="**/*.jar"/>-->
       <!--</fileset>-->
 
       <fileset dir="${project.dir}/tempjar">
@@ -129,6 +132,12 @@
         <attribute name="Revision" value="${plugin.revision}"/>
         <attribute name="Build" value="${plugin.version}"/>
       </manifest>
+    </jar>
+
+    <jar jarfile="${project.dir}/tempzip/Groovy/lib/${resources.file}">
+      <fileset dir="${project.dir}/resources">
+        <include name="inspectionDescriptions/**"/>
+      </fileset>
     </jar>
 
     <copy todir="${project.dir}/tempzip/Groovy/lib">
@@ -180,11 +189,11 @@
 
     <copy toDir="${test.dest}/testdata">
       <fileset dir="${project.dir}/testdata"/>
-     </copy>
+    </copy>
 
   </target>
 
-  <target name="run.tests" description="runs all tests" depends="build tests" >
+  <target name="run.tests" description="runs all tests" depends="build tests">
     <mkdir dir="${project.dir}/logs"/>
 
     <echo message="${idea.lib}"/>
