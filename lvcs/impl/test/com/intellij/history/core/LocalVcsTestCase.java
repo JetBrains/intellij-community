@@ -91,7 +91,7 @@ public abstract class LocalVcsTestCase extends Assert {
     return new ChangeSet(timestamp, name, Arrays.asList(changes));
   }
 
-  protected void createFile(Entry r, int id, String path, Content c, long timestamp) {
+  protected static void createFile(Entry r, int id, String path, Content c, long timestamp) {
     new CreateFileChange(id, path, c, timestamp).applyTo(r);
   }
 
@@ -99,7 +99,7 @@ public abstract class LocalVcsTestCase extends Assert {
     createFile(r, getNextId(), path, c, timestamp);
   }
 
-  protected void createDirectory(Entry r, int id, String path) {
+  protected static void createDirectory(Entry r, int id, String path) {
     new CreateDirectoryChange(id, path).applyTo(r);
   }
 
@@ -107,23 +107,23 @@ public abstract class LocalVcsTestCase extends Assert {
     createDirectory(r, getNextId(), path);
   }
 
-  protected void changeFileContent(Entry r, String path, Content c, long timestamp) {
+  protected static void changeFileContent(Entry r, String path, Content c, long timestamp) {
     new ChangeFileContentChange(path, c, timestamp).applyTo(r);
   }
 
-  protected void rename(Entry r, String path, String newName) {
+  protected static void rename(Entry r, String path, String newName) {
     new RenameChange(path, newName).applyTo(r);
   }
 
-  protected void move(Entry r, String path, String newParent) {
+  protected static void move(Entry r, String path, String newParent) {
     new MoveChange(path, newParent).applyTo(r);
   }
 
-  protected void delete(Entry r, String path) {
+  protected static void delete(Entry r, String path) {
     new DeleteChange(path).applyTo(r);
   }
 
-  protected void setCurrentTimestamp(long t) {
+  protected static void setCurrentTimestamp(long t) {
     Clock.setCurrentTimestamp(t);
   }
 
@@ -131,20 +131,20 @@ public abstract class LocalVcsTestCase extends Assert {
     assertEquals(expected, actual.toArray());
   }
 
-  protected static void assertEquals(byte[] expected, byte[] actual) {
-    String message = notEqualsMessage(expected, actual);
+  //protected static void assertEquals(byte[] expected, byte[] actual) {
+  //  String message = notEqualsMessage(expected, actual);
+  //
+  //  assertTrue(message, expected.length == actual.length);
+  //  for (int i = 0; i < expected.length; i++) {
+  //    assertTrue(message, expected[i] == actual[i]);
+  //  }
+  //}
 
-    assertTrue(message, expected.length == actual.length);
-    for (int i = 0; i < expected.length; i++) {
-      assertTrue(message, expected[i] == actual[i]);
-    }
-  }
+  //public static void assertEquals(long expected, long actual) {
+  //  Assert.assertEquals(expected, actual);
+  //}
 
-  protected void assertEquals(long expected, long actual) {
-    Assert.assertEquals(expected, actual);
-  }
-
-  private static String notEqualsMessage(Object expected, Object actual) {
-    return "elements are not equal:\n" + "\texpected: " + expected + "\n" + "\tactual: " + actual;
-  }
+  //private static String notEqualsMessage(Object expected, Object actual) {
+  //  return "elements are not equal:\n" + "\texpected: " + expected + "\n" + "\tactual: " + actual;
+  //}
 }
