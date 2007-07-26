@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -239,38 +240,53 @@ public class GroovyAnnotator implements Annotator {
 
     GroovyResolveResult resolveResult = refElement.advancedResolve();
     if (refElement.getReferenceName() != null) {
-      final PsiElement resolved = resolveResult.getElement();
-      if (resolved == null && refElement.multiResolve(false).length == 0) {
-        String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
 
-        // Register quickfix
-        final Annotation annotation = holder.createErrorAnnotation(refElement, message);
-        registerAddImportFixes(refElement, annotation);
-        //registerCreteClassByTypeFix(refElement, annotation);
-        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      if (parent instanceof GrNewExpression) {
+        checkNewExpression(holder, (GrNewExpression) parent, resolveResult);
         return;
-      } else if (!resolveResult.isAccessible()) {
-        String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
-        holder.createErrorAnnotation(refElement, message);
       }
+
+      checkSingleResolvedElement(holder, refElement, resolveResult);
     }
 
-    if (parent instanceof GrNewExpression) {
-      checkNewExpression(holder, refElement, resolveResult);
+  }
+
+  private void checkSingleResolvedElement(AnnotationHolder holder, GrCodeReferenceElement refElement, GroovyResolveResult resolveResult) {
+    final PsiElement resolved = resolveResult.getElement();
+    if (resolved == null) {
+      String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
+
+      // Register quickfix
+      final Annotation annotation = holder.createErrorAnnotation(refElement, message);
+      registerAddImportFixes(refElement, annotation);
+      //registerCreteClassByTypeFix(refElement, annotation);
+      annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    } else if (!resolveResult.isAccessible()) {
+      String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
+      holder.createErrorAnnotation(refElement, message);
     }
   }
 
-  private void checkNewExpression(AnnotationHolder holder, GrCodeReferenceElement refElement, GroovyResolveResult resolveResult) {
-    final PsiElement element = resolveResult.getElement();
-    if (element instanceof PsiMethod) {
-      checkMethodApplicability((PsiMethod) element, refElement, holder);
-    } else if (element instanceof PsiClass) {
+  private void checkNewExpression(AnnotationHolder holder, GrNewExpression newExpression, GroovyResolveResult resolveResult) {
+    GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+    LOG.assertTrue(refElement != null);
+    final PsiElement resolved = resolveResult.getElement();
+    if (resolved instanceof PsiMethod) {
+      checkMethodApplicability((PsiMethod) resolved, refElement, holder);
+    } else if (resolved instanceof PsiClass) {
       //default constructor invocation
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
       if (argumentTypes != null && argumentTypes.length > 0) {
-        String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) element).getName());
+        String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) resolved).getName());
         holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
       }
+    } else if (resolved == null && refElement.multiResolve(false).length > 0) {
+      final GrArgumentList argList = newExpression.getArgumentList();
+      PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
+      String message = GroovyBundle.message("ambiguous.constructor.call");
+      holder.createWarningAnnotation(toHighlight, message);
+    } else {
+      checkSingleResolvedElement(holder, refElement, resolveResult);
     }
   }
 
