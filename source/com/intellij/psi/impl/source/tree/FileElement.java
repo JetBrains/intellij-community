@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class FileElement extends RepositoryTreeElement{
   private CharTable myCharTable = new CharTableImpl();
@@ -42,7 +43,7 @@ public class FileElement extends RepositoryTreeElement{
     myCharTable = table;
   }
 
-  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
+  public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
     if (newElement.getElementType() == ElementType.IMPORT_LIST) {
       LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
       if (newElement.getFirstChildNode() == null) { //empty import list

@@ -313,7 +313,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     CodeEditUtil.removeChild(this, child);
   }
 
-  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
+  public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
       if (needParenth) {

@@ -340,7 +340,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     catch(IncorrectOperationException e){}
   }
 
-  public void replaceChildInternal(final ASTNode child, final TreeElement newElement) {
+  public void replaceChildInternal(@NotNull final ASTNode child, @NotNull final TreeElement newElement) {
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{

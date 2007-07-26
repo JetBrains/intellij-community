@@ -170,7 +170,7 @@ public class CodeEditUtil {
     return buffer.toString().trim().length();
   }
 
-  public static void replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
+  public static void replaceChild(CompositeElement parent, @NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     saveWhitespacesInfo(oldChild);
     saveWhitespacesInfo(newChild);
     checkForOuters(oldChild);
