@@ -214,11 +214,15 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   public void commit(final ModifiableFacetModel model) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(!myInsideCommit, "Recursive commit");
+
+    Set<Facet> toRemove = new HashSet<Facet>(Arrays.asList(getAllFacets()));
+    List<Facet> toAdd = new ArrayList<Facet>();
+    List<FacetRenameInfo> toRename = new ArrayList<FacetRenameInfo>();
+
+    final FacetManagerListener publisher = myMessageBus.syncPublisher(FACETS_TOPIC);
+
     try {
       myInsideCommit = true;
-
-      Set<Facet> toRemove = new HashSet<Facet>(Arrays.asList(getAllFacets()));
-      List<Facet> toAdd = new ArrayList<Facet>();
 
       for (Facet facet : model.getAllFacets()) {
         boolean isNew = !toRemove.remove(facet);
@@ -235,7 +239,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       }
       newFacets.addAll(toAdd);
 
-      List<FacetRenameInfo> toRename = new ArrayList<FacetRenameInfo>();
       for (Facet facet : newFacets) {
         final String newName = model.getNewName(facet);
         if (newName != null && !newName.equals(facet.getName())) {
@@ -243,7 +246,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
         }
       }
 
-      final FacetManagerListener publisher = myMessageBus.syncPublisher(FACETS_TOPIC);
       for (Facet facet : toAdd) {
         publisher.beforeFacetAdded(facet);
       }
@@ -258,27 +260,26 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
         info.myFacet.setName(info.myNewName);
       }
       myModel.setAllFacets(newFacets.toArray(new Facet[newFacets.size()]));
-
-      for (Facet facet : toAdd) {
-        facet.initFacet();
-      }
-      for (Facet facet : toRemove) {
-        Disposer.dispose(facet);
-      }
-
-      for (Facet facet : toAdd) {
-        publisher.facetAdded(facet);
-      }
-      for (Facet facet : toRemove) {
-        publisher.facetRemoved(facet);
-      }
-      for (FacetRenameInfo info : toRename) {
-        publisher.facetRenamed(info.myFacet, info.myOldName);
-      }
-
     }
     finally {
       myInsideCommit = false;
+    }
+
+    for (Facet facet : toAdd) {
+      facet.initFacet();
+    }
+    for (Facet facet : toRemove) {
+      Disposer.dispose(facet);
+    }
+
+    for (Facet facet : toAdd) {
+      publisher.facetAdded(facet);
+    }
+    for (Facet facet : toRemove) {
+      publisher.facetRemoved(facet);
+    }
+    for (FacetRenameInfo info : toRename) {
+      publisher.facetRenamed(info.myFacet, info.myOldName);
     }
   }
 

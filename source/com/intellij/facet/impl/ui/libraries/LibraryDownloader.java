@@ -4,7 +4,7 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -19,10 +19,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
@@ -40,17 +40,17 @@ import java.util.List;
  * @author nik
  */
 public class LibraryDownloader {
-  private LibraryInfo[] myLibraryInfos;
+  private LibraryDownloadInfo[] myLibraryInfos;
   private JComponent myParent;
   private @Nullable Project myProject;
 
-  public LibraryDownloader(final LibraryInfo[] libraryInfos, final @Nullable Project project, JComponent parent) {
+  public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, JComponent parent) {
     myProject = project;
     myLibraryInfos = libraryInfos;
     myParent = parent;
   }
 
-  public LibraryDownloader(final LibraryInfo[] libraryInfos, final @NotNull Project project) {
+  public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @NotNull Project project) {
     myLibraryInfos = libraryInfos;
     myProject = project;
   }
@@ -65,16 +65,16 @@ public class LibraryDownloader {
 
   private VirtualFile[] doDownload(final VirtualFile dir) {
     HttpConfigurable.getInstance().setAuthenticator();
-    final List<Pair<LibraryInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryInfo, File>>();
+    final List<Pair<LibraryDownloadInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryDownloadInfo, File>>();
     final List<VirtualFile> existingFiles = new ArrayList<VirtualFile>();
     final Exception[] exception = new Exception[]{null};
-    final Ref<LibraryInfo> currentLibrary = new Ref<LibraryInfo>();
+    final Ref<LibraryDownloadInfo> currentLibrary = new Ref<LibraryDownloadInfo>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         try {
           for (int i = 0; i < myLibraryInfos.length; i++) {
-            LibraryInfo info = myLibraryInfos[i];
+            LibraryDownloadInfo info = myLibraryInfos[i];
             currentLibrary.set(info);
             if (indicator != null) {
               indicator.checkCanceled();
@@ -118,7 +118,7 @@ public class LibraryDownloader {
     if (exception[0] instanceof IOException) {
       String message = IdeBundle.message("error.library.download.failed");
       if (currentLibrary.get() != null) {
-        message += ": " + currentLibrary.get().getDownloadingUrl();
+        message += ": " + currentLibrary.get().getDownloadUrl();
       }
       final boolean tryAgain = IOExceptionDialog.showErrorDialog((IOException)exception[0],
                                                                  IdeBundle.message("progress.download.libraries.title"), message);
@@ -144,13 +144,13 @@ public class LibraryDownloader {
     return files.length > 0 ? files[0] : null;
   }
 
-  private static VirtualFile[] moveToDir(final List<VirtualFile> existingFiles, final List<Pair<LibraryInfo, File>> downloadedFiles, final VirtualFile dir) throws IOException {
+  private static VirtualFile[] moveToDir(final List<VirtualFile> existingFiles, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles, final VirtualFile dir) throws IOException {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
 
     final File ioDir = VfsUtil.virtualToIoFile(dir);
-    for (Pair<LibraryInfo, File> pair : downloadedFiles) {
-      final LibraryInfo info = pair.getFirst();
-      final File toFile = generateName(info.getExpectedJarName(), info.getVersion(), ioDir);
+    for (Pair<LibraryDownloadInfo, File> pair : downloadedFiles) {
+      final LibraryDownloadInfo info = pair.getFirst();
+      final File toFile = generateName(info, ioDir);
       FileUtil.rename(pair.getSecond(), toFile);
       files.add(new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
@@ -174,41 +174,35 @@ public class LibraryDownloader {
     return files.toArray(new VirtualFile[files.size()]);
   }
 
-  private static String getExpectedFileName(LibraryInfo info) {
-    final String name = info.getExpectedJarName();
-    final int dot = name.lastIndexOf('.');
-    return name.substring(0, dot) + "-" + info.getVersion() + name.substring(dot);
+  private static String getExpectedFileName(LibraryDownloadInfo info) {
+    return info.getFileNamePrefix() + info.getFileNameSuffix();
   }
 
-  private static File generateName(final String baseName, final String version, final File dir) {
-    int index = baseName.lastIndexOf('.');
-    String prefix = (index != -1 ? baseName.substring(0, index) : baseName) + "-" + version;
-    String suffix = index != -1 ? baseName.substring(index) : "";
+  private static File generateName(LibraryDownloadInfo info, final File dir) {
+    String prefix = info.getFileNamePrefix();
+    String suffix = info.getFileNameSuffix();
     File file = new File(dir, prefix + suffix);
     int count = 1;
     while (file.exists()) {
-      file = new File(dir, prefix + "_" + count++ + suffix);
+      file = new File(dir, prefix + "_" + count + suffix);
+      count++;
     }
     return file;
   }
 
-  private static void deleteFiles(final List<Pair<LibraryInfo, File>> pairs) {
-    for (Pair<LibraryInfo, File> pair : pairs) {
+  private static void deleteFiles(final List<Pair<LibraryDownloadInfo, File>> pairs) {
+    for (Pair<LibraryDownloadInfo, File> pair : pairs) {
       FileUtil.delete(pair.getSecond());
     }
     pairs.clear();
   }
 
-  private static boolean download(final LibraryInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryInfo, File>> downloadedFiles) throws IOException {
-    final String url = libraryInfo.getDownloadingUrl();
-    if (url == null) return true;
+  private static boolean download(final LibraryDownloadInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles) throws IOException {
+    final String url = libraryInfo.getDownloadUrl();
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     String presentableUrl = libraryInfo.getPresentableUrl();
-    if (presentableUrl == null) {
-      presentableUrl = url;
-    }
-    indicator.setText2(IdeBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), presentableUrl));
+    indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
     File tempFile = null;
     HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 

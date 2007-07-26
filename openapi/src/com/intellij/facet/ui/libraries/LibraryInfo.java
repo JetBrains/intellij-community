@@ -23,22 +23,43 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author nik
  */
-public interface LibraryInfo {
-  LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
+public class LibraryInfo {
+  public static final LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
+  private @Nullable LibraryDownloadInfo myDownloadInfo;
+  private @NonNls String myPresentableName;
+  private @NonNls String[] myRequiredClasses;
+
+  public LibraryInfo(final @NonNls String presentableName, final @Nullable @NonNls String version,
+                         final @Nullable @NonNls String downloadingUrl,
+                     final @Nullable String presentableUrl, final @NonNls String... requiredClasses) {
+    myPresentableName = presentableName;
+    myRequiredClasses = requiredClasses;
+    if (downloadingUrl != null) {
+      int dot = presentableName.lastIndexOf('.');
+      String prefix = presentableName.substring(0, dot);
+      String suffix = presentableName.substring(dot);
+      myDownloadInfo = new LibraryDownloadInfo(downloadingUrl, presentableUrl, prefix, suffix);
+    }
+  }
+
+  public LibraryInfo(final String presentableName, final @Nullable LibraryDownloadInfo downloadInfo, String... requiredClasses) {
+    myPresentableName = presentableName;
+    myRequiredClasses = requiredClasses;
+    myDownloadInfo = downloadInfo;
+  }
+
+  @NonNls
+  public String getPresentableName() {
+    return myPresentableName;
+  }
+
+  @NonNls
+  public String[] getRequiredClasses() {
+    return myRequiredClasses;
+  }
 
   @Nullable
-  @NonNls
-  String getDownloadingUrl();
-
-  @NonNls
-  String getExpectedJarName();
-
-  @NonNls
-  String[] getRequiredClasses();
-
-  @Nullable @NonNls
-  String getPresentableUrl();
-
-  @Nullable @NonNls
-  String getVersion();
+  public LibraryDownloadInfo getDownloadingInfo() {
+    return myDownloadInfo;
+  }
 }

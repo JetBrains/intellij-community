@@ -12,6 +12,7 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -87,7 +88,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
         missedJarsText.append(", ");
       }
 
-      missedJarsText.append(info.getLibraryInfos()[i].getExpectedJarName());
+      missedJarsText.append(info.getLibraryInfos()[i].getPresentableName());
     }
     final String text = IdeBundle.message("label.missed.libraries.text", missedJarsText, info.getClassNames()[0]);
     return new ValidationResult(text, new LibrariesQuickFix(info.getLibraryInfos()));
@@ -175,19 +176,21 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     return addedLibraries;
   }
 
-  private void downloadJars(LibraryInfo[] missingLibraries, JComponent place) {
-    LibraryDownloader downloader = new LibraryDownloader(missingLibraries, null, place);
+  private void downloadJars(final LibraryDownloadInfo[] downloadInfos, JComponent place) {
+    LibraryDownloader downloader = new LibraryDownloader(downloadInfos, null, place);
     VirtualFile[] roots = downloader.download();
     addRoots(roots);
   }
 
-  private static boolean canDownload(final LibraryInfo[] infos) {
-    for (LibraryInfo libraryInfo : infos) {
-      if (libraryInfo.getDownloadingUrl() != null) {
-        return true;
+  private static LibraryDownloadInfo[] getDownloadingInfos(final LibraryInfo[] libraries) {
+    List<LibraryDownloadInfo> downloadInfos = new ArrayList<LibraryDownloadInfo>();
+    for (LibraryInfo library : libraries) {
+      LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
+      if (downloadInfo != null) {
+        downloadInfos.add(downloadInfo);
       }
     }
-    return false;
+    return downloadInfos.toArray(new LibraryDownloadInfo[downloadInfos.size()]);
   }
 
   private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
@@ -269,7 +272,9 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       else {
         librariesStep = null;
       }
-      if (canDownload(myMissingLibraries)) {
+
+      final LibraryDownloadInfo[] downloadInfos = getDownloadingInfos(myMissingLibraries);
+      if (downloadInfos.length > 0) {
         popupItems.add(downloadJars);
       }
       popupItems.add(addJars);
@@ -285,7 +290,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
           }
           popupRef.get().cancel();
           if (downloadJars.equals(selectedValue)) {
-            downloadJars(myMissingLibraries, place);
+            downloadJars(downloadInfos, place);
           }
           else {
             addJars(place);
