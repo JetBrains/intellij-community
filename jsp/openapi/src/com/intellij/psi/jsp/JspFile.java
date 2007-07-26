@@ -46,4 +46,6 @@ public interface JspFile extends XmlFile {
 
   @NotNull
   JspxFileViewProvider getViewProvider();
+
+  XmlTag[] getDirectiveTagsInContext(JspDirectiveKind directiveKind);
 }
