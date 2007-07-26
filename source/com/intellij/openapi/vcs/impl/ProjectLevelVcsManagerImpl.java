@@ -515,6 +515,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         getOrCreateConsoleContent(getContentManager());
         myEditorAdapter.appendString(message, attributes);
       }
