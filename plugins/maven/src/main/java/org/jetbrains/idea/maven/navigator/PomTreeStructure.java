@@ -342,21 +342,26 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
         return true;
       }
 
-      Collection<PomNode> childrenOfNew = new ArrayList<PomNode>();
-      for (PomNode node : pomNodes) {
-        if (newNode.isAncestor(node)) {
-          childrenOfNew.add(node);
-        }
-      }
-
-      pomNodes.removeAll(childrenOfNew);
-
-      for (PomNode child : childrenOfNew) {
+      for (PomNode child : removeChildren(newNode, new ArrayList<PomNode>())) {
         newNode.addNestedPom(child);
       }
 
       add(newNode);
       return true;
+    }
+
+    protected Collection<PomNode> removeChildren(final PomNode parent, final Collection<PomNode> children) {
+      return removeOwnChildren(parent, children);
+    }
+
+    protected final Collection<PomNode> removeOwnChildren(final PomNode parent, final Collection<PomNode> children) {
+      for (PomNode node : pomNodes) {
+        if (parent.isAncestor(node)) {
+          children.add(node);
+        }
+      }
+      pomNodes.removeAll(children);
+      return children;
     }
 
     protected void add(PomNode pomNode) {
@@ -484,6 +489,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       profilesNode = new ProfilesNode(this);
       modulePomsNode = new ModulePomsNode(this);
       nonModulePomsNode = new NonModulePomsNode(this);
+
+      modulePomsNode.sibling = nonModulePomsNode;
+      nonModulePomsNode.sibling = modulePomsNode;
 
       setUniformIcon(iconPom);
 
@@ -792,6 +800,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   class NestedPomsNode extends PomGroupNode {
 
+    private PomGroupNode sibling;
+
     public NestedPomsNode(PomNode parent) {
       super(parent);
       setIcons(iconFolderClosed, iconFolderOpen);
@@ -804,6 +814,14 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     @NotNull
     protected CustomNode getVisibleParent() {
       return getParent(PomNode.class);
+    }
+
+    protected Collection<PomNode> removeChildren(final PomNode node, final Collection<PomNode> children) {
+      super.removeChildren(node, children);
+      if(sibling!=null){
+        sibling.removeOwnChildren(node, children);
+      }
+      return children;
     }
   }
 
