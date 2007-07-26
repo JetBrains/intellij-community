@@ -1,5 +1,7 @@
 package com.intellij.jsp.impl;
 
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -7,6 +9,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -28,6 +31,14 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     }
 
     return elementDescriptor;
+  }
+
+  public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
+    return ArrayUtil.mergeArrays(
+      super.getElementsDescriptors(context),
+      HtmlUtil.getCustomTagDescriptors(PsiTreeUtil.getParentOfType(context, XmlDocument.class)), 
+      XmlElementDescriptor.class
+    );
   }
 
   public static XmlElementDescriptor getRelaxedDescriptor(XmlElementDescriptor base, final XmlTag childTag) {

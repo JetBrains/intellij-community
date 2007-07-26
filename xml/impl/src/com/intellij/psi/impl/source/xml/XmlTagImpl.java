@@ -630,7 +630,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
       final String[][] defaultNamespace = XmlUtil.getDefaultNamespaces((XmlDocument)parent);
       for (final String[] prefix2ns : defaultNamespace) {
-        namespaceMap.put(prefix2ns[0], prefix2ns[1]);
+        namespaceMap.put(prefix2ns[0], getRealNs(prefix2ns[1]));
       }
 
       myNamespaceMap = map = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException

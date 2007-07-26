@@ -19,10 +19,7 @@ import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -254,9 +251,12 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
         // their element descriptors (prev if section)
         if (namespace == null) continue;
         if(namespace.length() == 0 && !visited.isEmpty()) continue;
-        XmlNSDescriptor nsDescriptor = element.getNSDescriptor(namespace, false);
-        if(nsDescriptor == null && PsiUtil.isInJspFile(element))
-          nsDescriptor = PsiUtil.getJspFile(element).getDocument().getRootTag().getNSDescriptor(namespace, false);
+
+        XmlNSDescriptor nsDescriptor = getDescriptor(element, namespace, true);
+        if (nsDescriptor == null) {
+          if(!descriptorsMap.isEmpty()) continue;
+          nsDescriptor = getDescriptor(element, namespace, false);
+        }
 
         if(nsDescriptor != null && !visited.contains(nsDescriptor) &&
            isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)
@@ -266,7 +266,9 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
             nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));
           
           for(XmlElementDescriptor containedDescriptor:rootElementsDescriptors) {
-            if (containedDescriptor != null) variants.add(containedDescriptor);
+            if (containedDescriptor != null && couldContainDescriptor(element, elementDescriptor, containedDescriptor, namespace)) {
+              variants.add(containedDescriptor);
+            }
           }
         }
       }
@@ -280,6 +282,23 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       ret[index++] = descriptor.getName(element);
     }
     return ret;
+  }
+
+  private static XmlNSDescriptor getDescriptor(final XmlTag element, final String namespace, final boolean strict) {
+    XmlNSDescriptor nsDescriptor = element.getNSDescriptor(namespace, strict);
+    if(nsDescriptor == null && PsiUtil.isInJspFile(element))
+      nsDescriptor = PsiUtil.getJspFile(element).getDocument().getRootTag().getNSDescriptor(namespace, strict);
+    return nsDescriptor;
+  }
+
+  private static boolean couldContainDescriptor(final XmlTag element, final XmlElementDescriptor elementDescriptor,
+                                                final XmlElementDescriptor containedDescriptor, String containedDescriptorNs) {
+    if (XmlUtil.nsFromTemplateFramework(containedDescriptorNs) || true) return true;
+    final XmlTag parentTag = element.getParentTag();
+    if (parentTag == null) return true;
+    final XmlTag childTag = element.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
+    childTag.putUserData(XmlElement.ORIGINAL_ELEMENT, parentTag);
+    return elementDescriptor.getElementDescriptor(childTag) != null;
   }
 
   private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,
