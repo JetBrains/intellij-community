@@ -16,13 +16,13 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.util.ui.update.ComponentDisposable;
 
 import javax.swing.*;
@@ -39,9 +39,11 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(JTextField field, ActionListener browseActionListener) {
     super(field, browseActionListener);
-    final DataManager manager = DataManager.getInstance();
-    if (manager != null) {
-      installPathCompletion((Project)manager.getDataContext().getData(DataConstants.PROJECT), FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    if (ApplicationManager.getApplication() != null) {
+      final DataManager manager = DataManager.getInstance();
+      if (manager != null) {
+        installPathCompletion((Project)manager.getDataContext().getData(DataConstants.PROJECT), FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+      }
     }
   }
 
