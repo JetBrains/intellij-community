@@ -4,27 +4,27 @@
 
 package com.intellij.compiler.packaging;
 
-import com.intellij.testFramework.LiteFixture;
-import com.intellij.openapi.compiler.make.*;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.DummyCompileContext;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.compiler.impl.packagingCompiler.*;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.mock.MockProgressIndicator;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.openapi.compiler.make.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.testFramework.LiteFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashMap;
 
 /**
  * @author nik

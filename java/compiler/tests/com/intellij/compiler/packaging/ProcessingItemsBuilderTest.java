@@ -195,7 +195,7 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
     List<Pair<JarInfo, String>> jarContent = new ArrayList<Pair<JarInfo, String>>();
     for (JarInfo jar : jars) {
       List<String> contentList = new ArrayList<String>();
-      for (Pair<String, VirtualFile> pair : jar.getContent()) {
+      for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
         String s = " " + pair.getSecond().getPath() + " -> " + pair.getFirst();
         contentList.add(s);
       }
