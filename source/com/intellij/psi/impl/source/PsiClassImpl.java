@@ -158,7 +158,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     VirtualFile vFile = psiFile.getVirtualFile();
     final ProjectFileIndex idx = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
 
-    if (!idx.isInLibrarySource(vFile)) return this;
+    if (vFile == null || !idx.isInLibrarySource(vFile)) return this;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
     PsiClass original = myManager.findClass(getQualifiedName(), new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
