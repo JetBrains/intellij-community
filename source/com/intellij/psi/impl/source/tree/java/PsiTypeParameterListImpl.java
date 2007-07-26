@@ -64,7 +64,8 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   public PsiTypeParameter[] getTypeParameters() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0) {
-      if (myRepositoryClassParameters == null) {
+      PsiTypeParameter[] typeParameters = myRepositoryClassParameters;
+      if (typeParameters == null) {
         RepositoryManager repositoryManager = getRepositoryManager();
         CompositeElement treeElement = getTreeElement();
         int count;
@@ -84,14 +85,15 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
           count = treeElement.countChildren(CLASS_PARAMETER_BIT_SET);
         }
 
-        PsiTypeParameter[] typeParameters = count == 0 ? PsiTypeParameter.EMPTY_ARRAY : new PsiTypeParameter[count];
+        typeParameters = count == 0 ? PsiTypeParameter.EMPTY_ARRAY : new PsiTypeParameter[count];
         for (int i = 0; i < typeParameters.length; i++) {
           typeParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
         }
+
         myRepositoryClassParameters = typeParameters;
       }
 
-      return myRepositoryClassParameters;
+      return typeParameters;
     }
     else {
       return calcTreeElement().getChildrenAsPsiElements(CLASS_PARAMETER_BIT_SET, CLASS_PARAMETER_ARRAY_CONSTRUCTOR);
