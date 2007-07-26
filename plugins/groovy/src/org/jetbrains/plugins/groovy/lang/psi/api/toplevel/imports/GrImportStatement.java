@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -22,8 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author ilyas
  */
 public interface GrImportStatement extends GrTopStatement {
+  @Nullable
   GrCodeReferenceElement getImportReference();
 
+  @Nullable
   String getImportedName();
 
   boolean isOnDemand();

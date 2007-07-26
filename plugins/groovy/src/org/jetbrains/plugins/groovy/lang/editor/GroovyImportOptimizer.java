@@ -188,8 +188,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       GrImportStatement[] statements = result.toArray(new GrImportStatement[result.size()]);
       Arrays.sort(statements, new Comparator<GrImportStatement>() {
         public int compare(GrImportStatement statement1, GrImportStatement statement2) {
-          String name1 = statement1.getImportReference().getText();
-          String name2 = statement2.getImportReference().getText();
+          final GrCodeReferenceElement ref1 = statement1.getImportReference();
+          final GrCodeReferenceElement ref2 = statement2.getImportReference();
+          String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
+          String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
+          if (name1 == null) return name2 == null ? 0 : -1;
+          if (name2 == null) return 1;
           return name1.compareTo(name2);
         }
       });
