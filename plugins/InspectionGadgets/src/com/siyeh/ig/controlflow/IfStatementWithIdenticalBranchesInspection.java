@@ -69,23 +69,27 @@ public class IfStatementWithIdenticalBranchesInspection
             }
             final PsiStatement elseBranch = statement.getElseBranch();
             if (elseBranch == null) {
+	            // implicit else branch after the if
                 statement.delete();
                 return;
             }
-            if (thenBranch instanceof PsiBlockStatement) {
-                final PsiBlockStatement blockStatement =
-                        (PsiBlockStatement) thenBranch;
-                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-                final PsiStatement[] statements = codeBlock.getStatements();
-                final PsiElement parent = statement.getParent();
-                if (statements.length > 0) {
-                    parent.addRangeBefore(statements[0],
-                            statements[statements.length -1], statement);
-                }
-                statement.delete();
+	        final PsiElement parent = statement.getParent();
+	        if (thenBranch instanceof PsiBlockStatement) {
+		        final PsiBlockStatement blockStatement =
+				        (PsiBlockStatement) thenBranch;
+		        if (parent instanceof PsiCodeBlock) {
+			        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+			        final PsiStatement[] statements = codeBlock.getStatements();
+			        if (statements.length > 0) {
+				        parent.addRangeBefore(statements[0],
+						        statements[statements.length -1], statement);
+			        }
+			        statement.delete();
+		        } else {
+			        statement.replace(blockStatement);
+		        }
             } else {
-                final String bodyText = thenBranch.getText();
-                replaceStatement(statement, bodyText);
+		        statement.replace(thenBranch);
             }
         }
     }
