@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -94,7 +95,7 @@ public class TypeSpec implements GroovyElementTypes {
 
     typeElementMarker.done(CLASS_TYPE_ELEMENT);
 
-    if (mLBRACK.equals(builder.getTokenType())) {
+    if (ParserUtils.lookAhead(builder, mLBRACK, mRBRACK)) {
       declarationBracketsParse(builder, arrMarker);
     } else {
 //      arrMarker.done(CLASS_TYPE_ELEMENT);      
