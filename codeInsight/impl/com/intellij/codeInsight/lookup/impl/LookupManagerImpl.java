@@ -84,8 +84,15 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    PsiElement context = psiFile;
+    if (psiFile != null) {
+      final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+      if (element != null) {
+        context = element;
+      }
+    }
 
-    sortItems(psiFile, items, itemPreferencePolicy);
+    sortItems(context, items, itemPreferencePolicy);
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable(){
@@ -161,9 +168,9 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
   
 
-  protected void sortItems(PsiFile containingFile, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
-    if (shouldSortItems(containingFile, items)) {
-      final PsiProximityComparator proximityComparator = new PsiProximityComparator(containingFile, myProject);
+  protected void sortItems(PsiElement context, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
+    if (shouldSortItems(context.getContainingFile(), items)) {
+      final PsiProximityComparator proximityComparator = new PsiProximityComparator(context, myProject);
       if (isUseNewSorting()) {
         if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
           final ExpectedTypeInfo[] expectedInfos = ((CompletionPreferencePolicy)itemPreferencePolicy).getExpectedInfos();

@@ -5,6 +5,8 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 
+import java.util.Arrays;
+
 /**
  * @author peter
 */
@@ -19,5 +21,9 @@ public class LookupItemWeightComparable implements Comparable<LookupItemWeightCo
 
   public int compareTo(final LookupItemWeightComparable o) {
     return CompletionPreferencePolicy.doCompare(myPriority, o.myPriority, myWeight, o.myWeight);
+  }
+
+  public String toString() {
+    return myPriority + " " + Arrays.toString(myWeight);
   }
 }

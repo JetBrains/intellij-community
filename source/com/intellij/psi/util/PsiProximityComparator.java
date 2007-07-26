@@ -15,10 +15,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 
 import java.util.Collections;
@@ -46,41 +43,53 @@ public class PsiProximityComparator implements Comparator<Object> {
   // -in the same method: distance=0
   // -in the same class: distance=1
   // -in the neighboring opened editor distance=2
-  // -in the same module and package: distance=3
-  // -in the same module: distance=4
-  // -in the same project: distance=5
-  // -in the other project source: distance=6
-  // -in the library: distance=7
-  // -in the jdk: distance=8
-  // -otherwise, distance=9
+  // -in the superclass: distance=3
+  // -in the same module and package: distance=4
+  // -in the same module: distance=5
+  // -in the same project: distance=6
+  // -in the other project source: distance=7
+  // -in the library: distance=8
+  // -in the jdk: distance=9
+  // -otherwise, distance=10
   public int getProximity(final PsiElement element) {
     if (myContext == null) return -1;
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
     if (contextModule == null) return -1;
-    if (!element.isPhysical()) return -1;
 
     final PsiElement context = PsiTreeUtil.findCommonContext(myContext, element);
     if (PsiTreeUtil.getContextOfType(context, PsiMethod.class, false) != null) return 0;
     if (PsiTreeUtil.getContextOfType(context, PsiClass.class, false) != null) return 1;
 
+
+
     VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
     if (isOpenedInEditor(virtualFile)) return 2;
+
+    PsiClass contextClass = PsiTreeUtil.getContextOfType(myContext, PsiClass.class, false);
+    while (contextClass != null) {
+      PsiClass elementClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
+      while (elementClass != null) {
+        if (contextClass.isInheritor(elementClass, true)) return 3;
+        elementClass = elementClass.getContainingClass();
+      }
+      contextClass = contextClass.getContainingClass();
+    }
 
     Module elementModule = ModuleUtil.findModuleForPsiElement(element);
     if (contextModule == elementModule) {
       final PsiPackage psiPackage = PsiTreeUtil.getContextOfType(context, PsiPackage.class, false);
-      if (psiPackage != null && psiPackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false))) return 3;
-      return 4;
+      if (psiPackage != null && psiPackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false))) return 4;
+      return 5;
     }
     if (elementModule != null) {
-      return elementModule.getProject() == contextModule.getProject() ? 5 : 6;
+      return elementModule.getProject() == contextModule.getProject() ? 6 : 7;
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     List<OrderEntry> orderEntries = virtualFile == null ? Collections.<OrderEntry>emptyList() : fileIndex.getOrderEntriesForFile(virtualFile);
 
-    if (orderEntries.isEmpty()) return 9;
+    if (orderEntries.isEmpty()) return 10;
     OrderEntry orderEntry = orderEntries.get(0);
-    return orderEntry instanceof JdkOrderEntry ? 8 : 7;
+    return orderEntry instanceof JdkOrderEntry ? 9 : 8;
   }
 
   private boolean isOpenedInEditor(VirtualFile element) {

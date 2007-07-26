@@ -16,12 +16,25 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class NameUtil {
+  private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
+    public String fun(final String s) {
+      return s.toLowerCase();
+    }
+  };
+
   private NameUtil() {}
+
+  public static List<String> nameToWordsLowerCase(String name){
+    return ContainerUtil.map(nameToWords(name), LOWERCASE_MAPPING);
+  }
 
   public static String[] nameToWords(String name){
     ArrayList<String> array = new ArrayList<String>();

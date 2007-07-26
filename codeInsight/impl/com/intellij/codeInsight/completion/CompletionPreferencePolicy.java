@@ -14,10 +14,12 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
@@ -91,7 +93,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public int[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final int[] result = new int[9];
+    final int[] result = new int[10];
 
     String item1StringCap = capitalsOnly(item.getLookupString());
     result[0] = item1StringCap.startsWith(myPrefixCapitals) ? 1 : 0;
@@ -110,32 +112,49 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     result[1] = item1StringCap.startsWith(capitalsOnly(myPrefix) + myPrefixCapitals) ? 1 : 0;
     result[2] = item.getLookupString().startsWith(myPrefix) ? 1 : 0;
     result[3] = item.getLookupString().toLowerCase().startsWith(myPrefixLowered) ? 1 : 0;
+    result[4] = getExpectedTypeMatchingDegree(object, item);
 
 
-
-    if (myExpectedInfos != null) {
-      result[4] = getMatchedWordCount(object, item);
+    final String name = getName(object);
+    if (name != null && myExpectedInfos != null) {
+      final List<String> words = NameUtil.nameToWordsLowerCase(name);
+      final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
+      int max1 = calcMatch(words, 0);
+      max1 = calcMatch(wordsNoDigits, max1);
+      result[5] = max1;
+      int max = 0;
+      for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
+        String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
+        if (expectedName != null) {
+          final THashSet<String> set = new THashSet<String>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
+          set.retainAll(wordsNoDigits);
+          max = Math.max(max, set.size());
+        }
+      }
+      result[6] = max;
     }
 
-    result[5] = object instanceof String ? 1 : object instanceof PsiKeyword ? -1 : 0;
+    if (object instanceof String) result[5] = 1;
+    else if (object instanceof PsiKeyword) result[5] = -1;
 
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
       synchronized(myItemToIndexMap){
-        result[6] = myItemToIndexMap.get(item) - 1;
+        result[7] = myItemToIndexMap.get(item) - 1;
       }
     }
     else if (object instanceof PsiMember){
       if(object instanceof PsiNamedElement){
-        result[6] = myPrefix.equals(((PsiNamedElement)object).getName()) ? 1 : 0;
+        result[7] = myPrefix.equals(((PsiNamedElement)object).getName()) ? 1 : 0;
       }
       final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
       if (qualifierType1 != null){
-        result[7] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
+        result[8] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
       }
     }
 
     if (object instanceof PsiElement) {
-      result[8] = -myProximityComparator.getProximity((PsiElement)object);
+      final int proximity = myProximityComparator.getProximity((PsiElement)object);
+      result[9] = proximity < 0 ? -1 : 239 - proximity;
     }
 
     item.setAttribute(LookupItem.WEIGHT, result);
@@ -186,10 +205,19 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     Object o2 = item2.getObject();
 
     if (myExpectedInfos != null) {
-      int matchSize1 = getMatchedWordCount(o1, item1);
-      int matchSize2 = getMatchedWordCount(o2, item2);
-      if (matchSize1 != matchSize2){
-        return matchSize2 - matchSize1;
+      int i1 = getExpectedTypeMatchingDegree(o1, item1);
+      int i2 = getExpectedTypeMatchingDegree(o2, item2);
+      if (i1 != i2) return i2 - i1;
+
+      final String name1 = getName(o1);
+      final String name2 = getName(o2);
+
+      if (name1 != null && name2 != null) {
+        int matchSize1 = getMatchedWordCount(name1);
+        int matchSize2 = getMatchedWordCount(name2);
+        if (matchSize1 != matchSize2){
+          return matchSize2 - matchSize1;
+        }
       }
     }
 
@@ -258,25 +286,21 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
 
     for (int i = 0; i < weight1.length; i++) {
-      final int difference = weight2[i] - weight1[i];
-      if (difference != 0) {
-        return difference;
-      }
+      final int w1 = weight1[i];
+      final int w2 = weight2[i];
+      if (w2 > w1) return 1;
+      if (w2 < w1) return -1;
     }
 
     return 0;
   }
 
-  private int getMatchedWordCount(Object o, final LookupItem item) {
-    String name;
-    if (o instanceof PsiVariable) {
-      name = ((PsiVariable)o).getName();
-      VariableKind variableKind = myCodeStyleManager.getVariableKind((PsiVariable)o);
-      name = myCodeStyleManager.variableNameToPropertyName(name, variableKind);
-    }
-    else if (o instanceof PsiMethod) {
+  private int getExpectedTypeMatchingDegree(Object o, final LookupItem item) {
+    if (myExpectedInfos == null) return 0;
+
+    if (o instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)o;
-      if (myExpectedInfos != null) {
+
         PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
         if (substitutor != null) {
           final PsiType type = substitutor.substitute(method.getReturnType());
@@ -284,8 +308,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
             return -1;
           }
         }
-      }
-      name = method.getName();
+      
     }
     else if (o instanceof PsiClass && myExpectedInfos.length == 1) {
       final PsiClass psiClass = (PsiClass)o;
@@ -299,23 +322,36 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
       int count = StatisticsManager.getInstance().getMemberUseCount(type, psiClass);
       if(count == 0){
-        if(componentType.equals(objectType)){
-          return 1;
-        }
-        else
-          return 0;
+        return componentType.equals(objectType) ? 1 : 0;
       }
       return count + 1;
     }
-    else
-      return 0;
 
-    int max = calcMatch(NameUtil.nameToWords(name), 0);
-    max = calcMatch(NameUtil.nameToWords(truncDigits(name)), max);
+    return 0;
+  }
+
+
+  @Nullable
+  private String getName(Object o) {
+    if (o instanceof PsiVariable) {
+      String name = ((PsiVariable)o).getName();
+      VariableKind variableKind = myCodeStyleManager.getVariableKind((PsiVariable)o);
+      return myCodeStyleManager.variableNameToPropertyName(name, variableKind);
+    }
+    else if (o instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)o;
+      return method.getName();
+    }
+    return null;
+  }
+
+  private int getMatchedWordCount(@NotNull  String name) {
+    int max = calcMatch(NameUtil.nameToWordsLowerCase(name), 0);
+    max = calcMatch(NameUtil.nameToWordsLowerCase(truncDigits(name)), max);
     return max;
   }
 
-  private int calcMatch(final String[] words, int max) {
+  private int calcMatch(final List<String> words, int max) {
     for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
       String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
       if (expectedName == null) continue;
@@ -325,13 +361,13 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     return max;
   }
 
-  private static int calcMatch(final String expectedName, final String[] words, int max) {
+  private static int calcMatch(final String expectedName, final List<String> words, int max) {
     if (expectedName == null) return max;
 
     String[] expectedWords = NameUtil.nameToWords(expectedName);
-    int limit = Math.min(words.length, expectedWords.length);
+    int limit = Math.min(words.size(), expectedWords.length);
     for (int i = 0; i < limit; i++) {
-      String word = words[words.length - i - 1];
+      String word = words.get(words.size() - i - 1);
       String expectedWord = expectedWords[expectedWords.length - i - 1];
       if (word.equalsIgnoreCase(expectedWord)) {
         max = Math.max(max, i + 1);

@@ -48,7 +48,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private final Project myProject;
   private final Editor myEditor;
   private final LookupItem[] myItems;
-  private final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> myItemsMap;
+  private final SortedMap<LookupItemWeightComparable, List<LookupItem>> myItemsMap;
   private String myPrefix;
   private int myPreferredItemsCount;
   private final LookupItemPreferencePolicy myItemPreferencePolicy;
@@ -189,8 +189,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
     return myPreferredItemsCount;
   }
 
-  private SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {
-    final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> map = new TreeMap<LookupItemWeightComparable, SortedSet<LookupItem>>();
+  private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {
+    final SortedMap<LookupItemWeightComparable, List<LookupItem>> map = new TreeMap<LookupItemWeightComparable, List<LookupItem>>();
 
     if (LookupManagerImpl.isUseNewSorting()) {
       final Document document = myEditor.getDocument();
@@ -203,9 +203,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
                                ? ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item)
                                : new int[]{item.getObject() instanceof PsiElement ? proximityComparator.getProximity((PsiElement)item.getObject()) : 0};
           final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
-          SortedSet<LookupItem> sortedSet = map.get(key);
-          if (sortedSet == null) map.put(key, sortedSet = new TreeSet<LookupItem>());
-          sortedSet.add(item);
+          List<LookupItem> list = map.get(key);
+          if (list == null) map.put(key, list = new ArrayList<LookupItem>());
+          list.add(item);
       }
     }
     return map;
@@ -255,7 +255,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     Set<LookupItem> first = new THashSet<LookupItem>();
 
     for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
-      final SortedSet<LookupItem> items = myItemsMap.get(comparable);
+      final List<LookupItem> items = myItemsMap.get(comparable);
       final List<LookupItem> suitable = new SmartList<LookupItem>();
       for (final LookupItem item : items) {
         if (suits(item, matcher, pattern)) {
