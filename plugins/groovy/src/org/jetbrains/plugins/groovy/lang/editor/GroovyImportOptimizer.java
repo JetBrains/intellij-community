@@ -81,6 +81,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
               } else {
                 if (element instanceof PsiClass) {
                   importedName = ((PsiClass) element).getQualifiedName();
+                } else if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) {
+                  importedName = ((PsiMethod) element).getContainingClass().getQualifiedName();
                 }
               }
             } else {
