@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -246,7 +245,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   // IDEADEV-19364
   @Test
-  @Ignore("svnkit bug, waiting for fix from Alex")
   public void testUndoMovePackage() throws Exception {
     final TestDialog oldTestDialog = Messages.setTestDialog(new TestDialog() {
       public int show(final String message) {
@@ -258,11 +256,14 @@ public class SvnRenameTest extends SvnTestCase {
       final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
       final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
       final VirtualFile child = createDirInCommand(parent1, "child");
+      createFileInCommand(child, "a.txt", "a");
       checkin();
 
       moveFileInCommand(child, parent2);
       UndoManager.getInstance(myProject).undo(null);
-      Assert.assertTrue(new File(parent1.getPath(), "child").exists());
+      final File childPath = new File(parent1.getPath(), "child");
+      Assert.assertTrue(childPath.exists());
+      Assert.assertTrue(new File(childPath, "a.txt").exists());
     }
     finally {
       Messages.setTestDialog(oldTestDialog);

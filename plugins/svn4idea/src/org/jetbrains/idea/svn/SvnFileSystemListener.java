@@ -35,8 +35,11 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -58,6 +61,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class SvnFileSystemListener implements LocalFileOperationsHandler, CommandListener {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
+
   private static class AddedFileInfo {
     private final Project myProject;
     private final VirtualFile myDir;
@@ -85,6 +90,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
   private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
+  private File myStorageForUndo;
+  private List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
 
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
@@ -144,11 +151,12 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return false;
   }
 
-  private static boolean doMove(@NotNull SvnVcs vcs, final File src, final File dst) {
+  private boolean doMove(@NotNull SvnVcs vcs, final File src, final File dst) {
     SVNMoveClient mover = vcs.createMoveClient();
     long srcTime = src.lastModified();
     try {
       if (isUndo(vcs)) {
+        restoreFromUndoStorage(dst);
         mover.undoMove(src, dst);
       }
       else {
@@ -168,6 +176,29 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return false;
     }
     return true;
+  }
+
+  private void restoreFromUndoStorage(final File dst) {
+    String normPath = FileUtil.toSystemIndependentName(dst.getPath());
+    for (Iterator<Pair<File, File>> it = myUndoStorageContents.iterator(); it.hasNext();) {
+      Pair<File, File> e = it.next();
+      final String p = FileUtil.toSystemIndependentName(e.first.getPath());
+      if (p.startsWith(normPath)) {
+        try {
+          FileUtil.rename(e.second, e.first);
+        }
+        catch (IOException ex) {
+          LOG.error(ex);
+          FileUtil.asyncDelete(e.second);
+        }
+        it.remove();
+      }
+    }
+    final File[] files = myStorageForUndo.listFiles();
+    if (files == null || files.length == 0) {
+      FileUtil.asyncDelete(myStorageForUndo);
+      myStorageForUndo = null;      
+    }
   }
 
 
@@ -194,6 +225,27 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    * deleted: do nothing, return true (strange)
    */
   public boolean delete(VirtualFile file) throws IOException {
+    SvnVcs vcs = getVCS(file);
+    if (vcs != null) {
+      // never allow to delete admin directories by themselves (this can happen during LVCS undo,
+      // which deletes created directories from bottom to top)
+      if (file.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+        //moveToUndoStorage(file);
+        return true;
+      }
+      VirtualFile parent = file.getParent();
+      if (parent != null) {
+        if (parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+          //moveToUndoStorage(file);
+          return true;
+        }
+        parent = parent.getParent();
+        if (parent != null && parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+          //moveToUndoStorage(file);
+          return true;
+        }
+      }
+    }
     File ioFile = getIOFile(file);
     if (!SVNWCUtil.isVersionedDirectory(ioFile.getParentFile())) {
       return false;
@@ -218,10 +270,12 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return false;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
+      if (isUndo(vcs)) {
+        moveToUndoStorage(file);
+      }
       return true;
     }
     else {
-      SvnVcs vcs = getVCS(file);
       if (vcs != null) {
         if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
           try {
@@ -240,6 +294,21 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       }
       return false;
     }
+  }
+
+  private void moveToUndoStorage(final VirtualFile file) {
+    if (myStorageForUndo == null) {
+      try {
+        myStorageForUndo = FileUtil.createTempDirectory("svnUndoStorage", "");
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return; 
+      }
+    }
+    final File tmpFile = FileUtil.findSequentNonexistentFile(myStorageForUndo, "tmp", "");
+    myUndoStorageContents.add(0, new Pair<File, File>(new File(file.getPath()), tmpFile));
+    new File(file.getPath()).renameTo(tmpFile);
   }
 
   /**
