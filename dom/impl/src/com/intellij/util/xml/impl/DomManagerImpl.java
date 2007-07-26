@@ -359,11 +359,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   }
 
-  public final Set<String> getRootTagNames() {
-    return myRootTagName2FileDescription.keySet();
-  }
-
-  public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
+  public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
     return myRootTagName2FileDescription.get(rootTagName);
   }
 
