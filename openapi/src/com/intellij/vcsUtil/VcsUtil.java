@@ -15,7 +15,6 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.history.LocalHistoryBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.Application;
@@ -36,10 +35,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -124,25 +120,25 @@ public class VcsUtil {
     final String actionName;
 
     if (psiElement instanceof PsiClass) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.class");
+      actionName = VcsBundle.message("action.name.show.history.for.class");
     }
     else if (psiElement instanceof PsiField) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.field");
+      actionName = VcsBundle.message("action.name.show.history.for.field");
     }
     else if (psiElement instanceof PsiMethod) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.method");
+      actionName = VcsBundle.message("action.name.show.history.for.method");
     }
     else if (psiElement instanceof XmlTag) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.tag");
+      actionName = VcsBundle.message("action.name.show.history.for.tag");
     }
     else if (psiElement instanceof XmlText) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.text");
+      actionName = VcsBundle.message("action.name.show.history.for.text");
     }
     else if (psiElement instanceof PsiCodeBlock) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.code.block");
+      actionName = VcsBundle.message("action.name.show.history.for.code.block");
     }
     else if (psiElement instanceof PsiStatement) {
-      actionName = LocalHistoryBundle.message("action.name.show.history.for.statement");
+      actionName = VcsBundle.message("action.name.show.history.for.statement");
     }
     else {
       return null;
@@ -525,7 +521,7 @@ public class VcsUtil {
    */
   public static void collectFiles(VirtualFile dir, List files, boolean recursive, boolean addDirectories) {
     if (!dir.isDirectory()) {
-      throw new IllegalArgumentException(LocalHistoryBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
+      throw new IllegalArgumentException(VcsBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
     }
 
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();

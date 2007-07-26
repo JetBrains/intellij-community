@@ -1,4 +1,4 @@
-package com.intellij.history;
+package com.intellij.history.integration;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.PropertyKey;
