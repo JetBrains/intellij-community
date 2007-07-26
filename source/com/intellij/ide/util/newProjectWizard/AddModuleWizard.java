@@ -301,7 +301,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     final String projectFilePath = myWizardContext.getProjectFileDirectory();
     @NonNls String path = myWizardContext.getCompilerOutputDirectory();
     if (path == null) {
-      path = StringUtil.endsWithChar(projectFilePath, '/') ? projectFilePath + "classes" : projectFilePath + "/classes";
+      path = StringUtil.endsWithChar(projectFilePath, '/') ? projectFilePath + "out" : projectFilePath + "/out";
     }
     return path;
   }
