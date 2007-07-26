@@ -182,6 +182,7 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
     GroovyResolveResult resolveResult = refExpr.advancedResolve();
+    registerUsedImport(refExpr, resolveResult);
     PsiElement element = resolveResult.getElement();
     if (element != null) {
       if (!resolveResult.isAccessible()) {
@@ -220,6 +221,16 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
+  private void registerUsedImport(GrReferenceElement refExpr, GroovyResolveResult resolveResult) {
+    GrImportStatement importStatement = resolveResult.getImportStatementContext();
+    if (importStatement != null) {
+      PsiFile file = refExpr.getContainingFile();
+      if (file instanceof GroovyFile) {
+        GroovyInspectionData.getInstance().registerImportUsed(importStatement);
+      }
+    }
+  }
+
   private void checkMethodApplicability(PsiMethod method, GroovyPsiElement place, AnnotationHolder holder) {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
     if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method)) {
@@ -242,15 +253,7 @@ public class GroovyAnnotator implements Annotator {
   private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
     final PsiElement parent = refElement.getParent();
     GroovyResolveResult resolveResult = refElement.advancedResolve();
-
-    GrImportStatement importStatement = resolveResult.getImportStatementContext();
-    if (importStatement != null) {
-      PsiFile file = refElement.getContainingFile();
-      if (file instanceof GroovyFile) {
-        GroovyInspectionData.getInstance().registerImportUsed(importStatement);
-      }
-    }
-
+    registerUsedImport(refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
       if (parent instanceof GrNewExpression) {
