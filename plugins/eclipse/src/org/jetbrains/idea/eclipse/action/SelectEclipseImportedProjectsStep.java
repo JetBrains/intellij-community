@@ -11,6 +11,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.EclipseProjectModel;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
@@ -71,5 +72,10 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Eclip
       throw new ConfigurationException("Duplicated names found:" + StringUtil.join(duplicateNames.toArray(new String[duplicateNames.size()]), ","), "Unable to proceed");
     }
     return super.validate();
+  }
+
+  @NonNls
+  public String getHelpId() {
+    return "reference.dialogs.new.project.import.eclipse.page1";
   }
 }

@@ -38,6 +38,10 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           super.updateDataModel();
           getWizardContext().setProjectName(((MavenImportBuilder)getBuilder()).getSuggestedProjectName());
         }
+
+        public String getHelpId() {
+          return "reference.dialogs.new.project.import.maven.page3";
+        }
       }, stepFactory.createProjectJdkStep(wizardContext), stepFactory.createNameAndLocationStep(wizardContext)};
   }
 }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.action;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.List;
@@ -51,5 +52,10 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
+  }
+
+  @NonNls
+  public String getHelpId() {
+    return "reference.dialogs.new.project.import.maven.page2";
   }
 }

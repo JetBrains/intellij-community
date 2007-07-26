@@ -9,6 +9,7 @@ import org.jetbrains.idea.maven.project.ImporterPreferencesForm;
 import org.jetbrains.idea.maven.project.MavenImportProcessorContext;
 import org.jetbrains.idea.maven.project.MavenImporterPreferences;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -97,5 +98,10 @@ class MavenImportRootStep extends ProjectImportWizardStep {
       myImporterPreferences = ((MavenImportBuilder)getBuilder()).getImporterPreferences();
     }
     return myImporterPreferences;
+  }
+
+  @NonNls
+  public String getHelpId() {
+    return "reference.dialogs.new.project.import.maven.page1";
   }
 }

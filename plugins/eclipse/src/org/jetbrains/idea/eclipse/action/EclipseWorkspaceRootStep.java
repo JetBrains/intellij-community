@@ -77,7 +77,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   }
 
   public String getHelpId() {
-    return null;
+    return "reference.dialogs.new.project.import.eclipse.page1";
   }
 
   public EclipseProjectWizardContext getContext() {
