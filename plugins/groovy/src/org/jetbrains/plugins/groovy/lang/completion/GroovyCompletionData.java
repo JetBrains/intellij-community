@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
+import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
@@ -44,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterf
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
+import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 import java.util.Set;
 
@@ -75,6 +78,17 @@ public class GroovyCompletionData extends CompletionData {
     registerModifierCompletion();
     registerSynchronizedCompletion();
     registerFinalCompletion();
+
+    registerSuggestVariableNameCompletion();
+  }
+
+  private void registerSuggestVariableNameCompletion() {
+    CompletionVariant variant = new CompletionVariant(new ParentElementFilter(new ClassFilter(GrVariable.class)));
+    variant.includeScopeClass(LeafPsiElement.class);
+    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletion(new SuggestedVariableNamesGetter(), TailType.NONE);
+
+    registerVariant(variant);
   }
 
 
