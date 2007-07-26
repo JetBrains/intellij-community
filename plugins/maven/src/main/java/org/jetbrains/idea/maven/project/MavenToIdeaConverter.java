@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -144,21 +143,21 @@ public class MavenToIdeaConverter {
     if (module == null) {
       module = modifiableModuleModel.newModule(mavenToIdeaMapping.getModuleFilePath(node));
     }
-//    setLanguageLevel(module, getLanguageLevel(mavenProject, profiles));
 
-    convertRootModel(module, mavenProject);
+    convertRootModel(module, mavenProject, profiles);
 
     createFacets(module, mavenProject);
 
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
   }
 
-  void convertRootModel(Module module, MavenProject mavenProject) {
+  void convertRootModel(Module module, MavenProject mavenProject, final Collection<String> profiles) {
     RootModelAdapter rootModel = new RootModelAdapter(module);
     rootModel.init(mavenProject.getFile().getParent());
     createRoots(rootModel, mavenProject);
     createOutput(rootModel, mavenProject);
     createDependencies(rootModel, mavenProject);
+    rootModel.setLanguageLevel(getLanguageLevel(getLanguageLevel(mavenProject, profiles)));
     rootModel.commit();
   }
 
@@ -304,13 +303,13 @@ public class MavenToIdeaConverter {
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;
   }
 
-  public static void setLanguageLevel(final Module module, final String level) {
+  public static LanguageLevel getLanguageLevel(final String level) {
     if(stringToLanguageLevel==null){
       stringToLanguageLevel = new HashMap<String, LanguageLevel>();
       stringToLanguageLevel.put("1.3", LanguageLevel.JDK_1_3);
       stringToLanguageLevel.put("1.4", LanguageLevel.JDK_1_4);
       stringToLanguageLevel.put("1.5", LanguageLevel.JDK_1_5);
     }
-    ModuleRootManager.getInstance(module).setLanguageLevel(stringToLanguageLevel.get(level));
+    return stringToLanguageLevel.get(level);
   }
 }

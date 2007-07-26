@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -184,6 +185,15 @@ class RootModelAdapter {
     }
     if (dirty) {
       modifiableRootModel.rearrangeOrderEntries(entries);
+    }
+  }
+
+  public void setLanguageLevel(final LanguageLevel languageLevel) {
+    try {
+      modifiableRootModel.setLanguageLevel(languageLevel);
+    }
+    catch (IllegalArgumentException e) {
+      //bad value was stored
     }
   }
 }
