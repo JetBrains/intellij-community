@@ -167,4 +167,8 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     public final void removeSelectionInterval(int index0, int index1) {
     }
   }
+
+  public String getHelpId() {
+    return "reference.dialogs.new.project.fromScratch";
+  }
 }

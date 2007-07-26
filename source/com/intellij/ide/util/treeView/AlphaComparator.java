@@ -41,6 +41,11 @@ public class AlphaComparator implements Comparator<NodeDescriptor>{
     if (descriptor instanceof ModuleGroupNode) {
       return 0;
     }
+
+    if (descriptor instanceof ProjectViewModuleNode) {
+      return 10;
+    }
+
     if (descriptor instanceof PsiFileNode || descriptor instanceof ClassTreeNode) {
       return 20;
     }

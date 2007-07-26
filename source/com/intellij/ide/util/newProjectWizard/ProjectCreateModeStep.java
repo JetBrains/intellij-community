@@ -11,6 +11,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,5 +95,10 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   }
 
   protected void update() {
+  }
+
+  @NonNls
+  public String getHelpId() {
+    return myWizardContext.getProject() == null ? "reference.dialogs.new.project" : "reference.dialogs.new.module";
   }
 }

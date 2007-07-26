@@ -107,8 +107,7 @@ import java.io.File;
   }
   
   protected String getRootFiles() {
-    return " PsiDirectory: "+ getContentRoot().getParent().getName() + "\n" +
-           " " + myModule.getModuleFile().getName() + "\n" +
+    return " " + myModule.getModuleFile().getName() + "\n" +
            " " + myProject.getName() + ".ipr\n";
   }
 }

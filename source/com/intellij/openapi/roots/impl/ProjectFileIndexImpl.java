@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.Query;
@@ -27,7 +26,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private final FileTypeManager myFileTypeManager;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
-  private final ProjectRootContentFilter myProjectRootContentFilter;
 
   private VirtualFile myBaseDirCache;
 
@@ -38,7 +36,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     myDirectoryIndex = directoryIndex;
     myFileTypeManager = fileTypeManager;
     myContentFilter = new ContentFilter();
-    myProjectRootContentFilter = new ProjectRootContentFilter();
   }
 
   public boolean iterateContent(@NotNull ContentIterator iterator) {
@@ -64,8 +61,12 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     final VirtualFile projectBaseDir = myProject.getBaseDir();
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(projectBaseDir);
     if (info != null && info.module == null) {
-      boolean finished = FileIndexImplUtil.iterateRecursively(projectBaseDir, myProjectRootContentFilter, iterator);
-      if (!finished) return false;
+      final VirtualFile[] files = projectBaseDir.getChildren();
+      for (VirtualFile file : files) {
+        if (!myFileTypeManager.isFileIgnored(file.getName())) {
+          if (!iterator.processFile(file)) return false;
+        }
+      }
     }
     return true;
   }
@@ -213,7 +214,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       if (info == null) return false;
       if (info.module != null) return true;
 
-      return VfsUtil.isAncestor(getBaseDir(), fileOrDir, false);
+      return getBaseDir() == fileOrDir;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -261,15 +262,4 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     }
   }
 
-  private class ProjectRootContentFilter implements VirtualFileFilter {
-    public boolean accept(@NotNull VirtualFile file) {
-      if (file.isDirectory()) {
-        DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        return info != null && info.module == null && VfsUtil.isAncestor(getBaseDir(), file, false);
-      }
-      else {
-        return !myFileTypeManager.isFileIgnored(file.getName());
-      }
-    }
-  }
 }

@@ -37,6 +37,8 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget {
       if (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile)) {
         return true;
       }
+
+      return vFile.getParent() == myProject.getBaseDir();
     }
 
     return false;
