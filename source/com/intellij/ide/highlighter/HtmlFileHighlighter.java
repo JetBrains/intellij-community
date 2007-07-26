@@ -38,12 +38,11 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 
 public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
@@ -75,6 +74,15 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, HighlighterColors.HTML_ATTRIBUTE_VALUE);
     keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.HTML_ATTRIBUTE_VALUE);
     keys2.put(XmlTokenType.XML_EQ, HighlighterColors.HTML_ATTRIBUTE_NAME);
+
+    keys1.put(XmlTokenType.XML_PI_START, HighlighterColors.HTML_TAG);
+    keys1.put(XmlTokenType.XML_PI_END, HighlighterColors.HTML_TAG);
+    keys1.put(XmlTokenType.XML_PI_TARGET, HighlighterColors.HTML_TAG);
+    keys2.put(XmlTokenType.XML_PI_TARGET, HighlighterColors.HTML_TAG_NAME);
+    
+    keys1.put(XmlTokenType.XML_DOCTYPE_START, HighlighterColors.HTML_TAG);
+    keys1.put(XmlTokenType.XML_DOCTYPE_END, HighlighterColors.HTML_TAG);
+    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.HTML_TAG);
 
     keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, HighlighterColors.HTML_ENTITY_REFERENCE);
     keys2.put(XmlTokenType.XML_ENTITY_REF_TOKEN, HighlighterColors.HTML_ENTITY_REFERENCE);

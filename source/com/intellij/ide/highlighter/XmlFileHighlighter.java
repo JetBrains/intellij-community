@@ -31,18 +31,20 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.lexer.*;
+import com.intellij.lexer.DtdHighlightingLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.XHtmlHighlightingLexer;
+import com.intellij.lexer.XmlHighlightingLexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 
 public class XmlFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
@@ -83,7 +85,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
 
     keys1.put(XmlTokenType.XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    keys1.put(XmlTokenType.XML_DECL_START, HighlighterColors.XML_PROLOGUE);
+    keys1.put(XmlTokenType.XML_DECL_START, HighlighterColors.XML_TAG);
     keys2.put(XmlTokenType.XML_DECL_START, HighlighterColors.XML_TAG_NAME);
 
     keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, HighlighterColors.XML_PROLOGUE);
@@ -95,19 +97,30 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     keys1.put(XmlTokenType.XML_DECL_END, HighlighterColors.XML_PROLOGUE);
     keys2.put(XmlTokenType.XML_DECL_END, HighlighterColors.XML_TAG_NAME);
 
+    keys1.put(XmlTokenType.XML_PI_START, HighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_PI_END, HighlighterColors.XML_TAG);
     keys1.put(XmlTokenType.XML_DOCTYPE_END, HighlighterColors.XML_PROLOGUE);
     keys2.put(XmlTokenType.XML_DOCTYPE_END, HighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_DOCTYPE_START, HighlighterColors.XML_PROLOGUE);
+    keys1.put(XmlTokenType.XML_DOCTYPE_START, HighlighterColors.XML_TAG);
     keys2.put(XmlTokenType.XML_DOCTYPE_START, HighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_ATTLIST_DECL_START, HighlighterColors.XML_PROLOGUE);
+    keys1.put(XmlTokenType.XML_DOCTYPE_SYSTEM, HighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_SYSTEM, HighlighterColors.XML_TAG_NAME);
+
+    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG_NAME);
+
+    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG_NAME);
+
+    keys1.put(XmlTokenType.XML_ATTLIST_DECL_START, HighlighterColors.XML_TAG);
     keys2.put(XmlTokenType.XML_ATTLIST_DECL_START, HighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_ELEMENT_DECL_START, HighlighterColors.XML_PROLOGUE);
+    keys1.put(XmlTokenType.XML_ELEMENT_DECL_START, HighlighterColors.XML_TAG);
     keys2.put(XmlTokenType.XML_ELEMENT_DECL_START, HighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_PROLOGUE);
+    keys1.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_TAG);
     keys2.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_TAG_NAME);
 
     keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, HighlighterColors.XML_ENTITY_REFERENCE);
