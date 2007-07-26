@@ -29,11 +29,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -49,12 +50,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.awt.*;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author ven
@@ -237,8 +241,16 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
     final PsiElement parent = refElement.getParent();
-
     GroovyResolveResult resolveResult = refElement.advancedResolve();
+
+    GrImportStatement importStatement = resolveResult.getImportStatementContext();
+    if (importStatement != null) {
+      PsiFile file = refElement.getContainingFile();
+      if (file instanceof GroovyFile) {
+        GroovyInspectionData.getInstance().registerImportUsed(importStatement);
+      }
+    }
+
     if (refElement.getReferenceName() != null) {
 
       if (parent instanceof GrNewExpression) {
@@ -297,9 +309,11 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
+/*
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation) {
     annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
-
   }
+*/
+
 }
 

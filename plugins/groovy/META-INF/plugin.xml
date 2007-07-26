@@ -137,6 +137,9 @@
       <implementation-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</implementation-class>
       <interface-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</interface-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
+    </component>
   </application-components>
 
 </idea-plugin>
