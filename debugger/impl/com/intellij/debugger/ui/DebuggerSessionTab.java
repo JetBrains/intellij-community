@@ -143,7 +143,9 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     myContentUI = new DebuggerContentUI(this, getProject(), ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
     myViewsContentManager = getContentFactory().
       createContentManager(myContentUI, false, getProject());
+    Disposer.register(this, myViewsContentManager);
 
+   
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
 
     myFramesPanel = new FramesPanel(getProject(), getContextManager());
@@ -370,7 +372,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     disposeSession();
     myVariablesPanel.dispose();
     myWatchPanel.dispose();
-    myViewsContentManager.removeAllContents(true);
     myManager.unregisterFileMatcher();
     myConsole = null;
   }

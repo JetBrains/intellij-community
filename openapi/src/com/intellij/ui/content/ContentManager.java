@@ -15,15 +15,17 @@
  */
 package com.intellij.ui.content;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
-import org.jetbrains.annotations.Nullable;
+public interface ContentManager extends Disposable {
 
-public interface ContentManager {
+
   boolean canCloseContents();
 
   JComponent getComponent();

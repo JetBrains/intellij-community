@@ -150,6 +150,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setSelectedContent(final Content content) { }
     public void setSelectedContent(final Content content, final boolean requestFocus) { }
 
+    public void dispose() {}
 
     public ContentFactory getFactory() {
       return PeerFactory.getInstance().getContentFactory();
