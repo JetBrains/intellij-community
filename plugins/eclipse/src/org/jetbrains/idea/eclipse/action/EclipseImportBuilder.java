@@ -9,13 +9,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -23,8 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
-import org.jetbrains.idea.eclipse.direct.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
+import org.jetbrains.idea.eclipse.direct.IdeaXml;
 import org.jetbrains.idea.eclipse.util.Progress;
 
 import javax.swing.*;
@@ -68,6 +69,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
           }
         }
       }
+
+      public boolean isCancelled() {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        return indicator != null && indicator.isCanceled();
+      }
     };
   }
 
@@ -97,17 +103,26 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     return getParameters().workspace == null ? null : getParameters().workspace.getRoot();
   }
 
-  public void setRootDirectory(final String path) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
+  public boolean setRootDirectory(final String path) {
+    ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
+      public void run(ProgressIndicator indicator) {
         getParameters().workspace = EclipseWorkspace.load(path, new EclipseProjectReader.Options());
+        if (indicator.isCanceled()) {
+          return;
+        }
         Collections.sort(getParameters().workspace.getProjects(), new Comparator<EclipseProjectModel>() {
           public int compare(EclipseProjectModel o1, EclipseProjectModel o2) {
             return o1.getName().compareToIgnoreCase(o2.getName());
           }
         });
       }
-    }, EclipseBundle.message("eclipse.import.scanning"), false, null);
+
+      public void onCancel() {
+        getParameters().workspace = null;
+      }
+    });
+
+    return getParameters().workspace != null;
   }
 
   public List<EclipseProjectModel> getList() {
@@ -206,7 +221,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
 
   private void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
     if (libraries.contains(libraryName)) {
-      final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false){
+      final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
         public Icon getOpenIcon(final VirtualFile virtualFile) {
           return looksLikeEclipse(virtualFile) ? eclipseIcon : super.getOpenIcon(virtualFile);
         }
@@ -224,7 +239,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
       final VirtualFile[] files = FileChooser.chooseFiles(project, fileChooserDescriptor);
       if (files.length == 1) {
         final VirtualFile pluginsDir = files[0].findChild("plugins");
-        if(pluginsDir!=null){
+        if (pluginsDir != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               final LibraryTable table =

@@ -9,5 +9,5 @@ interface EclipseProjectWizardContext {
   @Nullable
   String getRootDirectory();
 
-  void setRootDirectory(String path);
+  boolean setRootDirectory(String path);
 }

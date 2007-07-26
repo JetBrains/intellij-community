@@ -3,6 +3,7 @@ package org.jetbrains.idea.eclipse.action;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.projectImport.ProjectImportWizardStep;
@@ -48,13 +49,15 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     return myPanel;
   }
 
+  public boolean validate() throws ConfigurationException {
+    return super.validate() && getContext().setRootDirectory(myWorkspacePathComponent.getPath());
+  }
+
   public void updateDataModel() {
-    final String path = myWorkspacePathComponent.getPath();
-    getContext().setRootDirectory(path);
     final String projectFilesDir = myModuleDirComponent.getPath();
     getParameters().converterOptions.commonModulesDirectory = projectFilesDir;
     getParameters().linkConverted = myLinkCheckBox.isSelected();
-    suggestProjectNameAndPath(projectFilesDir, path);
+    suggestProjectNameAndPath(projectFilesDir, myWorkspacePathComponent.getPath());
   }
 
   public void updateStep() {
