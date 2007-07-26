@@ -465,7 +465,7 @@ public class FileUtil {
     return name;
   }
 
-  public static String createSequentFileName(File aParentFolder, String aFilePrefix, String aExtension) {
+  public static String createSequentFileName(File aParentFolder, @NonNls String aFilePrefix, String aExtension) {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
