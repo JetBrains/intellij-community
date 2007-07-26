@@ -4,9 +4,11 @@ import org.jetbrains.annotations.NonNls;
 
 public interface EclipseXml {
   @NonNls String UNNAMED_PROJECT = "unnamed";
-  @NonNls String PROJECT_FILE = ".project";
+  @NonNls String PROJECT_EXT = "project";
+  @NonNls String PROJECT_FILE = "." + PROJECT_EXT;
   @NonNls String NAME_TAG = "name";
-  @NonNls String CLASSPATH_FILE = ".classpath";
+  @NonNls String CLASSPATH_EXT = "classpath";
+  @NonNls String CLASSPATH_FILE = "." + CLASSPATH_EXT;
   @NonNls String CLASSPATH_TAG = "classpath";
   @NonNls String CLASSPATHENTRY_TAG = "classpathentry";
   @NonNls String KIND_ATTR = "kind";

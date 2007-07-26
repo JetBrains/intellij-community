@@ -16,7 +16,12 @@
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.action.EclipseImportBuilder"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
-  <project-components>
+    <application-components>
+        <component>
+            <implementation-class>org.jetbrains.idea.eclipse.config.EclipseApplicationComponent</implementation-class>
+        </component>
+    </application-components>
+    <project-components>
     <component>
       <implementation-class>org.jetbrains.idea.eclipse.config.EclipseProjectResolver</implementation-class>
       <skipForDummyProject/>
