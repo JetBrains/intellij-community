@@ -21,18 +21,29 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.PathManager;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-
-import org.jetbrains.idea.devkit.DevKitBundle;
+import java.io.File;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class PluginConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
+  private String myVmParameters;
 
   PluginConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
-        return new PluginRunConfiguration(project, this, "");
+        final PluginRunConfiguration runConfiguration = new PluginRunConfiguration(project, this, "");
+        if (runConfiguration.VM_PARAMETERS == null) {
+          runConfiguration.VM_PARAMETERS = getVmParameters();
+        } else {
+          runConfiguration.VM_PARAMETERS += getVmParameters();
+        }
+        return runConfiguration;
       }
 
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
@@ -73,5 +84,36 @@ public class PluginConfigurationType implements ConfigurationType {
   }
 
   public void disposeComponent() {
+  }
+
+  public String getVmParameters() {
+    if (myVmParameters == null) {
+      myVmParameters = "";
+      final File file = new File(PathManager.getBinPath(), "idea.exe.vmoptions");
+      if (file.exists()) {
+        BufferedReader reader = null;
+        try {
+          reader = new BufferedReader(new FileReader(file));
+          String line;
+          while ((line = reader.readLine()) != null) {
+            myVmParameters += " " + line;
+          }
+        }
+        catch (IOException e) {
+          //skip
+        }
+        finally {
+          if (reader != null) {
+            try {
+              reader.close();
+            }
+            catch (IOException e) {
+              //skip
+            }
+          }
+        }
+      }
+    }
+    return myVmParameters;
   }
 }
