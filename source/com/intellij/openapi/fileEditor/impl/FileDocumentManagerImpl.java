@@ -64,6 +64,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private VirtualFileManager myVirtualFileManager;
   private MessageBus myBus;
 
+  private final Object lock = new Object();
 
   public FileDocumentManagerImpl(VirtualFileManager virtualFileManager) {
     myVirtualFileManager = virtualFileManager;
@@ -88,36 +89,41 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null){
-      if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
-      final CharSequence text = LoadTextUtil.loadText(file);
-      document = (DocumentEx)createDocument(text);
-      document.setModificationStamp(file.getModificationStamp());
-      final FileType fileType = file.getFileType();
-      document.setReadOnly(!file.isWritable() || fileType.isBinary());
-      file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document));
-      document.putUserData(FILE_KEY, file);
+      synchronized (lock) {
+        document = (DocumentEx)getCachedDocument(file);
+        if (document != null) return document; // Double checking
 
-      if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
-        document.addDocumentListener(
-        new DocumentAdapter() {
-            public void documentChanged(DocumentEvent e) {
-              final Document document = e.getDocument();
-              myUnsavedDocuments.add(document);
-              final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-              Project project = currentCommand != null ? CommandProcessor.getInstance().getCurrentCommandProject() : null;
-              String lineSeparator = CodeStyleSettingsManager.getSettings(project).getLineSeparator();
-              document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+        if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
+        final CharSequence text = LoadTextUtil.loadText(file);
+        document = (DocumentEx)createDocument(text);
+        document.setModificationStamp(file.getModificationStamp());
+        final FileType fileType = file.getFileType();
+        document.setReadOnly(!file.isWritable() || fileType.isBinary());
+        file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document));
+        document.putUserData(FILE_KEY, file);
+
+        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
+          document.addDocumentListener(
+          new DocumentAdapter() {
+              public void documentChanged(DocumentEvent e) {
+                final Document document = e.getDocument();
+                myUnsavedDocuments.add(document);
+                final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
+                Project project = currentCommand != null ? CommandProcessor.getInstance().getCurrentCommandProject() : null;
+                String lineSeparator = CodeStyleSettingsManager.getSettings(project).getLineSeparator();
+                document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+              }
             }
-          }
-        );
-        document.addEditReadOnlyListener(myReadOnlyListener);
-      }
+          );
+          document.addEditReadOnlyListener(myReadOnlyListener);
+        }
 
-      try {
-        fireFileContentLoaded(file, document);
-      }
-      catch (Exception e) {
-        LOG.error(e);
+        try {
+          fireFileContentLoaded(file, document);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
 

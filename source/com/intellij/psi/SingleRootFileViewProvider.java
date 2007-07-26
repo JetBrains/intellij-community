@@ -53,8 +53,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private final boolean myEventSystemEnabled;
   private boolean myPhysical;
   private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
-  private Content myContent;
-  private SoftReference<Document> myDocument;
+  private volatile Content myContent;
+  private volatile SoftReference<Document> myDocument;
   private Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
