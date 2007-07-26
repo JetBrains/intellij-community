@@ -78,9 +78,7 @@
     </copy>
 
     <copy todir="${production.dest.groovy}">
-      <fileset dir="${project.dir}/resources">
-        <exclude name="inspectionDescriptions/**"/>
-      </fileset>
+      <fileset dir="${project.dir}/resources"/>
     </copy>
 
     <copy file="${project.dir}/src/org/jetbrains/plugins/grails/GrailsBundle.properties"
@@ -132,12 +130,6 @@
         <attribute name="Revision" value="${plugin.revision}"/>
         <attribute name="Build" value="${plugin.version}"/>
       </manifest>
-    </jar>
-
-    <jar jarfile="${project.dir}/tempzip/Groovy/lib/${resources.file}">
-      <fileset dir="${project.dir}/resources">
-        <include name="inspectionDescriptions/**"/>
-      </fileset>
     </jar>
 
     <copy todir="${project.dir}/tempzip/Groovy/lib">
