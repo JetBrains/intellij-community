@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.apache.oro.text.regex.Pattern;
@@ -202,9 +201,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
       for (final LookupItem item : myItems) {
           final int[] weight = itemPreferencePolicy instanceof CompletionPreferencePolicy
                                ? ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item)
-                               : item.getObject() instanceof PsiElement
-                                 ? new int[]{proximityComparator.getProximity((PsiElement)item.getObject())}
-                                 : ArrayUtil.EMPTY_INT_ARRAY;
+                               : new int[]{item.getObject() instanceof PsiElement ? proximityComparator.getProximity((PsiElement)item.getObject()) : 0};
           final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
           SortedSet<LookupItem> sortedSet = map.get(key);
           if (sortedSet == null) map.put(key, sortedSet = new TreeSet<LookupItem>());
@@ -256,26 +253,24 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     Set<LookupItem> first = new THashSet<LookupItem>();
-    if (LookupManagerImpl.isUseNewSorting()) {
-      for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
-        final SortedSet<LookupItem> items = myItemsMap.get(comparable);
-        final List<LookupItem> suitable = new SmartList<LookupItem>();
-        for (final LookupItem item : items) {
-          if (suits(item, matcher, pattern)) {
-            suitable.add(item);
-          }
-        }
 
-        if (array.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
-        for (final LookupItem item : suitable) {
-          array.add(item);
-          first.add(item);
-          model.addElement(item);
+    for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
+      final SortedSet<LookupItem> items = myItemsMap.get(comparable);
+      final List<LookupItem> suitable = new SmartList<LookupItem>();
+      for (final LookupItem item : items) {
+        if (suits(item, matcher, pattern)) {
+          suitable.add(item);
         }
       }
-      myPreferredItemsCount = array.size();
-    }
 
+      if (array.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
+      for (final LookupItem item : suitable) {
+        array.add(item);
+        first.add(item);
+        model.addElement(item);
+      }
+    }
+    myPreferredItemsCount = array.size();
 
     for (LookupItem<?> item : myItems) {
       if (!first.contains(item) && suits(item, matcher, pattern)) {
