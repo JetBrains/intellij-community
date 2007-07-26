@@ -87,6 +87,9 @@
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/GroovyBundle.properties"/>
     <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"
           tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/refactoring/GroovyRefactoringBundle.properties"/>
+    <copy file="${project.dir}/src/org/jetbrains/plugins/groovy/codeInspection/GroovyInspectionBundle.properties"
+          tofile="${production.dest.groovy}/org/jetbrains/plugins/groovy/codeInspection/GroovyInspectionBundle.properties"/>
+
 
     <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
 
