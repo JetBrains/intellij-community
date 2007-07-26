@@ -20,7 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class ReplaceForLoopWithWhileLoopIntention extends Intention {
 
@@ -41,31 +40,34 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
             final PsiElement parent = forStatement.getParent();
             parent.addBefore(initialization, forStatement);
         }
-        final PsiStatement body = forStatement.getBody();
-        @NonNls final StringBuilder whileStatementText =
-                new StringBuilder("while(");
-        final PsiExpression condition = forStatement.getCondition();
-        if (condition != null) {
-            whileStatementText.append(condition.getText());
-        }
-        whileStatementText.append(") {\n");
-        if (body instanceof PsiBlockStatement) {
-            final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
-            final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-            final PsiStatement[] statements = codeBlock.getStatements();
-            for (PsiStatement statement : statements) {
-                whileStatementText.append(statement.getText());
-                whileStatementText.append('\n');
-            }
-        } else if (body != null) {
-            whileStatementText.append(body.getText());
+	    final PsiManager manager = element.getManager();
+	    final PsiElementFactory factory = manager.getElementFactory();
+	    final PsiWhileStatement whileStatement =
+			    (PsiWhileStatement)factory.createStatementFromText("while(true) {}", element);
+	    final PsiExpression forCondition = forStatement.getCondition();
+	    final PsiExpression whileCondition = whileStatement.getCondition();
+	    final PsiStatement body = forStatement.getBody();
+	    whileCondition.replace(forCondition);
+	    final PsiElement newBody;
+	    if (body instanceof PsiBlockStatement) {
+	        final PsiStatement whileBody = whileStatement.getBody();
+		    final PsiBlockStatement newWhileBody = (PsiBlockStatement)whileBody.replace(body);
+		    newBody = newWhileBody.getCodeBlock();
+        } else {
+	        final PsiBlockStatement blockStatement =
+			        (PsiBlockStatement)factory.createStatementFromText("{}", element);
+	        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+		    if (body != null) {
+			    codeBlock.addAfter(body, codeBlock.getFirstChild());
+		    }
+		    newBody = codeBlock;
         }
         final PsiStatement update = forStatement.getUpdate();
         if (update != null) {
-            whileStatementText.append(update.getText());
-            whileStatementText.append(";\n");
+	        final PsiStatement updateStatement = factory.createStatementFromText(
+			        update.getText() + ';', element);
+	        newBody.addBefore(updateStatement, newBody.getLastChild());
         }
-        whileStatementText.append('}');
-        replaceStatement(whileStatementText.toString(), forStatement);
+	    forStatement.replace(whileStatement);
     }
 }
