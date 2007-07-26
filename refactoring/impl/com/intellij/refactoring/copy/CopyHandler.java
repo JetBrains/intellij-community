@@ -260,14 +260,18 @@ public class CopyHandler {
               ChangeContextUtil.clearContextInfo(aClass);
               classCopy.setName(copyClassName);
               final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
-              final PsiJavaFile createdFile = (PsiJavaFile)targetDirectory.copyFileFrom(fileName, aClass.getContainingFile());
-              final PsiClass[] classes = createdFile.getClasses();
-              assert classes.length > 0 : createdFile.getText();
-              createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
-              PsiClass newClass = (PsiClass) createdFile.add(classCopy);
-              ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
-              updateSelectionInActiveProjectView(newClass, project, selectInActivePanel);
-              EditorHelper.openInEditor(newClass);
+              final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, aClass.getContainingFile());
+              PsiElement newElement = createdFile;
+              if (createdFile instanceof PsiJavaFile) {
+                final PsiClass[] classes = ((PsiJavaFile) createdFile).getClasses();
+                assert classes.length > 0 : createdFile.getText();
+                createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
+                PsiClass newClass = (PsiClass) createdFile.add(classCopy);
+                ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
+                newElement = newClass;
+              }
+              updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
+              EditorHelper.openInEditor(newElement);
 
               result[0] = true;
             } catch (final IncorrectOperationException ex) {
