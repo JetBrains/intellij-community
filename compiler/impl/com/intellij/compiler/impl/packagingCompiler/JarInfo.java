@@ -9,13 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class JarInfo {
-  private List<Pair<String, VirtualFile>> myContent;
+  private List<Pair<String, VirtualFile>> myPackedFiles;
+  private LinkedHashSet<Pair<String, JarInfo>> myPackedJars;
   private List<DestinationInfo> myDestinations;
   private List<String> myClasspath;
 
@@ -25,20 +27,29 @@ public class JarInfo {
 
   public JarInfo(List<String> classpath) {
     myDestinations = new ArrayList<DestinationInfo>();
-    myContent = new ArrayList<Pair<String, VirtualFile>>();
+    myPackedFiles = new ArrayList<Pair<String, VirtualFile>>();
+    myPackedJars = new LinkedHashSet<Pair<String, JarInfo>>();
     myClasspath = classpath;
   }
 
   public void addDestination(DestinationInfo info) {
     myDestinations.add(info);
+    if (info instanceof JarDestinationInfo) {
+      JarDestinationInfo destinationInfo = (JarDestinationInfo)info;
+      destinationInfo.getJarInfo().myPackedJars.add(Pair.create(destinationInfo.getPathInJar(), this));
+    }
   }
 
   public void addContent(String pathInJar, VirtualFile sourceFile) {
-    myContent.add(Pair.create(pathInJar, sourceFile));
+    myPackedFiles.add(Pair.create(pathInJar, sourceFile));
   }
 
-  public List<Pair<String, VirtualFile>> getContent() {
-    return myContent;
+  public List<Pair<String, VirtualFile>> getPackedFiles() {
+    return myPackedFiles;
+  }
+
+  public LinkedHashSet<Pair<String, JarInfo>> getPackedJars() {
+    return myPackedJars;
   }
 
   public List<JarDestinationInfo> getJarDestinations() {

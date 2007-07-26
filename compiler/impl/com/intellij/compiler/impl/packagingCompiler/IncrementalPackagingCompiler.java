@@ -212,7 +212,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
       Map<VirtualFile, PackagingProcessingItem> itemsBySource = context.getUserData(ITEMS_BY_SOURCE_KEY);
       Set<VirtualFile> recompiledSources = new HashSet<VirtualFile>();
       for (JarInfo info : builder.getJarsToBuild()) {
-        for (Pair<String, VirtualFile> pair : info.getContent()) {
+        for (Pair<String, VirtualFile> pair : info.getPackedFiles()) {
           recompiledSources.add(pair.getSecond());
         }
       }

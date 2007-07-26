@@ -5,11 +5,10 @@
 package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.DeploymentUtilImpl;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -39,12 +38,15 @@ public class JarsBuilder {
   private final FileFilter myFileFilter;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;
-  private MultiValuesMap<JarInfo, Pair<String, JarInfo>> myNestedJars;
   private List<ExplodedDestinationInfo> myJarsDestinations;
   private Set<File> myJarsToDelete;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild, FileFilter fileFilter, CompileContext context) {
-    myJarsToBuild = jarsToBuild;
+    DependentJarsEvaluator evaluator = new DependentJarsEvaluator();
+    for (JarInfo jarInfo : jarsToBuild) {
+      evaluator.addJarWithDependencies(jarInfo);
+    }
+    myJarsToBuild = evaluator.getJars();
     myFileFilter = fileFilter;
     myContext = context;
     myJarsDestinations = new ArrayList<ExplodedDestinationInfo>();
@@ -53,14 +55,10 @@ public class JarsBuilder {
   public boolean buildJars(Set<String> writtenPaths) throws IOException {
     myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.building.archives"));
 
-    addDependentJars();
-
     final JarInfo[] sortedJars = sortJars();
     if (sortedJars == null) {
       return false;
     }
-
-    computeNestedJars();
 
     myBuiltJars = new HashMap<JarInfo, File>();
     for (JarInfo jar : sortedJars) {
@@ -124,15 +122,6 @@ public class JarsBuilder {
     DeploymentUtil.getInstance().copyFile(fromFile, toFile, myContext, writtenPaths, myFileFilter);
   }
 
-  private void computeNestedJars() {
-    myNestedJars = new MultiValuesMap<JarInfo, Pair<String, JarInfo>>();
-    for (JarInfo jarInfo : myJarsToBuild) {
-      for (JarDestinationInfo destination : jarInfo.getJarDestinations()) {
-        myNestedJars.put(destination.getJarInfo(), Pair.create(destination.getPathInJar(), jarInfo));
-      }
-    }
-  }
-
   @Nullable
   private JarInfo[] sortJars() {
     final DFSTBuilder<JarInfo> builder = new DFSTBuilder<JarInfo>(GraphGenerator.create(CachingSemiGraph.create(new JarsGraph())));
@@ -151,24 +140,8 @@ public class JarsBuilder {
     return jars;
   }
 
-  private void addDependentJars() {
-    final JarInfo[] jars = myJarsToBuild.toArray(new JarInfo[myJarsToBuild.size()]);
-    for (JarInfo jarInfo : jars) {
-      addDependentJars(jarInfo);
-    }
-  }
-
   public Set<JarInfo> getJarsToBuild() {
     return myJarsToBuild;
-  }
-
-  private void addDependentJars(final JarInfo jarInfo) {
-    for (JarDestinationInfo destination : jarInfo.getJarDestinations()) {
-      JarInfo dependency = destination.getJarInfo();
-      if (myJarsToBuild.add(dependency)) {
-        addDependentJars(dependency);
-      }
-    }
   }
 
   private void buildJar(final JarInfo jar) throws IOException {
@@ -184,7 +157,7 @@ public class JarsBuilder {
     try {
       final THashSet<String> writtenPaths = new THashSet<String>();
       writtenPaths.add(JarFile.MANIFEST_NAME);
-      for (Pair<String, VirtualFile> pair : jar.getContent()) {
+      for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
         File file = VfsUtil.virtualToIoFile(pair.getSecond());
         String relativePath = pair.getFirst();
         if (!JarFile.MANIFEST_NAME.equals(relativePath)) {
@@ -192,12 +165,9 @@ public class JarsBuilder {
         }
       }
 
-      final Collection<Pair<String, JarInfo>> nestedJars = myNestedJars.get(jar);
-      if (nestedJars != null) {
-        for (Pair<String, JarInfo> nestedJar : nestedJars) {
-          File nestedJarFile = myBuiltJars.get(nestedJar.getSecond());
-          addFileToJar(jarOutputStream, nestedJarFile, nestedJar.getFirst(), writtenPaths);
-        }
+      for (Pair<String, JarInfo> nestedJar : jar.getPackedJars()) {
+        File nestedJarFile = myBuiltJars.get(nestedJar.getSecond());
+        addFileToJar(jarOutputStream, nestedJarFile, nestedJar.getFirst(), writtenPaths);
       }
     }
     finally {
@@ -206,7 +176,7 @@ public class JarsBuilder {
   }
 
   private static Manifest createManifest(final JarInfo jar) throws IOException {
-    for (Pair<String, VirtualFile> pair : jar.getContent()) {
+    for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
       if (JarFile.MANIFEST_NAME.equals(pair.getFirst())) {
         return new Manifest(pair.getSecond().getInputStream());
       }
