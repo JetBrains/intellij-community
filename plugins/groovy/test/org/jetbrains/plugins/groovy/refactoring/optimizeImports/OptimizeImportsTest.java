@@ -100,6 +100,10 @@ public class OptimizeImportsTest extends IdeaTestCase {
     doTest("foldImports5", "A.groovy");
   }
 
+  public void testFixPoint() throws Throwable {
+    doTest("fixPoint", "A.groovy");
+  }
+
   public void testSemicolons() throws Throwable {
     doTest("semicolons", "A.groovy");
   }
