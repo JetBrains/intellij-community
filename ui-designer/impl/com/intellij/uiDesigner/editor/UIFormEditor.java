@@ -81,11 +81,11 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
   public void deselectNotify(){
   }
 
-  public void addPropertyChangeListener(final PropertyChangeListener listener){
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
-  public void removePropertyChangeListener(final PropertyChangeListener listener){
+  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
@@ -101,7 +101,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
   }
 
   @NotNull
-  public FileEditorState getState(final FileEditorStateLevel ignored) {
+  public FileEditorState getState(@NotNull final FileEditorStateLevel ignored) {
     final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
     long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
