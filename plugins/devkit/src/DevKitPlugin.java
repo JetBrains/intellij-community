@@ -16,17 +16,23 @@
 package org.jetbrains.idea.devkit;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
-import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
-import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+
+import java.util.Arrays;
 
 public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider, FileTemplateGroupDescriptorFactory {
 
@@ -47,6 +53,12 @@ public class DevKitPlugin implements ApplicationComponent, InspectionToolProvide
   }
 
   public void initComponent() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final FileNameMatcher pluginMatcher = new WildcardFileNameMatcher("plugin.xml");
+        FileTypeManager.getInstance().registerFileType(new PluginFileType(), Arrays.asList(pluginMatcher));
+      }
+    });
   }
 
   public void disposeComponent() {
