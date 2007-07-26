@@ -262,15 +262,17 @@ public class FileUtil {
   }
 
   public static void asyncDelete(File file) {
-    final File tempFile = renameToTempFile(file);
-    if (tempFile == null) return;
-
+    final File tempFile = renameToTempFileOrDelete(file);
+    if (tempFile == null) {
+      return;
+    }
     startDeletionThread(tempFile);
   }
+  
   public static void asyncDelete(Collection<File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
-      final File tempFile = renameToTempFile(file);
+      final File tempFile = renameToTempFileOrDelete(file);
       if (tempFile != null) {
         tempFiles.add(tempFile);
       }
@@ -313,21 +315,27 @@ public class FileUtil {
     }
   }
 
-  private static File renameToTempFile(File file) {
-    File parent = new File(getTempDirectory());
-    final String originalFileName = file.getName();
-    File tempFile = getTempFile(originalFileName, parent);
+  private static File renameToTempFileOrDelete(File file) {
+    final File tempDir = new File(getTempDirectory());
+    boolean isSameDrive = true;
+    if (SystemInfo.isWindows) {
+      String tempDirDrive = tempDir.getAbsolutePath().substring(0, 2);
+      String fileDrive = file.getAbsolutePath().substring(0, 2);
+      isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
+    }
 
-    if (!file.renameTo(tempFile)) {
-      //second chance: try to move to the same directory - may fire events in case of file watcher
-      parent = file.getParentFile();
-      tempFile = getTempFile(originalFileName, parent);
-      if (!file.renameTo(tempFile)) {
-        delete(file);
-        return null;
+    if (isSameDrive) {
+      // the optimization is reasonable only if destination dir is located on the same drive
+      final String originalFileName = file.getName();
+      File tempFile = getTempFile(originalFileName, tempDir);
+      if (file.renameTo(tempFile)) {
+        return tempFile;
       }
     }
-    return tempFile;
+
+    delete(file);
+    
+    return null;
   }
 
   private static File getTempFile(String originalFileName, File parent) {

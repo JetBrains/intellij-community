@@ -34,6 +34,9 @@ public class FileProcessingCompilerStateCache {
   }
 
   public void update(VirtualFile sourceFile, ValidityState extState) {
+    if (!sourceFile.isValid()) {
+      LOG.error("Source file must be valid " + sourceFile.getPresentableUrl());
+    }
     myCache.update(sourceFile.getUrl(), new MyState(sourceFile.getTimeStamp(), extState));
   }
 
