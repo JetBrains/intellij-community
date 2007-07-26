@@ -271,7 +271,10 @@ public class BraceMatchingUtil {
       if (fileType == StdFileTypes.JAVA) {
         return tokenType == JavaTokenType.RBRACE || tokenType == JavaTokenType.LBRACE;
       }
-      else if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.XML) {
+      else if (fileType == StdFileTypes.HTML ||
+               fileType == StdFileTypes.XML ||
+               fileType == StdFileTypes.XHTML
+              ) {
         return tokenType == XmlTokenType.XML_START_TAG_START ||
                tokenType == XmlTokenType.XML_TAG_END ||
                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
@@ -283,7 +286,7 @@ public class BraceMatchingUtil {
                );
       }
       else {
-        return fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX && isJspJspxStructuralBrace(tokenType);
+        return (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) && isJspJspxStructuralBrace(tokenType);
       }
     }
 
