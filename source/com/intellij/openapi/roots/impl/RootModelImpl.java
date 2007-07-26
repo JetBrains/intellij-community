@@ -532,6 +532,10 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    if (myLanguageLevel != null) {
+      element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
+    }
+
     element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));
 
     if (myCompilerOutput!= null) {
@@ -588,10 +592,6 @@ class RootModelImpl implements ModifiableRootModel {
       final Element annotationPaths = new Element(ANNOTATION_PATHS_NAME);
       myAnnotationPointerContainer.writeExternal(annotationPaths, ROOT_ELEMENT);
       element.addContent(annotationPaths);
-    }
-
-    if (myLanguageLevel != null) {
-      element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
     }
   }
 
