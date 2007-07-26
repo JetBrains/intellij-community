@@ -2,6 +2,8 @@ package org.jetbrains.idea.eclipse.action;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -11,12 +13,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.direct.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.util.Progress;
 
@@ -27,8 +34,7 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectModel>
-  implements EclipseProjectWizardContext {
+public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectModel> implements EclipseProjectWizardContext {
 
   private static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
 
@@ -185,6 +191,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
       }
     });
 
+    createEclipseLibrary(project, libraries, IdeaXml.ECLIPSE_LIBRARY);
+
     if (libraries.size() != 0) {
       StringBuffer message = new StringBuffer();
       for (String name : libraries) {
@@ -193,6 +201,46 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
       }
       Messages
         .showErrorDialog(project, EclipseBundle.message("eclipse.import.warning.undefinded.libraries", message.toString()), getTitle());
+    }
+  }
+
+  private void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
+    if (libraries.contains(libraryName)) {
+      final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false){
+        public Icon getOpenIcon(final VirtualFile virtualFile) {
+          return looksLikeEclipse(virtualFile) ? eclipseIcon : super.getOpenIcon(virtualFile);
+        }
+
+        public Icon getClosedIcon(final VirtualFile virtualFile) {
+          return looksLikeEclipse(virtualFile) ? eclipseIcon : super.getClosedIcon(virtualFile);
+        }
+
+        private boolean looksLikeEclipse(final VirtualFile virtualFile) {
+          return virtualFile.findChild(".eclipseproduct") != null;
+        }
+      };
+      fileChooserDescriptor.setTitle(EclipseBundle.message("eclipse.create.library.title"));
+      fileChooserDescriptor.setDescription(EclipseBundle.message("eclipse.create.library.description", libraryName));
+      final VirtualFile[] files = FileChooser.chooseFiles(project, fileChooserDescriptor);
+      if (files.length == 1) {
+        final VirtualFile pluginsDir = files[0].findChild("plugins");
+        if(pluginsDir!=null){
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              final LibraryTable table =
+                LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.APPLICATION_LEVEL, project);
+              assert table != null;
+              final LibraryTable.ModifiableModel tableModel = table.getModifiableModel();
+              final Library library = tableModel.createLibrary(libraryName);
+              final Library.ModifiableModel libraryModel = library.getModifiableModel();
+              libraryModel.addJarDirectory(pluginsDir, true);
+              libraryModel.commit();
+              tableModel.commit();
+            }
+          });
+          libraries.remove(libraryName);
+        }
+      }
     }
   }
 
