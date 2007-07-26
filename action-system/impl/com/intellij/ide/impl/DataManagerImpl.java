@@ -125,7 +125,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   private static Object validated(Object data, String dataId, Object dataSource) {
-    Object invalidData = DataValidator.findInvalidData(dataId, data);
+    Object invalidData = DataValidator.findInvalidData(dataId, data, dataSource);
     if (invalidData != null) {
       LOG.assertTrue(false, "Data isn't valid. " + dataId + "=" + invalidData + " Provided by: " + dataSource.getClass().getName() + " (" +
                             dataSource.toString() + ")");
