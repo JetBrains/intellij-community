@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -78,6 +79,32 @@ public class GroovyAnnotator implements Annotator {
       checkAssignmentExpression((GrAssignmentExpression) element, holder);
     } else if (element instanceof GrNamedArgument) {
       checkCommandArgument((GrNamedArgument) element, holder);
+    } else if (element instanceof GrReturnStatement) {
+      checkReturnStatement((GrReturnStatement)element, holder);
+    }
+  }
+
+  private void checkReturnStatement(GrReturnStatement returnStatement, AnnotationHolder holder) {
+    final GrExpression value = returnStatement.getReturnValue();
+    if (value != null) {
+      final PsiType type = value.getType();
+      if (type != null) {
+        final GrMethod method = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class);
+        if (method != null) {
+          if (method.isConstructor()) {
+            holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.constructor"));
+          } else {
+            final PsiType returnType = method.getReturnType();
+            if (returnType != null) {
+              if (PsiType.VOID.equals(returnType)) {
+                holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.void.method"));
+              } else {
+                checkAssignability(holder, returnType, type, value);
+              }
+            }
+          }
+        }
+      }
     }
   }
 
