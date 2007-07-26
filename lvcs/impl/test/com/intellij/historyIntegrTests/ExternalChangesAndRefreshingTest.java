@@ -61,7 +61,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     String path = createFileExternally("f.java");
     refreshVFS();
     Revision r = getVcsRevisionsFor(root).get(0);
-    assertEquals("External Change", r.getCauseChangeName());
+    assertEquals("External change", r.getCauseChangeName());
   }
 
   public void testRefreshDuringCommand() {

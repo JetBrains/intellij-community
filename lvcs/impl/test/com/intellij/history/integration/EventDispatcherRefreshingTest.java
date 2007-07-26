@@ -39,7 +39,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     d.afterRefreshFinish(false);
 
     Revision r = vcs.getRevisionsFor("root").get(0);
-    assertEquals("External Change", r.getCauseChangeName());
+    assertEquals("External change", r.getCauseChangeName());
   }
 
   @Test

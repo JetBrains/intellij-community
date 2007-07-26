@@ -280,7 +280,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     revertLastChange(f);
 
     Revision r = getVcsRevisionsFor(root).get(0);
-    assertEquals("Revert 'file changed'", r.getCauseChangeName());
+    assertEquals("Revert of 'file changed'", r.getCauseChangeName());
   }
 
   public void testChangeSetNameAfterRevertUnnamedChange() throws IOException {
@@ -292,6 +292,6 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     revertLastChange(f);
 
     Revision r = getVcsRevisionsFor(root).get(0);
-    assertEquals("Revert change made 01.01.03 12:30", r.getCauseChangeName());
+    assertEquals("Revert of change made 01.01.03 12:30", r.getCauseChangeName());
   }
 }
