@@ -44,7 +44,7 @@ import java.util.ArrayList;
 public class DefaultFileNavigationContributor implements ChooseByNameContributor {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return PsiManager.getInstance(project).getShortNamesCache().getAllFieldNames(includeNonProjectItems);
+    return PsiManager.getInstance(project).getShortNamesCache().getAllFileNames();
   }
 
   public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
