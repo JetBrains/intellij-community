@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -67,6 +68,8 @@ class RootModelImpl implements ModifiableRootModel {
   private final VirtualFilePointerContainer myJavadocPointerContainer;
   private final VirtualFilePointerContainer myAnnotationPointerContainer;
 
+  private LanguageLevel myLanguageLevel;
+
   private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
     public VirtualFilePointer create(VirtualFile file) {
       final VirtualFilePointer pointer = myFilePointerManager.create(file, getFileListener());
@@ -92,7 +95,7 @@ class RootModelImpl implements ModifiableRootModel {
   private ProjectRootManagerImpl myProjectRootManager;
   @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
   @NonNls private static final String ANNOTATION_PATHS_NAME = "annotation-paths";
-
+  @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
 
   public String getCompilerOutputPathUrl() {
     return getCompilerOutputUrl();
@@ -190,6 +193,16 @@ class RootModelImpl implements ModifiableRootModel {
     if (annotationPaths != null) {
       myAnnotationPointerContainer.readExternal(annotationPaths, ROOT_ELEMENT);
     }
+
+    final String languageLevel = element.getAttributeValue(LANGUAGE_LEVEL_ELEMENT_NAME);
+    if (languageLevel != null) {
+      try {
+        myLanguageLevel = LanguageLevel.valueOf(languageLevel);
+      }
+      catch (IllegalArgumentException e) {
+        //bad value was stored
+      }
+    }
   }
 
   public boolean isWritable() {
@@ -251,6 +264,8 @@ class RootModelImpl implements ModifiableRootModel {
 
     myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     myAnnotationPointerContainer.addAll(rootModel.myAnnotationPointerContainer);
+
+    myLanguageLevel = rootModel.myLanguageLevel;
   }
 
   @NotNull
@@ -574,6 +589,10 @@ class RootModelImpl implements ModifiableRootModel {
       myAnnotationPointerContainer.writeExternal(annotationPaths, ROOT_ELEMENT);
       element.addContent(annotationPaths);
     }
+
+    if (myLanguageLevel != null) {
+      element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
+    }
   }
 
   public void setJdk(ProjectJdk jdk) {
@@ -847,6 +866,7 @@ class RootModelImpl implements ModifiableRootModel {
 
     if (myExcludeOutput != getSourceModel().myExcludeOutput) return true;
     if (myExcludeExploded != getSourceModel().myExcludeExploded) return true;
+    if (myLanguageLevel != getSourceModel().myLanguageLevel) return true;
 
     OrderEntry[] orderEntries = getOrderEntries();
     OrderEntry[] sourceOrderEntries = getSourceModel().getOrderEntries();
@@ -1156,6 +1176,14 @@ class RootModelImpl implements ModifiableRootModel {
   @NotNull
   public String[] getAnnotationUrls() {
     return myAnnotationPointerContainer.getUrls();
+  }
+
+  public void setLanguageLevel(final LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
+
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
   }
 
   public void setJavadocUrls(String[] urls) {

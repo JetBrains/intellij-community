@@ -27,9 +27,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
 
-  private VirtualFile myBaseDirCache;
-
-
   public ProjectFileIndexImpl(Project project, DirectoryIndex directoryIndex, FileTypeManager fileTypeManager) {
     myProject = project;
 
@@ -58,16 +55,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       }
     }
 
-    final VirtualFile projectBaseDir = myProject.getBaseDir();
-    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(projectBaseDir);
-    if (info != null && info.module == null) {
-      final VirtualFile[] files = projectBaseDir.getChildren();
-      for (VirtualFile file : files) {
-        if (!myFileTypeManager.isFileIgnored(file.getName())) {
-          if (!iterator.processFile(file)) return false;
-        }
-      }
-    }
     return true;
   }
 
@@ -211,10 +198,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      if (info == null) return false;
-      if (info.module != null) return true;
-
-      return getBaseDir() == fileOrDir;
+      return info != null && info.module != null;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -244,12 +228,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     }
   }
 
-  private VirtualFile getBaseDir() {
-    if (myBaseDirCache != null) return myBaseDirCache;
-    myBaseDirCache = myProject.getBaseDir();
-    return myBaseDirCache;
-  }
-
   private class ContentFilter implements VirtualFileFilter {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
@@ -261,5 +239,4 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       }
     }
   }
-
 }

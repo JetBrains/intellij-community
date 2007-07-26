@@ -29,9 +29,7 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +64,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedFiles;
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles;
 
-  @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
-  @Nullable private LanguageLevel myLanguageLevel;
+
 
   public ModuleRootManagerImpl(Module module,
                                DirectoryIndex directoryIndex,
@@ -589,8 +586,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
-    boolean needToReload = myLanguageLevel != languageLevel;
-    myLanguageLevel = languageLevel;
+    boolean needToReload = myRootModel.getLanguageLevel() != languageLevel;
+    myRootModel.setLanguageLevel(languageLevel);
     if (needToReload && myModule.getProject().isOpen()) {
       myProjectRootManager.reloadProjectOnLanguageLevelChange(languageLevel, true);
     }
@@ -598,11 +595,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   @Nullable
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
+    return myRootModel.getLanguageLevel();
   }
 
   public ModuleRootManagerState getState() {
-    return new ModuleRootManagerState(myRootModel, getLanguageLevel());
+    return new ModuleRootManagerState(myRootModel);
   }
 
   public void loadState(ModuleRootManagerState object) {
@@ -613,7 +610,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
       if (throwEvent) {
         fireBeforeRootsChange();
-        myLanguageLevel = object.getLanguageLevel();
         setModel(newModel);
         final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
         for (RootModelComponentBase rootModelComponentBase : components) {
@@ -622,7 +618,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         fireRootsChanged();
       }
       else {
-        myLanguageLevel = object.getLanguageLevel();
         myRootModel = newModel;
       }
     }
@@ -633,41 +628,21 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
-    private LanguageLevel myLanguageLevel;
     private Element myRootModelElement = null;
-
 
     public ModuleRootManagerState() {
     }
 
-    public ModuleRootManagerState(final RootModelImpl rootModel, final LanguageLevel languageLevel) {
+    public ModuleRootManagerState(final RootModelImpl rootModel) {
       myRootModel = rootModel;
-      myLanguageLevel = languageLevel;
     }
 
     public void readExternal(Element element) throws InvalidDataException {
-      final Attribute langLevelAttribute = element.getAttribute(LANGUAGE_LEVEL_ELEMENT_NAME);
-      if (langLevelAttribute != null) {
-        try {
-          myLanguageLevel = LanguageLevel.valueOf(langLevelAttribute.getValue());
-        }
-        catch (IllegalArgumentException e) {
-          //bad value was stored
-        }
-      }
-
       myRootModelElement = element;
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-      if (myLanguageLevel != null) {
-        element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
-      }
       myRootModel.writeExternal(element);
-    }
-
-    public LanguageLevel getLanguageLevel() {
-      return myLanguageLevel;
     }
 
     public Element getRootModelElement() {
