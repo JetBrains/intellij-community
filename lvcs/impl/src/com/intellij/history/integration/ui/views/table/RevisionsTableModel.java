@@ -2,6 +2,7 @@ package com.intellij.history.integration.ui.views.table;
 
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.FormatUtil;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 
 import javax.swing.table.AbstractTableModel;
@@ -23,9 +24,9 @@ public class RevisionsTableModel extends AbstractTableModel {
 
   @Override
   public String getColumnName(int column) {
-    if (column == 0) return "Date";
-    if (column == 1) return "Revision";
-    if (column == 2) return "Action";
+    if (column == 0) return LocalHistoryBundle.message("revisions.table.date");
+    if (column == 1) return LocalHistoryBundle.message("revisions.table.revision");
+    if (column == 2) return LocalHistoryBundle.message("revisions.table.action");
     return null;
   }
 

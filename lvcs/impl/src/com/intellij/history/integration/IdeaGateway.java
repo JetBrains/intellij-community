@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CommonBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,15 +57,15 @@ public class IdeaGateway {
   }
 
   public boolean askForProceed(String s) {
-    return Messages.showYesNoDialog(myProject, s, "Question", Messages.getWarningIcon()) == 0;
+    return Messages.showYesNoDialog(myProject, s, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == 0;
   }
 
   public void showError(String s) {
-    Messages.showErrorDialog(myProject, s, "Error");
+    Messages.showErrorDialog(myProject, s, CommonBundle.getErrorTitle());
   }
 
-  public void showMessage(String s) {
-    Messages.showInfoMessage(myProject, s, "Information");
+  public void showMessage(String s, String title) {
+    Messages.showInfoMessage(myProject, s, title);
   }
 
   public void performCommandInsideWriteAction(final String name, final Runnable r) {

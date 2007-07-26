@@ -34,7 +34,7 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
   private JPanel myPanel;
 
   public String getDisplayName() {
-    return LocalHistoryBundle.message("configuration.dialog.title");
+    return LocalHistoryBundle.message("config.dialog.title");
   }
 
   public Icon getIcon() {
@@ -74,7 +74,7 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
 
     myPurgePeriodField = new JTextField();
 
-    JLabel l = new JLabel(LocalHistoryBundle.message("local.history.period"));
+    JLabel l = new JLabel(LocalHistoryBundle.message("config.period"));
     l.setLabelFor(myPurgePeriodField);
 
     panel.add(l, BorderLayout.CENTER);
@@ -89,16 +89,16 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
 
   private JPanel createLabelingPanel() {
     JPanel panel = new JPanel(new GridLayout(7, 1));
-    Border title = IdeBorderFactory.createTitledBorder(LocalHistoryBundle.message("put.label.on.group"));
+    Border title = IdeBorderFactory.createTitledBorder(LocalHistoryBundle.message("config.put.label.group"));
     panel.setBorder(createCompoundBorder(title, createEmptyBorder(2, 2, 2, 2)));
 
-    myProjectOpenBox = addCheckBox("put.label.on.project.opening", panel);
-    myOnProjectCompileBox = addCheckBox("put.label.on.project.compilation", panel);
-    myOnFileCompileBox = addCheckBox("put.label.on.file.package.compilation", panel);
-    myOnProjectMakeBox = addCheckBox("put.label.on.project.make", panel);
-    myOnRunningBox = addCheckBox("put.label.on.running.debugging", panel);
-    myOnUnitTestsPassedBox = addCheckBox("put.label.on.unit.tests.passed", panel);
-    myOnUnitTestsFailedBox = addCheckBox("put.label.on.unit.tests.failed", panel);
+    myProjectOpenBox = addCheckBox("config.put.label.on.project.opening", panel);
+    myOnProjectCompileBox = addCheckBox("config.put.label.on.project.compilation", panel);
+    myOnFileCompileBox = addCheckBox("config.put.label.on.file.package.compilation", panel);
+    myOnProjectMakeBox = addCheckBox("config.put.label.on.project.make", panel);
+    myOnRunningBox = addCheckBox("config.put.label.on.running.debugging", panel);
+    myOnUnitTestsPassedBox = addCheckBox("config.put.label.on.unit.tests.passed", panel);
+    myOnUnitTestsFailedBox = addCheckBox("config.put.label.on.unit.tests.failed", panel);
 
     return panel;
   }

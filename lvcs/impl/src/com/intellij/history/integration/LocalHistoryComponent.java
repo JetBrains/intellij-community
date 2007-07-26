@@ -89,7 +89,6 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public File getStorageDir() {
-    // todo dont forget to change folder name
     File vcsDir = new File(getSystemPath(), "LocalHistory");
     return new File(vcsDir, myProject.getLocationHash());
   }
@@ -144,6 +143,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   protected LocalHistoryAction startAction(String name) {
+    // todo temporary means to catch bug IDEADEV-19421 
+    assert myProject != null;
+    assert !isDefaultProject();
+    assert myVcs != null;
+    assert myService != null;
+
     return myService.startAction(name);
   }
 

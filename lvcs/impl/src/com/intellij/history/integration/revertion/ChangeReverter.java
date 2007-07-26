@@ -4,6 +4,7 @@ import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class ChangeReverter extends Reverter {
         if (isBeforeMyChange(c, false)) stop();
         if (!isInTheChain(c)) return;
 
-        result[0] = "There are some changes that have been done after this one.\n" + "These changes should be reverted too.";
+        result[0] = LocalHistoryBundle.message("revert.message.should.revert.sequential.changes");
         stop();
       }
     });
@@ -48,7 +49,7 @@ public class ChangeReverter extends Reverter {
       @Override
       public void visit(StructuralChange c) {
         if (!c.canRevertOn(myRoot)) {
-          errors.add("some files already exist");
+          errors.add(LocalHistoryBundle.message("revert.error.files.already.exist"));
           return;
         }
         c.revertOn(myRoot);
@@ -59,10 +60,12 @@ public class ChangeReverter extends Reverter {
   @Override
   protected String formatCommandName() {
     String name = myChange.getName();
-    if (name != null) return "Revert '" + name + "'";
+    if (name != null) {
+      return LocalHistoryBundle.message("system.label.revert.of.change", name);
+    }
 
     String date = FormatUtil.formatTimestamp(myChange.getTimestamp());
-    return "Revert change made " + date;
+    return LocalHistoryBundle.message("system.label.revert.of.change.made.at.date", date);
   }
 
   @Override

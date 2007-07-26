@@ -5,6 +5,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,7 +26,7 @@ public abstract class RevisionReverter extends Reverter {
   protected void doCheckCanRevert(List<String> errors) throws IOException {
     super.doCheckCanRevert(errors);
     if (myLeftEntry != null && myLeftEntry.hasUnavailableContent()) {
-      errors.add("some of the files have big content");
+      errors.add(LocalHistoryBundle.message("revert.error.files.have.big.content"));
     }
   }
 
@@ -37,7 +38,8 @@ public abstract class RevisionReverter extends Reverter {
 
   @Override
   protected String formatCommandName() {
-    return "Reverted to " + FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
+    String date = FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
+    return LocalHistoryBundle.message("system.label.revert.to.date", date);
   }
 
   protected boolean hasPreviousVersion() {

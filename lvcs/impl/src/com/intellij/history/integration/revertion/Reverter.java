@@ -6,6 +6,7 @@ import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -39,7 +40,7 @@ public abstract class Reverter {
 
   protected void doCheckCanRevert(List<String> errors) throws IOException {
     if (!askForReadOnlyStatusClearing()) {
-      errors.add("some files are read-only");
+      errors.add(LocalHistoryBundle.message("revert.error.files.are.read.only"));
     }
   }
 

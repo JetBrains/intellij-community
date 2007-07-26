@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class Entry {
-  // todo make them basic type (quite possible)
   protected int myId;
   protected String myName;
   protected DirectoryEntry myParent;

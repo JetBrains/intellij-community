@@ -2,7 +2,9 @@ package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.LocalHistoryComponent;
+import static com.intellij.history.integration.LocalHistoryBundle.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -21,7 +23,7 @@ public class PutLabelDialog extends DialogWrapper {
 
   public PutLabelDialog(IdeaGateway gw, VirtualFile f) {
     super(gw.getProject(), false);
-    setTitle("Put Label");
+    setTitle(message("put.label.dialog.title"));
 
     myGateway = gw;
     myFile = f;
@@ -39,12 +41,12 @@ public class PutLabelDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
 
     initNameField();
-    panel.add(new JLabel("Label name"), atCell(0, 0));
+    panel.add(new JLabel(message("put.label.name")), atCell(0, 0));
     panel.add(myNameField, atCell(1, 0));
 
     if (canPutLabelOnSelectedFile()) {
       initGroupButtons();
-      panel.add(new JLabel("Put on"), atCell(0, 1));
+      panel.add(new JLabel(message("put.label.on")), atCell(0, 1));
       panel.add(myProjectButton, atCell(1, 1));
       panel.add(myFileButton, atCell(1, 2));
     }
@@ -63,7 +65,7 @@ public class PutLabelDialog extends DialogWrapper {
   }
 
   private void initGroupButtons() {
-    myProjectButton = new JRadioButton("Whole project");
+    myProjectButton = new JRadioButton(message("put.label.on.project"));
     myFileButton = new JRadioButton(myFile.getPath());
 
     ButtonGroup group = new ButtonGroup();

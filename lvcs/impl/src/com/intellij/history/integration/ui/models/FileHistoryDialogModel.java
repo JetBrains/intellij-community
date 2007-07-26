@@ -2,6 +2,7 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.revertion.FileReverter;
 import com.intellij.history.integration.revertion.RevisionReverter;
 import com.intellij.openapi.diff.DiffContent;
@@ -27,7 +28,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     return new EntireFileDifferenceModel(getLeftEntry(), getRightEntry()) {
       @Override
       public String getRightTitle() {
-        if (isCurrentRevisionSelected()) return "Current";
+        if (isCurrentRevisionSelected()) return LocalHistoryBundle.message("current.revision");
         return super.getRightTitle();
       }
 

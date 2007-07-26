@@ -4,6 +4,7 @@ import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -24,7 +25,8 @@ public class RecentChangesPopup {
   public void show() {
     List<RecentChange> cc = myVcs.getRecentChanges();
     if (cc.isEmpty()) {
-      myGateway.showMessage("There are no changes");
+      String message = LocalHistoryBundle.message("recent.changes.to.changes");
+      myGateway.showMessage(message, getTitle());
       return;
     }
 
@@ -52,7 +54,7 @@ public class RecentChangesPopup {
 
   private void showList(JList list, Runnable selectAction) {
     new PopupChooserBuilder(list).
-      setTitle("Recent Changes").
+      setTitle(getTitle()).
       setItemChoosenCallback(selectAction).
       createPopup().
       showCenteredInCurrentWindow(myGateway.getProject());
@@ -61,6 +63,10 @@ public class RecentChangesPopup {
   private void showRecentChangeDialog(RecentChange c) {
     DialogWrapper d = new RecentChangeDialog(myGateway, c);
     d.show();
+  }
+
+  private String getTitle() {
+    return LocalHistoryBundle.message("recent.changes.popup.title");
   }
 
   private static class RecentChangesListCellRenderer implements ListCellRenderer {

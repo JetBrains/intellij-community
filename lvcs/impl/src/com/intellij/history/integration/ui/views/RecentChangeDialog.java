@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +41,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
     Action help = getHelpAction();
     Action cancel = getCancelAction();
 
-    UIUtil.setActionNameAndMnemonic("Revert", revert);
+    UIUtil.setActionNameAndMnemonic(LocalHistoryBundle.message("action.revert"), revert);
     UIUtil.setActionNameAndMnemonic(CommonBundle.getCloseButtonText(), cancel);
 
     return new Action[]{revert, cancel, help};

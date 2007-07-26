@@ -1,8 +1,10 @@
 package com.intellij.history.integration.ui.views;
 
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
@@ -132,7 +134,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private class ShowDifferenceAction extends ActionOnSelection {
     public ShowDifferenceAction() {
-      super("Show difference", "/actions/diff.png");
+      super(message("action.show.difference"), "/actions/diff.png");
     }
 
     @Override
@@ -149,7 +151,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private class RevertSelectionAction extends ActionOnSelection {
     public RevertSelectionAction() {
-      super("Revert selection", "/actions/rollback.png");
+      super(message("action.revert.selection"), "/actions/rollback.png");
     }
 
     @Override

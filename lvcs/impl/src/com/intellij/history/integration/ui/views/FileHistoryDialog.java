@@ -1,7 +1,11 @@
 package com.intellij.history.integration.ui.views;
 
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
+import static com.intellij.history.integration.LocalHistoryBundle.*;
+import static com.intellij.history.integration.LocalHistoryBundle.*;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.openapi.diff.DiffManager;
@@ -48,9 +52,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected JComponent createDiffPanel() {
-    String message = "The difference cannot be shown<br>because one of the selected revisions has very long file content";
     myCanNotShowDifferenceLabel =
-      new JLabel("<HTML><CENTER><B><FONT color='red'>" + message + "</FONT></B></CENTER></HTML>", JLabel.CENTER);
+      new JLabel(getFormattedCanNotShowDiffMessage(), JLabel.CENTER);
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), getProject());
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
@@ -65,6 +68,13 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     updateDiffs();
 
     return myPanel;
+  }
+
+  private String getFormattedCanNotShowDiffMessage() {
+    String message = message("message.can.not.show.diffecence.because.of.big.files");
+    message = message.replaceAll("\n", "<br>");
+    message = "<HTML><CENTER><B><FONT color='red'>" + message + "</FONT></B></CENTER></HTML>";
+    return message;
   }
 
   @Override

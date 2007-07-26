@@ -23,7 +23,7 @@ public class LocalHistoryFacade {
   }
 
   public void finishRefreshing() {
-    endChangeSet("External Change");
+    endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
   }
 
   public void startCommand() {

@@ -1,9 +1,11 @@
 package com.intellij.history.integration.ui.views;
 
+import com.intellij.CommonBundle;
+import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.integration.LocalHistoryComponent;
-import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
@@ -224,7 +226,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     try {
       String question = r.askUserForProceed();
       if (question != null) {
-        if (!myGateway.askForProceed(question + "\nDo you want to proceed?")) {
+        String m = question + "\n" + message("message.do.you.want.to.proceed");
+        if (!myGateway.askForProceed(m)) {
           return;
         }
       }
@@ -238,7 +241,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
       close(0);
     }
     catch (IOException e) {
-      myGateway.showError("Error reverting changes: " + e);
+      myGateway.showError(message("message.error.during.revert", e));
     }
   }
 
@@ -252,7 +255,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
         formatted += "\n    -" + e;
       }
     }
-    myGateway.showError("Can not revert because " + formatted);
+    myGateway.showError(message("message.can.not.revert.because", formatted));
   }
 
   protected void showHelp() {
@@ -260,7 +263,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   protected void processRevisions(final RevisionProcessingTask t) {
-    new Task.Modal(getProject(), "Processing revisions", false) {
+    new Task.Modal(getProject(), message("message.processing.revisions"), false) {
       public void run(ProgressIndicator i) {
         t.run(new RevisionProcessingProgressAdapter(i));
       }
@@ -273,7 +276,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private class RevertAction extends AnAction {
     public RevertAction() {
-      super("Revert", null, IconLoader.getIcon("/actions/rollback.png"));
+      super(message("action.revert"), null, IconLoader.getIcon("/actions/rollback.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -288,7 +291,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private class ShowChangesOnlyAction extends ToggleAction {
     public ShowChangesOnlyAction() {
-      super("Show Changes Only", null, IconLoader.getIcon("/actions/showChangesOnly.png"));
+      super(message("action.show.changes.only"), null, IconLoader.getIcon("/actions/showChangesOnly.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -303,7 +306,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private class HelpAction extends AnAction {
     public HelpAction() {
-      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+      super(CommonBundle.getHelpButtonText(), null, IconLoader.getIcon("/actions/help.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -323,11 +326,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
 
     public void processingLeftRevision() {
-      myIndicator.setText("Processing left revision");
+      myIndicator.setText(message("message.processing.left.revision"));
     }
 
     public void processingRightRevision() {
-      myIndicator.setText("Processing right revision");
+      myIndicator.setText(message("message.processing.right.revision"));
     }
 
     public void processed(int percentage) {
