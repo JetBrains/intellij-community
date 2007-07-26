@@ -204,10 +204,19 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
   public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
     PsiElement next = PsiTreeUtil.skipSiblingsForward(importStatement, PsiWhiteSpace.class);
-    if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) {
-      deleteChildRange(importStatement, next);
-    } else {
-      deleteChildRange(importStatement, importStatement);
+    while (next != null && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
+      next = next.getNextSibling();
+      if (next instanceof PsiWhiteSpace) {
+        next = PsiTreeUtil.skipSiblingsForward(next, PsiWhiteSpace.class);
+      }
+    }
+    if (next != null) {
+      ASTNode astNode = next.getNode();
+      if (astNode != null && astNode.getElementType() == GroovyTokenTypes.mNLS) {
+        deleteChildRange(importStatement, next);
+      } else {
+        deleteChildRange(importStatement, importStatement);
+      }
     }
   }
 
@@ -225,7 +234,9 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
         (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
-    return (GrImportStatement) result;
+
+    GrImportStatement importStatement = (GrImportStatement) result;
+    return importStatement;
   }
 
   public GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException {

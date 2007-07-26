@@ -43,7 +43,6 @@ import java.io.IOException;
  * @author ilyas
  */
 public class OptimizeImportsTest extends IdeaTestCase {
-  protected CodeInsightTestFixture myFixture;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -99,6 +98,10 @@ public class OptimizeImportsTest extends IdeaTestCase {
 
   public void testFoldImports5() throws Throwable {
     doTest("foldImports5", "A.groovy");
+  }
+
+  public void testSemicolons() throws Throwable {
+    doTest("semicolons", "A.groovy");
   }
 
   private void doTest(String folder, String filePath) throws Throwable {
