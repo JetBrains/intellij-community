@@ -15,8 +15,13 @@
   -->
 
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin>
+<idea-plugin url="http://www.jetbrains.net/confluence/display/GRVY/Groovy+Home">
   <id>org.intellij.groovy</id>
+  <name>JetGroovy</name>
+  <description>Plugin for Groovy language support</description>
+  <version>0.1</version>
+  <vendor url="http://www.jetbrains.com">JetBrains Inc.</vendor>
+  <idea-version since-build="7065"/>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
@@ -101,11 +106,7 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
   </actions>
-  <name>JetGroovy</name>
-  <description>Plugin for Groovy language support</description>
-  <version>0.1</version>
-  <vendor>JetBrains Inc.</vendor>
-  <idea-version since-build="7065"/>
+
 
   <application-components>
     <component>

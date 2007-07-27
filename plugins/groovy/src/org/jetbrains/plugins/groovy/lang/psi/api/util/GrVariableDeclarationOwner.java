@@ -16,8 +16,6 @@ public interface GrVariableDeclarationOwner extends GroovyPsiElement {
   /**
    * Removes variable from its declaration. In case of alone variablein declaration,
    * it also will be removed.
-   * @param variable variable vto be removed
-   * @throws IncorrectOperationException
    */
   void removeVariable(GrVariable variable) throws IncorrectOperationException;
 
