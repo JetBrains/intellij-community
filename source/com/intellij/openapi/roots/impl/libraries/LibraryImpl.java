@@ -455,4 +455,26 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       return false;
     }
   }
+
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final LibraryImpl library = (LibraryImpl)o;
+
+    if (myJarDirectories != null ? !myJarDirectories.equals(library.myJarDirectories) : library.myJarDirectories != null) return false;
+    if (myName != null ? !myName.equals(library.myName) : library.myName != null) return false;
+    if (myRoots != null ? !myRoots.equals(library.myRoots) : library.myRoots != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myName != null ? myName.hashCode() : 0);
+    result = 31 * result + (myRoots != null ? myRoots.hashCode() : 0);
+    result = 31 * result + (myJarDirectories != null ? myJarDirectories.hashCode() : 0);
+    return result;
+  }
 }

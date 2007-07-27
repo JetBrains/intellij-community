@@ -79,10 +79,16 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   private void fireLibraryAdded (Library library) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("fireLibraryAdded: " + library);
+    }
     myDispatcher.getMulticaster().afterLibraryAdded(library);
   }
 
   private void fireBeforeLibraryRemoved (Library library) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("fireBeforeLibraryRemoved: " + library);
+    }
     myDispatcher.getMulticaster().beforeLibraryRemoved(library);
   }
 
