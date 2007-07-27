@@ -15,6 +15,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author dsl
  */
@@ -80,7 +83,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return DUMMY_RESULT;
   }
 
-  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
+  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     try {
       Project project = aClass.getProject();
       GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields);
@@ -93,7 +96,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
                                      CodeInsightBundle.message("generate.equals.and.hashcode.error.no.object.class.title"));
           }
         });
-      return GenerationInfo.EMPTY_ARRAY;
+      return Collections.emptyList();
     }
   }
 

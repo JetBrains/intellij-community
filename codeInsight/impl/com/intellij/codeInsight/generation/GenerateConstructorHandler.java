@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
@@ -116,7 +117,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return members;
   }
 
-  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
     ArrayList<PsiElement> fieldsVector = new ArrayList<PsiElement>();
     for (ClassMember member1 : members) {
@@ -130,20 +131,18 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     }
     PsiField[] fields = fieldsVector.toArray(new PsiField[fieldsVector.size()]);
 
-    GenerationInfo[] constructors;
-    if (baseConstructors.size() > 0) {
-      constructors = new GenerationInfo[baseConstructors.size()];
+    if (!baseConstructors.isEmpty()) {
+      List<GenerationInfo> constructors = new ArrayList<GenerationInfo>(baseConstructors.size());
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseConstructors.get(0).getContainingClass(), aClass, PsiSubstitutor.EMPTY);
-      for(int i = 0; i < baseConstructors.size(); i++){
-        PsiMethod baseConstructor = baseConstructors.get(i);
+      for (PsiMethod baseConstructor : baseConstructors) {
         if (substitutor != PsiSubstitutor.EMPTY) {
           baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor);
         }
-        constructors[i] = new PsiGenerationInfo(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields));
+        constructors.add(new PsiGenerationInfo(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields)));
       }
       return constructors;
     }
-    return new GenerationInfo[]{new PsiGenerationInfo(generateConstructorPrototype(aClass, null, false, fields))};
+    return Collections.<GenerationInfo>singletonList(new PsiGenerationInfo(generateConstructorPrototype(aClass, null, false, fields)));
   }
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {

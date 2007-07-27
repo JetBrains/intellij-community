@@ -5,7 +5,6 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -42,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author yole
@@ -226,7 +224,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
                 myClass.getProject(),
                 new Runnable() {
                   public void run() {
-                    if (OverrideImplementUtil.getMethodSignaturesToImplement(newClass).length != 0) {
+                    if (!OverrideImplementUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
                       OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
                     }
                     else {

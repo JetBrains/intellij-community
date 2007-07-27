@@ -50,15 +50,15 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
         try {
           int offset = editor.getCaretModel().getOffset();
 
-          PsiGenerationInfo<PsiMethod>[] prototypes = new PsiGenerationInfo[candidates.length];
-          for (int i = 0; i < candidates.length; i++) {
-            prototypes[i] = generateDelegatePrototype(candidates[i], target);
+          List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
+          for (PsiMethodMember candidate : candidates) {
+            prototypes.add(generateDelegatePrototype(candidate, target));
           }
 
-          PsiGenerationInfo<PsiMethod>[] results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
+          List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
 
           if (results != null) {
-            PsiMethod firstMethod = results[0].getPsiMember();
+            PsiMethod firstMethod = results.get(0).getPsiMember();
             final PsiCodeBlock block = firstMethod.getBody();
             assert block != null;
             final PsiElement first = block.getFirstBodyElement();

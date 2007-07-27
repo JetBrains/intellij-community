@@ -15,10 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author dsl
@@ -62,8 +59,8 @@ public class ExtractSuperClassUtil {
     pullUpHelper.moveMembersToBase();
     pullUpHelper.moveFieldInitializations();
 
-    MethodSignature[] toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(superclass);
-    if (toImplement.length > 0) {
+    Collection<MethodSignature> toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(superclass);
+    if (!toImplement.isEmpty()) {
       superClassModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
     }
     return superclass;
@@ -76,7 +73,7 @@ public class ExtractSuperClassUtil {
       PsiMethod constructor = (PsiMethod)superclass.add(factory.createConstructor());
       PsiParameterList paramList = constructor.getParameterList();
       PsiParameter[] baseParams = baseConstructor.getParameterList().getParameters();
-      @NonNls StringBuffer superCallText = new StringBuffer();
+      @NonNls StringBuilder superCallText = new StringBuilder();
       superCallText.append("super(");
       for (int i = 0; i < baseParams.length; i++) {
         PsiParameter baseParam = baseParams[i];

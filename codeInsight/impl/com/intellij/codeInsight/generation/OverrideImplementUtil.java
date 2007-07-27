@@ -51,15 +51,13 @@ public class OverrideImplementUtil {
   }
 
   @NotNull
-  public static MethodSignature[] getMethodSignaturesToImplement(PsiClass aClass) {
-    Set<MethodSignature> signatures = getMapToOverrideImplement(aClass, true).keySet();
-    return signatures.toArray(new MethodSignature[signatures.size()]);
+  public static Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
+    return getMapToOverrideImplement(aClass, true).keySet();
   }
 
   @NotNull
-  public static MethodSignature[] getMethodSignaturesToOverride(PsiClass aClass) {
-    Set<MethodSignature> signatures = getMapToOverrideImplement(aClass, false).keySet();
-    return signatures.toArray(new MethodSignature[signatures.size()]);
+  public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
+    return getMapToOverrideImplement(aClass, false).keySet();
   }
 
   @NotNull
@@ -265,39 +263,39 @@ public class OverrideImplementUtil {
   }
 
   @NotNull
-  public static PsiGenerationInfo<PsiMethod>[] overrideOrImplementMethods(PsiClass aClass,
-                                                       Collection<PsiMethodMember> candidates,
-                                                       boolean toCopyJavaDoc,
-                                                       boolean toInsertAtOverride) throws IncorrectOperationException {
-    List<CandidateInfo> candidateInfos =
-      ContainerUtil.map2List(candidates, new Function<PsiMethodMember, CandidateInfo>() {
-        public CandidateInfo fun(final PsiMethodMember s) {
-          return new CandidateInfo(s.getElement(), s.getSubstitutor());
-        }
-      });
-    final Collection<PsiMethod> methods = overrideOrImplementMethods(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
+  public static List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(PsiClass aClass,
+                                                                              Collection<PsiMethodMember> candidates,
+                                                                              boolean toCopyJavaDoc,
+                                                                              boolean toInsertAtOverride)
+    throws IncorrectOperationException {
+    List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, new Function<PsiMethodMember, CandidateInfo>() {
+      public CandidateInfo fun(final PsiMethodMember s) {
+        return new CandidateInfo(s.getElement(), s.getSubstitutor());
+      }
+    });
+    final List<PsiMethod> methods = overrideOrImplementMethodCandidates(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
     return convert2GenerationInfos(methods);
   }
 
-  public static PsiGenerationInfo<PsiMethod>[] convert2GenerationInfos(final Collection<PsiMethod> methods) {
-    return ContainerUtil.map2Array(methods, PsiGenerationInfo.class, new Function<PsiMethod, PsiGenerationInfo>() {
-      public PsiGenerationInfo fun(final PsiMethod s) {
-        return new PsiGenerationInfo<PsiMethod>(s);
-      }
-    });
-  }
-
   @NotNull
-  public static Collection<PsiMethod> overrideOrImplementMethods(PsiClass aClass,
-                                                       Collection<CandidateInfo> candidates,
-                                                       boolean toCopyJavaDoc,
-                                                       boolean toInsertAtOverride) throws IncorrectOperationException {
+  public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass,
+                                                                    Collection<CandidateInfo> candidates,
+                                                                    boolean toCopyJavaDoc,
+                                                                    boolean toInsertAtOverride) throws IncorrectOperationException {
     List<PsiMethod> result = new ArrayList<PsiMethod>();
     for (CandidateInfo candidateInfo : candidates) {
       result.addAll(overrideOrImplementMethod(aClass, (PsiMethod)candidateInfo.getElement(), candidateInfo.getSubstitutor(),
-                                                            toCopyJavaDoc, toInsertAtOverride));
+                                              toCopyJavaDoc, toInsertAtOverride));
     }
     return result;
+  }
+
+  public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(final Collection<PsiMethod> methods) {
+    return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
+      public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
+        return new PsiGenerationInfo<PsiMethod>(s);
+      }
+    });
   }
 
   @NotNull
@@ -427,7 +425,7 @@ public class OverrideImplementUtil {
                                                             boolean copyJavadoc,
                                                             boolean insertAtOverride) {
     try{
-      PsiGenerationInfo[] resultMembers;
+      List<PsiGenerationInfo<PsiMethod>> resultMembers;
 
       int offset = editor.getCaretModel().getOffset();
       int lbraceOffset = aClass.getLBrace().getTextOffset();
@@ -442,14 +440,14 @@ public class OverrideImplementUtil {
             list.add(new PsiGenerationInfo<PsiMethod>((PsiMethod)result));
           }
         }
-        resultMembers = list.toArray(new PsiGenerationInfo[list.size()]);
+        resultMembers = list;
       }
       else{
-        PsiGenerationInfo[] prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertAtOverride);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertAtOverride);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
       }
 
-      GenerateMembersUtil.positionCaret(editor, resultMembers[0].getPsiMember(), true);
+      GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -491,16 +489,16 @@ public class OverrideImplementUtil {
   public static void overrideOrImplement(PsiClass psiClass, @NotNull PsiMethod baseMethod) throws IncorrectOperationException {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(baseMethod.getProject());
 
-    PsiGenerationInfo[] prototypes = convert2GenerationInfos(overrideOrImplementMethod(psiClass, baseMethod, false));
-    if (prototypes.length == 0) return;
+    List<PsiGenerationInfo<PsiMethod>> prototypes = convert2GenerationInfos(overrideOrImplementMethod(psiClass, baseMethod, false));
+    if (prototypes.isEmpty()) return;
 
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseMethod.getContainingClass(), psiClass, PsiSubstitutor.EMPTY);
     PsiElement anchor = getDefaultAnchorToOverrideOrImplement(psiClass, baseMethod, substitutor);
-    PsiGenerationInfo[] results = GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor, prototypes);
+    List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor, prototypes);
 
     PsiFile psiFile = psiClass.getContainingFile();
     Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), false);
-    GenerateMembersUtil.positionCaret(editor, results[0].getPsiMember(), true);
+    GenerateMembersUtil.positionCaret(editor, results.get(0).getPsiMember(), true);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 

@@ -25,11 +25,6 @@ public class ImplementMethodsAction extends BaseCodeInsightAction {
     }
 
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
-    if (aClass == null) {
-      return false;
-    }
-    return OverrideImplementUtil.getMethodSignaturesToImplement(aClass).length != 0;
-    //final Collection<HierarchicalMethodSignature> allMethods = aClass.getVisibleSignatures();
-    //return ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null;
+    return aClass != null && !OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty();
   }
 }

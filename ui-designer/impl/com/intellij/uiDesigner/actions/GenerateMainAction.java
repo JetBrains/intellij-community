@@ -29,6 +29,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -92,8 +94,9 @@ public class GenerateMainAction extends AnAction {
           public void run() {
             try {
               PsiMethod method = file.getManager().getElementFactory().createMethodFromText(mainBuilder.toString(), file);
-              PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(file, offset, new PsiGenerationInfo[]{new PsiGenerationInfo(method)});
-              GenerateMembersUtil.positionCaret(editor, resultMembers[0].getPsiMember(), false);
+              List<PsiGenerationInfo<PsiMethod>> infos = Collections.singletonList(new PsiGenerationInfo<PsiMethod>(method));
+              List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(file, offset, infos);
+              GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), false);
             }
             catch (IncorrectOperationException e1) {
               LOG.error(e1);

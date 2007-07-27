@@ -27,6 +27,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
 */
@@ -81,11 +83,10 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
     try {
-      GenerationInfo[] prototypes = new GenerateFieldOrPropertyHandler(myName, myType, myMemberType, myAnnotations)
-        .generateMemberPrototypes(myClass, ClassMember.EMPTY_ARRAY);
+      List<? extends GenerationInfo> prototypes = new GenerateFieldOrPropertyHandler(myName, myType, myMemberType, myAnnotations).generateMemberPrototypes(myClass, ClassMember.EMPTY_ARRAY);
       prototypes = GenerateMembersUtil.insertMembersAtOffset(myClass.getContainingFile(), editor.getCaretModel().getOffset(), prototypes);
-      if (prototypes == null || prototypes.length == 0) return;
-      final PsiElement scope = prototypes[0].getPsiMember().getContext();
+      if (prototypes == null || prototypes.isEmpty()) return;
+      final PsiElement scope = prototypes.get(0).getPsiMember().getContext();
       assert scope != null;
       final Expression expression = new EmptyExpression() {
         public com.intellij.codeInsight.template.Result calculateResult(final ExpressionContext context) {

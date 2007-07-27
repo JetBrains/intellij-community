@@ -159,7 +159,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     try{
       final int previousStartOffset = myStartOffset;
       myStartOffset = addImportForItem(myFile, previousStartOffset, myLookupItem);
-      myContext.startOffset += (myStartOffset - previousStartOffset);
+      myContext.startOffset += myStartOffset - previousStartOffset;
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -193,8 +193,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
 
       if (elementAt instanceof PsiIdentifier &&
-          ( PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null || //we are inserting '@' only in annotation parameters
-            (parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof PsiJavaFile) // top level annotation without @
+          (PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null ||
+           parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof PsiJavaFile // top level annotation without @
           )
           && isAtTokenNeeded()) {
         PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
@@ -217,7 +217,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     HighlighterIterator iterator = ((EditorEx)myContext.editor).getHighlighter().createIterator(myContext.startOffset);
     LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
     iterator.retreat();
-    if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
+    if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
     return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
   }
 
@@ -243,8 +243,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private void handleParenses(final boolean hasParams, final boolean needParenth, TailType tailType){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
-    boolean insertRightParenth = (!settings.INSERT_SINGLE_PARENTH
-                                 || (settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams)
+    boolean insertRightParenth = (!settings.INSERT_SINGLE_PARENTH || settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams
                                  || generateAnonymousBody
                                  || tailType != TailType.NONE) && tailType != TailTypes.SMART_COMPLETION;
 
@@ -391,7 +390,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private boolean insertingNotRuntimeAnnotation() {
     final Object obj = myLookupItem.getObject();
     if (!(obj instanceof PsiClass)) return false;
-    final PsiClass aClass = ((PsiClass)obj);
+    final PsiClass aClass = (PsiClass)obj;
     if (!aClass.isAnnotationType()) return false;
     final PsiAnnotation retentionPolicy = AnnotationUtil.findAnnotation((PsiClass)obj, "java.lang.annotation.Retention");
     if (retentionPolicy == null) return true; //CLASS by default
@@ -514,9 +513,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                   try{
-                    PsiGenerationInfo[] prototypes = OverrideImplementUtil.convert2GenerationInfos(OverrideImplementUtil.overrideOrImplementMethods(aClass, candidatesToImplement, false, false));
-                    PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                    GenerateMembersUtil.positionCaret(myEditor, resultMembers[0].getPsiMember(), true);
+                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false, false);
+                    List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+                    List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+                    GenerateMembersUtil.positionCaret(myEditor, resultMembers.get(0).getPsiMember(), true);
                   }
                   catch(IncorrectOperationException ioe){
                     LOG.error(ioe);
@@ -553,11 +553,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     chooser.show();
     List<PsiMethodMember> selected = chooser.getSelectedElements();
-    if (selected == null || selected.size() == 0) return;
+    if (selected == null || selected.isEmpty()) return;
 
 
     try{
-      final PsiGenerationInfo<PsiMethod>[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selected, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+      final List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selected, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
       final int offset = editor.getCaretModel().getOffset();
 
@@ -571,8 +571,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
               }
             }
 
-            PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
-            GenerateMembersUtil.positionCaret(editor, resultMembers[0].getPsiMember(), true);
+            List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
+            GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
           }
           catch(IncorrectOperationException e){
             LOG.error(e);
@@ -633,7 +633,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref instanceof PsiJavaCodeReferenceElement) {
-      file.getManager().getCodeStyleManager().shortenClassReferences(((PsiJavaCodeReferenceElement)ref));
+      file.getManager().getCodeStyleManager().shortenClassReferences((PsiJavaCodeReferenceElement)ref);
     }
   }
 
@@ -643,7 +643,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
 
     final PsiManager manager = file.getManager();
-    final PsiResolveHelper helper = manager.getResolveHelper();
 
     final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
@@ -655,8 +654,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (reference != null) {
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiClass) {
-        if ((((PsiClass)resolved).getQualifiedName() == null/* local classes and parameters*/
-                                 || manager.areElementsEquivalent(aClass, resolved))) return newStartOffset;
+        if (((PsiClass)resolved).getQualifiedName() == null || manager.areElementsEquivalent(aClass, resolved)) return newStartOffset;
 
       }
     }

@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 abstract class OverrideImplementMethodAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
@@ -136,7 +137,9 @@ abstract class OverrideImplementMethodAction extends AnAction {
     if (baseMethod == null) return false;
     final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);
 
-    final MethodSignature[] allOriginalSignatures = toImplement ? OverrideImplementUtil.getMethodSignaturesToImplement(psiClass) : OverrideImplementUtil.getMethodSignaturesToOverride(psiClass);
+    Collection<MethodSignature> allOriginalSignatures = toImplement
+                                                        ? OverrideImplementUtil.getMethodSignaturesToImplement(psiClass)
+                                                        : OverrideImplementUtil.getMethodSignaturesToOverride(psiClass);
     for (final MethodSignature originalSignature : allOriginalSignatures) {
       if (originalSignature.equals(signature)) {
         return true;

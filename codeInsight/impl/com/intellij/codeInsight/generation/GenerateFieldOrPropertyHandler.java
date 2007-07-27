@@ -6,9 +6,12 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -32,7 +35,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
   }
 
 
-  public GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  public List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     final PsiElementFactory psiElementFactory = aClass.getManager().getElementFactory();
     try {
       final String name = myMemberType == PropertyMemberType.FIELD? myAttributeName : aClass.getManager().getCodeStyleManager().propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
@@ -58,7 +61,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
         }
         targetMember.getManager().getCodeStyleManager().shortenClassReferences(targetMember.getModifierList());
       }
-      return new GenerationInfo[]{new PsiGenerationInfo<PsiField>(psiField), getter, setter};
+      return Arrays.asList(new PsiGenerationInfo<PsiField>(psiField), getter, setter);
     }
     catch (IncorrectOperationException e) {
       assert false : e;

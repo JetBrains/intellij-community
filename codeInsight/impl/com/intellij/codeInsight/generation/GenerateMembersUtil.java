@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.List;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -30,8 +31,8 @@ public class GenerateMembersUtil {
   }
 
   @Nullable
-  public static <T extends GenerationInfo> T[] insertMembersAtOffset(PsiFile file, int offset, T[] memberPrototypes) throws IncorrectOperationException {
-    if (memberPrototypes.length == 0) return memberPrototypes;
+  public static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file, int offset, List<T> memberPrototypes) throws IncorrectOperationException {
+    if (memberPrototypes.isEmpty()) return memberPrototypes;
     PsiElement anchor = findAnchor(file, offset);
     if (anchor == null) return null;
     PsiClass aClass = (PsiClass) anchor.getParent();
@@ -84,7 +85,7 @@ public class GenerateMembersUtil {
     }
   }
 
-  public static <T extends GenerationInfo> T[] insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, T[] memberPrototypes) throws IncorrectOperationException {
+  public static <T extends GenerationInfo> List<T> insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, List<T> memberPrototypes) throws IncorrectOperationException {
     boolean before = true;
     for (T memberPrototype : memberPrototypes) {
       memberPrototype.insert(aClass, anchor, before);

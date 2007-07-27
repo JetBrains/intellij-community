@@ -67,9 +67,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     int line = editor.getCaretModel().getLogicalPosition().line;
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
-    GenerationInfo[] newMembers;
+    List<? extends GenerationInfo> newMembers;
     try{
-      GenerationInfo[] prototypes = generateMemberPrototypes(aClass, members);
+      List<? extends GenerationInfo> prototypes = generateMemberPrototypes(aClass, members);
       newMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
     }
     catch(IncorrectOperationException e){
@@ -91,8 +91,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
       runTemplates(project, editor, templates, 0);
     }
-    else if (newMembers.length > 0){
-      GenerateMembersUtil.positionCaret(editor, newMembers[0].getPsiMember(), false);
+    else if (!newMembers.isEmpty()){
+      GenerateMembersUtil.positionCaret(editor, newMembers.get(0).getPsiMember(), false);
     }
   }
 
@@ -141,7 +141,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return list == null ? null : list.toArray(new ClassMember[list.size()]);
   }
 
-  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);
@@ -149,7 +149,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
         array.addAll(Arrays.asList(prototypes));
       }
     }
-    return array.toArray(new GenerationInfo[array.size()]);
+    return array;
   }
 
   protected abstract ClassMember[] getAllOriginalMembers(PsiClass aClass);
