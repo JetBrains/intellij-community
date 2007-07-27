@@ -54,6 +54,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -287,6 +288,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           myMessageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
             public void moduleAdded(final Project project, final Module module) {
               autoDetectModuleVcsMapping(module);
+            }
+
+            public void beforeModuleRemoved(final Project project, final Module module) {
+              checkRemoveVcsRoot(module);
             }
           });
         }
@@ -935,5 +940,28 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     myDirectoryMappingList.cleanupMappings();
     updateActiveVcss();
+  }
+
+  private void checkRemoveVcsRoot(final Module module) {
+    final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+    final String moduleName = module.getName();
+    for(final VirtualFile file: files) {
+      for(final VcsDirectoryMapping mapping: myDirectoryMappingList.getDirectoryMappings()) {
+        if (FileUtil.toSystemIndependentName(mapping.getDirectory()).equals(file.getPath())) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              if (myProject.isDisposed()) return;
+              final String msg = VcsBundle.message("vcs.root.remove.prompt", FileUtil.toSystemDependentName(file.getPath()), moduleName);
+              int rc = Messages.showYesNoDialog(myProject, msg, VcsBundle.message("vcs.root.remove.title"), Messages.getQuestionIcon());
+              if (rc == 0) {
+                myDirectoryMappingList.removeDirectoryMapping(mapping);
+                updateActiveVcss();
+              }
+            }
+          }, ModalityState.NON_MODAL);
+          break;
+        }
+      }
+    }
   }
 }
