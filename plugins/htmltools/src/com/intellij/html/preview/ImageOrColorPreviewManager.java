@@ -54,7 +54,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   public void keyPressed(final KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+    if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (myEditor != null) {
         final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
         final Point location = pointerInfo.getLocation();
@@ -143,7 +143,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   public void mouseMoved(EditorMouseEvent e) {
     myQueue.cancelAllUpdates();
-    if (myHint == null && e.getMouseEvent().getModifiers() == KeyEvent.CTRL_MASK) {
+    if (myHint == null && e.getMouseEvent().getModifiers() == KeyEvent.SHIFT_MASK) {
       myQueue.queue(new PreviewUpdate(this, e.getMouseEvent().getPoint()));
     }
     else {
