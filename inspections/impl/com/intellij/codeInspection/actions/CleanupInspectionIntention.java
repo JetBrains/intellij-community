@@ -7,10 +7,7 @@ package com.intellij.codeInspection.actions;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -81,7 +78,7 @@ public class CleanupInspectionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class;
+    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool instanceof UnfairLocalInspectionTool);
   }
 
   public boolean startInWriteAction() {
