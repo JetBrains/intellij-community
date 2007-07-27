@@ -26,12 +26,6 @@ class AddToCompositeCollectionInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    final VirtualFile virtualFile = handler.getFile().getVirtualFile();
-    if (virtualFile != null && !virtualFile.isWritable()) {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
-      return null;
-    }
-
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       handler.checkInitialized(qname);
     }
