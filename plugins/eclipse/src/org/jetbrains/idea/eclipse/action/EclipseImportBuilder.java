@@ -201,7 +201,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        convertModules(project, ideaProjectModel.getModules(), getParameters().linkConverted, libraries);
+        convertModules(project, ideaProjectModel.getModules(), getParameters().linkConverted, getParameters().converterOptions, libraries);
         project.save();
       }
     });
@@ -262,9 +262,10 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
   public static void convertModules(final Project project,
                                     final Collection<IdeaModuleModel> modules,
                                     boolean link,
+                                    final EclipseToIdeaConverter.Options converterOptions,
                                     final Collection<String> libraries) {
     final ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-    EclipseProjectImporter.convertModules(modifiableModuleModel, modules, libraries);
+    EclipseProjectImporter.convertModules(modifiableModuleModel, modules, converterOptions, libraries);
     if (link) {
       for (IdeaModuleModel moduleModel : modules) {
         ClasspathStorage.setStorageType(modifiableModuleModel.findModuleByName(moduleModel.getName()), EclipseClasspathStorageProvider.ID);
