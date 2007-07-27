@@ -289,4 +289,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals(parameters[0].getType().getCanonicalText(), "int");
   }
 
+  public void testFixedVsVarargs2() throws Exception {
+    PsiReference ref = configureByFile("fixedVsVarargs2/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    final PsiParameter[] parameters = ((PsiMethod) resolved).getParameterList().getParameters();
+    assertEquals(parameters.length, 2);
+    assertEquals(parameters[0].getType().getCanonicalText(), "java.lang.Class");
+  }
+
 }
