@@ -26,8 +26,8 @@ public class SimpleLookupItem<T> extends LookupItem<T> {
     return this;
   }
 
-  public LookupItem<T> setOverwriteHandler(@NotNull final OverwriteHandler overwriteHandler) {
-    super.setOverwriteHandler(overwriteHandler);
+  public LookupItem<T> setCompletionCharHandler(@NotNull final CompletionCharHandler<T> completionCharHandler) {
+    super.setCompletionCharHandler(completionCharHandler);
     if (getInsertHandler() == null) {
       setInsertHandler(SimpleInsertHandler.EMPTY_HANDLER);
     }

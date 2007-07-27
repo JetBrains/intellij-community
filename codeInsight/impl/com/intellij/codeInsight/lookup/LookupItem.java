@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.completion.simple.OverwriteHandler;
+import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -69,17 +69,21 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   private int myGrouping;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
-  private static final OverwriteHandler DEFAULT_OVERWRITE_HANDLER = new OverwriteHandler() {
-    public void handleOverwrite(final Editor editor) {
-      final int offset = editor.getCaretModel().getOffset();
-      final Document document = editor.getDocument();
-      final CharSequence sequence = document.getCharsSequence();
-      int i = offset;
-      while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
-      document.deleteString(offset, i);
+  public static final CompletionCharHandler DEFAULT_COMPLETION_CHAR_HANDLER = new CompletionCharHandler() {
+    public TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
+      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+        final int offset = editor.getCaretModel().getOffset();
+        final Document document = editor.getDocument();
+        final CharSequence sequence = document.getCharsSequence();
+        int i = offset;
+        while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
+        document.deleteString(offset, i);
+        PsiDocumentManager.getInstance(editor.getProject()).commitDocument(editor.getDocument());
+      }
+      return DefaultInsertHandler.getTailType(completionChar, (LookupItem)lookupElement);
     }
   };
-  @NotNull private OverwriteHandler myOverwriteHandler = DEFAULT_OVERWRITE_HANDLER;
+  @NotNull private CompletionCharHandler<T> myCompletionCharHandler = DEFAULT_COMPLETION_CHAR_HANDLER;
   private Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
 
@@ -215,8 +219,8 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     return this;
   }
 
-  public LookupItem<T> setOverwriteHandler(@NotNull final OverwriteHandler overwriteHandler) {
-    myOverwriteHandler = overwriteHandler;
+  public LookupItem<T> setCompletionCharHandler(@NotNull final CompletionCharHandler<T> completionCharHandler) {
+    myCompletionCharHandler = completionCharHandler;
     return this;
   }
 
@@ -309,11 +313,11 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
                              final int startOffset, final LookupData data, final LookupItem item,
                              final boolean signatureSelected, final char completionChar) {
       final Editor editor = context.editor;
-      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
-        myOverwriteHandler.handleOverwrite(editor);
-        PsiDocumentManager.getInstance(editor.getProject()).commitDocument(editor.getDocument());
+      TailType tailType = myCompletionCharHandler.handleCompletionChar(editor, item, completionChar);
+      if (tailType == null) {
+        tailType = DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, completionChar);
       }
-      final TailType tailType = DefaultInsertHandler.getTailType(completionChar, item);
+      assert tailType != null;
       final int tailOffset = myHandler.handleInsert(editor, startOffset, LookupItem.this, data.items, tailType);
       tailType.processTail(editor, tailOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
 import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -62,7 +62,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (!(item instanceof SimpleLookupItem)) {
       if (item.getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)item.getObject();
-        LookupItem simpleItem = new SimpleLookupItem(method, item.getLookupString()).setInsertHandler(SimpleInsertHandlerFactory.createMethodInsertHandler(method));
+        LookupItem<PsiMethod> simpleItem = LookupElementFactoryImpl.getInstance().createLookupElement(method, item.getLookupString());
         simpleItem.setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR));
         simpleItem.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR));
         ((InsertHandler) simpleItem.getAttribute(LookupItem.INSERT_HANDLER_ATTR)).handleInsert(context, startOffset, data, simpleItem, signatureSelected, completionChar);
