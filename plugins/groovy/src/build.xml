@@ -52,7 +52,7 @@
     </fileset>
   </path>
 
-  <target name="unzip last successful IDEA build">
+  <target name="unzip.last.successful.IDEA.build">
     <unzip dest="${idea.dir}">
       <fileset dir="${idea.pack}">
         <include name="*.zip"/>
@@ -72,7 +72,7 @@
     <ant dir="./org/jetbrains/plugins/groovy/lang/lexer/" antfile="build.xml" target="generate.lexer"/>
   </target>
 
-  <target name="make.project" description="makes project" depends="build.lexer, unzip last successful IDEA build">
+  <target name="make.project" description="makes project" depends="build.lexer, unzip.last.successful.IDEA.build">
     <copy todir="${production.dest.groovy}/META-INF">
       <fileset dir="${project.dir}/META-INF"/>
     </copy>
