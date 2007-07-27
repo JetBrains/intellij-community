@@ -20,12 +20,11 @@ public class Storage implements Disposable {
   private RecordsTable myRecordsTable;
   private DataTable myDataTable;
 
-  public static void deleteFiles(String storageFilePath) {
+  public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + ".rindex");
     final File dataFile = new File(storageFilePath + ".data");
 
-    FileUtil.delete(recordsFile);
-    FileUtil.delete(dataFile);
+    return FileUtil.delete(recordsFile) && FileUtil.delete(dataFile);
   }
 
   @NotNull
@@ -45,7 +44,7 @@ public class Storage implements Disposable {
     }
 
     RecordsTable myRecordsTable = null;
-    DataTable myDataTable = null;
+    DataTable myDataTable;
     try {
       myRecordsTable = new RecordsTable(recordsFile);
       myDataTable = new DataTable(dataFile);
@@ -56,7 +55,7 @@ public class Storage implements Disposable {
         myRecordsTable.dispose();
       }
 
-      deleteFiles(storageFilePath);
+      assert deleteFiles(storageFilePath);
       return create(storageFilePath);
     }
 
