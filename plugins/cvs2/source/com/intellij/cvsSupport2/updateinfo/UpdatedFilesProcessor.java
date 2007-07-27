@@ -78,9 +78,9 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
       case FileMessage.MODIFIED:
         return myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID);
       case FileMessage.MERGED:
-        return getMergedFileGroup(vFile);
+        return getMergedFileGroup(vFile, FileGroup.MERGED_ID);
       case FileMessage.MERGED_WITH_CONFLICTS:
-        return getMergedFileGroup(vFile);
+        return getMergedFileGroup(vFile, FileGroup.MERGED_WITH_CONFLICT_ID);
       case FileMessage.CREATED_BY_SECOND_PARTY:
         return myUpdatedFiles.getGroupById(CvsUpdatePolicy.CREATED_BY_SECOND_PARTY_ID);
       case FileMessage.NOT_IN_REPOSITORY:
@@ -115,14 +115,14 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
     return myUpdatedFiles.getGroupById(FileGroup.UNKNOWN_ID);
   }
 
-  private FileGroup getMergedFileGroup(final VirtualFile vFile) {
+  private FileGroup getMergedFileGroup(final VirtualFile vFile, final String textMergedId) {
     if (vFile != null) {
       Entry entry = CvsEntriesManager.getInstance().getEntryFor(vFile);
       if (entry != null && entry.isBinary()) {
         return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
       }
     }
-    return myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
+    return myUpdatedFiles.getGroupById(textMergedId);
   }
 
 
