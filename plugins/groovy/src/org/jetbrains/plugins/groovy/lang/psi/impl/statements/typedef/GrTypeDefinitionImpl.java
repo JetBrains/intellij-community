@@ -164,7 +164,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     PsiElement parent = getParent();
     if (parent instanceof GroovyFileImpl) {
       GroovyFileImpl file = (GroovyFileImpl) parent;
-      if (file.getTopStatements().length == 1) file.delete(); else file.getNode().removeChild(getNode());
+      if (file.getTypeDefinitions().length == 1 && !file.isScript()) {
+        file.delete();
+      }else {
+        file.getNode().removeChild(getNode());
+      }
       return;
     }
 
