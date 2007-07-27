@@ -66,6 +66,11 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Eclip
     return isInConflict(item) ? ICON_CONFLICT : null;
   }
 
+  public void updateStep() {
+    super.updateStep();
+    duplicateNames = null;
+  }
+
   public boolean validate() throws ConfigurationException {
     calcDuplicates();
     if (!duplicateNames.isEmpty()) {
