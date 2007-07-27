@@ -105,9 +105,9 @@ public class AddToFavoritesAction extends AnAction {
   private static Object collectSelectedElements(final DataContext dataContext) {
     Object elements = retrieveData(null, dataContext.getData(DataConstantsEx.RESOURCE_BUNDLE_ARRAY));
     elements = retrieveData(elements, DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.PSI_ELEMENT.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.PSI_FILE.getData(dataContext));
     elements = retrieveData(elements, DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.PSI_FILE.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.PSI_ELEMENT.getData(dataContext));
     elements = retrieveData(elements, DataKeys.VIRTUAL_FILE.getData(dataContext));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY));
     elements = retrieveData(elements, DataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));

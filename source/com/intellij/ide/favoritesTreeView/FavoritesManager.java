@@ -1,12 +1,12 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ProjectComponent;
@@ -24,7 +24,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ import java.util.*;
 
 public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
-  private Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new THashMap<String, List<Pair<AbstractUrl, String>>>();
+  private Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new LinkedHashMap<String, List<Pair<AbstractUrl, String>>>();
   private final Project myProject;
   private final List<FavoritesListener> myListeners = new ArrayList<FavoritesListener>();
   public interface FavoritesListener {
