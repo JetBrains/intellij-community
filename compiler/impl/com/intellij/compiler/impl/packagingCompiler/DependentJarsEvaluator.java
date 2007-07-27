@@ -6,14 +6,14 @@ package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.util.Pair;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author nik
  */
 public class DependentJarsEvaluator {
-  private Set<JarInfo> myJars = new HashSet<JarInfo>();
+  private Set<JarInfo> myJars = new LinkedHashSet<JarInfo>();
 
   public void addJarWithDependencies(final JarInfo jarInfo) {
     if (myJars.add(jarInfo)) {
