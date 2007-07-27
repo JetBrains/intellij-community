@@ -15,12 +15,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vcs.impl.EditorIntegration</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.EditorIntegration</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.vcs.VcsConfiguration</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
