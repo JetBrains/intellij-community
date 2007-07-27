@@ -109,7 +109,7 @@ public class MavenProjectModel {
         }
       }
       else {
-        LOG.warn("Cannot find maven module " + modulePath);
+        LOG.info("Cannot find maven module " + modulePath);
       }
     }
     return node;

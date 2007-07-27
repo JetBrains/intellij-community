@@ -107,7 +107,7 @@ public class MavenToIdeaConverter {
           modifiableModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
         }
         else {
-          LOG.warn("Cannot find module " + name);
+          LOG.info("Cannot find module " + name);
         }
       }
 
