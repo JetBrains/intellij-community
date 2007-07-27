@@ -149,11 +149,31 @@ public abstract class AbstractVcs {
     return null;
   }
 
+  /**
+   * Returns true if the specified file path is located under a directory which is managed by this VCS.
+   * This method is called only for directories which are mapped to this VCS in the project configuration.
+   *
+   * @param filePath the path to check.
+   * @return true if the path is managed by this VCS, false otherwise. 
+   */
   public boolean fileIsUnderVcs(FilePath filePath) {
     return true;
   }
 
+  /**
+   * Returns true if the specified file path represents a file which exists in the VCS repository (is neither
+   * unversioned nor scheduled for addition).
+   * This method is called only for directories which are mapped to this VCS in the project configuration.
+   *
+   * @param path the path to check.
+   * @return true if the corresponding file exists in the repository, false otherwise.
+   */
   public boolean fileExistsInVcs(FilePath path) {
+    final VirtualFile virtualFile = path.getVirtualFile();
+    if (virtualFile != null) {
+      final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+      return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED;
+    }
     return true;
   }
 
@@ -235,6 +255,7 @@ public abstract class AbstractVcs {
   /**
    * Checks if the specified directory is managed by this version control system (regardless of the
    * project VCS configuration). For example, for CVS this checks the presense of "CVS" admin directories.
+   * This method is used for VCS autodetection during initial project creation and VCS configuration.
    *
    * @param dir the directory to check.
    * @return true if the directory is managed by the specified VCS, false otherwise.
