@@ -64,7 +64,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private VirtualFileManager myVirtualFileManager;
   private MessageBus myBus;
 
-  private final Object lock = new Object();
+  private final static Object lock = new Object();
 
   public FileDocumentManagerImpl(VirtualFileManager virtualFileManager) {
     myVirtualFileManager = virtualFileManager;
@@ -149,12 +149,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public static void registerDocument(final Document document, VirtualFile virtualFile) {
-    virtualFile.putUserData(DOCUMENT_KEY, new SoftReference<Document>(document) {
-      public Document get() {
-        return document;
-      }
-    });
-    document.putUserData(FILE_KEY, virtualFile);
+    synchronized (lock) {
+      virtualFile.putUserData(DOCUMENT_KEY, new SoftReference<Document>(document) {
+        public Document get() {
+          return document;
+        }
+      });
+      document.putUserData(FILE_KEY, virtualFile);
+    }
   }
 
   private static boolean isFileBecameBinary(VirtualFile file) {
