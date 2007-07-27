@@ -4,25 +4,38 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
+import com.intellij.facet.impl.ui.libraries.LibraryDownloader;
+import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -36,6 +49,8 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
   private static final int VERTICAL_SPACE = 5;
   private JPanel myMainPanel;
   private JPanel myFrameworksTreePanel;
+  private JButton myChangeButton;
+  private JPanel myDownloadingOptionsPanel;
   private List<FrameworkSupportSettings> myRoots;
   private final ModuleBuilder myBuilder;
 
@@ -47,6 +62,56 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     addSettingsComponents(myRoots, treePanel, 0);
     myFrameworksTreePanel.add(treePanel, BorderLayout.WEST);
     myBuilder.addModuleConfigurationUpdater(new MyModuleConfigurationUpdater());
+    myChangeButton.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        new LibraryDownloadingSettingsDialog(myMainPanel, getFrameworkWithLibraries()).show();
+        updateDownloadingOptionsPanel();
+      }
+    });
+    updateDownloadingOptionsPanel();
+  }
+
+  private void updateDownloadingOptionsPanel() {
+    @NonNls String card = getFrameworkWithLibraries().isEmpty() ? "empty" : "options";
+    ((CardLayout)myDownloadingOptionsPanel.getLayout()).show(myDownloadingOptionsPanel, card);
+  }
+
+  private List<FrameworkSupportSettings> getFrameworkWithLibraries() {
+    List<FrameworkSupportSettings> frameworkLibrariesInfos = new ArrayList<FrameworkSupportSettings>();
+    List<FrameworkSupportSettings> selected = getSelectedFrameworks();
+    for (FrameworkSupportSettings settings : selected) {
+      LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
+      if (libraries.length > 0) {
+        frameworkLibrariesInfos.add(settings);
+      }
+    }
+    return frameworkLibrariesInfos;
+  }
+
+  public void _commit(final boolean finishChosen) throws CommitStepException {
+    if (finishChosen) {
+      List<FrameworkSupportSettings> list = getFrameworkWithLibraries();
+      for (FrameworkSupportSettings settings : list) {
+        if (settings.isDownloadLibraries()) {
+          RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(settings.getConfigurable().getLibraries());
+          RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(settings.getAddedJars().toArray(new VirtualFile[settings.getAddedJars().size()]));
+          if (info != null) {
+            LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
+            if (downloadingInfos.length > 0) {
+              String libraryName = settings.getConfigurable().getLibraryName();
+              if (FrameworkSupportConfigurable.DEFAULT_LIBRARY_NAME.equals(libraryName)) {
+                libraryName = null;
+              }
+
+              LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, myMainPanel,
+                                                                   settings.getDirectoryForDownloadedLibrariesPath(),
+                                                                   libraryName);
+              settings.myAddedJars.addAll(Arrays.asList(downloader.download()));
+            }
+          }
+        }
+      }
+    }
   }
 
   public static boolean hasProviders(@NotNull ModuleType moduleType) {
@@ -61,10 +126,10 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
   }
 
   private void addSettingsComponents(final FrameworkSupportSettings frameworkSupport, JPanel parentPanel, int level) {
-    if (frameworkSupport.myParentNode != null) {
+    if (frameworkSupport.getParentNode() != null) {
       frameworkSupport.setEnabled(false);
     }
-    JComponent configurableComponent = frameworkSupport.myConfigurable.getComponent();
+    JComponent configurableComponent = frameworkSupport.getConfigurable().getComponent();
     int gridwidth = configurableComponent != null ? 1 : GridBagConstraints.REMAINDER;
     parentPanel.add(frameworkSupport.myCheckBox, createConstraints(0, GridBagConstraints.RELATIVE, gridwidth, 1,
                                                                    new Insets(0, INDENT * level, VERTICAL_SPACE, SPACE_AFTER_TITLE)));
@@ -95,7 +160,7 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
 
     myRoots = new ArrayList<FrameworkSupportSettings>();
     for (FrameworkSupportSettings settings : nodes.values()) {
-      if (settings.myParentNode == null) {
+      if (settings.getParentNode() == null) {
         myRoots.add(settings);
       }
     }
@@ -103,13 +168,13 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(frameworkSupportProviders))));
     if (!builder.isAcyclic()) {
       Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
-      LOG.error("Cirecular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
+      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
     }
 
     final Comparator<FrameworkSupportProvider> comparator = builder.comparator();
     sortNodes(myRoots, new Comparator<FrameworkSupportSettings>() {
       public int compare(final FrameworkSupportSettings o1, final FrameworkSupportSettings o2) {
-        return comparator.compare(o1.myProvider, o2.myProvider);
+        return comparator.compare(o1.getProvider(), o2.getProvider());
       }
     });
   }
@@ -152,6 +217,17 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     return node;
   }
 
+  private String getBaseModuleDirectory() {
+    String path = null;
+    if (myBuilder instanceof JavaModuleBuilder) {
+      path = ((JavaModuleBuilder)myBuilder).getContentEntryPath();
+    }
+    if (path == null) {
+      path = myBuilder.getModuleFileDirectory();
+    }
+    return path != null ? FileUtil.toSystemIndependentName(path) : "";
+  }
+
   @Nullable
   private FrameworkSupportProvider findProvider(@NotNull String id) {
     for (FrameworkSupportProvider provider : getProviders(myBuilder.getModuleType())) {
@@ -181,12 +257,32 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
   public void updateDataModel() {
   }
 
-  private static class FrameworkSupportSettings {
+  private List<FrameworkSupportSettings> getSelectedFrameworks() {
+    ArrayList<FrameworkSupportSettings> list = new ArrayList<FrameworkSupportSettings>();
+    if (myRoots != null) {
+      addSelectedFrameworks(myRoots, list);
+    }
+    return list;
+  }
+
+  private static void addSelectedFrameworks(final List<FrameworkSupportSettings> list, final ArrayList<FrameworkSupportSettings> selected) {
+    for (FrameworkSupportSettings settings : list) {
+      if (settings.myCheckBox.isSelected()) {
+        selected.add(settings);
+        addSelectedFrameworks(settings.myChildren, selected);
+      }
+    }
+  }
+
+  public class FrameworkSupportSettings {
     private final FrameworkSupportProvider myProvider;
     private final FrameworkSupportSettings myParentNode;
-    private FrameworkSupportConfigurable myConfigurable;
+    private final FrameworkSupportConfigurable myConfigurable;
     private JCheckBox myCheckBox;
     private List<FrameworkSupportSettings> myChildren = new ArrayList<FrameworkSupportSettings>();
+    private @NonNls String myDirectoryForDownloadedLibrariesPath;
+    private List<VirtualFile> myAddedJars = new ArrayList<VirtualFile>();
+    private boolean myDownloadLibraries = true;
 
     private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode) {
       myProvider = provider;
@@ -216,24 +312,67 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     }
 
     private void setConfigurableComponentEnabled(final boolean enable) {
-      JComponent component = myConfigurable.getComponent();
+      JComponent component = getConfigurable().getComponent();
       if (component != null) {
         UIUtil.setEnabled(component, enable, true);
       }
+      updateDownloadingOptionsPanel();
+    }
+
+    public FrameworkSupportProvider getProvider() {
+      return myProvider;
+    }
+
+    public FrameworkSupportSettings getParentNode() {
+      return myParentNode;
+    }
+
+    public FrameworkSupportConfigurable getConfigurable() {
+      return myConfigurable;
+    }
+
+    public List<VirtualFile> getAddedJars() {
+      return myAddedJars;
+    }
+
+    public void setAddedJars(final List<VirtualFile> addedJars) {
+      myAddedJars = addedJars;
+    }
+
+    public String getDirectoryForDownloadedLibrariesPath() {
+      if (myDirectoryForDownloadedLibrariesPath == null) {
+        myDirectoryForDownloadedLibrariesPath = getModuleDirectory() + "/lib";
+      }
+      return myDirectoryForDownloadedLibrariesPath;
+    }
+
+    public String getModuleDirectory() {
+      return getBaseModuleDirectory();
+    }
+
+    public void setDirectoryForDownloadedLibrariesPath(final String directoryForDownloadedLibrariesPath) {
+      myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+    }
+
+    public void setDownloadLibraries(final boolean downloadLibraries) {
+      myDownloadLibraries = downloadLibraries;
+    }
+
+    public boolean isDownloadLibraries() {
+      return myDownloadLibraries;
     }
   }
 
   private class MyModuleConfigurationUpdater extends ModuleBuilder.ModuleConfigurationUpdater {
     public void update(final Module module, final ModifiableRootModel rootModel) {
-      update(myRoots, module, rootModel);
-    }
-
-    private void update(final List<FrameworkSupportSettings> list, final Module module, final ModifiableRootModel rootModel) {
-      for (FrameworkSupportSettings settings : list) {
-        if (settings.myCheckBox.isSelected()) {
-          settings.myConfigurable.addSupport(module, rootModel);
-          update(settings.myChildren, module, rootModel);
+      for (FrameworkSupportSettings settings : getSelectedFrameworks()) {
+        if (!settings.myAddedJars.isEmpty()) {
+          VirtualFile[] roots = settings.myAddedJars.toArray(new VirtualFile[settings.myAddedJars.size()]);
+          LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+          Library library = FacetEditorContextBase.createLibraryInTable(settings.getConfigurable().getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
+          rootModel.addLibraryEntry(library);
         }
+        settings.getConfigurable().addSupport(module, rootModel);
       }
     }
   }

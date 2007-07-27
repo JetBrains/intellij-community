@@ -8,6 +8,7 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,16 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
     return new VersionConfigurable(getVersions(), getDefaultVersion());
   }
 
+  @NotNull
+  protected LibraryInfo[] getLibraries(final String selectedVersion) {
+    return LibraryInfo.EMPTY_ARRAY;
+  }
+
+  @NotNull @NonNls
+  protected String getLibraryName(final String selectedVersion) {
+    return FrameworkSupportConfigurable.DEFAULT_LIBRARY_NAME;
+  }
+
   public class VersionConfigurable extends FrameworkSupportConfigurable {
     private JComboBox myComboBox;
 
@@ -67,12 +78,28 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
       return myComboBox;
     }
 
+    @NotNull
+    public LibraryInfo[] getLibraries() {
+      return VersionedFrameworkSupportProvider.this.getLibraries(getSelectedVersion());
+    }
+
+    @NonNls
+    @NotNull
+    public String getLibraryName() {
+      return VersionedFrameworkSupportProvider.this.getLibraryName(getSelectedVersion());
+    }
+
     public void addSupport(final Module module, final ModifiableRootModel rootModel) {
+      VersionedFrameworkSupportProvider.this.addSupport(module, rootModel, getSelectedVersion());
+    }
+
+    private String getSelectedVersion() {
       String version = null;
       if (myComboBox != null) {
         version = myComboBox.getSelectedItem().toString();
       }
-      VersionedFrameworkSupportProvider.this.addSupport(module, rootModel, version);
+      return version;
     }
+
   }
 }

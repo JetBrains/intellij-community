@@ -54,6 +54,18 @@ public class RequiredLibrariesInfo {
                                            infos.toArray(new LibraryInfo[infos.size()]));
   }
 
+  public static String getLibrariesPresentableText(final LibraryInfo[] libraryInfos) {
+    StringBuilder missedJarsText = new StringBuilder();
+    for (int i = 0; i < libraryInfos.length; i++) {
+      if (i > 0) {
+        missedJarsText.append(", ");
+      }
+
+      missedJarsText.append(libraryInfos[i].getPresentableName());
+    }
+    return missedJarsText.toString();
+  }
+
   public static class RequiredClassesNotFoundInfo {
     private String[] myClassNames;
     private LibraryInfo[] myLibraryInfos;
@@ -63,7 +75,6 @@ public class RequiredLibrariesInfo {
       myLibraryInfos = libraryInfos;
     }
 
-
     public String[] getClassNames() {
       return myClassNames;
     }
@@ -71,6 +82,10 @@ public class RequiredLibrariesInfo {
     public LibraryInfo[] getLibraryInfos() {
       return myLibraryInfos;
     }
-  }
 
+    public String getMissingJarsText() {
+      return getLibrariesPresentableText(myLibraryInfos);
+    }
+
+  }
 }

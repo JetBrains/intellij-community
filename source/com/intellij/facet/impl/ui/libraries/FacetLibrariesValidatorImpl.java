@@ -81,16 +81,8 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       return ValidationResult.OK;
     }
 
-    StringBuilder missedJarsText = new StringBuilder(IdeBundle.message("label.missed.libraries.prefix"));
-    missedJarsText.append(' ');
-    for (int i = 0; i < info.getLibraryInfos().length; i++) {
-      if (i > 0) {
-        missedJarsText.append(", ");
-      }
-
-      missedJarsText.append(info.getLibraryInfos()[i].getPresentableName());
-    }
-    final String text = IdeBundle.message("label.missed.libraries.text", missedJarsText, info.getClassNames()[0]);
+    String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
+    final String text = IdeBundle.message("label.missed.libraries.text", missingJars, info.getClassNames()[0]);
     return new ValidationResult(text, new LibrariesQuickFix(info.getLibraryInfos()));
   }
 
@@ -182,17 +174,6 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     addRoots(roots);
   }
 
-  private static LibraryDownloadInfo[] getDownloadingInfos(final LibraryInfo[] libraries) {
-    List<LibraryDownloadInfo> downloadInfos = new ArrayList<LibraryDownloadInfo>();
-    for (LibraryInfo library : libraries) {
-      LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
-      if (downloadInfo != null) {
-        downloadInfos.add(downloadInfo);
-      }
-    }
-    return downloadInfos.toArray(new LibraryDownloadInfo[downloadInfos.size()]);
-  }
-
   private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     roots.addAll(myAddedRoots);
@@ -273,7 +254,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
         librariesStep = null;
       }
 
-      final LibraryDownloadInfo[] downloadInfos = getDownloadingInfos(myMissingLibraries);
+      final LibraryDownloadInfo[] downloadInfos = LibraryDownloader.getDownloadingInfos(myMissingLibraries);
       if (downloadInfos.length > 0) {
         popupItems.add(downloadJars);
       }

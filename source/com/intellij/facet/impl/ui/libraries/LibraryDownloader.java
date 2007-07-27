@@ -5,6 +5,7 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -43,20 +45,40 @@ public class LibraryDownloader {
   private LibraryDownloadInfo[] myLibraryInfos;
   private JComponent myParent;
   private @Nullable Project myProject;
+  private String myDirectoryForDownloadedLibrariesPath;
+  private final @Nullable String myLibraryPresentableName;
 
-  public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, JComponent parent) {
+  public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, JComponent parent, @Nullable String directoryForDownloadedLibrariesPath,
+                           @Nullable String libraryPresentableName) {
     myProject = project;
     myLibraryInfos = libraryInfos;
     myParent = parent;
+    myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+    myLibraryPresentableName = libraryPresentableName;
+  }
+
+  public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, @NotNull JComponent parent) {
+    this(libraryInfos, project, parent, null, null);
   }
 
   public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @NotNull Project project) {
     myLibraryInfos = libraryInfos;
     myProject = project;
+    myLibraryPresentableName = null;
   }
 
   public VirtualFile[] download() {
-    final VirtualFile dir = chooseDirectoryForLibraries();
+    VirtualFile dir = null;
+    if (myDirectoryForDownloadedLibrariesPath != null) {
+      File ioDir = new File(FileUtil.toSystemDependentName(myDirectoryForDownloadedLibrariesPath));
+      ioDir.mkdirs();
+      dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myDirectoryForDownloadedLibrariesPath);
+    }
+
+    if (dir == null) {
+      dir = chooseDirectoryForLibraries();
+    }
+
     if (dir != null) {
       return doDownload(dir);
     }
@@ -67,8 +89,14 @@ public class LibraryDownloader {
     HttpConfigurable.getInstance().setAuthenticator();
     final List<Pair<LibraryDownloadInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryDownloadInfo, File>>();
     final List<VirtualFile> existingFiles = new ArrayList<VirtualFile>();
-    final Exception[] exception = new Exception[]{null};
+    final Ref<Exception> exception = Ref.create(null);
     final Ref<LibraryDownloadInfo> currentLibrary = new Ref<LibraryDownloadInfo>();
+
+    String dialogTitle = IdeBundle.message("progress.download.libraries.title");
+    if (myLibraryPresentableName != null) {
+      dialogTitle = IdeBundle.message("progress.download.0.libraries.title", StringUtil.capitalize(myLibraryPresentableName));
+    }
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -90,15 +118,15 @@ public class LibraryDownloader {
           }
         }
         catch (ProcessCanceledException e) {
-          exception[0] = e;
+          exception.set(e);
         }
         catch (IOException e) {
-          exception[0] = e;
+          exception.set(e);
         }
       }
-    }, IdeBundle.message("progress.download.libraries.title"), true, myProject);
+    }, dialogTitle, true, myProject);
 
-    if (exception[0] == null) {
+    if (exception.get() == null) {
       try {
         return moveToDir(existingFiles, downloadedFiles, dir);
       }
@@ -115,12 +143,12 @@ public class LibraryDownloader {
     }
 
     deleteFiles(downloadedFiles);
-    if (exception[0] instanceof IOException) {
+    if (exception.get() instanceof IOException) {
       String message = IdeBundle.message("error.library.download.failed");
       if (currentLibrary.get() != null) {
         message += ": " + currentLibrary.get().getDownloadUrl();
       }
-      final boolean tryAgain = IOExceptionDialog.showErrorDialog((IOException)exception[0],
+      final boolean tryAgain = IOExceptionDialog.showErrorDialog((IOException)exception.get(),
                                                                  IdeBundle.message("progress.download.libraries.title"), message);
       if (tryAgain) {
         return doDownload(dir);
@@ -255,5 +283,16 @@ public class LibraryDownloader {
       }
       connection.disconnect();
     }
+  }
+
+  public static LibraryDownloadInfo[] getDownloadingInfos(final LibraryInfo[] libraries) {
+    List<LibraryDownloadInfo> downloadInfos = new ArrayList<LibraryDownloadInfo>();
+    for (LibraryInfo library : libraries) {
+      LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
+      if (downloadInfo != null) {
+        downloadInfos.add(downloadInfo);
+      }
+    }
+    return downloadInfos.toArray(new LibraryDownloadInfo[downloadInfos.size()]);
   }
 }
