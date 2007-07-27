@@ -12,11 +12,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -28,9 +29,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -42,7 +40,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -943,10 +940,8 @@ public class HighlightUtil {
     return null;
   }
 
-
   @Nullable
-  public static HighlightInfo checkThisOrSuperExpressionInIllegalContext(PsiExpression expr,
-                                                                         @Nullable PsiJavaCodeReferenceElement qualifier) {
+  public static HighlightInfo checkThisOrSuperExpressionInIllegalContext(PsiExpression expr, @Nullable PsiJavaCodeReferenceElement qualifier) {
     if (expr instanceof PsiSuperExpression && !(expr.getParent() instanceof PsiReferenceExpression)) {
       // like in 'Object o = super;'
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expr.getTextRange().getEndOffset(),
@@ -967,25 +962,12 @@ public class HighlightUtil {
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
-    @NonNls String key = "";
-    if (refElement instanceof PsiVariable) {
-      key = "non.static.variable.referenced.from.static.context";
-    }
-    else if (refElement instanceof PsiMethod) {
-      key = "non.static.method.referenced.from.static.context";
-    }
-    else if (refElement instanceof PsiClass) {
-      key = "non.static.class.referenced.from.static.context";
-    }
-    else {
-      LOG.error("???" + refElement);
-    }
-
-    return JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
+    String type = StdLanguages.JAVA.getFindUsagesProvider().getType(refElement);
+    String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
+    return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }
 
-  static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement,
-                                                  HighlightInfo errorResult, PsiJavaCodeReferenceElement place) {
+  static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement, HighlightInfo errorResult, PsiJavaCodeReferenceElement place) {
     PsiModifierList modifierList = null;
     if (refElement instanceof PsiModifierListOwner) {
       modifierList = ((PsiModifierListOwner)refElement).getModifierList();
@@ -996,10 +978,21 @@ public class HighlightUtil {
     }
     // make context non static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
-    if (staticParent != null) {
+    if (staticParent != null && isInstanceReference(place)) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent.getModifierList(),
                                                                                                  PsiModifier.STATIC, false, false));
     }
+  }
+
+  private static boolean isInstanceReference(PsiJavaCodeReferenceElement place) {
+    PsiElement qualifier = place.getQualifier();
+    if (qualifier == null) return true;
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return false;
+    PsiElement q = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+    if (q instanceof PsiClass) return false;
+    if (q != null) return true;
+    String qname = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
+    return qname == null || !Character.isLowerCase(qname.charAt(0));
   }
 
   static String buildProblemWithAccessDescription(PsiJavaCodeReferenceElement reference, JavaResolveResult result) {
@@ -2027,41 +2020,5 @@ public class HighlightUtil {
       HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("expected.class.or.package"));
     QuickFixAction.registerQuickFixAction(info, new RemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
     return info;
-  }
-
-  private static List<Problem> convertToProblems(final Collection<HighlightInfo> infos, final VirtualFile file,
-                                                 final boolean hasErrorElement) {
-    if (infos.isEmpty()) return Collections.emptyList();
-    List<Problem> problems = new SmartList<Problem>();
-    for (HighlightInfo info : infos) {
-      if (info.getSeverity() == HighlightSeverity.ERROR) {
-        Problem problem = new ProblemImpl(file, info, hasErrorElement);
-        problems.add(problem);
-      }
-    }
-    return problems;
-  }
-
-  public static List<Problem> convertToProblems(final HighlightInfo[] infos, final VirtualFile file,
-                                                 final boolean hasErrorElement) {
-    List<Problem> problems = new SmartList<Problem>();
-    for (HighlightInfo info : infos) {
-      if (info.getSeverity() == HighlightSeverity.ERROR) {
-        Problem problem = new ProblemImpl(file, info, hasErrorElement);
-        problems.add(problem);
-      }
-    }
-    return problems;
-  }
-
-  public static void addErrorsToWolf(final List<HighlightInfo> infos, final PsiFile psiFile) {
-    if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
-    Project project = psiFile.getProject();
-    if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
-    VirtualFile file = psiFile.getVirtualFile();
-
-    List<Problem> problems = convertToProblems(infos, file, false);
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
-    wolf.weHaveGotProblems(file, problems);
   }
 }

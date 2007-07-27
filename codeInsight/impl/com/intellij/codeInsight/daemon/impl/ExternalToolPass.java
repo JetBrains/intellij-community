@@ -68,7 +68,6 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, Pass.EXTERNAL_TOOLS);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
-    HighlightUtil.addErrorsToWolf(infos, myFile);
   }
 
   public List<HighlightInfo> getHighlights() {

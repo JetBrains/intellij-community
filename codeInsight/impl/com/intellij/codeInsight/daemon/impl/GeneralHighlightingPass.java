@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -43,6 +44,7 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -532,7 +534,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     if (file == null || CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return;
 
     boolean hasErrorElement = Boolean.TRUE.equals(psiFile.getUserData(HAS_ERROR_ELEMENT));
-    List<Problem> problems = HighlightUtil.convertToProblems(infos, file, hasErrorElement);
+    List<Problem> problems = convertToProblems(infos, file, hasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
     wolf.reportProblems(file, problems);
@@ -543,5 +545,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   public double getProgress() {
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;
+  }
+
+  private static List<Problem> convertToProblems(final HighlightInfo[] infos, final VirtualFile file,
+                                                 final boolean hasErrorElement) {
+    List<Problem> problems = new SmartList<Problem>();
+    for (HighlightInfo info : infos) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        Problem problem = new ProblemImpl(file, info, hasErrorElement);
+        problems.add(problem);
+      }
+    }
+    return problems;
   }
 }
