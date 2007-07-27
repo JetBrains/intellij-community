@@ -15,16 +15,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LiteFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -84,6 +84,38 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
 
   protected String loadText(final File file) throws IOException {
     return StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(file)));
+  }
+
+  protected List<Pair<JarInfo, String>> getJarsContent(final PackagingProcessingItem[] items) {
+    Set<JarInfo> jars = new HashSet<JarInfo>();
+    final Map<JarInfo, Integer> deps = fillAllJars(items, jars);
+
+    List<Pair<JarInfo, String>> jarContent = new ArrayList<Pair<JarInfo, String>>();
+    for (JarInfo jar : jars) {
+      List<String> contentList = new ArrayList<String>();
+      for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
+        String s = " " + pair.getSecond().getPath() + " -> " + pair.getFirst();
+        contentList.add(s);
+      }
+      Collections.sort(contentList);
+      StringBuilder content = new StringBuilder();
+      for (String s : contentList) {
+        content.append(s).append("\n");
+      }
+      jarContent.add(Pair.create(jar, content.toString()));
+    }
+
+    Collections.sort(jarContent, new Comparator<Pair<JarInfo, String>>() {
+      public int compare(final Pair<JarInfo, String> o1, final Pair<JarInfo, String> o2) {
+        final Integer d1 = deps.get(o1.getFirst());
+        final Integer d2 = deps.get(o2.getFirst());
+        if (!d1.equals(d2)) {
+          return d1.compareTo(d2);
+        }
+        return o1.getSecond().compareTo(o2.getSecond());
+      }
+    });
+    return jarContent;
   }
 
   protected static class MockBuildParticipant extends BuildParticipant {

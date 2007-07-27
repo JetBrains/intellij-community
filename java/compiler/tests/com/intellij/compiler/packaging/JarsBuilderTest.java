@@ -9,6 +9,7 @@ import com.intellij.compiler.impl.packagingCompiler.JarsBuilder;
 import com.intellij.compiler.impl.packagingCompiler.PackagingProcessingItem;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Pair;
 import gnu.trove.THashSet;
 
 import java.io.ByteArrayOutputStream;
@@ -66,9 +67,14 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
                       final BuildRecipeInfo info) throws Exception {
     final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled, buildExternalDependencies);
     final PackagingProcessingItem[] processingItems = buildItems(info.myBuildRecipe, configuration);
-    final HashSet<JarInfo> hashSet = new HashSet<JarInfo>();
-    fillAllJars(processingItems, hashSet);
-    final MyJarsBuilder builder = new MyJarsBuilder(hashSet);
+
+    List<Pair<JarInfo,String>> list = getJarsContent(processingItems);
+    final Set<JarInfo> linkedSet = new LinkedHashSet<JarInfo>();
+    for (Pair<JarInfo, String> pair : list) {
+      linkedSet.add(pair.getFirst());
+    }
+
+    final MyJarsBuilder builder = new MyJarsBuilder(linkedSet);
     builder.buildJars(new HashSet<String>());
     assertTrue(builder.myCreatedTempFiles.toString(), builder.myCreatedTempFiles.isEmpty());
     String expected = loadText(getExpectedFile(getTestName(true)));
