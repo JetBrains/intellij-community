@@ -35,12 +35,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private synchronized NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
+  private NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
     final NewVirtualFile result = doFindChild(name, createIfNotFound);
-    if (result == null && myChildren instanceof Map) {
-      ensureAsMap().put(name, NullVirtualFile.INSTANCE);
+    synchronized (this) {
+      if (result == null && myChildren instanceof Map) {
+        ensureAsMap().put(name, NullVirtualFile.INSTANCE);
+      }
     }
-    
+
     return result;
   }
 
@@ -55,8 +57,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
     }
 
-    final Map<String, VirtualFile> map = ensureAsMap();
-    final VirtualFile file = map.get(name);
+    final Map<String, VirtualFile> map;
+    final VirtualFile file;
+    synchronized (this) {
+      map = ensureAsMap();
+      file = map.get(name);
+    }
+
     if (file == NullVirtualFile.INSTANCE) {
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
     }
@@ -65,9 +72,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     int id = ourPersistence.getId(this, name);
     if (id > 0) {
-      NewVirtualFile child = createChild(name, id);
-      map.put(name, child);
-      return child;
+      synchronized (this) {
+        NewVirtualFile child = createChild(name, id);
+        map.put(name, child);
+        return child;
+      }
     }
 
     return null;
