@@ -73,7 +73,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         }
       }
       return;
-    } else if (obj instanceof String) {
+    } else if (obj instanceof String && !"assert".equals(obj)) {
       Editor editor = context.editor;
       Document document = editor.getDocument();
       if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
@@ -116,7 +116,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     String[] withSemi = {"break", "continue"};
     String[] withSpace = {"private", "public", "protected", "static", "transient", "abstract",
         "native", "volatile", "strictfp", "boolean", "byte", "char", "short", "int", "float", "long", "double", "void",
-        "new", "try", "while", "with", "switch", "for", "return", "throw", "thros", "assert", "synchronized", "package",
+        "new", "try", "while", "with", "switch", "for", "return", "throw", "throws", "assert", "synchronized", "package",
         "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else", "instanceof",
         "import", "final",};
     if (Arrays.asList(withSemi).contains(item.toString())) {
