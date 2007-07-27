@@ -1,0 +1,4 @@
+def sum = new A()
+def diff = <begin>sum<end>.dec()
+-----
+def diff = (new A())<caret>.dec()

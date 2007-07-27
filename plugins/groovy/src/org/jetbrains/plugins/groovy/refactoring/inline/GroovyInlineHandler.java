@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -166,9 +167,13 @@ public class GroovyInlineHandler implements InlineHandler {
         assert variable.getInitializerGroovy() != null;
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
+        GrExpression tempExpr = initializerGroovy;
+        while (tempExpr instanceof GrParenthesizedExpr){
+          tempExpr = ((GrParenthesizedExpr) tempExpr).getOperand();
+        }
         Project project = variable.getProject();
         GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-        GrExpression newExpr = factory.createExpressionFromText(initializerGroovy.getText());
+        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
 
         try {
           newExpr = exprToBeReplaced.replaceWithExpression(newExpr);

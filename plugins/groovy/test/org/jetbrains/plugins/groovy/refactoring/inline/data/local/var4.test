@@ -1,0 +1,4 @@
+def sum = 2 + 2
+def diff = 3 - <begin>sum<end>
+-----
+def diff = 3 - (2 + 2)<caret>

@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
 
 import java.util.ArrayList;
@@ -54,14 +55,17 @@ import java.util.List;
  */
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
+
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr) throws IncorrectOperationException {
+    ASTNode oldNode = oldExpr.getNode();
+    ASTNode parentNode = oldExpr.getParent().getNode();
     if (oldExpr.getParent() == null ||
-            oldExpr.getParent().getNode() == null) {
+        parentNode == null) {
       throw new IncorrectOperationException();
     }
     // Remove unnecessary parentheses
     if (oldExpr.getParent() instanceof GrParenthesizedExpr &&
-        newExpr instanceof GrReferenceExpression){
+        getExprPriorityLevel(newExpr) == 0) {
       return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr);
     }
 
@@ -69,18 +73,40 @@ public class PsiImplUtil {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(oldExpr.getProject());
     if (oldExpr.getParent() instanceof GrExpression) {
       GrExpression parentExpr = (GrExpression) oldExpr.getParent();
-      if (getExprPriorityLevel(parentExpr) >= getExprPriorityLevel(newExpr)) {
+      int parentPriorityLevel = getExprPriorityLevel(parentExpr);
+      int newPriorityLevel = getExprPriorityLevel(newExpr);
+      if (parentPriorityLevel > newPriorityLevel) {
         newExpr = factory.createParenthesizedExpr(newExpr);
+      } else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
+        if (parentExpr instanceof GrBinaryExpression) {
+          GrBinaryExpression binaryExpression = (GrBinaryExpression) parentExpr;
+          if (isNotAssociative(binaryExpression) &&
+              oldExpr.equals(binaryExpression.getRightOperand())) {
+            newExpr = factory.createParenthesizedExpr(newExpr);
+          }
+        }
       }
     }
 
-    ASTNode parentNode = oldExpr.getParent().getNode();
     ASTNode newNode = newExpr.getNode();
-    parentNode.replaceChild(oldExpr.getNode(), newNode);
-    if (!(newNode.getPsi() instanceof GrExpression)){
+    parentNode.replaceChild(oldNode, newNode);
+    if (!(newNode.getPsi() instanceof GrExpression)) {
       throw new IncorrectOperationException();
     }
     return ((GrExpression) newNode.getPsi());
+  }
+
+  private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {
+    if (binaryExpression instanceof GrMultiplicativeExprImpl) {
+      return binaryExpression.getOperationTokenType() != GroovyTokenTypes.mSTAR;
+    }
+    if (binaryExpression instanceof GrAdditiveExprImpl) {
+      return binaryExpression.getOperationTokenType() == GroovyTokenTypes.mMINUS;
+    }
+    return binaryExpression instanceof GrEqualityExprImpl
+        || binaryExpression instanceof GrRegexExprImpl
+        || binaryExpression instanceof GrShiftExprImpl
+        || binaryExpression instanceof GrPowerExprImpl;
   }
 
   public static void shortenReferences(GroovyPsiElement element) {
@@ -213,10 +239,11 @@ public class PsiImplUtil {
 
   /**
    * Returns priiority level of expression
+   *
    * @param expr
    * @return
    */
-  public static int getExprPriorityLevel(GrExpression expr){
+  public static int getExprPriorityLevel(GrExpression expr) {
     int priority = 0;
     if (expr instanceof GrNewExpression) priority = 1;
     if (expr instanceof GrPostfixExpression) priority = 5;
