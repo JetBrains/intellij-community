@@ -35,13 +35,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
+  private synchronized NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
     final NewVirtualFile result = doFindChild(name, createIfNotFound);
-    synchronized (this) {
-      if (result == null && myChildren instanceof Map) {
-        ensureAsMap().put(name, NullVirtualFile.INSTANCE);
-      }
+    if (result == null && myChildren instanceof Map) {
+      ensureAsMap().put(name, NullVirtualFile.INSTANCE);
     }
+    
     return result;
   }
 
@@ -111,7 +110,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  public NewVirtualFile findChildIfCached(final String name) {
+  public synchronized NewVirtualFile findChildIfCached(final String name) {
     final VirtualFile[] a = asArray();
     if (a != null) {
       for (VirtualFile file : a) {
@@ -160,21 +159,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private synchronized VirtualFile[] asArray() {
+  private VirtualFile[] asArray() {
     if (myChildren instanceof VirtualFile[]) return (VirtualFile[])myChildren;
     return null;
   }
 
   @Nullable
   @SuppressWarnings({"unchecked"})
-  private synchronized Map<String, VirtualFile> asMap() {
+  private Map<String, VirtualFile> asMap() {
     if (myChildren instanceof Map) return (Map<String, VirtualFile>)myChildren;
     return null;
   }
 
   @NotNull
   @SuppressWarnings({"unchecked"})
-  private synchronized Map<String, VirtualFile> ensureAsMap() {
+  private Map<String, VirtualFile> ensureAsMap() {
     assert !(myChildren instanceof VirtualFile[]);
 
     if (myChildren == null) {
