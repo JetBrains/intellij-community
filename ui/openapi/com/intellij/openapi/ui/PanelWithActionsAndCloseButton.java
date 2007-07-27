@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +33,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   private final String myHelpId;
   private final DefaultActionGroup myToolbalGroup = new DefaultActionGroup(null, false);
 
-  public PanelWithActionsAndCloseButton(ContentManager contentManager, String helpId) {
+  public PanelWithActionsAndCloseButton(ContentManager contentManager, @NonNls String helpId) {
     super(new BorderLayout());
     myContentManager = contentManager;
     myHelpId = helpId;

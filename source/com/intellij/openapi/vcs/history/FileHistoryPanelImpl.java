@@ -217,7 +217,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                               VcsHistoryProvider provider,
                               AnnotationProvider annotationProvider,
                               ContentManager contentManager) {
-    super(contentManager, provider.getHelpId());
+    super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myProvider = provider;
     myAnnotationProvider = annotationProvider;
     myProject = project;

@@ -93,12 +93,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private CommittedChangesTreeBrowser myTreeBrowser;
 
   public UpdateInfoTree(ContentManager contentManager,
-                        String helpId,
                         Project project,
                         UpdatedFiles updatedFiles,
                         String rootName,
                         ActionInfo actionInfo) {
-    super(contentManager, helpId);
+    super(contentManager, "reference.versionControl.toolwindow.update");
     myActionInfo = actionInfo;
 
     myFileStatusListener = new FileStatusListener() {

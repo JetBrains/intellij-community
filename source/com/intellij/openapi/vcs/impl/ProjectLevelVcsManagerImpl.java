@@ -586,7 +586,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
     ContentManager contentManager = getContentManager();
-    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, myProject, updatedFiles, displayActionName, actionInfo);
+    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
     Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
       "toolwindow.title.update.action.info", displayActionName), true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
