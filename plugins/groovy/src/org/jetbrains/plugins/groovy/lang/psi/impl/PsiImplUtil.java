@@ -245,7 +245,7 @@ public class PsiImplUtil {
    */
   public static int getExprPriorityLevel(GrExpression expr) {
     int priority = 0;
-    if (expr instanceof GrNewExpression) priority = 1;
+    //if (expr instanceof GrNewExpression) priority = 1;
     if (expr instanceof GrPostfixExpression) priority = 5;
     if (expr instanceof GrUnaryExpression ||
         expr instanceof GrTypeCastExpression) priority = 6;
