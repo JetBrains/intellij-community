@@ -133,7 +133,12 @@ public class XmlParsing {
         advance();
       }
 
-      if (token() == XML_TAG_END) advance();
+      if (token() == XML_TAG_END) {
+        advance();
+      }
+      else {
+        error(XmlErrorMessages.message("xml.parsing.closing.tag.is.not.done"));
+      }
     }
     else {
       error(XmlErrorMessages.message("xml.parsing.unexpected.end.of.file"));
