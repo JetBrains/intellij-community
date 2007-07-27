@@ -4,14 +4,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,6 +30,10 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
 
       @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
         return getRoots(getElement());
+      }
+
+      public FileReference createFileReference(final TextRange range, final int index, final String text) {
+        return FilePathReferenceProvider.this.createFileReference(this, range, index, text);
       }
 
       protected PsiScopeProcessor createProcessor(final List result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
@@ -51,6 +56,10 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
       }
     }.getAllReferences();
 
+  }
+
+  protected FileReference createFileReference(FileReferenceSet referenceSet, final TextRange range, final int index, final String text) {
+       return new FileReference(referenceSet, range, index, text);
   }
 
   @NotNull

@@ -49,7 +49,7 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
     return false;
   }
 
-  protected AntFileReference createFileReference(final TextRange range, final int index, final String text) {
+  public AntFileReference createFileReference(final TextRange range, final int index, final String text) {
     return new AntFileReference(this, range, index, text);
   }
 

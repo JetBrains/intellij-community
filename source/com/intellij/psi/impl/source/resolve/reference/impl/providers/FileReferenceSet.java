@@ -153,7 +153,7 @@ public class FileReferenceSet {
     return myStartInElement;
   }
 
-  protected FileReference createFileReference(final TextRange range, final int index, final String text) {
+  public FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new FileReference(this, range, index, text);
   }
 
