@@ -49,17 +49,19 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
   public PsiModifierList getModifierList(){
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
-      if (myRepositoryModifierList == null){
-        myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryModifierList == null){
+          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+        }
+        return myRepositoryModifierList;
       }
-      return myRepositoryModifierList;
     }
     else{
       return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
     }
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
@@ -78,8 +80,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if(lastParent == null) return true;
-    return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+    return lastParent == null || PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
   }
 }
 

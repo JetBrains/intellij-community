@@ -6,9 +6,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -79,10 +78,12 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
   public PsiModifierList getModifierList() {
     if (getRepositoryId() >= 0) {
-      if (myRepositoryModifierList == null) {
-        myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryModifierList == null) {
+          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+        }
+        return myRepositoryModifierList;
       }
-      return myRepositoryModifierList;
     }
     else {
       return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);

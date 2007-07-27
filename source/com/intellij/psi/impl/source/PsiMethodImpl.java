@@ -177,10 +177,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   public PsiTypeParameterList getTypeParameterList() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
-      if (myRepositoryTypeParameterList == null){
-        myRepositoryTypeParameterList = new PsiTypeParameterListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryTypeParameterList == null){
+          myRepositoryTypeParameterList = new PsiTypeParameterListImpl(myManager, this);
+        }
+        return myRepositoryTypeParameterList;
       }
-      return myRepositoryTypeParameterList;
     }
 
     return (PsiTypeParameterList) calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE_PARAMETER_LIST);
@@ -229,10 +231,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   @NotNull
   public PsiModifierList getModifierList() {
     if (getRepositoryId() >= 0){
-      if (myRepositoryModifierList == null){
-        myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryModifierList == null){
+          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+        }
+        return myRepositoryModifierList;
       }
-      return myRepositoryModifierList;
     }
     else{
       return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
@@ -246,10 +250,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   @NotNull
   public PsiParameterList getParameterList() {
     if (getRepositoryId() >= 0){
-      if (myRepositoryParameterList == null){
-        myRepositoryParameterList = new PsiParameterListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryParameterList == null){
+          myRepositoryParameterList = new PsiParameterListImpl(myManager, this);
+        }
+        return myRepositoryParameterList;
       }
-      return myRepositoryParameterList;
     }
     else{
       return (PsiParameterList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
@@ -259,10 +265,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   @NotNull
   public PsiReferenceList getThrowsList() {
     if (getRepositoryId() >= 0){
-      if (myRepositoryThrowsList == null){
-        myRepositoryThrowsList = new PsiReferenceListImpl(myManager, this, JavaElementType.THROWS_LIST);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryThrowsList == null){
+          myRepositoryThrowsList = new PsiReferenceListImpl(myManager, this, JavaElementType.THROWS_LIST);
+        }
+        return myRepositoryThrowsList;
       }
-      return myRepositoryThrowsList;
     }
     else{
       final CompositeElement compositeElement = calcTreeElement();

@@ -151,10 +151,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     }
 
     if (getRepositoryId() >= 0){
-      if (myRepositoryModifierList == null){
-        myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryModifierList == null){
+          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+        }
+        return myRepositoryModifierList;
       }
-      return myRepositoryModifierList;
     }
     else{
       return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);

@@ -509,11 +509,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public LanguageLevel getLanguageLevel() {
-    if (myLanguageLevel == null) {
-      myLanguageLevel = getLanguageLevelInner();
+    synchronized (PsiLock.LOCK) {
+      if (myLanguageLevel == null) {
+        myLanguageLevel = getLanguageLevelInner();
+      }
+      return myLanguageLevel;
     }
-    return myLanguageLevel;
-
   }
 
   private LanguageLevel getLanguageLevelInner() {

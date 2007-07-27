@@ -66,8 +66,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   private PsiMethod myValuesMethod = null;
   private PsiMethod myValueOfMethod = null;
   private volatile String myCachedForLongName = null;
-  private static final @NonNls String VALUES_METHOD = "values";
-  private static final @NonNls String VALUE_OF_METHOD = "valueOf";
+  @NonNls private static final String VALUES_METHOD = "values";
+  @NonNls private static final String VALUE_OF_METHOD = "valueOf";
 
   public PsiClassImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
@@ -254,10 +254,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiModifierList getModifierList(){
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
-      if (myRepositoryModifierList == null){
-        myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryModifierList == null){
+          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
+        }
+        return myRepositoryModifierList;
       }
-      return myRepositoryModifierList;
     }
     else{
       return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
@@ -272,10 +274,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     if (isEnum() || isAnnotationType()) return null;
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
-      if (myRepositoryExtendsList == null){
-        myRepositoryExtendsList = new PsiReferenceListImpl(myManager, this, JavaElementType.EXTENDS_LIST);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryExtendsList == null){
+          myRepositoryExtendsList = new PsiReferenceListImpl(myManager, this, JavaElementType.EXTENDS_LIST);
+        }
+        return myRepositoryExtendsList;
       }
-      return myRepositoryExtendsList;
     }
     else{
       return (PsiReferenceList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.EXTENDS_LIST);
@@ -285,10 +289,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiReferenceList getImplementsList() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
-      if (myRepositoryImplementsList == null){
-        myRepositoryImplementsList = new PsiReferenceListImpl(myManager, this, JavaElementType.IMPLEMENTS_LIST);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryImplementsList == null){
+          myRepositoryImplementsList = new PsiReferenceListImpl(myManager, this, JavaElementType.IMPLEMENTS_LIST);
+        }
+        return myRepositoryImplementsList;
       }
-      return myRepositoryImplementsList;
     }
     else{
       return (PsiReferenceList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPLEMENTS_LIST);
@@ -488,7 +494,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
           list.add(method);
         }
         for (final String methodName : cachedMethodsMap.keySet()) {
-          cachedMethods.put(methodName, cachedMethodsMap.get(methodName).toArray(PsiMethod.EMPTY_ARRAY));
+          List<PsiMethod> cached = cachedMethodsMap.get(methodName);
+          cachedMethods.put(methodName, cached.toArray(new PsiMethod[cached.size()]));
         }
         myCachedMethodsMap = cachedMethods;
       }
@@ -529,10 +536,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiTypeParameterList getTypeParameterList() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
-      if (myRepositoryParameterList == null){
-        myRepositoryParameterList = new PsiTypeParameterListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryParameterList == null){
+          myRepositoryParameterList = new PsiTypeParameterListImpl(myManager, this);
+        }
+        return myRepositoryParameterList;
       }
-      return myRepositoryParameterList;
     }
 
     return (PsiTypeParameterList) calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE_PARAMETER_LIST);
@@ -803,7 +812,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
     }
 
-  public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 

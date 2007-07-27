@@ -189,10 +189,12 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   }
 
   public PsiReferenceList getImplementsList() {
-    if (myLightEmptyImplementsList == null) {
-      myLightEmptyImplementsList = new LightEmptyImplementsList(getManager());
+    synchronized (PsiLock.LOCK) {
+      if (myLightEmptyImplementsList == null) {
+        myLightEmptyImplementsList = new LightEmptyImplementsList(getManager());
+      }
+      return myLightEmptyImplementsList;
     }
-    return myLightEmptyImplementsList;
   }
 
   @NotNull

@@ -138,10 +138,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @NotNull
   public PsiImportList getImportList() {
     if (getRepositoryId() >= 0){
-      if (myRepositoryImportList == null){
-        myRepositoryImportList = new PsiImportListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myRepositoryImportList == null){
+          myRepositoryImportList = new PsiImportListImpl(myManager, this);
+        }
+        return myRepositoryImportList;
       }
-      return myRepositoryImportList;
     }
     else{
       return (PsiImportList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_LIST);

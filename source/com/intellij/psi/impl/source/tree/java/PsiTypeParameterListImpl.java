@@ -27,8 +27,10 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
     }
   };
 
-  private PsiTypeParameter[] myRepositoryClassParameters;
   private static final TokenSet TYPE_PARAMETER_BIT_SET = TokenSet.create(JavaElementType.TYPE_PARAMETER);
+
+  private volatile PsiTypeParameter[] myRepositoryClassParameters;
+  private static final PsiFieldUpdater<PsiTypeParameterListImpl, PsiTypeParameter[]> classParametersUpdater = PsiFieldUpdater.forOnlyFieldWithType(PsiTypeParameterListImpl.class, PsiTypeParameter[].class);
 
   public PsiTypeParameterListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -64,8 +66,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   public PsiTypeParameter[] getTypeParameters() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0) {
-      PsiTypeParameter[] typeParameters = myRepositoryClassParameters;
-      if (typeParameters == null) {
+      if (myRepositoryClassParameters == null) {
         RepositoryManager repositoryManager = getRepositoryManager();
         CompositeElement treeElement = getTreeElement();
         int count;
@@ -85,15 +86,15 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
           count = treeElement.countChildren(CLASS_PARAMETER_BIT_SET);
         }
 
-        typeParameters = count == 0 ? PsiTypeParameter.EMPTY_ARRAY : new PsiTypeParameter[count];
+        PsiTypeParameter[] typeParameters = count == 0 ? PsiTypeParameter.EMPTY_ARRAY : new PsiTypeParameter[count];
         for (int i = 0; i < typeParameters.length; i++) {
           typeParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
         }
-
-        myRepositoryClassParameters = typeParameters;
+        // myRepositoryClassParameters = typeParameters;
+        classParametersUpdater.compareAndSet(this, null, typeParameters);
       }
 
-      return typeParameters;
+      return myRepositoryClassParameters;
     }
     else {
       return calcTreeElement().getChildrenAsPsiElements(CLASS_PARAMETER_BIT_SET, CLASS_PARAMETER_ARRAY_CONSTRUCTOR);

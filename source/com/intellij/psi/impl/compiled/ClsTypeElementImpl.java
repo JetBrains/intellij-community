@@ -117,10 +117,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @NotNull
   public PsiType getType() {
-    if (myCachedType == null) {
-      myCachedType = calculateType();
+    synchronized (PsiLock.LOCK) {
+      if (myCachedType == null) {
+        myCachedType = calculateType();
+      }
+      return myCachedType;
     }
-    return myCachedType;
   }
 
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
@@ -134,16 +136,17 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     if (isArray()) {
       createComponentTypeChild();
       if (myVariance == VARIANCE_NONE) return ((PsiTypeElement)myChild).getType().createArrayType();
-      switch(myVariance) {
+      switch (myVariance) {
         case VARIANCE_EXTENDS:
-          return PsiWildcardType.createExtends(getManager(), ((PsiTypeElement) myChild).getType());
+          return PsiWildcardType.createExtends(getManager(), ((PsiTypeElement)myChild).getType());
         case VARIANCE_SUPER:
-          return PsiWildcardType.createSuper(getManager(), ((PsiTypeElement) myChild).getType());
+          return PsiWildcardType.createSuper(getManager(), ((PsiTypeElement)myChild).getType());
         default:
           LOG.assertTrue(false);
           return null;
       }
-    } else if (isVarArgs()) {
+    }
+    else if (isVarArgs()) {
       createComponentTypeChild();
       return new PsiEllipsisType(((PsiTypeElement)myChild).getType());
     }
@@ -151,13 +154,13 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     createClassReferenceChild();
     final PsiClassReferenceType psiClassReferenceType;
     if (myVariance != VARIANCE_INVARIANT) {
-      psiClassReferenceType = new PsiClassReferenceType((PsiJavaCodeReferenceElement) myChild);
+      psiClassReferenceType = new PsiClassReferenceType((PsiJavaCodeReferenceElement)myChild);
     }
     else {
       psiClassReferenceType = null;
     }
 
-    switch(myVariance) {
+    switch (myVariance) {
       case VARIANCE_NONE:
         return psiClassReferenceType;
       case VARIANCE_EXTENDS:

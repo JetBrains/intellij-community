@@ -233,10 +233,12 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   @NotNull
   public PsiReferenceList getExtendsList() {
     if (myOwner != null) {
-      if (myExtendsBoundsList == null) {
-        myExtendsBoundsList = new PsiTypeParameterExtendsBoundsListImpl(myManager, this);
+      synchronized (PsiLock.LOCK) {
+        if (myExtendsBoundsList == null) {
+          myExtendsBoundsList = new PsiTypeParameterExtendsBoundsListImpl(myManager, this);
+        }
+        return myExtendsBoundsList;
       }
-      return myExtendsBoundsList;
     }
     else {
       return (PsiReferenceList) calcTreeElement().findChildByRoleAsPsiElement(ChildRole.EXTENDS_LIST);
