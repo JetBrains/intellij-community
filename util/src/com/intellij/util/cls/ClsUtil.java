@@ -403,7 +403,7 @@ public class ClsUtil {
              }
              else if (Character.isISOControl(c)) {
                String hexCode = Integer.toHexString(c).toUpperCase();
-               buffer.append("\\x");
+               buffer.append("\\u");
                int paddingCount = 4 - hexCode.length();
                while (paddingCount-- > 0) {
                  buffer.append(0);
