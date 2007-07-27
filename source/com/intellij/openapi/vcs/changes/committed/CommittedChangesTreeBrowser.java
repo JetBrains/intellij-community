@@ -5,6 +5,8 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -69,6 +71,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private FilterChangeListener myFilterChangeListener = new FilterChangeListener();
   private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
   private CopyProvider myCopyProvider;
+  private TreeExpander myTreeExpander;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
@@ -130,6 +133,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       this);
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
+    myTreeExpander = new DefaultTreeExpander(myChangesTree);
   }
 
   private TreeModel buildTreeModel() {
@@ -291,9 +295,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         sink.put(DataKeys.NAVIGATABLE_ARRAY, result);
       }
     }
+    else if (key.equals(DataKeys.TREE_EXPANDER)) {
+      sink.put(DataKeys.TREE_EXPANDER, myTreeExpander);
+    }
     else if (key.equals(DataKeys.HELP_ID)) {
       sink.put(DataKeys.HELP_ID, ourHelpId);
     }
+  }
+
+  public TreeExpander getTreeExpander() {
+    return myTreeExpander;
   }
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {

@@ -31,7 +31,10 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -46,8 +49,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UIHelper;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UIHelper;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
@@ -63,8 +66,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,6 +94,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   @NonNls private static final String CARD_STATUS = "Status";
   @NonNls private static final String CARD_CHANGES = "Changes";
   private CommittedChangesTreeBrowser myTreeBrowser;
+  private TreeExpander myTreeExpander;
 
   public UpdateInfoTree(ContentManager contentManager,
                         Project project,
@@ -118,6 +122,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myFileStatusManager.addFileStatusListener(myFileStatusListener);
     createTree();
     init();
+    myTreeExpander = new DefaultTreeExpander(myTree);
   }
 
   protected void dispose() {
@@ -145,6 +150,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   protected void addActionsTo(DefaultActionGroup group) {
     group.add(new MyGroupByPackagesAction());
     group.add(new GroupByChangeListAction());
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
   }
 
   protected JComponent createCenterPanel() {
@@ -214,6 +221,14 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
     else if (VcsDataConstants.IO_FILE_ARRAY.equals(dataId)) {
       return getFileArray();
+    }
+    else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
+      if (myGroupByChangeList) {
+        return myTreeBrowser.getTreeExpander();
+      }
+      else {
+        return myTreeExpander;
+      }
     }
     final Object fromProvider = ProjectLevelVcsManager.getInstance(myProject)
       .createVirtualAndPsiFileDataProvider(getVirtualFileArray(), mySelectedFile)

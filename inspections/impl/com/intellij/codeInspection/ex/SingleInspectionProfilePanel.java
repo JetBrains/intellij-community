@@ -14,6 +14,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -439,23 +440,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    myTreeExpander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
-
-      public boolean canExpand() {
-        return true;
-      }
-
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    myTreeExpander = new DefaultTreeExpander(myTree);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         myTree.requestFocus();
@@ -1180,4 +1165,5 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
   }
+
 }
