@@ -1,27 +1,28 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.Icons;
-import com.intellij.ide.util.PropertiesComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -381,7 +382,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
         e.getPresentation().setVisible(!myShowFlatten);
       }
     };
-    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
+    final SelectAllAction selectAllAction = new SelectAllAction();
+    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction, selectAllAction};
     directoriesAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       this);
@@ -391,6 +393,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
     collapseAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
       myTree);
+    selectAllAction.registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
+      this);
     return actions;
   }
 
@@ -533,6 +538,27 @@ public abstract class ChangesTreeList<T> extends JPanel {
     public void setSelected(AnActionEvent e, boolean state) {
       PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
       setShowFlatten(!state);
+    }
+  }
+
+  private class SelectAllAction extends AnAction {
+    private SelectAllAction() {
+      super("Select All", "Select all items", IconLoader.getIcon("/actions/selectall.png"));
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      if (myShowFlatten) {
+        final int count = myList.getModel().getSize();
+        if (count > 0) {
+          myList.setSelectionInterval(0, count-1);
+        }
+      }
+      else {
+        final int count = myTree.getRowCount() - 1;
+        if (count > 0) {
+          myTree.setSelectionInterval(0, count-1);
+        }
+      }
     }
   }
 
