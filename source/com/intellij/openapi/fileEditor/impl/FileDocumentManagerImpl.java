@@ -39,6 +39,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -168,6 +169,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return document.getUserData(FILE_KEY);
   }
 
+  @TestOnly
   public void dropAllUnsavedDocuments() {
     if (!ApplicationManager.getApplication().isUnitTestMode()){
       throw new RuntimeException("This method is only for test mode!");
