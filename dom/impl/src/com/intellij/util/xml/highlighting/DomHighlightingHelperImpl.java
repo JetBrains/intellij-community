@@ -256,8 +256,6 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   @Nullable
   private static DomElementProblemDescriptor checkRequiredGenericValue(final GenericDomValue child, final Required required,
                                                                        final DomElementAnnotationHolder annotator) {
-    assert child.getXmlTag() != null;
-
     final String stringValue = child.getStringValue();
     if (stringValue == null) return null;
 
