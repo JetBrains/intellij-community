@@ -46,7 +46,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
   }
 
   public String getHelpId() {
-    return "project.new.page2";
+    return "Reference/Dialogs/newProjectWizardJDKPage.html";
   }
 
   public JComponent getComponent() {

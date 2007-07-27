@@ -8,6 +8,7 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -68,5 +69,10 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       getWizardContext().setProjectBuilder(builder);
       builder.setUpdate(myUpdateCurrentProject.isSelected());
     }
+  }
+
+  @NonNls
+  public String getHelpId() {
+    return "reference.dialogs.new.project.import";
   }
 }
