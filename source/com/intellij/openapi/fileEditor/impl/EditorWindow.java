@@ -114,7 +114,7 @@ public class EditorWindow {
         final int componentIndex = findComponentIndex(editor.getComponent());
         if (componentIndex >= 0) { // editor could close itself on decomposition
           int indexToSelect = calcIndexToSelect(file, componentIndex);
-          if (indexToSelect >= 0) {
+          if (indexToSelect >= 0 && indexToSelect < myTabbedPane.getTabCount()) {
             myTabbedPane.setSelectedIndex(indexToSelect);
           }
 
