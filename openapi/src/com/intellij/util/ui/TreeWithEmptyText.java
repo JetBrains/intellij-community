@@ -44,6 +44,7 @@ public class TreeWithEmptyText extends Tree {
         }
       }
     });
+    myEmptyTextComponent.setFont(getFont());
   }
 
   @Nullable
