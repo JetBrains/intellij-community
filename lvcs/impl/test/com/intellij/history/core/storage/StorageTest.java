@@ -95,7 +95,7 @@ public class StorageTest extends TempDirTestCase {
   @Test
   public void testCreatingContent() {
     Content c = s.storeContent(b("abc"));
-    assertEquals(b("abc"), c.getBytes());
+    assertArrayEquals(b("abc"), c.getBytes());
   }
 
   @Test

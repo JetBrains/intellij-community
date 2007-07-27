@@ -18,7 +18,7 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
     replay(subject);
 
     assertEquals(3, s.store(c));
-    assertEquals(c, s.load(3));
+    assertArrayEquals(c, s.load(3));
 
     verify(subject);
   }
@@ -28,8 +28,8 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
     expect(subject.load(2)).andReturn("content".getBytes()).times(1);
     replay(subject);
 
-    assertEquals("content".getBytes(), s.load(2));
-    assertEquals("content".getBytes(), s.load(2));
+    assertArrayEquals("content".getBytes(), s.load(2));
+    assertArrayEquals("content".getBytes(), s.load(2));
 
     verify(subject);
   }
@@ -40,9 +40,9 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
     subject.remove(1);
     replay(subject);
 
-    assertEquals("content".getBytes(), s.load(1));
+    assertArrayEquals("content".getBytes(), s.load(1));
     s.remove(1);
-    assertEquals("content".getBytes(), s.load(1));
+    assertArrayEquals("content".getBytes(), s.load(1));
 
     verify(subject);
   }

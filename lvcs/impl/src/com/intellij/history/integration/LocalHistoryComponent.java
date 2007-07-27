@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 
@@ -33,7 +34,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private LocalHistoryService myService;
   private LocalHistoryConfiguration myConfiguration;
 
-  // todo test-support
+  @TestOnly
   public static LocalHistoryComponent getComponentInstance(Project p) {
     return (LocalHistoryComponent)p.getComponent(LocalHistory.class);
   }
@@ -43,6 +44,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return getComponentInstance(p).myVcs;
   }
 
+  @TestOnly
   public static LocalVcs getLocalVcsImplFor(Project p) {
     return getComponentInstance(p).myVcsImpl;
   }

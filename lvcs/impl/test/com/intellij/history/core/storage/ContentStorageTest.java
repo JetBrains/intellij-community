@@ -37,8 +37,8 @@ public class ContentStorageTest extends TempDirTestCase {
     int id1 = s.store(c1);
     int id2 = s.store(c2);
 
-    assertEquals(c1, s.load(id1));
-    assertEquals(c2, s.load(id2));
+    assertArrayEquals(c1, s.load(id1));
+    assertArrayEquals(c2, s.load(id2));
   }
 
   @Test
@@ -49,7 +49,7 @@ public class ContentStorageTest extends TempDirTestCase {
     s.close();
 
     s = createStorage();
-    assertEquals(c, s.load(id));
+    assertArrayEquals(c, s.load(id));
   }
 
   @Test
@@ -61,7 +61,7 @@ public class ContentStorageTest extends TempDirTestCase {
 
     IContentStorage another = createStorage();
     try {
-      assertEquals(c, another.load(id));
+      assertArrayEquals(c, another.load(id));
     }
     finally {
       another.close();

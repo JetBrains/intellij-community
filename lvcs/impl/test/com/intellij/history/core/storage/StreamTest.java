@@ -68,7 +68,7 @@ public class StreamTest extends LocalVcsTestCase {
     Content c = s.storeContent(b("abc"));
     os.writeContent(c);
 
-    assertEquals("abc".getBytes(), is.readContent().getBytes());
+    assertArrayEquals("abc".getBytes(), is.readContent().getBytes());
   }
 
   @Test
@@ -105,7 +105,7 @@ public class StreamTest extends LocalVcsTestCase {
 
     assertEquals(42, result.getId());
     assertEquals("file", result.getName());
-    assertEquals("content".getBytes(), result.getContent().getBytes());
+    assertArrayEquals("content".getBytes(), result.getContent().getBytes());
     assertEquals(123L, result.getTimestamp());
   }
 

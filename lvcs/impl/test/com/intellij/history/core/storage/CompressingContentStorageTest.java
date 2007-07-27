@@ -41,7 +41,7 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
     expect(subject.load(2)).andReturn(compressed[0]);
     replay(subject);
 
-    assertEquals(original, s.load(2));
+    assertArrayEquals(original, s.load(2));
   }
 
   @Test

@@ -128,23 +128,6 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected static void assertEquals(Object[] expected, Collection actual) {
-    assertEquals(expected, actual.toArray());
+    assertArrayEquals(expected, actual.toArray());
   }
-
-  //protected static void assertEquals(byte[] expected, byte[] actual) {
-  //  String message = notEqualsMessage(expected, actual);
-  //
-  //  assertTrue(message, expected.length == actual.length);
-  //  for (int i = 0; i < expected.length; i++) {
-  //    assertTrue(message, expected[i] == actual[i]);
-  //  }
-  //}
-
-  //public static void assertEquals(long expected, long actual) {
-  //  Assert.assertEquals(expected, actual);
-  //}
-
-  //private static String notEqualsMessage(Object expected, Object actual) {
-  //  return "elements are not equal:\n" + "\texpected: " + expected + "\n" + "\tactual: " + actual;
-  //}
 }

@@ -15,7 +15,7 @@ public class ContentFactoryTest extends LocalVcsTestCase {
     ContentFactory f = new MyContentFactory(new byte[]{1});
 
     Content c = f.createContent(s);
-    assertEquals(new byte[]{1}, c.getBytes());
+    assertArrayEquals(new byte[]{1}, c.getBytes());
   }
 
   @Test
