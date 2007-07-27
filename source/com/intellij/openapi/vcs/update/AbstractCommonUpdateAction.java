@@ -177,7 +177,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     final UpdateInfoTree updateInfoTree = projectLevelVcsManager.showUpdateProjectInfo(updatedFiles,
                                                                                                        getTemplatePresentation().getText(),
                                                                                                        myActionInfo);
-                    updateInfoTree.setCanGroupByChangeList(myActionInfo.canGroupByChangelist());
+                    updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(vcsToVirtualFiles.keySet()));
                     final MessageBusConnection messageBusConnection = project.getMessageBus().connect();
                     messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
                       public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
@@ -209,6 +209,17 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         //ignore
       }
     }
+  }
+
+  private boolean canGroupByChangelist(final Set<AbstractVcs> abstractVcses) {
+    if (myActionInfo.canGroupByChangelist()) {
+      for(AbstractVcs vcs: abstractVcses) {
+        if (vcs.getCachingCommittedChangesProvider() != null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean someSessionWasCanceled(List<UpdateSession> updateSessions) {

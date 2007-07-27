@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.ui.TreeWithEmptyText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,6 +63,7 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
 
   public void mouseMoved(MouseEvent e) {
     JTree tree = (JTree) e.getSource();
+    if (tree instanceof TreeWithEmptyText && ((TreeWithEmptyText) tree).isModelEmpty()) return;
     Object tag = getTagAt(e);
     if (tag != null) {
       tree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

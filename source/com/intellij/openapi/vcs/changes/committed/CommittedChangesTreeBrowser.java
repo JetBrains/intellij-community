@@ -28,7 +28,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
-import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.TreeWithEmptyText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
+import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,7 +58,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private static final Object MORE_TAG = new Object();
 
   private final Project myProject;
-  private final Tree myChangesTree;
+  private final TreeWithEmptyText myChangesTree;
   private final ChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
   private CommittedChangeList mySelectedChangeList;
@@ -71,30 +71,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private CopyProvider myCopyProvider;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
-  private String myEmptyText = "";
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
 
     myProject = project;
     myChangeLists = changeLists;
-    myChangesTree = new Tree(buildTreeModel()) {
+    myChangesTree = new TreeWithEmptyText(buildTreeModel()) {
       @Override
       public boolean getScrollableTracksViewportWidth() {
         return true;
-      }
-
-      protected void paintComponent(final Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g;
-        final TreeModel model = getModel();
-        if (model.getChildCount(model.getRoot()) == 0 && myEmptyText.length() > 0) {
-          final Rectangle bounds = getBounds();
-          final Rectangle2D stringBounds = g.getFont().getStringBounds(myEmptyText, g2d.getFontRenderContext());
-          int x = ((bounds.width - (int) stringBounds.getWidth())) / 2;
-          g.drawString(myEmptyText, bounds.x + x, bounds.y + 20);
-
-        }
       }
     };
     myChangesTree.setRootVisible(false);
@@ -167,7 +153,19 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void setEmptyText(final String emptyText) {
-    myEmptyText = emptyText;
+    myChangesTree.setEmptyText(emptyText);
+  }
+
+  public void clearEmptyText() {
+    myChangesTree.clearEmptyText();
+  }
+
+  public void appendEmptyText(final String text, final SimpleTextAttributes attrs) {
+    myChangesTree.appendEmptyText(text, attrs);
+  }
+
+  public void appendEmptyText(final String text, final SimpleTextAttributes attrs, ActionListener clickListener) {
+    myChangesTree.appendEmptyText(text, attrs, clickListener);
   }
 
   public void addToolBar(JComponent toolBar) {

@@ -52,6 +52,9 @@ public final class SimpleTextAttributes {
   public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
   public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
 
+  public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, Color.blue);
+  public static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE | STYLE_BOLD, Color.blue);
+
   /**
    * @param fgColor color of the text fragment. <code>color</code> can be
    * <code>null</code>. In that case <code>SimpleColoredComponent</code> will

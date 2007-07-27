@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.util.TextRange;
 
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author yole
@@ -15,9 +14,6 @@ import java.awt.*;
 public class IssueLinkRenderer {
   private SimpleColoredComponent myColoredComponent;
   private IssueNavigationConfiguration myIssueNavigationConfiguration;
-
-  private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
-  private static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE | SimpleTextAttributes.STYLE_BOLD, Color.blue);
 
   public IssueLinkRenderer(final Project project, final SimpleColoredComponent coloredComponent) {
     myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
@@ -45,6 +41,6 @@ public class IssueLinkRenderer {
   }
 
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
-    return (baseStyle.getStyle() & SimpleTextAttributes.STYLE_BOLD) != 0 ? LINK_BOLD_ATTRIBUTES : LINK_ATTRIBUTES;
+    return (baseStyle.getStyle() & SimpleTextAttributes.STYLE_BOLD) != 0 ? SimpleTextAttributes.LINK_BOLD_ATTRIBUTES : SimpleTextAttributes.LINK_ATTRIBUTES;
   }
 }

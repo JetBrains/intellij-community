@@ -38,18 +38,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,6 +63,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,7 +106,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         myTree.repaint();
       }
 
-      public void fileStatusChanged(VirtualFile virtualFile) {
+      public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
         myTree.repaint();
       }
     };
@@ -259,6 +265,16 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
     myCommittedChangeLists = receivedChanges;
     myTreeBrowser.setItems(myCommittedChangeLists, false);
+    myTreeBrowser.clearEmptyText();
+    if (CommittedChangesCache.getInstance(myProject).hasEmptyCaches()) {
+      myTreeBrowser.appendEmptyText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myTreeBrowser.appendEmptyText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          RefreshIncomingChangesAction.doRefresh(myProject);
+        }
+      });
+      myTreeBrowser.appendEmptyText(" to initialize repository changes cache", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
   }
 
   private class MyGroupByPackagesAction extends ToggleAction {

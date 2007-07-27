@@ -261,10 +261,18 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public boolean hasCachesForAnyRoot() {
+    return hasCachesWithEmptiness(false);
+  }
+
+  public boolean hasEmptyCaches() {
+    return hasCachesWithEmptiness(true);
+  }
+
+  private boolean hasCachesWithEmptiness(final boolean emptiness) {
     Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cacheFile: caches) {
       try {
-        if (!cacheFile.isEmpty()) {
+        if (cacheFile.isEmpty() == emptiness) {
           return true;
         }
       }
