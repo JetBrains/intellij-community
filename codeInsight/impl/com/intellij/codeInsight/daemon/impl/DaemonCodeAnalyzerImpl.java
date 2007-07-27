@@ -8,10 +8,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.concurrency.Job;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,14 +28,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.concurrency.Job;
-import gnu.trove.THashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,27 +90,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = (DaemonCodeAnalyzerSettings)mySettings.clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
-    myPassExecutorService = new PassExecutorService(myProject){
-      protected void applyInformationToEditor(final TextEditorHighlightingPass pass, final FileEditor fileEditor,
-                                              final ProgressIndicator updateProgress) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return;
-        final boolean wasCanceled = updateProgress.isCanceled();
-        if (fileEditor != null && !wasCanceled) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myDisposed || myProject.isDisposed()) return;
-              if (fileEditor.getComponent().isDisplayable()) {
-                pass.applyInformationToEditor();
-                
-                if (fileEditor instanceof TextEditor) {
-                  log(updateProgress, pass, "Apply ");
-                  Editor editor = ((TextEditor)fileEditor).getEditor();
-                  repaintErrorStripeRenderer(editor);
-                }
-              }
-            }
-          }, ModalityState.stateForComponent(fileEditor.getComponent()));
+    myPassExecutorService = new PassExecutorService(myProject) {
+      protected void afterApplyInformationToEditor(final TextEditorHighlightingPass pass,
+                                                   final FileEditor fileEditor,
+                                                   final ProgressIndicator updateProgress) {
+        if (fileEditor instanceof TextEditor) {
+          log(updateProgress, pass, "Apply ");
+          Editor editor = ((TextEditor)fileEditor).getEditor();
+          repaintErrorStripeRenderer(editor);
         }
+      }
+
+      protected boolean isDisposed() {
+        return myDisposed || super.isDisposed();
       }
     };
   }

@@ -4,7 +4,9 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -17,10 +19,13 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,6 +39,7 @@ public abstract class PassExecutorService {
 
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Job<Void>>();
   private final Project myProject;
+  private boolean isDisposed;
 
   public PassExecutorService(Project project) {
     myProject = project;
@@ -41,6 +47,7 @@ public abstract class PassExecutorService {
 
   public void dispose() {
     cancelAll();
+    isDisposed = true;
   }
 
   public void cancelAll() {
@@ -286,6 +293,7 @@ public abstract class PassExecutorService {
         }
       },myUpdateProgress);
 
+      boolean hasMoreWorkTodo = myThreadsToStartCountdown.decrementAndGet() != 0;
       if (!myUpdateProgress.isCanceled()) {
         for (ScheduledPass successor : mySuccessorsOnCompletion) {
           int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
@@ -293,35 +301,64 @@ public abstract class PassExecutorService {
             submit(successor);
           }
         }
-        applyInformationToEditors();
+        applyInformationToEditors(hasMoreWorkTodo);
       }
 
       //mySubmittedPasses.remove(this);
 
       // check that it is not remnant from the previous attempt, canceled long ago
       if (!myUpdateProgress.isCanceled()) {
-        int toexec = myThreadsToStartCountdown.decrementAndGet();
-        LOG.assertTrue(toexec >= 0, String.valueOf(toexec));
-        if (toexec == 0) {
+        if (!hasMoreWorkTodo) {
           log(myUpdateProgress, myPass, "Stopping ");
           myUpdateProgress.stopIfRunning();
         }
         else {
-          log(myUpdateProgress, myPass, "Pass finished but there are" + toexec, " passes in the queue");
+          log(myUpdateProgress, myPass, "Pass finished but there are passes in the queue");
         }
       }
       log(myUpdateProgress, myPass, "Finished ");
     }
 
-    private void applyInformationToEditors() {
+    private void applyInformationToEditors(boolean hasMoreWorkTodo) {
       for (FileEditor fileEditor : myFileEditor) {
-        applyInformationToEditor(myPass, fileEditor, myUpdateProgress);
+        applyInformationToEditor(myPass, fileEditor, myUpdateProgress, hasMoreWorkTodo);
       }
     }
   }
 
-  protected abstract void applyInformationToEditor(final TextEditorHighlightingPass pass, final FileEditor fileEditor,
-                                        final ProgressIndicator updateProgress);
+  public static void reportToWolf(@NotNull final Document document, @NotNull Project project) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile == null) return;
+    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project);
+    GeneralHighlightingPass.reportErrorsToWolf(errors, psiFile);
+  }
+
+  protected boolean isDisposed() {
+    return isDisposed;
+  }
+
+  protected abstract void afterApplyInformationToEditor(TextEditorHighlightingPass pass, FileEditor fileEditor, ProgressIndicator updateProgress);
+
+  private void applyInformationToEditor(final TextEditorHighlightingPass pass, final FileEditor fileEditor,
+                                        final ProgressIndicator updateProgress, final boolean hasMoreWorkTodo) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    final boolean wasCanceled = updateProgress.isCanceled();
+    if (fileEditor != null && !wasCanceled) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (isDisposed() || myProject.isDisposed()) return;
+          if (fileEditor.getComponent().isDisplayable()) {
+            pass.applyInformationToEditor();
+            Document document = pass.getDocument();
+            if (!hasMoreWorkTodo && document != null) {
+              reportToWolf(document, myProject);
+            }
+            afterApplyInformationToEditor(pass, fileEditor, updateProgress);    
+          }
+        }
+      }, ModalityState.stateForComponent(fileEditor.getComponent()));
+    }
+  }
 
   public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
     ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());

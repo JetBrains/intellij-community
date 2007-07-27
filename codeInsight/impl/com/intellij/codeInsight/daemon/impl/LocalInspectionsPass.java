@@ -248,7 +248,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   protected void applyInformationWithProgress() {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, Pass.LOCAL_INSPECTIONS);
-    HighlightUtil.addErrorsToWolf(myInfos, myFile);
   }
 
   private void addHighlightsFromDescriptors(final List<HighlightInfo> toInfos) {

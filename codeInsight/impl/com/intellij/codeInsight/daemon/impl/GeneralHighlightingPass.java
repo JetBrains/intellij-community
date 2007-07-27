@@ -319,6 +319,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void applyInformationWithProgress() {
+    myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
+
     UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
 
     // highlights from both passes should be in the same layer 
@@ -330,11 +332,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
     collection.addAll(myHighlights);
     myInjectedPsiHighlights.put(range, collection);
-    HighlightInfo[] infos = UpdateHighlightersUtil.setAndGetHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
-
-    if (myUpdateAll) {
-      reportErrorsToWolf(infos, myFile, myHasErrorElement);
-    }
+    UpdateHighlightersUtil.setAndGetHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
   }
 
   public Collection<LineMarkerInfo> queryLineMarkers() {
@@ -524,13 +522,16 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return 0;
   }
 
-  private static void reportErrorsToWolf(final HighlightInfo[] infos, @NotNull PsiFile psiFile, boolean hasErrorElement) {
+  private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
+
+  static void reportErrorsToWolf(final HighlightInfo[] infos, @NotNull PsiFile psiFile) {
     if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     Project project = psiFile.getProject();
     if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null || CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return;
 
+    boolean hasErrorElement = Boolean.TRUE.equals(psiFile.getUserData(HAS_ERROR_ELEMENT));
     List<Problem> problems = HighlightUtil.convertToProblems(infos, file, hasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 

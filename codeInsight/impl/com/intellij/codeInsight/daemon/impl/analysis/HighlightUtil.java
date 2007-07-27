@@ -2031,6 +2031,7 @@ public class HighlightUtil {
 
   private static List<Problem> convertToProblems(final Collection<HighlightInfo> infos, final VirtualFile file,
                                                  final boolean hasErrorElement) {
+    if (infos.isEmpty()) return Collections.emptyList();
     List<Problem> problems = new SmartList<Problem>();
     for (HighlightInfo info : infos) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {
@@ -2040,6 +2041,7 @@ public class HighlightUtil {
     }
     return problems;
   }
+
   public static List<Problem> convertToProblems(final HighlightInfo[] infos, final VirtualFile file,
                                                  final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<Problem>();
