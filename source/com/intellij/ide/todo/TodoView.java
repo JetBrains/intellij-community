@@ -14,6 +14,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -21,7 +24,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedPaneContentUI;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -37,28 +39,37 @@ import java.beans.PropertyChangeListener;
  */
 public class TodoView implements ProjectComponent,JDOMExternalizable{
   private final Project myProject;
+  private final ProjectLevelVcsManager myVCSManager;
   private MyPropertyChangeListener myPropertyChangeListener;
   private MessageBusConnection myConnection;
 
   private ContentManager myContentManager;
   private CurrentFileTodosPanel myCurrentFileTodos;
   private TodoPanel myAllTodos;
+  private ChangeListTodosPanel myChangeListTodos;
 
   private int mySelectedIndex;
   private TodoPanelSettings myCurrentPanelSettings;
   private TodoPanelSettings myAllPanelSettings;
+  private TodoPanelSettings myChangeListTodosPanelSettings;
 
   @NonNls private static final String ATTRIBUTE_SELECTED_INDEX = "selected-index";
   @NonNls private static final String ELEMENT_TODO_PANEL = "todo-panel";
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String VALUE_SELECTED_FILE = "selected-file";
   @NonNls private static final String VALUE_ALL = "all";
+  @NonNls private static final String VALUE_DEFAULT_CHANGELIST = "default-changelist";
+  private Content myChangeListTodosContent;
+
+  private MyVcsListener myVcsListener = new MyVcsListener();
 
   /* Invoked by reflection */
-  TodoView(Project project){
+  TodoView(Project project, ProjectLevelVcsManager manager){
     myProject=project;
+    myVCSManager = manager;
     myCurrentPanelSettings=new TodoPanelSettings();
     myAllPanelSettings=new TodoPanelSettings();
+    myChangeListTodosPanelSettings = new TodoPanelSettings();
   }
 
   public void readExternal(Element element) throws InvalidDataException{
@@ -79,6 +90,9 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
         else if (VALUE_ALL.equals(id)) {
           myAllPanelSettings.readExternal(child);
         }
+        else if (VALUE_DEFAULT_CHANGELIST.equals(id)) {
+          myChangeListTodosPanelSettings.readExternal(child);
+        }
         else {
           throw new IllegalArgumentException("unknown id: " + id);
         }
@@ -98,9 +112,14 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     element.addContent(selectedFileElement);
 
     Element allElement=new Element(ELEMENT_TODO_PANEL);
-    allElement.setAttribute(ATTRIBUTE_ID,VALUE_ALL);
+    allElement.setAttribute(ATTRIBUTE_ID, VALUE_ALL);
     myAllPanelSettings.writeExternal(allElement);
     element.addContent(allElement);
+
+    Element changeListElement=new Element(ELEMENT_TODO_PANEL);
+    changeListElement.setAttribute(ATTRIBUTE_ID, VALUE_DEFAULT_CHANGELIST);
+    myChangeListTodosPanelSettings.writeExternal(changeListElement);
+    element.addContent(changeListElement);
   }
 
   public void disposeComponent(){}
@@ -113,18 +132,21 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   public void initComponent(){}
 
   public void projectClosed(){
+    myVCSManager.removeVcsListener(myVcsListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myPropertyChangeListener);
     myConnection.disconnect();
 
     if(myAllTodos!=null){ // Panels can be null if project was closed before starup activities run
       myCurrentFileTodos.dispose();
       myAllTodos.dispose();
+      myChangeListTodos.dispose();
       ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
       toolWindowManager.unregisterToolWindow(ToolWindowId.TODO_VIEW);
     }
   }
 
   public void projectOpened(){
+    myVCSManager.addVcsListener(myVcsListener);
     myPropertyChangeListener=new MyPropertyChangeListener();
     TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
 
@@ -158,6 +180,16 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           };
           currentFileTodosContent.setComponent(myCurrentFileTodos);
 
+          myChangeListTodosContent = PeerFactory.getInstance().getContentFactory().createContent(null, "ChangeList", false);
+          myChangeListTodos = new ChangeListTodosPanel(myProject, myCurrentPanelSettings, myChangeListTodosContent) {
+            protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
+              ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
+              builder.init();
+              return builder;
+            }
+          };
+          myChangeListTodosContent.setComponent(myChangeListTodos);
+
           // Register tool window
 
           ToolWindow toolWindow=ToolWindowManager.getInstance(myProject).registerToolWindow(
@@ -170,6 +202,10 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
           myContentManager.addContent(allTodosContent);
           myContentManager.addContent(currentFileTodosContent);
+          if (myVCSManager.getAllActiveVcss().length > 0) {
+            myVcsListener.myIsVisible = true;
+            myContentManager.addContent(myChangeListTodosContent);
+          }
 
           Content content=myContentManager.getContent(mySelectedIndex);
           content = content == null ? allTodosContent : content;
@@ -179,7 +215,25 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     );
   }
 
+  private final class MyVcsListener implements VcsListener {
+    private boolean myIsVisible;
 
+    public void directoryMappingChanged() {
+      ApplicationManager.getApplication().invokeLater(new Runnable(){
+        public void run() {
+          final AbstractVcs[] vcss = myVCSManager.getAllActiveVcss();
+          if (myIsVisible && vcss.length == 0) {
+            myContentManager.removeContent(myChangeListTodosContent, false);
+            myIsVisible = false;
+          }
+          else if (!myIsVisible && vcss.length > 0) {
+            myContentManager.addContent(myChangeListTodosContent);
+            myIsVisible = true;
+          }
+        }
+      }, ModalityState.NON_MODAL);
+    }
+  }
 
   private final class MyPropertyChangeListener implements PropertyChangeListener{
     public void propertyChange(PropertyChangeEvent e){
