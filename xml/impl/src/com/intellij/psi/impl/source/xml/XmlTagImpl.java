@@ -15,6 +15,7 @@ import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -110,7 +111,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     final XmlTag parentTag = getParentTag();
 
     if (parentTag == null) {
-      final XmlDocument document = ((XmlFile)getContainingFile()).getDocument();
+      PsiFile containingFile = getContainingFile();
+      if (!(containingFile instanceof XmlFile) && PsiUtil.isInJspFile(containingFile)) {
+        containingFile = PsiUtil.getJspFile(containingFile);
+      }
+      final XmlDocument document = ((XmlFile)containingFile).getDocument();
       final XmlProlog prolog = document.getProlog();
 
       if(prolog != null && prolog.getDoctype() != null &&
