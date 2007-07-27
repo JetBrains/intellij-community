@@ -39,6 +39,8 @@ public interface DiffTool {
    */
   @NonNls Object HINT_DO_NOT_IGNORE_WHITESPACES = "doNotIgnoreWhitespaces";
 
+  @NonNls Object HINT_ALLOW_NO_DIFFERENCES = "allowNoDifferences";
+
   /**
    * Opens window to compare contents. Clients should call {@link #canShow(com.intellij.openapi.diff.DiffRequest)} first.
    */

@@ -67,7 +67,7 @@ class FrameDiffTool implements DiffTool {
   }
 
   private static boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window) {
-    if (!diffPanel.hasDifferences()) {
+    if (!diffPanel.hasDifferences() && !data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
       DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
       if (!Comparing.equal(manager.getComparisonPolicy(), ComparisonPolicy.DEFAULT)) {
         ComparisonPolicy oldPolicy = manager.getComparisonPolicy();

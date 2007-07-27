@@ -165,6 +165,9 @@ public class ShowDiffAction extends AnAction {
       else {
         diffReq.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       }
+      if (changes.length > 1) {
+        diffReq.addHint(DiffTool.HINT_ALLOW_NO_DIFFERENCES);
+      }
       tool.show(diffReq);
     }
   }
