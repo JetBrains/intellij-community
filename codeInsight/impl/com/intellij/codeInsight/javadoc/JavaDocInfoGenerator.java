@@ -581,7 +581,7 @@ class JavaDocInfoGenerator {
         buffer.append(parm.getName());
       }
       if (i < parms.length - 1) {
-        buffer.append(",\n");
+        buffer.append(",\n ");
         for (int j = 0; j < indent; j++) {
           buffer.append(" ");
         }
@@ -1374,7 +1374,7 @@ class JavaDocInfoGenerator {
             break;
           }
 
-          generateType(subst, t, context);
+          length += generateType(subst, t, context);
 
           if (i < params.length - 1) {
             subst.append(", ");
@@ -1386,7 +1386,6 @@ class JavaDocInfoGenerator {
           String text = subst.toString();
 
           buffer.append(text);
-          length += text.length();
         }
       }
 
