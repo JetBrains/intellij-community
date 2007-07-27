@@ -44,6 +44,7 @@ import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -69,6 +70,7 @@ public class GroovyPositionManager implements PositionManager {
     return myDebugProcess;
   }
 
+  @NotNull
   public List<Location> locationsOfLine(ReferenceType type,
                                         SourcePosition position) throws NoDataException {
     try {
@@ -90,6 +92,14 @@ public class GroovyPositionManager implements PositionManager {
     return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, GrClosableBlock.class);
   }
 
+  private GrTypeDefinition findEnclosingTypeDefinition(SourcePosition position) {
+    PsiFile file = position.getFile();
+    if (!(file instanceof GroovyFile)) return null;
+    PsiElement element = file.findElementAt(position.getOffset());
+    if (element == null) return null;
+    return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
+  }
+
   private GrTypeDefinition getToplevelTypeDefinition(GroovyPsiElement inner) {
     GrTypeDefinition outer = PsiTreeUtil.getParentOfType(inner, GrTypeDefinition.class);
     while (outer != null) {
@@ -101,31 +111,30 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) throws NoDataException {
-    GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
+    GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
     String qName = null;
-    if (sourceImage instanceof GrTypeDefinition) {
-      qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
-    } else {
-      if (sourceImage == null) {
-        PsiFile file = position.getFile();
-        if (file instanceof GroovyFile) {
-          qName = getScriptFQName((GroovyFile) file);
-        }
-        if (qName == null) throw new NoDataException();
-      }
+    if (typeDefinition != null) {
+      qName = typeDefinition.getQualifiedName();
     }
 
     String waitPrepareFor;
     ClassPrepareRequestor waitRequestor;
 
     if (qName == null) {
-      GrTypeDefinition toplevel = getToplevelTypeDefinition(sourceImage);
+      GrTypeDefinition toplevel = getToplevelTypeDefinition(typeDefinition);
 
-      if (toplevel == null) throw new NoDataException();
+      if (toplevel == null) {
+        PsiFile file = position.getFile();
+        if (file instanceof GroovyFile) {
+          qName = getScriptFQName((GroovyFile) file);
+        }
+        if (qName == null) throw new NoDataException();
+      } else {
+        qName = toplevel.getQualifiedName();
+      }
 
-      final String toplevelQName = toplevel.getQualifiedName();
-      if (toplevelQName == null) return null;
-      waitPrepareFor = toplevelQName + "$*";
+      if (qName == null) throw new NoDataException();
+      waitPrepareFor = qName + "$*";
       waitRequestor = new ClassPrepareRequestor() {
         public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
           final CompoundPositionManager positionManager = ((DebugProcessImpl) debuggerProcess).getPositionManager();
@@ -216,32 +225,32 @@ public class GroovyPositionManager implements PositionManager {
     return result.get();
   }
 
+  @NotNull
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       public List<ReferenceType> compute() {
-        GroovyPsiElement sourceImage = findReferenceTypeSourceImage(classPosition);
+        GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(classPosition);
 
         String qName = null;
-        if (sourceImage instanceof GrTypeDefinition) {
-          qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
-        } else if (sourceImage == null) {
-          PsiFile file = classPosition.getFile();
-          if (file instanceof GroovyFile) {
-            qName = getScriptFQName((GroovyFile) file);
-          } else {
-            return Collections.emptyList();
-          }
+        if (typeDefinition != null) {
+          qName = typeDefinition.getQualifiedName();
         }
 
         if (qName == null) {
-          final GrTypeDefinition toplevel = getToplevelTypeDefinition(sourceImage);
-          if (toplevel == null) return Collections.emptyList();
+          final GroovyPsiElement toplevel = getToplevelTypeDefinition(typeDefinition);
+          if (toplevel == null) {
+            PsiFile file = classPosition.getFile();
+            if (file instanceof GroovyFile) {
+              qName = getScriptFQName((GroovyFile) file);
+            }
+          }
 
-          final String parentClassName = toplevel.getQualifiedName();
+          if (qName == null) return Collections.emptyList();
 
-          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
+          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(qName);
           final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
 
+          final GroovyPsiElement sourceImage = findReferenceTypeSourceImage(classPosition);
           for (ReferenceType outer : outers) {
             final ReferenceType nested = findNested(outer, sourceImage, classPosition);
             if (nested != null) {
