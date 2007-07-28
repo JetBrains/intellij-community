@@ -460,7 +460,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     public void run() {
       //noinspection InfiniteLoopStatement
       while (true) {
-        if (ApplicationManager.getApplication().isDisposed()) break;
+        final Application application = ApplicationManager.getApplication();
+        if (application == null || application.isDisposed()) break;
         
         storeRefreshStatusToFiles();
         try {

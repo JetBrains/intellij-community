@@ -20,6 +20,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.ref.SoftReference;
@@ -83,6 +84,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     registerExtension(extension, LoadingOrder.ANY);
   }
 
+  public PluginDescriptor getDescriptor() {
+    return myDescriptor;
+  }
+
   public synchronized void registerExtension(T extension, LoadingOrder order) {
     assert (extension != null) : "Extension cannot be null";
 
@@ -130,8 +135,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void notifyListenersOnAdd(T extension, final PluginDescriptor pluginDescriptor) {
     //noinspection unchecked
-    ExtensionPointListener<T>[] listeners = (ExtensionPointListener<T>[])myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
-    for (ExtensionPointListener<T> listener : listeners) {
+    for (ExtensionPointListener<T> listener : getListenersCopy()) {
       try {
         listener.extensionAdded(extension, pluginDescriptor);
       }
@@ -139,6 +143,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         myLogger.error(e);
       }
     }
+  }
+
+  private ExtensionPointListener<T>[] getListenersCopy() {
+    return myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
   }
 
   @NotNull
@@ -241,7 +249,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void notifyListenersOnRemove(T extensionObject, PluginDescriptor pluginDescriptor) {
-    for (ExtensionPointListener<T> listener : myEPListeners) {
+    for (ExtensionPointListener<T> listener : getListenersCopy()) {
       try {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
       }
@@ -332,6 +340,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       return true;
     }
     return false;
+  }
+
+  @TestOnly
+  final void dropCaches() {
+    for (final ExtensionPointListener<T> listener : getListenersCopy()) {
+      if (listener instanceof SmartExtensionPoint) {
+        ((SmartExtensionPoint)listener).dropCache();
+      }
+    }
   }
 
   private static class ObjectComponentAdapter extends ExtensionComponentAdapter {

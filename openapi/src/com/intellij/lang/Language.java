@@ -31,20 +31,22 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.SmartExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +72,39 @@ public abstract class Language {
   public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
-  private Set<Annotator> myInjectedAnnotators;
+  private final NotNullLazyValue<SmartExtensionPoint<AnnotatorEP, Annotator>> myAnnotatorsSmartEP = new NotNullLazyValue<SmartExtensionPoint<AnnotatorEP, Annotator>>() {
+    @NotNull
+    protected SmartExtensionPoint<AnnotatorEP, Annotator> compute() {
+      return new SmartExtensionPoint<AnnotatorEP, Annotator>(new THashSet<Annotator>()) {
+        @NotNull
+        protected ExtensionPoint<AnnotatorEP> getExtensionPoint() {
+          return Extensions.getRootArea().getExtensionPoint(AnnotatorEP.EP_NAME);
+        }
+
+        protected Annotator getExtension(@NotNull final AnnotatorEP ep) {
+          if (ep.language.equals(getID())) {
+            try {
+              Annotator epAnnotator = ep.getAnnotator();
+              if (epAnnotator == null) {
+                PluginDescriptor descriptor = ep.getPluginDescriptor();
+                epAnnotator = (Annotator)Class.forName(ep.annotatorClass, true,
+                                                       descriptor == null ? getClass().getClassLoader() : descriptor.getPluginClassLoader()).newInstance();
+                ep.setAnnotator(epAnnotator);
+              }
+              return epAnnotator;
+            }
+            catch(Exception e) {
+              LOG.error(e);
+            }
+          }
+          return null;
+        }
+      };
+    }
+  };
+  ;
   private Set<ExternalAnnotator> myInjectedExternalAnnotators;
   private Annotator myLastAnnotator;
-  private List<Annotator> myCachedAnnotators;
   private ExternalAnnotator myLastExternalAnnotator;
   private List<ExternalAnnotator> myCachedExternalAnnotators;
   private final List<CustomFormattingModelBuilder> myCustomFormatters = new ArrayList<CustomFormattingModelBuilder>();
@@ -261,11 +292,7 @@ public abstract class Language {
    * @param annotator the annotator to inject.
    */
   public synchronized final void injectAnnotator(@NotNull Annotator annotator) {
-    if (myInjectedAnnotators == null) {
-      myInjectedAnnotators = new THashSet<Annotator>();
-    }
-    myInjectedAnnotators.add(annotator);
-    myCachedAnnotators = null;
+    myAnnotatorsSmartEP.getValue().addExplicitExtension(annotator);
   }
 
   public synchronized final void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
@@ -283,10 +310,7 @@ public abstract class Language {
    * @param annotator the annotator to remove.
    */
   public synchronized final void removeAnnotator(@NotNull Annotator annotator) {
-    if (myInjectedAnnotators != null) {
-      myInjectedAnnotators.remove(annotator);
-      myCachedAnnotators = null;
-    }
+    myAnnotatorsSmartEP.getValue().removeExplicitExtension(annotator);
   }
 
   /**
@@ -296,39 +320,18 @@ public abstract class Language {
    */
   @NotNull
   public synchronized final List<Annotator> getAnnotators() {
+    final SmartExtensionPoint<AnnotatorEP, Annotator> smartEP = myAnnotatorsSmartEP.getValue();
     Annotator annotator = getAnnotator();
-    if (annotator == myLastAnnotator && myCachedAnnotators != null) {
-      return myCachedAnnotators;
-    }
-    myLastAnnotator = annotator;
-    myCachedAnnotators = new SmartList<Annotator>();
-    if (annotator != null) {
-      myCachedAnnotators.add(annotator);
-    }
-    if (myInjectedAnnotators != null) {
-      myCachedAnnotators.addAll(myInjectedAnnotators);
-    }
-
-    final AnnotatorEP[] eps = Extensions.getExtensions(AnnotatorEP.EP_NAME);
-    for(AnnotatorEP ep: eps) {
-      if (ep.language.equals(getID())) {
-        try {
-          Annotator epAnnotator = ep.getAnnotator();
-          if (epAnnotator == null) {
-            PluginDescriptor descriptor = ep.getPluginDescriptor();
-            epAnnotator = (Annotator)Class.forName(ep.annotatorClass, true,
-                                        descriptor == null ? getClass().getClassLoader() : descriptor.getPluginClassLoader()).newInstance();
-            ep.setAnnotator(epAnnotator);
-          }
-          myCachedAnnotators.add(epAnnotator);
-        }
-        catch(Exception e) {
-          LOG.error(e);
-        }
+    if (annotator != myLastAnnotator) {
+      if (myLastAnnotator != null) {
+        smartEP.removeExplicitExtension(myLastAnnotator);
       }
+      if (annotator != null) {
+        smartEP.addExplicitExtension(annotator);
+      }
+      myLastAnnotator = annotator;
     }
-
-    return myCachedAnnotators;
+    return smartEP.getExtensions();
   }
 
   /**
@@ -383,7 +386,7 @@ public abstract class Language {
     myLastExternalAnnotator = annotator;
     int injectCount = myInjectedExternalAnnotators == null ? 0 : myInjectedExternalAnnotators.size();
     if (annotator == null && injectCount == 0) {
-        myCachedExternalAnnotators = ExternalAnnotator.EMPTY_LIST;
+      myCachedExternalAnnotators = ExternalAnnotator.EMPTY_LIST;
     }
     else {
       myCachedExternalAnnotators = new ArrayList<ExternalAnnotator>();

@@ -334,10 +334,10 @@ import java.util.Map;
   }
 
   protected void tearDown() throws Exception {
-    super.tearDown();
     Disposer.dispose(myTestRootDisposable);
     myTestRootDisposable = null;
     doTearDown();
+    super.tearDown();
   }
 
   private static void doPostponedFormatting(final Project project) {

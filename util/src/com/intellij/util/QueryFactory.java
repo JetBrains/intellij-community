@@ -4,6 +4,7 @@
 package com.intellij.util;
 
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -12,13 +13,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author max
  */
 public class QueryFactory<Result, Parameters> {
-  protected final List<QueryExecutor<Result, Parameters>> myExecutors = new CopyOnWriteArrayList<QueryExecutor<Result,Parameters>>();
+  private final List<QueryExecutor<Result, Parameters>> myExecutors = new CopyOnWriteArrayList<QueryExecutor<Result,Parameters>>();
 
-  public final void registerExecutor(QueryExecutor<Result, Parameters> executor) {
+  public void registerExecutor(QueryExecutor<Result, Parameters> executor) {
     myExecutors.add(executor);
   }
 
-  public final void unregisterExecutor(QueryExecutor<Result, Parameters> executor) {
+  public void unregisterExecutor(QueryExecutor<Result, Parameters> executor) {
     myExecutors.remove(executor);
   }
 
@@ -30,6 +31,7 @@ public class QueryFactory<Result, Parameters> {
     return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
   }
 
+  @NotNull
   protected List<QueryExecutor<Result, Parameters>> getExecutors() {
     return myExecutors;
   }

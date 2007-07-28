@@ -184,6 +184,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
+              ApplicationManagerEx.setApplication(ApplicationImpl.this);
               saveAll();
               disposeSelf();
             }

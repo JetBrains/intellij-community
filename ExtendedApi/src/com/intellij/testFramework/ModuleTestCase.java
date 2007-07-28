@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
-  protected Collection<Module> myModulesToDispose = new ArrayList<Module>();
+  protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
 
   protected void setUp() throws Exception {
     super.setUp();

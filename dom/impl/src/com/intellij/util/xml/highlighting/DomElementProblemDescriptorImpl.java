@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -61,7 +62,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                          final LocalQuickFix... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
-    if (element != null) {
+    if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.assertTrue(element.isPhysical(), "Problems may not be created for non-physical DOM elements");
     }
     mySeverity = type;

@@ -17,11 +17,14 @@
 
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,26 +32,36 @@ import java.util.List;
  * @author yole
  */
 public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Result, Parameters> {
-  private boolean myExtensionsLoaded = false;
+  private final NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result,Parameters>>> myPoint =
+    new NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>>() {
+      @NotNull
+      protected SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>> compute() {
+        return new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>(new SmartList<QueryExecutor<Result, Parameters>>()){
+          @NotNull
+          protected ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
+            @NonNls String epName = ExtensibleQueryFactory.this.getClass().getName();
+            int pos = epName.lastIndexOf('.');
+            if (pos >= 0) {
+              epName = epName.substring(pos+1);
+            }
+            epName = "com.intellij." + StringUtil.decapitalize(epName);
+            return Extensions.getRootArea().getExtensionPoint(epName);
+          }
+        };
+      }
+    };
+
+  public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor) {
+    myPoint.getValue().addExplicitExtension(queryExecutor);
+  }
+
+  public void unregisterExecutor(final QueryExecutor<Result, Parameters> queryExecutor) {
+    myPoint.getValue().removeExplicitExtension(queryExecutor);
+  }
 
   @Override
+  @NotNull
   protected List<QueryExecutor<Result, Parameters>> getExecutors() {
-    synchronized(myExecutors) {
-      if (!myExtensionsLoaded) {
-        myExtensionsLoaded = true;
-        @NonNls String epName = getClass().getName();
-        int pos = epName.lastIndexOf('.');
-        if (pos >= 0) {
-          epName = epName.substring(pos+1);
-        }
-        epName = "com.intellij." + StringUtil.decapitalize(epName);
-
-        for(Object ext: Extensions.getExtensions(epName)) {
-          //noinspection unchecked
-          myExecutors.add((QueryExecutor<Result,Parameters>) ext);
-        }
-      }
-      return myExecutors;
-    }
+    return myPoint.getValue().getExtensions();
   }
 }

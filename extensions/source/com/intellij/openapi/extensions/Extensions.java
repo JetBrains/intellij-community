@@ -22,6 +22,7 @@ import org.apache.commons.collections.MultiHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,10 +42,11 @@ public class Extensions {
     createRootArea();
   }
 
-  private static void createRootArea() {
+  private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
     ourAreaInstance2area.put(null, rootArea);
+    return rootArea;
   }
 
   private Extensions() {
@@ -62,12 +64,15 @@ public class Extensions {
     return ourAreaInstance2area.get(areaInstance);
   }
 
+  @TestOnly
   public static void cleanRootArea(@NotNull Disposable parentDisposable) {
-    final ExtensionsArea oldRootArea = getRootArea();
-    createRootArea();
+    final ExtensionsAreaImpl oldRootArea = (ExtensionsAreaImpl)getRootArea();
+    oldRootArea.dropCaches();
+    final ExtensionsAreaImpl newArea = createRootArea();
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
-        ourAreaInstance2area.put(null, (ExtensionsAreaImpl)oldRootArea);
+        newArea.dropCaches();
+        ourAreaInstance2area.put(null, oldRootArea);
       }
     });
   }

@@ -24,6 +24,7 @@ import org.jdom.Namespace;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
@@ -76,6 +77,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   public ExtensionsAreaImpl(MutablePicoContainer picoContainer, LogProvider logger) {
     this(null, null, picoContainer, logger);
+  }
+
+  @TestOnly
+  public final void dropCaches() {
+    for (final ExtensionPointImpl point : myExtensionPoints.values()) {
+      point.dropCaches();
+    }
   }
 
   public AreaPicoContainer getPicoContainer() {
@@ -269,11 +277,15 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
     }
 
-    ExtensionPointImpl extensionPoint = new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, this, myAreaInstance, myLogger, descriptor);
-    myExtensionPoints.put(extensionPointName, extensionPoint);
+    registerExtensionPoint(new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, this, myAreaInstance, myLogger, descriptor));
+  }
+
+  public void registerExtensionPoint(final ExtensionPointImpl extensionPoint) {
+    final String name = extensionPoint.getName();
+    myExtensionPoints.put(name, extensionPoint);
     notifyEPRegistered(extensionPoint);
     if (DEBUG_REGISTRATION) {
-      myEPTraces.put(extensionPointName, new Throwable("Original registration for " + extensionPointName));
+      myEPTraces.put(name, new Throwable("Original registration for " + name));
     }
   }
 
@@ -321,12 +333,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private void notifyAvailableListener(final ExtensionPointAvailabilityListener listener, final ExtensionPoint extensionPoint) {
-    Runnable action = new Runnable() {
+    queueNotificationAction(new Runnable() {
       public void run() {
         listener.extensionPointRegistered(extensionPoint);
       }
-    };
-    queueNotificationAction(action);
+    });
   }
 
   private void queueNotificationAction(final Runnable action) {
@@ -338,7 +349,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  public ExtensionPoint getExtensionPoint(String extensionPointName) {
+  @NotNull public ExtensionPoint getExtensionPoint(String extensionPointName) {
     return getExtensionPointImpl(extensionPointName);
   }
 
@@ -376,14 +387,17 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
     if (listeners != null) {
       for (final ExtensionPointAvailabilityListener listener : listeners) {
-        Runnable action = new Runnable() {
-          public void run() {
-            listener.extensionPointRemoved(extensionPoint);
-          }
-        };
-        queueNotificationAction(action);
+        notifyUnavailableListener(extensionPoint, listener);
       }
     }
+  }
+
+  private void notifyUnavailableListener(final ExtensionPoint extensionPoint, final ExtensionPointAvailabilityListener listener) {
+    queueNotificationAction(new Runnable() {
+      public void run() {
+        listener.extensionPointRemoved(extensionPoint);
+      }
+    });
   }
 
   public boolean hasExtensionPoint(String extensionPointName) {

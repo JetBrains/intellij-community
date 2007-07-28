@@ -85,7 +85,6 @@ public class IntentionManagerImpl extends IntentionManager {
       }
 
       public void extensionRemoved(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        throw new UnsupportedOperationException("Method extensionRemoved is not supported in " + getClass());
       }
     });
   }

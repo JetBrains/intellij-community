@@ -54,19 +54,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new SimpleAccessorReferenceSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceViaLastWordSearcher());
 
-    DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
-
-    OverridingMethodsSearch.INSTANCE.registerExecutor(new JavaOverridingMethodsSearcher());
-
-    AllOverridingMethodsSearch.INSTANCE.registerExecutor(new JavaAllOverridingMethodsSearcher());
-
-    MethodReferencesSearch.INSTANCE.registerExecutor(new MethodUsagesSearcher());
-
-    AnnotatedMembersSearch.INSTANCE.registerExecutor(new AnnotatedMembersSearcher());
-
-    SuperMethodsSearch.SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodSuperSearcher());
-    DeepestSuperMethodsSearch.DEEPEST_SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodDeepestSuperSearcher());
-
     IndexPatternSearch.INDEX_PATTERN_SEARCH_INSTANCE = new IndexPatternSearchImpl();
   }
 
