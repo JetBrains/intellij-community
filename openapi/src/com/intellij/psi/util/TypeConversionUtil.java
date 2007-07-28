@@ -711,11 +711,13 @@ public class TypeConversionUtil {
   }
 
   private static boolean isBoxable(final PsiClassType left, final PsiPrimitiveType right) {
+    if (!left.getLanguageLevel().hasEnumKeywordAndAutoboxing()) return false;
     final PsiClass psiClass = left.resolve();
     if (psiClass == null) return false;
-    if (!left.getLanguageLevel().hasEnumKeywordAndAutoboxing()) return false;
-    final PsiClassType rightBoxedType = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
-    return rightBoxedType != null && isAssignable(left, rightBoxedType);
+    final PsiClassType rightBoxed = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
+    if (rightBoxed == null) return false;
+    final String qName = psiClass.getQualifiedName();
+    return CommonClassNames.JAVA_LANG_OBJECT.equals(qName) || CommonClassNames.JAVA_LANG_NUMBER.equals(qName) || left.equals(rightBoxed);
   }
 
   private static boolean isClassAssignable(PsiClassType.ClassResolveResult leftResult,

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -60,7 +61,7 @@ public class InheritanceImplUtil {
 
     if (checkDeep) {
       if (checkedClasses == null) {
-        checkedClasses = new HashSet<PsiClass>();
+        checkedClasses = new THashSet<PsiClass>();
       }
       checkedClasses.add(aClass);
     }
