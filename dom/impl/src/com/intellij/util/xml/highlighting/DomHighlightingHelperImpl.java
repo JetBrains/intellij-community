@@ -4,10 +4,16 @@
  */
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
@@ -16,6 +22,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +35,7 @@ import com.intellij.util.xml.impl.GenericValueReferenceProvider;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,16 +59,24 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   @NotNull
-  public List<DomElementProblemDescriptor> checkRequired(DomElement element, final DomElementAnnotationHolder holder) {
+  public List<DomElementProblemDescriptor> checkRequired(final DomElement element, final DomElementAnnotationHolder holder) {
     final Required required = element.getAnnotation(Required.class);
     if (required != null) {
       final XmlElement xmlElement = element.getXmlElement();
       if (xmlElement == null) {
         if (required.value()) {
+          final String xmlElementName = element.getXmlElementName();
           if (element instanceof GenericAttributeValue) {
-            return Arrays.asList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", element.getXmlElementName())));
+            return Arrays.asList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", xmlElementName)));
           }
-          return Arrays.asList(holder.createProblem(element, IdeBundle.message("child.tag.0.should.be.defined", element.getXmlElementName())));
+          return Arrays.asList(
+            holder.createProblem(
+              element,
+              HighlightSeverity.ERROR,
+              IdeBundle.message("child.tag.0.should.be.defined", xmlElementName),
+              new AddRequiredSubtagFix(xmlElementName, element.getXmlElementNamespace(), element.getParent().getXmlTag())
+            )
+          );
         }
       }
       else if (element instanceof GenericDomValue) {
@@ -297,4 +314,55 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     return false;
   }
 
+  private static class AddRequiredSubtagFix implements LocalQuickFix, IntentionAction {
+    private final String tagName;
+    private final String tagNamespace;
+    private final XmlTag parentTag;
+
+    public AddRequiredSubtagFix(@NotNull String _tagName, @NotNull String _tagNamespace, @NotNull XmlTag _parentTag) {
+      tagName = _tagName;
+      tagNamespace = _tagNamespace;
+      parentTag = _parentTag;
+    }
+
+    public String getName() {
+      return XmlBundle.message("insert.required.tag.fix", tagName);
+    }
+
+    @NotNull
+    public String getText() {
+      return getName();
+    }
+
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+      return true;
+    }
+
+    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      doFix();
+    }
+
+    public boolean startInWriteAction() {
+      return true;
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      doFix();
+    }
+
+    private void doFix() {
+      if (!CodeInsightUtil.prepareFileForWrite(parentTag.getContainingFile())) return;
+
+      try {
+        parentTag.add(parentTag.createChildTag(tagName, tagNamespace, "",false));
+      }
+      catch (IncorrectOperationException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }

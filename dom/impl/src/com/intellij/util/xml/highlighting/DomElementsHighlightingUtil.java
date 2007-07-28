@@ -5,9 +5,11 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -63,12 +65,18 @@ public class DomElementsHighlightingUtil {
         if (StringUtil.isEmpty(text)) text = null;
         final HighlightSeverity severity = problemDescriptor.getHighlightSeverity();
         final AnnotationHolderImpl holder = EMPTY_ANNOTATION_HOLDER;
+
         TextRange range = s.first;
         if (text == null) range = TextRange.from(range.getStartOffset(), 0);
         range = range.shiftRight(s.second.getTextRange().getStartOffset());
         final Annotation annotation = createAnnotation(severity, holder, range, text);
+
         if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
           annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+        }
+
+        for(LocalQuickFix fix:problemDescriptor.getFixes()) {
+          if (fix instanceof IntentionAction) annotation.registerFix((IntentionAction)fix);
         }
         return annotation;
       }
