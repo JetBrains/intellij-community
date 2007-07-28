@@ -45,31 +45,28 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   public void moveUp(String url) {
-    int index = -1;
-    for (int i = 0; i < myList.size(); i++) {
-      final VirtualFilePointer pointer = myList.get(i);
-      if (url.equals(pointer.getUrl())) {
-        index = i;
-        break;
-      }
-    }
+    int index = indexOf(url);
     if (index <= 0) return;
     dropCaches();
     ContainerUtil.swapElements(myList, index - 1, index);
   }
 
   public void moveDown(String url) {
-    int index = -1;
-    for (int i = 0; i < myList.size(); i++) {
-      final VirtualFilePointer pointer = myList.get(i);
-      if (url.equals(pointer.getUrl())) {
-        index = i;
-        break;
-      }
-    }
+    int index = indexOf(url);
     if (index < 0 || index + 1 >= myList.size()) return;
     dropCaches();
     ContainerUtil.swapElements(myList, index, index + 1);
+  }
+
+  private int indexOf(final String url) {
+    for (int i = 0; i < myList.size(); i++) {
+      final VirtualFilePointer pointer = myList.get(i);
+      if (url.equals(pointer.getUrl())) {
+        return i;
+      }
+    }
+
+    return -1;
   }
 
   private static class DefaultFactory implements VirtualFilePointerFactory {
