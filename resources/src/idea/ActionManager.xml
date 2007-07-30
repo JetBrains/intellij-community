@@ -1488,5 +1488,7 @@
       <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TooglePathShowingAction"/>
     </group>
 
+    <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"
+      use-shortcut-of="NextSplitter"/>
   </actions>
 </component>

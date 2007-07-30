@@ -320,6 +320,15 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myOwnerWindow;
   }
 
+  public void focusOppositeSide() {
+    if (myCurrentSide == myLeftSide) {
+      myRightSide.getEditor().getContentComponent().requestFocus();
+    }
+    else {
+      myLeftSide.getEditor().getContentComponent().requestFocus();
+    }
+  }
+
   private class MyScrollingPanel implements DiffPanelOutterComponent.ScrollingPanel {
 
     public void scrollEditors() {
