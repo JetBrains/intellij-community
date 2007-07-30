@@ -24,9 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -177,22 +175,15 @@ public class ResolveUtil {
 
   public static GrLabeledStatement resolveLabeledStatement(String label, PsiElement place) {
     while (place != null) {
-      /*PsiElement run = place;
+      PsiElement run = place;
       while (run != null) {
         if (run instanceof GrLabeledStatement && label.equals(((GrLabeledStatement) run).getLabel()))
           return (GrLabeledStatement) run;
 
         run = run.getPrevSibling();
-      }*/
-      final PsiElement parent = place.getContext();
-
-      if (place instanceof GrLoopStatement && parent instanceof GrLabeledStatement) {
-        GrLabeledStatement labeledStatement = (GrLabeledStatement) parent;
-        if (label.equals(labeledStatement.getLabel())) {
-          return labeledStatement;
-        }
       }
-      place = parent;
+
+      place = place.getContext();
 
       if (place instanceof GrMember) break;
     }
