@@ -735,16 +735,19 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   protected final void attach(final XmlTag tag) {
     w.lock();
-    r.lock();
     try {
       myXmlTag = tag;
       cacheInTag(tag);
+    } finally{
+      r.lock();
+      w.unlock();
+    }
+    try {
       for (final Pair<FixedChildDescriptionImpl, Integer> pair : myFixedChildren.keySet()) {
         _checkInitialized(pair.first);
       }
     } finally {
       r.unlock();
-      w.unlock();
     }
   }
 
