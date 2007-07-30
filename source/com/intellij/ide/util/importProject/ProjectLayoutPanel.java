@@ -15,6 +15,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -83,9 +84,19 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private ActionToolbar createEntriesActionToolbar() {
     final DefaultActionGroup entriesActions = new DefaultActionGroup();
-    entriesActions.add(new RenameAction());
-    entriesActions.add(new MergeAction());
-    entriesActions.add(new SplitAction());
+
+    final RenameAction rename = new RenameAction();
+    rename.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK)), this);
+    entriesActions.add(rename);
+
+    final MergeAction merge = new MergeAction();
+    merge.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0)), this);
+    entriesActions.add(merge);
+
+    final SplitAction split = new SplitAction();
+    split.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0)), this);
+    entriesActions.add(split);
+    
     return ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", entriesActions, true);
   }
 
@@ -166,7 +177,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   protected abstract String getStepDescriptionText();
   
   private boolean isNameAlreadyUsed(String entryName) {
+    final Set<T> itemsToIgnore = new HashSet<T>(myEntriesChooser.getSelectedElements());
     for (T entry : getEntries()) {
+      if (itemsToIgnore.contains(entry)) {
+        continue;
+      }
       if (entryName.equals(getElementName(entry))) {
         return true;
       }
