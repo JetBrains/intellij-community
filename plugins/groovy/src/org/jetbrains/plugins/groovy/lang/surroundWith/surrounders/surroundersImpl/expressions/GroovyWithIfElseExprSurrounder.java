@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions;
 
 import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov

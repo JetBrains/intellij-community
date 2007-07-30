@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions;
+package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -12,12 +12,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyConditionSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
+public class GroovyWithWhileExprSurrounder extends GroovyConditionSurrounder {
   protected String getExpressionTemplateAsString(ASTNode node) {
     return "while " + "(" + node.getText() + ") { 4 \n }";
   }
@@ -45,9 +46,5 @@ public class GroovyWithWhileExprSurrounder extends GroovyExpressionSurrounder {
 
   public String getTemplateDescription() {
     return "while (...) {}";
-  }
-
-  protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrExpression && PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(((GrExpression) element).getType().getPresentableText().toLowerCase());
   }
 }

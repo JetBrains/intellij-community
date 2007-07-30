@@ -100,6 +100,21 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     return false;
   }
 
+  public boolean hasClassImplicitModifier(@NotNull @NonNls String name) {
+    if (name.equals(PsiModifier.PUBLIC)) return findChildByType(GroovyElementTypes.kPUBLIC) != null;
+    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
+    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
+    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
+    if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
+    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
+    if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
+    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
+    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
+    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
+    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
+    return false;
+  }
+
   public boolean hasClassExplicitModifier(@NotNull @NonNls String name) {
     if (name.equals(PsiModifier.PUBLIC)) {
       //groovy class members are public by default
