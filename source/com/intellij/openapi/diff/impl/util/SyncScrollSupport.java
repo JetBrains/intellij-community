@@ -125,11 +125,14 @@ public class SyncScrollSupport implements Disposable {
     Rectangle viewRect = master.getScrollingModel().getVisibleArea();
     int middleY = viewRect.height / 3;
 
-    int materVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
+    int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
     int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset();
 
-    LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, materVerticalScrollOffset + middleY));
+    LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, masterVerticalScrollOffset + middleY));
     int masterCenterLine = masterPos.line;
+    if (masterCenterLine > master.getDocument().getLineCount()) {
+      masterCenterLine = master.getDocument().getLineCount();
+    }
     int scrollToLine = sidesContainer.getLineBlocks().transform(masterSide, masterCenterLine) + 1;
     int actualLine = scrollToLine - 1;
 
@@ -141,7 +144,7 @@ public class SyncScrollSupport implements Disposable {
       slave.getScrollingModel().scrollVertically(slaveVerticalScrollOffset + offset);
     }
 
-    int correction = (materVerticalScrollOffset + middleY) % master.getLineHeight();
+    int correction = (masterVerticalScrollOffset + middleY) % master.getLineHeight();
     int scrollOffset = actualLine * slave.getLineHeight() - middleY;
     slave.getScrollingModel().scrollVertically(scrollOffset + correction);
 
