@@ -70,10 +70,14 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   }
 
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
-                                                   PsiClass aClass,
+                                                   final PsiClass aClass,
                                                    GlobalSearchScope scope, final LocalSearchScope filterScope) {
     PsiManagerImpl manager = (PsiManagerImpl)aClass.getManager();
-    String className = aClass.getQualifiedName();
+    String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return aClass.getQualifiedName();
+      }
+    });
     return className == null || processReferencesInUIFormsInner(className, aClass, processor, scope, manager, filterScope);
   }
 
@@ -84,13 +88,6 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     String className = enumConstant.getName();
     return className == null || processReferencesInUIFormsInner(className, enumConstant, processor, scope, manager, filterScope);
 
-  }
-
-  public static boolean processReferencesInUIForms(Processor<PsiReference> processor,
-                                                         PsiPackage aPackage,
-                                                         GlobalSearchScope scope) {
-    String packageName = aPackage.getQualifiedName();
-    return processReferencesInUIFormsInner(packageName, aPackage, processor, scope, (PsiManagerImpl)aPackage.getManager(), null);
   }
 
   private static boolean processReferencesInUIFormsInner(String name,
