@@ -169,7 +169,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   
 
   protected void sortItems(PsiElement context, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
-    if (shouldSortItems(context.getContainingFile(), items)) {
+    if (context == null || shouldSortItems(context.getContainingFile(), items)) {
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(context, myProject);
       if (isUseNewSorting()) {
         if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
