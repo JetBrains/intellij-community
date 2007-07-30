@@ -39,7 +39,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   private final CachedValueProvider<T> myProvider;
   private final boolean myTrackValue;
 
-  private final TimedReference<Data<T>> myData = new TimedReference<Data<T>>(null);
+  private final MyTimedReference<T> myData = new MyTimedReference<T>();
 
 
   private long myLastPsiTimeStamp = -1;
@@ -108,6 +108,16 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   private void setValue(final T value, final CachedValueProvider.Result<T> result) {
     myData.set(computeData(value == null ? (T) NULL : value, result == null ? null : result.getDependencyItems()));
+    if (result != null) {
+      myData.setIsLocked(result.isLockValue());
+    }
+    else {
+      myData.setIsLocked(false);
+    }
+  }
+
+  public void setDataLocked(boolean value) {
+    myData.setIsLocked(value);
   }
 
   public boolean hasUpToDateValue() {
@@ -243,6 +253,22 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
     finally {
       w.unlock();
+    }
+  }
+
+  private static class MyTimedReference<T> extends TimedReference<Data<T>> {
+    private boolean myIsLocked;
+
+    public MyTimedReference() {
+      super(null);
+    }
+
+    public void setIsLocked(final boolean isLocked) {
+      myIsLocked = isLocked;
+    }
+
+    protected boolean isLocked() {
+      return super.isLocked() || myIsLocked;
     }
   }
 }
