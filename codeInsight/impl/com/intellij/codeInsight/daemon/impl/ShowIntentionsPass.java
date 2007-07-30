@@ -280,7 +280,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private static boolean handleWrongRefInfo(Editor editor, PsiJavaCodeReferenceElement ref, final boolean showAddImportHint) {
-    if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
 
     PsiManager manager = ref.getManager();
     if (manager == null) return false;

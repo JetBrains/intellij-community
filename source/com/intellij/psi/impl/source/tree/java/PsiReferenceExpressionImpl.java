@@ -9,7 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSubstitutorEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -207,14 +207,13 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
 
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiManager manager = getManager();
+    final PsiManagerEx manager = getManager();
     if (manager == null) {
       LOG.assertTrue(false, "getManager() == null!");
       return null;
     }
 
-    final ResolveCache resolveCache = ((PsiManagerImpl)manager).getResolveCache();
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
+    return (JavaResolveResult[])manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
   }
 
   public String getCanonicalText() {
