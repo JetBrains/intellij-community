@@ -29,7 +29,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     buffer.append(myNameElement.getText());
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.DOC_TAG);
     myMirror = element;
@@ -113,7 +113,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     }
 
-    public void setMirror(TreeElement element) {
+    public void setMirror(@NotNull TreeElement element) {
       myMirror = element;
     }
 

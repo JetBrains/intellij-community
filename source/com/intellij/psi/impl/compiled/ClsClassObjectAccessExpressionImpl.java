@@ -27,7 +27,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     buffer.append(CLASS_ENDING);
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
     LOG.assertTrue(myMirror == null);
     myMirror = element;

@@ -33,7 +33,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     }
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 

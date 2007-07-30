@@ -77,7 +77,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     buffer.append(decorateTypeText(myTypeText));
   }
 
-  public void setMirror(TreeElement element){
+  public void setMirror(@NotNull TreeElement element){
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == JavaElementType.TYPE);
     myMirror = element;

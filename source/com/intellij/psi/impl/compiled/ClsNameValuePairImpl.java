@@ -33,7 +33,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     ((ClsElementImpl)myMemberValue).appendMirrorText(0, buffer);
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
     LOG.assertTrue(myMirror == null);
     myMirror = element;

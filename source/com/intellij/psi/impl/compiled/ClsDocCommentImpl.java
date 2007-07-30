@@ -35,7 +35,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     buffer.append("*/");
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == JavaDocElementType.DOC_COMMENT);
     myMirror = element;

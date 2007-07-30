@@ -146,7 +146,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     buffer.append(getText());
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.REFERENCE_EXPRESSION);
     myMirror = element;

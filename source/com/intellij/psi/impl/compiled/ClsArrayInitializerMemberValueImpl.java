@@ -37,7 +37,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     buffer.append('}');
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
     LOG.assertTrue(myMirror == null);
     myMirror = element;

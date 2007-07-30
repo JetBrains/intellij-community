@@ -33,7 +33,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
     LOG.assertTrue(myMirror == null);
     myMirror = element;

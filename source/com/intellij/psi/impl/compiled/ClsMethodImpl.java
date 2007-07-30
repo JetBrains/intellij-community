@@ -739,7 +739,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
     LOG.assertTrue(myMirror == null);
     myMirror = element;

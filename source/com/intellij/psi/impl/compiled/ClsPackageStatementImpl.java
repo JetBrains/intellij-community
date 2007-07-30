@@ -67,7 +67,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     buffer.append(";");
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.PACKAGE_STATEMENT);
     myMirror = element;

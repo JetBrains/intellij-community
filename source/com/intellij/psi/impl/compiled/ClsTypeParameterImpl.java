@@ -302,7 +302,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     }
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 

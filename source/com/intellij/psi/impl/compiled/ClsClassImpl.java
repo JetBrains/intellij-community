@@ -1011,7 +1011,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     buffer.append('}');
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
     LOG.assertTrue(myMirror == null);
     myMirror = element;

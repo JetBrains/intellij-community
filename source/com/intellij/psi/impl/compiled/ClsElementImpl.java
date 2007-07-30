@@ -95,7 +95,7 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(StdFileTypes.JAVA);
   }
 
-  public abstract void setMirror(TreeElement element);
+  public abstract void setMirror(@NotNull TreeElement element);
 
   public final PsiElement getMirror() {
     if (myMirror == null) {

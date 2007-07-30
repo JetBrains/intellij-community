@@ -142,7 +142,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     }
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == JavaElementType.MODIFIER_LIST);
     myMirror = element;

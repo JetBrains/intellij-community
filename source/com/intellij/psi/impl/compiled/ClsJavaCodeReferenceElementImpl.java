@@ -277,7 +277,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     buffer.append(getCanonicalText());
   }
 
-  public void setMirror(TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
     myMirror = element;

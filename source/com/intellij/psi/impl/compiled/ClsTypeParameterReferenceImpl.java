@@ -143,7 +143,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     buffer.append(getCanonicalText());
   }
 
-  public void setMirror(TreeElement element){
+  public void setMirror(@NotNull TreeElement element){
     LOG.assertTrue(myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.JAVA_CODE_REFERENCE);
     myMirror = element;
