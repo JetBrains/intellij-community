@@ -39,17 +39,14 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class NewActionBase extends CreateElementActionBase
-{
+public abstract class NewActionBase extends CreateElementActionBase {
 
-  public NewActionBase(String text, String description, Icon icon)
-  {
+  public NewActionBase(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
   @NotNull
-  protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory)
-  {
+  protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
     MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, getDialogPrompt(), getDialogTitle(), Messages.getQuestionIcon(), "", validator);
 
@@ -60,8 +57,7 @@ public abstract class NewActionBase extends CreateElementActionBase
 
   protected abstract String getDialogTitle();
 
-  public final void update(final AnActionEvent e)
-  {
+  public final void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
     super.update(e);
@@ -84,24 +80,19 @@ public abstract class NewActionBase extends CreateElementActionBase
     return false;
   }
 
-  public static boolean isUnderSourceRoots(final AnActionEvent e)
-  {
+  public static boolean isUnderSourceRoots(final AnActionEvent e) {
     final DataContext context = e.getDataContext();
     Module module = (Module) context.getData(DataConstants.MODULE);
-    if (module == null)
-    {
+    if (module == null) {
       return false;
     }
     final IdeView view = (IdeView) context.getData(DataConstants.IDE_VIEW);
     final Project project = (Project) context.getData(DataConstants.PROJECT);
-    if (view != null && project != null)
-    {
+    if (view != null && project != null) {
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       PsiDirectory[] dirs = view.getDirectories();
-      for (PsiDirectory dir : dirs)
-      {
-        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null)
-        {
+      for (PsiDirectory dir : dirs) {
+        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
           return true;
         }
       }
@@ -111,8 +102,7 @@ public abstract class NewActionBase extends CreateElementActionBase
   }
 
   @NotNull
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception
-  {
+  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     return doCreate(newName, directory);
   }
 
@@ -120,31 +110,26 @@ public abstract class NewActionBase extends CreateElementActionBase
   protected abstract PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception;
 
   protected static PsiFile createClassFromTemplate(final PsiDirectory directory, String className, String templateName,
-                                                   @NonNls String... parameters) throws IncorrectOperationException
-  {
+                                                   @NonNls String... parameters) throws IncorrectOperationException {
     return GroovyTemplatesFactory.createFromTemplate(directory, className, className + ".groovy", templateName, parameters);
   }
 
 
-  protected String getErrorTitle()
-  {
+  protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }
 
-  protected String getActionName(PsiDirectory directory, String newName)
-  {
+  protected String getActionName(PsiDirectory directory, String newName) {
     return GroovyBundle.message("newclass.progress.text", newName);
   }
 
-  protected final void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException
-  {
+  protected final void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
     doCheckBeforeCreate(newName, directory);
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     ReadonlyStatusHandler.getInstance(directory.getProject()).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
   }
 
-  protected void doCheckBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException
-  {
+  protected void doCheckBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
     directory.checkCreateClass(newName);
   }
 }

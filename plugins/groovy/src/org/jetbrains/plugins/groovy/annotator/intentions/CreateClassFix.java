@@ -31,11 +31,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +51,7 @@ public abstract class CreateClassFix {
     return new IntentionAction() {
 
       @NotNull
-      public String getText() {
+      public String getText() { 
         return "Create Class \'" + refElement.getReferenceName() + "\'";
       }
 
@@ -67,10 +69,10 @@ public abstract class CreateClassFix {
         final PsiManager manager = refElement.getManager();
         final String name = refElement.getReferenceName();
         final Module module = ModuleUtil.findModuleForPsiElement(file);
-        final String qualifier = ((GroovyFile) file).getPackageName();
+        GroovyFile groovyFile = (GroovyFile) file;
+        final String qualifier = groovyFile.getPackageName();
         String title = GroovyBundle.message("create.class", StringUtil.capitalize(CreateClassKind.CLASS.getDescription()));
-
-        CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifier, CreateClassKind.CLASS, false, module);
+        GroovyCreateClassDialog dialog = new GroovyCreateClassDialog(project, title, name, qualifier, module);
         dialog.show();
 
         if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
@@ -79,9 +81,16 @@ public abstract class CreateClassFix {
         if (targetDirectory == null) return;
 
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, refElement);
-        putCursor(project, targetClass.getContainingFile(), targetClass);
-        return;
-
+        if (targetClass != null) {
+          String qualifiedName = targetClass.getQualifiedName();
+          if (qualifiedName != null && qualifiedName.contains(".")) {
+            String packageName = qualifiedName.substring(0, qualifiedName.lastIndexOf("."));
+            if (!packageName.equals(groovyFile.getPackageName())){
+              groovyFile.addImportForClass(targetClass);
+            }
+          }
+          putCursor(project, targetClass.getContainingFile(), targetClass);
+        }
       }
 
       public boolean startInWriteAction() {
@@ -91,23 +100,34 @@ public abstract class CreateClassFix {
   }
 
   private static PsiClass createClassByType(final PsiDirectory directory,
-                                      final String name,
-                                      final PsiManager manager,
-                                      final PsiElement contextElement) {
+                                            final String name,
+                                            final PsiManager manager,
+                                            final PsiElement contextElement) {
     return ApplicationManager.getApplication().runWriteAction(
         new Computable<PsiClass>() {
           public PsiClass compute() {
             try {
-              PsiClass targetClass;
+              PsiClass targetClass = null;
               try {
-                targetClass = directory.createClass(name);
+                PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", "GroovyClass.groovy");
+                for (PsiElement element : file.getChildren()) {
+                  if (element instanceof PsiClass) {
+                    targetClass = ((PsiClass) element);
+                    break;
+                  }
+                }
+                if (targetClass == null) {
+                  throw new IncorrectOperationException();
+                }
               }
               catch (final IncorrectOperationException e) {
                 CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
                 return null;
               }
-              if (!manager.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
-                targetClass.getModifierList().setModifierProperty(PsiKeyword.PUBLIC, true);
+              PsiModifierList modifiers = targetClass.getModifierList();
+              if (!manager.getResolveHelper().isAccessible(targetClass, contextElement, null) &&
+                  modifiers != null) {
+                modifiers.setModifierProperty(PsiKeyword.PUBLIC, true);
               }
               return targetClass;
             }
@@ -119,11 +139,16 @@ public abstract class CreateClassFix {
         });
   }
 
-  protected static Editor putCursor(Project project, PsiFile targetFile, PsiElement element) {
+  protected static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    VirtualFile virtualFile = targetFile.getVirtualFile();
+    if (virtualFile != null) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, textOffset);
+      return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    } else {
+      return null;
+    }
   }
 }

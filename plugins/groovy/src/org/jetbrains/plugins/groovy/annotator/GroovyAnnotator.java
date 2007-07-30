@@ -28,6 +28,7 @@ import com.intellij.psi.util.*;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -473,8 +474,10 @@ public class GroovyAnnotator implements Annotator {
 
       // Register quickfix
       final Annotation annotation = holder.createErrorAnnotation(refElement, message);
-      registerAddImportFixes(refElement, annotation);
-      //registerCreteClassByTypeFix(refElement, annotation);
+      if (!refElement.getText().contains(".")) {
+        registerAddImportFixes(refElement, annotation);
+        registerCreateClassByTypeFix(refElement, annotation);
+      }
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     } else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
@@ -512,11 +515,9 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-/*
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation) {
     annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
   }
-*/
 
 }
 

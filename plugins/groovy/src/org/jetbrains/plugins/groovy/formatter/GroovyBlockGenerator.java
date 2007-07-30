@@ -181,9 +181,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
    * @param node Tree node
    * @return true, if the current node can be myBlock node, else otherwise
    */
-  private static boolean canBeCorrectBlock
-      (
-          final ASTNode node) {
+  private static boolean canBeCorrectBlock(final ASTNode node) {
     return (node.getText().trim().length() > 0);
   }
 
