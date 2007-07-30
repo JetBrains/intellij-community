@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -62,8 +63,20 @@ public class CreateHtmlAction extends CreateElementActionBase {
     directory.checkCreateFile(newName);
   }
 
+  public static boolean isExtensionOfType(@NotNull final String fileName, @NotNull final FileType type) {
+    final int i = fileName.lastIndexOf('.');
+    if (i != -1) {
+      final String ext = fileName.substring(i + 1);
+      if (type.getDefaultExtension().equals(ext)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private String getName(String oldName) {
-    if (FileTypeManager.getInstance().getFileTypeByFileName(oldName) == myFileType) return oldName;
+    if (isExtensionOfType(oldName, myFileType)) return oldName;
     return oldName + "." + myFileType.getDefaultExtension();
   }
 
@@ -115,6 +128,13 @@ public class CreateHtmlAction extends CreateElementActionBase {
         }
       }
 
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+    }
+
+    final FileTypeManager manager = FileTypeManager.getInstance();
+    final FileType fileType = manager.getFileTypeByExtension(HtmlFileType.DOT_DEFAULT_EXTENSION);
+    if (fileType == StdFileTypes.PLAIN_TEXT) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }
