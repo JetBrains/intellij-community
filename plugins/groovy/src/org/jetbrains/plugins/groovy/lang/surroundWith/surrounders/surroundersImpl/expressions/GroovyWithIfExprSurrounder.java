@@ -45,6 +45,6 @@ public class GroovyWithIfExprSurrounder extends GroovyExpressionSurrounder {
   }
 
   protected boolean isApplicable(PsiElement element) {
-    return element instanceof GrConditionalExpression && PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(((GrExpression) element).getType().getPresentableText().toLowerCase());
+    return element instanceof GrExpression && PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(((GrExpression) element).getType().getPresentableText().toLowerCase());
   }
 }
