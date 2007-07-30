@@ -73,10 +73,23 @@ public class PsiProximityComparator implements Comparator<Object> {
       }
     }
 
+    PsiClass placeClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
+    if (myContext.getParent() instanceof PsiReferenceExpression) {
+      final PsiExpression qualifierExpression = ((PsiReferenceExpression)myContext.getParent()).getQualifierExpression();
+      if (qualifierExpression != null) {
+        final PsiType type = qualifierExpression.getType();
+        if (type instanceof PsiClassType) {
+          final PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass != null) {
+            placeClass = psiClass;
+          }
+        }
+      }
+    }
 
     PsiClass contextClass = PsiTreeUtil.getContextOfType(myContext, PsiClass.class, false);
     while (contextClass != null) {
-      PsiClass elementClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
+      PsiClass elementClass = placeClass;
       while (elementClass != null) {
         if (contextClass.isInheritor(elementClass, true)) return PsiProximity.SUPERCLASS;
         elementClass = elementClass.getContainingClass();
