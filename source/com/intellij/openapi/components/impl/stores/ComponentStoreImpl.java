@@ -260,7 +260,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
   @NotNull
-  private <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
                                                  final StateStorageOperation operation) throws StateStorage.StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 

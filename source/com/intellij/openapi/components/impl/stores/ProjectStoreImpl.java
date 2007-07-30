@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -66,6 +67,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
   static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
   static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
+
+  static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
+
   private StorageScheme myScheme = StorageScheme.DEFAULT;
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -786,6 +790,50 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     return true;
+  }
+
+  @NotNull
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent, final StateStorageOperation operation) throws StateStorage.StateStorageException {
+    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, operation);
+
+    if (operation == StateStorageOperation.READ) {
+      Storage[] upd = new Storage[result.length + 1];
+      System.arraycopy(result, 0, upd, 0, result.length);
+      upd[result.length] = DEFAULT_STORAGE_ANNOTATION;
+      result = upd;
+    }
+
+    return result;
+  }
+
+  private static class MyStorage implements Storage {
+    public String id() {
+      return "___Default___";
+    }
+
+    public boolean isDefault() {
+      return true;
+    }
+
+    public String file() {
+      return DEFAULT_STATE_STORAGE;
+    }
+
+    public StorageScheme scheme() {
+      return  StorageScheme.DEFAULT;
+    }
+
+    public Class<? extends StateStorage> storageClass() {
+      return StorageAnnotationsDefaultValues.NullStateStorage.class;
+    }
+
+    public Class<? extends StateSplitter> stateSplitter() {
+      return StorageAnnotationsDefaultValues.NullStateSplitter.class;
+    }
+
+    public Class<? extends Annotation> annotationType() {
+      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
+    }
   }
 }
 
