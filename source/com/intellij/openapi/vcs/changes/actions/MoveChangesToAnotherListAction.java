@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -44,8 +45,14 @@ public class MoveChangesToAnotherListAction extends AnAction {
       changes = getChangesForSelectedFiles(project, changes, unversionedFiles, null, e);
     }
 
-    e.getPresentation().setEnabled(project != null &&
-                                   (changes != null && changes.length > 0) || (unversionedFiles != null && unversionedFiles.size() > 0));
+    final boolean isEnabled = project != null &&
+                              (changes != null && changes.length > 0) || (unversionedFiles != null && unversionedFiles.size() > 0);
+    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) {
+      e.getPresentation().setVisible(isEnabled);
+    }
+    else {
+      e.getPresentation().setEnabled(isEnabled);
+    }
   }
 
   @Nullable
