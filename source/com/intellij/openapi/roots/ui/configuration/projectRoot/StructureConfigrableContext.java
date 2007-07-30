@@ -45,7 +45,7 @@ public class StructureConfigrableContext implements Disposable {
   public final Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
 
   private ModuleManager myModuleManager;
-  public ModulesConfigurator myModulesConfigurator;
+  public final ModulesConfigurator myModulesConfigurator;
   private boolean myDisposed;
 
   public final Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -109,7 +109,7 @@ public class StructureConfigrableContext implements Disposable {
             }
           });
         }
-      }, 0);
+      }, 100);
       return null;
     }
   }
@@ -180,6 +180,7 @@ public class StructureConfigrableContext implements Disposable {
     myValidityCache.clear();
     myLibraryPathValidityCache.clear();
     myModulesDependencyCache.clear();
+    myDisposed = true;
   }
 
   public void invalidateModules(final Set<String> modules) {
@@ -202,16 +203,6 @@ public class StructureConfigrableContext implements Disposable {
     fireOnCacheChanged();
   }
 
-  public void clearCaches(final Module module, final LibraryOrderEntry libEntry) {
-    final Library library = libEntry.getLibrary();
-    myLibraryDependencyCache.remove(library);
-    if (library != null){
-      myLibraryDependencyCache.remove(((LibraryImpl)library).getSource());
-    }
-    myValidityCache.remove(module);
-    fireOnCacheChanged();
-  }
-
   public void clearCaches(final Module module, final ProjectJdk oldJdk, final ProjectJdk selectedModuleJdk) {
     myJdkDependencyCache.remove(oldJdk);
     myJdkDependencyCache.remove(selectedModuleJdk);
@@ -219,11 +210,18 @@ public class StructureConfigrableContext implements Disposable {
     fireOnCacheChanged();
   }
 
-  public void clearCaches(final Module module) {
-    myValidityCache.remove(module);
+  public void clearCaches(final OrderEntry entry) {
+    if (entry instanceof ModuleOrderEntry) {
+      final Module module = ((ModuleOrderEntry)entry).getModule();
+      myValidityCache.remove(module);
+      myModulesDependencyCache.remove(module);
+    } else if (entry instanceof JdkOrderEntry) {
+      invalidateModules(myJdkDependencyCache.remove(((JdkOrderEntry)entry).getJdk()));
+    } else if (entry instanceof LibraryOrderEntry) {
+      invalidateModules(myLibraryDependencyCache.remove(((LibraryOrderEntry)entry).getLibrary()));
+    }
     fireOnCacheChanged();
   }
-
 
   public boolean isInvalid(final Object object) {
      if (object instanceof Module){
@@ -237,7 +235,7 @@ public class StructureConfigrableContext implements Disposable {
              }
            });
          }
-       }, 0);
+       }, 100);
      } else if (object instanceof LibraryEx) {
        final LibraryEx library = (LibraryEx)object;
        if (myLibraryPathValidityCache.containsKey(library)) return myLibraryPathValidityCache.get(library).booleanValue();
@@ -249,7 +247,7 @@ public class StructureConfigrableContext implements Disposable {
              }
            });
          }
-       }, 0);
+       }, 100);
      }
      return false;
    }

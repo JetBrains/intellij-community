@@ -317,14 +317,7 @@ public class ClasspathPanel extends JPanel {
           if (orderEntry == null) {
             continue;
           }
-          final Module module = myRootModel.getModule();
-          final Project project = module.getProject();
-          final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(project);
-          if (orderEntry instanceof LibraryOrderEntry) {
-            final LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;            
-            rootConfigurable.getContext().clearCaches(module, libEntry);
-          }
-          rootConfigurable.getContext().clearCaches(module);
+          ModuleStructureConfigurable.getInstance(myProject).getContext().clearCaches(orderEntry);
           myRootModel.removeOrderEntry(orderEntry);
         }        
         final int[] selectedRows = myEntryTable.getSelectedRows();
@@ -466,12 +459,14 @@ public class ClasspathPanel extends JPanel {
         if (chosen.size() == 0) {
           return;
         }
+        final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
         //int insertionIndex = myEntryTable.getSelectedRow();
         for (ItemType item : chosen) {
           //myModel.addItemAt(createTableItem(item), insertionIndex++);
           final TableItem tableItem = createTableItem(item);
           if ( tableItem != null ) {
             myModel.addItem(tableItem);
+            rootConfigurable.getContext().clearCaches(tableItem.getEntry());
           }
         }
         myModel.fireTableDataChanged();
@@ -479,6 +474,7 @@ public class ClasspathPanel extends JPanel {
         //selectionModel.setSelectionInterval(insertionIndex - chosen.size(), insertionIndex - 1);
         selectionModel.setSelectionInterval(myModel.getRowCount() - chosen.size(), myModel.getRowCount() - 1);
         TableUtil.scrollSelectionToVisible(myEntryTable);
+
       }
       finally {
         if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {

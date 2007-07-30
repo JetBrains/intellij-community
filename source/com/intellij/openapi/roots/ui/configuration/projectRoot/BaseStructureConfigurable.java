@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -247,7 +248,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         ProjectBundle.message("dependencies.used.in.popup.title"), dependencies.toArray(new String[dependencies.size()])) {
 
         public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
-          selectNodeInTree(nameToSelect);
+          ProjectStructureConfigurable.getInstance(myProject).select(nameToSelect, null);
           return PopupStep.FINAL_CHOICE;
         }
 
