@@ -469,7 +469,7 @@ public class FileUtil {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
-  public static File findSequentNonexistentFile(final File aParentFolder, final String aFilePrefix, final String aExtension) {
+  public static File findSequentNonexistentFile(final File aParentFolder, @NonNls final String aFilePrefix, final String aExtension) {
     int postfix = 0;
     String ext = 0 == aExtension.length() ? "" : "." + aExtension;
 
