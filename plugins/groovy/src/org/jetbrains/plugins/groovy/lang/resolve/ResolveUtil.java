@@ -184,10 +184,15 @@ public class ResolveUtil {
 
         run = run.getPrevSibling();
       }*/
-      if (place instanceof GrLoopStatement && place.getContext() instanceof GrLabeledStatement) {
-        return (GrLabeledStatement) place.getContext();
+      final PsiElement parent = place.getContext();
+
+      if (place instanceof GrLoopStatement && parent instanceof GrLabeledStatement) {
+        GrLabeledStatement labeledStatement = (GrLabeledStatement) parent;
+        if (label.equals(labeledStatement.getLabel())) {
+          return labeledStatement;
+        }
       }
-      place = place.getContext();
+      place = parent;
 
       if (place instanceof GrMember) break;
     }
