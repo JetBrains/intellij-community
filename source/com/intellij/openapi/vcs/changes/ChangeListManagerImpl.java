@@ -120,7 +120,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void projectOpened() {
-    createDefaultChangelistIfNecessary();
+    initializeForNewProject();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myInitialized = true;
@@ -136,11 +136,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private void createDefaultChangelistIfNecessary() {
+  private void initializeForNewProject() {
     if (myChangeLists.isEmpty()) {
       final LocalChangeList list = LocalChangeList.createEmptyChangeList(myProject, VcsBundle.message("changes.default.changlist.name"));
       myChangeLists.add(list);
       setDefaultChangeList(list);
+
+      if (myFilesToIgnore.size() == 0) {
+        final String name = myProject.getName();
+        myFilesToIgnore.add(IgnoredFileBean.withPath(name + ".iws"));
+        myFilesToIgnore.add(IgnoredFileBean.withPath(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml"));
+      }
     }
   }
 
@@ -899,6 +905,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     for (Element listNode : listNodes) {
       readChangeList(listNode);
     }
+    myFilesToIgnore.clear();
     final List<Element> ignoredNodes = (List<Element>)element.getChildren(NODE_IGNORED);
     for (Element ignoredNode: ignoredNodes) {
       readFileToIgnore(ignoredNode);

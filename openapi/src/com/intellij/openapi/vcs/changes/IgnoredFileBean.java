@@ -12,6 +12,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
 
@@ -46,5 +47,17 @@ public class IgnoredFileBean {
 
   public Pattern getPattern() {
     return myPattern;
+  }
+
+  public static IgnoredFileBean withPath(@NonNls String path) {
+    IgnoredFileBean result = new IgnoredFileBean();
+    result.setPath(path);
+    return result;
+  }
+
+  public static IgnoredFileBean withMask(String mask) {
+    IgnoredFileBean result = new IgnoredFileBean();
+    result.setMask(mask);
+    return result;
   }
 }
