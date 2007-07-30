@@ -18,8 +18,8 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -38,6 +38,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
   private NodeDescriptor myParentDescriptor;
   protected String myLocationString;
   private TextAttributesKey myAttributesKey;
+  private String myTooltip;
 
   protected AbstractTreeNode(Project project, T value) {
     super(project, null);
@@ -56,15 +57,17 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     String locationString = presentation.getLocationString();
     TextAttributesKey attributesKey = presentation.getTextAttributesKey();
     Color color = computeColor();
+    String tooltip = presentation.getTooltip();
 
-    boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey},
-                                        new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey});
+    boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey, myTooltip},
+                                        new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey, tooltip});
     myOpenIcon = openIcon;
     myClosedIcon = closedIcon;
     myName = name;
     myLocationString = locationString;
     myColor = color;
     myAttributesKey = attributesKey;
+    myTooltip = tooltip;
 
     return updated;
   }
@@ -150,6 +153,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     myValue = value;
   }
 
+  @Nullable
   @NonNls public String getTestPresentation() {
     if (myName != null) {
       return myName;
@@ -183,12 +187,14 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     return false;
   }
 
+  @Nullable
   protected final Object getParentValue() {
-    return getParent() == null ? null : getParent().getValue();
+    AbstractTreeNode parent = getParent();
+    return parent == null ? null : parent.getValue();
   }
 
   protected String getToolTip() {
-    return null;
+    return myTooltip;
   }
 
   public boolean canRepresent(final Object element) {

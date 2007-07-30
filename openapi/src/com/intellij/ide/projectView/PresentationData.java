@@ -29,6 +29,7 @@ public class PresentationData implements ItemPresentation {
   private Icon myOpenIcon;
   private String myLocationString;
   private String myPresentableText;
+  private String myTooltip;
   private TextAttributesKey myAttributesKey;
 
   /**
@@ -149,5 +150,13 @@ public class PresentationData implements ItemPresentation {
    */
   public void setAttributesKey(final TextAttributesKey attributesKey) {
     myAttributesKey = attributesKey;
+  }
+
+  public String getTooltip() {
+    return myTooltip;
+  }
+
+  public void setTooltip(final String tooltip) {
+    myTooltip = tooltip;
   }
 }

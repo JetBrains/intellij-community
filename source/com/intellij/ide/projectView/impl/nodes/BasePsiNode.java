@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     }
   }
 
+  @Nullable
   private VirtualFile getVirtualFileForValue() {
     T value = getValue();
     if (value == null) return null;
@@ -94,6 +96,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     data.setOpenIcon(icon);
     data.setLocationString(myLocationString);
     data.setPresentableText(myName);
+    data.setTooltip(calcTooltip());
     if (isDeprecated()) {
       data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     }
@@ -131,7 +134,8 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigateToSource();
   }
 
-  protected String getToolTip() {
+  @Nullable
+  private String calcTooltip() {
     T t = getValue();
     if (t instanceof PsiModifierListOwner && t.isValid()) {
       return ElementBase.getDescription((PsiModifierListOwner)t);
