@@ -193,9 +193,10 @@ public class TestData implements Cloneable
   }
 
   public Module setTestMethod(Location<PsiMethod> location) {
-    METHOD_NAME = location.getPsiElement().getName();
+    final PsiMethod method = location.getPsiElement();
+    METHOD_NAME = method.getName();
     TEST_OBJECT = TestType.METHOD.getType();
-    return setMainClass(location.getParentElement(PsiClass.class));
+    return setMainClass(method.getContainingClass());
   }
 
   public Module setPackage(PsiPackage pkg) {
