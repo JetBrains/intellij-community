@@ -97,12 +97,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
       }
     }
     if (element instanceof LibraryDescriptor) {
-      final LibraryDescriptor libDescr = (LibraryDescriptor)element;
-      final Collection<File> jars = libDescr.getJars();
-      if (jars.size() == 1) {
-        return getDisplayText(jars.iterator().next());
-      }
-      return libDescr.getName();
+      return getDisplayText((LibraryDescriptor)element);
     }
     if (element instanceof File) {
       return getDisplayText(((File)element));

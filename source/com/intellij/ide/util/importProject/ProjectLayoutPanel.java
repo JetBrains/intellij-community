@@ -30,6 +30,17 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private static final Icon RENAME_ICON = IconLoader.getIcon("/modules/edit.png");
   private static final Icon MERGE_ICON = IconLoader.getIcon("/modules/merge.png");
   private static final Icon SPLIT_ICON = IconLoader.getIcon("/modules/split.png");
+  
+  private final Comparator<T> COMPARATOR = new Comparator<T>() {
+    public int compare(final T o1, final T o2) {
+      final int w1 = getWeight(o1);
+      final int w2 = getWeight(o2);
+      if (w1 != w2) {
+        return w1 - w2;
+      }
+      return getElementText(o1).compareToIgnoreCase(getElementText(o2));
+    }
+  };
 
   public ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
@@ -108,32 +119,15 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   public void rebuild() {
     myEntriesChooser.clear();
     for (final T entry : alphaSortList(getEntries())) {
-      myEntriesChooser.addElement(entry, true, new ElementsChooser.ElementProperties() {
-        public Icon getIcon() {
-          return getElementIcon(entry);
-        }
-
-        public Color getColor() {
-          return null;
-        }
-      });
+      myEntriesChooser.addElement(entry, true, new EntryProperties(entry));
     }
     if (myEntriesChooser.getElementCount() > 0) {
       myEntriesChooser.selectElements(Collections.singleton(myEntriesChooser.getElementAt(0)));
     }
   }
 
-  private <T> List<T> alphaSortList(final List<T> entries) {
-    Collections.sort(entries, new Comparator<T>() {
-      public int compare(final T o1, final T o2) {
-        final int w1 = getWeight(o1);
-        final int w2 = getWeight(o2);
-        if (w1 != w2) {
-          return w1 - w2;
-        }
-        return getElementText(o1).compareToIgnoreCase(getElementText(o2));
-      }
-    });
+  private List<T> alphaSortList(final List<T> entries) {
+    Collections.sort(entries, COMPARATOR);
     return entries;
   }
 
@@ -208,7 +202,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         if (newName != null) {
           final T merged = merge(elements);
           setElementName(merged, newName);
-          rebuild();
+          for (T element : elements) {
+            myEntriesChooser.removeElement(element);
+          }
+          myEntriesChooser.addElement(merged, true, new EntryProperties(merged));
+          myEntriesChooser.sort(COMPARATOR);
           myEntriesChooser.selectElements(Collections.singleton(merged));
         }
       }
@@ -242,7 +240,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
           final T extracted = split(entry, newName, chosenFiles);
           if (extracted != null) {
-            rebuild();
+            if (!getEntries().contains(entry)) {
+              myEntriesChooser.removeElement(entry);
+            }
+            myEntriesChooser.addElement(extracted, true, new EntryProperties(extracted));
+            myEntriesChooser.sort(COMPARATOR);
             myEntriesChooser.selectElements(Collections.singleton(extracted));
           }
         }
@@ -285,7 +287,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         );
         if (newName != null) {
           setElementName(element, newName);
-          rebuild();
+          myEntriesChooser.sort(COMPARATOR);
           myEntriesChooser.selectElements(Collections.singleton(element));
         }
       }
@@ -297,6 +299,26 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     }
   }
 
+  protected static String getDisplayText(LibraryDescriptor lib) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(lib.getName());
+      final Collection<File> jars = lib.getJars();
+      if (jars.size() == 1) {
+        final File parentFile = jars.iterator().next().getParentFile();
+        if (parentFile != null) {
+          builder.append(" (");
+          builder.append(parentFile.getPath());
+          builder.append(")");
+        }
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+  
   protected static String getDisplayText(File file) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -392,4 +414,19 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     }
   }
 
+  private class EntryProperties implements ElementsChooser.ElementProperties {
+    private final T myEntry;
+
+    public EntryProperties(final T entry) {
+      myEntry = entry;
+    }
+
+    public Icon getIcon() {
+      return getElementIcon(myEntry);
+    }
+
+    public Color getColor() {
+      return null;
+    }
+  }
 }

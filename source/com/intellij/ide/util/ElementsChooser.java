@@ -280,6 +280,10 @@ public class ElementsChooser<T> extends JPanel {
     return elements;
   }
 
+  public void sort(Comparator<T> comparator) {
+    myTableModel.sort(comparator);
+  }
+  
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myTable.setRowSelectionAllowed(enabled);
@@ -348,7 +352,12 @@ public class ElementsChooser<T> extends JPanel {
         ELEMENT_COLUMN_INDEX = 0;
       }
     }
-
+    
+    public void sort(Comparator<T> comparator) {
+      Collections.sort(myElements, comparator);
+      fireTableDataChanged();
+    }
+    
     public T getElementAt(int index) {
       return myElements.get(index);
     }

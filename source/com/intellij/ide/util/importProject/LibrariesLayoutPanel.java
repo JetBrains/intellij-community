@@ -51,12 +51,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
   protected String getElementText(final Object element) {
     if (element instanceof LibraryDescriptor) {
-      final LibraryDescriptor libDescr = (LibraryDescriptor)element;
-      final Collection<File> jars = libDescr.getJars();
-      if (jars.size() == 1) {
-        return getDisplayText(jars.iterator().next());
-      }
-      return libDescr.getName();
+      return getDisplayText((LibraryDescriptor)element);
     }
     if (element instanceof File) {
       return getDisplayText((File)element);
