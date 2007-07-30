@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ import java.util.List;
 public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     if ( project == null ) return;
 
     List<Module> pluginModules = new ArrayList<Module>();
@@ -50,13 +50,23 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
   }
 
   public void update(AnActionEvent e) {
-    boolean enabled = false;
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    int moduleCount = 0;
+    final Project project = e.getData(DataKeys.PROJECT);
     if (project != null) {
       for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
         if (aModule.getModuleType() instanceof PluginModuleType) {
-          enabled = true;
+          moduleCount++;
         }
+      }
+    }
+    boolean enabled = false;
+    if (moduleCount > 1) {
+      enabled = true;
+    }
+    else {
+      final Module module = e.getData(DataKeys.MODULE);
+      if (module == null || !(module.getModuleType() instanceof PluginModuleType)) {
+        enabled = true;
       }
     }
     e.getPresentation().setVisible(enabled);
