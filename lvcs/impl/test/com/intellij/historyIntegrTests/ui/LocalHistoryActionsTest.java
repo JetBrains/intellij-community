@@ -3,6 +3,7 @@ package com.intellij.historyIntegrTests.ui;
 import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction;
+import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -65,12 +66,17 @@ public class LocalHistoryActionsTest extends IntegrationTestCase {
     assertStatus(a, root, myProject, true);
     assertStatus(a, root, null, false);
   }
+  
+  public void testShowHistoryActionIsDisabledForMultipleSelection() throws Exception {
+    ShowHistoryAction a = new ShowHistoryAction();
+    assertStatus(a, new VirtualFile[] {f, new TestVirtualFile("ff")}, myProject, false);
+  }
 
   public void testShowSelectionHistoryActionForSelection() throws Exception {
     editor.getSelectionModel().setSelection(0, 2);
 
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
-    AnActionEvent e = createEventFor(a, f, myProject);
+    AnActionEvent e = createEventFor(a, new VirtualFile[] {f}, myProject);
     a.update(e);
 
     assertTrue(e.getPresentation().isEnabled());
@@ -78,13 +84,13 @@ public class LocalHistoryActionsTest extends IntegrationTestCase {
     assertEquals("Show History for Selection", e.getPresentation().getText());
   }
 
-  public void testShowSelectionHistoryActionDisabledForNonFiles() throws IOException {
+  public void testShowSelectionHistoryActionIsDisabledForNonFiles() throws IOException {
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
     assertStatus(a, root, false);
     assertStatus(a, null, false);
   }
 
-  public void testShowSelectionHistoryActionDisabledForEmptySelection() throws Exception {
+  public void testShowSelectionHistoryActionIsDisabledForEmptySelection() throws Exception {
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
     assertStatus(a, f, false);
   }
@@ -94,16 +100,21 @@ public class LocalHistoryActionsTest extends IntegrationTestCase {
   }
 
   private void assertStatus(AnAction a, VirtualFile f, Project p, boolean isEnabled) {
-    AnActionEvent e = createEventFor(a, f, p);
+    VirtualFile[] files = f == null ? null : new VirtualFile[]{f};
+    assertStatus(a, files, p, isEnabled);
+  }
+
+  private void assertStatus(AnAction a, VirtualFile[] files, Project p, boolean isEnabled) {
+    AnActionEvent e = createEventFor(a, files, p);
     a.update(e);
     assertEquals(isEnabled, e.getPresentation().isEnabled());
   }
 
-  private AnActionEvent createEventFor(AnAction a, final VirtualFile f, final Project p) {
+  private AnActionEvent createEventFor(AnAction a, final VirtualFile[] files, final Project p) {
     DataContext dc = new DataContext() {
       @Nullable
       public Object getData(String id) {
-        if (id.equals(DataKeys.VIRTUAL_FILE.getName())) return f;
+        if (id.equals(DataKeys.VIRTUAL_FILE_ARRAY.getName())) return files;
         if (id.equals(DataKeys.EDITOR.getName())) return editor;
         if (id.equals(DataKeys.PROJECT.getName())) return p;
         return null;

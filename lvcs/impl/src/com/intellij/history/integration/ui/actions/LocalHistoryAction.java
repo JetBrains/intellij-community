@@ -40,7 +40,12 @@ public abstract class LocalHistoryAction extends AnAction {
   }
 
   protected VirtualFile getFile(AnActionEvent e) {
-    return e.getData(DataKeys.VIRTUAL_FILE);
+    VirtualFile[] ff = getFiles(e);
+    return (ff == null || ff.length != 1) ? null : ff[0];
+  }
+
+  private VirtualFile[] getFiles(AnActionEvent e) {
+    return e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
   }
 
   private Project getProject(AnActionEvent e) {
