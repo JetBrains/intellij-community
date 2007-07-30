@@ -47,7 +47,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
     final boolean isEnabled = project != null &&
                               (changes != null && changes.length > 0) || (unversionedFiles != null && unversionedFiles.size() > 0);
-    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(isEnabled);
     }
     else {
