@@ -17,9 +17,14 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Mike
@@ -45,6 +50,16 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return true;
   }
 
+  private static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
+    String name = call.getMethodExpression().getReferenceName();
+    PsiExpressionList list = call.getArgumentList();
+    PsiMethod[] methods = target.findMethodsByName(name, false);
+    for (PsiMethod method : methods) {
+      if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, list)) return true;
+    }
+    return false;
+  }
+
   static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
     Project project = call.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
@@ -62,6 +77,20 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiMethodCallExpression call = getMethodCall();
     if (call == null || !call.getManager().isInProject(call)) return null;
     return call;
+  }
+
+  @NotNull
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
+    List<PsiClass> targets = super.getTargetClasses(element);
+    ArrayList<PsiClass> result = new ArrayList<PsiClass>();
+    PsiMethodCallExpression call = getMethodCall();
+    if (call == null) return Collections.emptyList();
+    for (PsiClass target : targets) {
+      if (!isMethodSignatureExists(call, target)) {
+        result.add(target);
+      }
+    }
+    return result;
   }
 
   protected void invokeImpl(PsiClass targetClass) {

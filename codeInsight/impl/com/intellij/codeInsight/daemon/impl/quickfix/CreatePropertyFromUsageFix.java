@@ -23,10 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -76,8 +73,8 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       LOG.error("Internal error in create property intention");
     }
 
-    PsiClass[] classes = getTargetClasses(myMethodCall);
-    if (classes == null) return false;
+    List<PsiClass> classes = getTargetClasses(myMethodCall);
+    if (classes.isEmpty()) return false;
 
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
@@ -131,15 +128,16 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     }
   }
 
-  protected PsiClass[] getTargetClasses(PsiElement element) {
-    PsiClass[] all = super.getTargetClasses(element);
-    if (all == null) return null;
+  @NotNull
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
+    List<PsiClass> all = super.getTargetClasses(element);
+    if (all.isEmpty()) return all;
 
     List<PsiClass> nonInterfaces = new ArrayList<PsiClass>();
     for (PsiClass aClass : all) {
       if (!aClass.isInterface()) nonInterfaces.add(aClass);
     }
-    return nonInterfaces.toArray(new PsiClass[nonInterfaces.size()]);
+    return nonInterfaces;
   }
 
   protected void invokeImpl(PsiClass targetClass) {

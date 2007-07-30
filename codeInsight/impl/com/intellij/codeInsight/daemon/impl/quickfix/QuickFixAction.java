@@ -21,7 +21,7 @@ public final class QuickFixAction extends IntentionActionComposite {
     addAvailableActionsForGroups(info, editor, file, list, passId == -1 ? null : new int[]{passId});
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key, String displayName) {
+  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key) {
     registerQuickFixAction(info, null, action, key);
   }
 

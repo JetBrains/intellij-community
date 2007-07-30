@@ -29,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createModifierListFix(PsiModifierList modifierList,
-                                               String modifier,
+                                               @NotNull String modifier,
                                                boolean shouldHave,
-                                               final boolean showContainingClass) {
+                                               boolean showContainingClass) {
     return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
   }
 
-  public IntentionAction createMethodReturnFix(PsiMethod method, PsiType toReturn, boolean fixWholeHierarchy) {
+  public IntentionAction createMethodReturnFix(@NotNull PsiMethod method, @NotNull PsiType toReturn, boolean fixWholeHierarchy) {
     return new MethodReturnFix(method, toReturn, fixWholeHierarchy);
   }
 
@@ -81,19 +81,19 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new ExtendsListFix(aClass, typeToExtendFrom, toAdd);
   }
 
-  public IntentionAction createRemoveUnusedParameterFix(PsiParameter parameter) {
+  public IntentionAction createRemoveUnusedParameterFix(@NotNull PsiParameter parameter) {
     return new RemoveUnusedParameterFix(parameter);
   }
 
-  public IntentionAction createRemoveUnusedVariableFix(PsiVariable variable) {
+  public IntentionAction createRemoveUnusedVariableFix(@NotNull PsiVariable variable) {
     return new RemoveUnusedVariableFix(variable);
   }
 
-  public IntentionAction createCreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
     return new CreateClassOrPackageFix(context, qualifiedName, createClass, superClass);
   }
 
-  public IntentionAction createCreateClassOrInterfaceFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
     return new CreateClassOrPackageFix(context, qualifiedName, true, !createClass, superClass);
   }
 

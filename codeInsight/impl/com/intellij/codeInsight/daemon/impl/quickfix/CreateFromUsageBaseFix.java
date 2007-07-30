@@ -22,11 +22,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * @author Mike
@@ -37,16 +40,15 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   protected CreateFromUsageBaseFix() {
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = getElement();
     if (element == null) {
       return false;
     }
 
-    PsiClass[] targetClasses = getTargetClasses(element);
-    return targetClasses != null && !isValidElement(element) && isAvailableImpl(offset);
-
+    List<PsiClass> targetClasses = getTargetClasses(element);
+    return !targetClasses.isEmpty() && !isValidElement(element) && isAvailableImpl(offset);
   }
 
   protected abstract boolean isAvailableImpl(int offset);
@@ -55,7 +57,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isValidElement(PsiElement result);
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement element = getElement();
@@ -68,11 +70,11 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       return;
     }
 
-    PsiClass[] targetClasses = getTargetClasses(element);
-    if (targetClasses == null) return;
+    List<PsiClass> targetClasses = getTargetClasses(element);
+    if (targetClasses.isEmpty()) return;
 
-    if (targetClasses.length == 1) {
-      doInvoke(project, targetClasses[0]);
+    if (targetClasses.size() == 1) {
+      doInvoke(project, targetClasses.get(0));
     } else {
       chooseTargetClass(targetClasses, editor);
     }
@@ -88,12 +90,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Nullable
-  abstract protected PsiElement getElement();
+  protected abstract PsiElement getElement();
 
-  private void chooseTargetClass(PsiClass[] classes, final Editor editor) {
-    final Project project = classes[0].getProject();
+  private void chooseTargetClass(List<PsiClass> classes, final Editor editor) {
+    final Project project = classes.get(0).getProject();
 
-    final JList list = new JList(classes);
+    final JList list = new JList(new Vector<PsiClass>(classes));
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
@@ -210,7 +212,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected static PsiSubstitutor getTargetSubstitutor (PsiElement element) {
     if (element instanceof PsiNewExpression) {
-      PsiSubstitutor substitutor = ((PsiNewExpression)element).getClassOrAnonymousClassReference().advancedResolve(false).getSubstitutor();
+      JavaResolveResult result = ((PsiNewExpression)element).getClassOrAnonymousClassReference().advancedResolve(false);
+      PsiSubstitutor substitutor = result.getSubstitutor();
       return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
     }
 
@@ -230,7 +233,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   //Should return only valid inproject classes
-  protected PsiClass[] getTargetClasses(PsiElement element) {
+  @NotNull
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
     PsiClass psiClass = null;
     PsiExpression qualifier = null;
 
@@ -248,8 +252,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     else if (element instanceof PsiMethodCallExpression) {
       final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
       qualifier = methodExpression.getQualifierExpression();
-      final @NonNls String referenceName = methodExpression.getReferenceName();
-      if (referenceName == null) return null;
+      @NonNls final String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null) return Collections.emptyList();
     }
     boolean allowOuterClasses = false;
     if (qualifier != null) {
@@ -276,17 +280,17 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         if (!aSuper.getManager().isInProject(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
       }
-      return !filtered.isEmpty() ? filtered.toArray(new PsiClass[filtered.size()]) : null;
+      return filtered;
     }
     else {
       if (psiClass == null || !psiClass.getManager().isInProject(psiClass)) {
-        return null;
+        return Collections.emptyList();
       }
 
       if (!allowOuterClasses ||
           !isAllowOuterTargetClass() ||
           ApplicationManager.getApplication().isUnitTestMode())
-        return new PsiClass[]{psiClass};
+        return Collections.singletonList(psiClass);
 
       List<PsiClass> result = new ArrayList<PsiClass>();
 
@@ -295,7 +299,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         if (psiClass.hasModifierProperty(PsiModifier.STATIC)) break;
         psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
       }
-      return result.toArray(new PsiClass[result.size()]);
+      return result;
     }
   }
 

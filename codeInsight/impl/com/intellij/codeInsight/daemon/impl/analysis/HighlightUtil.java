@@ -234,15 +234,7 @@ public class HighlightUtil {
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return;
 
-    PsiClass accessObjectClass = null;
-    PsiElement scope = place;
-    while (scope != null) {
-      if (scope instanceof PsiClass) {
-        accessObjectClass = (PsiClass)scope;
-        break;
-      }
-      scope = scope.getParent();
-    }
+    PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false, true);
 
     PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
@@ -266,10 +258,14 @@ public class HighlightUtil {
       for (; i < modifiers.length; i++) {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
-        if (refElement.getManager().getResolveHelper()
-          .isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
+        if (refElement.getManager().getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement.getModifierList(), modifier, true, true);
-          QuickFixAction.registerQuickFixAction(errorResult, fix);
+          TextRange fixRange = new TextRange(errorResult.startOffset, errorResult.endOffset);
+          PsiElement ref = place.getReferenceNameElement();
+          if (ref != null) {
+            fixRange = fixRange.union(ref.getTextRange());
+          }
+          QuickFixAction.registerQuickFixAction(errorResult, fixRange, fix, null);
         }
       }
     }

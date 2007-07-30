@@ -106,4 +106,8 @@ public class TextRange {
   public boolean isEmpty() {
     return myStartOffset >= myEndOffset;
   }
+
+  public TextRange union(TextRange textRange) {
+    return new TextRange(Math.min(myStartOffset, textRange.getStartOffset()), Math.max(myEndOffset, textRange.getEndOffset()));
+  }
 }

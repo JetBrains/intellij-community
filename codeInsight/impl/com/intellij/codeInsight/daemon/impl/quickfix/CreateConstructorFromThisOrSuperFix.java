@@ -18,6 +18,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ven
@@ -34,7 +36,8 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     myMethodCall = methodCall;
   }
 
-  abstract protected @NonNls String getSyntheticMethodName ();
+  @NonNls
+  protected abstract String getSyntheticMethodName ();
 
   protected boolean isAvailableImpl(int offset) {
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
@@ -43,11 +46,11 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiMethod method = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
     if (method == null || !method.isConstructor()) return false;
     if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
-    PsiClass[] targetClasses = getTargetClasses(myMethodCall);
-    LOG.assertTrue(targetClasses.length == 1);
+    List<PsiClass> targetClasses = getTargetClasses(myMethodCall);
+    LOG.assertTrue(targetClasses.size() == 1);
 
     if (CreateFromUsageUtils.shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
-      setText(QuickFixBundle.message("create.constructor.text", targetClasses[0].getName()));
+      setText(QuickFixBundle.message("create.constructor.text", targetClasses.get(0).getName()));
       return true;
     }
 
@@ -116,7 +119,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element;
     PsiMethod method = (PsiMethod) methodCall.getMethodExpression().resolve();
     PsiExpressionList argumentList = methodCall.getArgumentList();
-    PsiClass targetClass = getTargetClasses(element)[0];
+    PsiClass targetClass = getTargetClasses(element).get(0);
 
     return !CreateFromUsageUtils.shouldCreateConstructor(targetClass, argumentList, method);
   }

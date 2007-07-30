@@ -9,6 +9,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSuperFix {
 
@@ -20,14 +24,21 @@ public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSup
     return "this";
   }
 
-  protected PsiClass[] getTargetClasses(PsiElement element) {
+  @NotNull
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
     PsiElement e = element;
     do {
       e = PsiTreeUtil.getParentOfType(e, PsiClass.class);
     } while (e instanceof PsiTypeParameter);
-    return e != null && e.isValid() && e.getManager().isInProject(e) ? new PsiClass[]{(PsiClass) e} : null;
+    if (e != null && e.isValid() && e.getManager().isInProject(e)) {
+      return Collections.singletonList((PsiClass)e);
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.from.this.call.family");
   }

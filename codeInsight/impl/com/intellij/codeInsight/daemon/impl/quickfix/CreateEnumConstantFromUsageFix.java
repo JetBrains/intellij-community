@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateEnumConstantFromUsageFix");
   public CreateEnumConstantFromUsageFix(final PsiReferenceExpression referenceElement) {
@@ -37,10 +39,10 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
 
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    final PsiClass[] classes = getTargetClasses(getElement());
-    if (classes.length != 1 || !classes[0].isEnum()) return false;
+    final List<PsiClass> classes = getTargetClasses(getElement());
+    if (classes.size() != 1 || !classes.get(0).isEnum()) return false;
     ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
-    PsiType enumType = myReferenceExpression.getManager().getElementFactory().createType(classes[0]);
+    PsiType enumType = myReferenceExpression.getManager().getElementFactory().createType(classes.get(0));
     for (final ExpectedTypeInfo typeInfo : typeInfos) {
       if (ExpectedTypeUtil.matches(enumType, typeInfo)) return true;
     }

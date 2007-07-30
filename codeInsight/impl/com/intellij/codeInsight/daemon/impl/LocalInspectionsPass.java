@@ -327,13 +327,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (fixes != null && fixes.length > 0) {
       for (int k = 0; k < fixes.length; k++) {
         if (fixes[k] != null) { // prevent null fixes from var args
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), key, tool.getDisplayName());
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), key);
         }
       }
     }
     else if (emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
-      QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key, tool.getDisplayName());
+      QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key);
     }
   }
 

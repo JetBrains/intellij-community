@@ -8,6 +8,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSuperFix {
 
   public CreateConstructorFromSuperFix(PsiMethodCallExpression methodCall) {
@@ -18,17 +21,22 @@ public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSu
     return "super";
   }
 
-  protected PsiClass[] getTargetClasses(PsiElement element) {
+  @NotNull
+  protected List<PsiClass> getTargetClasses(PsiElement element) {
     do {
       element = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    } while (element instanceof PsiTypeParameter);
-    PsiClass curClass = (PsiClass) element;
-    if (curClass == null || curClass instanceof PsiAnonymousClass) return null;
+    }
+    while (element instanceof PsiTypeParameter);
+    PsiClass curClass = (PsiClass)element;
+    if (curClass == null || curClass instanceof PsiAnonymousClass) return Collections.emptyList();
     PsiClassType[] extendsTypes = curClass.getExtendsListTypes();
-    if (extendsTypes.length == 0) return null;
+    if (extendsTypes.length == 0) return Collections.emptyList();
     PsiClass aClass = extendsTypes[0].resolve();
-    if (aClass instanceof PsiTypeParameter) return null;
-    return aClass != null && aClass.isValid() && aClass.getManager().isInProject(aClass) ? new PsiClass[]{aClass} : null;
+    if (aClass instanceof PsiTypeParameter) return Collections.emptyList();
+    if (aClass != null && aClass.isValid() && aClass.getManager().isInProject(aClass)) {
+      return Collections.singletonList(aClass);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull

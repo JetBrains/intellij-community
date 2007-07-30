@@ -4,18 +4,19 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ public class ModifierFix implements IntentionAction {
     myShowContainingClass = showContainingClass;
   }
 
+  @NotNull
   public String getText() {
     String name = null;
     PsiElement parent = myModifierList.getParent();
@@ -74,11 +76,12 @@ public class ModifierFix implements IntentionAction {
                                   modifierText);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.modifiers.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myModifierList != null
            && myModifierList.isValid()
            && myModifierList.getManager().isInProject(myModifierList)
@@ -94,7 +97,7 @@ public class ModifierFix implements IntentionAction {
     }
   }
 
-  public void invoke(Project project, Editor editor, final PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
 
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     PsiElement owner = myModifierList.getParent();
@@ -117,7 +120,7 @@ public class ModifierFix implements IntentionAction {
 
     if (!CodeInsightUtil.prepareFileForWrite(myModifierList.getContainingFile())) return;
 
-    if (modifierLists.size() > 0) {
+    if (!modifierLists.isEmpty()) {
       if (Messages.showYesNoDialog(project,
                                    QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                    QuickFixBundle.message("change.inheritors.visibility.warning.title"),

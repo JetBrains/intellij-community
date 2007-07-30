@@ -267,7 +267,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!myRefCountHolder.isReferenced(variable) && !isImplicitUsage(variable)) {
       String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.never.used"), identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), displayName);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
       return highlightInfo;
     }
 
@@ -275,7 +275,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!referenced && !isImplicitRead(variable)) {
       String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.not.used.for.reading"), identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), displayName);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
       return highlightInfo;
     }
 
@@ -285,7 +285,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.not.assigned"), identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME),
-                                              HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), displayName);
+                                              HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
         return unusedSymbolInfo;
       }
     }
@@ -339,7 +339,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.used"), identifier.getText());
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, key, displayName, identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateConstructorParameterFromFieldFix(field), key, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateConstructorParameterFromFieldFix(field), key);
         return highlightInfo;
       }
 
@@ -356,8 +356,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
           final HighlightInfo info = createUnusedSymbolInfo(identifier, message);
 
-          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterFix(false, true, field), key, displayName);
-          QuickFixAction.registerQuickFixAction(info, new CreateConstructorParameterFromFieldFix(field), key, displayName);
+          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterFix(false, true, field), key);
+          QuickFixAction.registerQuickFixAction(info, new CreateConstructorParameterFromFieldFix(field), key);
           SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
             public boolean process(final String annoName) {
               QuickFixAction.registerQuickFixAction(info, unusedSymbolInspection.createQuickFix(annoName, field));
@@ -376,10 +376,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                                    final String displayName,
                                                    final PsiIdentifier identifier, final String message) {
     HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), key, displayName);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, false, field), key, displayName);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(false, true, field), key, displayName);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, true, field), key, displayName);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), key);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, false, field), key);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(false, true, field), key);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, true, field), key);
     return highlightInfo;
   }
 
@@ -409,7 +409,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       ) {
         HighlightInfo highlightInfo = checkUnusedParameter(parameter);
         if (highlightInfo != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), displayName);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
           return highlightInfo;
         }
       }
@@ -417,7 +417,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     else if (declarationScope instanceof PsiForeachStatement) {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
         return highlightInfo;
       }
     }
@@ -454,7 +454,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(pattern, symbolName);
         PsiIdentifier identifier = method.getNameIdentifier();
         final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
         if (isSetter) {
           SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
             public boolean process(final String annoName) {
@@ -500,7 +500,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     String message = MessageFormat.format(pattern, symbolName);
     PsiIdentifier identifier = aClass.getNameIdentifier();
     HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), key, displayName);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), key);
     return highlightInfo;
   }
 
@@ -547,8 +547,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     String displayName = UnusedImportLocalInspection.DISPLAY_NAME;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME);
-    QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), key, displayName);
-    QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), key, displayName);
+    QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), key);
+    QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), key);
     myHasRedundantImports = true;
     return info;
   }

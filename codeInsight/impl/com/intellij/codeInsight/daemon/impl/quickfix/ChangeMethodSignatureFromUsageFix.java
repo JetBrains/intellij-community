@@ -98,7 +98,17 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
 
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
-    return myNewParametersInfo != null && formatTypesList(myNewParametersInfo, myContext) != null;
+    if (myNewParametersInfo == null || formatTypesList(myNewParametersInfo, myContext) == null) return false;
+    return !isMethodSignatureExists();
+  }
+
+  private boolean isMethodSignatureExists() {
+    PsiClass target = myTargetMethod.getContainingClass();
+    PsiMethod[] methods = target.findMethodsByName(myTargetMethod.getName(), false);
+    for (PsiMethod method : methods) {
+      if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, myExpressions)) return true;
+    }
+    return false;
   }
 
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
