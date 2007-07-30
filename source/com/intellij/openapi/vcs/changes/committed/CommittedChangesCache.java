@@ -490,6 +490,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
             }
             else {
+              LOG.info("Clearing cached incoming changelists");
+              myCachedIncomingChangeLists.clear();
               pendingUpdateProcessed();
             }
           }
