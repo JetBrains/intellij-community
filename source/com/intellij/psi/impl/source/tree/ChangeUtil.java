@@ -313,17 +313,15 @@ public class ChangeUtil {
 
   private static void encodeInformation(TreeElement element, ASTNode original, boolean shallEncodeEscapedTexts) {
     if (original instanceof CompositeElement) {
-      if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || original.getElementType() == JavaElementType
-        .REFERENCE_EXPRESSION) {
+      if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || original.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
         encodeInformationInRef(element, original);
       }
-      else if (original.getElementType() == JavaElementType.MODIFIER_LIST) {
-        if ((original.getTreeParent().getElementType() == JavaElementType.FIELD ||
-             original.getTreeParent().getElementType() == JavaElementType.METHOD)
-            && original.getTreeParent().getTreeParent().getElementType() == JavaElementType.CLASS &&
-            ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()) {
-          element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, Boolean.TRUE);
-        }
+      else if (original.getElementType() == JavaElementType.MODIFIER_LIST
+               && (original.getTreeParent().getElementType() == JavaElementType.FIELD || original.getTreeParent().getElementType() == JavaElementType.METHOD || original.getTreeParent().getElementType() == JavaElementType.ANNOTATION_METHOD)
+               && original.getTreeParent().getTreeParent().getElementType() == JavaElementType.CLASS
+               && (((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()
+                   || ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isAnnotationType())) {
+        element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, Boolean.TRUE);
       }
 
       ChameleonTransforming.transformChildren(element);
@@ -455,6 +453,10 @@ public class ChangeUtil {
               modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
             else if (element.getTreeParent().getElementType() == JavaElementType.METHOD) {
+              modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+              modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+            }
+            else if (element.getTreeParent().getElementType() == JavaElementType.ANNOTATION_METHOD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
             }

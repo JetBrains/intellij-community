@@ -24,7 +24,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
-    return PsiModifier.FINAL.equals(name) || super.hasModifierProperty(name);
+    return PsiModifier.ABSTRACT.equals(name) || PsiModifier.PUBLIC.equals(name) || super.hasModifierProperty(name);
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
