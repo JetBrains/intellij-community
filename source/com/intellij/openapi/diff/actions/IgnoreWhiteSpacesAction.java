@@ -1,16 +1,19 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
+import java.awt.*;
 
 public class IgnoreWhiteSpacesAction extends ComboBoxAction {
   private final Map<ComparisonPolicy, AnAction> myActions = new HashMap<ComparisonPolicy, AnAction>();
@@ -26,6 +29,14 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
       DiffBundle.message("diff.acton.ignore.qhitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
     myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
     myDiffPanel = diffPanel;
+  }
+
+  @Override
+  public JComponent createCustomComponent(final Presentation presentation) {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel(DiffBundle.message("comparison.ignore.whitespace.acton.name")), BorderLayout.WEST);
+    panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);
+    return panel;
   }
 
   @NotNull

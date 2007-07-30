@@ -61,7 +61,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       toolbar.addAction(PreviousDiffAction.find());
       toolbar.addAction(NextDiffAction.find());
       toolbar.addSeparator();
-      toolbar.addAction(new LabelAction(DiffBundle.message("comparison.ignore.whitespace.acton.name")));
       toolbar.addAction(new IgnoreWhiteSpacesAction(DiffPanelImpl.this));
     }
   };
