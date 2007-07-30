@@ -914,15 +914,15 @@ public class ExpectedTypesProvider {
         if (type != null) return type;
       }
       if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "containsValue".equals(name)) {
-        return checkMethod(method, CommonClassNames.JAVA_UTIL_MAP, new NullableFunction<PsiClass, PsiType>() {
+        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_MAP, new NullableFunction<PsiClass, PsiType>() {
           public PsiType fun(final PsiClass psiClass) {
             return getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0);
           }
         });
-
+        if (type != null) return type;
       }
       if ("equals".equals(name)) {
-        return checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, new NullableFunction<PsiClass, PsiType>() {
+        final PsiType type = checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, new NullableFunction<PsiClass, PsiType>() {
           public PsiType fun(final PsiClass psiClass) {
             final PsiElement parent = argumentList.getParent();
             if (parent instanceof PsiMethodCallExpression) {
@@ -939,6 +939,7 @@ public class ExpectedTypesProvider {
             return null;
           }
         });
+        if (type != null) return type;
       }
       return parameterType;
     }
