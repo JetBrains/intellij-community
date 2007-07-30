@@ -19,8 +19,7 @@ import java.util.List;
  * Time: 14:46:31
  * To change this template use Options | File Templates.
  */
-public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
- implements NameHint{
+public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo> implements NameHint{
   protected final PsiConflictResolver[] myResolvers;
   private JavaResolveResult[] myCachedResult = null;
   protected String myName;
@@ -50,7 +49,6 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myCachedResult = null;
     myResults.add(info);
   }
-
 
   public void handleEvent(Event event, Object associated){
     if(event == Event.CHANGE_LEVEL && myName != null){

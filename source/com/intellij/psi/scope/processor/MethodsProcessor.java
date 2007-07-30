@@ -24,6 +24,9 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
 
+  public MethodsProcessor(PsiConflictResolver[] resolvers, List<CandidateInfo> container) {
+    super(null, ourFilter, resolvers, container);
+  }
 
   public PsiExpressionList getArgumentList() {
     return myArgumentList;
@@ -46,10 +49,6 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
 
   public PsiType[] getTypeArguments() {
     return myTypeArguments;
-  }
-
-  public MethodsProcessor(PsiConflictResolver[] resolvers, List<CandidateInfo> container) {
-    super(null, ourFilter, resolvers, container);
   }
 
   public boolean isInStaticScope() {

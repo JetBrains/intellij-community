@@ -420,7 +420,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   @NotNull
-  public static TailType getTailType(final char completionChar, final LookupItem item) {
+  public static TailType getTailType(final char completionChar, final LookupItem<?> item) {
     switch(completionChar){
       case '.': return TailType.DOT;
       case ',': return TailType.COMMA;
@@ -432,7 +432,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
       case '\r': return TailTypes.SMART_COMPLETION;
     }
-    final TailType attr = (TailType)item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+    final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
     return attr != null ? attr : TailType.NONE;
   }
 

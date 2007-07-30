@@ -463,7 +463,7 @@ public class ExpectedTypesProvider {
       List<CandidateInfo> array = new ArrayList<CandidateInfo>();
       PsiMethod[] constructors = referencedClass.getConstructors();
       for (PsiMethod constructor : constructors) {
-        if (helper.isAccessible(constructor, argumentList, referencedClass)) {
+        if (helper.isAccessible(constructor, argumentList, null)) {
           array.add(new CandidateInfo(constructor, substitutor));
         }
       }

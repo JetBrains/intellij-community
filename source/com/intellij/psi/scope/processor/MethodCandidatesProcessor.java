@@ -18,7 +18,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class MethodCandidatesProcessor extends MethodsProcessor{
-  private PsiElement myPlace;
+  private final PsiElement myPlace;
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
   protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, List<CandidateInfo> container){
