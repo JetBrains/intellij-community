@@ -350,7 +350,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return ourHexCodeToColorNameMap.get(colorName);
   }
 
-  public static void addColorPreviewAndCodeToLookup(final PsiElement currentElement, final StringBuffer buf) {
+  public static void addColorPreviewAndCodeToLookup(final PsiElement currentElement, final StringBuilder buf) {
     final Color colorFromElement = UserColorLookup.getColorFromElement(currentElement);
 
     if (colorFromElement != null) {

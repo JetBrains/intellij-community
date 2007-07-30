@@ -172,7 +172,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   }
 
   private static String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics, PsiElement element) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     final boolean istag = descriptor instanceof HtmlTagDescriptor;
     
     if (istag) {

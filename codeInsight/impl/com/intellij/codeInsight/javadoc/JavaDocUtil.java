@@ -32,7 +32,7 @@ public class JavaDocUtil {
   private static final @NonNls String LT_ENTITY = "&lt;";
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void createHyperlink(StringBuffer buffer, String refText,String label,boolean plainLink) {
+  public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
     buffer.append("<a href=\"");
     buffer.append("psi_element://"); // :-)
     buffer.append(refText);
@@ -422,7 +422,7 @@ public class JavaDocUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final void formatEntityName(String type, String name, StringBuffer destination) {
+  public static final void formatEntityName(String type, String name, StringBuilder destination) {
     destination.append(type).append(":&nbsp;<b>").append(name).append("</b><br>");
   }
 }

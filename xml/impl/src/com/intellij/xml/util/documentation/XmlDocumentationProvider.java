@@ -178,7 +178,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   private static String generateDoc(String str, String name, String typeName) {
     if (str == null) return null;
-    StringBuffer buf = new StringBuffer(str.length() + 20);
+    StringBuilder buf = new StringBuilder(str.length() + 20);
 
     if (typeName==null) {
       JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),name,buf);
