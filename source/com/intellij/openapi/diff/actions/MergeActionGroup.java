@@ -1,14 +1,13 @@
 package com.intellij.openapi.diff.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.Nullable;
 
 public class MergeActionGroup extends ActionGroup {
   private final MergeOperations myOperations;
@@ -49,7 +48,7 @@ public class MergeActionGroup extends ActionGroup {
     private final MergeOperations.Operation myOperation;
 
     public OperationAction(MergeOperations.Operation operation) {
-      super(operation.getName(), null, operation.getGlutterIcon());
+      super(operation.getName(), null, operation.getGutterIcon());
       myOperation = operation;
     }
 

@@ -2,21 +2,24 @@ package com.intellij.openapi.diff.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class MergeOperations {
   private final DiffPanelImpl myDiffPanel;
@@ -50,7 +53,18 @@ public class MergeOperations {
 
   private boolean isWritable(FragmentSide side) {
     Editor editor = myDiffPanel.getEditor(side);
-    return !editor.isViewer() && editor.getDocument().isWritable();
+    return !editor.isViewer() && canMakeWritable(editor.getDocument());
+  }
+
+  private static boolean canMakeWritable(final Document document) {
+    if (document.isWritable()) {
+      return true;
+    }
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null && file.isInLocalFileSystem()) {
+      return true;
+    }
+    return false;
   }
 
   public void selectSuggestion() {
@@ -67,15 +81,17 @@ public class MergeOperations {
   }
 
   private static Operation replaceOperation(TextRange range, TextRange otherRange, Document document, Document otherDocument) {
-    Operation operation = new Operation(DiffBundle.message("merge.editor.replace.operation.name"), GutterActionRenderer.REPLACE_ARROW);
-    operation.addModification(replaceModification(range, document, otherRange, otherDocument));
-    return operation;
+    return new Operation(DiffBundle.message("merge.editor.replace.operation.name"),
+                         GutterActionRenderer.REPLACE_ARROW,
+                         otherDocument,
+                         replaceModification(range, document, otherRange, otherDocument));
   }
 
+  @Nullable
   public static Operation mostSensible(Document document, Document otherDocument, TextRange range, TextRange otherRange) {
-    if (!document.isWritable() && !otherDocument.isWritable()) return null;
+    if (!canMakeWritable(document) && !canMakeWritable(otherDocument)) return null;
     if (range.getLength() != 0) {
-      if (otherDocument.isWritable())
+      if (canMakeWritable(otherDocument))
         return otherRange.getLength() != 0 ?
                replaceOperation(range, otherRange, document, otherDocument) :
                insertOperation(range, otherRange.getEndOffset(), document, otherDocument);
@@ -95,9 +111,10 @@ public class MergeOperations {
   }
 
   private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument) {
-    Operation operation = new Operation(DiffBundle.message("merge.editor.insert.operation.name"), GutterActionRenderer.REPLACE_ARROW);
-    operation.addModification(insertModification(range, document, offset, otherDocument));
-    return operation;
+    return new Operation(DiffBundle.message("merge.editor.insert.operation.name"),
+                         GutterActionRenderer.REPLACE_ARROW,
+                         otherDocument,
+                         insertModification(range, document, offset, otherDocument));
   }
 
   private static Runnable insertModification(TextRange range, Document document,
@@ -119,9 +136,10 @@ public class MergeOperations {
   }
 
   private static Operation removeOperation(TextRange range, Document document) {
-    Operation operation = new Operation(DiffBundle.message("merge.editor.remove.operation.name"), GutterActionRenderer.REMOVE_CROSS);
-    operation.addModification(removeModification(range, document));
-    return operation;
+    return new Operation(DiffBundle.message("merge.editor.remove.operation.name"),
+                         GutterActionRenderer.REMOVE_CROSS,
+                         document,
+                         removeModification(range, document));
   }
 
   private static Runnable removeModification(final TextRange range, final Document document) {
@@ -144,35 +162,36 @@ public class MergeOperations {
 
   public static class Operation {
     private final String myName;
-    private final ArrayList<Runnable> myModifications = new ArrayList<Runnable>();
-    private final Icon myGlutterIcon;
+    private final Document myDocument;
+    private final Runnable myModification;
+    private final Icon myGutterIcon;
 
-    public Operation(String name, Icon icon) {
+    public Operation(String name, Icon icon, final Document document, Runnable modification) {
       myName = name;
-      myGlutterIcon = icon;
+      myGutterIcon = icon;
+      myDocument = document;
+      myModification = modification;
     }
 
-    public Icon getGlutterIcon() {
-      return myGlutterIcon;
+    public Icon getGutterIcon() {
+      return myGutterIcon;
     }
 
     public String getName() {
       return myName;
     }
 
-    private void addModification(Runnable modification) {
-      myModifications.add(modification);
-    }
-
     public void perform(final Project project) {
-      for (Iterator<Runnable> iterator = myModifications.iterator(); iterator.hasNext();) {
-        final Runnable modification = iterator.next();
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(project, modification, getName(), null);
-          }
-        });
+      if (!myDocument.isWritable()) {
+        final VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
+        if (status.hasReadonlyFiles()) return;
       }
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(project, myModification, getName(), null);
+        }
+      });
     }
   }
 }
