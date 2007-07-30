@@ -16,16 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author ilyas
  */
-public class GrBreakStmtImpl extends GroovyPsiElementImpl implements GrBreakStatement {
-  public GrBreakStmtImpl(@NotNull ASTNode node) {
+public class GrBreakStatementImpl extends GroovyPsiElementImpl implements GrBreakStatement {
+  public GrBreakStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -35,5 +39,17 @@ public class GrBreakStmtImpl extends GroovyPsiElementImpl implements GrBreakStat
 
   public String toString() {
     return "BREAK statement";
+  }
+
+  @Nullable
+  public String getLabel() {
+    final PsiElement id = findChildByType(GroovyElementTypes.mIDENT);
+    if (id == null) return null;
+    return id.getText();
+  }
+
+  @Nullable
+  public GrStatement findTarget() {
+    return null;
   }
 }

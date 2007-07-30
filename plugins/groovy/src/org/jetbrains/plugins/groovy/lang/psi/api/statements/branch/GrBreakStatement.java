@@ -16,9 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
 public interface GrBreakStatement extends GrStatement {
+  @Nullable String getLabel();
+  @Nullable GrStatement findTarget();
 }

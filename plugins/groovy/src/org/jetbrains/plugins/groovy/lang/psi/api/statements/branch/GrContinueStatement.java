@@ -15,10 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas
  */
 public interface GrContinueStatement extends GrStatement {
+  @Nullable String getLabel();
+  @Nullable GrStatement findTarget();
 }

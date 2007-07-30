@@ -15,8 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ilyas
  */
 public interface GrLabeledStatement extends GrStatement{
+  @NotNull String getLabel();
+
+  GrStatement getStatement();
 }

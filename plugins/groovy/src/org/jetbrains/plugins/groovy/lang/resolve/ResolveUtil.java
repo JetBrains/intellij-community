@@ -23,8 +23,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
@@ -168,6 +172,25 @@ public class ResolveUtil {
       if (element instanceof GrVariable) return (GrVariable) element;
     }
 
+    return null;
+  }
+
+  public static GrLabeledStatement resolveLabeledStatement(String label, PsiElement place) {
+    while (place != null) {
+      /*PsiElement run = place;
+      while (run != null) {
+        if (run instanceof GrLabeledStatement && label.equals(((GrLabeledStatement) run).getLabel()))
+          return (GrLabeledStatement) run;
+
+        run = run.getPrevSibling();
+      }*/
+      if (place instanceof GrLoopStatement && place.getContext() instanceof GrLabeledStatement) {
+        return (GrLabeledStatement) place.getContext();
+      }
+      place = place.getContext();
+
+      if (place instanceof GrMember) break;
+    }
     return null;
   }
 }
