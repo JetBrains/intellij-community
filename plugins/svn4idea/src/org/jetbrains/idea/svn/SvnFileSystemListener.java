@@ -90,7 +90,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
   private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
-  private File myStorageForUndo;
+  @Nullable private File myStorageForUndo;
   private List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
 
   @Nullable
@@ -194,10 +194,12 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         it.remove();
       }
     }
-    final File[] files = myStorageForUndo.listFiles();
-    if (files == null || files.length == 0) {
-      FileUtil.asyncDelete(myStorageForUndo);
-      myStorageForUndo = null;      
+    if (myStorageForUndo != null) {
+      final File[] files = myStorageForUndo.listFiles();
+      if (files == null || files.length == 0) {
+        FileUtil.asyncDelete(myStorageForUndo);
+        myStorageForUndo = null;
+      }
     }
   }
 

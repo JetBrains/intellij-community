@@ -246,11 +246,7 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-19364
   @Test
   public void testUndoMovePackage() throws Exception {
-    final TestDialog oldTestDialog = Messages.setTestDialog(new TestDialog() {
-      public int show(final String message) {
-        return 0;
-      }
-    });
+    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
     try {
       enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
       final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
@@ -260,7 +256,7 @@ public class SvnRenameTest extends SvnTestCase {
       checkin();
 
       moveFileInCommand(child, parent2);
-      UndoManager.getInstance(myProject).undo(null);
+      undo();
       final File childPath = new File(parent1.getPath(), "child");
       Assert.assertTrue(childPath.exists());
       Assert.assertTrue(new File(childPath, "a.txt").exists());
@@ -268,5 +264,29 @@ public class SvnRenameTest extends SvnTestCase {
     finally {
       Messages.setTestDialog(oldTestDialog);
     }
+  }
+
+  private void undo() {
+    UndoManager.getInstance(myProject).undo(null);
+  }
+
+  // IDEADEV-19552
+  @Test
+  public void testUndoRename() throws Exception {
+    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+    try {
+      enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+      final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+      checkin();
+
+      renameFileInCommand(file, "b.txt");
+      undo();
+      Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
+      Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "b.txt").exists());
+    }
+    finally {
+      Messages.setTestDialog(oldTestDialog);
+    }
+
   }
 }
