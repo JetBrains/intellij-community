@@ -31,6 +31,9 @@ public class CompilerDirectoryTimestamp extends FileAttribute {
     try {
       final ManagingFS managingFS = ManagingFS.getInstance();
       for (VirtualFile file : files) {
+        if (!file.isValid()) {
+          return false;
+        }
         final DataInputStream stream = INSTANCE.readAttribute(file);
         if (stream == null) {
           return false;
@@ -57,6 +60,9 @@ public class CompilerDirectoryTimestamp extends FileAttribute {
     try {
       final ManagingFS managingFS = ManagingFS.getInstance();
       for (VirtualFile file : files) {
+        if (!file.isValid()) {
+          continue;
+        }
         final DataOutputStream stream = INSTANCE.writeAttribute(file);
         try {
           stream.writeInt(managingFS.getModificationCount(file));

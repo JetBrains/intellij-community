@@ -559,7 +559,7 @@ public class CompileDriver {
           context.getProgressIndicator().popState();
         }
         
-        if (context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+        if (!context.getProgressIndicator().isCanceled() && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
           RefreshQueue.getInstance().refresh(true, true, new Runnable() {
             public void run() {
               CompilerDirectoryTimestamp.updateTimestamp(Arrays.asList(allOutputDirs));
