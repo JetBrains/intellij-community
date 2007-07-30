@@ -55,7 +55,8 @@ public class Storage implements Disposable {
         myRecordsTable.dispose();
       }
 
-      assert deleteFiles(storageFilePath);
+      boolean deleted = deleteFiles(storageFilePath);
+      assert deleted;
       return create(storageFilePath);
     }
 
@@ -82,8 +83,7 @@ public class Storage implements Disposable {
       newDataFile.createNewFile();
 
       File oldDataFile = new File(path + ".data");
-      DataTable newDataTable;
-      newDataTable = new DataTable(newDataFile);
+      DataTable newDataTable = new DataTable(newDataFile);
 
       final int count = myRecordsTable.getRecordsCount();
       for (int i = 0; i < count; i++) {
