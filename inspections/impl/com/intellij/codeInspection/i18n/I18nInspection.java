@@ -788,7 +788,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final Project project = manager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass throwable = manager.findClass("java.lang.Throwable", scope);
-    return aClass.isInheritor(throwable, true);
+    return throwable != null && aClass.isInheritor(throwable, true);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(PsiExpression expression, String[] specifiedExceptions) {
