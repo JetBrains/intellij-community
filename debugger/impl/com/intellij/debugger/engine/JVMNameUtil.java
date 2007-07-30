@@ -205,7 +205,8 @@ public class JVMNameUtil {
 
   public static JVMName getJVMQualifiedName(PsiType psiType) {
     if(psiType instanceof PsiArrayType) {
-      JVMName jvmName = getJVMQualifiedName(((PsiArrayType)psiType).getComponentType());
+      final PsiArrayType arrayType = (PsiArrayType)psiType;
+      JVMName jvmName = getJVMQualifiedName(arrayType.getComponentType());
       JVMNameBuffer buffer = new JVMNameBuffer();
       buffer.append(jvmName);
       buffer.append("[]");
@@ -215,7 +216,8 @@ public class JVMNameUtil {
     PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
     if (psiClass == null) {
       return getJVMRawText(psiType.getCanonicalText());
-    } else {
+    } 
+    else {
       return getJVMQualifiedName(psiClass);
     }
   }

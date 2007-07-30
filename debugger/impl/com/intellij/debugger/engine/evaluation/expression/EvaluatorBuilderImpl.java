@@ -18,11 +18,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
@@ -709,13 +711,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         myResult = new FieldEvaluator(new TypeEvaluator(typeName), typeName, "TYPE");
       }
       else {
-        PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        if (psiClass == null) {
-          throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-            DebuggerBundle.message("evaluation.error.cannot.resolve.class", type.getCanonicalText()))
-          );
-        }
-        myResult = new ClassObjectEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(psiClass)));
+        myResult = new ClassObjectEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)));
       }
     }
 
