@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class TestOnlyInspection extends BaseLocalInspectionTool {
@@ -57,7 +58,7 @@ public class TestOnlyInspection extends BaseLocalInspectionTool {
   }
 
   private boolean isInsideTestOnlyMethod(PsiMethodCallExpression e) {
-    PsiMethod m = PsiTreeUtil.getParentOfType(e, PsiMethod.class);
+    PsiMethod m = getTopLevelParentOfType(e, PsiMethod.class);
     return isAnnotatedAsTestOnly(m);
   }
 
@@ -66,8 +67,19 @@ public class TestOnlyInspection extends BaseLocalInspectionTool {
   }
 
   private boolean isInsideTestClass(PsiMethodCallExpression e) {
-    PsiClass c = PsiTreeUtil.getParentOfType(e, PsiClass.class);
+    PsiClass c = getTopLevelParentOfType(e, PsiClass.class);
     return TestUtil.isTestClass(c);
+  }
+
+  public static <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {
+    T parent = PsiTreeUtil.getParentOfType(e, c);
+    if (parent == null) return null;
+
+    do {
+      T next = PsiTreeUtil.getParentOfType(parent, c);
+      if (next == null) return parent;
+      parent = next;
+    } while(true);
   }
 
   private boolean isUnderTestSources(PsiMethodCallExpression e) {
