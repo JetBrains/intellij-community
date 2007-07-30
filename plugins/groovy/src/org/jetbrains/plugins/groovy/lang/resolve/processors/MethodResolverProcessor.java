@@ -64,7 +64,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       return true;
     } else if (element instanceof PsiVariable) {
-      if (element instanceof GrField && ((GrField)element).isProperty() ||
+      if (myForCompletion ||
+          element instanceof GrField && ((GrField)element).isProperty() ||
           ((PsiVariable) element).getType().equalsToText("groovy.lang.Closure")) {
         return super.execute(element, substitutor);
       }
