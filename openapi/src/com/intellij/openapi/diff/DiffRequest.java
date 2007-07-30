@@ -41,9 +41,6 @@ public abstract class DiffRequest {
     myProject = project;
   }
 
-  /**
-   * <B>Work in progess. Don't rely on this functionality</B><br>
-   */
   public void setToolbarAddons(ToolbarAddons toolbarAddons) {
     LOG.assertTrue(toolbarAddons != null);
     myToolbarAddons = toolbarAddons;

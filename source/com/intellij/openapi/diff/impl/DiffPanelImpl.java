@@ -51,6 +51,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private LineBlocks myLineBlocks = LineBlocks.EMPTY;
   private final SyncScrollSupport myScrollSupport = new SyncScrollSupport();
   private final FontSizeSynchronizer myFontSizeSynchronizer = new FontSizeSynchronizer();
+  private DiffRequest myDiffRequest;
+
   private final DiffRequest.ToolbarAddons TOOL_BAR = new DiffRequest.ToolbarAddons() {
     public void customize(DiffToolbar toolbar) {
       ActionManager actionManager = ActionManager.getInstance();
@@ -284,6 +286,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
   public void setDiffRequest(DiffRequest data) {
+    myDiffRequest = data;
     if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
       setComparisonPolicy(ComparisonPolicy.DEFAULT, false);
     }
@@ -352,6 +355,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     public Object getData(String dataId) {
       if (DataConstants.DIFF_VIEWER.equals(dataId)) return DiffPanelImpl.this;
       if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) return myCurrentSide == null ? null : myFocusDiffSide;
+      if (DataKeys.DIFF_REQUEST.getName().equals(dataId)) return myDiffRequest;
       return null;
     }
   }

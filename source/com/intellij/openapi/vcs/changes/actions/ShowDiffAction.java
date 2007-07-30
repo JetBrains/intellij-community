@@ -5,6 +5,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -183,7 +184,7 @@ public class ShowDiffAction extends AnAction {
     return changesList.toArray(new Change[changesList.size()]);
   }
 
-  private static void showDiffForChange(AnActionEvent e,
+  static void showDiffForChange(AnActionEvent e,
                                         final Change[] changes,
                                         final int index,
                                         final Project project,
@@ -235,15 +236,15 @@ public class ShowDiffAction extends AnAction {
     else {
       title = VcsBundle.message("diff.unknown.path.title");
     }
-    final SimpleDiffRequest diffReq = new SimpleDiffRequest(project, title);
+    final ChangeDiffRequest diffReq = new ChangeDiffRequest(project, title, changes, index, actionsFactory);
 
     if (changes.length > 1 || actionsFactory != null) {
       diffReq.setToolbarAddons(new DiffRequest.ToolbarAddons() {
         public void customize(DiffToolbar toolbar) {
           if (changes.length > 1) {
             toolbar.addSeparator();
-            toolbar.addAction(new ShowPrevChangeAction(changes, index, project, actionsFactory));
-            toolbar.addAction(new ShowNextChangeAction(changes, index, project, actionsFactory));
+            toolbar.addAction(ActionManager.getInstance().getAction("Diff.PrevChange"));
+            toolbar.addAction(ActionManager.getInstance().getAction("Diff.NextChange"));
           }
           if (actionsFactory != null) {
             toolbar.addSeparator();
@@ -294,52 +295,6 @@ public class ShowDiffAction extends AnAction {
       return fileType != null && !fileType.isBinary();
     }
     return false;
-  }
-
-  private static class ShowNextChangeAction extends AnAction {
-    private Change[] myChanges;
-    private int myIndex;
-    private Project myProject;
-    private DiffExtendUIFactory myAdditionalActions;
-
-    public ShowNextChangeAction(final Change[] changes, final int index, final Project project, final DiffExtendUIFactory actionsFactory) {
-      super(VcsBundle.message("action.name.compare.next.file"), "", IconLoader.findIcon("/actions/nextfile.png"));
-      myAdditionalActions = actionsFactory;
-      myChanges = changes;
-      myIndex = index;
-      myProject = project;
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myIndex < myChanges.length - 1);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      showDiffForChange(e, myChanges, myIndex + 1, myProject, myAdditionalActions);
-    }
-  }
-
-  private static class ShowPrevChangeAction extends AnAction {
-    private Change[] myChanges;
-    private int myIndex;
-    private Project myProject;
-    private DiffExtendUIFactory myAdditionalActions;
-
-    public ShowPrevChangeAction(final Change[] changes, final int index, final Project project, final DiffExtendUIFactory actionsFactory) {
-      super(VcsBundle.message("action.name.compare.prev.file"), "", IconLoader.findIcon("/actions/prevfile.png"));
-      myAdditionalActions = actionsFactory;
-      myChanges = changes;
-      myIndex = index;
-      myProject = project;
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myIndex > 0);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      showDiffForChange(e, myChanges, myIndex - 1, myProject, myAdditionalActions);
-    }
   }
 
   private static DiffContent createContent(Project project, ContentRevision revision) {

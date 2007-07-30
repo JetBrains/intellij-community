@@ -1490,5 +1490,9 @@
 
     <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"
       use-shortcut-of="NextSplitter"/>
+    <action id="Diff.PrevChange" class="com.intellij.openapi.vcs.changes.actions.ShowPrevChangeAction"
+      icon="/actions/prevfile.png" use-shortcut-of="PreviousTab"/>
+    <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
+      icon="/actions/nextfile.png" use-shortcut-of="NextTab"/>
   </actions>
 </component>
