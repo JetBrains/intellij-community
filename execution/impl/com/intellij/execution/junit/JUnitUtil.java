@@ -74,10 +74,9 @@ public class JUnitUtil implements TestFramework {
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
-    final Location<PsiClass> aClass = location.getParent(PsiClass.class);
-    if (aClass == null) return false;
-    if (!isTestClass(aClass)) return false;
     final PsiMethod psiMethod = location.getPsiElement();
+    final PsiClass aClass = psiMethod.getContainingClass();
+    if (aClass == null || !isTestClass(aClass)) return false;
     if (isTestAnnotated(psiMethod)) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
