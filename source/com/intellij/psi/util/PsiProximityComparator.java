@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,39 +38,47 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (element1 == null) return element2 == null ? 0 : 1;
     if (element2 == null) return -1;
 
-    return getProximity(element1) - getProximity(element2);
+    final PsiProximity proximity1 = getProximity(element1);
+    final PsiProximity proximity2 = getProximity(element2);
+    return proximity1 != null && proximity2 != null ? proximity1.compareTo(proximity2) : 0;
   }
-  // 'distance' from the myContext, like in the following (closest to farthest):
-  // -in the same method: distance=0
-  // -in the same class: distance=1
-  // -in the neighboring opened editor distance=2
-  // -in the superclass: distance=3
-  // -in the same module and package: distance=4
-  // -in the same module: distance=5
-  // -in the same project: distance=6
-  // -in the other project source: distance=7
-  // -in the library: distance=8
-  // -in the jdk: distance=9
-  // -otherwise, distance=10
-  public int getProximity(final PsiElement element) {
-    if (myContext == null) return -1;
+
+  @Nullable
+  public final PsiProximity getProximity(final PsiElement element) {
+    if (myContext == null) return null;
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
-    if (contextModule == null) return -1;
+    if (contextModule == null) return null;
 
-    final PsiElement context = PsiTreeUtil.findCommonContext(myContext, element);
-    if (PsiTreeUtil.getContextOfType(context, PsiMethod.class, false) != null) return 0;
-    if (PsiTreeUtil.getContextOfType(context, PsiClass.class, false) != null) return 1;
-
-
+    final PsiElement commonContext = PsiTreeUtil.findCommonContext(myContext, element);
+    if (PsiTreeUtil.getContextOfType(commonContext, PsiMethod.class, false) != null) return PsiProximity.SAME_METHOD;
+    if (PsiTreeUtil.getContextOfType(commonContext, PsiClass.class, false) != null) return PsiProximity.SAME_CLASS;
 
     VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
-    if (isOpenedInEditor(virtualFile)) return 2;
+    if (isOpenedInEditor(virtualFile)) return PsiProximity.OPENED_IN_EDITOR;
+
+    if (element instanceof PsiClass) {
+      final String qname = ((PsiClass) element).getQualifiedName();
+      if (qname != null) {
+        final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(myContext, PsiJavaFile.class, false);
+        if (psiJavaFile != null) {
+          final PsiImportList importList = psiJavaFile.getImportList();
+          if (importList != null) {
+            for (final PsiImportStatement importStatement : importList.getImportStatements()) {
+              if (!importStatement.isOnDemand() && qname.equals(importStatement.getQualifiedName())) {
+                return PsiProximity.EXPLICITLY_IMPORTED;
+              }
+            }
+          }
+        }
+      }
+    }
+
 
     PsiClass contextClass = PsiTreeUtil.getContextOfType(myContext, PsiClass.class, false);
     while (contextClass != null) {
       PsiClass elementClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
       while (elementClass != null) {
-        if (contextClass.isInheritor(elementClass, true)) return 3;
+        if (contextClass.isInheritor(elementClass, true)) return PsiProximity.SUPERCLASS;
         elementClass = elementClass.getContainingClass();
       }
       contextClass = contextClass.getContainingClass();
@@ -77,23 +86,22 @@ public class PsiProximityComparator implements Comparator<Object> {
 
     Module elementModule = ModuleUtil.findModuleForPsiElement(element);
     if (contextModule == elementModule) {
-      final PsiPackage psiPackage = PsiTreeUtil.getContextOfType(context, PsiPackage.class, false);
-      if (psiPackage != null && psiPackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false))) return 4;
-      return 5;
+      final PsiPackage psiPackage = PsiTreeUtil.getContextOfType(myContext, PsiPackage.class, false);
+      if (psiPackage != null && psiPackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false))) return PsiProximity.SAME_MODULE_AND_PACKAGE;
+      return PsiProximity.SAME_MODULE;
     }
     if (elementModule != null) {
-      return elementModule.getProject() == contextModule.getProject() ? 6 : 7;
+      return elementModule.getProject() == contextModule.getProject() ? PsiProximity.SAME_PROJECT : PsiProximity.OTHER_PROJECT;
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     List<OrderEntry> orderEntries = virtualFile == null ? Collections.<OrderEntry>emptyList() : fileIndex.getOrderEntriesForFile(virtualFile);
 
-    if (orderEntries.isEmpty()) return 10;
+    if (orderEntries.isEmpty()) return null;
     OrderEntry orderEntry = orderEntries.get(0);
-    return orderEntry instanceof JdkOrderEntry ? 9 : 8;
+    return orderEntry instanceof JdkOrderEntry ? PsiProximity.JDK : PsiProximity.LIBRARY;
   }
 
   private boolean isOpenedInEditor(VirtualFile element) {
-    if (element == null) return false;
-    return ArrayUtil.find(FileEditorManager.getInstance(myProject).getOpenFiles(), element) != -1;
+    return element != null && ArrayUtil.find(FileEditorManager.getInstance(myProject).getOpenFiles(), element) != -1;
   }
 }

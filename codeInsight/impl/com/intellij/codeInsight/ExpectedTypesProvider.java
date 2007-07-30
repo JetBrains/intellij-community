@@ -27,15 +27,17 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -816,8 +818,9 @@ public class ExpectedTypesProvider {
         else {
           tailType = TailType.COMMA;
         }
-        ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, parameterType,
-                                                   tailType);
+        PsiType defaultType = getDefautType(method, substitutor, parameterType, argumentList);
+
+        ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);
         String propertyName = getPropertyName(parameter);
         if (propertyName != null) info.expectedName = propertyName;
         array.add(info);
@@ -863,6 +866,81 @@ public class ExpectedTypesProvider {
       }
 
       return array.toArray(new ExpectedTypeInfo[array.size()]);
+    }
+
+    @Nullable
+    private PsiType getTypeParameterValue(PsiClass rootClass, PsiClass derivedClass, PsiSubstitutor substitutor, int index) {
+      final PsiTypeParameter[] typeParameters = rootClass.getTypeParameters();
+      if (typeParameters.length > index) {
+        final PsiSubstitutor psiSubstitutor = TypeConversionUtil.getClassSubstitutor(rootClass, derivedClass, substitutor);
+        if (psiSubstitutor != null) {
+          PsiType type = psiSubstitutor.substitute(typeParameters[index]);
+          if (type != null) return type;
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    protected PsiType checkMethod(PsiMethod method, @NonNls String className, NullableFunction<PsiClass,PsiType> function) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) return null;
+
+      if (className.equals(containingClass.getQualifiedName())) {
+        return function.fun(containingClass);
+      }
+      for (final PsiMethod psiMethod : DeepestSuperMethodsSearch.search(method).findAll()) {
+        final PsiClass rootClass = psiMethod.getContainingClass();
+        if (className.equals(rootClass.getQualifiedName())) {
+          return function.fun(rootClass);
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private PsiType getDefautType(final PsiMethod method, final PsiSubstitutor substitutor, final PsiType parameterType,
+                                  final PsiExpressionList argumentList) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) return parameterType;
+
+      @NonNls final String name = method.getName();
+      if ("contains".equals(name) || "remove".equals(name)) {
+        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_COLLECTION, new NullableFunction<PsiClass, PsiType>() {
+          public PsiType fun(final PsiClass psiClass) {
+            return getTypeParameterValue(psiClass, containingClass, substitutor, 0);
+          }
+        });
+        if (type != null) return type;
+      }
+      if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "containsValue".equals(name)) {
+        return checkMethod(method, CommonClassNames.JAVA_UTIL_MAP, new NullableFunction<PsiClass, PsiType>() {
+          public PsiType fun(final PsiClass psiClass) {
+            return getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0);
+          }
+        });
+
+      }
+      if ("equals".equals(name)) {
+        return checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, new NullableFunction<PsiClass, PsiType>() {
+          public PsiType fun(final PsiClass psiClass) {
+            final PsiElement parent = argumentList.getParent();
+            if (parent instanceof PsiMethodCallExpression) {
+              final PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
+              final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
+              if (qualifierExpression != null) {
+                return qualifierExpression.getType();
+              }
+              final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
+              if (aClass != null) {
+                return aClass.getManager().getElementFactory().createType(psiClass);
+              }
+            }
+            return null;
+          }
+        });
+      }
+      return parameterType;
     }
 
     private PsiType getParameterType(PsiParameter parameter, PsiSubstitutor substitutor) {

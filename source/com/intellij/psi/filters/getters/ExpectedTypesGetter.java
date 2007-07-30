@@ -6,9 +6,9 @@ import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
  * To change this template use Options | File Templates.
  */
 public class ExpectedTypesGetter implements ContextGetter{
+
   public PsiType[] get(PsiElement context, CompletionContext completionContext){
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
@@ -25,10 +26,15 @@ public class ExpectedTypesGetter implements ContextGetter{
 
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 
-    return ContainerUtil.map(infos, new Function<ExpectedTypeInfo, PsiType>() { //We want function types!!!
-      public PsiType fun(ExpectedTypeInfo info) {
-        return info.getType();
+    List<PsiType> result = new ArrayList<PsiType>(infos.length);
+    for (ExpectedTypeInfo info : infos) {
+      final PsiType type = info.getType();
+      result.add(type);
+      final PsiType defaultType = info.getDefaultType();
+      if (!defaultType.equals(type)) {
+        result.add(defaultType);
       }
-    }, PsiType.EMPTY_ARRAY);
+    }
+    return result.toArray(PsiType.EMPTY_ARRAY);
   }
 }

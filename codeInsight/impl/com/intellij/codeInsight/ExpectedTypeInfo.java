@@ -34,7 +34,7 @@ public interface ExpectedTypeInfo {
 
   PsiType getDefaultType ();
 
-  public int getKind();
+  int getKind();
 
   boolean equals (ExpectedTypeInfo info);
 

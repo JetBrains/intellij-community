@@ -298,15 +298,19 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   public static THashSet<PsiClass> getFirstClasses(final ExpectedTypeInfo[] expectedInfos) {
     final THashSet<PsiClass> set = new THashSet<PsiClass>();
     for (final ExpectedTypeInfo info : expectedInfos) {
-      final PsiType type = info.getType();
-      if (type instanceof PsiClassType) {
-        final PsiClass psiClass = ((PsiClassType)type).resolve();
-        if (psiClass != null) {
-          set.add(psiClass);
-        }
-      }
+      addFirstPsiType(set, info.getType());
+      addFirstPsiType(set, info.getDefaultType());
     }
     return set;
+  }
+
+  private static void addFirstPsiType(final THashSet<PsiClass> set, final PsiType type) {
+    if (type instanceof PsiClassType) {
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null) {
+        set.add(psiClass);
+      }
+    }
   }
 
 }

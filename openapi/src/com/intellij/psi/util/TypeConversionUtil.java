@@ -24,6 +24,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -798,6 +799,7 @@ public class TypeConversionUtil {
     }
   }
 
+  @Nullable
   public static PsiSubstitutor getClassSubstitutor(PsiClass superClassCandidate,
                                                    PsiClass derivedClassCandidate,
                                                    PsiSubstitutor derivedSubstitutor) {

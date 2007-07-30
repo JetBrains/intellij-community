@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PsiProximity;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
@@ -30,7 +31,6 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private final TObjectIntHashMap<LookupItem> myItemToIndexMap = new TObjectIntHashMap<LookupItem>();
 
   private final PsiProximityComparator myProximityComparator;
-  private final PsiElement myPosition;
   private CodeStyleManager myCodeStyleManager;
   private String myPrefix;
   private String myPrefixLowered;
@@ -39,7 +39,6 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix, @NotNull PsiElement position) {
     setPrefix( prefix );
     myProximityComparator = new PsiProximityComparator(position, manager.getProject());
-    myPosition = position;
     myPrefixCapitals = capitalsOnly(prefix);
     myCodeStyleManager = manager.getCodeStyleManager();
     if(expectedInfos != null){
@@ -102,8 +101,13 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     if (object instanceof PsiClass && myExpectedInfos != null) {
       final PsiClass psiClass = (PsiClass)object;
       for (final ExpectedTypeInfo info : myExpectedInfos) {
-        if(info.getType().getDeepComponentType().equals(psiClass.getManager().getElementFactory().createType(psiClass))){
+        final PsiClassType psiClassType = psiClass.getManager().getElementFactory().createType(psiClass);
+        if(info.getType().getDeepComponentType().equals(psiClassType)) {
           result[0] = Integer.MAX_VALUE;
+          break;
+        }
+        else if(info.getDefaultType().getDeepComponentType().equals(psiClassType)) {
+          result[0] = Integer.MAX_VALUE - 1;
           break;
         }
       }
@@ -122,7 +126,34 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       int max1 = calcMatch(words, 0);
       max1 = calcMatch(wordsNoDigits, max1);
       result[5] = max1;
+    }
+
+    if (object instanceof String) result[5] = 1;
+    else if (object instanceof PsiKeyword) result[5] = -1;
+
+
+    if(object instanceof PsiNamedElement){
+      result[6] = myPrefix.equals(((PsiNamedElement)object).getName())
+                  ? 3
+                  : object instanceof PsiEnumConstant
+                    ? 1
+                    : object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : 0;
+    }
+    if (object instanceof PsiMember){
+      final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
+      if (qualifierType1 != null){
+        result[7] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
+      }
+    }
+
+    if (object instanceof PsiElement) {
+      final PsiProximity proximity = myProximityComparator.getProximity((PsiElement)object);
+      result[8] = proximity ==null ? -1 : 239 - proximity.ordinal();
+    }
+
+    if (name != null && myExpectedInfos != null) {
       int max = 0;
+      final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
       for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
         String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
         if (expectedName != null) {
@@ -131,31 +162,9 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
           max = Math.max(max, set.size());
         }
       }
-      result[6] = max;
+      result[9] = max;
     }
 
-    if (object instanceof String) result[5] = 1;
-    else if (object instanceof PsiKeyword) result[5] = -1;
-
-    if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
-      synchronized(myItemToIndexMap){
-        result[7] = myItemToIndexMap.get(item) - 1;
-      }
-    }
-    else if (object instanceof PsiMember){
-      if(object instanceof PsiNamedElement){
-        result[7] = myPrefix.equals(((PsiNamedElement)object).getName()) ? 1 : 0;
-      }
-      final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
-      if (qualifierType1 != null){
-        result[8] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
-      }
-    }
-
-    if (object instanceof PsiElement) {
-      final int proximity = myProximityComparator.getProximity((PsiElement)object);
-      result[9] = proximity < 0 ? -1 : 239 - proximity;
-    }
 
     item.setAttribute(LookupItem.WEIGHT, result);
 
@@ -166,7 +175,6 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     if (item1 == item2) return 0;
 
     if (LookupManagerImpl.isUseNewSorting()) {
-      if (item1.getAttribute(LookupItem.DONT_PREFER) != null) return 1;
       if (item2.getAttribute(LookupItem.DONT_PREFER) != null) return -1;
       return 0;
     }
@@ -297,6 +305,32 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   private int getExpectedTypeMatchingDegree(Object o, final LookupItem item) {
     if (myExpectedInfos == null) return 0;
+    int delta = 0;
+
+    for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+      final PsiType defaultType = expectedInfo.getDefaultType();
+      if (defaultType != expectedInfo.getType()) {
+        final PsiType itemType;
+        if (o instanceof PsiVariable) {
+          itemType = ((PsiVariable)o).getType();
+        }
+        else if (o instanceof PsiMethod) {
+          itemType = ((PsiMethod)o).getReturnType();
+        }
+        else if (o instanceof PsiClass) {
+          final PsiClass psiClass = (PsiClass)o;
+          itemType = psiClass.getManager().getElementFactory().createType(psiClass);
+        }
+        else if (o instanceof PsiExpression) {
+          itemType = ((PsiExpression)o).getType();
+        }
+        else return 0;
+
+        if (itemType != null && defaultType.isAssignableFrom(itemType)) {
+          delta = 1;
+        }
+      }
+    }
 
     if (o instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)o;
@@ -322,12 +356,12 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
       int count = StatisticsManager.getInstance().getMemberUseCount(type, psiClass);
       if(count == 0){
-        return componentType.equals(objectType) ? 1 : 0;
+        return componentType.equals(objectType) ? delta + 1 : delta;
       }
-      return count + 1;
+      return delta + count + 1;
     }
 
-    return 0;
+    return delta;
   }
 
 

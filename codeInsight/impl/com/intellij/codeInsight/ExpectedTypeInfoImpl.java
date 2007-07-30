@@ -34,7 +34,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public String expectedName;
 
 
-  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, PsiType defaultType, TailType myTailType) {
+  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
     this.type = type;
     this.kind = kind;
     this.defaultType = defaultType;

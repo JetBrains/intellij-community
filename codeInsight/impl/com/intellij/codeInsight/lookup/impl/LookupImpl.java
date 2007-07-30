@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.PsiProximity;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
@@ -195,20 +196,32 @@ public class LookupImpl extends LightweightHint implements Lookup {
     if (LookupManagerImpl.isUseNewSorting()) {
       final Document document = myEditor.getDocument();
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      assert psiFile != null;
       final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(element, myProject);
 
       for (final LookupItem item : myItems) {
-          final int[] weight = itemPreferencePolicy instanceof CompletionPreferencePolicy
-                               ? ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item)
-                               : new int[]{item.getObject() instanceof PsiElement ? proximityComparator.getProximity((PsiElement)item.getObject()) : 0};
-          final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
-          List<LookupItem> list = map.get(key);
-          if (list == null) map.put(key, list = new ArrayList<LookupItem>());
-          list.add(item);
+        final int[] weight = getWeight(itemPreferencePolicy, proximityComparator, item);
+        final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
+        List<LookupItem> list = map.get(key);
+        if (list == null) map.put(key, list = new ArrayList<LookupItem>());
+        list.add(item);
       }
     }
     return map;
+  }
+
+  private static int[] getWeight(final LookupItemPreferencePolicy itemPreferencePolicy, final PsiProximityComparator proximityComparator,
+                                 final LookupItem item) {
+    if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
+      return ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item);
+    }
+    int i = 0;
+    if (item.getObject() instanceof PsiElement) {
+      final PsiProximity proximity = proximityComparator.getProximity((PsiElement)item.getObject());
+      i = proximity == null ? -1 : proximity.ordinal();
+    }
+    return new int[]{i};
   }
 
 
