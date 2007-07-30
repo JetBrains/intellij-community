@@ -80,6 +80,7 @@ public class CompareWithBranchAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
+    assert project != null;
     VirtualFile virtualFile = e.getData(DataKeys.VIRTUAL_FILE);
     final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(virtualFile);
     final SvnBranchConfiguration configuration;
@@ -175,7 +176,7 @@ public class CompareWithBranchAction extends AnAction {
       else if (!myTopLevel || selectedValue.equals(myConfiguration.getTrunkUrl())) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            new CompareWithBranchOperation(myProject, myVirtualFile, myConfiguration).compareFileWithBranch(selectedValue, -1);
+            new CompareWithBranchOperation(myProject, myVirtualFile, myConfiguration).compareWithBranch(selectedValue, -1);
           }
         });
       }
