@@ -233,7 +233,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
 
       myFileToStorage.clear();
-      for (StateStorage storage : myStorages.values()) {
+      for (StateStorage storage : myCompoundSaveSession.getStateStorages()) {
         final List<IFile> storageFiles = myCompoundSaveSession.getSaveSession(storage).getAllStorageFiles();
         for (IFile storageFile : storageFiles) {
           myFileToStorage.put(storageFile, storage);

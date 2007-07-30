@@ -67,4 +67,8 @@ public class CompoundSaveSession {
 
     return result;
   }
+
+  public Set<StateStorage> getStateStorages() {
+    return mySaveSessions.keySet();
+  }
 }
