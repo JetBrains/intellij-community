@@ -244,6 +244,10 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     return myTodoTreeBuilder.getFileForNode(node);
   }
 
+  public void setDisplayName(String tabName) {
+    myContent.setDisplayName(tabName);
+  }
+
   @Nullable
   private PsiElement getSelectedElement() {
     if (myTree == null) return null;

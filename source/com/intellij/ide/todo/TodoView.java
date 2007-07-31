@@ -17,6 +17,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -180,7 +181,10 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           };
           currentFileTodosContent.setComponent(myCurrentFileTodos);
 
-          myChangeListTodosContent = PeerFactory.getInstance().getContentFactory().createContent(null, "ChangeList", false);
+          myChangeListTodosContent = PeerFactory.getInstance().getContentFactory()
+            .createContent(null, IdeBundle.message("changelist.todo.title",
+                                                   ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
+                                 false);
           myChangeListTodos = new ChangeListTodosPanel(myProject, myCurrentPanelSettings, myChangeListTodosContent) {
             protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
               ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
