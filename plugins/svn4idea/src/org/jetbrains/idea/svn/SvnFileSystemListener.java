@@ -92,6 +92,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
   @Nullable private File myStorageForUndo;
   private List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
+  private boolean myUndoingMove = false;
 
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
@@ -156,6 +157,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     long srcTime = src.lastModified();
     try {
       if (isUndo(vcs)) {
+        myUndoingMove = true;
         restoreFromUndoStorage(dst);
         mover.undoMove(src, dst);
       }
@@ -228,25 +230,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    */
   public boolean delete(VirtualFile file) throws IOException {
     SvnVcs vcs = getVCS(file);
-    if (vcs != null) {
-      // never allow to delete admin directories by themselves (this can happen during LVCS undo,
-      // which deletes created directories from bottom to top)
-      if (file.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-        //moveToUndoStorage(file);
-        return true;
-      }
-      VirtualFile parent = file.getParent();
-      if (parent != null) {
-        if (parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-          //moveToUndoStorage(file);
-          return true;
-        }
-        parent = parent.getParent();
-        if (parent != null && parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-          //moveToUndoStorage(file);
-          return true;
-        }
-      }
+    if (vcs != null && isAdminDirectory(file)) {
+      return true;
     }
     File ioFile = getIOFile(file);
     if (!SVNWCUtil.isVersionedDirectory(ioFile.getParentFile())) {
@@ -291,11 +276,33 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         else {
           myDeletedFiles.add(new DeletedFileInfo(vcs.getProject(), ioFile));
           // packages deleted from disk should not be deleted from svn (IDEADEV-16066)
-          if (file.isDirectory()) return true;
+          if (file.isDirectory() || isUndo(vcs)) return true;
         }
       }
       return false;
     }
+  }
+
+  private static boolean isAdminDirectory(final VirtualFile file) {
+    return isAdminDirectory(file.getParent(), file.getName());
+  }
+
+  private static boolean isAdminDirectory(VirtualFile parent, String name) {
+    // never allow to delete admin directories by themselves (this can happen during LVCS undo,
+    // which deletes created directories from bottom to top)
+    if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
+      return true;
+    }
+    if (parent != null) {
+      if (parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+        return true;
+      }
+      parent = parent.getParent();
+      if (parent != null && parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void moveToUndoStorage(final VirtualFile file) {
@@ -330,6 +337,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SvnVcs vcs = getVCS(dir);
     if (vcs == null) {
       return false;
+    }
+    if (isUndo(vcs) && isAdminDirectory(dir, name)) {
+      return false;      
     }
     File ioDir = getIOFile(dir);
     boolean pendingAdd = isPendingAdd(dir);
@@ -379,6 +389,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   }
 
   public void commandStarted(CommandEvent event) {
+    myUndoingMove = false;
   }
 
   public void beforeCommandFinished(CommandEvent event) {
@@ -483,7 +494,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
               }
             }
             else {
-              wcClient.doAdd(ioFile, false, false, false, false);
+              wcClient.doAdd(ioFile, true, false, false, false);
             }
             VcsDirtyScopeManager.getInstance(project).fileDirty(file);
           }
@@ -508,7 +519,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         deletedFiles.add(filePath);
       }
     }
-    if (deletedFiles.size() == 0) return;
+    if (deletedFiles.size() == 0 || myUndoingMove) return;
     SvnVcs vcs = SvnVcs.getInstance(project);
     final VcsShowConfirmationOption.Value value = vcs.getDeleteConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {

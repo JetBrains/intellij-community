@@ -1,8 +1,5 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -246,47 +243,48 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-19364
   @Test
   public void testUndoMovePackage() throws Exception {
-    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
-    try {
-      enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-      final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
-      final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
-      final VirtualFile child = createDirInCommand(parent1, "child");
-      createFileInCommand(child, "a.txt", "a");
-      checkin();
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
+    final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
+    final VirtualFile child = createDirInCommand(parent1, "child");
+    createFileInCommand(child, "a.txt", "a");
+    checkin();
 
-      moveFileInCommand(child, parent2);
-      undo();
-      final File childPath = new File(parent1.getPath(), "child");
-      Assert.assertTrue(childPath.exists());
-      Assert.assertTrue(new File(childPath, "a.txt").exists());
-    }
-    finally {
-      Messages.setTestDialog(oldTestDialog);
-    }
-  }
-
-  private void undo() {
-    UndoManager.getInstance(myProject).undo(null);
+    moveFileInCommand(child, parent2);
+    undo();
+    final File childPath = new File(parent1.getPath(), "child");
+    Assert.assertTrue(childPath.exists());
+    Assert.assertTrue(new File(childPath, "a.txt").exists());
   }
 
   // IDEADEV-19552
   @Test
   public void testUndoRename() throws Exception {
-    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
-    try {
-      enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-      final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
-      checkin();
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    checkin();
 
-      renameFileInCommand(file, "b.txt");
-      undo();
-      Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
-      Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "b.txt").exists());
-    }
-    finally {
-      Messages.setTestDialog(oldTestDialog);
-    }
+    renameFileInCommand(file, "b.txt");
+    undo();
+    Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
+    Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "b.txt").exists());
+  }
 
+  // IDEADEV-19336
+  @Test
+  public void testUndoMoveCommittedPackage() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
+    final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
+    final VirtualFile child = createDirInCommand(parent1, "child");
+    createFileInCommand(child, "a.txt", "a");
+    checkin();
+
+    moveFileInCommand(child, parent2);
+    checkin();
+
+    undo();
+    verifySorted(runSvn("status"), "A + parent1\\child", "D parent2\\child", "D parent2\\child\\a.txt");
   }
 }

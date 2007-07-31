@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,5 +56,16 @@ public class SvnAddTest extends SvnTestCase {
     files.add(dir);
     final List<VcsException> errors = SvnVcs.getInstance(myProject).getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     Assert.assertEquals(0, errors.size());
+  }
+
+  @Test
+  public void testUndoAdd() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    createFileInCommand("a.txt", "old content");
+    checkin();
+    undo();
+    verify(runSvn("status"), "D a.txt");
+    Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
   }
 }

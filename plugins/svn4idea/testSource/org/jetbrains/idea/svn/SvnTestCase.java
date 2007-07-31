@@ -10,6 +10,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -100,5 +103,15 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     MockChangelistBuilder builder = new MockChangelistBuilder();
     changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator());
     return builder.getChanges();
+  }
+
+  protected void undo() {
+    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+    try {
+      UndoManager.getInstance(myProject).undo(null);
+    }
+    finally {
+      Messages.setTestDialog(oldTestDialog);
+    }
   }
 }
