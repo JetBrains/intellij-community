@@ -41,7 +41,11 @@ public class PutLabelDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
 
     initNameField();
-    panel.add(new JLabel(message("put.label.name")), atCell(0, 0));
+
+    JLabel l = new JLabel(message("put.label.name"));
+    l.setLabelFor(myNameField);
+
+    panel.add(l, atCell(0, 0));
     panel.add(myNameField, atCell(1, 0));
 
     if (canPutLabelOnSelectedFile()) {
@@ -66,7 +70,7 @@ public class PutLabelDialog extends DialogWrapper {
 
   private void initGroupButtons() {
     myProjectButton = new JRadioButton(message("put.label.on.project"));
-    myFileButton = new JRadioButton(myFile.getPath());
+    myFileButton = new JRadioButton(message("put.label.on.file", myFile.getPath()));
 
     ButtonGroup group = new ButtonGroup();
     group.add(myProjectButton);
