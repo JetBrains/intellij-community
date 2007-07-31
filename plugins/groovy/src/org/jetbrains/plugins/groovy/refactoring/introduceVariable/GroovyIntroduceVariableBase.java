@@ -308,9 +308,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       } else if (realContainer instanceof GrIfStatement) {
         GrIfStatement ifStatement = ((GrIfStatement) realContainer);
         if (inThenIfBranch) {
-          tempBlock = ((GrCodeBlock) ifStatement.replaceThenBranch(newBody));
+          tempBlock = ((GrBlockStatement) ifStatement.replaceThenBranch(newBody)).getBlock();
         } else {
-          tempBlock = ((GrCodeBlock) ifStatement.replaceElseBranch(newBody));
+          tempBlock = ((GrBlockStatement) ifStatement.replaceElseBranch(newBody)).getBlock();
         }
       }
 
