@@ -21,12 +21,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +102,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
 
   private boolean collectFilesToDelete(final CompileContext context, final PackagingProcessingItem[] allProcessingItems) {
     List<String> filesToDelete = new ArrayList<String>();
-    Set<String> outputPaths = new THashSet<String>();
+    Set<String> outputPaths = createPathsHashSet();
     for (PackagingProcessingItem item : allProcessingItems) {
       for (DestinationInfo destinationInfo : item.getDestinations()) {
         outputPaths.add(destinationInfo.getOutputFilePath());
@@ -129,6 +131,10 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     return true;
   }
 
+  private static THashSet<String> createPathsHashSet() {
+    return SystemInfo.isFileSystemCaseSensitive ? new THashSet<String>() : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  }
+
   private static <P extends BuildParticipant> void addItemsForProvider(final BuildParticipantProvider<P> provider,
                                                                        final Module[] modulesToCompile,
                                                                        ProcessingItemsBuilderContext builderContext) {
@@ -149,7 +155,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
 
 
     final List<PackagingProcessingItem> processedItems = new ArrayList<PackagingProcessingItem>();
-    final Set<String> writtenPaths = new THashSet<String>();
+    final Set<String> writtenPaths = createPathsHashSet();
     Boolean built = new ReadAction<Boolean>() {
       protected void run(final Result<Boolean> result) {
         boolean built = doBuild(context, items, processedItems, writtenPaths);
