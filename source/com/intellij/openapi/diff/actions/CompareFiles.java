@@ -1,14 +1,15 @@
 package com.intellij.openapi.diff.actions;
 
 import com.intellij.ide.DataAccessor;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffContentFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,8 +39,14 @@ public class CompareFiles extends BaseDiffAction {
       presentation.setText(DiffBundle.message("compare.two.element.type.acton.name", firstKind.getTypeNum()));
     } else presentation.setText(
       DiffBundle.message("compare.element.type.with.element.type.action.name", firstKind.getTypeNum(), secondKind.getTypeNum()));
-    presentation.setVisible(true);
-    presentation.setEnabled(DiffManager.getInstance().getDiffTool().canShow(diffRequest));
+    final boolean canShow = DiffManager.getInstance().getDiffTool().canShow(diffRequest);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      presentation.setVisible(canShow);      
+    }
+    else {
+      presentation.setVisible(true);
+      presentation.setEnabled(canShow);
+    }
   }
 
   protected DiffRequest getDiffData(DataContext dataContext) throws DataAccessor.NoDataException {

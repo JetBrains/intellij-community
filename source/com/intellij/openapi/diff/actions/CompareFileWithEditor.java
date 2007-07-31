@@ -4,6 +4,7 @@ import com.intellij.ide.DataAccessor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.ex.DiffContentFactory;
 import com.intellij.openapi.editor.Document;
@@ -25,19 +26,23 @@ public class CompareFileWithEditor extends BaseDiffAction {
   };
 
   public void update(AnActionEvent e) {
+    boolean enabled = true;
     Presentation presentation = e.getPresentation();
-    FileEditorContents diffData;
     try {
-      diffData = getDiffData(e.getDataContext());
+      FileEditorContents diffData = getDiffData(e.getDataContext());
+      presentation.setText(
+        DiffBundle.message("diff.compare.element.type.with.editor.action.name", diffData.getElementPresentation().getKind().getTypeNum()));
     }
     catch (DataAccessor.NoDataException e1) {
       presentation.setText(DiffBundle.message("compare.with.editor.action.name"));
-      presentation.setEnabled(false);
-      return;
+      enabled = false;
     }
-    presentation.setText(
-      DiffBundle.message("diff.compare.element.type.with.editor.action.name", diffData.getElementPresentation().getKind().getTypeNum()));
-    presentation.setEnabled(true);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      presentation.setVisible(enabled);
+    }
+    else {
+      presentation.setEnabled(enabled);
+    }
   }
 
   protected FileEditorContents getDiffData(DataContext dataContext) throws DataAccessor.NoDataException {
