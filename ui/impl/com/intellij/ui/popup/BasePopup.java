@@ -299,6 +299,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   private void processParentWindowMoved() {
+    if (myPopup == null || myContainer == null) return;
+
     final Point newOwnerPoint = myOwnerWindow.getLocationOnScreen();
 
     int deltaX = myLastOwnerPoint.x - newOwnerPoint.x;
