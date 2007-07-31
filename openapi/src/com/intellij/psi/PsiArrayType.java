@@ -31,7 +31,7 @@ public class PsiArrayType extends PsiType {
    *
    * @param componentType the type of the array component.
    */
-  public PsiArrayType(PsiType componentType) {
+  public PsiArrayType(@NotNull PsiType componentType) {
     myComponentType = componentType;
   }
 
@@ -78,13 +78,13 @@ public class PsiArrayType extends PsiType {
    *
    * @return the component type instance.
    */
+  @NotNull
   public PsiType getComponentType() {
     return myComponentType;
   }
 
   public boolean equals(Object obj) {
-    if (obj == null || !getClass().equals(obj.getClass())) return false;
-    return myComponentType.equals(((PsiArrayType)obj).getComponentType());
+    return obj != null && getClass().equals(obj.getClass()) && myComponentType.equals(((PsiArrayType)obj).getComponentType());
   }
 
   public int hashCode() {

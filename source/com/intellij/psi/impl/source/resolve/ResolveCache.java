@@ -73,7 +73,7 @@ public class ResolveCache {
     });
   }
 
-  private static final PsiType NULL_TYPE = new PsiEllipsisType(null){
+  private static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
     public boolean isValid() {
       return true;
     }
