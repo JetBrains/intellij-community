@@ -1,9 +1,6 @@
 package com.intellij.ide.util;
 
-import com.intellij.codeInsight.generation.ClassMember;
-import com.intellij.codeInsight.generation.MemberChooserObject;
-import com.intellij.codeInsight.generation.MemberChooserObjectBase;
-import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
+import com.intellij.codeInsight.generation.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +36,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class MemberChooser<T extends ClassMember> extends DialogWrapper {
+public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   private JCheckBox myCopyJavadocCheckbox;
@@ -482,6 +479,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     mySelectedNodes.clear();
     myElements = null;
     super.dispose();
+  }
+
+  public void calcData(final DataKey key, final DataSink sink) {
+    if (key.equals(DataKeys.PSI_ELEMENT)) {
+      if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
+        T selectedElement = mySelectedElements.iterator().next();
+        if (selectedElement instanceof PsiElementClassMember) {
+          sink.put(DataKeys.PSI_ELEMENT, ((PsiElementClassMember) selectedElement).getElement());
+        }
+      }
+    }
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
