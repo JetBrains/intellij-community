@@ -198,7 +198,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     myUndoHelper.setShowing(b);
   }
 
-  protected final void ensureInitialized() {
+  protected final synchronized void ensureInitialized() {
     if (!isInitialised()) {
       myWrapprer.setContent(createCustomComponent());
       myInitialised = true;
@@ -267,7 +267,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return myWrapprer;
   }
 
-  protected final boolean isInitialised() {
+  protected final synchronized boolean isInitialised() {
     return myInitialised;
   }
 }

@@ -117,6 +117,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    ensureInitialized();
     return DomUIFactory.getDomUIFactory().createDomHighlighter(getProject(), this, getDomElement());
   }
 
