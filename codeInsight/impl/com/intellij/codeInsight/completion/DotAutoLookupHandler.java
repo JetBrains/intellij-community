@@ -25,6 +25,9 @@ public class DotAutoLookupHandler extends CodeCompletionHandler{
     int offset = context.startOffset;
 
     PsiElement lastElement = file.findElementAt(offset - 1);
+    if (lastElement == null) {
+      return LookupData.EMPTY;
+    }
 
     //do not show lookup when typing varargs ellipsis
     final PsiElement prevSibling = lastElement.getPrevSibling();
@@ -35,7 +38,7 @@ public class DotAutoLookupHandler extends CodeCompletionHandler{
     } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
     if (parent instanceof PsiParameterList) return LookupData.EMPTY;
 
-    if (lastElement == null || !(".".equals(lastElement.getText()) || "#".equals(lastElement.getText()))) {
+    if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
       return LookupData.EMPTY;
     }
     else{
