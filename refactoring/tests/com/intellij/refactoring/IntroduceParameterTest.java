@@ -13,15 +13,30 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import gnu.trove.TIntArrayList;
 
 public class IntroduceParameterTest extends CodeInsightTestCase {
+  private LanguageLevel myPreviousLanguageLevel;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPreviousLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
+    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+  protected void tearDown() throws Exception {
+    getPsiManager().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    super.tearDown();
+  }
+
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal) throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters);
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
+
   public void testNoUsages() throws Exception {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
@@ -156,6 +171,9 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
   }
 
+  public void testVarargs() throws Exception {   // IDEADEV-16828
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+  }
 
   private boolean perform(boolean replaceAllOccurences,
                           int replaceFieldsWithGetters,

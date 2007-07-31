@@ -38,6 +38,7 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -774,6 +775,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     });
   }
 
+  @Nullable
   private static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
     PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     final PsiParameter anchorParameter;
@@ -785,7 +787,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     else {
       LOG.assertTrue(length > 0);
       LOG.assertTrue(parameters[length-1].isVarArgs());
-      anchorParameter = length > 1 ? parameters[length - 1] : null;
+      anchorParameter = length > 1 ? parameters[length-2] : null;
     }
     return anchorParameter;
   }
