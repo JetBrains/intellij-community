@@ -110,6 +110,16 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
   }
 
+  // IDEADEV-19675
+  public void testInterfaceImplicitImplementation() throws Exception {
+    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
+  }
+
+  // IDEADEV-19699
+  public void testMultipleInterfaceDelegation() throws Exception {
+    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf2", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+  }
+
   public void testScr20557() throws Exception {
     doTest(createPerformAction2("xxx.SCR20557", "myResultSet", "MyResultSet", "java.sql.ResultSet",
         new String[]{"getDate"}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -32,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,7 +48,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private final Set<PsiClass> myDelegatedInterfaces;
   private final Set<PsiMethod> myDelegatedMethods;
   private final HashMap<PsiMethod,String> myDelegatedMethodsVisibility;
-  private final Set<PsiMethod> myOverridenMethods;
+  private final Set<PsiMethod> myOverriddenMethods;
 
   private final PsiClass myBaseClass;
   private final Set<PsiMember> myBaseClassMembers;
@@ -112,7 +114,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    myOverridenMethods = getOverriddenMethods();
+    myOverriddenMethods = getOverriddenMethods();
   }
 
   private PsiSubstitutor getSuperSubstitutor(final PsiClass superClass) {
@@ -736,8 +738,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
         public void createMethod(PsiClass innerClass)
                 throws IncorrectOperationException {
-          OverridenMethodClassMemberReferencesVisitor visitor = new OverridenMethodClassMemberReferencesVisitor();
-          myMethod.accept(visitor);
+          OverriddenMethodClassMemberReferencesVisitor visitor = new OverriddenMethodClassMemberReferencesVisitor();
+          myClass.accept(visitor);
           final List<PsiAction> actions = visitor.getPsiActions();
           for (PsiAction action : actions) {
             action.run();
@@ -748,7 +750,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (PsiMethod method : myOverridenMethods) {
+      for (PsiMethod method : myOverriddenMethods) {
         result.add(new InnerClassOverridingMethod(method));
       }
     }
@@ -756,9 +758,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     // fix abstract methods
     {
       class InnerClassAbstractMethod extends InnerClassMethod {
-        public InnerClassAbstractMethod(PsiMethod method) {
+        private boolean myImplicitImplementation;
+
+        public InnerClassAbstractMethod(PsiMethod method, final boolean implicitImplementation) {
           super(method);
-          LOG.assertTrue(method.hasModifierProperty(PsiModifier.ABSTRACT));
+          myImplicitImplementation = implicitImplementation;
         }
 
         public void createMethod(PsiClass innerClass)
@@ -770,14 +774,17 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
           }
           innerClass.add(method);
-          final MethodSignature signature = myMethod.getSignature(substitutor);
-          PsiMethod outerMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
-          if (outerMethod == null) {
-            final String visibility = checkOuterClassAbstractMethod(signature);
-            PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
-            newOuterMethod.getModifierList().setModifierProperty(visibility, true);
-            if (newOuterMethod.getDocComment() != null) {
-              newOuterMethod.getDocComment().delete();
+          if (!myImplicitImplementation) {
+            final MethodSignature signature = myMethod.getSignature(substitutor);
+            PsiMethod outerMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
+            if (outerMethod == null) {
+              final String visibility = checkOuterClassAbstractMethod(signature);
+              PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
+              newOuterMethod.getModifierList().setModifierProperty(visibility, true);
+              final PsiDocComment docComment = newOuterMethod.getDocComment();
+              if (docComment != null) {
+                docComment.delete();
+              }
             }
           }
         }
@@ -790,7 +797,10 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           final MethodSignature signature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
           PsiMethod classMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, true);
           if (classMethod == null || classMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            result.add(new InnerClassAbstractMethod(method));
+            result.add(new InnerClassAbstractMethod(method, false));
+          }
+          else if ((myBaseClass.isInterface() && classMethod.getContainingClass() != myClass)) {   // IDEADEV-19675
+            result.add(new InnerClassAbstractMethod(method, true));
           }
         }
       }
@@ -847,6 +857,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
+  @Nullable
   private PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
@@ -969,7 +980,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
 
     public void visitMethod(PsiMethod method) {
-      if (!myOverridenMethods.contains(method)) {
+      if (!myOverriddenMethods.contains(method)) {
         super.visitMethod(method);
       }
     }
@@ -982,11 +993,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   /**
    * This visitor should be called for overriden methods before they are moved to an inner class
    */
-  private class OverridenMethodClassMemberReferencesVisitor extends ClassMemberReferencesVisitor {
+  private class OverriddenMethodClassMemberReferencesVisitor extends ClassMemberReferencesVisitor {
     private final ArrayList<PsiAction> myPsiActions;
     private final PsiThisExpression myQualifiedThis;
 
-    OverridenMethodClassMemberReferencesVisitor() throws IncorrectOperationException {
+    OverriddenMethodClassMemberReferencesVisitor() throws IncorrectOperationException {
       super(myClass);
       myPsiActions = new ArrayList<PsiAction>();
       final PsiJavaCodeReferenceElement classReferenceElement = myFactory.createClassReferenceElement(myClass);
@@ -1027,6 +1038,22 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    class QualifyWithField implements PsiAction {
+      private final PsiReferenceExpression myReference;
+      private final String myReferencedName;
+
+      public QualifyWithField(final PsiReferenceExpression reference, final String name) {
+        myReference = reference;
+        myReferencedName = name;
+      }
+
+      public void run() throws IncorrectOperationException {
+        PsiReferenceExpression newRef =
+                (PsiReferenceExpression) myFactory.createExpressionFromText(myFieldName + "." + myReferencedName, null);
+        myReference.replace(newRef);
+      }
+    }
+
     protected void visitClassMemberReferenceExpression(PsiMember classMember,
                                                        PsiReferenceExpression classMemberReference) {
       if (classMember instanceof PsiField) {
@@ -1041,15 +1068,20 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             myPsiActions.add(new QualifyThis((PsiThisExpression) classMemberReference.getQualifierExpression()));
           }
         }
-      } else if (classMember instanceof PsiMethod && !myOverridenMethods.contains(classMember)) {
+      } else if (classMember instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod) classMember;
 
         if (method.getContainingClass().equals(myClass)) {
-          final PsiMethod baseMethod = findSuperMethodInBaseClass(method);
-          if (baseMethod != null) {
-            myPsiActions.add(new QualifyName(classMemberReference, baseMethod.getName()));
-          } else if (classMemberReference.getQualifierExpression() instanceof PsiThisExpression) {
-            myPsiActions.add(new QualifyThis((PsiThisExpression) classMemberReference.getQualifierExpression()));
+          if (!myOverriddenMethods.contains(method)) {
+            final PsiMethod baseMethod = findSuperMethodInBaseClass(method);
+            if (baseMethod != null) {
+              myPsiActions.add(new QualifyName(classMemberReference, baseMethod.getName()));
+            } else if (classMemberReference.getQualifierExpression() instanceof PsiThisExpression) {
+              myPsiActions.add(new QualifyThis((PsiThisExpression) classMemberReference.getQualifierExpression()));
+            }
+          }
+          else if (!myDelegatedMethods.contains(method)) {
+            myPsiActions.add(new QualifyWithField(classMemberReference, method.getName()));
           }
         }
       }
@@ -1131,7 +1163,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
 
       PsiElement resolved = qualified.resolve();
-      if (resolved != null && (myBaseClassMembers.contains(resolved) || myOverridenMethods.contains(resolved))
+      if (resolved != null && (myBaseClassMembers.contains(resolved) || myOverriddenMethods.contains(resolved))
           && !isDelegated((PsiMember)resolved)) {
         myUsageInfoStorage.add(new NonDelegatedMemberUsageInfo(instanceRef, resolved, getFieldAccessibility(instanceRef)));
       }
