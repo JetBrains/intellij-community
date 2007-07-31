@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import junit.framework.Assert;
@@ -99,7 +98,7 @@ public class GroovyAnnotator implements Annotator {
     PsiElement typeDef = parent.getParent();
     if (typeDef != null && typeDef instanceof GrTypeDefinition) {
       GrModifierListImpl modifiersList = (GrModifierListImpl) grVariableDeclaration.getModifierList();
-      checkAccessModifies(holder, modifiersList);
+      checkAccessModifiers(holder, modifiersList);
 
       if (modifiersList.hasClassImplicitModifier(PsiModifier.VOLATILE)
           && modifiersList.hasClassImplicitModifier(PsiModifier.FINAL)) {
@@ -117,7 +116,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkMethodDefinition(AnnotationHolder holder, GrMethod grMethod) {
-    checkAccessModifies(holder, ((GrModifierListImpl) grMethod.getModifierList()));
+    checkAccessModifiers(holder, ((GrModifierListImpl) grMethod.getModifierList()));
 
     GrModifierListImpl modifiersList = (GrModifierListImpl) grMethod.getModifierList();
     assert modifiersList != null;
@@ -175,7 +174,7 @@ public class GroovyAnnotator implements Annotator {
     if (modifiersList == null) return;
 
     /**** class ****/
-    checkAccessModifies(holder, modifiersList);
+    checkAccessModifiers(holder, modifiersList);
 
     if (modifiersList.hasClassImplicitModifier(PsiModifier.ABSTRACT)
         && modifiersList.hasClassImplicitModifier(PsiModifier.FINAL)) {
@@ -205,7 +204,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkAccessModifies(AnnotationHolder holder, GrModifierListImpl modifierList) {
+  private void checkAccessModifiers(AnnotationHolder holder, GrModifierListImpl modifierList) {
     Assert.assertNotNull("modifiers list must be not null", modifierList);
 
     boolean hasPrivate = modifierList.hasClassImplicitModifier(PsiModifier.PRIVATE);
