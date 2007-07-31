@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 
@@ -28,7 +28,7 @@ public class SynchronizeCurrentFileAction extends AnAction {
     e.getPresentation().setText(message);
   }
 
-  private String getMessage(VirtualFile[] files) {
+  private static String getMessage(VirtualFile[] files) {
     if (files.length == 1) {
       return IdeBundle.message("action.synchronize.file", files[0].getName());
     }
@@ -47,20 +47,25 @@ public class SynchronizeCurrentFileAction extends AnAction {
       }
     });
 
-    FileStatusManager sm = FileStatusManager.getInstance(project);
+    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile f : files) {
-      sm.fileStatusChanged(f);
+      if (f.isDirectory()) {
+        dirtyScopeManager.dirDirtyRecursively(f, true);
+      }
+      else {
+        dirtyScopeManager.fileDirty(f);
+      }
     }
 
     String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }
 
-  private Project getProject(AnActionEvent e) {
+  private static Project getProject(AnActionEvent e) {
     return e.getData(DataKeys.PROJECT);
   }
 
-  private VirtualFile[] getFiles(AnActionEvent e) {
+  private static VirtualFile[] getFiles(AnActionEvent e) {
     return e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
   }
 }
