@@ -3,7 +3,10 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerFactory;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -70,32 +73,26 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private static class DefaultFactory implements VirtualFilePointerFactory {
-    private final VirtualFilePointerListener myListener;
     private final VirtualFilePointerManager myVirtualFilePointerManager = VirtualFilePointerManager.getInstance();
 
-    public DefaultFactory(VirtualFilePointerListener listener) {
-      myListener = listener;
+    public DefaultFactory() {
     }
 
     public VirtualFilePointer create(VirtualFile file) {
-      return myVirtualFilePointerManager.create(file, myListener);
+      return myVirtualFilePointerManager.create(file, null);
     }
 
     public VirtualFilePointer create(String url) {
-      return myVirtualFilePointerManager.create(url, myListener);
+      return myVirtualFilePointerManager.create(url, null);
     }
 
     public VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer) {
-      return myVirtualFilePointerManager.duplicate(virtualFilePointer, myListener);
+      return myVirtualFilePointerManager.duplicate(virtualFilePointer, null);
     }
   }
 
   public VirtualFilePointerContainerImpl() {
-    myVirtualFilePointerFactory = new DefaultFactory(null);
-  }
-
-  public VirtualFilePointerContainerImpl(VirtualFilePointerListener listener) {
-    myVirtualFilePointerFactory = new DefaultFactory(listener);
+    myVirtualFilePointerFactory = new DefaultFactory();
   }
 
   public VirtualFilePointerContainerImpl(VirtualFilePointerFactory factory) {

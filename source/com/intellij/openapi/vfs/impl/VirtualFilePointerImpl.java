@@ -85,6 +85,10 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
         myUrl = null;
       }
     }
+    else if (!myFile.exists()) {
+      myUrl = myFile.getUrl();
+      myFile = null;
+    }
 
     myWasRecentlyValid = isValid();
   }
