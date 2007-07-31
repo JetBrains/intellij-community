@@ -9,8 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.content.Content;
+
+import java.util.Collection;
 
 public abstract class ChangeListTodosPanel extends TodoPanel{
   private MyChangeListManagerListener myChangeListManagerListener = new MyChangeListManagerListener();
@@ -34,7 +37,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     }
 
     public void changeListRenamed(final ChangeList list, final String oldName) {
-      setDisplayName(IdeBundle.message("changelist.todo.title", list.getName())); //todo i18n 
+      setDisplayName(IdeBundle.message("changelist.todo.title", list.getName()));
+    }
+
+    public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      myTodoTreeBuilder.rebuildCache();
     }
   }
 }
