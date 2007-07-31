@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ class InstructionImpl implements Instruction {
 
   PsiElement myPsiElement;
 
+  @Nullable
   public PsiElement getElement() {
     return myPsiElement;
   }
