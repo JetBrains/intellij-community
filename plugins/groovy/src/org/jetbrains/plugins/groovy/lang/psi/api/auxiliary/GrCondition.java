@@ -23,4 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author ilyas
  */
 public interface GrCondition extends GroovyPsiElement {
+  public static final GrCondition[] EMPTY_ARRAY = new GrCondition[0];
 }

@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -291,17 +292,17 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       boolean inThenIfBranch = realContainer instanceof GrIfStatement &&
           anchorElement.equals(((GrIfStatement) realContainer).getThenBranch());
       String refId = varDecl.getVariables()[0].getNameIdentifierGroovy().getText();
-      GrOpenBlock newBody;
+      GrBlockStatement newBody;
       if (tempStatement.equals(selectedExpr)) {
-        newBody = factory.createOpenBlockFromStatements(varDecl);
+        newBody = factory.createBlockStatement(varDecl);
       } else {
         replaceExpressionOccurrencesInStatement(tempStatement, selectedExpr, refId, replaceAllOccurrences);
-        newBody = factory.createOpenBlockFromStatements(varDecl, tempStatement);
+        newBody = factory.createBlockStatement(varDecl, tempStatement);
       }
 
-      varDecl = (GrVariableDeclaration) newBody.getStatements()[0];
+      varDecl = (GrVariableDeclaration) newBody.getBlock().getStatements()[0];
 
-      GrCodeBlock tempBlock = newBody;
+      GrCodeBlock tempBlock = newBody.getBlock();
       if (realContainer instanceof GrLoopStatement) {
         tempBlock = ((GrCodeBlock) ((GrLoopStatement) realContainer).replaceBody(newBody));
       } else if (realContainer instanceof GrIfStatement) {

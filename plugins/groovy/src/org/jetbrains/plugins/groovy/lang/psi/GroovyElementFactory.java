@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 
 /**
  * @author ven
@@ -58,7 +59,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrArgumentList createExpressionArgumentList(GrExpression ... expressions);
 
-  public abstract GrOpenBlock createOpenBlockFromStatements(GrStatement... statements);
+  public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 
   public abstract GrMethodCallExpression createMethodCallByAppCall(GrApplicationStatement callExpr);
 

@@ -20,6 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 /**
  * @author ilyas
  */
-public interface GrOpenBlock extends GrCodeBlock, GrCondition {
+public interface GrOpenBlock extends GrCodeBlock {
 
 }

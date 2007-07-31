@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
@@ -220,7 +219,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (((GrMethodCallExpression) file.getChildren()[0])).getArgumentList();
   }
 
-  public GrOpenBlock createOpenBlockFromStatements(@NonNls GrStatement... statements) {
+  public GrBlockStatement createBlockStatement(@NonNls GrStatement... statements) {
     StringBuffer text = new StringBuffer();
     text.append("while (true) { \n");
     for (GrStatement statement : statements) {
@@ -229,7 +228,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     text.append("}");
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement);
-    return ((GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody()).getBlock();
+    return (GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody();
   }
 
   public GrMethodCallExpression createMethodCallByAppCall(GrApplicationStatement callExpr) {

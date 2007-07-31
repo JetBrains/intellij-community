@@ -6,7 +6,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWithStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -20,24 +19,16 @@ public class GroovyWithWithExprSurrounder extends GroovyExpressionSurrounder {
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrWithStatement;
 
-    GrWithStatement grWithStatement = (GrWithStatement) element;
+    GrWithStatement withStatement = (GrWithStatement) element;
 
-    GrCondition grStatement = grWithStatement.getBody();
+    GrOpenBlock block = withStatement.getBody();
 
-    int endOffset = grStatement.getTextRange().getEndOffset();
+    GrStatement statementInBody = block.getStatements()[0];
+    int endOffset = statementInBody.getTextRange().getEndOffset();
 
-    if (grStatement instanceof GrStatement) {
-      endOffset = grStatement.getTextRange().getEndOffset();
-      grStatement.getParent().getNode().removeChild(grStatement.getNode());
+    statementInBody.getParent().getNode().removeChild(statementInBody.getNode());
 
-    } else if (grStatement instanceof GrOpenBlock) {
-      GrStatement grStatementInBody = ((GrOpenBlock) grStatement).getStatements()[0];
-      endOffset = grStatementInBody.getTextRange().getEndOffset();
-
-      grStatementInBody.getParent().getNode().removeChild(grStatementInBody.getNode());
-    }
-
-//    int endOffset = grWithStatement.getBody().getFirstChild().getTextRange().getEndOffset();
+//    int endOffset = withStatement.getBody().getFirstChild().getTextRange().getEndOffset();
 
     return new TextRange(endOffset, endOffset);
   }

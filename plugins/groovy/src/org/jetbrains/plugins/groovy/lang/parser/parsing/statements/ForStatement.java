@@ -123,12 +123,11 @@ public class ForStatement implements GroovyElementTypes {
   /**
    * Parses list of control expression in for condition
    */
-  private static GroovyElementType controlExpressionListParse(PsiBuilder builder) {
+  private static void controlExpressionListParse(PsiBuilder builder) {
 
     GroovyElementType result = StrictContextExpression.parse(builder);
-    if (result.equals(WRONGWAY)) {
-      return WRONGWAY;
-    }
+    if (result.equals(WRONGWAY)) return;
+
     while (mCOMMA.equals(builder.getTokenType()) || !result.equals(WRONGWAY)) {
 
       if (ParserUtils.lookAhead(builder, mCOMMA, mNLS, mRPAREN) ||
@@ -154,8 +153,6 @@ public class ForStatement implements GroovyElementTypes {
         }
       }
     }
-
-    return FOR_TRADITIONAL_CLAUSE;
   }
 
   /**
