@@ -18,8 +18,10 @@
         <component>
             <implementation-class>com.theoryinpractice.testng.configuration.TestNGConfigurationType
             </implementation-class>
-            <option name="workspace" value="true"/>
         </component>
+      <component>
+        <implementation-class>com.theoryinpractice.testng.TestNGPlugin</implementation-class>
+      </component>
     </application-components>
     <project-components>
         <component>
