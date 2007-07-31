@@ -7,19 +7,18 @@ package com.intellij.facet.impl.autodetecting;
 import com.intellij.facet.*;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -34,6 +33,17 @@ import java.util.List;
  */
 public class ImplicitFacetManager implements Disposable {
   public static final Icon FACET_DETECTED_ICON = IconLoader.getIcon("/ide/facetDetected.png");
+  private static final int NOTIFICATION_DELAY = 200;
+  private final JBPopupListener myNotificationPopupListener = new JBPopupListener() {
+    public void onClosed(final JBPopup popup) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          myNotificationIsShowing = false;
+          firePendingNotifications();
+        }
+      });
+    }
+  };
   private List<Facet> myImplicitFacets = new ArrayList<Facet>();
   private Project myProject;
   private final FacetAutodetectingManagerImpl myAutodetectingManager;
@@ -41,6 +51,9 @@ public class ImplicitFacetManager implements Disposable {
   private AttentionComponent myAttentionComponent;
   private StatusBar myStatusBar;
   private boolean myUIInitialized;
+  private Set<Facet> myPendingNewFacets = new HashSet<Facet>();
+  private boolean myNotificationIsShowing;
+  private Alarm myNotificationAlarm = new Alarm();
 
   public ImplicitFacetManager(final Project project, final FacetAutodetectingManagerImpl autodetectingManager) {
     myProjectWideFacetListenersRegistry = ProjectWideFacetListenersRegistry.getInstance(project);
@@ -63,9 +76,8 @@ public class ImplicitFacetManager implements Disposable {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         Runnable runnable = new Runnable() {
           public void run() {
-            if (!newFacets.isEmpty()) {
-              fireNotificationPopup(newFacets);
-            }
+            myPendingNewFacets.addAll(newFacets);
+            queueNotificationPopup();
 
             if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
               myAttentionComponent.stopBlinking();
@@ -86,25 +98,40 @@ public class ImplicitFacetManager implements Disposable {
     }
   }
 
-  private void showPopup(final MouseEvent e) {
-    ImplicitFacetsComponent facetsComponent = createImplicitFacetsComponent(myImplicitFacets);
-    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(facetsComponent.getMainPanel(), null)
-      .setForceHeavyweight(true)
-      .setRequestFocus(false)
-      .setResizable(false)
-      .setMovable(true)
-      .setLocateWithinScreenBounds(true)
-      .createPopup();
-    popup.showUnderneathOf(e.getComponent());
-    facetsComponent.setContainingPopup(popup);
+  private void queueNotificationPopup() {
+    myNotificationAlarm.cancelAllRequests();
+    myNotificationAlarm.addRequest(new Runnable() {
+      public void run() {
+        firePendingNotifications();
+      }
+    }, NOTIFICATION_DELAY);
   }
 
-  private void fireNotificationPopup(final Collection<Facet> facets) {
-    ImplicitFacetsComponent implicitFacetsComponent = createImplicitFacetsComponent(facets);
-    NotificationPopup popup = new NotificationPopup((JComponent)myStatusBar, implicitFacetsComponent.getMainPanel(), ImplicitFacetsComponent.BACKGROUND_COLOR, false);
-    implicitFacetsComponent.setContainingPopup(popup.getPopup());
-    //todo[nik] return popup instance from fireNotificationPopup
-    //myStatusBar.fireNotificationPopup(implicitFacetsComponent.getMainPanel(), ImplicitFacetsComponent.BACKGROUND_COLOR);
+  private void firePendingNotifications() {
+    if (myPendingNewFacets.isEmpty()) return;
+
+    List<Facet> newFacets = new ArrayList<Facet>();
+    for (Facet newFacet : myPendingNewFacets) {
+      if (myImplicitFacets.contains(newFacet)) {
+        newFacets.add(newFacet);
+      }
+    }
+    myPendingNewFacets.clear();
+    fireNotification(newFacets);
+  }
+
+  private void fireNotification(final Collection<Facet> newFacets) {
+    if (newFacets.isEmpty()) {
+      return;
+    }
+
+    if (!myNotificationIsShowing) {
+      myNotificationIsShowing = true;
+      createImplicitFacetsComponent(newFacets).fireNotificationPopup(myStatusBar, myNotificationPopupListener);
+    }
+    else {
+      myPendingNewFacets.addAll(newFacets);
+    }
   }
 
   private ImplicitFacetsComponent createImplicitFacetsComponent(final Collection<Facet> newFacets) {
@@ -148,6 +175,7 @@ public class ImplicitFacetManager implements Disposable {
   public void disposeUI() {
     if (!myUIInitialized) return;
 
+    myNotificationAlarm.cancelAllRequests();
     myStatusBar.removeCustomIndicationComponent(myAttentionComponent);
   }
 
@@ -166,6 +194,22 @@ public class ImplicitFacetManager implements Disposable {
   public void disableDetectionInProject(final Facet facet) {
     myAutodetectingManager.getState().addDisabled(facet.getType().getStringId());
     FacetUtil.deleteImplicitFacets(facet.getModule().getProject(), facet.getTypeId());
+  }
+
+  private void showPopup(final Component component) {
+    ImplicitFacetsComponent facetsComponent = createImplicitFacetsComponent(myImplicitFacets);
+    facetsComponent.showPopups(component);
+  }
+
+  public void skipImplicitFacet(final Facet facet) {
+    facet.setImplicit(false);
+    onImplicitFacetChanged();
+  }
+
+  public void showImplicitFacetsPopup() {
+    if (!myImplicitFacets.isEmpty()) {
+      showPopup(myAttentionComponent);
+    }
   }
 
   private class MyProjectWideFacetListener<F extends Facet<C>, C extends FacetConfiguration> extends ProjectWideFacetAdapter<F> {
@@ -199,7 +243,7 @@ public class ImplicitFacetManager implements Disposable {
       addMouseListener(new MouseAdapter() {
         public void mouseClicked(final MouseEvent e) {
           if (myActive && !e.isPopupTrigger()) {
-            showPopup(e);
+            showPopup(e.getComponent());
           }
         }
       });
