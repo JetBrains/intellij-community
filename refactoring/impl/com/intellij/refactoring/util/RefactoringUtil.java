@@ -239,18 +239,24 @@ public class RefactoringUtil {
                                                    @NotNull String stringToSearch,
                                                    List<UsageInfo> results,
                                                    UsageInfoFactory factory) {
+    addUsagesInStringsAndComments(element, stringToSearch, results, factory, false);
+  }
+
+  public static void addUsagesInStringsAndComments(final PsiElement element, final String stringToSearch, final List<UsageInfo> results,
+                                                   final UsageInfoFactory factory,
+                                                   final boolean ignoreReferences) {
     PsiManager manager = element.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     SearchScope scope = element.getUseScope();
     scope = scope.intersectWith(GlobalSearchScope.projectScope(manager.getProject()));
     PsiLiteralExpression[] literals = helper.findStringLiteralsContainingIdentifier(stringToSearch, scope);
     for (PsiLiteralExpression literal : literals) {
-      processStringOrComment(literal, stringToSearch, results, factory);
+      processStringOrComment(literal, stringToSearch, results, factory, ignoreReferences);
     }
 
     PsiElement[] comments = helper.findCommentsContainingIdentifier(stringToSearch, scope);
     for (PsiElement comment : comments) {
-      processStringOrComment(comment, stringToSearch, results, factory);
+      processStringOrComment(comment, stringToSearch, results, factory, ignoreReferences);
     }
   }
 
@@ -296,13 +302,14 @@ public class RefactoringUtil {
     }, searchScope);
   }
 
-  private static void processStringOrComment(PsiElement element, String stringToSearch, List<UsageInfo> results, UsageInfoFactory factory) {
+  private static void processStringOrComment(PsiElement element, String stringToSearch, List<UsageInfo> results, UsageInfoFactory factory,
+                                             final boolean ignoreReferences) {
     String elementText = element.getText();
     for (int index = 0; index < elementText.length(); index++) {
       index = elementText.indexOf(stringToSearch, index);
       if (index < 0) break;
       final PsiReference referenceAt = element.findReferenceAt(index);
-      if (referenceAt != null && referenceAt.resolve() != null) continue;
+      if (!ignoreReferences && referenceAt != null && referenceAt.resolve() != null) continue;
 
       if (index > 0) {
         char c = elementText.charAt(index - 1);
