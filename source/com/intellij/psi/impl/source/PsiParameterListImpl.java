@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -57,28 +54,32 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
 
   @NotNull
   public PsiParameter[] getParameters(){
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0) {
-      PsiParameter[] repositoryParameters = myRepositoryParameters;
-      if (repositoryParameters == null) {
-        int count;
-        CompositeElement treeElement = getTreeElement();
-        if (treeElement != null) {
-          count = treeElement.countChildren(PARAMETER_BIT_SET);
+    PsiParameter[] repositoryParameters = myRepositoryParameters;
+    if (repositoryParameters != null) return repositoryParameters;
+    synchronized (PsiLock.LOCK) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId >= 0) {
+        repositoryParameters = myRepositoryParameters;
+        if (repositoryParameters == null) {
+          int count;
+          CompositeElement treeElement = getTreeElement();
+          if (treeElement != null) {
+            count = treeElement.countChildren(PARAMETER_BIT_SET);
+          }
+          else {
+            count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
+          }
+          repositoryParameters = count == 0 ? PsiParameter.EMPTY_ARRAY : new PsiParameterImpl[count];
+          for (int i = 0; i < count; i++) {
+            repositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
+          }
+          myRepositoryParameters = repositoryParameters;
         }
-        else {
-          count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
-        }
-        repositoryParameters = count == 0 ? PsiParameter.EMPTY_ARRAY : new PsiParameterImpl[count];
-        for (int i = 0; i < count; i++) {
-          repositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
-        }
-        myRepositoryParameters = repositoryParameters;
+        return repositoryParameters;
       }
-      return repositoryParameters;
-    }
-    else{
-      return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
+      else{
+        return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
+      }
     }
   }
 
