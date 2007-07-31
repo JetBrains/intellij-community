@@ -250,6 +250,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     private void updateFilters(){
       myCurrentFileTodos.updateTodoFilter();
       myAllTodos.updateTodoFilter();
+      myChangeListTodos.updateTodoFilter();
     }
   }
 
@@ -273,6 +274,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                   public void run(){
                     myAllTodos.rebuildCache();
                     myCurrentFileTodos.rebuildCache();
+                    myChangeListTodos.rebuildCache();
                   }
                 }
               );
@@ -280,6 +282,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                 public void run(){
                   myAllTodos.updateTree();
                   myCurrentFileTodos.updateTree();
+                  myChangeListTodos.updateTree();
                 }
               }, ModalityState.NON_MODAL);
             }

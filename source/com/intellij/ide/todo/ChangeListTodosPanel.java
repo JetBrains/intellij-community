@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.content.Content;
 
@@ -31,8 +32,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
 
   private final class MyChangeListManagerListener extends ChangeListAdapter {
     public void defaultListChanged(final ChangeList newDefaultList) {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      myTodoTreeBuilder.rebuildCache();
+      rebuild();
       setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName()));
     }
 
@@ -41,8 +41,16 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     }
 
     public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      myTodoTreeBuilder.rebuildCache();
+      rebuild();
+    }
+
+    private void rebuild() {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          myTodoTreeBuilder.rebuildCache();
+        }
+      });
     }
   }
 }
