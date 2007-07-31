@@ -366,13 +366,15 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
   private class MyModuleConfigurationUpdater extends ModuleBuilder.ModuleConfigurationUpdater {
     public void update(final Module module, final ModifiableRootModel rootModel) {
       for (FrameworkSupportSettings settings : getSelectedFrameworks()) {
+        Library library = null;
+        FrameworkSupportConfigurable configurable = settings.getConfigurable();
         if (!settings.myAddedJars.isEmpty()) {
           VirtualFile[] roots = settings.myAddedJars.toArray(new VirtualFile[settings.myAddedJars.size()]);
           LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-          Library library = FacetEditorContextBase.createLibraryInTable(settings.getConfigurable().getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
+          library = FacetEditorContextBase.createLibraryInTable(configurable.getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
           rootModel.addLibraryEntry(library);
         }
-        settings.getConfigurable().addSupport(module, rootModel);
+        configurable.addSupport(module, rootModel, library);
       }
     }
   }

@@ -8,9 +8,11 @@ import com.intellij.facet.*;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -45,7 +47,7 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
 
   }
 
-  protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version) {
+  protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version, final @Nullable Library library) {
     ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
     Facet underlyingFacet = null;
     FacetTypeId underlyingFacetType = myFacetType.getUnderlyingFacetType();
@@ -55,8 +57,14 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
     }
     F facet = FacetUtil.createFacet(myFacetType, module, underlyingFacet);
     setupConfiguration(facet, rootModel, version);
+    if (library != null) {
+      onLibraryAdded(facet, library);
+    }
     model.addFacet(facet);
     model.commit();
+  }
+
+  protected void onLibraryAdded(final F facet, final @NotNull Library library) {
   }
 
   protected abstract void setupConfiguration(final F facet, final ModifiableRootModel rootModel, final String version);

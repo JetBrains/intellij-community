@@ -8,6 +8,7 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
     super(id, title);
   }
 
-  protected abstract void addSupport(Module module, ModifiableRootModel rootModel, String version);
+  protected abstract void addSupport(Module module, ModifiableRootModel rootModel, String version, final @Nullable Library library);
 
   @NotNull
   public String[] getVersions() {
@@ -89,8 +90,8 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
       return VersionedFrameworkSupportProvider.this.getLibraryName(getSelectedVersion());
     }
 
-    public void addSupport(final Module module, final ModifiableRootModel rootModel) {
-      VersionedFrameworkSupportProvider.this.addSupport(module, rootModel, getSelectedVersion());
+    public void addSupport(final Module module, final ModifiableRootModel rootModel, final @Nullable Library library) {
+      VersionedFrameworkSupportProvider.this.addSupport(module, rootModel, getSelectedVersion(), library);
     }
 
     private String getSelectedVersion() {
