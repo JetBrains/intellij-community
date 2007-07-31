@@ -64,7 +64,8 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
         final String name = attribute.getLocalName();
         final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
         if (childDescription != null) {
-          domElement = childDescription.getDomAttributeValue(domElement);
+          final GenericAttributeValue value = childDescription.getDomAttributeValue(domElement);
+          domElement = value.getXmlElement() == null ? null : value;
         }
       }
     }
