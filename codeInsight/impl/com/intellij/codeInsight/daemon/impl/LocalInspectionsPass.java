@@ -279,13 +279,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       //noinspection ForLoopReplaceableByForEach
       for (int j = 0; j < result.foundProblems.size(); j++) {
         ProblemDescriptor descriptor = result.foundProblems.get(j);
-        if (InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), tool)) continue;
+        PsiElement psiElement = descriptor.getPsiElement();
+        if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) continue;
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
         if (info == null) continue;
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable == null) continue;
-        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
+        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
         if (patched != null) {
           registerQuickFixes(tool, descriptor, patched,emptyActionRegistered);
           infos.add(patched);

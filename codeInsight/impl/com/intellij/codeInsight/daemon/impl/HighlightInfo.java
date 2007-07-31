@@ -84,29 +84,32 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
-
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
-    return createHighlightInfo(type, start, end, description, toolTip);
+    return createHighlightInfo(type, element, start, end, description, toolTip);
   }
 
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip, boolean isEndOfLine) {
-    if (isEndOfLine){
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type,
+                                                  @NotNull PsiElement element,
+                                                  String description,
+                                                  String toolTip,
+                                                  boolean isEndOfLine) {
+    if (isEndOfLine) {
       TextRange range = element.getTextRange();
       int end = range.getEndOffset();
-      final HighlightInfo highlightInfo = createHighlightInfo(type, end - 1, end, description, toolTip);
+      final HighlightInfo highlightInfo = createHighlightInfo(type, element, end - 1, end, description, toolTip);
       highlightInfo.isAfterEndOfLine = true;
       return highlightInfo;
-    } else {
+    }
+    else {
       return createHighlightInfo(type, element, description, toolTip);
     }
   }
 
-
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
     HighlightInfoFilter[] filters = getFilters();
-    HighlightInfo highlightInfo = new HighlightInfo(type, start, end, description, toolTip);
+    HighlightInfo highlightInfo = new HighlightInfo(type, element, start, end, description, toolTip);
     for (HighlightInfoFilter filter : filters) {
       if (!filter.accept(highlightInfo, null)) {
         return null;
@@ -120,14 +123,14 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description) {
-    return createHighlightInfo(type, start, end, description, htmlEscapeToolTip(description));
+    return createHighlightInfo(type, null, start, end, description, htmlEscapeToolTip(description));
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
   }
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip) {
-    return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description, toolTip);
+    return createHighlightInfo(type, null, textRange.getStartOffset(), textRange.getEndOffset(), description, toolTip);
   }
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, TextAttributes textAttributes) {
     // do not use HighlightInfoFilter
@@ -179,7 +182,10 @@ public class HighlightInfo {
   private GutterIconRenderer gutterIconRenderer;
 
   public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
-    this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(null), false, null);
+    this(type, null, startOffset, endOffset, description, toolTip);
+  }
+  public HighlightInfo(HighlightInfoType type, @Nullable PsiElement element, int startOffset, int endOffset, String description, String toolTip) {
+    this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(element), false, null);
   }
 
   public HighlightInfo(TextAttributes textAttributes,

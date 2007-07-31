@@ -215,10 +215,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     dlg.show();
     if (!dlg.isOK()) return null;
     profileName = dlg.getName();
-    final boolean isLocal = (isLocalProfile && !dlg.isChecked()) || (!isLocalProfile && dlg.isChecked());
+    final boolean isLocal = isLocalProfile && !dlg.isChecked() || !isLocalProfile && dlg.isChecked();
     ProfileManager profileManager = isLocal && ideProfileManager != null ? ideProfileManager : currentProfileManager;
     if (ArrayUtil.find(currentProfileManager.getAvailableProfileNames(), profileName) != -1 ||
-        (ideProfileManager != null && ArrayUtil.find(ideProfileManager.getAvailableProfileNames(), profileName) != -1)) {
+        ideProfileManager != null && ArrayUtil.find(ideProfileManager.getAvailableProfileNames(), profileName) != -1) {
       Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
                                InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
       return null;
@@ -361,7 +361,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
-        if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_SPACE && !TreeSpeedSearch.hasActiveSpeedSearch(myTree)) {
+        if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_SPACE && !SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
           final int selectionRow = myTree.getLeadSelectionRow();
           final int[] rows = myTree.getSelectionRows();
           for (int i = 0; rows != null && i < rows.length; i++) {
@@ -414,7 +414,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTree.setSelectionModel(new DefaultTreeSelectionModel());
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     TreeUtil.collapseAll(myTree, 1);
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, scrollPane.getPreferredSize().height);
     scrollPane.setPreferredSize(preferredSize);
@@ -649,79 +649,78 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   protected void updateOptionsAndDescriptionPanel(TreePath path) {
-    if (path != null) {
-      final MyTreeNode node = (MyTreeNode)path.getLastPathComponent();
-      final Object userObject = node.getUserObject();
-      if (userObject instanceof Descriptor) {
-        final Descriptor descriptor = (Descriptor)userObject;
-        if (descriptor.getDescriptorFileName() != null) {
-          // need this in order to correctly load plugin-supplied descriptions
-          final InspectionProfileEntry tool = descriptor.getTool();
-          try {
-            URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
-            if (descriptionUrl == null) throw new IOException();
-            myBrowser.read(new StringReader(SearchUtil.markup(ResourceUtil.loadText(descriptionUrl), myProfileFilter.getFilter())), null);
-          }
-          catch (IOException e2) {
-            try {
-              //noinspection HardCodedStringLiteral
-              myBrowser.read(new StringReader("<html><body><b>" + UNDER_CONSTRUCTION + "</b></body></html>"), null);
-            }
-            catch (IOException e1) {
-              //Can't be
-            }
-          }
-
+    if (path == null) return;
+    final MyTreeNode node = (MyTreeNode)path.getLastPathComponent();
+    final Object userObject = node.getUserObject();
+    if (userObject instanceof Descriptor) {
+      final Descriptor descriptor = (Descriptor)userObject;
+      if (descriptor.getDescriptorFileName() != null) {
+        // need this in order to correctly load plugin-supplied descriptions
+        final InspectionProfileEntry tool = descriptor.getTool();
+        try {
+          URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
+          if (descriptionUrl == null) throw new IOException();
+          myBrowser.read(new StringReader(SearchUtil.markup(ResourceUtil.loadText(descriptionUrl), myProfileFilter.getFilter())), null);
         }
-        else {
+        catch (IOException e2) {
           try {
-            myBrowser.read(new StringReader(EMPTY_HTML), null);
+            //noinspection HardCodedStringLiteral
+            myBrowser.read(new StringReader("<html><body><b>" + UNDER_CONSTRUCTION + "</b></body></html>"), null);
           }
           catch (IOException e1) {
             //Can't be
           }
         }
 
-
-        final LevelChooser chooser = descriptor.getChooser();
-        chooser.getComboBox().addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            boolean toUpdate = mySelectedProfile.getErrorLevel(descriptor.getKey()) != chooser.getLevel();
-            mySelectedProfile.setErrorLevel(descriptor.getKey(), chooser.getLevel());
-            if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(descriptor.getKey());
-          }
-        });
-        chooser.setLevel(mySelectedProfile.getErrorLevel(descriptor.getKey()));
-        final JPanel withSeverity = new JPanel(new GridBagLayout());
-        withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")), new GridBagConstraints(0, 0, 1, 1, 0, 0,
-                                                                                                              GridBagConstraints.WEST,
-                                                                                                              GridBagConstraints.NONE,
-                                                                                                              new Insets(0, 5, 5, 10), 0,
-                                                                                                              0));
-        Dimension dimension = new Dimension(150, chooser.getPreferredSize().height);
-        chooser.setPreferredSize(dimension);
-        chooser.setMinimumSize(dimension);
-        withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                         new Insets(0, 0, 5, 0), 0, 0));
-
-        final JComponent config = descriptor.getAdditionalConfigPanel(mySelectedProfile);
-        if (config != null) {
-          withSeverity.add(config, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                          new Insets(0, 0, 0, 0), 0, 0));
-        }
-        else {
-          withSeverity.add(new JPanel(), new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                                new Insets(0, 0, 0, 0), 0, 0));
-        }
-
-        myOptionsPanel.removeAll();
-        myOptionsPanel.add(withSeverity);
-        myOptionsPanel.validate();
-        GuiUtils.enableChildren(myOptionsPanel, node.isEnabled);
       }
       else {
-        initOptionsAndDescriptionPanel();
+        try {
+          myBrowser.read(new StringReader(EMPTY_HTML), null);
+        }
+        catch (IOException e1) {
+          //Can't be
+        }
       }
+
+
+      final LevelChooser chooser = descriptor.getChooser();
+      chooser.getComboBox().addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          boolean toUpdate = mySelectedProfile.getErrorLevel(descriptor.getKey()) != chooser.getLevel();
+          mySelectedProfile.setErrorLevel(descriptor.getKey(), chooser.getLevel());
+          if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(descriptor.getKey());
+        }
+      });
+      chooser.setLevel(mySelectedProfile.getErrorLevel(descriptor.getKey()));
+      final JPanel withSeverity = new JPanel(new GridBagLayout());
+      withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")), new GridBagConstraints(0, 0, 1, 1, 0, 0,
+                                                                                                            GridBagConstraints.WEST,
+                                                                                                            GridBagConstraints.NONE,
+                                                                                                            new Insets(0, 5, 5, 10), 0,
+                                                                                                            0));
+      Dimension dimension = new Dimension(150, chooser.getPreferredSize().height);
+      chooser.setPreferredSize(dimension);
+      chooser.setMinimumSize(dimension);
+      withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                       new Insets(0, 0, 5, 0), 0, 0));
+
+      final JComponent config = descriptor.getAdditionalConfigPanel(mySelectedProfile);
+      if (config != null) {
+        withSeverity.add(config, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                        new Insets(0, 0, 0, 0), 0, 0));
+      }
+      else {
+        withSeverity.add(new JPanel(), new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                              new Insets(0, 0, 0, 0), 0, 0));
+      }
+
+      myOptionsPanel.removeAll();
+      myOptionsPanel.add(withSeverity);
+      myOptionsPanel.validate();
+      GuiUtils.enableChildren(myOptionsPanel, node.isEnabled);
+    }
+    else {
+      initOptionsAndDescriptionPanel();
     }
   }
 
@@ -793,7 +792,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       ModifiableModel profile = mySelectedProfile.getParentProfile().getModifiableModel();
       ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
       profile.save();
-      ((InspectionProfileImpl)profile).getProfileManager().updateProfile(profile);
+      profile.getProfileManager().updateProfile(profile);
     }
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
@@ -950,7 +949,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       comboBox.setRenderer(ourRenderer);
       addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, ((HighlightSeverity)getComboBox().getSelectedItem()));
+          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem());
           dlg.show();
           if (dlg.isOK()) {
             fillModel(model);

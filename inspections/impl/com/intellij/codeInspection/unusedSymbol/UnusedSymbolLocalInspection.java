@@ -98,8 +98,8 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     panel.add(classes);
     panel.add(parameters);
 
-    final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(INJECTION_ANNOS, InspectionsBundle.message("dependency.injection.annotations.list"));
+    String title = InspectionsBundle.message("dependency.injection.annotations.list");
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(INJECTION_ANNOS, title);
 
     JPanel doNotExpand = new JPanel(new BorderLayout());
     final JPanel north = new JPanel(new BorderLayout(2, 2));
@@ -118,5 +118,4 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
       INJECTION_ANNOS, qualifiedName, context);
   }
-
 }
