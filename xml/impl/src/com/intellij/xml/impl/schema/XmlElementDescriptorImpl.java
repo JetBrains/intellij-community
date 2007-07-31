@@ -243,7 +243,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
                              ((xmlNSDescriptor != null)?xmlNSDescriptor.getDefaultNamespace():"") :
                              context.getNamespaceByPrefix(namespacePrefix);
 
-    XmlAttributeDescriptor attribute = getAttribute(localName, namespace, context);
+    XmlAttributeDescriptor attribute = getAttribute(localName, namespace, context, attributeName);
     
     if (attribute instanceof AnyXmlAttributeDescriptor && namespace.length() > 0) {
       final XmlNSDescriptor candidateNSDescriptor = context.getNSDescriptor(namespace, true);
@@ -269,11 +269,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return getAttributeDescriptorImpl(attribute.getName(),attribute.getParent());
   }
 
-  private XmlAttributeDescriptor getAttribute(String attributeName, String namespace, XmlTag context) {
+  private XmlAttributeDescriptor getAttribute(String attributeName, String namespace, XmlTag context, String qName) {
     XmlAttributeDescriptor[] descriptors = getAttributesDescriptors(context);
 
     for (XmlAttributeDescriptor descriptor : descriptors) {
-      if (descriptor.getName().equals(attributeName)) {
+      if (descriptor.getName().equals(attributeName) &&
+          descriptor.getName(context).equals(qName)
+         ) {
         return descriptor;
       }
     }
