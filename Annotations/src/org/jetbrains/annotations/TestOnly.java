@@ -4,6 +4,6 @@ import java.lang.annotation.*;
 
 @Documented
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface TestOnly {
 }
