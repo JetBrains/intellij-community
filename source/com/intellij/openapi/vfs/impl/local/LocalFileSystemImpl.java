@@ -700,10 +700,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return convertToIOFile(fileOrDirectory).exists();
   }
 
-  public long getCRC(final VirtualFile file) {
-    return -1;
-  }
-
   public long getLength(final VirtualFile file) {
     return convertToIOFile(file).length();
   }

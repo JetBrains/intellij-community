@@ -34,6 +34,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final int IS_READ_ONLY = 0x04;
   private static final int MUST_RELOAD_CONTENT = 0x08;
 
+  private static final long FILE_LENGTH_TO_CACHE_THRESHOULD = 20 * 1024 * 1024; // 20 megabytes
+
   private final FSRecords myRecords;
   private final MessageBus myEventsBus;
 
@@ -174,11 +176,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     myRecords.setParent(id, parentId);
     myRecords.setName(id, name);
 
-    myRecords.setCRC(id, delegate.getCRC(file));
     myRecords.setTimestamp(id, delegate.getTimeStamp(file));
     myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (!delegate.isWritable(file) ? IS_READ_ONLY : 0));
 
-    myRecords.setLength(id, -1);
+    myRecords.setLength(id, -1L);
 
     // TODO!!!: More attributes?
   }
@@ -229,12 +230,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, isWritable(file), writableFlag, false));
   }
 
-  public long getCRC(final VirtualFile file) {
-    final int id = getFileId(file);
-
-    return myRecords.getCRC(id);
-  }
-
   public int getId(final VirtualFile parent, final String childName) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     final int parentId = getFileId(parent);
@@ -258,7 +253,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public long getLength(final VirtualFile file) {
     final int id = getFileId(file);
 
-    int len = myRecords.getLength(id);
+    long len = myRecords.getLength(id);
     if (len == -1) {
       len = (int)getDelegate(file).getLength(file);
       myRecords.setLength(id, len);
@@ -321,10 +316,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       setFlag(file, MUST_RELOAD_CONTENT, false);
 
       final NewVirtualFileSystem delegate = getDelegate(file);
-      final int len = (int)delegate.getLength(file);
+      final long len = delegate.getLength(file);
       final InputStream nativeStream = delegate.getInputStream(file);
 
-      final ByteArrayOutputStream cache = new ByteArrayOutputStream(len);
+      if (len > FILE_LENGTH_TO_CACHE_THRESHOULD) return nativeStream;
+
+      final ByteArrayOutputStream cache = new ByteArrayOutputStream((int)len);
       return new ReplicatorInputStream(nativeStream, cache) {
         public void close() throws IOException {
           super.close();
@@ -628,7 +625,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
 
     final NewVirtualFileSystem delegate = getDelegate(file);
-    myRecords.setLength(getFileId(file), (int)delegate.getLength(file));
+    myRecords.setLength(getFileId(file), delegate.getLength(file));
     myRecords.setTimestamp(getFileId(file), delegate.getTimeStamp(file));
 
     ((NewVirtualFile)file).setModificationStamp(newModificationStamp);

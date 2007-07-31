@@ -243,18 +243,6 @@ public class JarHandler implements FileSystemInterface {
     return zip != null ? zip.getEntry(path) : null;
   }
 
-  public long getCRC(final VirtualFile file) {
-    if (file.getParent() == null) return -1L; // Optimization
-    lock.lock();
-    try {
-      final ZipEntry entry = convertToEntry(file);
-      return entry != null ? entry.getCrc() : -1L;
-    }
-    finally {
-      lock.unlock();
-    }
-  }
-
   public long getLength(final VirtualFile file) {
     lock.lock();
     try {

@@ -164,10 +164,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return getHandler(fileOrDirectory).exists(fileOrDirectory);
   }
 
-  public long getCRC(final VirtualFile file) {
-    return getHandler(file).getCRC(file);
-  }
-
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     return getHandler(file).getInputStream(file);
   }

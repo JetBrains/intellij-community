@@ -138,10 +138,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return false;
   }
 
-  public long getCRC(final VirtualFile file) {
-    return 0;
-  }
-
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     return null;
   }

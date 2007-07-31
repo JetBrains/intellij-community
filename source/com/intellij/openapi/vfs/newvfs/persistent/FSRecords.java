@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FSRecords implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 3;
+  private final static int VERSION = 4;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -35,14 +35,12 @@ public class FSRecords implements Disposable {
   private static final int FLAGS_SIZE = 4;
   private static final int ATTREF_OFFSET = FLAGS_OFFSET + FLAGS_SIZE;
   private static final int ATTREF_SIZE = 4;
-  private static final int CRC_OFFSET = ATTREF_OFFSET + ATTREF_SIZE;
-  private static final int CRC_SIZE = 8;
-  private static final int TIMESTAMP_OFFSET = CRC_OFFSET + CRC_SIZE;
+  private static final int TIMESTAMP_OFFSET = ATTREF_OFFSET + ATTREF_SIZE;
   private static final int TIMESTAMP_SIZE = 8;
   private static final int MODCOUNT_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_SIZE;
   private static final int MODCOUNT_SIZE = 4;
   private static final int LENGTH_OFFSET = MODCOUNT_OFFSET + MODCOUNT_SIZE;
-  private static final int LENGTH_SIZE = 4;
+  private static final int LENGTH_SIZE = 8;
 
   private final static int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
 
@@ -591,10 +589,10 @@ public class FSRecords implements Disposable {
     }
   }
 
-  public int getLength(int id) {
+  public long getLength(int id) {
     r.lock();
     try {
-      return myConnection.getRecords().getInt(id * RECORD_SIZE + LENGTH_OFFSET);
+      return myConnection.getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -604,38 +602,11 @@ public class FSRecords implements Disposable {
     }
   }
 
-  public void setLength(int id, int len) {
+  public void setLength(int id, long len) {
     w.lock();
     try {
       incModCount(id);
-      myConnection.getRecords().putInt(id * RECORD_SIZE + LENGTH_OFFSET, len);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally{
-      w.unlock();
-    }
-  }
-
-  public long getCRC(int id) {
-    r.lock();
-    try {
-      return myConnection.getRecords().getLong(id * RECORD_SIZE + CRC_OFFSET);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally{
-      r.unlock();
-    }
-  }
-
-  public void setCRC(int id, long crc) {
-    w.lock();
-    try {
-      incModCount(id);
-      myConnection.getRecords().putLong(id * RECORD_SIZE + CRC_OFFSET, crc);
+      myConnection.getRecords().putLong(id * RECORD_SIZE + LENGTH_OFFSET, len);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

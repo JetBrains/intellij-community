@@ -33,11 +33,5 @@ public interface FileSystemInterface {
   InputStream getInputStream(VirtualFile file) throws IOException;
   OutputStream getOutputStream(VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
 
-  /**
-   * @return the CRC-32 checksum of the file content, or -1 if not known
-   * @param file a file to get CRC-32 checksum for
-   */
-  long getCRC(VirtualFile file);
-
   long getLength(VirtualFile file);
 }
