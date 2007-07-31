@@ -5,8 +5,8 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -97,7 +97,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public final DomElement addValue(DomElement parent, Type type, int index) {
-    return addChild(parent, type, Integer.MAX_VALUE);
+    return addChild(parent, type, index);
   }
 
   @Nullable

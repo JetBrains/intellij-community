@@ -3,6 +3,7 @@ package com.intellij.util.xml.ui.actions.generate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -38,11 +39,26 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
 
       for (DomCollectionChildDescription childDescription : list) {
         if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
-          return (T)childDescription.addValue(parent, myChildElementClass);
+          int index  = getCollectionIndex(parent, childDescription, editor);
+
+          return index < 0 ? (T)childDescription.addValue(parent, myChildElementClass) : (T)childDescription.addValue(parent, myChildElementClass, index) ;
         }
       }
     }
-
     return null;
+  }
+
+  private static int getCollectionIndex(final DomElement parent, final DomCollectionChildDescription childDescription, final Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+
+    for (int i = 0; i < childDescription.getValues(parent).size(); i++) {
+      DomElement element = childDescription.getValues(parent).get(i);
+      XmlElement xmlElement = element.getXmlElement();
+      if (xmlElement != null && xmlElement.getTextRange().getStartOffset() >= offset) {
+          return i;
+      }
+    }
+
+    return -1;
   }
 }
