@@ -385,9 +385,11 @@ public class CompareWithBranchAction extends AnAction {
     }
 
     private void reportException(final SVNException ex, final String baseUrl) {
-      if (ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL) ||
-          ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
-          ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_DAV_PATH_NOT_FOUND)) {
+      final SVNErrorCode errorCode = ex.getErrorMessage().getErrorCode();
+      if (errorCode.equals(SVNErrorCode.RA_ILLEGAL_URL) ||
+          errorCode.equals(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
+          errorCode.equals(SVNErrorCode.RA_DAV_PATH_NOT_FOUND) ||
+          errorCode.equals(SVNErrorCode.FS_NOT_FOUND)) {
         reportNotFound(baseUrl);
       }
       else {
