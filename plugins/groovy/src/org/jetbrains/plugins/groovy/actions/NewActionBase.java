@@ -27,8 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -36,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public abstract class NewActionBase extends CreateElementActionBase {
 
@@ -124,12 +120,6 @@ public abstract class NewActionBase extends CreateElementActionBase {
   }
 
   protected final void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    doCheckBeforeCreate(newName, directory);
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
-    ReadonlyStatusHandler.getInstance(directory.getProject()).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
-  }
-
-  protected void doCheckBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
     directory.checkCreateClass(newName);
   }
 }
