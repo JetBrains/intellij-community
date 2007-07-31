@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
+package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.PsiManager;
