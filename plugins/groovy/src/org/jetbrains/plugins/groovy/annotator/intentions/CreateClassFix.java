@@ -16,29 +16,26 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.CreateClassDialog;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author ilyas
@@ -52,12 +49,12 @@ public abstract class CreateClassFix {
 
       @NotNull
       public String getText() { 
-        return "Create Class \'" + refElement.getReferenceName() + "\'";
+        return GroovyBundle.message("create.class.text", refElement.getReferenceName());
       }
 
       @NotNull
       public String getFamilyName() {
-        return GroovyBundle.message("create.class");
+        return GroovyBundle.message("create.class.family.name");
       }
 
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -71,7 +68,7 @@ public abstract class CreateClassFix {
         final Module module = ModuleUtil.findModuleForPsiElement(file);
         GroovyFile groovyFile = (GroovyFile) file;
         final String qualifier = groovyFile.getPackageName();
-        String title = GroovyBundle.message("create.class", StringUtil.capitalize(CreateClassKind.CLASS.getDescription()));
+        String title = GroovyBundle.message("create.class.family.name");
         GroovyCreateClassDialog dialog = new GroovyCreateClassDialog(project, title, name, qualifier, module);
         dialog.show();
 
@@ -117,11 +114,17 @@ public abstract class CreateClassFix {
                   }
                 }
                 if (targetClass == null) {
-                  throw new IncorrectOperationException();
+                  throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
                 }
               }
               catch (final IncorrectOperationException e) {
-                CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    Messages.showErrorDialog(
+                        GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
+                        GroovyBundle.message("cannot.create.class.error.title"));
+                  }
+                });
                 return null;
               }
               PsiModifierList modifiers = targetClass.getModifierList();
@@ -139,7 +142,7 @@ public abstract class CreateClassFix {
         });
   }
 
-  protected static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
+  private static Editor putCursor(Project project, @NotNull PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
