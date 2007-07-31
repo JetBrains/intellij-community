@@ -475,6 +475,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void notifyStartProcessingChanges(final VcsDirtyScope scope) {
+    if (myDisposed) throw new DisposedException();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (myChangeLists) {
