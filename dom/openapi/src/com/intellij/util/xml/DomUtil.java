@@ -9,10 +9,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -239,10 +236,7 @@ public class DomUtil {
       return null;
     }
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-
-    return getDomElement(element);
+    return getDomElement(file.findElementAt(editor.getCaretModel().getOffset()));
   }
 
   @Nullable
@@ -250,12 +244,19 @@ public class DomUtil {
     if (element == null) return null;
 
     final Project project = element.getProject();
-    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    final DomManager domManager = DomManager.getDomManager(project);
+    final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
+    if (attr != null) {
+      final GenericAttributeValue value = domManager.getDomElement(attr);
+      if (value != null) return value;
+    }
+
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
     while (tag != null) {
-      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+      final DomElement domElement = domManager.getDomElement(tag);
       if(domElement != null) return domElement;
 
-      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
+      tag = tag.getParentTag();
     }
     return null;
   }

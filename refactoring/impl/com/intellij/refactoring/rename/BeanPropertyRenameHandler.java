@@ -40,17 +40,17 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
   }
 
-  public static void doRename(final BeanProperty myProperty, final String newName, final boolean searchInComments) {
-    final PsiElement psiElement = myProperty.getPsiElement();
+  public static void doRename(@NotNull final BeanProperty property, final String newName, final boolean searchInComments) {
+    final PsiElement psiElement = property.getPsiElement();
     final RenameRefactoring rename = new RenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
 
-    final PsiMethod setter = myProperty.getSetter();
+    final PsiMethod setter = property.getSetter();
     if (setter != null) {
       final String setterName = PropertyUtil.suggestSetterName(newName);
       rename.addElement(setter, setterName);
     }
 
-    final PsiMethod getter = myProperty.getGetter();
+    final PsiMethod getter = property.getGetter();
     if (getter != null) {
       final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType());
       rename.addElement(getter, getterName);
