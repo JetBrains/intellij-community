@@ -5,6 +5,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.lang.StdLanguages;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.analysis.AnalysisUIOptions;
@@ -305,9 +306,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = new RefManagerImpl(myProject, myCurrentScope, this);
+      myRefManager = ApplicationManager.getApplication().runReadAction(new Computable<RefManagerImpl>() {
+        public RefManagerImpl compute() {
+          return new RefManagerImpl(myProject, myCurrentScope, GlobalInspectionContextImpl.this);
+        }
+      });
     }
-
     return myRefManager;
   }
 
@@ -741,7 +745,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return new PsiReferenceProcessor() {
       public boolean execute(PsiReference reference) {
         AnalysisScope scope = getRefManager().getScope();
-        if ((scope.contains(reference.getElement()) && reference.getElement().getContainingFile() instanceof PsiJavaFile) ||
+        if ((scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA) ||
             PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
           return true;
         }
