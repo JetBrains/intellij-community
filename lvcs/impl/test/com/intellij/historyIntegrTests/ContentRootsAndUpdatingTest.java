@@ -6,9 +6,15 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 
 public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   public void testUpdatingOnRootsChanges() {
@@ -119,7 +125,34 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     assertTrue(hasVcsEntry(path));
   }
 
+  public void testIgnoreContentRootsNotFromLocalFileSystem() throws IOException {
+    String path = createJarWithSomeFiles();
+    VirtualFile file = getJFS().refreshAndFindFileByPath(path + "!/");
+
+    int before = getVcs().getRoots().size();
+    PsiTestUtil.addContentRoot(myModule, file);
+
+    assertEquals(before, getVcs().getRoots().size());
+  }
+
+  private String createJarWithSomeFiles() throws IOException {
+    File dir = createTempDirectory();
+    File f = new File(dir, "root.jar");
+    OutputStream fs = new FileOutputStream(f);
+    JarOutputStream s = new JarOutputStream(fs);
+
+    s.putNextEntry(new ZipEntry("file.java"));
+    s.write(new byte[]{2});
+    s.close();
+
+    return f.getPath();
+  }
+
+  private JarFileSystem getJFS() {
+    return JarFileSystem.getInstance();
+  }
+
   private VirtualFile findFile(String parentPath) {
-    return LocalFileSystem.getInstance().findFileByPath(parentPath);
+    return getFS().findFileByPath(parentPath);
   }
 }

@@ -2,6 +2,7 @@ package com.intellij.history.integration;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileFilter {
@@ -20,6 +21,7 @@ public class FileFilter {
   }
 
   public boolean isUnderContentRoot(VirtualFile f) {
+    if (!(f.getFileSystem() instanceof LocalFileSystem)) return false;
     return myFileIndex.isInContent(f);
   }
 

@@ -1,7 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.Paths;
-import com.intellij.mock.MockVirtualFileSystem;
+import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -77,7 +77,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
 
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return new MockVirtualFileSystem() {
+    return new MockLocalFileSystem() {
       @Override
       public boolean equals(Object o) {
         return true;

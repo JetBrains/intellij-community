@@ -4,7 +4,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import static org.easymock.classextension.EasyMock.*;
+import org.jetbrains.annotations.NotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
@@ -48,7 +50,7 @@ public class FileFilterTest {
   }
 
   @Test
-  public void testFilteringFileFromAnotherProject() {
+  public void testFilteringFileNotUnderContentRoot() {
     expect(fi.isInContent(f1)).andReturn(true);
     expect(fi.isInContent(f2)).andReturn(false);
     replay(fi);
@@ -57,6 +59,22 @@ public class FileFilterTest {
 
     assertTrue(f.isUnderContentRoot(f1));
     assertFalse(f.isUnderContentRoot(f2));
+  }
+
+  @Test
+  public void testFilteringFileNotUnderLocalFileSystemButUnderContentRoot() {
+    TestVirtualFile file = new TestVirtualFile("file") {
+      @Override
+      @NotNull
+      public VirtualFileSystem getFileSystem() {
+        return createMock(VirtualFileSystem.class);
+      }
+    };
+
+    expect(fi.isInContent(file)).andReturn(true);
+    replay(fi);
+    FileFilter f = new FileFilter(fi, tm);
+    assertFalse(f.isUnderContentRoot(file));
   }
 
   @Test

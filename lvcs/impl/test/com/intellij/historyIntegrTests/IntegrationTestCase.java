@@ -176,19 +176,22 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
 
   protected VirtualFile addContentRootWithFiles(Module module, String... fileNames) {
     try {
-      LocalFileSystem fs = LocalFileSystem.getInstance();
       File dir = createTempDirectory();
 
       for (String n : fileNames) {
         new File(dir, n).createNewFile();
       }
 
-      VirtualFile root = fs.refreshAndFindFileByIoFile(dir);
+      VirtualFile root = getFS().refreshAndFindFileByIoFile(dir);
       PsiTestUtil.addContentRoot(module, root);
       return root;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected LocalFileSystem getFS() {
+    return LocalFileSystem.getInstance();
   }
 }
