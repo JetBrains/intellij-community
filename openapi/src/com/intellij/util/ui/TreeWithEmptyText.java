@@ -44,7 +44,7 @@ public class TreeWithEmptyText extends Tree {
         }
       }
     });
-    myEmptyTextComponent.setFont(getFont());
+    myEmptyTextComponent.setFont(UIUtil.getLabelFont());
   }
 
   @Nullable
