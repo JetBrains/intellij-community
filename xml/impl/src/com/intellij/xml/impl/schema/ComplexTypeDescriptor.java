@@ -1,8 +1,10 @@
 package com.intellij.xml.impl.schema;
 
+import com.intellij.openapi.util.FieldCache;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -11,6 +13,7 @@ import com.intellij.xml.impl.XmlLangAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -21,17 +24,19 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private final XmlNSDescriptorImpl myDocumentDescriptor;
   private XmlTag myTag;
 
-  private static final SimpleFieldCache<XmlElementDescriptor[],ComplexTypeDescriptor> myElementDescriptorsCache = new SimpleFieldCache<XmlElementDescriptor[], ComplexTypeDescriptor>() {
-    protected final XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor) {
-      return complexTypeDescriptor.doCollectElements();
+  private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
+    new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
+
+    protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement p) {
+      return complexTypeDescriptor.doCollectElements(p);
     }
 
-    protected final XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor) {
+    protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
       return complexTypeDescriptor.myElementDescriptors;
     }
 
-    protected final void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor) {
+    protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
+                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
       complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
     }
   };
@@ -74,14 +79,14 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return myTag;
   }
 
-  public XmlElementDescriptor[] getElements() {
-    return myElementDescriptorsCache.get(this);
+  public XmlElementDescriptor[] getElements(XmlElement context) {
+    return myElementDescriptorsCache.get(null, this, context);
   }
 
   // Read-only calculation
-  private XmlElementDescriptor[] doCollectElements() {
+  private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
     Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-    collectElements(map, myTag, new HashSet<XmlTag>());
+    collectElements(map, myTag, new HashSet<XmlTag>(), context);
     addSubstitutionGroups(map);
     filterAbstractElements(map);
     return map.values().toArray(
@@ -136,7 +141,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     result.add(new XmlLangAttributeDescriptor());
   }
 
-  private void collectElements(Map<String,XmlElementDescriptor> result, XmlTag tag, Set<XmlTag> visited) {
+  private void collectElements(Map<String,XmlElementDescriptor> result, XmlTag tag, Set<XmlTag> visited, @Nullable XmlElement context) {
     if(visited.contains(tag)) return;
     visited.add(tag);
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
@@ -179,11 +184,20 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (ref != null) {
         XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
+        
+        // This is bad hack, but we need context for "include-style" schemas
+        if (groupTag == null && context instanceof XmlTag) {
+          final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
+
+          if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {
+            groupTag = ((XmlNSDescriptorImpl)descriptor).findGroup(ref);
+          }
+        }
 
         if (groupTag != null) {
           XmlTag[] tags = groupTag.getSubTags();
           for (XmlTag subTag : tags) {
-            collectElements(result, subTag, visited);
+            collectElements(result, subTag, visited, context);
           }
         }
       }
@@ -199,13 +213,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          complexTypeDescriptor.collectElements(result, complexTypeDescriptor.myTag, visited);
+          complexTypeDescriptor.collectElements(result, complexTypeDescriptor.myTag, visited, context);
         }
 
         XmlTag[] tags = tag.getSubTags();
 
         for (XmlTag subTag : tags) {
-          collectElements(result, subTag, visited);
+          collectElements(result, subTag, visited, context);
         }
       }
     }
@@ -213,7 +227,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlTag[] tags = tag.getSubTags();
 
       for (XmlTag subTag : tags) {
-        collectElements(result, subTag, visited);
+        collectElements(result, subTag, visited, context);
       }
     }
   }

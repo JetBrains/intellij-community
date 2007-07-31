@@ -153,7 +153,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       }
     }
 
-    XmlElementDescriptor[] elementsDescriptors = getElementsDescriptors();
+    XmlElementDescriptor[] elementsDescriptors = getElementsDescriptorsImpl(context);
 
     final TypeDescriptor type = getType();
 
@@ -186,13 +186,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return elementsDescriptors;
   }
 
-  private XmlElementDescriptor[] getElementsDescriptors() {
+  private XmlElementDescriptor[] getElementsDescriptorsImpl(XmlElement context) {
     TypeDescriptor type = getType();
 
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
 
-      return typeDescriptor.getElements();
+      return typeDescriptor.getElements(context);
     }
 
     return EMPTY_ARRAY;
@@ -295,7 +295,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType();
 
     if (type instanceof ComplexTypeDescriptor) {
-      final XmlElementDescriptor[] elements = ((ComplexTypeDescriptor)type).getElements();
+      final XmlElementDescriptor[] elements = ((ComplexTypeDescriptor)type).getElements(null);
 
       if (elements.length > 0) return CONTENT_TYPE_CHILDREN;
       return CONTENT_TYPE_EMPTY;
@@ -314,7 +314,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   protected XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context, String fullName) {
-    XmlElementDescriptor[] elements = getElementsDescriptors();
+    XmlElementDescriptor[] elements = getElementsDescriptorsImpl(context);
 
     for (XmlElementDescriptor element1 : elements) {
       final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl)element1;
