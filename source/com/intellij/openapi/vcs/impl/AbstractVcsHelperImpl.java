@@ -235,8 +235,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                Messages.getErrorIcon());
   }
 
-  public void showErrors(final List<VcsException> abstractVcsExceptions, final String tabDisplayName) {
-    LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
+  public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !abstractVcsExceptions.isEmpty()) {
+      throw new RuntimeException(abstractVcsExceptions.get(0));
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;

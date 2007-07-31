@@ -47,7 +47,7 @@ public abstract class AbstractVcsHelper {
     return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
-  public abstract void showErrors(List<VcsException> abstractVcsExceptions, String tabDisplayName);
+  public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
 
   public abstract LocalHistoryAction startLocalHistoryAction(String actionName);
 
