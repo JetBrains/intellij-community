@@ -204,7 +204,7 @@ public abstract class OrderEntryFix implements IntentionAction {
 
   }
 
-  private static void addBundledJarToRoots(final Project project, final Editor editor, final Module currentModule, final PsiJavaCodeReferenceElement reference,
+  public static void addBundledJarToRoots(final Project project, final Editor editor, final Module currentModule, final PsiJavaCodeReferenceElement reference,
                                            @NonNls final String className,
                                            @NonNls final String libPath) {
     String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));
