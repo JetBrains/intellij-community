@@ -162,11 +162,14 @@ public abstract class BaseRefactoringProcessor {
         public UsageSearcher create() {
           return new UsageSearcher() {
             public void generate(final Processor<Usage> processor) {
-              for (int i = 0; i < elements.length; i++) {
-                elements[i] = targets[i].getElement();
-              }
-
-              refreshElements(elements);
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  for (int i = 0; i < elements.length; i++) {
+                    elements[i] = targets[i].getElement();
+                  }
+                  refreshElements(elements);
+                }
+              });
               findUsagesRunnable.run();
               final Usage[] usages = UsageInfo2UsageAdapter.convert(refUsages.get());
 
