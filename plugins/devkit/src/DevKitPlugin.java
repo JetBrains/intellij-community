@@ -16,25 +16,28 @@
 package org.jetbrains.idea.devkit;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.ide.IconProvider;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
-import java.util.Arrays;
+import javax.swing.*;
 
-public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider, FileTemplateGroupDescriptorFactory {
+public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider, FileTemplateGroupDescriptorFactory, IconProvider {
+  private static final Icon ICON = IconLoader.getIcon("/plugin.png");
 
   public DevKitPlugin(ModuleTypeManager moduleTypeManager) {
     moduleTypeManager.registerModuleType(PluginModuleType.getInstance(), true);
@@ -52,17 +55,9 @@ public class DevKitPlugin implements ApplicationComponent, InspectionToolProvide
     };
   }
 
-  public void initComponent() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final FileNameMatcher pluginMatcher = new WildcardFileNameMatcher("plugin.xml");
-        FileTypeManager.getInstance().registerFileType(new PluginFileType(), Arrays.asList(pluginMatcher));
-      }
-    });
-  }
+  public void initComponent() {}
 
-  public void disposeComponent() {
-  }
+  public void disposeComponent() {}
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"), IconLoader.getIcon("/nodes/plugin.png"));
@@ -74,4 +69,12 @@ public class DevKitPlugin implements ApplicationComponent, InspectionToolProvide
     return descriptor;
   }
 
+  @Nullable
+  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
+    @NonNls final String pluginXml = "plugin.xml";
+    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), pluginXml)) {
+      return ICON;
+    }
+    return null;
+  }
 }

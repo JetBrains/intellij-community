@@ -1,23 +1,23 @@
 package org.jetbrains.idea.maven.core;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.IconProvider;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 
-import java.util.Arrays;
+import javax.swing.*;
 
 /**
  * Author: Vladislav.Kaznacheev
  */
-public class MavenApplicationComponent implements ApplicationComponent {
-
-  private FileType fileType = new MavenFileType();
+public class MavenApplicationComponent implements ApplicationComponent, IconProvider {
+  public static final Icon mavenIcon = IconLoader.getIcon("/images/mavenEmblem.png");
 
   @NonNls
   @NotNull
@@ -25,16 +25,17 @@ public class MavenApplicationComponent implements ApplicationComponent {
     return "MavenApplicationComponent";
   }
 
-  public void initComponent() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final FileNameMatcher matcher = new WildcardFileNameMatcher(MavenEnv.POM_FILE);
-        FileTypeManagerEx.getInstance().registerFileType(fileType, Arrays.asList(matcher));
-      }
-    });
-  }
+  public void initComponent() {}
 
   public void disposeComponent() {
+  }
+
+  @Nullable
+  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
+    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), MavenEnv.POM_FILE)) {
+      return mavenIcon;
+    }
+    return null;
   }
 }
 
