@@ -436,6 +436,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
       }
     }
+    if (addedVFiles.size() == 0) return;
     final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
@@ -507,6 +508,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         deletedFiles.add(filePath);
       }
     }
+    if (deletedFiles.size() == 0) return;
     SvnVcs vcs = SvnVcs.getInstance(project);
     final VcsShowConfirmationOption.Value value = vcs.getDeleteConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
