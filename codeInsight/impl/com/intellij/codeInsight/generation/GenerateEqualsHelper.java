@@ -487,7 +487,7 @@ public class GenerateEqualsHelper implements Runnable {
     PRIMITIVE_HASHCODE_FORMAT.put("long", new MessageFormat("(int) ({0} ^ ({0} >>> 32))"));
     PRIMITIVE_HASHCODE_FORMAT.put("boolean", new MessageFormat("({0} ? 1 : 0)"));
 
-    PRIMITIVE_HASHCODE_FORMAT.put("float", new MessageFormat("{0} != +0.0f ? Float.floatToIntBits({0}) : 0"));
+    PRIMITIVE_HASHCODE_FORMAT.put("float", new MessageFormat("({0} != +0.0f ? Float.floatToIntBits({0}) : 0)"));
     PRIMITIVE_HASHCODE_FORMAT.put("double", new MessageFormat("(int) ({1} ^ ({1} >>> 32))"));
 
     PRIMITIVE_HASHCODE_FORMAT.put("char", new MessageFormat("(int) {0}"));
