@@ -17,7 +17,7 @@ public interface UpdateParameterInfoContext {
   void setParameterOwner(final PsiElement o);
   PsiElement getParameterOwner();
 
-  void setHighlightedParameter(final PsiElement parameter);
+  void setHighlightedParameter(final Object parameter);
   void setCurrentParameter(final int index);
   boolean isUIComponentEnabled(int index);
   void setUIComponentEnabled(int index, boolean b);

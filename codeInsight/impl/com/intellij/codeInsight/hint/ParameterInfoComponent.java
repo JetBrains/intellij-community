@@ -22,7 +22,7 @@ class ParameterInfoComponent extends JPanel{
   private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
-  private PsiElement myHighlighted;
+  private Object myHighlighted;
   private final @NotNull ParameterInfoHandler myHandler;
 
   private OneElementComponent[] myPanels;
@@ -147,7 +147,7 @@ class ParameterInfoComponent extends JPanel{
     return myParameterOwner;
   }
 
-  public void setHighlightedParameter(PsiElement element) {
+  public void setHighlightedParameter(Object element) {
     myHighlighted = element;
   }
 

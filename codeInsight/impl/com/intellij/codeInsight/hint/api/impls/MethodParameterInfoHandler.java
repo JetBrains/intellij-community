@@ -160,22 +160,30 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
         }
       }
       else{
-        for(int j = 0; j < index; j++){
-          PsiParameter parm = parms[j];
-          PsiExpression arg = args[j];
-          assert parm.isValid();
-          assert arg.isValid();
-          PsiType parmType = substitutor.substitute(parm.getType());
-          PsiType argType = arg.getType();
-          if (argType != null && !parmType.isAssignableFrom(argType)){
-            enabled = false;
-            break;
-          }
-        }
+        enabled = isAssignableParametersBeforeGivenIndex(parms, args, index, substitutor);
       }
 
       context.setUIComponentEnabled(i, enabled);
+      if (enabled && parms.length == args.length && isAssignableParametersBeforeGivenIndex(parms,args, args.length, substitutor)) {
+        context.setHighlightedParameter(candidate);
+      }
     }
+  }
+
+  private static boolean isAssignableParametersBeforeGivenIndex(final PsiParameter[] parms, final PsiExpression[] args, int length, PsiSubstitutor substitutor) {
+    for(int j = 0; j < length; j++){
+      PsiParameter parm = parms[j];
+      PsiExpression arg = args[j];
+      assert parm.isValid();
+      assert arg.isValid();
+      PsiType parmType = substitutor.substitute(parm.getType());
+      PsiType argType = arg.getType();
+
+      if (argType != null && !parmType.isAssignableFrom(argType)){
+        return false;
+      }
+    }
+    return true;
   }
 
   public String getParameterCloseChars() {

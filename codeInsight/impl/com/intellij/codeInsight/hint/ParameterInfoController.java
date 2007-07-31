@@ -368,7 +368,7 @@ public class ParameterInfoController {
       return myComponent.getParameterOwner();
     }
 
-    public void setHighlightedParameter(final PsiElement method) {
+    public void setHighlightedParameter(final Object method) {
       myComponent.setHighlightedParameter(method);
     }
 
