@@ -3,19 +3,15 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.listeners.MoveMemberListener;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.util.Pair;
 
 /**
  * @author ven
@@ -40,6 +36,23 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
     PsiClass targetClass = sourceClass.getSuperClass();
     assertTrue(targetClass.isWritable());
+    MemberInfo[] infos = findMembers(sourceClass, membersToFind);
+
+    final int[] countMoved = new int[] {0};
+    final MoveMemberListener listener = new MoveMemberListener() {
+      public void memberMoved(PsiClass aClass, PsiMember member) {
+        assertEquals(sourceClass, aClass);
+        countMoved[0]++;
+      }
+    };
+    RefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
+    new PullUpHelper(sourceClass, targetClass, infos, new JavaDocPolicy(JavaDocPolicy.ASIS)).moveMembersToBase();
+    RefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
+    assertEquals(countMoved[0], membersToFind.length);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public static MemberInfo[] findMembers(final PsiClass sourceClass, final Pair<String, Class<? extends PsiMember>>... membersToFind) {
     MemberInfo[] infos = new MemberInfo[membersToFind.length];
     for (int i = 0; i < membersToFind.length; i++) {
       final Class<? extends PsiMember> clazz = membersToFind[i].getSecond();
@@ -58,18 +71,6 @@ public class PullUpTest extends LightCodeInsightTestCase {
       assertNotNull(member);
       infos[i] = new MemberInfo(member);
     }
-
-    final int[] countMoved = new int[] {0};
-    final MoveMemberListener listener = new MoveMemberListener() {
-      public void memberMoved(PsiClass aClass, PsiMember member) {
-        assertEquals(sourceClass, aClass);
-        countMoved[0]++;
-      }
-    };
-    RefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
-    new PullUpHelper(sourceClass, targetClass, infos, new JavaDocPolicy(JavaDocPolicy.ASIS)).moveMembersToBase();
-    RefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
-    assertEquals(countMoved[0], membersToFind.length);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    return infos;
   }
 }

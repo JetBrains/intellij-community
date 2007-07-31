@@ -19,8 +19,7 @@ public class ExtractSuperClassProcessor extends ExtractSuperBaseProcessor {
 
 
   protected PsiClass extractSuper(final String superClassName) throws IncorrectOperationException {
-    final PsiClass superClass = ExtractSuperClassUtil.extractSuperClass(myProject, myTargetDirectory, superClassName, myClass, myMemberInfos, myJavaDocPolicy);
-    return superClass;
+    return ExtractSuperClassUtil.extractSuperClass(myProject, myTargetDirectory, superClassName, myClass, myMemberInfos, myJavaDocPolicy);
   }
 
   protected boolean isSuperInheritor(PsiClass aClass) {

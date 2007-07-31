@@ -16,23 +16,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
-import java.util.HashSet;
 
 public class PullUpHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.PullUpHelper");
@@ -487,6 +485,9 @@ public class PullUpHelper {
         final PsiElement resolved = referenceElement.resolve();
         if (!(resolved instanceof PsiParameter)) {
           PsiClass containingClass = null;
+          if (resolved instanceof PsiClass && ((PsiClass) resolved).hasModifierProperty(PsiModifier.STATIC)) {
+            return;
+          }
           if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
             containingClass = ((PsiMember) resolved).getContainingClass();
           }

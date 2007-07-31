@@ -2,11 +2,12 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
-import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
