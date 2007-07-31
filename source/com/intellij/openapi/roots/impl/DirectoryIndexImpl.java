@@ -39,8 +39,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
-  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
-  private Map<String, VirtualFile[]> myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
+  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = Collections.synchronizedMap(new THashMap<VirtualFile, DirectoryInfo>());
+  private Map<String, VirtualFile[]> myPackageNameToDirsMap = Collections.synchronizedMap(new THashMap<String, VirtualFile[]>());
 
   private VirtualFileListener myVirtualFileListener;
   private final MessageBusConnection myConnection;
