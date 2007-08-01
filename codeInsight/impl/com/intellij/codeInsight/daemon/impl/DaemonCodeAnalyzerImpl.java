@@ -522,6 +522,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
         renewUpdateProgress(true);
+        myAlarm.cancelAllRequests();
         myPassExecutorService.submitPasses(passes, myUpdateProgress, Job.DEFAULT_PRIORITY);
       }
     };
