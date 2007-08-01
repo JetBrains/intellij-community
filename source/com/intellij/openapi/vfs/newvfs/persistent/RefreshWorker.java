@@ -11,23 +11,25 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.Queue;
 
 import java.util.*;
 
 public class RefreshWorker {
-  private boolean myIsRecursive;
-  private Stack<VirtualFile> myRefreshQueue = new Stack<VirtualFile>();
+  private final VirtualFile myRefreshRoot;
+  private final boolean myIsRecursive;
+  private final Queue<VirtualFile> myRefreshQueue = new Queue<VirtualFile>(100);
 
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
   public RefreshWorker(final VirtualFile refreshRoot, final boolean isRecursive) {
+    myRefreshRoot = refreshRoot;
     myIsRecursive = isRecursive;
-    myRefreshQueue.push(refreshRoot);
+    myRefreshQueue.addLast(refreshRoot);
   }
 
   public void scan() {
-    final NewVirtualFile root = (NewVirtualFile)myRefreshQueue.peek();
+    final NewVirtualFile root = (NewVirtualFile)myRefreshRoot;
     final NewVirtualFileSystem delegate = root.getFileSystem();
     if (root.isDirty() && !delegate.exists(root)) {
       scheduleDeletion(root);
@@ -37,7 +39,7 @@ public class RefreshWorker {
       final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();
 
       while (!myRefreshQueue.isEmpty()) {
-        final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pop();
+        final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
         if (!file.isDirty()) continue;
 
         if (file.isDirectory()) {
@@ -116,11 +118,13 @@ public class RefreshWorker {
       scheduleCreation(file, child.getName(), uptodateisDirectory);
     }
     else if ((myIsRecursive || !currentIsDirectory)) {
-      myRefreshQueue.push(child);
+      myRefreshQueue.addLast(child);
     }
   }
 
-  private void scheduleWritableAttributeChange(final VirtualFileSystemEntry file, final boolean currentWritable, final boolean uptodateWritable) {
+  private void scheduleWritableAttributeChange(final VirtualFileSystemEntry file,
+                                               final boolean currentWritable,
+                                               final boolean uptodateWritable) {
     myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, currentWritable, uptodateWritable, true));
   }
 
