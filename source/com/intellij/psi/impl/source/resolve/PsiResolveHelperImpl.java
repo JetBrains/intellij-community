@@ -294,6 +294,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return partialSubstitutor;
   }
 
+  @NotNull
   public PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters, PsiType[] leftTypes, PsiType[] rightTypes,
                                            final LanguageLevel languageLevel) {
     if (leftTypes.length != rightTypes.length) throw new IllegalArgumentException("Types must be of the same length");

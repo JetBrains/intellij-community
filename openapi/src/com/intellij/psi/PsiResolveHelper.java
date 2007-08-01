@@ -109,6 +109,7 @@ public interface PsiResolveHelper {
                                     PsiElement parent,
                                     final boolean forCompletion);
 
+  @NotNull  
   PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
                                     PsiType[] leftTypes,
                                     PsiType[] rightTypes,

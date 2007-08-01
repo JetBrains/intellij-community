@@ -12,6 +12,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   private PsiType type;
   private PsiType defaultType;
+  private boolean myInsertExplicitTypeParams;
 
   int getDimCount() {
     return dimCount;
@@ -57,6 +58,14 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     while (dims-- > 0) t = t.createArrayType();
     return t;
+  }
+
+  public boolean isInsertExplicitTypeParams() {
+    return myInsertExplicitTypeParams;
+  }
+
+  public void setInsertExplicitTypeParams(final boolean insertExplicitTypeParams) {
+    this.myInsertExplicitTypeParams = insertExplicitTypeParams;
   }
 
   public boolean equals (ExpectedTypeInfo obj) {

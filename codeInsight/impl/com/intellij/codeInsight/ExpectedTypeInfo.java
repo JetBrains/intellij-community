@@ -45,4 +45,6 @@ public interface ExpectedTypeInfo {
   boolean isArrayTypeInfo ();
 
   TailType getTailType();
+
+  boolean isInsertExplicitTypeParams();
 }

@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
   public static final Object TYPE = Key.create("TYPE");
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
+  public static final Key<String> INSERT_TYPE_PARAMS = Key.create("INSERT_TYPE_PARAMS");
 
   public static final Key<Object> DONT_PREFER = Key.create("DONT_PREFER");
   public static final Key<int[]> WEIGHT = Key.create("WEIGHT");
@@ -287,6 +289,10 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     return myAllLookupStrings;
   }
 
+  public void copyAttributes(final LookupItem item) {
+    myAttributes.putAll(item.myAttributes);
+  }
+
   private class MyInsertHandler implements InsertHandler {
     private final SimpleInsertHandler myHandler;
 
@@ -318,7 +324,13 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
         tailType = DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, completionChar);
       }
       assert tailType != null;
-      final int tailOffset = myHandler.handleInsert(editor, startOffset, LookupItem.this, data.items, tailType);
+      final int tailOffset;
+      try {
+        tailOffset = myHandler.handleInsert(editor, startOffset, LookupItem.this, data.items, tailType);
+      }
+      catch (IncorrectOperationException e) {
+        throw new RuntimeException(e);
+      }
       tailType.processTail(editor, tailOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();

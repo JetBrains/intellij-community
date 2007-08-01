@@ -33,8 +33,8 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -692,6 +692,7 @@ public class ExpectedTypesProvider {
         if (types != null) {
           for (ExpectedTypeInfo info : types) {
             ExpectedTypeInfoImpl infoImpl = (ExpectedTypeInfoImpl)info;
+            infoImpl.setInsertExplicitTypeParams(true);
             infoImpl.myTailType = TailType.COND_EXPR_COLON;
           }
         }
@@ -700,6 +701,12 @@ public class ExpectedTypesProvider {
       else {
         LOG.assertTrue(myExpr.equals(expr.getElseExpression()));
         myResult = getExpectedTypes(expr, myForCompletion);
+        if (myResult != null) {
+          for (ExpectedTypeInfo info : myResult) {
+            ((ExpectedTypeInfoImpl)info).setInsertExplicitTypeParams(true);
+          }
+        }
+
       }
     }
 
@@ -805,6 +812,7 @@ public class ExpectedTypesProvider {
         PsiType defaultType = getDefautType(method, substitutor, parameterType, argumentList);
 
         ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);
+        info.setInsertExplicitTypeParams(true);
         String propertyName = getPropertyName(parameter);
         if (propertyName != null) info.expectedName = propertyName;
         array.add(info);
@@ -813,6 +821,7 @@ public class ExpectedTypesProvider {
           //Then we may still want to call with array argument
           final PsiArrayType arrayType = parameterType.createArrayType();
           ExpectedTypeInfoImpl info1 = createInfoImpl(arrayType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, arrayType, tailType);
+          info1.setInsertExplicitTypeParams(true);
           info1.expectedName = propertyName;
           array.add(info1);
         }
