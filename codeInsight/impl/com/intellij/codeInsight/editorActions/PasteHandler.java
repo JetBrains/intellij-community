@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -276,21 +277,25 @@ public class PasteHandler extends EditorActionHandler {
     PsiDocumentManager.getInstance(project).commitDocument(document);
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(caretOffset);
-    if (elementAtCaret instanceof PsiJavaToken &&
-        ((PsiJavaToken)elementAtCaret).getTokenType() == JavaTokenType.STRING_LITERAL &&
-        caretOffset > elementAtCaret.getTextOffset()) {
-      if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
+    if (elementAtCaret instanceof PsiJavaToken && caretOffset > elementAtCaret.getTextOffset()) {
+      final IElementType tokenType = ((PsiJavaToken)elementAtCaret).getTokenType();
+      if (tokenType == JavaTokenType.STRING_LITERAL) {
+        if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
 
-      StringBuilder buffer = new StringBuilder(text.length());
-      CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-      @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
-      final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        buffer.append(StringUtil.escapeStringCharacters(line));
-        if (i != lines.length - 1) buffer.append(breaker);
+        StringBuilder buffer = new StringBuilder(text.length());
+        CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+        @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
+        final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
+        for (int i = 0; i < lines.length; i++) {
+          String line = lines[i];
+          buffer.append(StringUtil.escapeStringCharacters(line));
+          if (i != lines.length - 1) buffer.append(breaker);
+        }
+        text = buffer.toString();
       }
-      text = buffer.toString();
+      else if (tokenType == JavaTokenType.CHARACTER_LITERAL) {
+        if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
+      }
     }
     return text;
   }
