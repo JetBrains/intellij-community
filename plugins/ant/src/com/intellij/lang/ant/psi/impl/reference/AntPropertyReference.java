@@ -92,21 +92,21 @@ public class AntPropertyReference extends AntGenericReference {
     final String text = getCanonicalText();
     final AntProperty resolved = antFile != null? antFile.getProperty(text) : null;
     if (resolved != null) {
+      final String propName = cutPrefix(text, resolved.getPrefix());
       final PropertiesFile propFile = resolved.getPropertiesFile();
       if (propFile != null) {
-        final String prefix = resolved.getPrefix();
-        final String propertyName;
-        if (prefix != null && text.startsWith(prefix) && prefix.length() < text.length() && text.charAt(prefix.length()) == '.') {
-          propertyName = text.substring(prefix.length() + 1);
-        }
-        else {
-          propertyName = text;
-        }
-        return propFile.findPropertyByKey(propertyName);
+        return propFile.findPropertyByKey(propName);
       }
-      return resolved.getFormatElement();
+      return resolved.getFormatElement(propName);
     }
     return null;
+  }
+
+  private static String cutPrefix(final String text, final String prefix) {
+    if (prefix != null && text.startsWith(prefix) && prefix.length() < text.length() && text.charAt(prefix.length()) == '.') {
+      return text.substring(prefix.length() + 1);
+    }
+    return text;
   }
 
   public String getUnresolvedMessagePattern() {

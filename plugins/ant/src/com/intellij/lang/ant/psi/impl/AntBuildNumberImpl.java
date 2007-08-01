@@ -79,7 +79,7 @@ public class AntBuildNumberImpl extends AntTaskImpl implements AntProperty {
   }
 
   @Nullable
-  public AntElement getFormatElement() {
+  public AntElement getFormatElement(final String propName) {
     return this;
   }
 }

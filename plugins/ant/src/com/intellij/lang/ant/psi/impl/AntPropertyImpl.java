@@ -79,8 +79,8 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public String getName() {
-    final XmlAttributeValue value = getTstampPropertyAttributeValue();
-    return (value != null) ? value.getValue() : super.getName();
+    final XmlAttributeValue[] values = getTstampPropertyAttributeValues();
+    return (values.length == 1) ? values[0].getValue() : super.getName();
   }
 
   public AntElementRole getRole() {
@@ -88,7 +88,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public boolean canRename() {
-    return super.canRename() && (!isTstamp() || getTstampPropertyAttributeValue() != null);
+    return super.canRename() && (!isTstamp() || getTstampPropertyAttributeValues().length > 0);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -199,21 +199,23 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public int getTextOffset() {
-    final XmlAttributeValue value = getTstampPropertyAttributeValue();
-    return (value != null) ? value.getTextOffset() : super.getTextOffset();
+    final XmlAttributeValue[] values = getTstampPropertyAttributeValues();
+    return (values.length == 1) ? values[0].getTextOffset() : super.getTextOffset();
   }
 
   /**
    * @return <format> element for the <tstamp> property
+   * @param propName
    */
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public AntElement getFormatElement() {
-    if (getTstampPropertyAttributeValue() != null) {
-      for (final AntElement child : getChildren()) {
-        if (child instanceof AntStructuredElement) {
-          final AntStructuredElement se = (AntStructuredElement)child;
-          if (AntFileImpl.FORMAT_TAG.equals(se.getSourceElement().getName())) {
+  public AntElement getFormatElement(final String propName) {
+    for (final AntElement child : getChildren()) {
+      if (child instanceof AntStructuredElement) {
+        final AntStructuredElement se = (AntStructuredElement)child;
+        final XmlTag tag = se.getSourceElement();
+        if (AntFileImpl.FORMAT_TAG.equals(tag.getName())) {
+          if (propName.equals(tag.getAttributeValue(AntFileImpl.PROPERTY))) {
             return child;
           }
         }
@@ -302,36 +304,38 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         return new SimpleDateFormat("MMMM d yyyy", Locale.US).format(d);
       }
     }
-    final XmlAttributeValue value = getTstampPropertyAttributeValue();
-    if (value != null && (_propName == null || _propName.equals(value.getValue()))) {
-      if (formatTag != null) {
-        final String pattern = formatTag.getAttributeValue("pattern");
-        final DateFormat format = (pattern != null) ? new SimpleDateFormat(pattern) : DateFormat.getTimeInstance();
-        final String tz = formatTag.getAttributeValue("timezone");
-        if (tz != null) {
-          format.setTimeZone(TimeZone.getTimeZone(tz));
+
+    for (XmlAttributeValue value : getTstampPropertyAttributeValues()) {
+      if (value != null && (_propName == null || _propName.equals(value.getValue()))) {
+        if (formatTag != null) {
+          final String pattern = formatTag.getAttributeValue("pattern");
+          final DateFormat format = (pattern != null) ? new SimpleDateFormat(pattern) : DateFormat.getTimeInstance();
+          final String tz = formatTag.getAttributeValue("timezone");
+          if (tz != null) {
+            format.setTimeZone(TimeZone.getTimeZone(tz));
+          }
+          return format.format(d);
         }
-        return format.format(d);
       }
     }
     return null;
   }
 
-  @Nullable
-  public XmlAttributeValue getTstampPropertyAttributeValue() {
+  private XmlAttributeValue[] getTstampPropertyAttributeValues() {
     if (isTstamp()) {
-      final XmlTag formatTag = getSourceElement().findFirstSubTag(AntFileImpl.FORMAT_TAG);
-      if (formatTag != null) {
+      final List<XmlAttributeValue> elements = new ArrayList<XmlAttributeValue>();
+      for (XmlTag formatTag : getSourceElement().findSubTags(AntFileImpl.FORMAT_TAG)) {
         final XmlAttribute propAttr = formatTag.getAttribute(AntFileImpl.PROPERTY, null);
         if (propAttr != null) {
           final XmlAttributeValue value = propAttr.getValueElement();
           if (value != null) {
-            return value;
+            elements.add(value);
           }
         }
       }
+      return elements.toArray(new XmlAttributeValue[elements.size()]);
     }
-    return null;
+    return new XmlAttributeValue[0];
   }
 
   public boolean isTstamp() {
@@ -353,14 +357,15 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         strings.add(prefix + "TSTAMP");
         strings.add(prefix + "TODAY");
       }
-      final XmlAttributeValue value = getTstampPropertyAttributeValue();
-      if (value != null && value.getValue() != null) {
-        final String additionalProperty = value.getValue();
-        if (prefix == null) {
-          strings.add(additionalProperty);
-        }
-        else {
-          strings.add(prefix + additionalProperty);
+      for (XmlAttributeValue value : getTstampPropertyAttributeValues()) {
+        if (value != null && value.getValue() != null) {
+          final String additionalProperty = value.getValue();
+          if (prefix == null) {
+            strings.add(additionalProperty);
+          }
+          else {
+            strings.add(prefix + additionalProperty);
+          }
         }
       }
       return strings.toArray(new String[strings.size()]);

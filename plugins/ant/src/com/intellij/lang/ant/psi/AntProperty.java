@@ -32,5 +32,5 @@ public interface AntProperty extends AntTask {
   String[] getNames();
 
   @Nullable
-  AntElement getFormatElement();
+  AntElement getFormatElement(final String propName);
 }
