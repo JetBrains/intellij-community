@@ -21,6 +21,7 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -220,7 +221,7 @@ public class PullUpDialog extends DialogWrapper {
       return false;
     }
 
-    public int checkForProblems(MemberInfo member) {
+    public int checkForProblems(@NotNull MemberInfo member) {
       if (member.isChecked()) return OK;
       PsiClass currentSuperClass = getSuperClass();
 

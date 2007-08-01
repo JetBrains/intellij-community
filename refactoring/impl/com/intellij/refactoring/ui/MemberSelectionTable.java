@@ -29,6 +29,8 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MemberSelectionTable extends Table {
   private static final int CHECKED_COLUMN = 0;
   private static final int DISPLAY_NAME_COLUMN = 1;
@@ -64,7 +66,7 @@ public class MemberSelectionTable extends Table {
     }
 
 
-    public int checkForProblems(MemberInfo member) {
+    public int checkForProblems(@NotNull MemberInfo member) {
       return OK;
     }
 

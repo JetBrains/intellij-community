@@ -8,6 +8,8 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DelegatingMemberInfoModel implements MemberInfoModel {
   private MemberInfoModel myDelegatingTarget;
 
@@ -39,7 +41,7 @@ public class DelegatingMemberInfoModel implements MemberInfoModel {
     return myDelegatingTarget.isAbstractWhenDisabled(member);
   }
 
-  public int checkForProblems(MemberInfo member) {
+  public int checkForProblems(@NotNull MemberInfo member) {
     return myDelegatingTarget.checkForProblems(member);
   }
 

@@ -9,6 +9,7 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UsesDependencyMemberInfoModel extends DependencyMemberInfoModel {
   private PsiClass myClass;
@@ -23,7 +24,7 @@ public class UsesDependencyMemberInfoModel extends DependencyMemberInfoModel {
     myClass = aClass;
   }
 
-  public int checkForProblems(MemberInfo memberInfo) {
+  public int checkForProblems(@NotNull MemberInfo memberInfo) {
     final int problem = super.checkForProblems(memberInfo);
     final PsiElement member = memberInfo.getMember();
     if(problem == ERROR

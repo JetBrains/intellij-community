@@ -10,6 +10,8 @@ package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMember;
+import org.jetbrains.annotations.NotNull;
 
 public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMemberInfoModel {
   public static final InterfaceContainmentVerifier DEFAULT_CONTAINMENT_VERIFIER = new InterfaceContainmentVerifier() {
@@ -19,14 +21,15 @@ public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMember
                     };
 
   public UsesAndInterfacesDependencyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive,
-                                                    final InterfaceContainmentVerifier interfaceContainmentVerifier) {
+                                                    @NotNull final InterfaceContainmentVerifier interfaceContainmentVerifier) {
     super(new ANDCombinedMemberInfoModel(
             new UsesDependencyMemberInfoModel(aClass, superClass, recursive) {
-              public int checkForProblems(MemberInfo memberInfo) {
+              public int checkForProblems(@NotNull MemberInfo memberInfo) {
                 final int problem = super.checkForProblems(memberInfo);
                 if (problem == OK) return OK;
-                if (memberInfo.getMember() instanceof PsiMethod) {
-                  if (interfaceContainmentVerifier.checkedInterfacesContain((PsiMethod) memberInfo.getMember())) return OK;
+                final PsiMember member = memberInfo.getMember();
+                if (member instanceof PsiMethod) {
+                  if (interfaceContainmentVerifier.checkedInterfacesContain((PsiMethod)member)) return OK;
                 }
                 return problem;
               }

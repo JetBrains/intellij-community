@@ -8,6 +8,7 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
+import org.jetbrains.annotations.NotNull;
 
 
 public interface MemberInfoModel extends MemberInfoChangeListener {
@@ -30,7 +31,7 @@ public interface MemberInfoModel extends MemberInfoChangeListener {
    */
   Boolean isFixedAbstract(MemberInfo member);
 
-  int checkForProblems(MemberInfo member);
+  int checkForProblems(@NotNull MemberInfo member);
 
   String getTooltipText(MemberInfo member);
 }

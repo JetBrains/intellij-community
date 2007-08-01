@@ -9,6 +9,7 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class DependencyMemberInfoModel implements MemberInfoModel {
   protected MemberDependencyGraph myMemberDependencyGraph;
@@ -36,7 +37,7 @@ public abstract class DependencyMemberInfoModel implements MemberInfoModel {
     return true;
   }
 
-  public int checkForProblems(MemberInfo memberInfo) {
+  public int checkForProblems(@NotNull MemberInfo memberInfo) {
     if (memberInfo.isChecked()) return OK;
     final PsiElement member = memberInfo.getMember();
 

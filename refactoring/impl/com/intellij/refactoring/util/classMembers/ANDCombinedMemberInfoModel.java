@@ -8,6 +8,8 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ANDCombinedMemberInfoModel implements MemberInfoModel {
   private final MemberInfoModel myModel1;
   private final MemberInfoModel myModel2;
@@ -41,7 +43,7 @@ public class ANDCombinedMemberInfoModel implements MemberInfoModel {
     return myModel1.isAbstractWhenDisabled(member) && myModel2.isAbstractWhenDisabled(member);
   }
 
-  public int checkForProblems(MemberInfo member) {
+  public int checkForProblems(@NotNull MemberInfo member) {
     return Math.max(myModel1.checkForProblems(member), myModel2.checkForProblems(member));
   }
 

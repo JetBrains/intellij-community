@@ -278,7 +278,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       return null;
     }
 
-    public int checkForProblems(MemberInfo member) {
+    public int checkForProblems(@NotNull MemberInfo member) {
       return OK;
     }
 

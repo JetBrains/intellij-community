@@ -319,7 +319,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       return null;
     }
 
-    public int checkForProblems(MemberInfo member) {
+    public int checkForProblems(@NotNull MemberInfo member) {
       if (!(member.getMember() instanceof PsiField)) return ERROR;
       final PsiType type = ((PsiField)member.getMember()).getType();
       if (GenerateEqualsHelper.isNestedArray(type)) return ERROR;
@@ -367,7 +367,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       return null;
     }
 
-    public int checkForProblems(MemberInfo member) {
+    public int checkForProblems(@NotNull MemberInfo member) {
       return OK;
     }
 
