@@ -135,7 +135,7 @@ public class MockPsiManager extends PsiManagerEx {
       ((MockPsiPackage)superPackage).addDeclaration(declaration);
     }
     if (declaration instanceof MockPsiElement) {
-      ((MockPsiElement)declaration).setParent(superPackage);
+      ((MockPsiElement)declaration).setParent(declaration instanceof MockPsiPackage ? superPackage : new MockPsiDirectory(superPackage));
     }
 
     final PsiFile file = declaration.getContainingFile();
