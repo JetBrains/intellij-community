@@ -157,17 +157,7 @@ class InlineToAnonymousConstructorProcessor {
           }
         }
         else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
-          if (stmt instanceof PsiDeclarationStatement) {
-            PsiElement[] declaredElements = ((PsiDeclarationStatement)stmt).getDeclaredElements();
-            for(PsiElement declaredElement: declaredElements) {
-              if (declaredElement instanceof PsiVariable) {
-                PsiExpression initializer = ((PsiVariable)declaredElement).getInitializer();
-                if (initializer != null) {
-                  replaceParameterReferences(initializer, new ArrayList<PsiReferenceExpression>());
-                }
-              }
-            }
-          }
+          replaceParameterReferences(stmt, new ArrayList<PsiReferenceExpression>());
           initializerBlock.addBefore(stmt, initializerBlock.getRBrace());
         }
       }
