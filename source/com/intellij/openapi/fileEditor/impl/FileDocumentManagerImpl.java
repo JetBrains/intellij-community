@@ -90,12 +90,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null){
+      if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
+      final CharSequence text = LoadTextUtil.loadText(file);
+
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);
         if (document != null) return document; // Double checking
 
-        if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
-        final CharSequence text = LoadTextUtil.loadText(file);
         document = (DocumentEx)createDocument(text);
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
