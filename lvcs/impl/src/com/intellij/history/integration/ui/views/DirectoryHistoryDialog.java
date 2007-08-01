@@ -2,10 +2,7 @@ package com.intellij.history.integration.ui.views;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.core.ILocalVcs;
-import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
@@ -21,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -107,18 +103,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected void updateDiffs() {
-    List<Change> changes = new ArrayList<Change>();
-    flatternChanges(myModel.getRootDifferenceNodeModel(), changes);
-    myChangesTree.setChangesToDisplay(changes);
-  }
-
-  private void flatternChanges(DirectoryDifferenceModel m, List<Change> changes) {
-    if (!m.getDifferenceKind().equals(Difference.Kind.NOT_MODIFIED)) {
-      changes.add(new DirectoryDifference(m));
-    }
-    for (DirectoryDifferenceModel child : m.getChildren()) {
-      flatternChanges(child, changes);
-    }
+    myChangesTree.setChangesToDisplay(myModel.getPlainChanges());
   }
 
   @Override

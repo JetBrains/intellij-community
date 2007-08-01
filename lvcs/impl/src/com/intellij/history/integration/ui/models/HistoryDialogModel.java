@@ -1,6 +1,7 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
@@ -8,12 +9,13 @@ import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.revertion.RevisionReverter;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.IOException;
 
 public abstract class HistoryDialogModel {
   protected ILocalVcs myVcs;
@@ -110,8 +112,17 @@ public abstract class HistoryDialogModel {
     return myRightRevisionIndex == 0;
   }
 
+  public DirectoryDifferenceModel getRootDifferenceModel() {
+    Difference d = getLeftRevision().getDifferenceWith(getRightRevision());
+    return new DirectoryDifferenceModel(d);
+  }
+
+  public List<Change> getPlainChanges() {
+    return getRootDifferenceModel().getPlainChanges();
+  }
+
   public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
-    PatchCreator.create(myGateway, getLeftRevision(), getRightRevision(), path, isReverse);
+    PatchCreator.create(myGateway, getPlainChanges(), path, isReverse);
   }
 
   public Reverter createReverter() {

@@ -6,16 +6,7 @@ import com.intellij.history.core.storage.UnavailableContent;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
-import com.intellij.history.integration.stubs.StubFileTypeManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.util.Icons;
-import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
-
-import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
@@ -97,110 +88,5 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
     assertFalse(new DirectoryDifferenceModel(d1).canShowFileDifference());
     assertFalse(new DirectoryDifferenceModel(d2).canShowFileDifference());
-  }
-
-  @Test
-  public void testIconsForFile() {
-    Entry e = new FileEntry(-1, "file", null, -1);
-    Difference d = new Difference(true, null, e, e);
-    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
-
-    MyFileTypeManager tm = new MyFileTypeManager();
-    Icon i = tm.addIconForFile("file");
-
-    assertIcons(i, i, m, tm);
-  }
-
-  @Test
-  public void testIconsForDifferentFiles() {
-    Entry e1 = new FileEntry(-1, "one", null, -1);
-    Entry e2 = new FileEntry(-1, "two", null, -1);
-
-    Difference d = new Difference(true, null, e1, e2);
-    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
-
-    MyFileTypeManager tm = new MyFileTypeManager();
-    Icon i1 = tm.addIconForFile("one");
-    Icon i2 = tm.addIconForFile("two");
-
-    assertIcons(i1, i2, m, tm);
-  }
-
-  @Test
-  public void testIconsForFileWhenOneEntryIsNull() {
-    Entry e1 = new FileEntry(-1, "file1", null, -1);
-    Entry e2 = new FileEntry(-1, "file2", null, -1);
-
-    Difference d1 = new Difference(true, null, e1, null);
-    Difference d2 = new Difference(true, null, null, e2);
-
-    DirectoryDifferenceModel m1 = new DirectoryDifferenceModel(d1);
-    DirectoryDifferenceModel m2 = new DirectoryDifferenceModel(d2);
-
-    MyFileTypeManager tm = new MyFileTypeManager();
-    Icon i1 = tm.addIconForFile("file1");
-    Icon i2 = tm.addIconForFile("file2");
-
-    assertIcons(i1, null, m1, tm);
-    assertIcons(null, i2, m2, tm);
-  }
-
-  @Test
-  public void testIconsForDirectory() {
-    Entry e = new DirectoryEntry(-1, null);
-    Difference d = new Difference(false, null, e, e);
-    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
-
-    Icon open = Icons.DIRECTORY_OPEN_ICON;
-    Icon closed = Icons.DIRECTORY_CLOSED_ICON;
-    assertOpenIcons(open, open, m, null);
-    assertClosedIcons(closed, closed, m, null);
-  }
-
-  @Test
-  public void testIconsForDirectoryWhenOneEntryIsNull() {
-    Entry e = new DirectoryEntry(-1, null);
-    Difference d = new Difference(false, null, e, null);
-    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
-
-    Icon open = Icons.DIRECTORY_OPEN_ICON;
-    Icon closed = Icons.DIRECTORY_CLOSED_ICON;
-    assertOpenIcons(open, open, m, null);
-    assertClosedIcons(closed, closed, m, null);
-  }
-
-  private void assertIcons(Icon left, Icon right, DirectoryDifferenceModel m, FileTypeManager tm) {
-    assertOpenIcons(left, right, m, tm);
-    assertClosedIcons(left, right, m, tm);
-  }
-
-  private void assertClosedIcons(Icon left, Icon right, DirectoryDifferenceModel m, FileTypeManager tm) {
-    assertSame(left, m.getClosedIcon(0, tm));
-    assertSame(right, m.getClosedIcon(1, tm));
-  }
-
-  private void assertOpenIcons(Icon left, Icon right, DirectoryDifferenceModel m, FileTypeManager tm) {
-    assertSame(left, m.getOpenIcon(0, tm));
-    assertSame(right, m.getOpenIcon(1, tm));
-  }
-
-  private class MyFileTypeManager extends StubFileTypeManager {
-    private Map<String, FileType> myTypes = new HashMap<String, FileType>();
-
-    @Override
-    public FileType getFileTypeByFileName(String name) {
-      return myTypes.get(name);
-    }
-
-    public Icon addIconForFile(String name) {
-      Icon i = createMock(Icon.class);
-
-      FileType t = createMock(FileType.class);
-      expect(t.getIcon()).andStubReturn(i);
-      replay(i, t);
-
-      myTypes.put(name, t);
-      return i;
-    }
   }
 }

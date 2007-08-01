@@ -32,7 +32,7 @@ public class DirectoryHistoryDialogModelTest extends LocalVcsTestCase {
     assertEquals(1, m.getRevisions().size());
 
     m.selectRevisions(0, 0);
-    DirectoryDifferenceModel nm = m.getRootDifferenceNodeModel();
+    DirectoryDifferenceModel nm = m.getRootDifferenceModel();
 
     assertEquals(NOT_MODIFIED, nm.getDifferenceKind());
     assertEquals(0, nm.getChildren().size());
@@ -48,7 +48,7 @@ public class DirectoryHistoryDialogModelTest extends LocalVcsTestCase {
     assertEquals(2, m.getRevisions().size());
 
     m.selectRevisions(0, 1);
-    DirectoryDifferenceModel nm = m.getRootDifferenceNodeModel();
+    DirectoryDifferenceModel nm = m.getRootDifferenceModel();
     assertEquals(1, nm.getChildren().size());
 
     nm = nm.getChildren().get(0);

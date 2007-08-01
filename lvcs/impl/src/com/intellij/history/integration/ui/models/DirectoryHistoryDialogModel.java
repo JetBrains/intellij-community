@@ -6,7 +6,10 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.DirectoryReverter;
 import com.intellij.history.integration.revertion.RevisionReverter;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.List;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   public DirectoryHistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
@@ -15,11 +18,6 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
 
   public String getTitle() {
     return myFile.getPath();
-  }
-
-  public DirectoryDifferenceModel getRootDifferenceNodeModel() {
-    Difference d = getLeftRevision().getDifferenceWith(getRightRevision());
-    return new DirectoryDifferenceModel(d);
   }
 
   @Override

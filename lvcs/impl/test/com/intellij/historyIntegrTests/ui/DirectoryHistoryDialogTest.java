@@ -28,7 +28,7 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
     root.createChildData(null, "f2.java");
 
     DirectoryHistoryDialogModel m = createModelAndSelectRevision(2);
-    m.createRevisionReverter(m.getRootDifferenceNodeModel().getChildren().get(0)).revert();
+    m.createRevisionReverter(m.getRootDifferenceModel().getChildren().get(0)).revert();
 
     assertNull(root.findChild("f1.java"));
     assertNotNull(root.findChild("f2.java"));

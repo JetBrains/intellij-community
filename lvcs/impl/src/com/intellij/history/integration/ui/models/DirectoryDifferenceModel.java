@@ -2,13 +2,18 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.util.Icons;
+import com.intellij.history.integration.ui.views.DirectoryDifference;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class DirectoryDifferenceModel {
@@ -23,7 +28,6 @@ public class DirectoryDifferenceModel {
     for (Difference d : myDiff.getChildren()) {
       result.add(new DirectoryDifferenceModel(d));
     }
-    Collections.sort(result, new MyComparator());
     return result;
   }
 
@@ -38,20 +42,6 @@ public class DirectoryDifferenceModel {
 
   public Difference.Kind getDifferenceKind() {
     return myDiff.getKind();
-  }
-
-  public Icon getClosedIcon(int i, FileTypeManager tm) {
-    return getFileIconOr(i, Icons.DIRECTORY_CLOSED_ICON, tm);
-  }
-
-  public Icon getOpenIcon(int i, FileTypeManager tm) {
-    return getFileIconOr(i, Icons.DIRECTORY_OPEN_ICON, tm);
-  }
-
-  private Icon getFileIconOr(int i, Icon dirIcon, FileTypeManager tm) {
-    if (!isFile()) return dirIcon;
-    if (getEntry(i) == null) return null;
-    return tm.getFileTypeByFileName(getEntry(i).getName()).getIcon();
   }
 
   public Entry getEntry(int i) {
@@ -70,16 +60,41 @@ public class DirectoryDifferenceModel {
     return true;
   }
 
-  private static class MyComparator implements Comparator<DirectoryDifferenceModel> {
-    public int compare(DirectoryDifferenceModel l, DirectoryDifferenceModel r) {
-      if (l.isFile() != r.isFile()) return l.isFile() ? 1 : -1;
-      return l.getAnyEntryName().compareToIgnoreCase(r.getAnyEntryName());
-    }
+  public ContentRevision getContentRevision(int i) {
+    final Entry e = getEntry(i);
+    if (e == null) return null;
+
+    return new ContentRevision() {
+      @Nullable
+      public String getContent() throws VcsException {
+        if (e.isDirectory()) return null;
+        return new String(e.getContent().getBytes());
+      }
+
+      @NotNull
+      public FilePath getFile() {
+        return new FilePathImpl(new File(e.getPath()), e.isDirectory());
+      }
+
+      @NotNull
+      public VcsRevisionNumber getRevisionNumber() {
+        return VcsRevisionNumber.NULL;
+      }
+    };
   }
 
-  private String getAnyEntryName() {
-    Entry e = getEntry(0);
-    if (e == null) e = getEntry(1);
-    return e.getName();
+  public List<Change> getPlainChanges() {
+    List<Change> result = new ArrayList<Change>();
+    flatternChanges(result);
+    return result;
+  }
+
+  private void flatternChanges(List<Change> changes) {
+    if (!getDifferenceKind().equals(Difference.Kind.NOT_MODIFIED)) {
+      changes.add(new DirectoryDifference(this));
+    }
+    for (DirectoryDifferenceModel child : getChildren()) {
+      child.flatternChanges(changes);
+    }
   }
 }
