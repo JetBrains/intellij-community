@@ -20,19 +20,19 @@ import java.awt.event.ActionListener;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase {
 
-  FixedHeightLabel myText = new FixedHeightLabel();
-  FixedHeightLabel myText2 = new FixedHeightLabel();
+  private final FixedHeightLabel myText = new FixedHeightLabel();
+  private final FixedHeightLabel myText2 = new FixedHeightLabel();
 
-  MyProgressBar myProgress;
+  private final MyProgressBar myProgress;
 
-  JPanel myComponent = new MyComponent();
+  private final JPanel myComponent;
 
-  InplaceButton myCancelButton;
+  private final InplaceButton myCancelButton;
 
   private final boolean myCompact;
   private final TaskInfo myInfo;
 
-  private FixedHeightLabel myProcessName = new FixedHeightLabel();
+  private final FixedHeightLabel myProcessName = new FixedHeightLabel();
 
   public InlineProgressIndicator(boolean compact, TaskInfo processInfo) {
     myCompact = compact;
@@ -53,6 +53,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
 
     myProgress = new MyProgressBar(JProgressBar.HORIZONTAL, compact);
 
+    myComponent = new MyComponent(compact, myProcessName);
     if (myCompact) {
       myComponent.setOpaque(true);
       myComponent.setLayout(new BorderLayout(2, 0));
@@ -204,7 +205,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     return myInfo;
   }
 
-  private class FixedHeightLabel extends JLabel {
+  private static class FixedHeightLabel extends JLabel {
     private Dimension myPrefSize;
 
     public FixedHeightLabel() {
@@ -261,7 +262,14 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
-  private class MyComponent extends JPanel {
+  private static class MyComponent extends JPanel {
+    private boolean myCompact;
+    private FixedHeightLabel myProcessName;
+
+    private MyComponent(final boolean compact, final FixedHeightLabel processName) {
+      myCompact = compact;
+      myProcessName = processName;
+    }
 
     protected void paintComponent(final Graphics g) {
       if (myCompact) {
