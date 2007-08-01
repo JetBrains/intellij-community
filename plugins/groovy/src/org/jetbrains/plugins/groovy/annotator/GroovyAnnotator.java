@@ -405,7 +405,11 @@ public class GroovyAnnotator implements Annotator {
         } else {
           if (refExpr.getParent() instanceof GrReferenceExpression) {
             Annotation annotation = holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
-            registerAddImportFixes(refExpr, annotation);
+            if (!refExpr.getText().contains(".")) {
+              registerAddImportFixes(refExpr, annotation);
+              registerCreateClassByTypeFix(refExpr, annotation, false);
+            }
+
           }
         }
       }
@@ -473,9 +477,11 @@ public class GroovyAnnotator implements Annotator {
 
       // Register quickfix
       final Annotation annotation = holder.createErrorAnnotation(refElement, message);
+      // todo implement for nested classes
       if (!refElement.getText().contains(".")) {
         registerAddImportFixes(refElement, annotation);
-        registerCreateClassByTypeFix(refElement, annotation);
+        PsiElement parent = refElement.getParent();
+        registerCreateClassByTypeFix(refElement, annotation, false);
       }
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     } else if (!resolveResult.isAccessible()) {
@@ -514,8 +520,8 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation) {
-    annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
+  private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation, boolean createConstructor) {
+    annotation.registerFix(CreateClassFix.createClassFixAction(refElement, createConstructor));
   }
 
 }

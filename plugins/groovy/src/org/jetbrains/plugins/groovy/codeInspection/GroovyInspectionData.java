@@ -60,8 +60,11 @@ public class GroovyInspectionData {
       HashSet<GrImportStatement> statements = new HashSet<GrImportStatement>();
       myUsedImportStatements.put(file, statements);
       return statements.toArray(new GrImportStatement[statements.size()]);
+    } else if (importStatements.size() == 0) {
+      return new GrImportStatement[0];
+    } else {
+      return importStatements.toArray(new GrImportStatement[importStatements.size()]);
     }
-    return importStatements.toArray(new GrImportStatement[importStatements.size()]);
   }
 
   public static GroovyInspectionData getInstance() {

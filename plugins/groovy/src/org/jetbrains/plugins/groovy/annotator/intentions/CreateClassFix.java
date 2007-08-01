@@ -44,11 +44,11 @@ public abstract class CreateClassFix {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix");
 
-  public static IntentionAction createClassFixAction(final GrReferenceElement refElement) {
+  public static IntentionAction createClassFixAction(final GrReferenceElement refElement, final boolean createConstructor) {
     return new IntentionAction() {
 
       @NotNull
-      public String getText() { 
+      public String getText() {
         return GroovyBundle.message("create.class.text", refElement.getReferenceName());
       }
 
@@ -79,10 +79,11 @@ public abstract class CreateClassFix {
 
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, refElement);
         if (targetClass != null) {
+          // add import for created class
           String qualifiedName = targetClass.getQualifiedName();
           if (qualifiedName != null && qualifiedName.contains(".")) {
             String packageName = qualifiedName.substring(0, qualifiedName.lastIndexOf("."));
-            if (!packageName.equals(groovyFile.getPackageName())){
+            if (!packageName.equals(groovyFile.getPackageName())) {
               groovyFile.addImportForClass(targetClass);
             }
           }
