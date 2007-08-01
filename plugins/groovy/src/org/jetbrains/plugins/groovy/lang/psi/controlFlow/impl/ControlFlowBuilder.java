@@ -48,26 +48,29 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  public Instruction buildControlFlow(GroovyPsiElement scope, GroovyPsiElement startInScope, GroovyPsiElement endInScope) {
+  public Instruction[] buildControlFlow(GroovyPsiElement scope, GroovyPsiElement startInScope, GroovyPsiElement endInScope) {
     myInstructions = new ArrayList<InstructionImpl>();
     myProcessingStack = new Stack<InstructionImpl>();
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
-    myInstructionNumber = 0;
-    myHead = new InstructionImpl(scope, myInstructionNumber++);
+    myInstructionNumber = 1;
     myStartInScope = startInScope;
     myEndInScope = endInScope;
+    myIsInScope = startInScope == null;
 
-    Instruction head = myHead;
+    startNode(null);
     scope.accept(this);
 
+    myHead = null; //to prevent first -> last edge
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
-    return head;
+    return myInstructions.toArray(new Instruction[myInstructions.size()]);
   }
 
   private void addNode(InstructionImpl instruction) {
     myInstructions.add(instruction);
-    addEdge(myHead, instruction);
+    if (myHead != null) {
+      addEdge(myHead, instruction);
+    }
     myHead = instruction;
   }
 
@@ -136,16 +139,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch != null) {
       final InstructionImpl thenInstruction = startNode(thenBranch);
-      addEdge(ifInstruction, thenInstruction);
       thenBranch.accept(this);
+      addPendingEdge(ifStatement);
       finishNode(thenInstruction);
     }
 
     final GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) {
       final InstructionImpl elseInstruction = startNode(elseBranch);
-      addEdge(ifInstruction, elseInstruction);
       elseBranch.accept(this);
+      addPendingEdge(ifStatement);
       finishNode(elseInstruction);
     }
 
@@ -199,8 +202,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       for (Pair<InstructionImpl, GroovyPsiElement> pair : myPending) {
         addEdge(pair.getFirst(), instruction);
       }
+      myPending.clear();
     } else {
-      for (int i = myPending.size(); i >= 0; i--) {
+      for (int i = myPending.size() - 1; i >= 0; i--) {
         final Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
         final PsiElement scopeWhenToAdd = pair.getSecond();
         if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, element, false)) {

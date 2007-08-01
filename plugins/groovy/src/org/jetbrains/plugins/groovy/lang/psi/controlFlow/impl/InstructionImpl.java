@@ -40,8 +40,9 @@ class InstructionImpl implements Instruction {
     final StringBuilder builder = new StringBuilder();
     builder.append(myNumber);
     builder.append("(");
-    for (InstructionImpl instruction : mySucc) {
-      builder.append(instruction.myNumber);
+    for (int i = 0; i < mySucc.size(); i++) {
+      if (i > 0) builder.append(',');
+      builder.append(mySucc.get(i).myNumber);
     }
     builder.append(")");
     builder.append(" element: ").append(myPsiElement);
