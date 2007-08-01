@@ -58,7 +58,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     Instruction head = myHead;
     scope.accept(this);
 
-    checkPending(new InstructionImpl(null)); //collect return edges
+    final InstructionImpl end = startNode(null);
+    checkPending(end); //collect return edges
     return head;
   }
 
