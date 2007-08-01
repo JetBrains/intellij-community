@@ -242,6 +242,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Class cannot be inlined because it has usages of fields not inherited from its superclass");
   }
 
+  public void testNoInlineNewWithInner() throws Exception {
+    doTestNoInline("Class cannot be inlined because it has usages of its inner classes");
+  }
+
   public void testNoInlineStaticField() throws Exception {
     doTestNoInline("Class cannot be inlined because it has static fields with non-constant initializers");
   }
