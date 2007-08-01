@@ -119,9 +119,13 @@ public class FSRecords implements Disposable {
         try {
           closeFiles();
 
-          FileUtil.delete(namesFile);
-          Storage.deleteFiles(attributesFile.getCanonicalPath());
-          FileUtil.delete(recordsFile);
+          boolean deleted = FileUtil.delete(namesFile) &&
+                            Storage.deleteFiles(attributesFile.getCanonicalPath()) &&
+                            FileUtil.delete(recordsFile);
+
+          if (!deleted) {
+            throw new IOException("Cannot delete filesystem storage files");
+          }
         }
         catch (IOException e1) {
           throw new RuntimeException("Can't rebuild filesystem storage ", e1);
