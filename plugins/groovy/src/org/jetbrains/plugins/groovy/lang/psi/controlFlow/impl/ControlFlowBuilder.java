@@ -123,7 +123,29 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitIfStatement(GrIfStatement ifStatement) {
-    super.visitIfStatement(ifStatement);    //To change body of overridden methods use File | Settings | File Templates.
+    InstructionImpl ifInstruction = startNode(ifStatement);
+    final GrCondition condition = ifStatement.getCondition();
+    if (condition != null) {
+      condition.accept(this);
+    }
+
+    final GrStatement thenBranch = ifStatement.getThenBranch();
+    if (thenBranch != null) {
+      final InstructionImpl thenInstruction = startNode(thenBranch);
+      addEdge(ifInstruction, thenInstruction);
+      thenBranch.accept(this);
+      finishNode(thenInstruction);
+    }
+
+    final GrStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch != null) {
+      final InstructionImpl elseInstruction = startNode(elseBranch);
+      addEdge(ifInstruction, elseInstruction);
+      elseBranch.accept(this);
+      finishNode(elseInstruction);
+    }
+
+    finishNode(ifInstruction);
   }
 
   public void visitForStatement(GrForStatement forStatement) {

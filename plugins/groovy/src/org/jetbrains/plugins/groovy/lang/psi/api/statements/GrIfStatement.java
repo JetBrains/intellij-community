@@ -27,13 +27,13 @@ public interface GrIfStatement extends GrStatement, GrControlStatement {
 
   public GrCondition getCondition();
 
-  public GrCondition getThenBranch();
+  public GrStatement getThenBranch();
 
-  public GrCondition getElseBranch();
+  public GrStatement getElseBranch();
 
-  public GrCondition replaceThenBranch(GrCondition newBranch) throws IncorrectOperationException;
+  public GrStatement replaceThenBranch(GrStatement newBranch) throws IncorrectOperationException;
 
-  public GrCondition replaceElseBranch(GrCondition newBranch) throws IncorrectOperationException;
+  public GrStatement replaceElseBranch(GrStatement newBranch) throws IncorrectOperationException;
 
 
 }

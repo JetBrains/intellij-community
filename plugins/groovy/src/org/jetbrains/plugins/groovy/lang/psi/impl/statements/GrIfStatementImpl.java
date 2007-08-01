@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -52,29 +51,25 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
-  public GrCondition getThenBranch() {
-    GrCondition[] statements = findChildrenByClass(GrCondition.class);
+  public GrStatement getThenBranch() {
+    GrStatement[] statements = findChildrenByClass(GrStatement.class);
     if (statements.length > 1 && (statements[1] instanceof GrStatement)) {
       return statements[1];
     }
-    if (statements.length > 1 && (statements[1] instanceof GrOpenBlock)) {
-      return statements[1];
-    }
+
     return null;
   }
 
-  public GrCondition getElseBranch() {
-    GrCondition[] statements = findChildrenByClass(GrCondition.class);
+  public GrStatement getElseBranch() {
+    GrStatement[] statements = findChildrenByClass(GrStatement.class);
     if (statements.length == 3 && (statements[2] instanceof GrStatement)) {
       return statements[2];
     }
-    if (statements.length == 3 && (statements[2] instanceof GrOpenBlock)) {
-      return statements[2];
-    }
+
     return null;
   }
 
-  public GrCondition replaceThenBranch(GrCondition newBranch) throws IncorrectOperationException {
+  public GrStatement replaceThenBranch(GrStatement newBranch) throws IncorrectOperationException {
     if (getThenBranch() == null ||
         newBranch == null) {
       throw new IncorrectOperationException();
@@ -90,10 +85,10 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     if (!(newNode.getPsi() instanceof GrCondition)) {
       throw new IncorrectOperationException();
     }
-    return (GrCondition) newNode.getPsi();
+    return (GrStatement) newNode.getPsi();
   }
 
-  public GrCondition replaceElseBranch(GrCondition newBranch) throws IncorrectOperationException {
+  public GrStatement replaceElseBranch(GrStatement newBranch) throws IncorrectOperationException {
     if (getElseBranch() == null ||
         newBranch == null) {
       throw new IncorrectOperationException();
@@ -109,7 +104,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     if (!(newNode.getPsi() instanceof GrCondition)) {
       throw new IncorrectOperationException();
     }
-    return (GrCondition) newNode.getPsi();
+    return (GrStatement) newNode.getPsi();
   }
 
 }
