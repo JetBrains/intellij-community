@@ -412,7 +412,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, findUsagesOptions, scopeFile);
     final boolean[] usagesWereFound = new boolean[]{false};
 
-    Usage fUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
+    Usage fUsage = findSiblingUsage(myProject, usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
 
     if (fUsage != null) {
       fUsage.navigate(true);
@@ -475,7 +475,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private static Usage findSiblingUsage(final UsageSearcher usageSearcher,
+  private static Usage findSiblingUsage(final Project project, final UsageSearcher usageSearcher,
                                  FileSearchScope dir,
                                  final FileEditorLocation currentLocation,
                                  final boolean[] usagesWereFound,
@@ -495,6 +495,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     final Usage[] foundUsage = new Usage[]{null};
     usageSearcher.generate(new Processor<Usage>() {
       public boolean process(Usage usage) {
+        if (com.intellij.usages.UsageViewManager.getInstance(project).searchHasBeenCancelled()) return false;
+
         usagesWereFound[0] = true;
 
         if (direction == FileSearchScope.FROM_START) {

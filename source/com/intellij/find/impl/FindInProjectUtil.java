@@ -192,6 +192,7 @@ public class FindInProjectUtil {
       boolean processAllLarge = false;
 
       for (final PsiFile psiFile : psiFiles) {
+        if (UsageViewManager.getInstance(project).searchHasBeenCancelled()) break;
         ProgressManager.getInstance().checkCanceled();
         if (customScope != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
