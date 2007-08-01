@@ -15,13 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas
  */
 public interface GrBreakStatement extends GrStatement {
   @Nullable String getLabel();
-  @Nullable GrStatement findTarget();
+
+  @Nullable GrLoopStatement getBreakedLoop();
 }

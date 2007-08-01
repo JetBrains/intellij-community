@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -50,8 +51,8 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
     return null;
   }
 
-  public GrCondition getBody() {
-    GrCondition[] statements = findChildrenByClass(GrCondition.class);
+  public GrStatement getBody() {
+    GrStatement[] statements = findChildrenByClass(GrStatement.class);
     if (statements.length == 2) {
       return statements[1];
     }

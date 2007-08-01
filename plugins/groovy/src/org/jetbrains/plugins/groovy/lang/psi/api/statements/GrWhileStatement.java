@@ -26,6 +26,6 @@ public interface GrWhileStatement extends GrStatement, GrControlStatement, GrLoo
 
   public GrCondition getCondition();
 
-  public GrCondition getBody();
+  public GrStatement getBody();
 
 }

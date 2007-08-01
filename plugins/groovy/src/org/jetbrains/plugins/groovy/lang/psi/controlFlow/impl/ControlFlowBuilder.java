@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -26,12 +27,40 @@ import java.util.Stack;
  * @author ven
  */
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
-  List<InstructionImpl> myInstructions = new ArrayList<InstructionImpl>();
+  List<InstructionImpl> myInstructions;
 
-  Stack<InstructionImpl> myProcessingStack = new Stack<InstructionImpl>();
+  Stack<InstructionImpl> myProcessingStack;
   private InstructionImpl myHead;
 
-  private Stack<Pair<InstructionImpl, GroovyPsiElement>> myPending = new Stack<Pair<InstructionImpl, GroovyPsiElement>>();
+  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
+  private GroovyPsiElement myStartInScope;
+  private GroovyPsiElement myEndInScope;
+
+  private boolean myIsInScope;
+
+  public void visitElement(GroovyPsiElement element) {
+    if (element == myStartInScope) myIsInScope = true;
+    else if (element == myEndInScope) myIsInScope = false;
+
+    if (myIsInScope) {
+      super.visitElement(element);
+    }
+  }
+
+  public Instruction buildControlFlow(GroovyPsiElement scope, GroovyPsiElement startInScope, GroovyPsiElement endInScope) {
+    myInstructions = new ArrayList<InstructionImpl>();
+    myProcessingStack = new Stack<InstructionImpl>();
+    myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+    myHead = new InstructionImpl(scope);
+    myStartInScope = startInScope;
+    myEndInScope = endInScope;
+
+    Instruction head = myHead;
+    scope.accept(this);
+
+    checkPending(new InstructionImpl(null)); //collect return edges
+    return head;
+  }
 
   private void addNode(InstructionImpl instruction) {
     myInstructions.add(instruction);
@@ -49,9 +78,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
     super.visitBreakStatement(breakStatement);
-    final GrStatement target = breakStatement.findTarget();
+    final GrLoopStatement target = breakStatement.getBreakedLoop();
     if (target != null) {
-      addPendingEdge(target);
+      final GrCondition body = target.getBody();
+      assert body != null;
+      addPendingEdge(body);
     }
   }
 
@@ -66,7 +97,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitReturnStatement(GrReturnStatement returnStatement) {
-    super.visitReturnStatement(returnStatement);    //To change body of overridden methods use File | Settings | File Templates.
+    final GrExpression value = returnStatement.getReturnValue();
+    if (value != null) value.accept(this);
+
+    addPendingEdge(null);
   }
 
   public void visitAssertStatement(GrAssertStatement assertStatement) {
@@ -100,7 +134,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       for (GrCondition initializer : ((GrTraditionalForClause) clause).getInitialization()) {
         initializer.accept(this);
       }
-    } else if (clause instanceof GrForInClause){
+    } else if (clause instanceof GrForInClause) {
       final GrExpression expression = ((GrForInClause) clause).getIteratedExpression();
       expression.accept(this);
     }
@@ -110,6 +144,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     InstructionImpl bodyInstruction = startNode(body);
     if (body != null) body.accept(this);
     finishNode(bodyInstruction);
+    checkPending(instruction); //check for breaks targeted here
 
     if (clause instanceof GrTraditionalForClause) {
       final GrExpression condition = ((GrTraditionalForClause) clause).getCondition();
@@ -132,21 +167,37 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void checkPending(InstructionImpl instruction) {
-    Pair<InstructionImpl, GroovyPsiElement> pending;
-    final PsiElement currElement = instruction.getElement();
-    while (!myPending.isEmpty()) {
-      pending = myPending.peek();
-      final PsiElement scope = pending.getSecond();
-      assert scope != null;
-      if (currElement == null || !PsiTreeUtil.isAncestor(scope, currElement, true)) {
-        addEdge(pending.getFirst(), instruction);
-        myPending.pop();
-      } else break;
+    final PsiElement element = instruction.getElement();
+    if (element == null) {
+      //add all
+      for (Pair<InstructionImpl, GroovyPsiElement> pair : myPending) {
+        addEdge(pair.getFirst(), instruction);
+      }
+    } else {
+      for (int i = myPending.size(); i >= 0; i--) {
+        final Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
+        final PsiElement scopeWhenToAdd = pair.getSecond();
+        if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, element, false)) {
+          addEdge(pair.getFirst(), instruction);
+          myPending.remove(i);
+        } else break;
+      }
     }
   }
 
+  //add edge when instruction.getElement() is not contained in scopeWhenAdded
   private void addPendingEdge(GroovyPsiElement scopeWhenAdded) {
-    myPending.push(new Pair<InstructionImpl, GroovyPsiElement>(myHead, scopeWhenAdded));
+    int i = 0;
+    if (scopeWhenAdded != null) {
+      for (; i < myPending.size(); i++) {
+        Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
+
+        final GroovyPsiElement currScope = pair.getSecond();
+        if (currScope == null) continue;
+        if (!PsiTreeUtil.isAncestor(currScope, scopeWhenAdded, true)) break;
+      }
+    }
+    myPending.add(i, new Pair<InstructionImpl, GroovyPsiElement>(myHead, scopeWhenAdded));
   }
 
   public void visitWhileStatement(GrWhileStatement whileStatement) {
@@ -160,6 +211,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (body != null) {
       body.accept(this);
     }
+    checkPending(instruction); //check for breaks targeted here
     addEdge(myHead, instruction); //loop
     finishNode(instruction);
   }
@@ -184,7 +236,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     public PsiVariable getVariable() {
       final PsiElement resolved = myRefExpr.resolve();
-      return resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
+      return resolved instanceof PsiVariable ? (PsiVariable) resolved : null;
     }
 
     public boolean isWrite() {
@@ -204,7 +256,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void finishNode(InstructionImpl instruction) {
-    assert(instruction.equals(myProcessingStack.pop()));
+    assert instruction.equals(myProcessingStack.pop());
   }
 
   private InstructionImpl findInstruction(GroovyPsiElement element) {

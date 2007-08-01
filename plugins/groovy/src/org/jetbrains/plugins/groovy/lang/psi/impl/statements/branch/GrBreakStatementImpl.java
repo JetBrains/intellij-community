@@ -20,13 +20,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
@@ -52,9 +51,17 @@ public class GrBreakStatementImpl extends GroovyPsiElementImpl implements GrBrea
   }
 
   @Nullable
-  public GrStatement findTarget() {
+  public GrLoopStatement getBreakedLoop() {
     final String label = getLabel();
-    if (label == null) return PsiTreeUtil.getParentOfType(this, GrLoopStatement.class);
-    return ResolveUtil.resolveLabeledStatement(label, this);
+    GrLoopStatement loop = PsiTreeUtil.getParentOfType(this, GrLoopStatement.class);
+    if (label == null) return loop;
+    while (loop != null) {
+      if (loop.getParent() instanceof GrLabeledStatement && label.equals(((GrLabeledStatement) loop.getParent()).getLabel())) {
+        return loop;
+      }
+      loop = PsiTreeUtil.getParentOfType(loop, GrLoopStatement.class);
+    }
+
+    return null;
   }
 }

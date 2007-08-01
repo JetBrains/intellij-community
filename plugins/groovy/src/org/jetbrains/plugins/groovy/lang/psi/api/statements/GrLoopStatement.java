@@ -24,5 +24,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 public interface GrLoopStatement extends GrStatement {
 
   GrCondition replaceBody (GrCondition statement) throws IncorrectOperationException;
-
+  GrCondition getBody();
 }
