@@ -87,7 +87,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     }
 
     PsiFile file = child.getContainingFile();
-    if (file == null) {
+    if (file == null || file instanceof PsiCompiledElement) {
       myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
       return;
     }

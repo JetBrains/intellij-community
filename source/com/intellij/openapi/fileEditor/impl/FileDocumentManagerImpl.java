@@ -375,8 +375,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     final VirtualFile file = event.getFile();
     final Document document = getCachedDocument(file);
     if (document == null) {
-      myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileWithNoDocumentChanged(file);
+      fireFileWithNoDocumentChanged(file);
       return;
+    }
+
+    if (file.getFileType() == StdFileTypes.CLASS) {
+      fireFileWithNoDocumentChanged(file); // This will generate PSI event at FileManagerImpl
     }
 
     long documentStamp = document.getModificationStamp();
@@ -405,6 +409,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     else{
       reloadFromDisk(document);
     }
+  }
+
+  private void fireFileWithNoDocumentChanged(final VirtualFile file) {
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileWithNoDocumentChanged(file);
   }
 
   public void reloadFromDisk(@NotNull final Document document) {

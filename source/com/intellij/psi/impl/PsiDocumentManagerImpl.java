@@ -403,8 +403,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final FileViewProvider provider = getCachedViewProvider(document);
     if (provider == null) return;
 
+    if (provider.getVirtualFile().getFileType().isBinary()) return;
+    
     final List<PsiFile> files = provider.getAllFiles();
-    boolean hasLockedBlocks = false;
+    boolean hasLockedBlocks = false;                                                      
     for (PsiFile file : files) {
       if (file == null) continue;
       final TextBlock textBlock = getTextBlock(document, file);
@@ -441,6 +443,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final Document document = event.getDocument();
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider != null) {
+      if (viewProvider.getVirtualFile().getFileType().isBinary()) return;
+
       final List<PsiFile> files = viewProvider.getAllFiles();
       boolean commitNecessary = false;
       for (PsiFile file : files) {

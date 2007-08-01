@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
@@ -56,6 +57,7 @@ public class JarHandler implements FileSystemInterface {
   public JarHandler(final JarFileSystemImpl fileSystem, String path) {
     myFileSystem = fileSystem;
     myBasePath = path;
+    LocalFileSystem.getInstance().findFileByPath(path); // Make sure local file system is aware of this file and will fire events if it changes
   }
 
   public void dispose() {
