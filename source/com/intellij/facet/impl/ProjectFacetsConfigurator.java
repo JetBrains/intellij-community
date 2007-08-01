@@ -5,20 +5,19 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.ui.ConfigureFacetsStep;
-import com.intellij.facet.impl.ui.FacetEditor;
-import com.intellij.facet.impl.ui.FacetTreeModel;
-import com.intellij.facet.impl.ui.ProjectConfigurableContext;
+import com.intellij.facet.impl.ui.*;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
@@ -34,7 +33,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ProjectFacetsConfigurator implements FacetsProvider {
+public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
   private Map<Module, ModifiableFacetModel> myModels = new HashMap<Module, ModifiableFacetModel>();
   private Map<Facet, FacetEditor> myEditors = new HashMap<Facet, FacetEditor>();
@@ -246,6 +245,15 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   @Nullable
   public <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
     return getFacetModel(module).findFacet(type, name);
+  }
+
+  public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
+    Module module = moduleRootModel.getModule();
+    Facet[] allFacets = getAllFacets(module);
+    for (Facet facet : allFacets) {
+      FacetEditor editor = getOrCreateEditor(facet);
+      ((FacetEditorContextBase)editor.getContext()).fireModuleRootsChanged(moduleRootModel);
+    }
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {

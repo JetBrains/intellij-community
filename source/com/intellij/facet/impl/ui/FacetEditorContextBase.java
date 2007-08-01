@@ -15,10 +15,12 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +33,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private ModulesProvider myModulesProvider;
   private final FacetInfo myFacetInfo;
   private UserDataHolder mySharedModuleData;
+  private EventDispatcher<ModuleRootsChangeListener> myModuleRootsDispatcher = EventDispatcher.create(ModuleRootsChangeListener.class);
 
   public FacetEditorContextBase(@NotNull FacetInfo facetInfo, final @Nullable FacetEditorContext parentContext, 
                                 final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider,
@@ -121,5 +124,13 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
       name = baseName + " (" + count++ + ")";
     }
     return name;
+  }
+
+  public void addModuleRootListener(ModuleRootsChangeListener moduleRootsChangeListener) {
+    myModuleRootsDispatcher.addListener(moduleRootsChangeListener);
+  }
+
+  public void fireModuleRootsChanged(final ModifiableRootModel moduleRootModel) {
+    myModuleRootsDispatcher.getMulticaster().moduleRootsChanged(moduleRootModel);
   }
 }

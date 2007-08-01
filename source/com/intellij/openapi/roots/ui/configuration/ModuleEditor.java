@@ -1,8 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
-import com.intellij.facet.FacetModel;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -19,18 +17,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
-import com.intellij.openapi.ui.ChooseView;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +76,7 @@ public class ModuleEditor implements Place.Navigator {
     myProject = project;
     myModulesProvider = modulesProvider;
     myFacetsConfigurator = facetsConfigurator;
+    addChangeListener(facetsConfigurator);
     myName = module.getName();
     myModuleBuilder = moduleBuilder;
   }
