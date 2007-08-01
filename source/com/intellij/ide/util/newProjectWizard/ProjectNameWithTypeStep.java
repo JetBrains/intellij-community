@@ -20,15 +20,40 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
   private LabeledComponent<JTextField> myModuleName = new LabeledComponent<JTextField>();
   private boolean myInSync = false;
   private boolean myChangedByUser = false;
+  @NonNls private static final String NAME = "NAME";
+  @NonNls private static final String EMPTY = "EMPTY";
 
   public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
+    final JTextField component = new JTextField();
+    component.setText(myNamePathComponent.getNameValue());
+    myModuleName.setComponent(component);
+    myModuleName.setText(ProjectBundle.message("project.new.wizard.module.name.title"));
+    myModuleName.getLabel().setFont(myModuleName.getFont().deriveFont(Font.BOLD));
+    final CardLayout card = new CardLayout();
+    final JPanel moduleNamePanel = new JPanel(card);
+    final JPanel nonEmpty = new JPanel(new BorderLayout());
+    moduleNamePanel.add(NAME, nonEmpty);
+    nonEmpty.add(myModuleName, BorderLayout.CENTER);
+    moduleNamePanel.add(EMPTY, new JPanel(new BorderLayout()));
+    card.show(moduleNamePanel, myWizardContext.getProject() == null ? NAME : EMPTY);
+    myAdditionalContentPanel.add(moduleNamePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST,
+                                                                        GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+    component.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (myInSync) return;
+        myChangedByUser = true;
+      }
+    });
+
     myModuleDescriptionPane = new JEditorPane();
     myModuleDescriptionPane.setContentType(UIUtil.HTML_MIME);
     myModuleDescriptionPane.addHyperlinkListener(new HyperlinkListener() {
@@ -71,6 +96,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         //noinspection HardCodedStringLiteral
         myModuleDescriptionPane
           .setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
+        card.show(moduleNamePanel, typeSelected != ModuleType.EMPTY && myWizardContext.getProject() == null ? NAME : EMPTY);
         fireStateChanged();
       }
     });
@@ -93,20 +119,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         myInSync = false;
       }
     });
-    final JTextField component = new JTextField();
-    component.setText(myNamePathComponent.getNameValue());
-    myModuleName.setComponent(component);
-    myModuleName.setText(ProjectBundle.message("project.new.wizard.module.name.title"));
-    myModuleName.getLabel().setFont(myModuleName.getFont().deriveFont(Font.BOLD));
-    myModuleName.setVisible(myWizardContext.getProject() == null);
-    myAdditionalContentPanel.add(myModuleName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                                                                      GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
-    component.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myInSync) return;
-        myChangedByUser = true;
-      }
-    });
+
 
     final JLabel descriptionLabel = new JLabel(IdeBundle.message("label.description"));
     descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
