@@ -18,11 +18,9 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.Comparator;
 
@@ -106,37 +104,16 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntity(final RefEntity entity, final PsiElement element) {
     if (entity instanceof RefElement) {
-      return compareElements(((RefElement)entity).getElement(), element);
+      return PsiUtil.compareElementsByPosition(((RefElement)entity).getElement(), element);
     }
     return -1;
   }
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      return compareElements(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+      return PsiUtil.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
     } else if (entity1 != null && entity2 != null) {
       return entity1.getName().compareToIgnoreCase(entity2.getName());
-    }
-    return 0;
-  }
-
-  private static int compareElements(final PsiElement element1, final PsiElement element2) {
-    if (element1 != null && element2 != null) {
-      final PsiFile psiFile1 = element1.getContainingFile();
-      final PsiFile psiFile2 = element2.getContainingFile();
-      if (Comparing.equal(psiFile1, psiFile2)){
-        final TextRange textRange1 = element1.getTextRange();
-        final TextRange textRange2 = element2.getTextRange();
-        if (textRange1 != null && textRange2 != null) {
-          return textRange1.getStartOffset() - textRange2.getStartOffset();
-        }
-      } else if (psiFile1 != null && psiFile2 != null){
-        final String name1 = psiFile1.getName();
-        LOG.assertTrue(name1 != null);
-        final String name2 = psiFile2.getName();
-        LOG.assertTrue(name2 != null);
-        return name1.compareToIgnoreCase(name2);
-      }
     }
     return 0;
   }

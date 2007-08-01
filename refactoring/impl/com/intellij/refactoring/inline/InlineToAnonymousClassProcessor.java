@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
@@ -173,6 +174,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    Collections.sort(newExpressions, new Comparator<PsiElement>() {
+      public int compare(final PsiElement o1, final PsiElement o2) {
+        return PsiUtil.compareElementsByPosition(o1, o2);
+      }
+    });
     for(PsiNewExpression newExpression: newExpressions) {
       replaceNewOrType(newExpression, superType);
     }

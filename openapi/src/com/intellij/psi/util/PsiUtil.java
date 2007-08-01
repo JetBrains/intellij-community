@@ -1250,4 +1250,24 @@ public final class PsiUtil {
     return parent;
   }
 
+  public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {
+    if (element1 != null && element2 != null) {
+      final PsiFile psiFile1 = element1.getContainingFile();
+      final PsiFile psiFile2 = element2.getContainingFile();
+      if (Comparing.equal(psiFile1, psiFile2)){
+        final TextRange textRange1 = element1.getTextRange();
+        final TextRange textRange2 = element2.getTextRange();
+        if (textRange1 != null && textRange2 != null) {
+          return textRange1.getStartOffset() - textRange2.getStartOffset();
+        }
+      } else if (psiFile1 != null && psiFile2 != null){
+        final String name1 = psiFile1.getName();
+        LOG.assertTrue(name1 != null);
+        final String name2 = psiFile2.getName();
+        LOG.assertTrue(name2 != null);
+        return name1.compareToIgnoreCase(name2);
+      }
+    }
+    return 0;
+  }
 }
