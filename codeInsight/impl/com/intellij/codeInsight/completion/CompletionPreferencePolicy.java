@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiProximity;
 import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -92,7 +93,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public int[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final int[] result = new int[10];
+    final int[] result = new int[12];
 
     String item1StringCap = capitalsOnly(item.getLookupString());
     result[0] = item1StringCap.startsWith(myPrefixCapitals) ? 1 : 0;
@@ -121,24 +122,22 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
     final String name = getName(object);
     if (name != null && myExpectedInfos != null) {
-      final List<String> words = NameUtil.nameToWordsLowerCase(name);
-      final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
-      int max1 = calcMatch(words, 0);
-      max1 = calcMatch(wordsNoDigits, max1);
-      result[5] = max1;
+      if (myPrefix.equals(name)) {
+        result[5] = Integer.MAX_VALUE;
+      } else {
+        final List<String> words = NameUtil.nameToWordsLowerCase(name);
+        final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
+        int max1 = calcMatch(words, 0);
+        max1 = calcMatch(wordsNoDigits, max1);
+        result[5] = max1;
+      }
     }
 
     if (object instanceof String) result[5] = 1;
     else if (object instanceof PsiKeyword) result[5] = -1;
 
+    result[6] = object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : object instanceof PsiEnumConstant ? 1 : 0;
 
-    if(object instanceof PsiNamedElement){
-      result[6] = myPrefix.equals(((PsiNamedElement)object).getName())
-                  ? 3
-                  : object instanceof PsiEnumConstant
-                    ? 1
-                    : object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : 0;
-    }
     if (object instanceof PsiMember){
       final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
       if (qualifierType1 != null){
@@ -165,6 +164,20 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       result[9] = max;
     }
 
+    if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
+      result[10] = 5;
+    }
+    else if (object instanceof PsiField) {
+      result[10] = 4;
+    }
+    else if (object instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)object;
+      result[10]= PropertyUtil.isSimplePropertyGetter(method) ? 3 : 2;
+    }
+
+    if (name != null && myExpectedInfos != null && result[5] != 0) {
+      result[11] = 239 - NameUtil.nameToWords(name).length;
+    }
 
     item.setAttribute(LookupItem.WEIGHT, result);
 
