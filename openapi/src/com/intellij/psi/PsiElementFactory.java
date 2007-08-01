@@ -319,7 +319,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * Creates a local variable declaration statement with the specified name, type and initializer,
    * optionally without reformatting the declaration.
    *
-   *  @param name        the name of the variable to create. @param type        the type of the variable to create. @param initializer the initializer for the variable. @return the variable instance.
+   * @param name        the name of the variable to create.
+   * @param type        the type of the variable to create.
+   * @param initializer the initializer for the variable.
+   * @return the variable instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
    *                                     <code>type</code> is not a valid type.
    */
