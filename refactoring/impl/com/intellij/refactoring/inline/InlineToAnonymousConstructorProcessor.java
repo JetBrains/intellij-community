@@ -73,7 +73,7 @@ class InlineToAnonymousConstructorProcessor {
     }
 
     @NonNls StringBuilder builder = new StringBuilder("new ");
-    builder.append(substType.getPresentableText());
+    builder.append(substType.getCanonicalText());
     builder.append("() {}");
 
     PsiNewExpression superNewExpressionTemplate = (PsiNewExpression) myElementFactory.createExpressionFromText(builder.toString(),

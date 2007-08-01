@@ -23,6 +23,10 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
     doTest("p1.SubjectWithSuper");
   }
 
+  public void testImportForConstructor() throws Exception {   // IDEADEV-18714
+    doTest("p1.ChildCtor");
+  }
+
   private String getRoot() {
     return PathManagerEx.getTestDataPath()+ "/refactoring/inlineToAnonymousClass/multifile/" + getTestName(true);
   }
