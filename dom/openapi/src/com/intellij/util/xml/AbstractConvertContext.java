@@ -18,14 +18,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractConvertContext extends ConvertContext {
 
-  public final PsiClass findClass(String name, @Nullable final GlobalSearchScope searchScope) {
+  public final PsiClass findClass(@Nullable String name, @Nullable final GlobalSearchScope searchScope) {
+    return findClass(name, getFile(), getModule(), searchScope);
+  }
+
+  @Nullable
+  public static PsiClass findClass(@Nullable String name, @NotNull final XmlFile file, @Nullable final Module module, @Nullable final GlobalSearchScope searchScope) {
     if (name == null) return null;
-    final XmlFile file = getFile();
     if (name.indexOf('$')>=0) name = name.replace('$', '.');
 
     final GlobalSearchScope scope;
     if (searchScope == null) {
-      final Module module = getModule();
+
       if (module != null) {
         scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
       }
@@ -36,7 +40,8 @@ public abstract class AbstractConvertContext extends ConvertContext {
     else {
       scope = searchScope;
     }
-    final PsiClass aClass = getPsiManager().findClass(name, scope);
+
+    final PsiClass aClass = file.getManager().findClass(name, scope);
     if (aClass != null) {
       assert aClass.isValid() : name;
     }

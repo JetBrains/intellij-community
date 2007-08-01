@@ -99,9 +99,11 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
       for (OrderRootType rootType : OrderRootType.ALL_TYPES) {
         final String[] roots = lib.getRoots(rootType);
         for (String root : roots) {
-          final VirtualFile vRoot = OrderRootType.CLASSES.equals(rootType)
-                                    ? JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/")
-                                    : LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+          VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+          if (vRoot != null && OrderRootType.CLASSES.equals(rootType) && !vRoot.isDirectory()) {
+            final VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/");
+            if (jar != null) vRoot = jar;
+          }
           if (vRoot != null) {
             libraryModel.addRoot(vRoot, rootType);
           }
