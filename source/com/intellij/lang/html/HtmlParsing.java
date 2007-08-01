@@ -208,7 +208,7 @@ class HtmlParsing {
         }
 
 
-        if (isInlineTagContainer && HtmlUtil.isHtmlBlockTagL(childName)) {
+        if (isInlineTagContainer && HtmlUtil.isHtmlBlockTagL(childName) && isOptionalTagEnd) {
           tag.doneBefore(XmlElementType.HTML_TAG, childMarker);
           return;
         }
