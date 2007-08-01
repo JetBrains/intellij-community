@@ -28,12 +28,13 @@ import java.util.ArrayList;
 public abstract class ParameterTablePanel extends JPanel {
   private final Project myProject;
   private final VariableData[] myVariableData;
+  private final TypeSelector[] myParameterTypeSelectors;
 
   private final Table myTable;
   private MyTableModel myTableModel;
   private JButton myUpButton;
   private JButton myDownButton;
-  private TypeSelector[] myParameterTypeSelectors;
+  private JComboBox myTypeRendererCombo;
 
   public static class VariableData {
     public final PsiVariable variable;
@@ -93,11 +94,11 @@ public abstract class ParameterTablePanel extends JPanel {
       myVariableData[i].type = myParameterTypeSelectors[i].getSelectedType(); //reverse order
     }
 
-    final JComboBox combo = new JComboBox(myVariableData); //used for rendering types with multiple choices
-    combo.setOpaque(true);
-    combo.setBorder(null);
+    myTypeRendererCombo = new JComboBox(myVariableData);
+    myTypeRendererCombo.setOpaque(true);
+    myTypeRendererCombo.setBorder(null);
 
-    combo.setRenderer(new DefaultListCellRenderer() {
+    myTypeRendererCombo.setRenderer(new DefaultListCellRenderer() {
 
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
@@ -126,8 +127,8 @@ public abstract class ParameterTablePanel extends JPanel {
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (myParameterTypeSelectors[row].getComponent() instanceof JComboBox) {
-          combo.setSelectedIndex(row);
-          return combo;
+          myTypeRendererCombo.setSelectedIndex(row);
+          return myTypeRendererCombo;
         }
 
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -303,9 +304,17 @@ public abstract class ParameterTablePanel extends JPanel {
     if (row < 0 || row >= myVariableData.length) return;
     int targetRow = row + moveIncrement;
     if (targetRow < 0 || targetRow >= myVariableData.length) return;
+
     VariableData currentItem = myVariableData[row];
     myVariableData[row] = myVariableData[targetRow];
     myVariableData[targetRow] = currentItem;
+
+    TypeSelector currentSelector = myParameterTypeSelectors[row];
+    myParameterTypeSelectors[row] = myParameterTypeSelectors[targetRow];
+    myParameterTypeSelectors[targetRow] = currentSelector;
+    
+    myTypeRendererCombo.setModel(new DefaultComboBoxModel(myVariableData));
+
     myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
     myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
   }
