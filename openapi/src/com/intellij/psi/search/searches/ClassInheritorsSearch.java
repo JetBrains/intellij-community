@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
@@ -47,13 +48,11 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                            PsiBundle.message("psi.search.inheritors.progress"));
         }
 
-        Collection<PsiClass> processed = new THashSet<PsiClass>();
-        processed.add(baseClass);
         boolean result = processInheritors(consumer,
                                            baseClass,
                                            searchScope,
                                            p.isCheckDeep(),
-                                           processed,
+                                           new THashSet<PsiClass>(),
                                            p.isCheckInheritance(),
                                            p.isIncludeAnonymous());
 
@@ -135,32 +134,25 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
     if (baseClass instanceof PsiAnonymousClass) return true;
 
-    boolean isFinal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));
-      }
-    }).booleanValue();
-
-    if (isFinal) return true;
+    if (isFinal(baseClass)) return true;
 
     /* TODO
     if ("java.lang.Object".equals(baseClass.getQualifiedName())) { // special case
       // TODO!
     }
     */
-
     final PsiManager psiManager = PsiManager.getInstance(baseClass.getProject());
 
-    DirectClassInheritorsSearch.search(baseClass, GlobalSearchScope.allScope(baseClass.getProject()), includeAnonymous).forEach(new Processor<PsiClass>() {
+    final Ref<PsiClass> currentBase = Ref.create(null);
+    final Queue<PsiClass> queue = new Queue<PsiClass>(10);
+    final Processor<PsiClass> processor = new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
         final Ref<Boolean> result = new Ref<Boolean>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
-              if (!candidate.isInheritor(baseClass, false) || !processed.add(candidate)) {
-                result.set(true);
-                return;
-              }
+            if (!processed.add(candidate) || checkInheritance && !candidate.isInheritor(currentBase.get(), false)) {
+              result.set(true);
+              return;
             }
 
             if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
@@ -182,15 +174,28 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         });
         if (!result.isNull()) return result.get();
 
-        if (checkDeep) {
-          if (!processInheritors(consumer, candidate, searchScope, checkDeep, processed, checkInheritance, includeAnonymous)) return false;
+        if (checkDeep && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
+          queue.addLast(candidate);
         }
 
         return true;
       }
-    });
-
-
+    };
+    queue.addLast(baseClass);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(baseClass.getProject());
+    while (!queue.isEmpty()) {
+      final PsiClass psiClass = queue.pullFirst();
+      currentBase.set(psiClass);
+      if (!DirectClassInheritorsSearch.search(psiClass, scope, includeAnonymous).forEach(processor)) return false;
+    }
     return true;
+  }
+
+  private static boolean isFinal(final PsiClass baseClass) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));
+      }
+    }).booleanValue();
   }
 }
