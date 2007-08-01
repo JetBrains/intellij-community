@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.extapi.psi.MetadataPsiElementBase;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -49,12 +50,15 @@ public class PsiProximityComparator implements Comparator<Object> {
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
     if (contextModule == null) return null;
 
-    final PsiElement commonContext = PsiTreeUtil.findCommonContext(myContext, element);
-    if (PsiTreeUtil.getContextOfType(commonContext, PsiMethod.class, false) != null) return PsiProximity.SAME_METHOD;
-    if (PsiTreeUtil.getContextOfType(commonContext, PsiClass.class, false) != null) return PsiProximity.SAME_CLASS;
+    VirtualFile virtualFile = null;
+    if (!(element instanceof MetadataPsiElementBase)) {
+      final PsiElement commonContext = PsiTreeUtil.findCommonContext(myContext, element);
+      if (PsiTreeUtil.getContextOfType(commonContext, PsiMethod.class, false) != null) return PsiProximity.SAME_METHOD;
+      if (PsiTreeUtil.getContextOfType(commonContext, PsiClass.class, false) != null) return PsiProximity.SAME_CLASS;
 
-    VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
-    if (isOpenedInEditor(virtualFile)) return PsiProximity.OPENED_IN_EDITOR;
+      virtualFile = PsiUtil.getVirtualFile(element);
+      if (isOpenedInEditor(virtualFile)) return PsiProximity.OPENED_IN_EDITOR;
+    }
 
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
