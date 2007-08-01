@@ -148,9 +148,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     for (PsiMember container : containers) {
       Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
       for (PsiMember referenced : referencedInaccessible) {
+        final String referencedDescription = ConflictsUtil.getDescription(referenced, true);
+        final String containerDescription = ConflictsUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
-                                                   ConflictsUtil.getDescription(referenced, true),
-                                                   ConflictsUtil.getDescription(container, true));
+                                                   referencedDescription, containerDescription);
         conflicts.add(ConflictsUtil.capitalize(message));
       }
     }
@@ -168,6 +169,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     for (UsageInfo usage : usages) {
       final PsiMember container = ConflictsUtil.getContainer(usage.getElement());
+      if (container == null) continue;    // usage in import statement
       Set<PsiMember> inaccessibleReferenced = result.get(container);
       if (inaccessibleReferenced == null) {
         inaccessibleReferenced = new HashSet<PsiMember>();

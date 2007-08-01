@@ -40,7 +40,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   protected InlineToAnonymousClassProcessor(Project project,
                                             PsiClass psiClass,
-                                            final PsiCall callToInline,
+                                            @Nullable final PsiCall callToInline,
                                             boolean inlineThisOnly,
                                             final boolean searchInComments,
                                             final boolean searchInNonJavaFiles) {
@@ -48,6 +48,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     myClass = psiClass;
     myCallToInline = callToInline;
     myInlineThisOnly = inlineThisOnly;
+    if (myInlineThisOnly) assert myCallToInline != null;
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
   }
@@ -129,9 +130,16 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     ArrayList<String> result = new ArrayList<String>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       protected void checkAddMember(@NotNull final PsiMember member) {
-        if (!PsiTreeUtil.isAncestor(myClass, member, false)) {
-          super.checkAddMember(member);
+        if (PsiTreeUtil.isAncestor(myClass, member, false)) {
+          return;
         }
+        final PsiModifierList modifierList = member.getModifierList();
+        if (member.getContainingClass() == myClass.getSuperClass() && modifierList != null &&
+            modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+          // ignore access to protected members of superclass - they'll be accessible anyway
+          return;
+        }
+        super.checkAddMember(member);
       }
     };
     InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, collector, result);

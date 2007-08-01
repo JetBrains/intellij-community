@@ -10,10 +10,15 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public class ConflictsUtil {
+  private ConflictsUtil() {
+  }
+
+  @Nullable
   public static PsiMember getContainer(PsiElement place) {
     PsiElement parent = place;
     while (true) {
@@ -47,10 +52,9 @@ public class ConflictsUtil {
     if (element instanceof PsiClassInitializer) {
       PsiClassInitializer initializer = (PsiClassInitializer) element;
       boolean isStatic = initializer.hasModifierProperty(PsiModifier.STATIC);
-      String s = isStatic ?
-                 RefactoringBundle.message("static.initializer.description", getDescription(initializer.getContainingClass(), false)) :
-                 RefactoringBundle.message("instance.initializer.description", getDescription(initializer.getContainingClass(), false));;
-      return s;
+      return isStatic
+             ? RefactoringBundle.message("static.initializer.description", getDescription(initializer.getContainingClass(), false))
+             : RefactoringBundle.message("instance.initializer.description", getDescription(initializer.getContainingClass(), false));
     }
 
     if (element instanceof PsiParameter) {
