@@ -4,13 +4,16 @@ import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.revertion.RevisionReverter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.VcsException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.IOException;
 
 public abstract class HistoryDialogModel {
   protected ILocalVcs myVcs;
@@ -105,6 +108,10 @@ public abstract class HistoryDialogModel {
 
   protected boolean isCurrentRevisionSelected() {
     return myRightRevisionIndex == 0;
+  }
+
+  public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
+    PatchCreator.create(myGateway, getLeftRevision(), getRightRevision(), path, isReverse);
   }
 
   public Reverter createReverter() {

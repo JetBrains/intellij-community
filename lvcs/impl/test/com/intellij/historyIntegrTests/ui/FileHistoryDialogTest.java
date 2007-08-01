@@ -1,4 +1,4 @@
-package com.intellij.historyIntegrTests;
+package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionProcessingProgress;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.historyIntegrTests.IntegrationTestCase;
 
 import java.io.IOException;
 

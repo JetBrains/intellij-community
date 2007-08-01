@@ -19,10 +19,13 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
@@ -109,6 +112,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   private ActionGroup createRevisionsActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
+    result.add(new CreatePatchAction());
     result.add(new ShowChangesOnlyAction());
     result.add(Separator.getInstance());
     result.add(new HelpAction());
@@ -258,6 +262,28 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     myGateway.showError(message("message.can.not.revert.because", formatted));
   }
 
+  private void createPatch() {
+    try {
+      CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel();
+      if (!showAsDialog(p)) return;
+      myModel.createPatch(p.getFileName(), p.isReversePatch());
+      close(0);
+    }
+    catch (VcsException e) {
+      myGateway.showError(message("message.error.during.create.patch", e));
+    }
+    catch (IOException e) {
+      myGateway.showError(message("message.error.during.create.patch", e));
+    }
+  }
+
+  private boolean showAsDialog(CreatePatchConfigurationPanel p) {
+    DialogBuilder b = new DialogBuilder(myGateway.getProject());
+    b.setTitle(message("create.patch.dialog.title"));
+    b.setCenterPanel(p.getPanel());
+    return b.show() == OK_EXIT_CODE;
+  }
+
   protected void showHelp() {
     HelpManager.getInstance().invokeHelp(getHelpId());
   }
@@ -286,6 +312,16 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setEnabled(isRevertEnabled());
+    }
+  }
+
+  private class CreatePatchAction extends AnAction {
+    public CreatePatchAction() {
+      super(message("action.create.patch"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      createPatch();
     }
   }
 

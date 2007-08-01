@@ -48,6 +48,10 @@ public class IdeaGateway {
     return myFileFilter;
   }
 
+  public String getBaseDir() {
+    return myProject.getBaseDir().getPath();
+  }
+
   public List<VirtualFile> getContentRoots() {
     return Arrays.asList(getRootManager().getContentRoots());
   }

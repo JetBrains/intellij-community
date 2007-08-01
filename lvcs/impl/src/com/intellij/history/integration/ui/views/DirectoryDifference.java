@@ -42,27 +42,25 @@ public class DirectoryDifference extends Change {
     return contentRevisionFrom(m, 1);
   }
 
-  private static ContentRevision contentRevisionFrom(final DirectoryDifferenceModel m, final int i) {
-    if (m.getEntry(i) == null) return null;
+  private static ContentRevision contentRevisionFrom(DirectoryDifferenceModel m, int i) {
+    final Entry e =  m.getEntry(i);
+    if (e == null) return null;
+
     return new ContentRevision() {
       @Nullable
       public String getContent() throws VcsException {
-        if (!m.isFile()) return null;
-        return new String(getEntry().getContent().getBytes());
+        if (e.isDirectory()) return null;
+        return new String(e.getContent().getBytes());
       }
 
       @NotNull
       public FilePath getFile() {
-        return new FilePathImpl(new File(getEntry().getPath()), getEntry().isDirectory());
+        return new FilePathImpl(new File(e.getPath()), e.isDirectory());
       }
 
       @NotNull
       public VcsRevisionNumber getRevisionNumber() {
         return VcsRevisionNumber.NULL;
-      }
-
-      private Entry getEntry() {
-        return m.getEntry(i);
       }
     };
   }
