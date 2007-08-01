@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -102,6 +103,8 @@ public class InspectionApplication {
         System.exit(1);
       }
       myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath, false);
+
+      VirtualFileManager.getInstance().refresh(false);
 
       //fetch profile by name from project file (project profiles can be disabled)
       Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfiles().get(myProfileName);
