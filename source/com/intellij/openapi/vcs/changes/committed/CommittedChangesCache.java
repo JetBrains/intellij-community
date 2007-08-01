@@ -491,7 +491,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             }
             else {
               LOG.info("Clearing cached incoming changelists");
-              myCachedIncomingChangeLists.clear();
+              myCachedIncomingChangeLists = null;
               pendingUpdateProcessed();
             }
           }
