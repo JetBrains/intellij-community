@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -15,9 +16,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +93,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (target != null) {
       addPendingEdge(target);
     }
+    myHead = null;
   }
 
   public void visitContinueStatement(GrContinueStatement continueStatement) {
@@ -99,6 +104,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       assert instruction != null;
       addEdge(myHead, instruction);
     }
+    myHead = null;
   }
 
   public void visitReturnStatement(GrReturnStatement returnStatement) {
@@ -125,8 +131,24 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     super.visitReferenceExpression(referenceExpression);
     if (referenceExpression.getQualifierExpression() == null) {
-      addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++));
+      if (isIncOrDecOperand(referenceExpression)) {
+        addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false));
+        addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, true));
+      } else {
+        addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, PsiUtil.isLValue(referenceExpression)));
+      }
     }
+  }
+
+  private boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
+    final PsiElement parent = referenceExpression.getParent();
+    if (parent instanceof GrPostfixExpression) return true;
+    if (parent instanceof GrUnaryExpression) {
+      final IElementType opType = ((GrUnaryExpression) parent).getOperationTokenType();
+      return opType == GroovyElementTypes.mDEC || opType == GroovyElementTypes.mINC;
+    }
+
+    return false;
   }
 
   public void visitIfStatement(GrIfStatement ifStatement) {
@@ -136,6 +158,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       condition.accept(this);
     }
 
+    final InstructionImpl head = myHead;
     final GrStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch != null) {
       final InstructionImpl thenInstruction = startNode(thenBranch);
@@ -144,6 +167,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       finishNode(thenInstruction);
     }
 
+    myHead = head;
     final GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) {
       final InstructionImpl elseInstruction = startNode(elseBranch);
@@ -217,6 +241,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   //add edge when instruction.getElement() is not contained in scopeWhenAdded
   private void addPendingEdge(GroovyPsiElement scopeWhenAdded) {
+    if (myHead == null) return;
+    
     int i = 0;
     if (scopeWhenAdded != null) {
       for (; i < myPending.size(); i++) {
@@ -258,10 +284,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     private GrReferenceExpression myRefExpr;
     private boolean myIsWrite;
 
-    public ReadWriteVariableInstructionImpl(GrReferenceExpression refExpr, int num) {
+    public ReadWriteVariableInstructionImpl(GrReferenceExpression refExpr, int num, boolean isWrite) {
       super(refExpr, num);
       myRefExpr = refExpr;
-      myIsWrite = PsiUtil.isLValue(refExpr);
+      myIsWrite = isWrite;
     }
 
     public PsiVariable getVariable() {
@@ -291,7 +317,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void finishNode(InstructionImpl instruction) {
     assert instruction.equals(myProcessingStack.pop());
-    myHead = myProcessingStack.peek();
+/*    myHead = myProcessingStack.peek();*/
   }
 
   private InstructionImpl findInstruction(GroovyPsiElement element) {
