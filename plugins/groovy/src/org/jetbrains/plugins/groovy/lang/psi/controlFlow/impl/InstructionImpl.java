@@ -11,26 +11,40 @@ import java.util.List;
  * @author ven
  */
 class InstructionImpl implements Instruction {
-  List<Instruction> myPred = new ArrayList<Instruction>();
+  List<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
 
-  List<Instruction> mySucc = new ArrayList<Instruction>();
+  List<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
 
   PsiElement myPsiElement;
+  private int myNumber;
 
   @Nullable
   public PsiElement getElement() {
     return myPsiElement;
   }
 
-  InstructionImpl(PsiElement psiElement) {
+  InstructionImpl(PsiElement psiElement, int num) {
     myPsiElement = psiElement;
+    myNumber = num;
   }
 
-  public Iterable<Instruction> succ() {
+  public Iterable<? extends Instruction> succ() {
     return mySucc;
   }
 
-  public Iterable<Instruction> pred() {
+  public Iterable<? extends Instruction> pred() {
     return myPred;
+  }
+
+  public String toString() {
+    final StringBuilder builder = new StringBuilder();
+    builder.append(myNumber);
+    builder.append("(");
+    for (InstructionImpl instruction : mySucc) {
+      builder.append(instruction.myNumber);
+    }
+    builder.append(")");
+    builder.append(" element: ").append(myPsiElement);
+    return builder.toString();
   }
 }

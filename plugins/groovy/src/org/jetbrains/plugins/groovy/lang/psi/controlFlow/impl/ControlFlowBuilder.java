@@ -37,6 +37,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private GroovyPsiElement myEndInScope;
 
   private boolean myIsInScope;
+  private int myInstructionNumber;
 
   public void visitElement(GroovyPsiElement element) {
     if (element == myStartInScope) myIsInScope = true;
@@ -51,7 +52,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myInstructions = new ArrayList<InstructionImpl>();
     myProcessingStack = new Stack<InstructionImpl>();
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
-    myHead = new InstructionImpl(scope);
+    myInstructionNumber = 0;
+    myHead = new InstructionImpl(scope, myInstructionNumber++);
     myStartInScope = startInScope;
     myEndInScope = endInScope;
 
@@ -120,7 +122,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     super.visitReferenceExpression(referenceExpression);
-    addNode(new ReadWriteVariableInstructionImpl(referenceExpression));
+    addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++));
   }
 
   public void visitIfStatement(GrIfStatement ifStatement) {
@@ -251,8 +253,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     private GrReferenceExpression myRefExpr;
     private boolean myIsWrite;
 
-    public ReadWriteVariableInstructionImpl(GrReferenceExpression refExpr) {
-      super(refExpr);
+    public ReadWriteVariableInstructionImpl(GrReferenceExpression refExpr, int num) {
+      super(refExpr, num);
       myRefExpr = refExpr;
       myIsWrite = PsiUtil.isLValue(refExpr);
     }
@@ -272,7 +274,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private InstructionImpl startNode(GroovyPsiElement element) {
-    final InstructionImpl instruction = new InstructionImpl(element);
+    final InstructionImpl instruction = new InstructionImpl(element, myInstructionNumber++);
     addNode(instruction);
     checkPending(instruction);
     return myProcessingStack.push(instruction);
