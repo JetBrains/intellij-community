@@ -153,11 +153,11 @@ class InlineToAnonymousConstructorProcessor {
         if (ourAssignmentPattern.accepts(stmt, context, new TraverseContext())) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
           if (!processAssignmentInConstructor(expression)) {
-            initializerBlock.addBefore(replaceParameterReferences(stmt, null), initializerBlock.getRBrace());
+            initializerBlock.addBefore(replaceParameterReferences(stmt, null, false), initializerBlock.getRBrace());
           }
         }
         else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
-          replaceParameterReferences(stmt, new ArrayList<PsiReferenceExpression>());
+          replaceParameterReferences(stmt, new ArrayList<PsiReferenceExpression>(), false);
           initializerBlock.addBefore(stmt, initializerBlock.getRBrace());
         }
       }
@@ -182,7 +182,7 @@ class InlineToAnonymousConstructorProcessor {
           final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
           final PsiExpression initializer;
           try {
-            initializer = (PsiExpression) replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs);
+            initializer = (PsiExpression) replaceParameterReferences((PsiExpression)rExpr.copy(), localVarRefs, false);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -197,7 +197,7 @@ class InlineToAnonymousConstructorProcessor {
       }
       else if (psiElement instanceof PsiVariable) {
         try {
-          replaceParameterReferences((PsiExpression)rExpr.copy(), new ArrayList<PsiReferenceExpression>());
+          replaceParameterReferences(rExpr.copy(), new ArrayList<PsiReferenceExpression>(), false);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -254,7 +254,7 @@ class InlineToAnonymousConstructorProcessor {
       if (parameter.isVarArgs()) {
         PsiEllipsisType ellipsisType = (PsiEllipsisType)parameter.getType();
         PsiType baseType = ellipsisType.getComponentType();
-        StringBuilder exprBuilder = new StringBuilder("new ");
+        @NonNls StringBuilder exprBuilder = new StringBuilder("new ");
         exprBuilder.append(baseType.getCanonicalText());
         exprBuilder.append("[] { }");
         try {
@@ -295,27 +295,29 @@ class InlineToAnonymousConstructorProcessor {
     PsiExpressionList superArguments = context.get(ourCallKey).getArgumentList();
     if (superArguments != null) {
       for(PsiExpression argument: superArguments.getExpressions()) {
-        argumentList.add(replaceParameterReferences((PsiExpression) argument.copy(),
-                                                    new ArrayList<PsiReferenceExpression>()));
+        final PsiElement superArgument = replaceParameterReferences(argument.copy(), new ArrayList<PsiReferenceExpression>(), true);
+        argumentList.add(superArgument);
       }
     }
   }
 
   private PsiElement replaceParameterReferences(PsiElement argument,
-                                                @Nullable final List<PsiReferenceExpression> localVarRefs) throws IncorrectOperationException {
+                                                @Nullable final List<PsiReferenceExpression> localVarRefs,
+                                                final boolean replaceFieldsWithInitializers) throws IncorrectOperationException {
     if (argument instanceof PsiReferenceExpression) {
       PsiElement element = ((PsiReferenceExpression)argument).resolve();
       if (element instanceof PsiParameter) {
         PsiParameter parameter = (PsiParameter)element;
         if (myLocalsForParameters.containsKey(parameter)) {
-          return (PsiExpression) argument.replace(getParameterReference(parameter));
+          return argument.replace(getParameterReference(parameter));
         }
         int index = myConstructorParameters.getParameterIndex(parameter);
-        return (PsiExpression) argument.replace(myConstructorArguments.getExpressions() [index]);
+        return argument.replace(myConstructorArguments.getExpressions() [index]);
       }
     }
 
     final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<Pair<PsiReferenceExpression, PsiParameter>>();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
     argument.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -323,9 +325,16 @@ class InlineToAnonymousConstructorProcessor {
         if (psiElement instanceof PsiParameter) {
           parameterReferences.add(new Pair<PsiReferenceExpression, PsiParameter>(expression, (PsiParameter) psiElement));
         }
-        else if (psiElement instanceof PsiVariable && localVarRefs != null) {
-          localVarRefs.add(expression);
-        }
+        else if (psiElement instanceof PsiVariable) {
+          if (localVarRefs != null) {
+            localVarRefs.add(expression);
+          }
+          if (replaceFieldsWithInitializers && psiElement instanceof PsiField && ((PsiField) psiElement).getContainingClass() == myClass) {
+          final PsiExpression initializer = ((PsiField)psiElement).getInitializer();
+          if (isConstant(initializer)) {
+            elementsToReplace.put(expression, initializer);
+          }
+        }        }
       }
     });
     for (Pair<PsiReferenceExpression, PsiParameter> pair: parameterReferences) {
@@ -337,14 +346,14 @@ class InlineToAnonymousConstructorProcessor {
       else {
         int index = myConstructorParameters.getParameterIndex(param);
         if (ref == argument) {
-          argument = (PsiExpression)argument.replace(myConstructorArguments.getExpressions() [index]);
+          argument = argument.replace(myConstructorArguments.getExpressions() [index]);
         }
         else {
           ref.replace(myConstructorArguments.getExpressions() [index]);
         }
       }
     }
-    return argument;
+    return replaceElementsWithMap(argument, elementsToReplace);
   }
 
   private PsiExpression getParameterReference(final PsiParameter parameter) throws IncorrectOperationException {
@@ -413,8 +422,16 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
     });
+    replaceElementsWithMap(method, elementsToReplace);
+  }
+
+  private static PsiElement replaceElementsWithMap(PsiElement replaceIn, final Map<PsiElement, PsiElement> elementsToReplace) throws IncorrectOperationException {
     for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
+      if (e.getKey() == replaceIn) {
+        return e.getKey().replace(e.getValue());
+      }
       e.getKey().replace(e.getValue());
     }
+    return replaceIn;
   }
 }
