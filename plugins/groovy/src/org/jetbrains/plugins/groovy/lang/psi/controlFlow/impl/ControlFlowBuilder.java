@@ -321,7 +321,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private InstructionImpl findInstruction(GroovyPsiElement element) {
-    for (int i = myProcessingStack.size(); i >= 0; i--) {
+    for (int i = myProcessingStack.size() - 1; i >= 0; i--) {
       InstructionImpl instruction = myProcessingStack.get(i);
       if (element.equals(instruction.getElement())) return instruction;
     }
