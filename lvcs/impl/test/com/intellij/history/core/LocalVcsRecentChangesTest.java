@@ -91,6 +91,24 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testIncludeChangeSetsWithFileContentChangesOnly() {
+    vcs.beginChangeSet();
+    vcs.createFile("f1", null, -1);
+    vcs.createFile("f2", null, -1);
+    vcs.endChangeSet("a");
+
+    vcs.beginChangeSet();
+    vcs.changeFileContent("f1", null, -1);
+    vcs.changeFileContent("f2", null, -1);
+    vcs.endChangeSet("b");
+
+    List<RecentChange> cc = vcs.getRecentChanges();
+    assertEquals(2, cc.size());
+    assertEquals("b", cc.get(0).getChangeName());
+    assertEquals("a", cc.get(1).getChangeName());
+  }
+
+  @Test
   public void testDoesNotIncludeLabels() {
     vcs.beginChangeSet();
     vcs.createFile("f", null, -1);

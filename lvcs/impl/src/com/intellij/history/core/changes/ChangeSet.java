@@ -122,11 +122,8 @@ public class ChangeSet extends Change {
   }
 
   @Override
-  public boolean isLocal() {
-    for (Change c : myChanges) {
-      if (!c.isLocal()) return false;
-    }
-    return true;
+  public boolean isFileContentChange() {
+    return myChanges.size() == 1 && myChanges.get(0).isFileContentChange();
   }
 
   @Override

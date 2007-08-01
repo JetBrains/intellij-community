@@ -218,7 +218,7 @@ public abstract class LocalVcs implements ILocalVcs {
 
     for (int i = 0; i < cc.size() && result.size() < 20; i++) {
       Change c = cc.get(i);
-      if (c.isLocal()) continue;
+      if (c.isFileContentChange()) continue;
       if (c.isLabel()) continue;
       if (c.getName() == null) continue;
 

@@ -65,7 +65,7 @@ public class ChangeFileContentChange extends StructuralChange {
   }
 
   @Override
-  public boolean isLocal() {
+  public boolean isFileContentChange() {
     return true;
   }
 

@@ -75,11 +75,11 @@ public class ChangeSetTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testIsLocal() {
-    assertFalse(cs(new CreateFileChange(1, "f", null, -1)).isLocal());
-    assertTrue(cs(new ChangeFileContentChange("f", null, -1)).isLocal());
-    assertTrue(cs(new ChangeFileContentChange("f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isLocal());
-    assertFalse(cs(new CreateFileChange(1, "f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isLocal());
+  public void testIsFileContentChange() {
+    assertFalse(cs(new CreateFileChange(1, "f", null, -1)).isFileContentChange());
+    assertTrue(cs(new ChangeFileContentChange("f", null, -1)).isFileContentChange());
+    assertFalse(cs(new ChangeFileContentChange("f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isFileContentChange());
+    assertFalse(cs(new CreateFileChange(1, "f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isFileContentChange());
   }
 
   private class LoggingChange extends CreateFileChange {

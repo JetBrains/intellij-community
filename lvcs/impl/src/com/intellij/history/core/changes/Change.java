@@ -56,7 +56,7 @@ public abstract class Change {
     return false;
   }
 
-  public boolean isLocal() {
+  public boolean isFileContentChange() {
     return false;
   }
 
