@@ -87,9 +87,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitBreakStatement(breakStatement);
     final GrLoopStatement target = breakStatement.getBreakedLoop();
     if (target != null) {
-      final GrCondition body = target.getBody();
-      assert body != null;
-      addPendingEdge(body);
+      addPendingEdge(target);
     }
   }
 
@@ -126,7 +124,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     super.visitReferenceExpression(referenceExpression);
-    addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++));
+    if (referenceExpression.getQualifierExpression() == null) {
+      addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++));
+    }
   }
 
   public void visitIfStatement(GrIfStatement ifStatement) {
@@ -275,6 +275,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     public GrReferenceExpression getReferenceExpression() {
       return myRefExpr;
+    }
+
+    protected String getElementPresentation() {
+      return (isWrite() ? "WRITE " : "READ ") + myRefExpr.getReferenceName();
     }
   }
 

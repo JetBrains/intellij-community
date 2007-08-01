@@ -44,8 +44,11 @@ class InstructionImpl implements Instruction {
       if (i > 0) builder.append(',');
       builder.append(mySucc.get(i).myNumber);
     }
-    builder.append(")");
-    builder.append(" element: ").append(myPsiElement);
+    builder.append(") ").append(getElementPresentation());
     return builder.toString();
+  }
+
+  protected String getElementPresentation() {
+    return "element: " + myPsiElement;
   }
 }
