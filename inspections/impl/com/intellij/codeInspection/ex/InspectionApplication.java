@@ -180,7 +180,7 @@ public class InspectionApplication {
                 final Library library = libraryOrderEntry.getLibrary();
                 if (library == null || library.getFiles(OrderRootType.CLASSES).length != library.getUrls(OrderRootType.CLASSES).length) {
                   logError(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
-                                                     libraryOrderEntry.getLibraryName(),
+                                                     libraryOrderEntry.getPresentableName(),
                                                      module.getName()));
                 }
               }
