@@ -67,6 +67,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void addNode(InstructionImpl instruction) {
     myInstructions.add(instruction);
+    addEdge(myHead, instruction);
     myHead = instruction;
   }
 
