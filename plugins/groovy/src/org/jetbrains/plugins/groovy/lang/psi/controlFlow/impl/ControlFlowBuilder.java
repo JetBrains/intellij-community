@@ -283,6 +283,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void finishNode(InstructionImpl instruction) {
     assert instruction.equals(myProcessingStack.pop());
+    myHead = myProcessingStack.peek();
   }
 
   private InstructionImpl findInstruction(GroovyPsiElement element) {
