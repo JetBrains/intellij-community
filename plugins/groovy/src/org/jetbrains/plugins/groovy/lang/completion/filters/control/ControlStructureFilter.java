@@ -15,21 +15,19 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.control;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ilyas
@@ -48,9 +46,7 @@ public class ControlStructureFilter implements ElementFilter {
             parent instanceof  GrClosableBlock) {
           return true;
         }
-        if (parent instanceof GrCaseBlock &&
-            ((GrCaseBlock) parent).getCaseLabels().length != 0 &&
-            ((GrCaseBlock) parent).getCaseLabels()[0].getTextRange().getStartOffset() < offset){
+        if (parent instanceof GrCaseSection){
           return true;
         }
       }
@@ -70,7 +66,6 @@ public class ControlStructureFilter implements ElementFilter {
 
         if (superParent instanceof GrOpenBlock ||
             superParent instanceof GrClosableBlock ||
-            superParent instanceof GrCaseBlock ||
             superParent instanceof GrIfStatement ||
             superParent instanceof GrForStatement ||
             superParent instanceof GrWhileStatement) {

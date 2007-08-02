@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
@@ -33,22 +34,12 @@ public class CaseDefaultFilter implements ElementFilter {
       return true;
     }
     final PsiElement left = GroovyCompletionUtil.nearestLeftSibling(context);
-    if (left instanceof GrSwitchStatement && GroovyCompletionUtil.isIncomplete(left)) {
+    if (left != null && left.getParent() != null &&
+        left.getParent() instanceof GrSwitchStatement &&
+        left.getPrevSibling() != null &&
+        left.getPrevSibling().getNode() != null &&
+        GroovyTokenTypes.mLCURLY.equals(left.getPrevSibling().getNode().getElementType())) {
       return true;
-    }
-
-    PsiElement elem = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
-    if (elem instanceof GrSwitchStatement &&
-        GroovyCompletionUtil.isIncomplete(elem)) {
-      return true;
-    }
-
-    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
-    if (leaf != null) {
-      PsiElement parent = leaf.getParent();
-      if (parent instanceof GrCaseSection) {
-        return true;
-      }
     }
     return false;
   }

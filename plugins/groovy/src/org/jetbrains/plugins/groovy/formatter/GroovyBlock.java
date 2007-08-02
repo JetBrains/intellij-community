@@ -116,7 +116,8 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     if (psiParent instanceof GroovyFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
-    if (BLOCK_SET.contains(astNode.getElementType())) {
+    if (BLOCK_SET.contains(astNode.getElementType()) ||
+        SWITCH_STATEMENT.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (CASE_SECTION.equals(astNode.getElementType())) {

@@ -15,18 +15,16 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.control;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ilyas
@@ -40,7 +38,7 @@ public class BranchFilter implements ElementFilter {
           treeWalkUp(parent)) {
         PsiElement superParent = parent.getParent();
         if ((superParent instanceof GrOpenBlock ||
-            superParent instanceof GrCaseBlock ||
+            superParent instanceof GrCaseSection ||
             superParent instanceof GrClosableBlock)) {
           return true;
         }
@@ -69,7 +67,7 @@ public class BranchFilter implements ElementFilter {
     while (parent != null &&
         !(parent instanceof GrWhileStatement ||
             parent instanceof GrForStatement ||
-            parent instanceof GrCaseBlock)) {
+            parent instanceof GrCaseSection)) {
       parent = parent.getParent();
     }
     return parent != null;
