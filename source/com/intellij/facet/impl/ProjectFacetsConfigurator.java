@@ -219,18 +219,6 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     return myInfo2Facet.get(facetInfo);
   }
 
-  public void registerEditors(final Module module, ConfigureFacetsStep facetsStep) {
-    final Map<FacetInfo, FacetEditor> info2EditorMap = facetsStep.getInfo2EditorMap();
-    final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
-    for (Facet facet : allFacets) {
-      for (Map.Entry<FacetInfo, FacetEditor> entry : info2EditorMap.entrySet()) {
-        if (entry.getKey().getConfiguration() == facet.getConfiguration()) {
-          myEditors.put(facet, entry.getValue());
-        }
-      }
-    }
-  }
-
   public void disposeEditors() {
     for (FacetEditor editor : myEditors.values()) {
       editor.disposeUIResources();
