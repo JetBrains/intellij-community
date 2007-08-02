@@ -254,7 +254,7 @@ public final class FormSourceCodeGenerator {
 
     if (needSetupUI) {
       for(PsiMethod constructor: newClass.getConstructors()) {
-        addSetupUICall(constructor, rootContainer);
+        addSetupUICall(constructor, rootContainer, method);
       }
     }
 
@@ -280,7 +280,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private static void addSetupUICall(final PsiMethod constructor, final LwRootContainer rootContainer) {
+  private static void addSetupUICall(final PsiMethod constructor, final LwRootContainer rootContainer, final PsiMethod setupUIMethod) {
     final PsiCodeBlock psiCodeBlock = constructor.getBody();
     if (psiCodeBlock == null) {
       return;
@@ -290,6 +290,9 @@ public final class FormSourceCodeGenerator {
     PsiElement anchor = psiCodeBlock.getRBrace();
     Ref<Boolean> callsThisConstructor = new Ref<Boolean>(Boolean.FALSE);
     for(PsiStatement statement: statements) {
+      if (containsMethodIdentifier(statement, setupUIMethod)) {
+        return;
+      }
       if (!ourSuperCallPattern.accepts(statement) &&
           hasCustomComponentAffectingReferences(statement, classToBind, rootContainer, callsThisConstructor)) {
         anchor = statement;
@@ -330,9 +333,14 @@ public final class FormSourceCodeGenerator {
         }
         else if (psiElement instanceof PsiMethod) {
           PsiMethod method = (PsiMethod) psiElement;
-          if (method.isConstructor() && method.getContainingClass() == classToBind) {
-            if (callsThisConstructor != null) {
-              callsThisConstructor.set(Boolean.TRUE);
+          if (method.isConstructor()) {
+            if (method.getContainingClass() == classToBind) {
+              if (callsThisConstructor != null) {
+                callsThisConstructor.set(Boolean.TRUE);
+              }
+            }
+            else if (method.getContainingClass() != classToBind.getSuperClass()) {
+              result.set(Boolean.TRUE);
             }
           }
           else {
