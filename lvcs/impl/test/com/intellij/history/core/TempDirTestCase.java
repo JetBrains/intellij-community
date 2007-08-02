@@ -49,6 +49,7 @@ public abstract class TempDirTestCase extends LocalVcsTestCase {
   }
 
   private static void deleteDir(File dir) {
+    if (!dir.exists()) return;
     if (!FileUtil.delete(dir)) throw new RuntimeException("can't delete dir <" + dir.getName() + ">");
   }
 }

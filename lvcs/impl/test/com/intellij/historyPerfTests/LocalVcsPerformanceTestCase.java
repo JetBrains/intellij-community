@@ -1,7 +1,6 @@
 package com.intellij.historyPerfTests;
 
 import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.integration.TestVirtualFile;
 import org.junit.After;
@@ -16,7 +15,8 @@ public class LocalVcsPerformanceTestCase extends PerformanceTestCase {
   public void initVcs() {
     closeStorage();
     storage = new Storage(tempDir);
-    vcs = new TestLocalVcs(storage);
+    final Storage s = storage;
+    vcs = new LocalVcs(s);
   }
 
   @After

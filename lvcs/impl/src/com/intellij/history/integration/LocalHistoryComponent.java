@@ -41,12 +41,12 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   // todo bad method - extend interface instead
   public static ILocalVcs getLocalVcsFor(Project p) {
-    return getComponentInstance(p).myVcs;
+    return getComponentInstance(p).getLocalVcs();
   }
 
   @TestOnly
   public static LocalVcs getLocalVcsImplFor(Project p) {
-    return getComponentInstance(p).myVcsImpl;
+    return getComponentInstance(p).getLocalVcsImpl();
   }
 
   public LocalHistoryComponent(Project p,
@@ -76,12 +76,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
-    myVcsImpl = new LocalVcs(myStorage) {
-      @Override
-      protected long getPurgingPeriod() {
-        return myConfiguration.PURGE_PERIOD;
-      }
-    };
+    myVcsImpl = new LocalVcs(myStorage);
     myVcs = new ThreadSafeLocalVcs(myVcsImpl);
   }
 
@@ -108,9 +103,10 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   public void disposeComponent() {
     if (isDefaultProject()) return;
 
-    // save could not be called if user had canceled save of project files
+    // save could haven't been called if user had canceled save of project files
     // so we have to force save. But that will be ignored if where were
     // no changes since last save, so there is no performance issues here
+    if (myVcs != null) myVcs.purgeObsolete(myConfiguration.PURGE_PERIOD);
     save();
 
     closeVcs();
@@ -192,6 +188,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   public ILocalVcs getLocalVcs() {
     return myVcs;
+  }
+
+  @TestOnly
+  public LocalVcs getLocalVcsImpl() {
+    return myVcsImpl;
   }
 
   public void projectOpened() {

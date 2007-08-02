@@ -1,7 +1,6 @@
 package com.intellij.historyIntegrTests;
 
 import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.storage.IContentStorage;
 import com.intellij.history.core.storage.Storage;
@@ -24,7 +23,7 @@ public class StorageChecker {
       }
     };
 
-    LocalVcs vcs = new TestLocalVcs(s);
+    LocalVcs vcs = new LocalVcs(s);
     LocalVcs.Memento m = s.load();
     Entry e = m.myRoot.getEntry(43077);
     //List<Change> cc = m.myChangeList.getChangesFor(m.myRoot.copy(), e.getPath());

@@ -5,7 +5,7 @@ import com.intellij.history.core.storage.Storage;
 
 import java.io.IOException;
 
-public class InMemoryLocalVcs extends TestLocalVcs {
+public class InMemoryLocalVcs extends LocalVcs {
   public InMemoryLocalVcs() {
     this(new InMemoryStorage());
   }

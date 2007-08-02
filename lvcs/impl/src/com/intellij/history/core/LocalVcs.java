@@ -8,13 +8,14 @@ import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class LocalVcs implements ILocalVcs {
+public class LocalVcs implements ILocalVcs {
   protected Storage myStorage;
 
   private ChangeList myChangeList;
@@ -40,8 +41,6 @@ public abstract class LocalVcs implements ILocalVcs {
   public void save() {
     if (!wasModifiedAfterLastSave) return;
 
-    purgeObsolete(getPurgingPeriod());
-
     Memento m = new Memento();
     m.myRoot = myRoot;
     m.myEntryCounter = myEntryCounter;
@@ -50,6 +49,11 @@ public abstract class LocalVcs implements ILocalVcs {
     myStorage.store(m);
 
     wasModifiedAfterLastSave = false;
+  }
+
+  public void purgeObsolete(long period) {
+    List<Content> contentsToPurge = myChangeList.purgeObsolete(period);
+    myStorage.purgeContents(contentsToPurge);
   }
 
   public boolean hasEntry(String path) {
@@ -164,7 +168,7 @@ public abstract class LocalVcs implements ILocalVcs {
     wasModifiedAfterLastSave = true;
   }
 
-  // test-support
+  @TestOnly
   public ChangeList getChangeList() {
     return myChangeList;
   }
@@ -229,13 +233,6 @@ public abstract class LocalVcs implements ILocalVcs {
 
     return result;
   }
-
-  public void purgeObsolete(long period) {
-    List<Content> contentsToPurge = myChangeList.purgeObsolete(period);
-    myStorage.purgeContents(contentsToPurge);
-  }
-
-  protected abstract long getPurgingPeriod();
 
   public byte[] getByteContent(String path, RevisionTimestampComparator c) {
     for (Revision r : getRevisionsFor(path)) {

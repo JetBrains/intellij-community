@@ -5,7 +5,6 @@ import com.intellij.history.Clock;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.RevisionTimestampComparator;
 import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.TestTimestampComparator;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.Storage;
@@ -30,11 +29,8 @@ public class BasicsTest extends IntegrationTestCase {
     myProject.save();
     getVcsComponent().closeVcs();
 
-    //File temp = createTempDirectory();
-    //FileUtil.copyDir(dir, temp);
-
     Storage s = new Storage(dir);
-    LocalVcs vcs = new TestLocalVcs(s);
+    LocalVcs vcs = new LocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(f.getPath()));
   }

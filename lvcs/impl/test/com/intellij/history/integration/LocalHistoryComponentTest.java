@@ -3,7 +3,6 @@ package com.intellij.history.integration;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.TempDirTestCase;
-import com.intellij.history.core.TestLocalVcs;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.integration.stubs.StubStartupManagerEx;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -17,6 +16,8 @@ import java.io.File;
 public class LocalHistoryComponentTest extends TempDirTestCase {
   private MyStartupManager sm;
   private LocalHistoryComponent c;
+  private LocalHistoryConfiguration config = new LocalHistoryConfiguration();
+  private long purgePeriod = 0;
 
   @After
   public void tearDown() {
@@ -37,7 +38,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     initComponent();
 
     Storage s = new Storage(c.getStorageDir());
-    LocalVcs vcs = new TestLocalVcs(s);
+    LocalVcs vcs = new LocalVcs(s);
     vcs.createFile("file", cf(""), -1);
     vcs.save();
     s.close();
@@ -77,19 +78,42 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     assertHasSavedEntry("file");
   }
 
+  @Test
+  public void testPurgingOnDispose() {
+    initComponent();
+    startUp();
+
+    setCurrentTimestamp(10);
+    c.getLocalVcs().createDirectory("1");
+
+    setCurrentTimestamp(20);
+    c.getLocalVcs().createDirectory("2");
+
+    setCurrentTimestamp(30);
+    c.getLocalVcs().createDirectory("3");
+
+    assertEquals(3, c.getLocalVcsImpl().getChangeList().getChanges().size());
+
+    config.PURGE_PERIOD = 5;
+    c.disposeComponent();
+
+    assertEquals(1, c.getLocalVcsImpl().getChangeList().getChanges().size());
+  }
+
   private void assertHasSavedEntry(String path) {
     Storage s = new Storage(c.getStorageDir());
-    LocalVcs vcs = new TestLocalVcs(s);
+    LocalVcs vcs = new LocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(path));
   }
 
   @Test
-  public void testSavingBeforeStartupDoesNotThrowExceptions() {
+  public void testSavingAndDisposeBeforeStartupDoesNotThrowExceptions() {
     initComponent();
 
     try {
       c.save();
+      c.disposeComponent();
       // success
     }
     catch (Exception e) {
@@ -119,7 +143,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
   @Test
   public void testCleaningOnDisposeInUnitTestMode() {
     final boolean[] isUnitTestMode = new boolean[]{true};
-    LocalHistoryComponent c = new LocalHistoryComponent(null, null, null, null, null, null) {
+    LocalHistoryComponent c = new LocalHistoryComponent(null, null, null, null, null, config) {
       @Override
       public File getStorageDir() {
         return new File(tempDir, "vcs");
@@ -179,12 +203,12 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     }
   }
 
-  private static class MyLocalHistoryComponent extends LocalHistoryComponent {
+  private class MyLocalHistoryComponent extends LocalHistoryComponent {
     private String mySystemPath;
     private boolean isVcsInitialized;
 
     public MyLocalHistoryComponent(String systemPath, Project p, MyStartupManager sm) {
-      super(p, sm, null, null, null, new LocalHistoryConfiguration());
+      super(p, sm, null, null, null, config);
       mySystemPath = systemPath;
     }
 

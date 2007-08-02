@@ -65,14 +65,6 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     assertTrue(purgedContent.isEmpty());
   }
 
-  @Test
-  public void testPurgingOnSave() {
-    vcs.setPurgingPeriod(5);
-
-    vcs.save();
-    assertEquals(2, vcs.getRevisionsFor("file").size());
-  }
-
   class PurgeLoggingStorage extends InMemoryStorage {
     @Override
     public void purgeContent(StoredContent c) {
