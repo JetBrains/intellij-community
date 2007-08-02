@@ -18,13 +18,13 @@ public class ContentStorageTest extends PerformanceTestCase {
   int ITERATIONS_COUNT = 1000;
   int MAX_RECORD_SIZE = 20 * 1024;
 
-  File sf;
+  File file;
   ContentStorage s;
 
   @Before
   public void setUp() throws Exception {
-    sf = new File(tempDir, "s");
-    s = new ContentStorage(sf);
+    file = new File(tempDir, "s");
+    s = new ContentStorage(file);
   }
 
   @After
@@ -34,7 +34,7 @@ public class ContentStorageTest extends PerformanceTestCase {
 
   @Test
   public void testStorageWriting() throws Exception {
-    assertExecutionTime(1000, new RunnableAdapter() {
+    assertExecutionTime(250, new RunnableAdapter() {
       public void doRun() throws Exception {
         createContentsOfDifferentSize();
       }
@@ -44,7 +44,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   @Test
   public void testStorageReading() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(50, new RunnableAdapter() {
+    assertExecutionTime(100, new RunnableAdapter() {
       public void doRun() throws Exception {
         readContentsRandomly(cc);
       }
@@ -66,7 +66,7 @@ public class ContentStorageTest extends PerformanceTestCase {
     List<Integer> cc = createContentsOfDifferentSize();
     deleteHalfOfContentsRandomly(cc);
 
-    assertExecutionTime(1500, new RunnableAdapter() {
+    assertExecutionTime(200, new RunnableAdapter() {
       public void doRun() throws Exception {
         createContentsOfDifferentSize();
       }
@@ -77,7 +77,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   public void testStorageReadingAfterManyModifications() throws IOException {
     final List<Integer> cc = modifyStorageManyTimes();
 
-    assertExecutionTime(30, new RunnableAdapter() {
+    assertExecutionTime(100, new RunnableAdapter() {
       public void doRun() throws Exception {
         readContentsRandomly(cc);
       }
@@ -85,9 +85,12 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageSizeOfterManyModifications() throws IOException {
+  public void testStorageSizeAfterManyModifications() throws IOException {
     modifyStorageManyTimes();
-    assertEquals(15, (int)sf.length() / (1024 * 1024));
+    s.close();
+    long indexLength = new File(file.getPath() + ".rindex").length();
+    long dataLength = new File(file.getPath() + ".data").length();
+    assertEquals(19, (int)(indexLength + dataLength) / (1024 * 1024));
   }
 
   private List<Integer> createContentsOfDifferentSize() throws IOException {

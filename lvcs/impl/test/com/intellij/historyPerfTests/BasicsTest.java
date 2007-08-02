@@ -110,7 +110,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(1000, new RunnableAdapter() {
+    assertExecutionTime(400, new RunnableAdapter() {
       public void doRun() {
         vcs.purgeObsolete(0);
       }
