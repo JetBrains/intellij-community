@@ -26,9 +26,9 @@ public class StreamLogger implements IStreamLogger {
   private static final long MAX_OUTPUT_SIZE = 1000000;
   @NonNls private static final String OUTPUT_PATHNAME = "cvs.output";
 
-  private OutputStream createFileOutputStream(final File cvsOutputFile) {
+  private static OutputStream createFileOutputStream(final File cvsOutputFile) {
     try {
-      return new FileOutputStream(cvsOutputFile, true);
+      return new BufferedOutputStream(new FileOutputStream(cvsOutputFile, true));
     }
     catch (FileNotFoundException e) {
       return DUMMY_OUTPUT_STREAM;
@@ -57,11 +57,17 @@ public class StreamLogger implements IStreamLogger {
   }
 
   public InputStream createLoggingInputStream(final InputStream inputStream) {
+    if (!CvsApplicationLevelConfiguration.getInstance().DO_OUTPUT) {
+      return inputStream;
+    }
     return new InputStream() {
       public int read() throws IOException {
         int result = inputStream.read();
-        getInputLogStream().write(result);
-        getInputLogStream().flush();
+        final OutputStream logStream = getInputLogStream();
+        logStream.write(result);
+        if (result == '\n') {
+          logStream.flush();
+        }
         return result;
       }
 
