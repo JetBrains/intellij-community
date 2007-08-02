@@ -18,6 +18,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -167,6 +170,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
 
     return result;
+  }
+
+  public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
+    final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile.getProject());
+    if (schema != null) {
+      return schema;
+    }
+    final String location = getResourceLocation(url, version);
+    return XmlUtil.findXmlFile(baseFile, location);
   }
 
   public String[] getResourceUrls(FileType fileType, final boolean includeStandard) {

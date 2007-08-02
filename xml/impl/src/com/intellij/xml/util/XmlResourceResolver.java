@@ -1,6 +1,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -16,6 +17,7 @@ import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -171,15 +173,16 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return psiFile;
   }
 
+  @Nullable
   public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException, IOException {
-    String publicId;
-
-    PsiFile psiFile = resolve(
-      xmlResourceIdentifier.getBaseSystemId(),
-      publicId = (xmlResourceIdentifier.getLiteralSystemId() != null ?
+    String publicId  = xmlResourceIdentifier.getLiteralSystemId() != null ?
                   xmlResourceIdentifier.getLiteralSystemId():
-                  xmlResourceIdentifier.getNamespace())
-    );
+                  xmlResourceIdentifier.getNamespace();
+
+    PsiFile psiFile = resolve(xmlResourceIdentifier.getBaseSystemId(), publicId);
+    if (psiFile == null && xmlResourceIdentifier.getBaseSystemId() != null) {
+        psiFile = ExternalResourceManager.getInstance().getResourceLocation(xmlResourceIdentifier.getBaseSystemId(), myFile, null);
+    }
     if (psiFile==null && xmlResourceIdentifier.getLiteralSystemId()!=null && xmlResourceIdentifier.getNamespace()!=null) {
       psiFile = resolve(
         xmlResourceIdentifier.getBaseSystemId(),

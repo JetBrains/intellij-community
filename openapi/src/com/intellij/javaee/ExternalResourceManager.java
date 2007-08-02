@@ -17,7 +17,9 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -38,6 +40,8 @@ public abstract class ExternalResourceManager {
 
   public abstract String getResourceLocation(@NonNls String url);
   public abstract String getResourceLocation(@NonNls String url, String version);
+  public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, String version);
+  
   public abstract String[] getResourceUrls(FileType fileType, final boolean includeStandard);
   public abstract String[] getResourceUrls(FileType fileType, @NonNls String version, final boolean includeStandard);
 }

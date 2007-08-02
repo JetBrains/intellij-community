@@ -275,10 +275,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return map;
   }
 
+  @Nullable
   private XmlFile retrieveFile(final String fileLocation, String version) {
     final String targetNs = XmlUtil.getTargetSchemaNsFromTag(this);
-    return fileLocation.equals(targetNs) ? null : XmlUtil.findXmlFile(
-      XmlUtil.getContainingFile(this),ExternalResourceManager.getInstance().getResourceLocation(fileLocation, version));
+    if (fileLocation.equals(targetNs)) {
+      return null;
+    }
+    else {
+      final XmlFile file = XmlUtil.getContainingFile(this);
+      final PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
+      return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
+    }
   }
 
   @Nullable
