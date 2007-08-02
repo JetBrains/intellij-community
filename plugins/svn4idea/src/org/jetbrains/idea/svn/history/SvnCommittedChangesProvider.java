@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -115,6 +116,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       logger.doLog(SVNURL.parseURIEncoded(svnLocation.getURL()), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, maxCount,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
+                       if (myProject.isDisposed()) throw new ProcessCanceledException();
                        if (progress != null) {
                          progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
                          progress.checkCanceled();
