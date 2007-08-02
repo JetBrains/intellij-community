@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.SingleInspectionProfilePanel;
@@ -32,9 +33,11 @@ public class InspectionResultsViewComparator implements Comparator {
   public int compare(Object o1, Object o2) {
     InspectionTreeNode node1 = (InspectionTreeNode)o1;
     InspectionTreeNode node2 = (InspectionTreeNode)o2;
-    
+
     if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
-      return -((InspectionSeverityGroupNode)node1).getSeverityLevel().getSeverity().compareTo(((InspectionSeverityGroupNode)node2).getSeverityLevel().getSeverity());
+      final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
+      final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
+      return -SeverityRegistrar.getInstance(groupNode1.getProject()).compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
     }
 
     if (node1 instanceof InspectionGroupNode && node2 instanceof InspectionGroupNode) {

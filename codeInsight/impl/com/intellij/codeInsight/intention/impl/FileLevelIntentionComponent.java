@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class FileLevelIntentionComponent extends JPanel {
     }
 
     JLabel content =
-      new JLabel(description, severity.compareTo(HighlightSeverity.ERROR) >= 0 ? ourQuickFixIcon : ourIntentionIcon, JLabel.LEADING);
+      new JLabel(description, SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? ourQuickFixIcon : ourIntentionIcon, JLabel.LEADING);
     add(content, BorderLayout.WEST);
     content.setBackground(null);
     setBackground(getColor(severity));
@@ -64,12 +65,12 @@ public class FileLevelIntentionComponent extends JPanel {
     });
   }
 
-  private static Color getColor(HighlightSeverity severity) {
-    if (severity.compareTo(HighlightSeverity.ERROR) >= 0) {
+  private  Color getColor(HighlightSeverity severity) {
+    if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
     }
 
-    if (severity.compareTo(HighlightSeverity.WARNING) >= 0) {
+    if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
       return LightColors.YELLOW;
     }
 

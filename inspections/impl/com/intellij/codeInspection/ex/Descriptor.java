@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
@@ -10,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -24,7 +26,6 @@ public class Descriptor {
   private HighlightDisplayKey myKey;
   private JComponent myAdditionalConfigPanel;
   private Element myConfig;
-  private SingleInspectionProfilePanel.LevelChooser myChooser;
   private InspectionProfileEntry myTool;
   private HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
@@ -91,6 +92,7 @@ public class Descriptor {
     return myLevel;
   }
 
+  @Nullable
   public JComponent getAdditionalConfigPanel(ModifiableModel inspectionProfile) {
     if (myAdditionalConfigPanel == null && myTool != null){
       myAdditionalConfigPanel = myTool.createOptionsPanel();
@@ -106,12 +108,10 @@ public class Descriptor {
     myAdditionalConfigPanel = null;
   }
 
-  public SingleInspectionProfilePanel.LevelChooser getChooser() {
-    if (myChooser == null){
-      myChooser = new SingleInspectionProfilePanel.LevelChooser();
-      myChooser.setLevel(myLevel);
-    }
-    return myChooser;
+  public SingleInspectionProfilePanel.LevelChooser getChooser(final SeverityRegistrar severityRegistrar) {
+    final SingleInspectionProfilePanel.LevelChooser chooser = new SingleInspectionProfilePanel.LevelChooser(severityRegistrar);
+    chooser.setLevel(myLevel);
+    return chooser;
   }
 
   public Element getConfig() {

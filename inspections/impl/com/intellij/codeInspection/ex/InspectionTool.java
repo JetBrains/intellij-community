@@ -19,6 +19,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
@@ -164,7 +165,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  protected String getTextAttributeKey(HighlightSeverity severity, ProblemHighlightType highlightType) {
+  protected String getTextAttributeKey(final Project project, HighlightSeverity severity, ProblemHighlightType highlightType) {
     if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return HighlightInfoType.DEPRECATED.getAttributesKey().getExternalName();
     }
@@ -179,7 +180,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
     }
-    return SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
+    return SeverityRegistrar.getInstance(project).getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
   }
 
   public static void setOutputPath(final String output) {

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -135,7 +136,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         // show errors first
         Collections.sort(infos, new Comparator<HighlightInfo>() {
           public int compare(final HighlightInfo o1, final HighlightInfo o2) {
-            return o2.getSeverity().compareTo(o1.getSeverity());
+            return SeverityRegistrar.getInstance(myEditor.getProject()).compare(o2.getSeverity(), o1.getSeverity());
           }
         });
         final HighlightInfoComposite composite = new HighlightInfoComposite(infos);

@@ -548,7 +548,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           if (refEntity instanceof RefElement) {
             final RefElement refElement = (RefElement)refEntity;
             final HighlightSeverity severity = getCurrentSeverity(refElement);
-            final String attributeKey = getTextAttributeKey(severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            final String attributeKey = getTextAttributeKey(refElement.getElement().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             problemClassElement.setAttribute("severity", severity.myName);
             problemClassElement.setAttribute("attribute_key", attributeKey);
           }

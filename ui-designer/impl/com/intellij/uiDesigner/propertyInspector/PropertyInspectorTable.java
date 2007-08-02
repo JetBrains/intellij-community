@@ -36,6 +36,7 @@ import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.IndentedIcon;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1063,7 +1064,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         Map<HighlightSeverity, SimpleTextAttributes> cache = modified ? myModifiedHighlightAttributes : myHighlightAttributes;
         result = cache.get(severity);
         if (result == null) {
-          final TextAttributesKey attrKey = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+          final TextAttributesKey attrKey = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
           TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
           if (modified) {
             textAttrs = textAttrs.clone();

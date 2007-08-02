@@ -17,6 +17,7 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EmptyIcon;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 public class HighlightDisplayLevel {
   private static final Icon EMPTY = new EmptyIcon(12, 12);
-  private static Map<String, HighlightDisplayLevel> ourMap = new HashMap<String, HighlightDisplayLevel>();
+  private static Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
                                                                                                         createIconByMask(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING.getDefaultAttributes().getErrorStripeColor())); 
@@ -40,13 +41,20 @@ public class HighlightDisplayLevel {
   private final HighlightSeverity mySeverity;
 
   public static HighlightDisplayLevel find(String name) {
-    return ourMap.get(name);
+    for (HighlightSeverity severity : ourMap.keySet()) {
+      if (Comparing.strEqual(severity.toString(), name)) return ourMap.get(severity);
+    }
+    return null;
+  }
+
+  public static HighlightDisplayLevel find(HighlightSeverity severity) {
+    return ourMap.get(severity);
   }
 
   public HighlightDisplayLevel(HighlightSeverity severity, Icon icon){
     mySeverity = severity;
     myIcon = icon;
-    ourMap.put(mySeverity.toString(), this);
+    ourMap.put(mySeverity, this);
   }
 
   public String toString() {
@@ -63,7 +71,7 @@ public class HighlightDisplayLevel {
 
   public static void registerSeverity(final HighlightSeverity severity, final Color renderColor) {
     Icon severityIcon = createIconByMask(renderColor);
-    final HighlightDisplayLevel level = ourMap.get(severity.toString());
+    final HighlightDisplayLevel level = ourMap.get(severity);
     if (level == null) {
       new HighlightDisplayLevel(severity, severityIcon);
     }

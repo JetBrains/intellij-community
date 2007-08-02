@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
 
     public String[/*rootsNumber*/] noHighlightingRoots;
     public String[/*rootsNumber*/] noInspectionRoots;
-    public int[] errorCount = new int[SeverityRegistrar.getSeveritiesCount()];
+    public int[] errorCount;
     public int rootsNumber;
 
     public String toString() {
@@ -88,10 +88,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : noInspectionRoots.toArray(new String[noInspectionRoots.size()]);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
+
+    status.errorCount = new int[SeverityRegistrar.getInstance(myProject).getSeveritiesCount()];
     status.rootsNumber = roots.length;
 
     for (int i = 0; i < status.errorCount.length; i++) {
-      final HighlightSeverity minSeverity = SeverityRegistrar.getSeverityByIndex(i);
+      final HighlightSeverity minSeverity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
       status.errorCount[i] = getErrorsCount(minSeverity);
     }
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myFile);
@@ -162,7 +164,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     else {
       int currentSeverityErrors = 0;
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
-        final HighlightSeverity severity = SeverityRegistrar.getSeverityByIndex(i);
+        final HighlightSeverity severity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
         final int count = status.errorCount[i] - currentSeverityErrors;
         if (count > 0) {
           text += BR;
@@ -253,7 +255,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     if (atLeastOnePassFinished) {
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] != 0) {
-          icon = SeverityRegistrar.getRendererIconByIndex(i);
+          icon = SeverityRegistrar.getInstance(myProject).getRendererIconByIndex(i);
           break;
         }
       }

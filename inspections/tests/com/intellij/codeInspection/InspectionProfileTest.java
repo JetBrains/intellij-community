@@ -52,7 +52,21 @@ public class InspectionProfileTest extends TestCase {
     assertTrue(JDOMUtil.areElementsEqual(element, copy));
   }
 
-  private static Element loadProfile() throws IOException, JDOMException {
+  public void testConvertOldProfile() throws Exception {
+    final Element element = loadOldStyleProfile();
+    final InspectionProfileImpl profile = new InspectionProfileImpl("Default");
+    profile.readExternal(element);
+    final ModifiableModel model = profile.getModifiableModel();
+    model.commit();
+    final Element copy = new Element("inspections");
+    profile.writeExternal(copy);
+    StringWriter writer = new StringWriter();
+    JDOMUtil.writeElement(copy, writer, "\n");
+    System.out.println(writer.getBuffer().toString());
+    assertTrue(JDOMUtil.areElementsEqual(loadProfile(), copy));
+  }
+
+  private static Element loadOldStyleProfile() throws IOException, JDOMException {
     final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
                                                     "  <option name=\"myName\" value=\"Default\" />\n" +
                                                     "  <option name=\"myLocal\" value=\"true\" />\n" +
@@ -74,6 +88,43 @@ public class InspectionProfileTest extends TestCase {
                                                     "      <option name=\"myVal\" value=\"100\" />\n" +
                                                     "    </server>\n" +
                                                     "  </used_levels>\n" +
+                                                    "  <inspection_tool class=\"JavaDoc\" level=\"WARNING\" enabled=\"false\">\n" +
+                                                    "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
+                                                    "      <value>\n" +
+                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                                    "      </value>\n" +
+                                                    "    </option>\n" +
+                                                    "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
+                                                    "      <value>\n" +
+                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                                    "      </value>\n" +
+                                                    "    </option>\n" +
+                                                    "    <option name=\"METHOD_OPTIONS\">\n" +
+                                                    "      <value>\n" +
+                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                                    "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
+                                                    "      </value>\n" + "    </option>\n" +
+                                                    "    <option name=\"FIELD_OPTIONS\">\n" +
+                                                    "      <value>\n" +
+                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                                    "      </value>\n" +
+                                                    "    </option>\n" +
+                                                    "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
+                                                    "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                                    "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
+                                                    "  </inspection_tool>\n" +
+                                                    "</inspections>");
+    HighlightDisplayKey.register("JavaDoc"); //InspectionProfileImpl.DEFAULT wasn't setup because of tests optimizations
+    return document.getRootElement();
+  }
+
+  private static Element loadProfile() throws IOException, JDOMException {
+    final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+                                                    "  <option name=\"myName\" value=\"Default\" />\n" +
+                                                    "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                     "  <inspection_tool class=\"JavaDoc\" level=\"WARNING\" enabled=\"false\">\n" +
                                                     "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
                                                     "      <value>\n" +

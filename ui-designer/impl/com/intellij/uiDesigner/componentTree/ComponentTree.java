@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -23,10 +24,10 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -78,9 +79,11 @@ public final class ComponentTree extends Tree implements DataProvider {
   private Icon myInspectionSuppressionIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/inspectionSuppression.png");
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
+  private final Project myProject;
 
-  public ComponentTree() {
+  public ComponentTree(final Project project) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    myProject = project;
 
     setCellRenderer(new MyTreeCellRenderer());
     setRootVisible(false);
@@ -309,7 +312,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     SimpleTextAttributes result = highlightMap.get(attrs);
     if (result == null) {
-      final TextAttributesKey attrKey = SeverityRegistrar.getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+      final TextAttributesKey attrKey = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
       TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
       textAttrs = TextAttributes.merge(attrs.toTextAttributes(), textAttrs);
       result = SimpleTextAttributes.fromTextAttributes(textAttrs);

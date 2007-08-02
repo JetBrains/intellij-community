@@ -611,12 +611,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   }
 
-  private static void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
+  private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
                                                final List<CodeSmellInfo> result,
                                                final Document document) {
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
-      if (severity.compareTo(HighlightSeverity.WARNING) >= 0) {
+      if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
         result.add(new CodeSmellInfo(document, getDescription(highlightInfo),
                                      new TextRange(highlightInfo.startOffset, highlightInfo.endOffset), severity));
       }

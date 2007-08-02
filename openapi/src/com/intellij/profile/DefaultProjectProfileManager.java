@@ -255,7 +255,9 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       final String projectProfileAttempt = myProfiles.keySet().iterator().next();
       setProjectProfile(projectProfileAttempt);
     }
-    return myProfiles.get(PROJECT_PROFILE);
+    final Profile profile = myProfiles.get(PROJECT_PROFILE);
+    profile.setProfileManager(this);
+    return profile;
   }
 
   public static class ProfileStateSplitter implements StateSplitter {

@@ -414,7 +414,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,
-        SeverityRegistrar.getHighlightInfoTypeBySeverity(profile.getErrorLevel(key).getSeverity()),
+        SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key).getSeverity()),
         key,
         intentionAction,
         basicIntention);

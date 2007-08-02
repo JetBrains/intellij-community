@@ -33,6 +33,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -458,12 +459,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     severities.add(HighlightSeverity.ERROR);
     severities.add(HighlightSeverity.WARNING);
     severities.add(HighlightSeverity.INFO);
-    final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes = SeverityRegistrar.getRegisteredHighlightingInfoTypes();
+    final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes =
+      ((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar().getRegisteredHighlightingInfoTypes();
     for (HighlightInfoType.HighlightInfoTypeImpl info : infoTypes) {
       severities.add(info.getSeverity(null));
     }
     for (HighlightSeverity severity : severities) {
-      final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity.toString());
+      final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
       final JMenuItem item = new JMenuItem(renderSeverity(level.getSeverity()));
       item.setIcon(level.getIcon()); //todo correct position
       item.addActionListener(new LevelSelection(level));
@@ -682,8 +684,8 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
 
-
-      final LevelChooser chooser = descriptor.getChooser();
+      final LevelChooser chooser =
+        descriptor.getChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar());
       chooser.getComboBox().addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           boolean toUpdate = mySelectedProfile.getErrorLevel(descriptor.getKey()) != chooser.getLevel();
@@ -696,14 +698,12 @@ public class SingleInspectionProfilePanel extends JPanel {
       withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")), new GridBagConstraints(0, 0, 1, 1, 0, 0,
                                                                                                             GridBagConstraints.WEST,
                                                                                                             GridBagConstraints.NONE,
-                                                                                                            new Insets(0, 5, 5, 10), 0,
-                                                                                                            0));
+                                                                                                            new Insets(0, 5, 5, 10), 0, 0));
       Dimension dimension = new Dimension(150, chooser.getPreferredSize().height);
       chooser.setPreferredSize(dimension);
       chooser.setMinimumSize(dimension);
       withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                        new Insets(0, 0, 5, 0), 0, 0));
-
       final JComponent config = descriptor.getAdditionalConfigPanel(mySelectedProfile);
       if (config != null) {
         withSeverity.add(config, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
@@ -941,18 +941,18 @@ public class SingleInspectionProfilePanel extends JPanel {
   public static class LevelChooser extends ComboboxWithBrowseButton {
     private final MyRenderer ourRenderer = new MyRenderer();
 
-    public LevelChooser() {
+    public LevelChooser(final SeverityRegistrar severityRegistrar) {
       final JComboBox comboBox = getComboBox();
       final DefaultComboBoxModel model = new DefaultComboBoxModel();
       comboBox.setModel(model);
-      fillModel(model);
+      fillModel(model, severityRegistrar);
       comboBox.setRenderer(ourRenderer);
       addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem());
+          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, ((HighlightSeverity)getComboBox().getSelectedItem()), severityRegistrar);
           dlg.show();
           if (dlg.isOK()) {
-            fillModel(model);
+            fillModel(model, severityRegistrar);
             final HighlightInfoType type = dlg.getSelectedType();
             if (type != null) {
               getComboBox().setSelectedItem(type.getSeverity(null));
@@ -962,15 +962,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       });
     }
 
-    private static void fillModel(DefaultComboBoxModel model) {
+    private static void fillModel(DefaultComboBoxModel model, final SeverityRegistrar severityRegistrar) {
       model.removeAllElements();
-      final TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>();
-      for (HighlightInfoType.HighlightInfoTypeImpl type : SeverityRegistrar.getRegisteredHighlightingInfoTypes()) {
+      final TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
+      for (HighlightInfoType.HighlightInfoTypeImpl type : severityRegistrar.getRegisteredHighlightingInfoTypes()) {
         severities.add(type.getSeverity(null));
       }
       severities.add(HighlightSeverity.ERROR);
       severities.add(HighlightSeverity.WARNING);
       severities.add(HighlightSeverity.INFO);
+      severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
       for (HighlightSeverity severity : severities) {
         model.addElement(severity);
       }
@@ -979,7 +980,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     public HighlightDisplayLevel getLevel() {
       HighlightSeverity severity = (HighlightSeverity)getComboBox().getSelectedItem();
       if (severity == null) return HighlightDisplayLevel.WARNING;
-      return HighlightDisplayLevel.find(severity.toString());
+      return HighlightDisplayLevel.find(severity);
     }
 
     public void setLevel(HighlightDisplayLevel level) {
@@ -992,7 +993,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         if (value instanceof HighlightSeverity) {
           HighlightSeverity severity = (HighlightSeverity)value;
           setText(renderSeverity(severity));
-          setIcon(HighlightDisplayLevel.find(severity.toString()).getIcon());
+          setIcon(HighlightDisplayLevel.find(severity).getIcon());
         }
         return this;
       }

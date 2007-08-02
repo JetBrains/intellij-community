@@ -32,9 +32,6 @@
     <component>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.SeverityRegistrar</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

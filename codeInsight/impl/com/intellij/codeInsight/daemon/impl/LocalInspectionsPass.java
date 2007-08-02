@@ -223,11 +223,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   @Nullable
-  private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final HighlightSeverity severity) {
+  private HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final HighlightSeverity severity) {
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     HighlightInfoType type = null;
     if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
-      type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
     }
     else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       type = HighlightInfoType.DEPRECATED;
@@ -237,7 +237,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         type = HighlightInfoType.WRONG_REF;
       }
       else {
-        type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+        type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
       }
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {

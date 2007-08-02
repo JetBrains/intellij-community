@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -58,7 +58,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   private String myEnabledTool = null;
   @NonNls private static final String USED_LEVELS = "used_levels";
-  private boolean myOverrideSeverities = true;
 
   private InspectionToolRegistrar myRegistrar;
   @NonNls private static final String IS_LOCKED = "is_locked";
@@ -89,8 +88,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myLockedProfile = inspectionProfile.myLockedProfile;
     myFile = inspectionProfile.myFile;
     mySource = inspectionProfile;
-    copyFrom(inspectionProfile);
     setProfileManager(inspectionProfile.getProfileManager());
+    copyFrom(inspectionProfile);
   }
 
   public InspectionProfileImpl(final String inspectionProfile, 
@@ -197,7 +196,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey) {
     HighlightDisplayLevel level = getToolState(inspectionToolKey).getLevel();
-    if (!SeverityRegistrar.isSeverityValid(level.getSeverity())){
+    if (!((SeverityProvider)getProfileManager()).getSeverityRegistrar().isSeverityValid(level.getSeverity())){
       level = HighlightDisplayLevel.WARNING;
       setErrorLevel(inspectionToolKey, level);
     }
@@ -245,11 +244,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myLockedProfile = Boolean.parseBoolean(locked);
     }
 
-    if (myOverrideSeverities) {
-      final Element highlightElement = element.getChild(USED_LEVELS);
-      if (highlightElement != null) {
-        SeverityRegistrar.getInstance().readExternal(highlightElement);
-      }
+    final Element highlightElement = element.getChild(USED_LEVELS);
+    if (highlightElement != null) { //from old profiles
+      ((SeverityProvider)getProfileManager()).getSeverityRegistrar().readExternal(highlightElement);
     }
 
     myBaseProfile = getDefaultProfile();
@@ -260,7 +257,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
 
       final String levelName = toolElement.getAttributeValue(LEVEL_TAG);
-      HighlightDisplayLevel level = HighlightDisplayLevel.find(levelName);
+      HighlightDisplayLevel level = HighlightDisplayLevel.find(((SeverityProvider)getProfileManager()).getSeverityRegistrar().getSeverity(levelName));
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {//from old profiles
         level = HighlightDisplayLevel.WARNING;
       }
@@ -283,10 +280,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     super.writeExternal(element);
     element.setAttribute(VERSION_TAG, VALID_VERSION);
     element.setAttribute(IS_LOCKED, String.valueOf(myLockedProfile));
-
-    Element highlightSettings = new Element(USED_LEVELS);
-    SeverityRegistrar.getInstance().writeExternal(highlightSettings);
-    element.addContent(highlightSettings);
 
     for (final HighlightDisplayKey key : myDisplayLevelMap.keySet()) {
       Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
@@ -364,8 +357,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myEnabledTool = displayName;
   }
 
-  private void load(boolean overrideSeverities){
-    myOverrideSeverities = overrideSeverities;
+  public void load() {
     try {
       if (myFile != null) {
         Document document = JDOMUtil.loadDocument(myFile);
@@ -384,11 +376,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         }
       }, ModalityState.NON_MODAL);
     }
-    myOverrideSeverities = true;
-  }
-
-  public void load() {
-    load(true);
   }
 
   public boolean isDefault() {
@@ -436,7 +423,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       if (mySource != null){
         copyToolsConfigurations(mySource);
       }
-      load(false);
+      load();
     }
   }
 

@@ -188,7 +188,7 @@ public interface HighlightInfoType {
 
     public TextAttributesKey getAttributesKey() {
       final HighlightSeverity severity = getSeverity(null);
-      final HighlightInfoTypeImpl infoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      final HighlightInfoTypeImpl infoType = SeverityRegistrar.getInstance().getHighlightInfoTypeBySeverity(severity);
       return infoType != null
              ? infoType.getAttributesKey()
              : severity == HighlightSeverity.ERROR

@@ -5,6 +5,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +71,7 @@ public class DomElementsHighlightingUtil {
         TextRange range = s.first;
         if (text == null) range = TextRange.from(range.getStartOffset(), 0);
         range = range.shiftRight(s.second.getTextRange().getStartOffset());
-        final Annotation annotation = createAnnotation(severity, holder, range, text);
+        final Annotation annotation = createAnnotation(severity, holder, range, text, s.second.getProject());
 
         if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
           annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
@@ -86,10 +88,10 @@ public class DomElementsHighlightingUtil {
   private static Annotation createAnnotation(final HighlightSeverity severity,
                                              final AnnotationHolderImpl holder,
                                              final TextRange range,
-                                             final String text) {
-    if (severity.compareTo(HighlightSeverity.ERROR) >= 0) return holder.createErrorAnnotation(range, text);
-    if (severity.compareTo(HighlightSeverity.WARNING) >= 0) return holder.createWarningAnnotation(range, text);
-    if (severity.compareTo(HighlightSeverity.INFO) >= 0) return holder.createInformationAnnotation(range, text);
+                                             final String text, final Project project) {
+    if (SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0) return holder.createErrorAnnotation(range, text);
+    if (SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.WARNING) >= 0) return holder.createWarningAnnotation(range, text);
+    if (SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.INFO) >= 0) return holder.createInformationAnnotation(range, text);
     return holder.createInfoAnnotation(range, text);
   }
 

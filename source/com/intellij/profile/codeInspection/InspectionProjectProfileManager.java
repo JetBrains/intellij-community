@@ -15,6 +15,7 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -52,14 +53,16 @@ import java.util.Set;
     ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManager.ProfileStateSplitter.class)
     }
 )
-public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent, PersistentStateComponent<Element> {
+public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
   private Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
   private Project myProject;
+  private SeverityRegistrar mySeverityRegistrar;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public InspectionProjectProfileManager(final Project project, EditorColorsManager manager) {
     super(project, Profile.INSPECTION);
     myProject = project;
+    mySeverityRegistrar = new SeverityRegistrar();
   }
 
   public static InspectionProjectProfileManager getInstance(Project project){
@@ -183,4 +186,26 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     }
     HighlightingSettingsPerFile.getInstance(myProject).cleanProfileSettings();
   }
+
+  public SeverityRegistrar getSeverityRegistrar() {
+    if (!USE_PROJECT_LEVEL_SETTINGS) {
+      return ((SeverityProvider)myApplicationProfileManager).getSeverityRegistrar();
+    }
+    return mySeverityRegistrar;
+  }
+
+  public SeverityRegistrar getOwnSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  public void readExternal(final Element element) throws InvalidDataException {
+    super.readExternal(element);
+    mySeverityRegistrar.readExternal(element);
+  }
+
+  public void writeExternal(final Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    mySeverityRegistrar.writeExternal(element);
+  }
+
 }

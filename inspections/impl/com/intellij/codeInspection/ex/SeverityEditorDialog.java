@@ -41,6 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -54,9 +55,11 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   private int myCurrentSelection = -1;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.SeverityEditorDialog");
+  private final SeverityRegistrar mySeverityRegistrar;
 
-  public SeverityEditorDialog(JComponent parent, final HighlightSeverity severity) {
+  public SeverityEditorDialog(JComponent parent, final HighlightSeverity severity, final SeverityRegistrar severityRegistrar) {
     super(parent, true);
+    mySeverityRegistrar = severityRegistrar;
     myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -98,17 +101,17 @@ public class SeverityEditorDialog extends DialogWrapper {
   private void fillList(final HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
-    final TreeSet<HighlightInfoType.HighlightInfoTypeImpl> infoTypes =
-      new TreeSet<HighlightInfoType.HighlightInfoTypeImpl>(new Comparator<HighlightInfoType.HighlightInfoTypeImpl>() {
-        public int compare(final HighlightInfoType.HighlightInfoTypeImpl o1, final HighlightInfoType.HighlightInfoTypeImpl o2) {
-          return - o1.getSeverity(null).compareTo(o2.getSeverity(null));
-        }
-      });
-
-    infoTypes.addAll(SeverityRegistrar.getRegisteredHighlightingInfoTypes());
+    final List<HighlightInfoType.HighlightInfoTypeImpl> infoTypes = new ArrayList<HighlightInfoType.HighlightInfoTypeImpl>();
+    infoTypes.addAll(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.ERROR);
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.WARNING);
     infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFO);
+    infoTypes.add((HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
+    Collections.sort(infoTypes, new Comparator<HighlightInfoType.HighlightInfoTypeImpl>() {
+      public int compare(final HighlightInfoType.HighlightInfoTypeImpl o1, final HighlightInfoType.HighlightInfoTypeImpl o2) {
+        return mySeverityRegistrar.compare(o1.getSeverity(null), o2.getSeverity(null));
+      }
+    });
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     MyHighlightInfoTypeWithAtrributesDescription preselection = null;
     for (HighlightInfoType.HighlightInfoTypeImpl type : infoTypes) {
@@ -257,7 +260,8 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   private static boolean isDefaultSetting(HighlightInfoType info) {
     HighlightSeverity severity = info.getSeverity(null);
-    if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING || severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO) {
+    if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING || severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO
+        || severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
       return true;
     }
     return false;
@@ -276,24 +280,26 @@ public class SeverityEditorDialog extends DialogWrapper {
     }
     processListValueChanged((MyHighlightInfoTypeWithAtrributesDescription)myOptionsList.getSelectedValue(), true);
     final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes =
-      new HashSet<HighlightInfoType.HighlightInfoTypeImpl>(SeverityRegistrar.getRegisteredHighlightingInfoTypes());
+      new HashSet<HighlightInfoType.HighlightInfoTypeImpl>(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
     Set<HighlightInfoType.HighlightInfoTypeImpl> currentTypes = new HashSet<HighlightInfoType.HighlightInfoTypeImpl>();
     final ListModel listModel = myOptionsList.getModel();
+    final List<String> order = new ArrayList<String>();
     for (int i = 0; i < listModel.getSize(); i++) {
       final MyHighlightInfoTypeWithAtrributesDescription info =
         (MyHighlightInfoTypeWithAtrributesDescription)listModel.getElementAt(i);
-      info.getSeverity().setVal((listModel.getSize() - i + 1) * 100); //last value from server
+      order.add(info.getSeverity().myName);
       if (!isDefaultSetting(info.getHighlightInfoType())) {
         currentTypes.add(info.getHighlightInfoType());
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
-        SeverityRegistrar.registerSeverity(info.getHighlightInfoType(), stripeColor != null ? stripeColor : LightColors.YELLOW);
+        mySeverityRegistrar.registerSeverity(info.getHighlightInfoType(), stripeColor != null ? stripeColor : LightColors.YELLOW);
       }
       editorColorsManager.getGlobalScheme().setAttributes(info.getHighlightInfoType().getAttributesKey(), info.getAttributes());
     }
     infoTypes.removeAll(currentTypes);
     for (HighlightInfoType.HighlightInfoTypeImpl info : infoTypes) {
-      SeverityRegistrar.unregisterSeverity(info.getSeverity(null));
+      mySeverityRegistrar.unregisterSeverity(info.getSeverity(null));
     }
+    mySeverityRegistrar.setOrder(order);
     try {
       editorColorsManager.saveAllSchemes();
     }

@@ -4,15 +4,15 @@
 
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
@@ -112,10 +112,10 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return getProblems(domElement, withChildren, minSeverity);
   }
 
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
+  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
     return ContainerUtil.findAll(getProblems(domElement, true, withChildren), new Condition<DomElementProblemDescriptor>() {
       public boolean value(final DomElementProblemDescriptor object) {
-        return object.getHighlightSeverity().compareTo(minSeverity) >= 0;
+        return SeverityRegistrar.getInstance(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
       }
     });
 

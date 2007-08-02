@@ -66,7 +66,7 @@ public class InspectionProfileConvertor {
             Element e = (Element)o;
             String key = e.getName();
             String levelName = e.getAttributeValue(LEVEL_ATT);
-            HighlightDisplayLevel level = HighlightDisplayLevel.find(levelName);
+            HighlightDisplayLevel level = HighlightDisplayLevel.find(myManager.getSeverityRegistrar().getSeverity(levelName));
             if (level == null) continue;
             myDisplayLevelMap.put(key, level);
           }

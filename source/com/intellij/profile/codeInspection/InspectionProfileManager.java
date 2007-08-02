@@ -23,10 +23,10 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.profile.DefaultApplicationProfileManager;
 import com.intellij.profile.Profile;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -45,11 +45,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: anna
  * Date: 29-Nov-2005
  */
-public class InspectionProfileManager extends DefaultApplicationProfileManager implements ExportableApplicationComponent {
+public class InspectionProfileManager extends DefaultApplicationProfileManager implements SeverityProvider, ExportableApplicationComponent, JDOMExternalizable {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private InspectionToolRegistrar myRegistrar;
   private AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
+  private SeverityRegistrar mySeverityRegistrar;
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
@@ -67,6 +68,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
           },
           "inspection");
     myRegistrar = registrar;
+    mySeverityRegistrar = new SeverityRegistrar();
   }
 
   public void initComponent() {
@@ -186,5 +188,21 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     for (Project project : projects) {
       InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);
     }
+  }
+
+  public SeverityRegistrar getSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  public SeverityRegistrar getOwnSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  public void readExternal(final Element element) throws InvalidDataException {
+    mySeverityRegistrar.readExternal(element);
+  }
+
+  public void writeExternal(final Element element) throws WriteExternalException {
+    mySeverityRegistrar.writeExternal(element);
   }
 }

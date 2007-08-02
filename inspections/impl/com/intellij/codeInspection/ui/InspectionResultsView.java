@@ -511,7 +511,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         return mySeverityGroupNodes.get(level);
       }
       else {
-        final InspectionSeverityGroupNode severityGroupNode = new InspectionSeverityGroupNode(level);
+        final InspectionSeverityGroupNode severityGroupNode = new InspectionSeverityGroupNode(myProject, level);
         mySeverityGroupNodes.put(level, severityGroupNode);
         myTree.getRoot().add(severityGroupNode);
         return severityGroupNode;

@@ -342,7 +342,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
-      if (info.getSeverity().compareTo(minSeverity) >= 0 &&
+      if (SeverityRegistrar.getInstance(project).compare(info.getSeverity(), minSeverity) >= 0 &&
           info.startOffset >= startOffset &&
           info.endOffset <= endOffset) {
         array.add(info);
@@ -379,10 +379,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
       if (!foundInfoList.isEmpty()) {
         HighlightInfo foundInfo = foundInfoList.get(0);
-        if (foundInfo.getSeverity().compareTo(info.getSeverity()) < 0) {
+        if (SeverityRegistrar.getInstance(myProject).compare(foundInfo.getSeverity(), info.getSeverity()) < 0) {
           foundInfoList.clear();
         }
-        else if (info.getSeverity().compareTo(foundInfo.getSeverity()) < 0) {
+        else if (SeverityRegistrar.getInstance(myProject).compare(info.getSeverity(), foundInfo.getSeverity()) < 0) {
           continue;
         }
       }

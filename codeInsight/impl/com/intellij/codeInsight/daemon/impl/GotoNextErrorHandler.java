@@ -31,7 +31,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
-    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), SeverityRegistrar.getSeverityByIndex(0), project);
+    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), SeverityRegistrar.getInstance(project).getSeverityByIndex(0), project);
     if (highlights.length == 0){
       showMessageWhenNoHighlights(project, file, editor);
       return;
