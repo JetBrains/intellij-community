@@ -13,14 +13,13 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
@@ -44,7 +43,8 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     moduleNamePanel.add(NAME, nonEmpty);
     nonEmpty.add(myModuleName, BorderLayout.CENTER);
     moduleNamePanel.add(EMPTY, new JPanel(new BorderLayout()));
-    card.show(moduleNamePanel, myWizardContext.getProject() == null ? NAME : EMPTY);
+    card.show(moduleNamePanel, NAME);
+    moduleNamePanel.setVisible(myWizardContext.getProject() == null);
     myAdditionalContentPanel.add(moduleNamePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                                         GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
     component.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -96,8 +96,14 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         //noinspection HardCodedStringLiteral
         myModuleDescriptionPane
           .setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
-        card.show(moduleNamePanel, typeSelected != ModuleType.EMPTY && myWizardContext.getProject() == null ? NAME : EMPTY);
+        moduleNamePanel.setVisible(myWizardContext.getProject() == null);
+        card.show(moduleNamePanel, typeSelected != ModuleType.EMPTY ? NAME : EMPTY);
         fireStateChanged();
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            myTypesList.requestFocusInWindow();
+          }
+        });
       }
     });
     myTypesList.setSelectedIndex(0);
