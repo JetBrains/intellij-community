@@ -37,6 +37,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   public ExtractSuperclassDialog(Project project, PsiClass sourceClass, MemberInfo[] selectedMembers, Callback callback) {
     super(project, sourceClass, selectedMembers, ExtractSuperclassHandler.REFACTORING_NAME);
     myCallback = callback;
+    init();
   }
 
   public MemberInfo[] getSelectedMemberInfos() {

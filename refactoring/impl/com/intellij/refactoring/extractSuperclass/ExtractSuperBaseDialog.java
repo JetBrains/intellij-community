@@ -44,8 +44,6 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     mySourceClass = sourceClass;
     myMemberInfos = members;
     myTargetDirectory = mySourceClass.getContainingFile().getContainingDirectory();
-
-    init();
   }
 
   @Override

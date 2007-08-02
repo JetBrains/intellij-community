@@ -1,8 +1,6 @@
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.ide.util.PackageChooserDialog;
-import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
@@ -10,14 +8,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseDialog;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
-import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.JavaDocPolicy;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +24,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
 
   public ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
     super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
+    init();
   }
 
   private static MemberInfo[] collectMembers(PsiClass c) {
