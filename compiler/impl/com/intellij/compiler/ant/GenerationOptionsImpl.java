@@ -2,15 +2,14 @@ package com.intellij.compiler.ant;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.util.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 
@@ -138,7 +137,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
       }
       moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[deps.size()]));
     }
-    Arrays.sort(moduleChunks, new DFSTBuilder<ModuleChunk>(moduleChunkGraph).comparator());
+    Arrays.sort(moduleChunks, new ChunksComparator());
     if (generateSingleFile) {
       final File baseDir = BuildProperties.getProjectBaseDir(myProject);
       for (ModuleChunk chunk : moduleChunks) {
@@ -146,5 +145,35 @@ public class GenerationOptionsImpl extends GenerationOptions {
       }
     }
     return moduleChunks;
+  }
+  
+  
+  private class ChunksComparator implements Comparator<ModuleChunk> {
+    final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<ModuleChunk, Integer>();
+
+    public int compare(final ModuleChunk o1, final ModuleChunk o2) {
+      final int level1 = getChunkLevel(o1);
+      final int level2 = getChunkLevel(o2);
+      return (level1 == level2)? o1.getName().compareToIgnoreCase(o2.getName()) : (level1 - level2);
+    }
+
+    private int getChunkLevel(ModuleChunk chunk) {
+      Integer level = myCachedLevels.get(chunk);
+      if (level == null) {
+        final ModuleChunk[] chunks = chunk.getDependentChunks();
+        if (chunks.length > 0) {
+          int maxLevel = 0;
+          for (ModuleChunk dependent : chunks) {
+            maxLevel = Math.max(maxLevel, getChunkLevel(dependent));
+          }
+          level = new Integer(1 + maxLevel);
+        }
+        else {
+          level = new Integer(0);
+        }
+        myCachedLevels.put(chunk, level);
+      }
+      return level.intValue();
+    }
   }
 }
