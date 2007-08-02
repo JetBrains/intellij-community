@@ -14,7 +14,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -22,19 +23,16 @@ import java.util.Iterator;
  */
 public class ModuleChunkClasspath extends Path{
 
-  public ModuleChunkClasspath(ModuleChunk chunk, final GenerationOptions genOptions) {
-    super(BuildProperties.getClasspathProperty(chunk.getName()));
+  public ModuleChunkClasspath(ModuleChunk chunk, final GenerationOptions genOptions, final boolean generateRuntimeClasspath) {
+    super(generateRuntimeClasspath? BuildProperties.getRuntimeClasspathProperty(chunk.getName()) : BuildProperties.getClasspathProperty(chunk.getName()));
 
     final OrderedSet<ClasspathItem> pathItems = new OrderedSet<ClasspathItem>((TObjectHashingStrategy<ClasspathItem>)TObjectHashingStrategy.CANONICAL);
     final String compilerOutputPathUrl = chunk.getOutputDirUrl();
     final String compilerOutputPathForTestsUrl = chunk.getTestsOutputDirUrl();
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
-    for (int moduleIdx = 0; moduleIdx < modules.length; moduleIdx++) {
-      final Module module = modules[moduleIdx];
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      for (int idx = 0; idx < orderEntries.length; idx++) {
-        final OrderEntry orderEntry = orderEntries[idx];
+    for (final Module module : modules) {
+      for (final OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (!orderEntry.isValid()) {
           continue;
         }
@@ -48,9 +46,7 @@ public class ModuleChunkClasspath extends Path{
           pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
         }
         else {
-          final String[] files = orderEntry.getUrls(OrderRootType.COMPILATION_CLASSES);
-          for (int i = 0; i < files.length; i++) {
-            String url = files[i];
+          for (String url : getCompilationClasses(orderEntry, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath)) {
             if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
               url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
             }
@@ -70,15 +66,28 @@ public class ModuleChunkClasspath extends Path{
             }
             else {
               final String path = VirtualFileManager.extractPath(url);
-              pathItems.add(new PathElementItem(GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions, !chunk.isSavePathsRelative())));
+              pathItems.add(new PathElementItem(GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty,
+                                                                               genOptions, !chunk.isSavePathsRelative())));
             }
           }
         }
       }
     }
-    for (Iterator<ClasspathItem> it = pathItems.iterator(); it.hasNext();) {
-      add(it.next().toGenerator());
+    for (final ClasspathItem pathItem : pathItems) {
+      add(pathItem.toGenerator());
     }
+  }
+
+  private static String[] getCompilationClasses(final OrderEntry orderEntry, final GenerationOptionsImpl options, final boolean forRuntime) {
+    if (!forRuntime) {
+      return orderEntry.getUrls(OrderRootType.COMPILATION_CLASSES);
+    }
+    final Set<String> jdkUrls = options.getAllJdkUrls();
+
+    final OrderedSet<String> urls = new OrderedSet<String>();
+    urls.addAll(Arrays.asList(orderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT)));
+    urls.removeAll(jdkUrls);
+    return urls.toArray(new String[urls.size()]);
   }
 
   private abstract static class ClasspathItem {

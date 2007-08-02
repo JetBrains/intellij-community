@@ -6,7 +6,10 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -26,6 +29,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   private final Map<String, String> myOutputUrlToPropertyRefMap; // from absolute path to macro substitutions
   private final ModuleChunk[] myModuleChunks;
   private final Project myProject;
+  private Set<String> myJdkUrls;
 
   public GenerationOptionsImpl(Project project,
                            boolean generateSingleFile,
@@ -146,8 +150,19 @@ public class GenerationOptionsImpl extends GenerationOptions {
     }
     return moduleChunks;
   }
-  
-  
+
+  Set<String> getAllJdkUrls() {
+    if (myJdkUrls != null) {
+      return myJdkUrls;
+    }
+    final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
+    myJdkUrls = new HashSet<String>();
+    for (ProjectJdk jdk : projectJdks) {
+      myJdkUrls.addAll(Arrays.asList(jdk.getRootProvider().getUrls(OrderRootType.CLASSES)));
+    }
+    return myJdkUrls;
+  }
+
   private class ChunksComparator implements Comparator<ModuleChunk> {
     final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<ModuleChunk, Integer>();
 

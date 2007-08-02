@@ -107,6 +107,10 @@ public abstract class BuildProperties extends CompositeGenerator {
     return convertName(moduleName) + ".module.classpath";
   }
 
+  public static @NonNls String getRuntimeClasspathProperty(@NonNls String moduleName) {
+    return convertName(moduleName) + ".runtime.module.classpath";
+  }
+
   public static @NonNls String getBootClasspathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".module.bootclasspath";
   }
