@@ -676,7 +676,7 @@ public class HighlightClassUtil {
     PsiClass base = (PsiClass)resolved;
     // must be inner class
     if (!PsiUtil.isInnerClass(base)) return null;
-    PsiClass baseClass = (PsiClass)base.getParent();
+    PsiClass baseClass = base.getContainingClass();
 
     PsiClass aClass = (PsiClass)parent.getParent();
     if (!hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
