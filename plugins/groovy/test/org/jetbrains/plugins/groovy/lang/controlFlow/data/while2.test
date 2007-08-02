@@ -6,9 +6,10 @@ while (true) {
 -----
 1(2) element: null
 2(3) WRITE i
-3(4,8) element: WHILE statement
+3(4,9) element: WHILE statement
 4(5) element: IF statement
 5(6,7) READ i
 6(3) element: CONTINUE statement
-7(3) READ i
-8() element: null
+7(8) READ i
+8(3) WRITE j
+9() element: null

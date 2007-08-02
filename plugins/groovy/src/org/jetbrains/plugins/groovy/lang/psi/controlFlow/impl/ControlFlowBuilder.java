@@ -2,13 +2,13 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
@@ -280,34 +279,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitTryStatement(tryCatchStatement);    //To change body of overridden methods use File | Settings | File Templates.
   }
 
-  private class ReadWriteVariableInstructionImpl extends InstructionImpl implements ReadWriteVariableInstruction {
-    private GrReferenceExpression myRefExpr;
-    private boolean myIsWrite;
-
-    public ReadWriteVariableInstructionImpl(GrReferenceExpression refExpr, int num, boolean isWrite) {
-      super(refExpr, num);
-      myRefExpr = refExpr;
-      myIsWrite = isWrite;
-    }
-
-    public PsiVariable getVariable() {
-      final PsiElement resolved = myRefExpr.resolve();
-      return resolved instanceof PsiVariable ? (PsiVariable) resolved : null;
-    }
-
-    public boolean isWrite() {
-      return myIsWrite;
-    }
-
-    public GrReferenceExpression getReferenceExpression() {
-      return myRefExpr;
-    }
-
-    protected String getElementPresentation() {
-      return (isWrite() ? "WRITE " : "READ ") + myRefExpr.getReferenceName();
-    }
-  }
-
   private InstructionImpl startNode(GroovyPsiElement element) {
     final InstructionImpl instruction = new InstructionImpl(element, myInstructionNumber++);
     addNode(instruction);
@@ -318,6 +289,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void finishNode(InstructionImpl instruction) {
     assert instruction.equals(myProcessingStack.pop());
 /*    myHead = myProcessingStack.peek();*/
+  }
+
+  public void visitField(GrField field) {}
+
+  public void visitParameter(GrParameter parameter) {}
+
+  public void visitVariable(GrVariable variable) {
+    super.visitVariable(variable);
+    if (variable.getInitializerGroovy() != null) {
+      addNode(new ReadWriteVariableInstructionImpl(variable, myInstructionNumber++));
+    }
   }
 
   private InstructionImpl findInstruction(GroovyPsiElement element) {

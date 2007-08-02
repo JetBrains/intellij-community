@@ -10,6 +10,4 @@ public interface ReadWriteVariableInstruction extends Instruction {
   PsiVariable getVariable();
 
   boolean isWrite();
-
-  GrReferenceExpression getReferenceExpression();
 }
