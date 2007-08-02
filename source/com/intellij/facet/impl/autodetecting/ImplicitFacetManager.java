@@ -163,7 +163,7 @@ public class ImplicitFacetManager implements Disposable {
   }
 
   public void initUI() {
-    myAttentionComponent = new AttentionComponent();
+    myAttentionComponent = new AttentionComponent(this);
     myStatusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (myStatusBar == null) return;
 
@@ -177,6 +177,8 @@ public class ImplicitFacetManager implements Disposable {
 
     myNotificationAlarm.cancelAllRequests();
     myStatusBar.removeCustomIndicationComponent(myAttentionComponent);
+    myAttentionComponent.disposeUI();
+    myAttentionComponent = null;
   }
 
   public void configureFacet(final Facet facet) {
@@ -233,17 +235,19 @@ public class ImplicitFacetManager implements Disposable {
     }
   }
 
-  private class AttentionComponent extends SimpleColoredComponent {
+  private static class AttentionComponent extends SimpleColoredComponent {
     private static final int BLINKING_DELAY = 300;
     private Alarm myBlinkingAlarm = new Alarm();
     private boolean myIconVisible;
     private boolean myActive;
+    private ImplicitFacetManager myManager;
 
-    public AttentionComponent() {
+    public AttentionComponent(final ImplicitFacetManager manager) {
+      myManager = manager;
       addMouseListener(new MouseAdapter() {
         public void mouseClicked(final MouseEvent e) {
-          if (myActive && !e.isPopupTrigger()) {
-            showPopup(e.getComponent());
+          if (myActive && !e.isPopupTrigger() && myManager != null) {
+            myManager.showPopup(e.getComponent());
           }
         }
       });
@@ -284,6 +288,11 @@ public class ImplicitFacetManager implements Disposable {
     private void hideIcon() {
       clear();
       repaint();
+    }
+
+    public void disposeUI() {
+      myManager = null;
+      myBlinkingAlarm.cancelAllRequests();
     }
 
     public Dimension getPreferredSize() {
