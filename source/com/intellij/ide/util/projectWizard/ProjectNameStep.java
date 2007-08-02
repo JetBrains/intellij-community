@@ -65,6 +65,10 @@ public class ProjectNameStep extends ModuleWizardStep {
       }
     }
     myNamePathComponent.setNameValue(name);
+    if (name != null) {
+      myNamePathComponent.getNameComponent().setSelectionStart(0);
+      myNamePathComponent.getNameComponent().setSelectionEnd(name.length());
+    }
   }
 
   public void updateDataModel() {
