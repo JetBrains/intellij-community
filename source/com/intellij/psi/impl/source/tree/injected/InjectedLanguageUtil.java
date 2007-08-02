@@ -484,10 +484,6 @@ public class InjectedLanguageUtil {
   }
 
   public static void clearCaches(PsiFile injected, DocumentRange documentRange) {
-    PsiElement host = injected.getContext();
-    if (host != null) {
-      host.putUserData(INJECTED_PSI, null);
-    }
     VirtualFileDelegate virtualFile = (VirtualFileDelegate)injected.getVirtualFile();
     injected.putUserData(ResolveUtil.INJECTED_IN_ELEMENT,null);
     ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(virtualFile, null);

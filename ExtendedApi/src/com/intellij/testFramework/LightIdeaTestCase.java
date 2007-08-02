@@ -524,6 +524,9 @@ import java.util.Map;
   protected static void commitDocument(final Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
+  protected static void commitAllDocuments() {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+  }
 
   protected Document getDocument(final PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
