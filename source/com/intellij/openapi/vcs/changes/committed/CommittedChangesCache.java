@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -117,6 +119,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myBus = bus;
     myTaskQueue = new BackgroundTaskQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
     myVcsManager = vcsManager;
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        cancelRefreshTimer();
+      }
+    });
   }
 
   public MessageBus getMessageBus() {
@@ -709,10 +716,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private void updateRefreshTimer() {
-    if (myFuture != null) {
-      myFuture.cancel(false);
-      myFuture = null;
-    }
+    cancelRefreshTimer();
     if (myState.isRefreshEnabled()) {
       myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         public void run() {
@@ -726,6 +730,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           }
         }
       }, myState.getRefreshInterval()*60, myState.getRefreshInterval()*60, TimeUnit.SECONDS);
+    }
+  }
+
+  private void cancelRefreshTimer() {
+    if (myFuture != null) {
+      myFuture.cancel(false);
+      myFuture = null;
     }
   }
 
