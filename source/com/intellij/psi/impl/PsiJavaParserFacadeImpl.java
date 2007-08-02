@@ -57,12 +57,15 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return createFileFromText(name, fileType, text, modificationStamp, physical, true);
   }
 
-  public PsiFile createFileFromText(@NotNull String name, @NotNull LanguageDialect dialect, @NotNull String text) {
-    ParserDefinition parserDefinition = dialect.getParserDefinition();
-    SingleRootFileViewProvider viewProvider = new SingleRootFileViewProvider(myManager, new LightVirtualFile(name, dialect, text));
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text) {
+    ParserDefinition parserDefinition = language.getParserDefinition();
+    SingleRootFileViewProvider viewProvider = new SingleRootFileViewProvider(myManager, new LightVirtualFile(name, language, text));
     assert parserDefinition != null;
-    PsiFile psiFile = parserDefinition.createFile(viewProvider);
-    psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
+    final PsiFile psiFile = parserDefinition.createFile(viewProvider);
+    viewProvider.forceCachedPsi(psiFile);
+    if (language instanceof LanguageDialect) {
+      psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, (LanguageDialect)language);
+    }
     TreeElement node = (TreeElement)psiFile.getNode();
     assert node != null;
     node.acceptTree(new GeneratedMarkerVisitor());
@@ -109,8 +112,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiFile createFileFromText(@NotNull String name,
                                     @NotNull FileType fileType,
-                                    @NotNull Language lang,
-                                    @NotNull CharSequence text,
+                                    @NotNull Language targetLanguage,
+                                    LanguageDialect dialect, @NotNull CharSequence text,
                                     long modificationStamp,
                                     final boolean physical,
                                     boolean markAsCopy) {
@@ -122,8 +125,11 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
-        final PsiFile psiFile = viewProvider.getPsi(lang);
+        final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
         if (psiFile != null) {
+          if (dialect != null) {
+            psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
+          }
           if(markAsCopy) {
             final TreeElement node = (TreeElement)psiFile.getNode();
             assert node != null;

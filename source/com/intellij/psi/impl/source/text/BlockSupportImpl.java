@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -222,9 +223,8 @@ public class BlockSupportImpl extends BlockSupport {
       final PsiManagerEx manager = (PsiManagerEx)fileImpl.getManager();
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
 
-
-      final PsiFileImpl newFile =
-        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getLanguage(), newFileText, fileImpl.getModificationStamp(), true, false);
+      final PsiFileImpl newFile = 
+        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();

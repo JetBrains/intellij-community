@@ -8,7 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.LanguageDialect;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -202,7 +202,7 @@ public interface PsiJavaParserFacade {
   PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                       long modificationStamp, boolean physical, boolean markAsCopy);
 
-  PsiFile createFileFromText(@NotNull String name, @NotNull LanguageDialect dialect, @NotNull String text);
+  PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text);
 
   @NotNull
   PsiEnumConstant createEnumConstantFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException;

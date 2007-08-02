@@ -264,6 +264,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     else if (myOriginalFile != null) {
       clone.myOriginalFile = myOriginalFile;
     }
+    final LanguageDialect dialect = getLanguageDialect();
+    if (dialect != null) {
+      clone.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
+    }
 
     return clone;
   }

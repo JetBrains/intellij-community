@@ -137,7 +137,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (file instanceof PsiBinaryFile) return null;
 
     Document document = getCachedDocument(file);
-    if (document != null) return document;
+    if (document != null) {
+      if (!file.getViewProvider().isPhysical() &&
+          document.getUserData(HARD_REF_TO_PSI) == null) {
+        document.putUserData(HARD_REF_TO_PSI, file);
+      }
+      return document;
+    }
 
     if (!file.getViewProvider().isEventSystemEnabled()) return null;
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
@@ -404,7 +410,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (provider == null) return;
 
     if (provider.getVirtualFile().getFileType().isBinary()) return;
-    
+
     final List<PsiFile> files = provider.getAllFiles();
     boolean hasLockedBlocks = false;                                                      
     for (PsiFile file : files) {
