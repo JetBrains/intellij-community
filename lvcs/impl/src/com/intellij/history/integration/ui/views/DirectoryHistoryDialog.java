@@ -90,13 +90,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
         if (a.isEnabled()) a.perform();
       }
     });
-    new ShowDifferenceAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
     myChangesTree.installPopupHandler(createChangesTreeActions());
   }
 
   private ActionGroup createChangesTreeActions() {
     DefaultActionGroup result = new DefaultActionGroup();
-    result.add(new ShowDifferenceAction());
+    ShowDifferenceAction a = new ShowDifferenceAction();
+    a.registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
+    result.add(a);
     result.add(new RevertSelectionAction());
     return result;
   }
