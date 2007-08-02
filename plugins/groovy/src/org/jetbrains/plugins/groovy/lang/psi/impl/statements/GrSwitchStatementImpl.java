@@ -18,10 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -39,10 +38,6 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
 
   public String toString() {
     return "Switch statement";
-  }
-
-  public GrCaseBlock getCaseBlock() {
-    return findChildByClass(GrCaseBlock.class);
   }
 
   public GrCondition getCondition() {

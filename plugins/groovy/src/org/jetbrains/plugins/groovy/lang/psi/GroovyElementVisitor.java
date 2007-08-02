@@ -328,10 +328,6 @@ public abstract class GroovyElementVisitor {
     visitStatement(switchStatement);
   }
 
-  public void visitCaseBlock(GrCaseBlock caseBlock) {
-    visitElement(caseBlock);
-  }
-
   public void visitCaseSection(GrCaseSection caseSection) {
     visitElement(caseSection);
   }
