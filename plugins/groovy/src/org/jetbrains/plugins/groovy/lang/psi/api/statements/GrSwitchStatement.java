@@ -22,5 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
  * @author ilyas
  */
 public interface GrSwitchStatement extends GroovyPsiElement, GrStatement {
-  public GrCaseBlock getCaseBlock();
+  GrCaseBlock getCaseBlock();
 }

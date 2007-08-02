@@ -15,15 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ilyas
@@ -31,28 +29,24 @@ import org.jetbrains.annotations.NonNls;
 public class CaseDefaultFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() instanceof GrReferenceExpression &&
-        context.getParent().getParent() instanceof GrCaseBlock) {
+        context.getParent().getParent() instanceof GrCaseSection) {
       return true;
     }
-    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrSwitchStatement &&
-        ((GrSwitchStatement) GroovyCompletionUtil.nearestLeftSibling(context)).getCaseBlock() != null) {
-      GrCaseBlock block = ((GrSwitchStatement) GroovyCompletionUtil.nearestLeftSibling(context)).getCaseBlock();
-      if (block.getLastChild() instanceof PsiErrorElement) {
-        return true;
-      }
+    final PsiElement left = GroovyCompletionUtil.nearestLeftSibling(context);
+    if (left instanceof GrSwitchStatement && GroovyCompletionUtil.isIncomplete(left)) {
+      return true;
     }
+
     PsiElement elem = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
     if (elem instanceof GrSwitchStatement &&
-        ((GrSwitchStatement) elem).getCaseBlock() != null) {
-      GrCaseBlock block = ((GrSwitchStatement) elem).getCaseBlock();
-      if (block.getLastChild() instanceof PsiErrorElement) {
-        return true;
-      }
+        GroovyCompletionUtil.isIncomplete(elem)) {
+      return true;
     }
+
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
       PsiElement parent = leaf.getParent();
-      if (parent instanceof GrCaseBlock) {
+      if (parent instanceof GrCaseSection) {
         return true;
       }
     }

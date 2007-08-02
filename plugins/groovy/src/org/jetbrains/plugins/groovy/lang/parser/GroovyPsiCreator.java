@@ -35,10 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedAr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -121,6 +118,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(SWITCH_STATEMENT)) return new GrSwitchStatementImpl(node);
     if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
     if (elem.equals(CASE_BLOCK)) return new GrCaseBlockImpl(node);
+    if (elem.equals(CASE_SECTION)) return new GrCaseSectionImpl(node);
     if (elem.equals(VARIABLE_DEFINITION) || elem.equals(VARIABLE_DEFINITION_ERROR))
       return new GrVariableDeclarationImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);

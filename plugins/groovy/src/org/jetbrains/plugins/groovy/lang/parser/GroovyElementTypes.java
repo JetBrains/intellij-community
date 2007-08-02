@@ -182,6 +182,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // switch dtatement
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
   GroovyElementType CASE_BLOCK = new GroovyElementType("case block");
+  GroovyElementType CASE_SECTION = new GroovyElementType("case block");
   GroovyElementType CASE_LABEL = new GroovyElementType("case label");
 
   //for clauses

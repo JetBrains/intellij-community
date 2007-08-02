@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas
  */
-public interface GrCaseBlock extends GroovyPsiElement {
+public interface GrCaseSection extends GroovyPsiElement {
 
-  public GrCaseLabel[] getCaseLabels();
-
+  GrCaseLabel getCaseLabel();
+  GrStatement[] getStatements();
 }

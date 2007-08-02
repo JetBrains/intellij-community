@@ -22,44 +22,44 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
- * @author ilyas
+ * @author ven
  */
-public class GrCaseBlockImpl extends GroovyPsiElementImpl implements GrCaseBlock, GrVariableDeclarationOwner {
-  public GrCaseBlockImpl(@NotNull ASTNode node) {
+public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSection, GrVariableDeclarationOwner {
+  public GrCaseSectionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitCaseBlock(this);
+    visitor.visitCaseSection(this);
   }
 
   public String toString() {
-    return "Case block";
-  }
-
-  public GrCaseLabel[] getCaseLabels() {
-    return findChildrenByClass(GrCaseLabel.class);
+    return "Case section";
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    PsiElement run = lastParent == null ? getLastChild() : lastParent.getPrevSibling();
-    while(run != null && !(run instanceof GrCaseLabel)) { //do not process variables from another case clause: todo: modify psi to make it nonflat
-      if (!run.processDeclarations(processor, substitutor, null, place)) return false;
-      run = run.getPrevSibling();
-    }
-
-    return true;
+    return ResolveUtil.processChildren(this, processor, substitutor, lastParent, place);
   }
 
   public void removeVariable(GrVariable variable) throws IncorrectOperationException {
     PsiImplUtil.removeVariable(variable);
+  }
+
+  public GrCaseLabel getCaseLabel() {
+    return findChildByClass(GrCaseLabel.class);
+  }
+
+  public GrStatement[] getStatements() {
+    return findChildrenByClass(GrStatement.class);
   }
 }

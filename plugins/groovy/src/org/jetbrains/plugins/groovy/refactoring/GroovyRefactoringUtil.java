@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -57,7 +57,7 @@ public abstract class GroovyRefactoringUtil {
     PsiElement parent = place.getParent();
     while (parent != null &&
         !(parent instanceof GrCodeBlock) &&
-        !(parent instanceof GrCaseBlock) &&
+        !(parent instanceof GrCaseSection) &&
         !(parent instanceof GroovyFile) &&
         !isLoopOrForkStatement(parent)) {
       parent = parent.getParent();
@@ -186,7 +186,7 @@ public abstract class GroovyRefactoringUtil {
     return tempContainer instanceof GrOpenBlock ||
         tempContainer instanceof GrClosableBlock ||
         tempContainer instanceof GroovyFile ||
-        tempContainer instanceof GrCaseBlock ||
+        tempContainer instanceof GrCaseSection ||
         isLoopOrForkStatement(tempContainer);
   }
 
