@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -235,7 +236,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
 
         public boolean contains(VirtualFile file) {
-          return myFileIndex.isInContent(file);
+          return file instanceof VirtualFileDelegate || myFileIndex.isInContent(file);
         }
 
         public int compare(VirtualFile file1, VirtualFile file2) {
