@@ -361,10 +361,18 @@ public class ChangeUtil {
 
   private static void encodeInformationInRef(TreeElement ref, ASTNode original) {
     if (original.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
-      if (original.getTreeParent().getElementType() != JavaElementType.REFERENCE_EXPRESSION) return; // cannot refer to class (optimization)
-      PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
-      if (target instanceof PsiClass) {
+      final PsiJavaCodeReferenceElement javaRefElement = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original);
+      assert javaRefElement != null;
+      final JavaResolveResult resolveResult = javaRefElement.advancedResolve(false);
+      final PsiElement target = resolveResult.getElement();
+      if (target instanceof PsiClass &&
+          original.getTreeParent().getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
         ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
+      }
+      else if ((target instanceof PsiMethod || target instanceof PsiField) &&
+               ((PsiMember) target).hasModifierProperty(PsiModifier.STATIC) &&
+                resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+        ref.putCopyableUserData(REFERENCED_MEMBER_KEY, (PsiMember) target);
       }
     }
     else if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE) {
@@ -414,8 +422,8 @@ public class ChangeUtil {
         child = child.getTreeNext();
       }
 
-      if (element.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || element.getElementType() == JavaElementType
-        .REFERENCE_EXPRESSION) {
+      if (element.getElementType() == JavaElementType.JAVA_CODE_REFERENCE ||
+          element.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiClass refClass = element.getCopyableUserData(REFERENCED_CLASS_KEY);
         if (refClass != null) {
@@ -439,6 +447,22 @@ public class ChangeUtil {
           }
           catch (IncorrectOperationException e) {
             ((PsiImportHolder) ref.getContainingFile()).importClass(refClass);
+          }
+        }
+        else {
+          final PsiMember refMember = element.getCopyableUserData(REFERENCED_MEMBER_KEY);
+          if (refMember != null) {
+            element.putCopyableUserData(REFERENCED_MEMBER_KEY, null);
+            PsiElement refElement1 = ref.resolve();
+            if (refMember != refElement1 && !refMember.getManager().areElementsEquivalent(refMember, refElement1)) {
+              try {
+                ref = (PsiJavaCodeReferenceElement) ref.bindToElement(refMember);
+              }
+              catch (IncorrectOperationException e) {
+                // TODO[yole] ignore?
+              }
+              element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
+            }
           }
         }
       }
@@ -754,6 +778,7 @@ public class ChangeUtil {
   }
 
   private static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
+  private static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
   private static final Key<Boolean> INTERFACE_MODIFIERS_FLAG_KEY = Key.create("INTERFACE_MODIFIERS_FLAG_KEY");
 
   public static void addChildren(final ASTNode parent,

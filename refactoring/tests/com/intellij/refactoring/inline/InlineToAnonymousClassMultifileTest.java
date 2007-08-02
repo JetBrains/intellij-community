@@ -27,6 +27,10 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
     doTest("p1.ChildCtor");
   }
 
+  public void testStaticImports() throws Exception {   // IDEADEV-18745
+    doTest("p1.Inlined");
+  }
+
   private String getRoot() {
     return PathManagerEx.getTestDataPath()+ "/refactoring/inlineToAnonymousClass/multifile/" + getTestName(true);
   }

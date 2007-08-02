@@ -431,6 +431,16 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       getTreeParent().replaceChildInternal(this, ref);
       return SourceTreeToPsiMap.treeElementToPsi(ref);
     }
+    else if ((element instanceof PsiField || element instanceof PsiMethod) && ((PsiMember) element).hasModifierProperty(PsiModifier.STATIC)) {
+      PsiMember member = (PsiMember) element;
+      final PsiClass psiClass = member.getContainingClass();
+      if (psiClass == null) throw new IncorrectOperationException();
+      String qName = psiClass.getQualifiedName() + "." + member.getName();
+      final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
+      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName, 0, qName.length(), table);
+      getTreeParent().replaceChildInternal(this, ref);
+      return SourceTreeToPsiMap.treeElementToPsi(ref);
+    }
     else {
       throw new IncorrectOperationException(element.toString());
     }
