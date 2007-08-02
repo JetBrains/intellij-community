@@ -294,8 +294,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private Point fixPopupLocation(final Component contents, final int x, final int y) {
     if (!(contents instanceof JToolTip)) return new Point(x, y);
 
-    final Point mouse = MouseInfo.getPointerInfo().getLocation();
-    int deltaY = mouse.y - y;
+    final PointerInfo info = MouseInfo.getPointerInfo();
+    int deltaY = 0;
+
+    if (info != null) {
+      final Point mouse = info.getLocation();
+      deltaY = mouse.y - y;
+    }
 
     final Dimension size = contents.getPreferredSize();
     final Rectangle rec = new Rectangle(new Point(x, y), size);
