@@ -3,12 +3,14 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -167,17 +169,24 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           cellRenderer.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
         }
         if (myEnabled.get(ideaPluginDescriptor.getPluginId()).booleanValue()) {
-          for (PluginId pluginId : ideaPluginDescriptor.getDependentPluginIds()) {
-            if (ArrayUtil.find(ideaPluginDescriptor.getOptionalDependentPluginIds(), pluginId) == -1 &&
-                !myEnabled.get(pluginId).booleanValue()) {
-              cellRenderer.setForeground(Color.red);
-              final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-              if (plugin != null) {
-                cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.tooltip.warning", plugin.getName()));
-                break;
-              }
+          PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+            @Nullable
+            public IdeaPluginDescriptor fun(final PluginId pluginId) {
+              return PluginManager.getPlugin(pluginId);
             }
-          }
+          }, new Condition<PluginId>() {
+            public boolean value(final PluginId pluginId) {
+              if (!myEnabled.get(pluginId).booleanValue()) {
+                cellRenderer.setForeground(Color.red);
+                final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+                if (plugin != null) {
+                  cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.tooltip.warning", plugin.getName()));
+                }
+                return false;
+              }
+              return true;
+            }
+          });
         }
         if (PluginManager.isIncompatible(ideaPluginDescriptor)) {
           cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning"));

@@ -14,9 +14,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -509,24 +511,29 @@ public class PluginManager {
       }
     }
     final List<String> disabledPluginIds = new ArrayList<String>();
-    for (Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
+    for (final Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptorImpl pluginDescriptor = it.next();
-      final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-      final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
-      for (final PluginId dependentPluginId : dependentPluginIds) {
-        if (!idToDescriptorMap.containsKey(dependentPluginId) && !optionalDependencies.contains(dependentPluginId)) {
-          if (message.length() > 0) {
-            message.append("\n");
-          }
-          pluginDescriptor.setEnabled(false);
-          disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
-          message.append(getDisabledPlugins().contains(dependentPluginId.getIdString()) ?
-                         IdeBundle.message("error.required.plugin.disabled", pluginDescriptor.getPluginId(), dependentPluginId) :
-                         IdeBundle.message("error.required.plugin.not.installed", pluginDescriptor.getPluginId(), dependentPluginId));
-          it.remove();
-          break;
+      checkDependants(pluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+        public IdeaPluginDescriptor fun(final PluginId pluginId) {
+          return idToDescriptorMap.get(pluginId);
         }
-      }
+      }, new Condition<PluginId>() {
+        public boolean value(final PluginId pluginId) {
+          if (!idToDescriptorMap.containsKey(pluginId)) {
+            if (message.length() > 0) {
+              message.append("\n");
+            }
+            pluginDescriptor.setEnabled(false);
+            disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
+            message.append(getDisabledPlugins().contains(pluginId.getIdString())
+                           ? IdeBundle.message("error.required.plugin.disabled", pluginDescriptor.getPluginId(), pluginId)
+                           : IdeBundle.message("error.required.plugin.not.installed", pluginDescriptor.getPluginId(), pluginId));
+            it.remove();
+            return false;
+          }
+          return true;
+        }
+      });
     }
     if (!disabledPluginIds.isEmpty()) {
       try {
@@ -547,6 +554,34 @@ public class PluginManager {
       return message.toString();
     }
     return null;
+  }
+
+  public static void checkDependants(final IdeaPluginDescriptor pluginDescriptor,
+                                     final Function<PluginId, IdeaPluginDescriptor> pluginId2Descriptor,
+                                     final Condition<PluginId> check) {
+    checkDependants(pluginDescriptor, pluginId2Descriptor, check, new HashSet<PluginId>());
+  }
+
+  private static boolean checkDependants(final IdeaPluginDescriptor pluginDescriptor,
+                                         final Function<PluginId, IdeaPluginDescriptor> pluginId2Descriptor,
+                                         final Condition<PluginId> check,
+                                         final Set<PluginId> processed) {
+    processed.add(pluginDescriptor.getPluginId());
+    final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+    final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
+    for (final PluginId dependentPluginId : dependentPluginIds) {
+      if (processed.contains(dependentPluginId)) continue;
+      if (!optionalDependencies.contains(dependentPluginId)) {
+        if (!check.value(dependentPluginId)) {
+          return false;
+        }
+        final IdeaPluginDescriptor dependantPluginDescriptor = pluginId2Descriptor.fun(dependentPluginId);
+        if (dependantPluginDescriptor != null && !checkDependants(dependantPluginDescriptor, pluginId2Descriptor, check, processed)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   @Nullable
