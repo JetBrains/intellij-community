@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.idea.eclipse.EclipseProjectModel;
 import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -21,9 +22,9 @@ public class EclipseProjectOpenProcessor extends ProjectOpenProcessor {
     return (EclipseImportBuilder)super.getBuilder();
   }
 
-  public boolean canOpenProject(final VirtualFile file) {
-    final String name = file.getName();
-    return name.equals(EclipseXml.CLASSPATH_FILE) || name.equals(EclipseXml.PROJECT_FILE);
+  @Nullable
+  public String[] getSupportedExtensions() {
+    return new String[] {EclipseXml.CLASSPATH_FILE, EclipseXml.PROJECT_FILE};
   }
 
   public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {

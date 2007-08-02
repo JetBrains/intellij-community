@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,12 +25,12 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessor {
     return (MavenImportBuilder)super.getBuilder();
   }
 
-
-  public boolean canOpenProject(VirtualFile file) {
-    return file.getName().equals(MavenEnv.POM_FILE);
+  @Nullable
+  public String[] getSupportedExtensions() {
+    return new String[]{MavenEnv.POM_FILE};
   }
 
-  public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
+public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
     getBuilder().setFiles(Arrays.asList(file));
 
     if(!getBuilder().setProfiles(new ArrayList<String>())){
