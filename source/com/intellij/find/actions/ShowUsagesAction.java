@@ -22,14 +22,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.GroupNode;
+import com.intellij.usages.impl.UsageNode;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class ShowUsagesAction extends AnAction {
   public ShowUsagesAction() {
@@ -63,8 +70,7 @@ public class ShowUsagesAction extends AnAction {
     };
     ArrayList<Usage> usages = new ArrayList<Usage>();
     CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
-    UsageViewPresentation presentation =
-      ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().processUsages(element, collect);
+    UsageViewPresentation presentation = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().processUsages(element, collect);
 
     if (usages.isEmpty()) {
       HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.usage.view.no.usages.text"));
@@ -86,35 +92,85 @@ public class ShowUsagesAction extends AnAction {
   }
 
   private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor, final Project project) {
-    Collections.sort(usages, new Comparator<Usage>() {
-      public int compare(final Usage o1, final Usage o2) {
-        VirtualFile file1 = UsageListCellRenderer.getVirtualFile(o1);
-        VirtualFile file2 = UsageListCellRenderer.getVirtualFile(o2);
-        String name1 = file1 == null ? "" : file1.getName();
-        String name2 = file2 == null ? "" : file2.getName();
-        String s1 = name1 + o1;
-        String s2 = name2 + o2;
-        return s1.compareTo(s2);
+    Usage[] arr = usages.toArray(new Usage[usages.size()]);
+    UsageViewPresentation presentation = new UsageViewPresentation();
+    presentation.setDetachedMode(true);
+    final UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(project).createUsageView(new UsageTarget[0], arr, presentation, null);
+
+    GroupNode root = usageView.getRoot();
+    List<UsageNode> nodes = new ArrayList<UsageNode>();
+
+    addUsageNodes(root, nodes);
+
+    final JList list = new JList(new Vector<UsageNode>(nodes));
+    list.setCellRenderer(new ListCellRenderer(){
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        UsageNode usageNode = (UsageNode)value;
+        int seq = appendGroupText((GroupNode)usageNode.getParent(), panel,list, value, index, isSelected);
+
+        ColoredListCellRenderer usageRenderer = new ColoredListCellRenderer() {
+          protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+            UsageNode usageNode = (UsageNode)value;
+            Usage usage = usageNode.getUsage();
+            UsagePresentation presentation = usage.getPresentation();
+            setIcon(presentation.getIcon());
+
+            TextChunk[] text = presentation.getText();
+            for (TextChunk textChunk : text) {
+              append(textChunk.getText(), SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()));
+            }
+          }
+        };
+        usageRenderer.setIpad(new Insets(0,0,0,0));
+        usageRenderer.setBorder(null);
+        usageRenderer.getListCellRendererComponent(list, value, index, isSelected, false);
+        panel.add(usageRenderer, new GridBagConstraints(seq, 0, GridBagConstraints.REMAINDER, 0, 1, 0,
+                                                        GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 1));
+        panel.setBackground(list.getBackground());
+        return panel;
+      }
+      private int appendGroupText(final GroupNode node, JPanel panel, JList list, Object value, int index, boolean isSelected) {
+        if (node != null && node.getGroup() != null) {
+          int seq = appendGroupText((GroupNode)node.getParent(), panel, list, value, index, isSelected);
+          if (node.canNavigateToSource()) {
+            ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
+              protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+                UsageGroup group = node.getGroup();
+                setIcon(group.getIcon(false));
+                append(group.getText(usageView), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              }
+            };
+            renderer.setIpad(new Insets(0,0,0,0));
+            renderer.setBorder(null);
+            renderer.getListCellRendererComponent(list, value, index, isSelected, false);
+            panel.add(renderer, new GridBagConstraints(seq, 0, 1, 0, 0, 0,
+                                                       GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 1));
+            return seq+1;
+          }
+        }
+        return 0;
       }
     });
-    final JList list = new JList(new Vector<Usage>(usages));
-    list.setCellRenderer(new UsageListCellRenderer(project));
 
     final Runnable runnable = new Runnable() {
       public void run() {
         int[] ids = list.getSelectedIndices();
         if (ids == null || ids.length == 0) return;
         for (Object element : list.getSelectedValues()) {
-          processor.process((Usage)element);
+          UsageNode node = (UsageNode)element;
+          Usage usage = node.getUsage();
+          processor.process(usage);
         }
       }
     };
 
     ListSpeedSearch speedSearch = new ListSpeedSearch(list) {
-
       protected String getElementText(final Object element) {
         StringBuilder text = new StringBuilder();
-        Usage usage = (Usage)element;
+        UsageNode node = (UsageNode)element;
+        Usage usage = node.getUsage();
         VirtualFile virtualFile = UsageListCellRenderer.getVirtualFile(usage);
         if (virtualFile != null) {
           text.append(virtualFile.getName());
@@ -134,6 +190,7 @@ public class ShowUsagesAction extends AnAction {
         }
       }
     });
+
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
     if (title != null) {
       builder.setTitle(title);
@@ -141,6 +198,16 @@ public class ShowUsagesAction extends AnAction {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
+  private static void addUsageNodes(GroupNode root, List<UsageNode> nodes) {
+    for (UsageNode node : root.getUsageNodes()) {
+      node.setParent(root);
+      nodes.add(node);
+    }
+    for (GroupNode groupNode : root.getSubGroups()) {
+      groupNode.setParent(root);
+      addUsageNodes(groupNode, nodes);
+    }
+  }
 
   private static void chooseAmbiguousTarget(final Project project, final Editor editor) {
     if (editor != null) {

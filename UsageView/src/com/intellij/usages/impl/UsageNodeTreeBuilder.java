@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class UsageNodeTreeBuilder {
+class UsageNodeTreeBuilder {
   private GroupNode myRoot;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;

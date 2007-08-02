@@ -92,7 +92,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final UsageModelTracker myModelTracker;
   private final Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
-  private static final UsageNode NULL_NODE = new UsageNode(new NullUsage(), new DefaultTreeModel(null));
+  private static final UsageNode NULL_NODE = new UsageNode(new NullUsage(), new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
 
   private boolean myChangesDetected = false;
@@ -126,6 +126,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private UsagePreviewPanel myUsagePreviewPanel;
   private JPanel myCentralPanel;
   private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
+  private final GroupNode myRoot;
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -158,54 +159,56 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myModelTracker = new UsageModelTracker(project);
 
     final UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), (GroupNode)model.getRoot());
+    myRoot = (GroupNode)model.getRoot();
+    myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myTree.setModel(model);
+    if (!myPresentation.isDetachedMode()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTree.setModel(model);
 
-        myRootPanel.setLayout(new BorderLayout());
+          myRootPanel.setLayout(new BorderLayout());
 
-        JPanel toolbarPanel = new JPanel(new BorderLayout());
-        toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
-        toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
-        myRootPanel.add(toolbarPanel, BorderLayout.WEST);
+          JPanel toolbarPanel = new JPanel(new BorderLayout());
+          toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
+          toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
+          myRootPanel.add(toolbarPanel, BorderLayout.WEST);
 
-        myCentralPanel = new JPanel();
-        myCentralPanel.setLayout(new BorderLayout());
-        myRootPanel.add(myCentralPanel, BorderLayout.CENTER);
-        setupCentralPanel();
+          myCentralPanel = new JPanel();
+          myCentralPanel.setLayout(new BorderLayout());
+          myRootPanel.add(myCentralPanel, BorderLayout.CENTER);
+          setupCentralPanel();
 
-        initTree();
+          initTree();
 
-        myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
-        collapseAll();
+          myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
+          collapseAll();
 
-        myModelTracker.addListener(UsageViewImpl.this);
+          myModelTracker.addListener(UsageViewImpl.this);
 
-        if (myPresentation.isShowCancelButton()) {
-          addButtonToLowerPane(new Runnable() {
-            public void run() {
-              close();
-            }
-          }, UsageViewBundle.message("usage.view.cancel.button"));
-        }
-
-        myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-          public void valueChanged(final TreeSelectionEvent e) {
-            SwingUtilities.invokeLater(new Runnable() {
+          if (myPresentation.isShowCancelButton()) {
+            addButtonToLowerPane(new Runnable() {
               public void run() {
-                List<UsageInfo> infos = getSelectedUsageInfos();
-                if (infos != null && myUsagePreviewPanel != null) {
-                  myUsagePreviewPanel.updateLayout(infos);
-                }
+                close();
               }
-            });
+            }, UsageViewBundle.message("usage.view.cancel.button"));
           }
-        });
 
-      }
-    });
+          myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+            public void valueChanged(final TreeSelectionEvent e) {
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  List<UsageInfo> infos = getSelectedUsageInfos();
+                  if (infos != null && myUsagePreviewPanel != null) {
+                    myUsagePreviewPanel.updateLayout(infos);
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+    }
   }
 
   private void setupCentralPanel() {
@@ -514,7 +517,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
-
   private class CloseAction extends AnAction {
     private CloseAction() {
       super(UsageViewBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
@@ -578,8 +580,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         UsageSearcher usageSearcher = myUsageSearcherFactory.create();
         usageSearcher.generate(new Processor<Usage>() {
           public boolean process(final Usage usage) {
-            appendUsageLater(usage);
             if (usageViewManager.searchHasBeenCancelled()) return false;
+            appendUsageLater(usage);
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
           }
@@ -594,12 +596,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void reset() {
     myUsageNodes.clear();
     myIsFirstVisibleUsageFound = false;
-    ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        TreeUtil.expand(myTree, 2);
-      }
-    });
+    if (!myPresentation.isDetachedMode()) {
+      ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          TreeUtil.expand(myTree, 2);
+        }
+      });
+    }
 
     myUsages.clear();
   }
@@ -766,25 +770,28 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     flush();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final UsageNode firstUsageNode = ((UsageViewTreeModelBuilder)myTree.getModel()).getFirstUsageNode();
-        if (firstUsageNode != null) { //first usage;
-          showNode(firstUsageNode);
+    if (!myPresentation.isDetachedMode()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          final UsageNode firstUsageNode = ((UsageViewTreeModelBuilder)myTree.getModel()).getFirstUsageNode();
+          if (firstUsageNode != null) { //first usage;
+            showNode(firstUsageNode);
+          }
         }
-      }
-    });
-
+      });
+    }
   }
 
   private void showNode(final UsageNode node) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        TreePath usagePath = new TreePath(node.getPath());
-        myTree.expandPath(usagePath.getParentPath());
-        myTree.setSelectionPath(usagePath);
-      }
-    });
+    if (!myPresentation.isDetachedMode()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          TreePath usagePath = new TreePath(node.getPath());
+          myTree.expandPath(usagePath.getParentPath());
+          myTree.setSelectionPath(usagePath);
+        }
+      });
+    }
   }
 
   public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text) {
@@ -1267,5 +1274,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private List<UsageInfo> getSelectedUsageInfos() {
     return (List<UsageInfo>)DataManager.getInstance().getDataContext(myRootPanel).getData(USAGE_INFO_LIST_KEY.getName());
+  }
+
+  public GroupNode getRoot() {
+    return myRoot;
   }
 }

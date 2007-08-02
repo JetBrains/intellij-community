@@ -31,6 +31,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final UsageTarget[] myTargets;
   private UsageTargetNode[] myTargetNodes;
   private final String myTargetsNodeText;
+  private final boolean myDetachedMode;
 
   public UsageViewTreeModelBuilder(UsageViewPresentation presentation, UsageTarget[] targets) {
     //noinspection HardCodedStringLiteral
@@ -47,6 +48,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     else {
       myTargetsNode = null;
     }
+    myDetachedMode = presentation.isDetachedMode();
   }
 
   public static class TargetsRootNode extends DefaultMutableTreeNode {
@@ -108,16 +110,22 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     }
 
     public void addNode(final DefaultMutableTreeNode node) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myTreeModel.insertNodeInto(node, RootGroupNode.this, getNodeInsertionIndex(node));
-        }
-      });
+      if (!myDetachedMode) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myTreeModel.insertNodeInto(node, RootGroupNode.this, getNodeInsertionIndex(node));
+          }
+        });
+      }
     }
 
     @NonNls
     public String toString() {
       return "Root "+super.toString();
     }
+  }
+
+  public boolean isDetachedMode() {
+    return myDetachedMode;
   }
 }

@@ -21,17 +21,16 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.Arrays;
 
 /**
  * @author max
  */
-class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
+public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   private final Usage myUsage;
   private boolean myUsageExcluded = false;
 
-  public UsageNode(@NotNull Usage usage, @NotNull DefaultTreeModel model) {
+  public UsageNode(@NotNull Usage usage, @NotNull UsageViewTreeModelBuilder model) {
     super(model);
     setUserObject(usage);
     myUsage = usage;

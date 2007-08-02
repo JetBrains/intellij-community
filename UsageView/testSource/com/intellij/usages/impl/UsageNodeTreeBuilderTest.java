@@ -10,8 +10,6 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 
 /**
  * Created by IntelliJ IDEA.
@@ -79,7 +77,8 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       usages[i] = createUsage(indices[i]);
     }
 
-    DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode("temp"));
+    //DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode("temp"));
+    UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]);
     GroupNode rootNode = new GroupNode(null, 0, model);
     model.setRoot(rootNode);
     UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);

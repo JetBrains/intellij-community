@@ -42,7 +42,7 @@ public class UsageViewPresentation {
   private String myToolwindowTitle;
 
   private List<Action> myNotFoundActions;
-
+  private boolean myDetachedMode; // no UI will be shown
 
   public String getTabText() {
     return myTabText;
@@ -156,6 +156,14 @@ public class UsageViewPresentation {
 
   public void setToolwindowTitle(final String toolwindowTitle) {
     myToolwindowTitle = toolwindowTitle;
+  }
+
+  public boolean isDetachedMode() {
+    return myDetachedMode;
+  }
+
+  public void setDetachedMode(boolean detachedMode) {
+    myDetachedMode = detachedMode;
   }
 }
 

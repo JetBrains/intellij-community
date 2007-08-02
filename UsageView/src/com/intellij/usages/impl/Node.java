@@ -25,7 +25,7 @@ import javax.swing.tree.DefaultTreeModel;
 /**
  * @author max
  */
-abstract class Node extends DefaultMutableTreeNode {
+public abstract class Node extends DefaultMutableTreeNode {
   private boolean myIsValid = true;
   protected final DefaultTreeModel myTreeModel;
   private Boolean myIsReadOnly = null;

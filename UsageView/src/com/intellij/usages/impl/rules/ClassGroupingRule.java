@@ -37,48 +37,50 @@ import javax.swing.*;
  */
 public class ClassGroupingRule implements UsageGroupingRule {
   public UsageGroup groupUsage(Usage usage) {
-    if (usage instanceof PsiElementUsage) {
-      final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
-      final PsiFile containingFile = psiElement.getContainingFile();
-      
-      if (containingFile instanceof PsiJavaFile && !(containingFile instanceof JspFile)) {
-        PsiElement containingClass = psiElement;
-        do {
-          containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
-          if (containingClass == null || ((PsiClass)containingClass).getQualifiedName() != null) break;
-        }
-        while (true);
+    if (!(usage instanceof PsiElementUsage)) {
+      return null;
+    }
+    final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
+    final PsiFile containingFile = psiElement.getContainingFile();
 
-        if (containingClass == null) {
-          // check whether the element is in the import list
-          PsiImportList importList = PsiTreeUtil.getParentOfType(psiElement, PsiImportList.class, true);
-          if (importList != null) {
-            final String fileName = getFileNameWithoutExtension(containingFile);
-            final PsiClass[] classes = ((PsiJavaFile)containingFile).getClasses();
-            for (final PsiClass aClass : classes) {
-              if (fileName.equals(aClass.getName())) {
-                containingClass = aClass;
-                break;
-              }
-            }
-          }
-        }
-        else {
-          // skip JspClass synthetic classes.
-          if (containingClass.getParent() instanceof PsiFile && PsiUtil.isInJspFile(containingClass)) {
-            containingClass = null;
-          }
-        }
+    if (!(containingFile instanceof PsiJavaFile) || containingFile instanceof JspFile) {
+      return null;
+    }
+    PsiElement containingClass = psiElement;
+    do {
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
+      if (containingClass == null || ((PsiClass)containingClass).getQualifiedName() != null) break;
+    }
+    while (true);
 
-        if (containingClass != null) {
-          return new ClassUsageGroup((PsiClass)containingClass);
-        }
-        
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
-        if (virtualFile != null) {
-          return new FileGroupingRule.FileUsageGroup(containingFile.getProject(), virtualFile);
+    if (containingClass == null) {
+      // check whether the element is in the import list
+      PsiImportList importList = PsiTreeUtil.getParentOfType(psiElement, PsiImportList.class, true);
+      if (importList != null) {
+        final String fileName = getFileNameWithoutExtension(containingFile);
+        final PsiClass[] classes = ((PsiJavaFile)containingFile).getClasses();
+        for (final PsiClass aClass : classes) {
+          if (fileName.equals(aClass.getName())) {
+            containingClass = aClass;
+            break;
+          }
         }
       }
+    }
+    else {
+      // skip JspClass synthetic classes.
+      if (containingClass.getParent() instanceof PsiFile && PsiUtil.isInJspFile(containingClass)) {
+        containingClass = null;
+      }
+    }
+
+    if (containingClass != null) {
+      return new ClassUsageGroup((PsiClass)containingClass);
+    }
+
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile != null) {
+      return new FileGroupingRule.FileUsageGroup(containingFile.getProject(), virtualFile);
     }
     return null;
   }
