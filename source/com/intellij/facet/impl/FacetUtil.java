@@ -22,7 +22,7 @@ public class FacetUtil {
   }
 
   public static <F extends Facet, C extends FacetConfiguration> F createFacet(FacetType<F, C> type, Module module, final Facet underlying) {
-    return type.createFacet(module, type.getDefaultFacetName(), type.createDefaultConfiguration(), underlying);
+    return FacetManagerImpl.createFacet(type, module, type.getDefaultFacetName(), type.createDefaultConfiguration(), underlying);
   }
 
   public static void deleteFacet(final Facet facet) {

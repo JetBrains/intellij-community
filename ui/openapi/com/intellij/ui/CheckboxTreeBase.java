@@ -13,6 +13,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Enumeration;
 
 /**
  * @author Dmitry Avdeev
@@ -96,6 +97,30 @@ public class CheckboxTreeBase extends Tree {
   protected void checkNode(CheckedTreeNode node, boolean checked) {
     node.setChecked(checked);
     repaint();
+  }
+
+  protected void adjustParentsAndChildren(final CheckedTreeNode node, final boolean checked) {
+    node.setChecked(checked);
+    if (checked) {
+      CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
+      while (parent != null) {
+        parent.setChecked(true);
+        parent = (CheckedTreeNode)parent.getParent();
+      }
+    }
+    else {
+      uncheckChildren(node);
+    }
+    repaint();
+  }
+
+  private static void uncheckChildren(final CheckedTreeNode node) {
+    final Enumeration children = node.children();
+    while (children.hasMoreElements()) {
+      CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
+      child.setChecked(false);
+      uncheckChildren(child);
+    }
   }
 
   public static abstract class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {

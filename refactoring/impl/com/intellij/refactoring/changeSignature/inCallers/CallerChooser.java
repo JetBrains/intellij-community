@@ -200,33 +200,13 @@ public abstract class CallerChooser extends DialogWrapper {
     };
     Tree tree = new CheckboxTree(cellRenderer, root) {
       protected void checkNode(CheckedTreeNode node, boolean checked) {
-        node.setChecked(checked);
-        if (checked) {
-          CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
-          while (parent != null) {
-            parent.setChecked(true);
-            parent = (CheckedTreeNode)parent.getParent();
-          }
-        }
-        else {
-          uncheckChildren(node);
-        }
-        repaint();
+        adjustParentsAndChildren(node, checked);
       }
     };
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
 
     return tree;
-  }
-
-  private static void uncheckChildren(final CheckedTreeNode node) {
-    final Enumeration children = node.children();
-    while (children.hasMoreElements()) {
-      MethodNode child = (MethodNode)children.nextElement();
-      child.setChecked(false);
-      uncheckChildren(child);
-    }
   }
 
   private void getSelectedMethods(Set<PsiMethod> methods) {

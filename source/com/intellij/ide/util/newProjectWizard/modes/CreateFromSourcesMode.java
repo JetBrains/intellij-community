@@ -4,10 +4,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.importProject.DelegatingProgressIndicator;
-import com.intellij.ide.util.importProject.LibrariesDetectionStep;
-import com.intellij.ide.util.importProject.ModuleInsight;
-import com.intellij.ide.util.importProject.ModulesDetectionStep;
+import com.intellij.ide.util.importProject.*;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -47,6 +44,7 @@ public class CreateFromSourcesMode extends WizardMode {
     sequence.addCommonStep(new LibrariesDetectionStep(projectBuilder, moduleInsight, null, "reference.dialogs.new.project.fromCode.page1"));
     sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, null, "reference.dialogs.new.project.fromCode.page2"));
     sequence.addCommonStep(factory.createProjectJdkStep(context));
+    sequence.addCommonStep(new FacetDetectionStep(projectBuilder, null));
     return sequence;
   }
 

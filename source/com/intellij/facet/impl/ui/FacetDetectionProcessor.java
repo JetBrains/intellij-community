@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -27,7 +28,7 @@ import java.util.*;
  */
 public class FacetDetectionProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetDetectionProcessor");
-  private Map<FacetConfiguration, FacetInfo> myDetectedFacets = new LinkedHashMap<FacetConfiguration, FacetInfo>();
+  private Map<FacetConfiguration, Pair<FacetInfo, VirtualFile>> myDetectedFacets = new LinkedHashMap<FacetConfiguration, Pair<FacetInfo, VirtualFile>>();
   private Map<FacetTypeId, List<FacetConfiguration>> myDetectedConfigurations = new HashMap<FacetTypeId, List<FacetConfiguration>>();
   private final ProgressIndicator myProgressIndicator;
   private FileTypeManager myFileTypeManager;
@@ -95,8 +96,16 @@ public class FacetDetectionProcessor {
     }
   }
 
+  public List<Pair<FacetInfo, VirtualFile>> getDetectedFacetsWithFiles() {
+    return new ArrayList<Pair<FacetInfo, VirtualFile>>(myDetectedFacets.values());
+  }
+
   public List<FacetInfo> getDetectedFacets() {
-    return new ArrayList<FacetInfo>(myDetectedFacets.values());
+    List<FacetInfo> list = new ArrayList<FacetInfo>();
+    for (Pair<FacetInfo, VirtualFile> pair : myDetectedFacets.values()) {
+      list.add(pair.getFirst());
+    }
+    return list;
   }
 
   private class MyFacetDetectorWrapper<C extends FacetConfiguration, U extends FacetConfiguration> {
@@ -133,7 +142,7 @@ public class FacetDetectionProcessor {
         if (underlying == null) {
           return;
         }
-        underlyingFacet = myDetectedFacets.get(underlying);
+        underlyingFacet = myDetectedFacets.get(underlying).getFirst();
       }
 
       List<C> configurations = (List<C>)myDetectedConfigurations.get(myFacetType.getId());
@@ -144,7 +153,7 @@ public class FacetDetectionProcessor {
 
       FacetInfo facetInfo = new FacetInfo(myFacetType, generateFacetName(), newConfiguration, underlyingFacet);
       configurations.add(newConfiguration);
-      myDetectedFacets.put(newConfiguration, facetInfo);
+      myDetectedFacets.put(newConfiguration, Pair.create(facetInfo, file));
     }
 
     private String generateFacetName() {
@@ -164,7 +173,7 @@ public class FacetDetectionProcessor {
       List<FacetConfiguration> configurations = myDetectedConfigurations.get(myFacetType.getId());
       if (configurations != null) {
         for (FacetConfiguration configuration : configurations) {
-          if (name.equals(myDetectedFacets.get(configuration).getName())) {
+          if (name.equals(myDetectedFacets.get(configuration).getFirst().getName())) {
             return true;
           }
         }

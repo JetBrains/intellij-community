@@ -154,9 +154,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     addFacets(facets, element, facet);
   }
 
-  public static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, final String name,
+  public static <C extends FacetConfiguration, F extends Facet> F createFacet(final FacetType<F, C> type, final Module module, final String name,
                                                                   final C configuration, final Facet underlyingFacet) {
-    final Facet facet = type.createFacet(module, name, configuration, underlyingFacet);
+    final F facet = type.createFacet(module, name, configuration, underlyingFacet);
     assertTrue(facet.getModule() == module, facet, "module");
     assertTrue(facet.getConfiguration() == configuration, facet, "configuration");
     assertTrue(Comparing.equal(facet.getName(), name), facet, "module");

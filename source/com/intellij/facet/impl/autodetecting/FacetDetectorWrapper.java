@@ -89,7 +89,7 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
     }
 
     String name = generateName(module);
-    final Facet facet = myFacetType.createFacet(module, name, result, underlyingFacet);
+    final Facet facet = FacetManagerImpl.createFacet(myFacetType, module, name, result, underlyingFacet);
     facet.setImplicit(true);
 
     new WriteAction() {

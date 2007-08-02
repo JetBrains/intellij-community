@@ -39,6 +39,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
   private List<LibraryDescriptor> myChosenLibraries = Collections.emptyList();
   private Set<LibraryDescriptor> myChosenLibrariesSet;
   private List<ModuleDescriptor> myChosenModules = Collections.emptyList();
+  private List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
   private final ModuleInsight myModuleInsight;
 
   public ProjectFromSourcesBuilder(final ModuleInsight moduleInsight) {
@@ -161,6 +162,10 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     }
   }
 
+  public void addConfigurationUpdater(ProjectConfigurationUpdater updater) {
+    myUpdaters.add(updater);
+  }
+
   @NotNull
   public Module createModule(final Project project, final ModuleDescriptor descriptor, final Map<String, String> sourceRootToPrefixMap,
                              final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel) 
@@ -179,6 +184,9 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     final Module module = moduleModel.newModule(moduleFilePath, ModuleType.JAVA);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(descriptor, modifiableModel, sourceRootToPrefixMap, projectLibs);
+    for (ProjectConfigurationUpdater updater : myUpdaters) {
+      updater.updateModule(descriptor, module, modifiableModel);
+    }
     modifiableModel.commit();
 
     module.setSavePathsRelative(true); // default setting
@@ -262,5 +270,11 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       myChosenLibrariesSet = available;
     }
     return available.contains(lib);
+  }
+
+  public static interface ProjectConfigurationUpdater {
+
+    void updateModule(final ModuleDescriptor descriptor, Module module, ModifiableRootModel rootModel);
+
   }
 }
