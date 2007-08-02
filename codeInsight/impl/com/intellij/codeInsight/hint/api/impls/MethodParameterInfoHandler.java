@@ -104,6 +104,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
 
     Object[] candidates = context.getObjectsToView();
     PsiExpression[] args = o.getExpressions();
+
     for(int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo) candidates[i];
       PsiMethod method = (PsiMethod) candidate.getElement();
@@ -164,7 +165,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
       }
 
       context.setUIComponentEnabled(i, enabled);
-      if (enabled && parms.length == args.length && isAssignableParametersBeforeGivenIndex(parms,args, args.length, substitutor)) {
+      if (candidates.length > 1 && enabled && parms.length == args.length && isAssignableParametersBeforeGivenIndex(parms,args, args.length, substitutor)) {
         context.setHighlightedParameter(candidate);
       }
     }
