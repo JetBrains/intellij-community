@@ -79,11 +79,9 @@ public class SwitchStatement implements GroovyElementTypes {
    * @param builder
    */
   private static void parseCaseBlock(PsiBuilder builder) {
-    PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLCURLY);
     ParserUtils.getToken(builder, mNLS);
     if (ParserUtils.getToken(builder, mRCURLY)) {
-      marker.done(CASE_BLOCK);
       return;
     }
     if (!kCASE.equals(builder.getTokenType()) &&
@@ -111,7 +109,6 @@ public class SwitchStatement implements GroovyElementTypes {
       sectionMarker.done(CASE_SECTION);
     }
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
-    marker.done(CASE_BLOCK);
   }
 
   /**
