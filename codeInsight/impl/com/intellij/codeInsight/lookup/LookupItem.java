@@ -280,7 +280,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     return this;
   }
 
-  public LookupItem<T> addLookupStrings(final String... additionalLookupStrings) {
+  public LookupItem<T> addLookupStrings(@NonNls final String... additionalLookupStrings) {
     myAllLookupStrings.addAll(Arrays.asList(additionalLookupStrings));
     return this;
   }

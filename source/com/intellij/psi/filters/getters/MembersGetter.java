@@ -1,12 +1,14 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.filters.TrueFilter;
+import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ContextGetter;
+import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.element.ModifierFilter;
+import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.scope.processor.FilterScopeProcessor;
-import com.intellij.codeInsight.completion.CompletionContext;
 
 import java.util.List;
 
@@ -25,7 +27,10 @@ public class MembersGetter implements ContextGetter{
   }
 
   public Object[] get(PsiElement context, CompletionContext completionContext){
-    final FilterScopeProcessor processor = new FilterScopeProcessor(TrueFilter.INSTANCE);
+    final FilterScopeProcessor processor = new FilterScopeProcessor(new OrFilter(
+      new ClassFilter(PsiCompiledElement.class, false),
+      new ModifierFilter(PsiModifier.PRIVATE, false)
+    ));
     final Object[] elements = myBaseGetter.get(context, completionContext);
 
     for (final Object element : elements) {
