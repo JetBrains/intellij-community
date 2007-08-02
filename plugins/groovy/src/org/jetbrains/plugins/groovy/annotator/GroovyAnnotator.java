@@ -123,6 +123,7 @@ public class GroovyAnnotator implements Annotator {
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasClassImplicitModifier(PsiModifier.ABSTRACT);
+    boolean isMethodStatic = modifiersList.hasClassImplicitModifier(PsiModifier.STATIC);
     if (grMethod.getParent() instanceof GroovyFile) {
       if (isMethodAbstract) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
@@ -141,6 +142,10 @@ public class GroovyAnnotator implements Annotator {
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.static.method"));
           }
 
+          if (modifiersList.hasClassImplicitModifier(PsiModifier.PRIVATE)) {
+            holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.private.method"));
+          }
+
         } else if (containingTypeDef.isEnum()) {
           //enumeration
           //todo
@@ -155,6 +160,10 @@ public class GroovyAnnotator implements Annotator {
           if (!typeDefModifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
             if (isMethodAbstract) {
               holder.createErrorAnnotation(modifiersList, GroovyBundle.message("not.abstract.class.cannot.have.abstract.method"));
+            }
+          } else {
+             if (isMethodStatic) {
+              holder.createErrorAnnotation(modifiersList, GroovyBundle.message("abstract.class.cannot.have.static.method"));
             }
           }
 
