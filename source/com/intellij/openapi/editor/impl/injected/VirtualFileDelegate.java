@@ -34,7 +34,7 @@ public class VirtualFileDelegate extends LightVirtualFile {
     VirtualFileDelegate that = (VirtualFileDelegate)o;
 
     if (myDelegate != that.myDelegate) return false;
-    if (getContent().equals(that.getContent())) return false;
+    if (!getContent().equals(that.getContent())) return false;
     return myDocumentRange.equalsTo(that.myDocumentRange);
   }
 
