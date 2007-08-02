@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class CreateFromScratchMode extends WizardMode {
 
   @NotNull
   public String getDescription(final WizardContext context) {
-    return ProjectBundle.message("project.new.wizard.from.scratch.description", context.getPresentationName());
+    return ProjectBundle.message("project.new.wizard.from.scratch.description", ApplicationNamesInfo.getInstance().getProductName(), context.getPresentationName());
   }
 
   @Nullable
