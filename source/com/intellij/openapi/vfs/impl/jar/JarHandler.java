@@ -15,8 +15,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
@@ -57,7 +56,12 @@ public class JarHandler implements FileSystemInterface {
   public JarHandler(final JarFileSystemImpl fileSystem, String path) {
     myFileSystem = fileSystem;
     myBasePath = path;
-    LocalFileSystem.getInstance().findFileByPath(path); // Make sure local file system is aware of this file and will fire events if it changes
+
+    NewVirtualFile localJarFile = (NewVirtualFile)LocalFileSystem.getInstance().findFileByPath(path);
+    if (localJarFile != null) {
+      localJarFile.markDirty();
+      localJarFile.refresh(true, false); // Make sure local file system is aware of this file and will fire events if it changes
+    }
   }
 
   public void dispose() {
@@ -73,19 +77,13 @@ public class JarHandler implements FileSystemInterface {
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
       if (root != null) {
         root.markDirty();
-        try {
-          for (VirtualFile child : root.getChildren()) {
-            child.delete(this);
-          }
+        for (VirtualFile child : root.getChildren()) {
+          ManagingFS fs = ManagingFS.getInstance();
+          fs.processEvents(Collections.singletonList(new VFileDeleteEvent(this, child, true)));
+        }
 
-          root.markDirtyRecursively();
-          RefreshQueue.getInstance().refresh(false, true, null, root);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        // root.markDirtyRecursively();
-        /*;*/
+        root.markDirtyRecursively();
+        RefreshQueue.getInstance().refresh(false, true, null, root);
       }
     }
     finally {
