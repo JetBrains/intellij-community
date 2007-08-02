@@ -25,6 +25,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     final ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     nodes.addAll(modulesAndGroups(modules));
     final VirtualFile baseDir = getProject().getBaseDir();
+    if (baseDir == null) return nodes;
+
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     final VirtualFile[] files = baseDir.getChildren();
     for (VirtualFile file : files) {
