@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +53,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
 
   private final Project myProject;
-  private final Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new HashMap<RepositoryLocation, ChangesCacheFile>();
+  private final Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new ConcurrentHashMap<RepositoryLocation, ChangesCacheFile>();
   private final MessageBus myBus;
   private final BackgroundTaskQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
