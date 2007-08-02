@@ -53,7 +53,7 @@ public class ShowPropertiesAction extends BasicAction {
         component = new PropertiesComponent();
         w = ToolWindowManager.getInstance(project).registerToolWindow(PropertiesComponent.ID, component, ToolWindowAnchor.BOTTOM);
       } else {
-        component = ((PropertiesComponent) w.getComponent());
+        component = ((PropertiesComponent) w.getContentManager().getContents()[0].getComponent());
       }
       w.setTitle(ioFiles[0].getName());
       w.show(null);
