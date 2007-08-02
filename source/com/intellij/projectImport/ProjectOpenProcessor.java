@@ -46,6 +46,15 @@ public abstract class ProjectOpenProcessor {
   }
 
   public boolean canOpenProject(final VirtualFile file) {
+    final String[] supported = getSupportedExtensions();
+    if (supported != null) {
+      final String fileName = file.getName();
+      for (String name : supported) {
+        if (fileName.equals(name)) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 
@@ -56,6 +65,9 @@ public abstract class ProjectOpenProcessor {
   public ProjectImportBuilder getBuilder() {
     return myBuilder;
   }
+
+  @Nullable
+  public abstract String [] getSupportedExtensions();
 
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {

@@ -6,11 +6,14 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +59,15 @@ public class OpenProjectAction extends AnAction {
       }
     };
     descriptor.setTitle(IdeBundle.message("title.open.project"));
-    descriptor.setDescription(IdeBundle.message("filter.project.files"));
+    String [] extensions = new String[]{ProjectFileType.DOT_DEFAULT_EXTENSION};
+    final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME);
+    for (ProjectOpenProcessor openProcessor : openProcessors) {
+      final String[] supportedExtensions = openProcessor.getSupportedExtensions();
+      if (supportedExtensions != null) {
+        extensions = ArrayUtil.mergeArrays(extensions, supportedExtensions, String.class);
+      }
+    }
+    descriptor.setDescription(IdeBundle.message("filter.project.files", StringUtil.join(extensions, ", ")));
     final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
 
     if (files.length == 0 || files[0] == null) return;
