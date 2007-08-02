@@ -1,16 +1,15 @@
 package com.intellij.historyIntegrTests;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class PatchingTestCase extends IntegrationTestCase {
   protected String patchFilePath;
@@ -39,7 +38,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
     }
 
     ApplyPatchContext ctx = new ApplyPatchContext(root, 0, true, false);
-    List<FilePath> files = new ArrayList<FilePath>();
-    ApplyPatchAction.applyFilePatches(myProject, patches, ctx, files);
+    ApplyPatchAction.applyFilePatches(myProject, patches, ctx);
   }
 }

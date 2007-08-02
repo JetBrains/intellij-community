@@ -201,8 +201,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   @Nullable
   public List<FilePath> unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
                                            @Nullable final List<ShelvedBinaryFile> binaryFiles) {
-    List<FilePath> result = new ArrayList<FilePath>();
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
+    ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
     try {
       List<FilePatch> patches = loadPatches(changeList.PATH);
       if (changes != null) {
@@ -216,8 +216,6 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         }
       }
       List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
-      VirtualFile baseDir = myProject.getBaseDir();
-      ApplyPatchContext context = new ApplyPatchContext(baseDir, 0, true, true);
       if (!ApplyPatchAction.prepareFiles(myProject, patches, context, filesToMakeWritable)) {
         return null;
       }
@@ -241,7 +239,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         return null;
       }
 
-      if (ApplyPatchAction.applyFilePatches(myProject, patches, context, result) == ApplyPatchStatus.FAILURE) {
+      if (ApplyPatchAction.applyFilePatches(myProject, patches, context) == ApplyPatchStatus.FAILURE) {
         return null;
       }
       for(ShelvedBinaryFile file: binaryFilesToUnshelve) {
@@ -250,7 +248,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
           break;
         }
         changeList.getBinaryFiles().remove(file);
-        result.add(unshelvedFile);
+        context.addAffectedFile(unshelvedFile);
       }
     }
     catch (IOException e) {
@@ -267,7 +265,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     else {
       saveRemainingPatches(changeList, remainingPatches);
     }
-    return result;
+    return context.getAffectedFiles();
   }
 
   private static List<ShelvedBinaryFile> getBinaryFilesToUnshelve(final ShelvedChangeList changeList, final List<ShelvedBinaryFile> binaryFiles) {

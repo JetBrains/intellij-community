@@ -38,14 +38,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,15 +78,13 @@ public class ApplyPatchAction extends AnAction {
     if (readonlyStatus.hasReadonlyFiles()) {
       return ApplyPatchStatus.FAILURE;
     }
-    final List<FilePath> affectedPaths = new ArrayList<FilePath>();
-    final ApplyPatchStatus patchStatus = applyFilePatches(project, patches, context, affectedPaths);
-    moveChangesToList(project, affectedPaths, targetChangeList);
+    final ApplyPatchStatus patchStatus = applyFilePatches(project, patches, context);
+    moveChangesToList(project, context.getAffectedFiles(), targetChangeList);
     return patchStatus;
   }
 
   public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches,
-                                                  final ApplyPatchContext context,
-                                                  @Nullable final List<FilePath> affectedFiles) {
+                                                  final ApplyPatchContext context) {
     final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -95,7 +92,7 @@ public class ApplyPatchAction extends AnAction {
           public void run() {
             ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context, affectedFiles);
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             try {
@@ -165,8 +162,7 @@ public class ApplyPatchAction extends AnAction {
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch,
-                                                   final ApplyPatchContext context,
-                                                   @Nullable final List<FilePath> affectedFiles) {
+                                                   final ApplyPatchContext context) {
     VirtualFile file;
     try {
       file = patch.findFileToPatch(context);
@@ -181,10 +177,7 @@ public class ApplyPatchAction extends AnAction {
     }
 
     try {
-      if (affectedFiles != null) {
-        affectedFiles.add(patch.getTarget(file));
-      }
-      return patch.apply(file);
+      return patch.apply(file, context);
     }
     catch(ApplyPatchException ex) {
       if (!patch.isNewFile() && !patch.isDeletedFile()) {

@@ -95,7 +95,7 @@ public class FilePatch {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
     }
 
-    return apply(fileToPatch);
+    return apply(fileToPatch, context);
   }
 
   public FilePath getTarget(final VirtualFile file) {
@@ -105,7 +105,8 @@ public class FilePatch {
     return new FilePathImpl(file);
   }
 
-  public ApplyPatchStatus apply(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
+  public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context) throws IOException, ApplyPatchException {
+    context.addAffectedFile(getTarget(fileToPatch));
     if (isNewFile()) {
       if (fileToPatch.findChild(getBeforeFileName()) != null) {
         throw new ApplyPatchException("File " + getBeforeFileName() + " already exists");
@@ -171,7 +172,9 @@ public class FilePatch {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
+        context.addAffectedFile(file);
         file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
+        context.addAffectedFile(file);
       }
       boolean needMove = (beforeNameComponents.length != afterNameComponents.length);
       if (!needMove) {
@@ -182,7 +185,9 @@ public class FilePatch {
         if (moveTarget == null) {
           return null;
         }
-        file.move(null, moveTarget);
+        context.addAffectedFile(file);
+        file.move(FilePatch.class, moveTarget);
+        context.addAffectedFile(file);
       }
     }
     return file;

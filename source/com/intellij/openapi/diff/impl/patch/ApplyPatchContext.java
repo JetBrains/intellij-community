@@ -5,9 +5,12 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -20,6 +23,7 @@ public class ApplyPatchContext {
   private final boolean myAllowRename;
   private Map<VirtualFile, String> myPendingRenames = null;
   private TreeSet<String> myMissingDirectories = new TreeSet<String>();
+  private List<FilePath> myAffectedFiles = new ArrayList<FilePath>();
   
   public ApplyPatchContext(final VirtualFile baseDir, final int skipTopDirs, final boolean createDirectories, final boolean allowRename) {
     myBaseDir = baseDir;
@@ -58,7 +62,10 @@ public class ApplyPatchContext {
   public void applyPendingRenames() throws IOException {
     if (myPendingRenames != null) {
       for(Map.Entry<VirtualFile, String> entry: myPendingRenames.entrySet()) {
-        entry.getKey().rename(FilePatch.class, entry.getValue());      
+        final VirtualFile file = entry.getKey();
+        addAffectedFile(file);
+        file.rename(FilePatch.class, entry.getValue());
+        addAffectedFile(file);
       }
       myPendingRenames = null;
     }
@@ -74,5 +81,17 @@ public class ApplyPatchContext {
 
   public Collection<String> getMissingDirectories() {
     return Collections.unmodifiableSet(myMissingDirectories);
+  }
+
+  public void addAffectedFile(FilePath filePath) {
+    myAffectedFiles.add(filePath);
+  }
+
+  public List<FilePath> getAffectedFiles() {
+    return Collections.unmodifiableList(myAffectedFiles);
+  }
+
+  public void addAffectedFile(final VirtualFile file) {
+    addAffectedFile(new FilePathImpl(new File(file.getPath()), file.isDirectory()));
   }
 }
