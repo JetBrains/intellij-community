@@ -33,6 +33,8 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public void removeLibrary(@NotNull Library library) {
+    if (myLibrariesModifiableModel.getLibraryByName(library.getName()) == null) return;
+
     myRemovedLibraries.add(library);
     removeLibraryEditor(library);
     myLibrariesModifiableModel.removeLibrary(library);

@@ -73,7 +73,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
 
   public void addFacetInfo(final Facet facet) {
     final FacetInfo exiting = myFacet2Info.get(facet);
-    LOG.assertTrue(exiting == null);
+    if (exiting != null) {
+      LOG.assertTrue(exiting.getName().equals(facet.getName()));
+      LOG.assertTrue(exiting.getFacetType().equals(facet.getType()));
+      LOG.assertTrue(exiting.getConfiguration().equals(facet.getConfiguration()));
+      return;
+    }
 
     FacetInfo info = new FacetInfo(facet.getType(), facet.getName(), facet.getConfiguration(), myFacet2Info.get(facet.getUnderlyingFacet()));
     myFacet2Info.put(facet, info);

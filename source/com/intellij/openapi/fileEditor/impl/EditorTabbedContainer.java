@@ -104,6 +104,8 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       }
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
+          if (index < 0 || index >= MyTabbedPane.super.getTabCount()) return;
+          
           // [jeka] IMPORTANT: setSelectedIndex must be invoked inside a Command
           //  in order to support back-forward history navigation
           final EditorComposite oldComposite = myWindow.getSelectedEditor();

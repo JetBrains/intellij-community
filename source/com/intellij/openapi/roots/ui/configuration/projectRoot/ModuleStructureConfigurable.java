@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -153,7 +154,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private void updateSelection(final NamedConfigurable configurable, final String selectedTab) {
     super.updateSelection(configurable);
-    updateTabSelection(configurable, selectedTab);
+    if (configurable != null) {
+      updateTabSelection(configurable, selectedTab);
+    }
   }
 
   private void updateTabSelection(final NamedConfigurable configurable, final String selectedTab) {
@@ -416,13 +419,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   public void addLibraryOrderEntry(final Module module, final Library library) {
+    Component parent = WindowManager.getInstance().suggestParentWindow(module.getProject());
+
     final ModuleEditor moduleEditor = myContext.myModulesConfigurator.getModuleEditor(module);
     LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
     final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
     final OrderEntry[] entries = modelProxy.getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), library.getName())) {
-        if (Messages.showYesNoDialog(myWholePanel,
+        if (Messages.showYesNoDialog(parent,
                                      ProjectBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
                                      ProjectBundle.message("project.roots.replace.library.entry.title"),
                                      Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
