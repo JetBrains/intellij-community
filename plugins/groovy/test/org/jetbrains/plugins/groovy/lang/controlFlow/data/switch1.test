@@ -1,0 +1,16 @@
+switch(i) {
+  case 0:
+    int j = i
+    break
+  case 1:
+    print i
+}
+-----
+1(2) element: null
+2(3) READ i
+3(4,6) element: Switch statement
+4(5) READ i
+5(8) WRITE j
+6(7) READ print
+7() READ i
+8() element: null

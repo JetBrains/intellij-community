@@ -24,6 +24,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -51,15 +53,15 @@ public class GrBreakStatementImpl extends GroovyPsiElementImpl implements GrBrea
   }
 
   @Nullable
-  public GrLoopStatement getBreakedLoop() {
+  public GrStatement getBreakedLoop() {
     final String label = getLabel();
-    GrLoopStatement loop = PsiTreeUtil.getParentOfType(this, GrLoopStatement.class);
-    if (label == null) return loop;
-    while (loop != null) {
-      if (loop.getParent() instanceof GrLabeledStatement && label.equals(((GrLabeledStatement) loop.getParent()).getLabel())) {
-        return loop;
+    GrStatement target = PsiTreeUtil.getParentOfType(this, GrLoopStatement.class, GrSwitchStatement.class);
+    if (label == null) return target;
+    while (target != null) {
+      if (target.getParent() instanceof GrLabeledStatement && label.equals(((GrLabeledStatement) target.getParent()).getLabel())) {
+        return target;
       }
-      loop = PsiTreeUtil.getParentOfType(loop, GrLoopStatement.class);
+      target = PsiTreeUtil.getParentOfType(target, GrLoopStatement.class);
     }
 
     return null;

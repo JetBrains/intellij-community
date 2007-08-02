@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
@@ -88,7 +89,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
     super.visitBreakStatement(breakStatement);
-    final GrLoopStatement target = breakStatement.getBreakedLoop();
+    final GrStatement target = breakStatement.getBreakedLoop();
     if (target != null) {
       addPendingEdge(target);
     }
@@ -273,7 +274,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitSwitchStatement(GrSwitchStatement switchStatement) {
-    super.visitSwitchStatement(switchStatement);    //To change body of overridden methods use File | Settings | File Templates.
+    final GrCondition condition = switchStatement.getCondition();
+    if (condition != null) {
+      condition.accept(this);
+    }
+    final InstructionImpl instruction = startNode(switchStatement);
+    for (GrCaseSection section : switchStatement.getCaseSections()) {
+      myHead = instruction;
+      section.accept(this);
+    }
+    finishNode(instruction);
   }
 
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {

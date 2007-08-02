@@ -25,5 +25,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 public interface GrBreakStatement extends GrStatement {
   @Nullable String getLabel();
 
-  @Nullable GrLoopStatement getBreakedLoop();
+  @Nullable GrStatement getBreakedLoop();
 }
