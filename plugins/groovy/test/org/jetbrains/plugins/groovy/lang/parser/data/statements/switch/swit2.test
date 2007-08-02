@@ -10,9 +10,9 @@ Groovy script
     Literal
       PsiElement(string)(''bear'')
     PsiElement())(')')
-    Case block
-      PsiElement({)('{')
-      PsiWhiteSpace('\n')
+    PsiElement({)('{')
+    PsiWhiteSpace('\n')
+    Case section
       Case label
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
@@ -40,4 +40,4 @@ Groovy script
       BREAK statement
         PsiElement(break)('break')
       PsiElement(new line)('\n')
-      PsiElement(})('}')
+    PsiElement(})('}')
