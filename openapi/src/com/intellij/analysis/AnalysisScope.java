@@ -540,6 +540,9 @@ public class AnalysisScope {
 
       case PACKAGE:
         return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
+
+      case VIRTUAL_FILES:
+        return AnalysisScopeBundle.message("scope.selected.files");
     }
 
     return "";

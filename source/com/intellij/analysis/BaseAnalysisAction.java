@@ -51,11 +51,11 @@ public abstract class BaseAnalysisAction extends AnAction {
         scope = getInspectionScope(dataContext);
       }
       LOG.assertTrue(scope != null);
-      if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
+      /*if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
         FileDocumentManager.getInstance().saveAllDocuments();
         analyze(project, scope);
         return;
-      }
+      }*/
       final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
       final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
       BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
