@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -353,6 +350,8 @@ public class InjectedLanguageUtil {
   @Nullable
   public static PsiLanguageInjectionHost findInjectionHost(PsiElement element) {
     if (element == null || element instanceof PsiFile) return null;
+    if ("EL".equals(element.getLanguage().getID())) return null;
+
     if (element instanceof PsiLanguageInjectionHost) {
       return (PsiLanguageInjectionHost)element;
     }
