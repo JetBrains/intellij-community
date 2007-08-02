@@ -37,6 +37,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   private static final @NonNls String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
+  public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
 
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
@@ -99,7 +100,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private static void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder) {
+  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder) {
     Pair<Set<Instruction>,Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
@@ -179,15 +180,19 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           }
         }
         else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
+          boolean evaluatesToTrue = trueSet.contains(instruction);
           if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
             holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.pointless.assignment.expression",
-                                                                        Boolean.toString(trueSet.contains(instruction))));
+                                                                        Boolean.toString(evaluatesToTrue)));
           }
           else {
-            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
-            holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.condition",
-                                                                        Boolean.toString(trueSet.contains(instruction))),
-                                              localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
+            boolean report = !(psiAnchor.getParent() instanceof PsiAssertStatement) || !DONT_REPORT_TRUE_ASSERT_STATEMENTS || !evaluatesToTrue;
+            if (report) {
+              final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+              holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.condition",
+                                                                          Boolean.toString(evaluatesToTrue)),
+                                                localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
+            }
           }
           reportedAnchors.add(psiAnchor);
         }
@@ -348,6 +353,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox mySuggestNullables;
+    private final JCheckBox myDontReportTrueAsserts;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -367,9 +373,22 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           SUGGEST_NULLABLE_ANNOTATIONS = mySuggestNullables.isSelected();
         }
       });
+
+      myDontReportTrueAsserts = new JCheckBox(
+        InspectionsBundle.message("inspection.data.flow.true.asserts.option", ApplicationNamesInfo.getInstance().getProductName()));
+      myDontReportTrueAsserts.setSelected(DONT_REPORT_TRUE_ASSERT_STATEMENTS);
+      myDontReportTrueAsserts.getModel().addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          DONT_REPORT_TRUE_ASSERT_STATEMENTS = myDontReportTrueAsserts.isSelected();
+        }
+      });
+
       gc.insets = new Insets(0, 0, 15, 0);
       gc.gridy = 0;
       add(mySuggestNullables, gc);
+
+      gc.gridy++;
+      add(myDontReportTrueAsserts, gc);
     }
   }
 }
