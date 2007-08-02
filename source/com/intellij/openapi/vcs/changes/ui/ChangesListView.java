@@ -334,7 +334,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
           if (diffProvider != null) {
             ContentRevision beforeRevision = new VcsCurrentRevisionProxy(diffProvider, file);
             ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
-            changes.add(new Change(beforeRevision, afterRevision));
+            changes.add(new Change(beforeRevision, afterRevision, FileStatus.HIJACKED));
           }
         }
       }
