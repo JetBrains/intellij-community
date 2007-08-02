@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,13 +19,12 @@ import java.util.Iterator;
  * author: lesya
  */
 class AddHandler {
-
   private final Collection<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
   private final Collection<VirtualFile> myAllFiles = new ArrayList<VirtualFile>();
   private final Project myProject;
   private final CvsStorageComponent myCvsStorageComponent;
 
-  public AddHandler(Project project, CvsStorageComponent cvsStorageComponent) {
+  public AddHandler(@NotNull Project project, CvsStorageComponent cvsStorageComponent) {
     myProject = project;
     myCvsStorageComponent = cvsStorageComponent;
   }

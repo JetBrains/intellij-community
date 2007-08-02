@@ -192,10 +192,13 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
 
   public void fileCreated(final VirtualFileEvent event) {
     if (!shouldProcessEvent(event, false)) return;
+    final Project project = myProject;
+    if (project == null) return;    // already disposed
+    
     final VirtualFile file = event.getFile();
     myDeletedStorage.checkNeedForPurge(VfsUtil.virtualToIoFile(file));
     deleteIfAdminDirCreated(file);
-    if (myAddHandler == null) myAddHandler = new AddHandler(myProject, this);
+    if (myAddHandler == null) myAddHandler = new AddHandler(project, this);
     myAddHandler.addFile(file);
 
     execute();
