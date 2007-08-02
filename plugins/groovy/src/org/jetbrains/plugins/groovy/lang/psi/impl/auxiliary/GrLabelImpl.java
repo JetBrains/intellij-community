@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -36,5 +38,11 @@ public class GrLabelImpl extends GroovyPsiElementImpl implements GrLabel {
 
   public String toString() {
     return "Label";
+  }
+
+  public String getName() {
+    final PsiElement id = findChildByType(GroovyElementTypes.mIDENT);
+    assert id != null;
+    return id.getText();
   }
 }
