@@ -651,12 +651,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (refCountHolder != null) {
       if (attributeDescriptor.hasIdType()) {
-        if (doAddValueWithIdType(value, attribute, tag, refCountHolder)) return;
+        if (doAddValueWithIdType(value, attribute, tag, refCountHolder, false)) return;
       } else {
         refs = value.getReferences();
         for(PsiReference r:refs) {
           if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference) {
-            if (doAddValueWithIdType(value, attribute, tag, refCountHolder)) return;
+            if (doAddValueWithIdType(value, attribute, tag, refCountHolder, r.isSoft())) return;
           }
         }
       }
@@ -669,7 +669,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     doCheckRefs(value, quickFixProvider, refs);
   }
 
-  private boolean doAddValueWithIdType(final XmlAttributeValue value, final XmlAttribute attribute, final XmlTag tag, final RefCountHolder refCountHolder) {
+  private boolean doAddValueWithIdType(final XmlAttributeValue value, final XmlAttribute attribute, final XmlTag tag,
+                                       final RefCountHolder refCountHolder, boolean soft) {
     final String unquotedValue = getUnquotedValue(value, tag);
 
     if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
@@ -677,7 +678,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       if (attributeById == null ||
           !attributeById.isValid() ||
-          attributeById == attribute
+          attributeById == attribute ||
+          soft
          ) {
         refCountHolder.registerAttributeWithId(unquotedValue,attribute);
       } else {

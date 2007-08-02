@@ -35,12 +35,16 @@ public class IdRefReference extends BasicAttributeValueReference {
     if (attribute == null) {
       attribute = tag.getAttribute(IdReferenceProvider.NAME_ATTR_NAME, null);
     }
+    if (attribute == null) {
+      attribute = tag.getAttribute(IdReferenceProvider.STYLE_ID_ATTR_NAME, null);
+    }
     return attribute.getValueElement();
   }
 
   protected static String getIdValue(final XmlTag subTag) {
     String s = subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME);
     if (s == null) s = subTag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);
+    if (s == null) s = subTag.getAttributeValue(IdReferenceProvider.STYLE_ID_ATTR_NAME);
     return s;
   }
 

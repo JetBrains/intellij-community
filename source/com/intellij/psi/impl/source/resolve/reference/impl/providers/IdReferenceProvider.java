@@ -17,6 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.*;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +31,16 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
   @NonNls public static final String ID_ATTR_NAME = "id";
   @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
   @NonNls public static final String NAME_ATTR_NAME = "name";
-  private static THashSet<String> ourNamespacesWithoutIdRefs = new THashSet<String>();
+
+  private static THashSet<String> ourNamespacesWithoutNameReference = new THashSet<String>();
   static {
-    ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.JSP_URI );
-    ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_BEAN_URI );
-    ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_BEAN_URI2 );
-    ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_LOGIC_URI );
-    for(String s:com.intellij.xml.util.XmlUtil.JSTL_CORE_URIS) ourNamespacesWithoutIdRefs.add( s );
-    ourNamespacesWithoutIdRefs.add( "http://struts.apache.org/tags-tiles" );
-    for(String s: MetaRegistry.SCHEMA_URIS) ourNamespacesWithoutIdRefs.add( s );
+    ourNamespacesWithoutNameReference.add( XmlUtil.JSP_URI );
+    ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_BEAN_URI );
+    ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_BEAN_URI2 );
+    ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_LOGIC_URI );
+    for(String s: XmlUtil.JSTL_CORE_URIS) ourNamespacesWithoutNameReference.add( s );
+    ourNamespacesWithoutNameReference.add( "http://struts.apache.org/tags-tiles" );
+    for(String s: MetaRegistry.SCHEMA_URIS) ourNamespacesWithoutNameReference.add( s );
   }
 
   public String[] getIdForAttributeNames() {
@@ -50,12 +53,9 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
         final PsiElement grandParent = ((PsiElement)element).getParent().getParent();
         if (grandParent instanceof XmlTag) {
           final XmlTag tag = (XmlTag)grandParent;
-          final String nsPrefix = tag.getNamespacePrefix();
 
-          if (nsPrefix.length() > 0) {
-            String ns = tag.getNamespace();
-            if (ns.endsWith("-el")) ns = ns.substring(0, ns.length() - 3);
-            return !ourNamespacesWithoutIdRefs.contains(ns) && grandParent.getLanguage() != StdLanguages.XML;
+          if (tag.getNamespacePrefix().length() > 0) {
+            return true;
           }
         }
         return false;
@@ -89,39 +89,37 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
           } :new IdRefReference(element, 1)
         };
       }
-      else if (ID_ATTR_NAME.equals(name) ||
-               NAME_ATTR_NAME.equals(name) ||
-               STYLE_ID_ATTR_NAME.equals(name)
-              ) {
-        final AttributeValueSelfReference attributeValueSelfReference;
+      else {
+        final boolean allowReferences = !(ourNamespacesWithoutNameReference.contains(ns));
+        
+        if ((ID_ATTR_NAME.equals(name) && allowReferences) ||
+             STYLE_ID_ATTR_NAME.equals(name) ||
+             (NAME_ATTR_NAME.equals(name) && allowReferences)
+            ) {
+          final AttributeValueSelfReference attributeValueSelfReference;
 
-        if (jsfNs) {
-          attributeValueSelfReference = new AttributeValueSelfReference(element);
-        } else {
-          attributeValueSelfReference =  new GlobalAttributeValueSelfReference(element);
+          if (jsfNs) {
+            attributeValueSelfReference = new AttributeValueSelfReference(element);
+          } else {
+            attributeValueSelfReference =  new GlobalAttributeValueSelfReference(element, true);
+          }
+          return new PsiReference[]{attributeValueSelfReference};
         }
-        return new PsiReference[]{attributeValueSelfReference};
       }
     }
     return PsiReference.EMPTY_ARRAY;
   }
 
   public static class GlobalAttributeValueSelfReference extends AttributeValueSelfReference {
+    private boolean mySoft;
 
-    public GlobalAttributeValueSelfReference(final PsiElement element) {
+    public GlobalAttributeValueSelfReference(PsiElement element, boolean soft) {
       super(element);
-    }
-
-    public GlobalAttributeValueSelfReference(final PsiElement element, int offset) {
-      super(element, offset);
-    }
-
-    public GlobalAttributeValueSelfReference(final PsiElement element, TextRange range) {
-      super(element, range);
+      mySoft = soft;
     }
 
     public boolean isSoft() {
-      return false;
+      return mySoft;
     }
   }
 }
