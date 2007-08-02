@@ -12,36 +12,29 @@
  */
 package org.netbeans.lib.cvsclient.command;
 
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
-import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
 public final class FileObjects {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final List fileObjects = new ArrayList();
+  private final List<AbstractFileObject> fileObjects = new ArrayList<AbstractFileObject>();
 
-	// Setup ==================================================================
+  // Accessing ==============================================================
 
-	public FileObjects() {
-	}
+  public void addFileObject(@NotNull AbstractFileObject file) {
+    fileObjects.add(file);
+  }
 
-	// Accessing ==============================================================
-
-	public void addFileObject(AbstractFileObject file) {
-		BugLog.getInstance().assertNotNull(file);
-
-		fileObjects.add(file);
-	}
-
-	public List getFileObjects() {
-		return Collections.unmodifiableList(fileObjects);
-	}
+  public List<AbstractFileObject> getFileObjects() {
+    return Collections.unmodifiableList(fileObjects);
+  }
 }
