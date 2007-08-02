@@ -1206,6 +1206,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (!info.isActive()) {
         myFocusedComponentAlaram.addRequest(new Runnable() {
           public void run() {
+            if (!myLayout.isToolWindowRegistered(myId)) return;
             activateToolWindow(myId);
           }
         }, 100);

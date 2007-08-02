@@ -627,7 +627,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     protected abstract void _update(AnActionEvent e, int selectedIndex);
 
     public final void actionPerformed(final AnActionEvent e) {
-      _actionPerformed(e, myInfos.indexOf(getSelectedInfo()));
+      final int index = myInfos.indexOf(getSelectedInfo());
+      if (index == -1) return;
+      _actionPerformed(e, index);
     }
 
     protected abstract void _actionPerformed(final AnActionEvent e, final int selectedIndex);
