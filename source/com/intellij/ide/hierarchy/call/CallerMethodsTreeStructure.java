@@ -38,14 +38,16 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
 
-    SearchScope searchScope = GlobalSearchScope.projectScope(myProject);
+    SearchScope searchScope = GlobalSearchScope.allScope(myProject);
     if (CallHierarchyBrowser.SCOPE_CLASS.equals(myScopeType)) {
       final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
       final PsiClass containingClass = baseMethod.getContainingClass();
       searchScope = new LocalSearchScope(containingClass);
     }
-    else if (CallHierarchyBrowser.SCOPE_ALL.equals(myScopeType)) {
-      searchScope = GlobalSearchScope.allScope(myProject);
+    else if (CallHierarchyBrowser.SCOPE_PROJECT.equals(myScopeType)) {
+      searchScope = GlobalSearchScope.projectScope(myProject);
+    } else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
+      searchScope = GlobalSearchScope.projectTestScope(myProject, true);
     }
 
     final Set<PsiMethod> methodsToFind = new HashSet<PsiMethod>();

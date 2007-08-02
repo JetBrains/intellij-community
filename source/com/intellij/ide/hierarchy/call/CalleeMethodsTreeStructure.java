@@ -4,6 +4,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,6 +56,14 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
       else if (CallHierarchyBrowser.SCOPE_PROJECT.equals(myScopeType)) {
         if (!calledMethod.getManager().isInProject(calledMethod)) {
           continue;
+        }
+      } else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
+        if (!calledMethod.getManager().isInProject(calledMethod)) {
+          final VirtualFile virtualFile = calledMethod.getContainingFile().getVirtualFile();
+          if (virtualFile != null &&
+              !ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
+            continue;
+          }
         }
       }
 

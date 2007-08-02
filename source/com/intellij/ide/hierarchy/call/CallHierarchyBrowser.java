@@ -48,6 +48,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
 
   static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
   static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
+  static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
 
   @NonNls
@@ -618,6 +619,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
       final DefaultActionGroup group = new DefaultActionGroup();
 
       group.add(new MenuAction(SCOPE_PROJECT));
+      group.add(new MenuAction(SCOPE_TEST));
       group.add(new MenuAction(SCOPE_ALL));
       group.add(new MenuAction(SCOPE_CLASS));
 
