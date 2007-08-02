@@ -119,11 +119,11 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     if (BLOCK_SET.contains(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
+    if (CASE_SECTION.equals(astNode.getElementType())) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
     if (psiParent instanceof GrBinaryExpression) {
       return new ChildAttributes(Indent.getContinuationWithoutFirstIndent(), null);
-    }
-    if (this instanceof LargeGroovyBlock) {
-      return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrParameterList) {
       return new ChildAttributes(this.getIndent(), this.getAlignment());

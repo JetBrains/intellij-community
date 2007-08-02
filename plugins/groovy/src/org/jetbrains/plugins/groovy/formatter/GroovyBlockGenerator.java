@@ -21,11 +21,10 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -77,11 +76,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       return generateForNestedExpr();
     }
 
-    // For case block
-    if (myBlock.getNode().getPsi() instanceof GrCaseBlock) {
-      return generateForCaseBlock();
-    }
-
     // For Parameter lists
     if (myBlock.getNode().getPsi() instanceof GrParameterList) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
@@ -98,12 +92,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       return subBlocks;
     }
 
-    // For case labels
-    if (myBlock.getNode().getPsi() instanceof GrCaseLabel &&
-        (myBlock instanceof LargeGroovyBlock)) {
-      return generateForCaseLabel();
-    }
-
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     ASTNode children[] = myNode.getChildren(null);
@@ -114,65 +102,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
         prevChildNode = childNode;
       }
-    }
-    return subBlocks;
-  }
-
-  /**
-   * Generates blocks for case block
-   *
-   * @return
-   */
-  private static List<Block> generateForCaseBlock
-      () {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    ASTNode children[] = myNode.getChildren(null);
-    int childNumber = children.length;
-    if (childNumber == 0) {
-      return subBlocks;
-    }
-    ASTNode prevChildNode = null;
-    for (ASTNode childNode : children) {
-      if (canBeCorrectBlock(childNode) &&
-          ((childNode.getPsi() instanceof GrCaseLabel) ||
-              mLCURLY.equals(childNode.getElementType()) ||
-              mRCURLY.equals(childNode.getElementType()))
-          ) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, prevChildNode, childNode);
-        if (!(childNode.getPsi() instanceof GrCaseLabel)) {
-          subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
-        } else {
-          subBlocks.add(new LargeGroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
-        }
-        prevChildNode = childNode;
-      }
-    }
-    return subBlocks;
-  }
-
-  /**
-   * Generates blocks for case labels
-   *
-   * @return
-   */
-  private static List<Block> generateForCaseLabel
-      () {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    ASTNode prevChildNode = null;
-    Indent oldIndent = GroovyIndentProcessor.getChildIndent(myBlock, prevChildNode, myNode);
-    subBlocks.add(new GroovyBlock(myNode, myAlignment, oldIndent, myWrap, mySettings));
-
-    PsiElement nextSibling = myNode.getPsi().getNextSibling();
-    while (!(nextSibling == null) &&
-        !(mRCURLY.equals(nextSibling.getNode().getElementType())) &&
-        !(nextSibling instanceof GrCaseLabel)) {
-      ASTNode childNode = nextSibling.getNode();
-      if (canBeCorrectBlock(childNode)) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, prevChildNode, childNode);
-        subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
-        prevChildNode = childNode;
-      }
-      nextSibling = nextSibling.getNextSibling();
     }
     return subBlocks;
   }

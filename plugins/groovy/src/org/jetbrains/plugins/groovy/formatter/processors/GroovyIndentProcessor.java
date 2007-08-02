@@ -21,19 +21,17 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
-import org.jetbrains.plugins.groovy.formatter.LargeGroovyBlock;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author ilyas
@@ -68,6 +66,14 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
       return indentForBlock(psiParent, child);
     }
 
+    if (CASE_SECTION.equals(astNode.getElementType())) {
+      return indentForCaseSection(psiParent, child);
+    }
+
+    if (SWITCH_STATEMENT.equals(astNode.getElementType())) {
+      return indentForSwitchStatement(psiParent, child);
+    }
+
     // For labels
     if (child.getPsi() instanceof GrLabel) {
       return Indent.getLabelIndent();
@@ -93,15 +99,6 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     // For arguments
     if (psiParent instanceof GrArgumentList) {
       return Indent.getContinuationIndent();
-    }
-
-
-    // For case clause
-    if (parent instanceof LargeGroovyBlock) {
-      if (child.getPsi() instanceof GrCaseLabel) {
-        return Indent.getNoneIndent();
-      }
-      return Indent.getNormalIndent();
     }
 
     return Indent.getNoneIndent();
@@ -181,7 +178,6 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
    * @return
    */
   private static Indent indentForBlock(PsiElement psiBlock, ASTNode child) {
-
     // Common case
     if (mLCURLY.equals(child.getElementType()) ||
         mRCURLY.equals(child.getElementType())) {
@@ -190,6 +186,20 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     return Indent.getNormalIndent();
 
 
+  }
+
+  private static Indent indentForCaseSection(PsiElement psiParent, ASTNode child) {
+    if (CASE_LABEL.equals(child.getElementType())) {
+      return Indent.getNoneIndent();
+    }
+    return Indent.getNormalIndent();
+  }
+
+  private static Indent indentForSwitchStatement(PsiElement psiParent, ASTNode child) {
+    if (CASE_SECTION.equals(child.getElementType())) {
+      return Indent.getNormalIndent();
+    }
+    return Indent.getNoneIndent();
   }
 }
 
