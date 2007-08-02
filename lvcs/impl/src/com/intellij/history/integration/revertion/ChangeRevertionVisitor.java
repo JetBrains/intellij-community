@@ -50,7 +50,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
     c.revertOn(myRoot);
 
-    f.rename(this, e.getName());
+    f.rename(this, getName(e));
   }
 
   @Override
