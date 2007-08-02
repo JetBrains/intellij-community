@@ -113,7 +113,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
 
     }
     catch (ProcessCanceledException ex) {
-      myContent = null;
+      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
 }
