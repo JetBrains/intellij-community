@@ -1,18 +1,18 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.integration.ui.models.DirectoryDifferenceModel;
+import com.intellij.history.integration.ui.models.DirectoryChangeModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.openapi.vcs.changes.Change;
 
-public class DirectoryDifference extends Change {
-  private DirectoryDifferenceModel myModel;
+public class DirectoryChange extends Change {
+  private DirectoryChangeModel myModel;
 
-  public DirectoryDifference(DirectoryDifferenceModel m) {
+  public DirectoryChange(DirectoryChangeModel m) {
     super(m.getContentRevision(0), m.getContentRevision(1));
     myModel = m;
   }
 
-  public DirectoryDifferenceModel getModel() {
+  public DirectoryChangeModel getModel() {
     return myModel;
   }
 

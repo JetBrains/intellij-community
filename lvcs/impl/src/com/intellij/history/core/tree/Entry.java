@@ -10,6 +10,7 @@ import java.io.IOException;
 import static java.lang.String.format;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public abstract class Entry {
   protected int myId;
@@ -190,13 +191,19 @@ public abstract class Entry {
 
   public void changeContent(Content newContent, long timestamp) {
     throw new UnsupportedOperationException(formatPath());
+  }           
+
+  public List<Difference> getDifferencesWith(Entry e) {
+    List<Difference> result = new ArrayList<Difference>();
+    collectDifferencesWith(e, result);
+    return result;
   }
 
-  public abstract Difference getDifferenceWith(Entry e);
+  public abstract void collectDifferencesWith(Entry e, List<Difference> result);
 
-  protected abstract Difference asCreatedDifference();
+  protected abstract void collectCreatedDifferences(List<Difference> result);
 
-  protected abstract Difference asDeletedDifference();
+  protected abstract void collectDeletedDifferences(List<Difference> result);
 
   @Override
   public String toString() {

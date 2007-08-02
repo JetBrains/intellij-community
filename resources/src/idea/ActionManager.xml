@@ -1457,7 +1457,7 @@
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <reference ref="ChangesView.Diff"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
-              icon="/nodes/property.png"/>
+              icon="/actions/createPatch.png"/>
       <separator/>
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"
               use-shortcut-of="RenameElement"/>

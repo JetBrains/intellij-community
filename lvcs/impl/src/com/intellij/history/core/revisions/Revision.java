@@ -4,6 +4,8 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 
+import java.util.List;
+
 public abstract class Revision {
   public String getName() {
     return null;
@@ -21,11 +23,10 @@ public abstract class Revision {
 
   public abstract Entry getEntry();
 
-  public Difference getDifferenceWith(Revision right) {
+  public List<Difference> getDifferencesWith(Revision right) {
     Entry leftEntry = getEntry();
     Entry rightEntry = right.getEntry();
-
-    return leftEntry.getDifferenceWith(rightEntry);
+    return leftEntry.getDifferencesWith(rightEntry);
   }
 
   public boolean isImportant() {

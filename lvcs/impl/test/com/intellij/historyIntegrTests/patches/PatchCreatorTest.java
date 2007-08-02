@@ -1,13 +1,13 @@
 package com.intellij.historyIntegrTests.patches;
 
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.revisions.Difference;
+import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.patches.PatchCreator;
-import com.intellij.history.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.historyIntegrTests.PatchingTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PatchCreatorTest extends PatchingTestCase {
@@ -68,8 +68,14 @@ public class PatchCreatorTest extends PatchingTestCase {
     List<Revision> rr = getVcsRevisionsFor(root);
     Revision l = rr.get(left);
     Revision r = rr.get(right);
-    Difference d = l.getDifferenceWith(r);
-    List<Change> cc = new DirectoryDifferenceModel(d).getPlainChanges();
+
+    List<Difference> dd = l.getDifferencesWith(r);
+    List<Change> cc = new ArrayList<Change>();
+    for (Difference d : dd) {
+      Change c = new Change(d.getLeftContentRevision(), d.getRightContentRevision());
+      cc.add(c);
+    }
+
     PatchCreator.create(gateway, cc, patchFilePath, reverse);
   }
 }

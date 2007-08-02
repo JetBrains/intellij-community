@@ -5,6 +5,8 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import org.junit.Test;
 
+import java.util.List;
+
 public class EntryTest extends LocalVcsTestCase {
   @Test
   public void testPathEquality() {
@@ -29,19 +31,23 @@ public class EntryTest extends LocalVcsTestCase {
       super(-1, null);
     }
 
+    @Override
     public Entry copy() {
       throw new UnsupportedOperationException();
     }
 
-    public Difference getDifferenceWith(Entry e) {
+    @Override
+    public void collectDifferencesWith(Entry e, List<Difference> result) {
       throw new UnsupportedOperationException();
     }
 
-    protected Difference asCreatedDifference() {
+    @Override
+    protected void collectCreatedDifferences(List<Difference> result) {
       throw new UnsupportedOperationException();
     }
 
-    protected Difference asDeletedDifference() {
+    @Override
+    protected void collectDeletedDifferences(List<Difference> result) {
       throw new UnsupportedOperationException();
     }
   }

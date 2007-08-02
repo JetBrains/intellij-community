@@ -103,7 +103,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected void updateDiffs() {
-    myChangesTree.setChangesToDisplay(myModel.getPlainChanges());
+    myChangesTree.setChangesToDisplay(myModel.getChanges());
   }
 
   @Override
@@ -111,10 +111,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return "reference.dialogs.localHistory.show.folder";
   }
 
-  private DirectoryDifference getSelectedChange() {
+  private DirectoryChange getSelectedChange() {
     List<Change> selected = myChangesTree.getSelectedChanges();
     if (selected.size() != 1) return null;
-    return (DirectoryDifference)selected.get(0);
+    return (DirectoryChange)selected.get(0);
   }
 
   private class ShowDifferenceAction extends ActionOnSelection {
@@ -123,13 +123,13 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryDifference c) {
+    protected void performOn(DirectoryChange c) {
       DiffRequest r = createDifference(c.getFileDifferenceModel());
       DiffManager.getInstance().getDiffTool().show(r);
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryDifference c) {
+    protected boolean isEnabledFor(DirectoryChange c) {
       return c.canShowFileDifference();
     }
   }
@@ -140,12 +140,12 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(DirectoryDifference c) {
+    protected void performOn(DirectoryChange c) {
       revert(myModel.createRevisionReverter(c.getModel()));
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryDifference c) {
+    protected boolean isEnabledFor(DirectoryChange c) {
       return myModel.isRevertEnabled();
     }
   }
@@ -164,7 +164,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       performOn(getSelectedChange());
     }
 
-    protected abstract void performOn(DirectoryDifference c);
+    protected abstract void performOn(DirectoryChange c);
 
     @Override
     public void update(AnActionEvent e) {
@@ -173,11 +173,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     public boolean isEnabled() {
-      DirectoryDifference c = getSelectedChange();
+      DirectoryChange c = getSelectedChange();
       return c != null && isEnabledFor(c);
     }
 
-    protected boolean isEnabledFor(DirectoryDifference c) {
+    protected boolean isEnabledFor(DirectoryChange c) {
       return true;
     }
   }

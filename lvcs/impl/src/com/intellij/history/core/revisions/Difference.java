@@ -1,35 +1,33 @@
 package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class Difference {
-  public enum Kind {
-    NOT_MODIFIED, MODIFIED, CREATED, DELETED
-  }
-
   private boolean myIsFile;
-  private Kind myKind;
   private Entry myLeft;
   private Entry myRight;
 
-  private List<Difference> myChildren = new ArrayList<Difference>();
-
-  public Difference(boolean isFile, Kind k, Entry left, Entry right) {
+  public Difference(boolean isFile, Entry left, Entry right) {
     myIsFile = isFile;
-    myKind = k;
     myLeft = left;
     myRight = right;
   }
 
   public boolean isFile() {
     return myIsFile;
-  }
-
-  public Kind getKind() {
-    return myKind;
   }
 
   public Entry getLeft() {
@@ -40,21 +38,33 @@ public class Difference {
     return myRight;
   }
 
-  public void addChild(Difference d) {
-    myChildren.add(d);
+  public ContentRevision getLeftContentRevision() {
+    return createContentRevision(getLeft());
   }
 
-  public List<Difference> getChildren() {
-    return myChildren;
+  public ContentRevision getRightContentRevision() {
+    return createContentRevision(getRight());
   }
 
-  public boolean hasDifference() {
-    if (!myKind.equals(Kind.NOT_MODIFIED)) return true;
+  private ContentRevision createContentRevision(final Entry e) {
+    if (e == null) return null;
 
-    for (Difference child : myChildren) {
-      if (child.hasDifference()) return true;
-    }
+    return new ContentRevision() {
+      @Nullable
+      public String getContent() throws VcsException {
+        if (e.isDirectory()) return null;
+        return new String(e.getContent().getBytes());
+      }
 
-    return false;
+      @NotNull
+      public FilePath getFile() {
+        return new FilePathImpl(new File(e.getPath()), e.isDirectory());
+      }
+
+      @NotNull
+      public VcsRevisionNumber getRevisionNumber() {
+        return VcsRevisionNumber.NULL;
+      }
+    };
   }
 }

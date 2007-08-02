@@ -1,7 +1,6 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.revisions.Difference;
-import static com.intellij.history.core.revisions.Difference.Kind.*;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import org.junit.Test;
@@ -317,8 +316,10 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    Difference d = prev.getDifferenceWith(recent);
-    assertEquals(MODIFIED, d.getKind());
+    List<Difference> dd = prev.getDifferencesWith(recent);
+    assertEquals(1, dd.size());
+
+    Difference d = dd.get(0);
     assertEquals(c("content"), d.getLeft().getContent());
     assertEquals(c("new content"), d.getRight().getContent());
   }
@@ -332,8 +333,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     Revision one = rr.get(0);
     Revision two = rr.get(0);
 
-    Difference d = one.getDifferenceWith(two);
-    assertFalse(d.hasDifference());
+    assertTrue(one.getDifferencesWith(two).isEmpty());
   }
 
   @Test
@@ -347,12 +347,10 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    Difference d = prev.getDifferenceWith(recent);
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
+    List<Difference> dd = prev.getDifferencesWith(recent);
+    assertEquals(1, dd.size());
 
-    d = d.getChildren().get(0);
-    assertEquals(CREATED, d.getKind());
+    Difference d = dd.get(0);
     assertNull(d.getLeft());
     assertEquals("file", d.getRight().getName());
   }
@@ -365,8 +363,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
 
-    Difference d = rr.get(0).getDifferenceWith(rr.get(2));
-    assertFalse(d.hasDifference());
+    assertTrue(rr.get(0).getDifferencesWith(rr.get(2)).isEmpty());
   }
 
   @Test
@@ -384,16 +381,11 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     Revision recent = rr.get(0);
     Revision prev = rr.get(1);
 
-    Difference d = prev.getDifferenceWith(recent);
+    List<Difference> dd = prev.getDifferencesWith(recent);
+    assertEquals(1, dd.size());
 
-    assertEquals("dir1", d.getLeft().getName());
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
-
-    d = d.getChildren().get(0);
-
-    assertEquals("dir3", d.getLeft().getName());
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
+    Difference d = dd.get(0);
+    assertNull(d.getLeft());
+    assertEquals("dir1/dir3/file", d.getRight().getPath());
   }
 }

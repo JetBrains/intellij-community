@@ -2,6 +2,7 @@ package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
+import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.historyIntegrTests.PatchingTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,8 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
     root.createChildData(null, "f2.java");
 
     DirectoryHistoryDialogModel m = createModelAndSelectRevision(2);
-    m.createRevisionReverter(m.getRootDifferenceModel().getChildren().get(0)).revert();
+    DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
+    m.createRevisionReverter(c.getModel()).revert();
 
     assertNull(root.findChild("f1.java"));
     assertNotNull(root.findChild("f2.java"));

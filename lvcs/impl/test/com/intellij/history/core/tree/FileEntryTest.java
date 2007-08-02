@@ -3,9 +3,11 @@ package com.intellij.history.core.tree;
 import com.intellij.history.core.LocalVcsTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
-import static com.intellij.history.core.revisions.Difference.Kind.*;
 import com.intellij.history.core.storage.UnavailableContent;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.ArrayList;
 
 public class FileEntryTest extends LocalVcsTestCase {
   @Test
@@ -57,16 +59,12 @@ public class FileEntryTest extends LocalVcsTestCase {
     assertFalse(e.isOutdated(2L));
   }
 
-
   @Test
   public void testNoDifference() {
     FileEntry e1 = new FileEntry(-1, "name", c("content"), -1);
     FileEntry e2 = new FileEntry(-1, "name", c("content"), -1);
 
-    Difference d = e1.getDifferenceWith(e2);
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
+    assertTrue(e1.getDifferencesWith(e2).isEmpty());
   }
 
   @Test
@@ -74,10 +72,8 @@ public class FileEntryTest extends LocalVcsTestCase {
     Entry e1 = new FileEntry(-1, "name", c("content"), -1);
     Entry e2 = new FileEntry(-1, "another name", c("content"), -1);
 
-    Difference d = e1.getDifferenceWith(e2);
-    assertEquals(MODIFIED, d.getKind());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertDifference(dd, e1, e2);
   }
 
   @Test
@@ -86,10 +82,10 @@ public class FileEntryTest extends LocalVcsTestCase {
     Entry e2 = new FileEntry(-1, "NAME", c(""), -1);
 
     Paths.setCaseSensitive(false);
-    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
+    assertEquals(1, e1.getDifferencesWith(e2).size());
 
     Paths.setCaseSensitive(true);
-    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
+    assertEquals(1, e1.getDifferencesWith(e2).size());
   }
 
   @Test
@@ -97,33 +93,34 @@ public class FileEntryTest extends LocalVcsTestCase {
     FileEntry e1 = new FileEntry(-1, "name", c("content"), -1);
     FileEntry e2 = new FileEntry(-1, "name", c("another content"), -1);
 
-    Difference d = e1.getDifferenceWith(e2);
-    assertEquals(MODIFIED, d.getKind());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertDifference(dd, e1, e2);
   }
 
   @Test
   public void testAsCreatedDifference() {
     FileEntry e = new FileEntry(-1, null, null, -1);
 
-    Difference d = e.asCreatedDifference();
-
-    assertEquals(CREATED, d.getKind());
-    assertTrue(d.isFile());
-    assertNull(d.getLeft());
-    assertSame(e, d.getRight());
+    ArrayList<Difference> dd = new ArrayList<Difference>();
+    e.collectCreatedDifferences(dd);
+    assertDifference(dd, null, e);
   }
 
   @Test
   public void testAsDeletedDifference() {
     FileEntry e = new FileEntry(-1, null, null, -1);
 
-    Difference d = e.asDeletedDifference();
+    ArrayList<Difference> dd = new ArrayList<Difference>();
+    e.collectDeletedDifferences(dd);
+    assertDifference(dd, e, null);
+  }
 
-    assertEquals(DELETED, d.getKind());
+  private void assertDifference(List<Difference> dd, Entry left, Entry right) {
+    assertEquals(1, dd.size());
+    Difference d = dd.get(0);
+
     assertTrue(d.isFile());
-    assertSame(e, d.getLeft());
-    assertNull(d.getRight());
+    assertSame(left, d.getLeft());
+    assertSame(right, d.getRight());
   }
 }

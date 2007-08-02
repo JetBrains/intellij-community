@@ -3,7 +3,6 @@ package com.intellij.history.core.tree;
 import com.intellij.history.core.LocalVcsTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
-import static com.intellij.history.core.revisions.Difference.Kind.*;
 import com.intellij.history.core.storage.UnavailableContent;
 import org.junit.Test;
 
@@ -252,10 +251,7 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     DirectoryEntry e1 = new DirectoryEntry(-1, "name");
     DirectoryEntry e2 = new DirectoryEntry(-1, "name");
 
-    Difference d = e1.getDifferenceWith(e2);
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
+    assertTrue(e1.getDifferencesWith(e2).isEmpty());
   }
 
   @Test
@@ -263,12 +259,9 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     DirectoryEntry e1 = new DirectoryEntry(-1, "name");
     DirectoryEntry e2 = new DirectoryEntry(-1, "another name");
 
-    Difference d = e1.getDifferenceWith(e2);
-
-    assertEquals(MODIFIED, d.getKind());
-    assertFalse(d.isFile());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertEquals(1, dd.size());
+    assertDirDifference(dd.get(0), e1, e2);
   }
 
   @Test
@@ -277,10 +270,10 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     DirectoryEntry e2 = new DirectoryEntry(-1, "NAME");
 
     Paths.setCaseSensitive(false);
-    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
+    assertEquals(1, e1.getDifferencesWith(e2).size());
 
     Paths.setCaseSensitive(true);
-    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
+    assertEquals(1, e1.getDifferencesWith(e2).size());
   }
 
   @Test
@@ -291,17 +284,9 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     Entry child = new FileEntry(1, "name", c("content"), -1);
     e2.addChild(child);
 
-    Difference d = e1.getDifferenceWith(e2);
-
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
-
-    d = d.getChildren().get(0);
-
-    assertEquals(CREATED, d.getKind());
-    assertTrue(d.isFile());
-    assertNull(d.getLeft());
-    assertSame(child, d.getRight());
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertEquals(1, dd.size());
+    assertFileDifference(dd.get(0), null, child);
   }
 
   @Test
@@ -315,23 +300,10 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     dir2.addChild(subDir);
     subDir.addChild(subSubFile);
 
-    Difference d = dir1.getDifferenceWith(dir2);
-
-    assertEquals(1, d.getChildren().size());
-    d = d.getChildren().get(0);
-
-    assertEquals(CREATED, d.getKind());
-    assertFalse(d.isFile());
-    assertNull(d.getLeft());
-    assertSame(subDir, d.getRight());
-    assertEquals(1, d.getChildren().size());
-
-    d = d.getChildren().get(0);
-
-    assertEquals(CREATED, d.getKind());
-    assertTrue(d.isFile());
-    assertNull(d.getLeft());
-    assertSame(subSubFile, d.getRight());
+    List<Difference> dd = dir1.getDifferencesWith(dir2);
+    assertEquals(2, dd.size());
+    assertDirDifference(dd.get(0), null, subDir);
+    assertFileDifference(dd.get(1), null, subSubFile);
   }
 
   @Test
@@ -345,28 +317,10 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     dir1.addChild(subDir);
     subDir.addChild(subSubFile);
 
-    Difference d = dir1.getDifferenceWith(dir2);
-
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertFalse(d.isFile());
-    assertSame(dir1, d.getLeft());
-    assertSame(dir2, d.getRight());
-
-    assertEquals(1, d.getChildren().size());
-    d = d.getChildren().get(0);
-
-    assertEquals(DELETED, d.getKind());
-    assertFalse(d.isFile());
-    assertSame(subDir, d.getLeft());
-    assertNull(d.getRight());
-
-    assertEquals(1, d.getChildren().size());
-    d = d.getChildren().get(0);
-
-    assertEquals(DELETED, d.getKind());
-    assertTrue(d.isFile());
-    assertSame(subSubFile, d.getLeft());
-    assertNull(d.getRight());
+    List<Difference> dd = dir1.getDifferencesWith(dir2);
+    assertEquals(2, dd.size());
+    assertDirDifference(dd.get(0), subDir, null);
+    assertFileDifference(dd.get(1), subSubFile, null);
   }
 
   @Test
@@ -380,17 +334,9 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     e1.addChild(child1);
     e2.addChild(child2);
 
-    Difference d = e1.getDifferenceWith(e2);
-
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertEquals(1, d.getChildren().size());
-
-    d = d.getChildren().get(0);
-
-    assertEquals(MODIFIED, d.getKind());
-    assertTrue(d.isFile());
-    assertSame(child1, d.getLeft());
-    assertSame(child2, d.getRight());
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertEquals(1, dd.size());
+    assertFileDifference(dd.get(0), child1, child2);
   }
 
   @Test
@@ -399,14 +345,13 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     Entry e2 = new DirectoryEntry(-1, "name");
 
     e1.addChild(new FileEntry(1, "name", c("content"), -1));
-    e2.addChild(new FileEntry(1, "name", c("content"), -1));
-
     e1.addChild(new FileEntry(2, "another name", c("content"), -1));
 
-    Difference d = e1.getDifferenceWith(e2);
-    assertEquals(1, d.getChildren().size());
+    e2.addChild(new FileEntry(1, "name", c("content"), -1));
 
-    assertEquals(DELETED, d.getChildren().get(0).getKind());
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertEquals("another name", dd.get(0).getLeft().getName());
+    assertEquals(null, dd.get(0).getRight());
   }
 
   @Test
@@ -417,12 +362,7 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     e1.addChild(new FileEntry(1, "name", c("content"), -1));
     e2.addChild(new FileEntry(1, "name", c("content"), -1));
 
-    Difference d = e1.getDifferenceWith(e2);
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
-
-    assertEquals(0, d.getChildren().size());
+    assertTrue(e1.getDifferencesWith(e2).isEmpty());
   }
 
   @Test
@@ -436,17 +376,24 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     e1.addChild(child1);
     e2.addChild(child2);
 
-    Difference d = e1.getDifferenceWith(e2);
+    List<Difference> dd = e1.getDifferencesWith(e2);
+    assertEquals(2, dd.size());
 
-    assertEquals(MODIFIED, d.getKind());
-    assertSame(e1, d.getLeft());
-    assertSame(e2, d.getRight());
+    assertDirDifference(dd.get(0), e1, e2);
+    assertFileDifference(dd.get(1), child1, child2);
+  }
 
-    assertEquals(1, d.getChildren().size());
-    d = d.getChildren().get(0);
+  private void assertDirDifference(Difference d, Entry left, Entry right) {
+    assertDifference(d, left, right, false);
+  }
 
-    assertEquals(MODIFIED, d.getKind());
-    assertSame(child1, d.getLeft());
-    assertSame(child2, d.getRight());
+  private void assertFileDifference(Difference d, Entry left, Entry right) {
+    assertDifference(d, left, right, true);
+  }
+
+  private void assertDifference(Difference d, Entry left, Entry right, boolean isFile) {
+    assertEquals(isFile, d.isFile());
+    assertSame(left, d.getLeft());
+    assertSame(right, d.getRight());
   }
 }

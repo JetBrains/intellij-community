@@ -113,6 +113,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
     result.add(new CreatePatchAction());
+    result.add(Separator.getInstance());
     result.add(new ShowChangesOnlyAction());
     result.add(Separator.getInstance());
     result.add(new HelpAction());
@@ -317,7 +318,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private class CreatePatchAction extends AnAction {
     public CreatePatchAction() {
-      super(message("action.create.patch"));
+      super(message("action.create.patch"), null, IconLoader.getIcon("/actions/createPatch.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {

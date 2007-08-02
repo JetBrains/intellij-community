@@ -6,10 +6,8 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.DirectoryReverter;
 import com.intellij.history.integration.revertion.RevisionReverter;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.util.List;
 
 public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   public DirectoryHistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
@@ -21,11 +19,16 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
+  protected DirectoryChange createChange(Difference d) {
+    return new DirectoryChange(new DirectoryChangeModel(d));
+  }
+
+  @Override
   protected RevisionReverter createRevisionReverter() {
     return createRevisionReverter(getLeftEntry(), getRightEntry());
   }
 
-  public RevisionReverter createRevisionReverter(DirectoryDifferenceModel m) {
+  public RevisionReverter createRevisionReverter(DirectoryChangeModel m) {
     return createRevisionReverter(m.getEntry(0), m.getEntry(1));
   }
 

@@ -1,11 +1,11 @@
 package com.intellij.history.core.tree;
 
 import com.intellij.history.core.revisions.Difference;
-import static com.intellij.history.core.revisions.Difference.Kind.*;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Stream;
 
 import java.io.IOException;
+import java.util.List;
 
 public class FileEntry extends Entry {
   private long myTimestamp;
@@ -57,18 +57,18 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public Difference getDifferenceWith(Entry e) {
-    boolean modified = !myName.equals(e.getName()) || !myContent.equals(e.getContent());
-    return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
+  public void collectDifferencesWith(Entry e, List<Difference> result) {
+    if (myName.equals(e.getName()) && myContent.equals(e.getContent())) return;
+    result.add(new Difference(true, this, e));
   }
 
   @Override
-  protected Difference asCreatedDifference() {
-    return new Difference(true, CREATED, null, this);
+  protected void collectCreatedDifferences(List<Difference> result) {
+    result.add(new Difference(true, null, this));
   }
 
   @Override
-  protected Difference asDeletedDifference() {
-    return new Difference(true, DELETED, this, null);
+  protected void collectDeletedDifferences(List<Difference> result) {
+    result.add(new Difference(true, this, null));
   }
 }

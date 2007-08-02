@@ -112,17 +112,23 @@ public abstract class HistoryDialogModel {
     return myRightRevisionIndex == 0;
   }
 
-  public DirectoryDifferenceModel getRootDifferenceModel() {
-    Difference d = getLeftRevision().getDifferenceWith(getRightRevision());
-    return new DirectoryDifferenceModel(d);
+  public List<Change> getChanges() {
+    List<Difference> dd = getLeftRevision().getDifferencesWith(getRightRevision());
+
+    List<Change> result = new ArrayList<Change>();
+    for (Difference d : dd) {
+      result.add(createChange(d));
+    }
+
+    return result;
   }
 
-  public List<Change> getPlainChanges() {
-    return getRootDifferenceModel().getPlainChanges();
+  protected Change createChange(Difference d) {
+    return new Change(d.getLeftContentRevision(), d.getRightContentRevision());
   }
 
   public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
-    PatchCreator.create(myGateway, getPlainChanges(), path, isReverse);
+    PatchCreator.create(myGateway, getChanges(), path, isReverse);
   }
 
   public Reverter createReverter() {

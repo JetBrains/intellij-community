@@ -136,7 +136,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
 
     assertExecutionTime(1200, new RunnableAdapter() {
       public void doRun() {
-        revisions.get(0).getDifferenceWith(revisions.get(0));
+        revisions.get(0).getDifferencesWith(revisions.get(0));
       }
     });
   }

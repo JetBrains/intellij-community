@@ -2,7 +2,6 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
-import static com.intellij.history.core.revisions.Difference.Kind.*;
 import com.intellij.history.core.storage.Stream;
 
 import java.io.IOException;
@@ -97,41 +96,39 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Difference getDifferenceWith(Entry right) {
+  public void collectDifferencesWith(Entry right, List<Difference> result) {
     DirectoryEntry e = (DirectoryEntry)right;
 
-    Difference.Kind kind = myName.equals(e.myName) ? NOT_MODIFIED : MODIFIED;
-    Difference result = new Difference(false, kind, this, e);
+    if (!myName.equals(e.myName)) {
+      result.add(new Difference(false, this, e));
+    }
 
     addCreatedChildrenDifferences(e, result);
     addDeletedChildrenDifferences(e, result);
-    addModifiedChildrenDifference(e, result);
-
-    return result;
+    addModifiedChildrenDifferences(e, result);
   }
 
-  private void addCreatedChildrenDifferences(DirectoryEntry e, Difference d) {
+  private void addCreatedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry child : e.myChildren) {
       if (findDirectChild(child.getId()) == null) {
-        d.addChild(child.asCreatedDifference());
+        child.collectCreatedDifferences(result);
       }
     }
   }
 
-  private void addDeletedChildrenDifferences(DirectoryEntry e, Difference d) {
+  private void addDeletedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry child : myChildren) {
       if (e.findDirectChild(child.getId()) == null) {
-        d.addChild(child.asDeletedDifference());
+        child.collectDeletedDifferences(result);
       }
     }
   }
 
-  private void addModifiedChildrenDifference(DirectoryEntry e, Difference d) {
+  private void addModifiedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry myChild : myChildren) {
       Entry itsChild = e.findDirectChild(myChild.getId());
       if (itsChild != null) {
-        Difference childDiff = myChild.getDifferenceWith(itsChild);
-        if (childDiff.hasDifference()) d.addChild(childDiff);
+        myChild.collectDifferencesWith(itsChild, result);
       }
     }
   }
@@ -144,20 +141,20 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected Difference asCreatedDifference() {
-    Difference d = new Difference(false, CREATED, null, this);
+  protected void collectCreatedDifferences(List<Difference> result) {
+    result.add(new Difference(false, null, this));
+
     for (Entry child : myChildren) {
-      d.addChild(child.asCreatedDifference());
+      child.collectCreatedDifferences(result);
     }
-    return d;
   }
 
   @Override
-  protected Difference asDeletedDifference() {
-    Difference d = new Difference(false, DELETED, this, null);
+  protected void collectDeletedDifferences(List<Difference> result) {
+    result.add(new Difference(false, this, null));
+    
     for (Entry child : myChildren) {
-      d.addChild(child.asDeletedDifference());
+      child.collectDeletedDifferences(result);
     }
-    return d;
   }
 }
