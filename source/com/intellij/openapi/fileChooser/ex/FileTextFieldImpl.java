@@ -236,11 +236,11 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return point;
   }
 
-  public void processCompletion(CompletionResult result) {
+  public void processCompletion(final CompletionResult result) {
     result.myToComplete = new ArrayList<LookupFile>();
     String typed = result.myCompletionBase;
 
-    LookupFile current = getClosestParent(typed);
+    final LookupFile current = getClosestParent(typed);
     result.myClosestParent = current;
 
     if (current == null) return;
@@ -260,15 +260,20 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     final String effectivePrefix = prefix.toUpperCase();
-    final List<LookupFile> files = current.getChildren(new LookupFilter() {
-      public boolean isAccepted(final LookupFile file) {
-        return myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(effectivePrefix);
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final List<LookupFile> files = current.getChildren(new LookupFilter() {
+          public boolean isAccepted(final LookupFile file) {
+            return myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(effectivePrefix);
+          }
+        });
+
+        for (LookupFile each : files) {
+          result.myToComplete.add(each);
+        }
       }
     });
-
-    for (LookupFile each : files) {
-      result.myToComplete.add(each);
-    }
   }
 
   private
