@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -28,6 +29,11 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   public SvnRollbackEnvironment(SvnVcs svnVcs) {
     mySvnVcs = svnVcs;
+  }
+
+  @Override
+  public String getRollbackOperationName() {
+    return SvnBundle.message("action.name.revert");
   }
 
   public List<VcsException> rollbackChanges(List<Change> changes) {

@@ -42,7 +42,7 @@
       <separator/>
       <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
-      <action id="Subversion.Revert" class="org.jetbrains.idea.svn.actions.RevertAction"/>
+      <reference id="ChangesView.Rollback"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
       <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction"/>
       <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
@@ -65,7 +65,7 @@
     </group>
     <group id="SubversionUpdateActionGroup">
       <reference id="Subversion.Add"/>
-      <reference id="Subversion.Revert"/>
+      <reference id="ChangesView.Rollback"/>
       <reference id="Subversion.Resolve"/>
       <reference id="Subversion.MarkResolved"/>
       <separator/>
