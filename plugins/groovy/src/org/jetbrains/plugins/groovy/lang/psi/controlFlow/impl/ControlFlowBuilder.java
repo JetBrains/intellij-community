@@ -179,8 +179,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitForStatement(GrForStatement forStatement) {
-    InstructionImpl instruction = startNode(forStatement);
-
     final GrForClause clause = forStatement.getClause();
     if (clause instanceof GrTraditionalForClause) {
       for (GrCondition initializer : ((GrTraditionalForClause) clause).getInitialization()) {
@@ -191,11 +189,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       expression.accept(this);
     }
 
+    InstructionImpl instruction = startNode(forStatement);
 
     final GrStatement body = forStatement.getBody();
-    InstructionImpl bodyInstruction = startNode(body);
-    if (body != null) body.accept(this);
-    finishNode(bodyInstruction);
+    if (body != null) {
+      InstructionImpl bodyInstruction = startNode(body);
+      body.accept(this);
+      finishNode(bodyInstruction);
+    }
     checkPending(instruction); //check for breaks targeted here
 
     if (clause instanceof GrTraditionalForClause) {
