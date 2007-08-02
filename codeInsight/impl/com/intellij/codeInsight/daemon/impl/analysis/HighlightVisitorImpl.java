@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.jsp.JspxFileViewProvider;
@@ -327,6 +328,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   private static boolean filterJspErrors(final PsiErrorElement element) {
+    if (element.getParent().getLanguage() == StdLanguages.JAVA) return false;
     PsiElement nextSibling = element.getNextSibling();
 
     if (nextSibling != null) {
