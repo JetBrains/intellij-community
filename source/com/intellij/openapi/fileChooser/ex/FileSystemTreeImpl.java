@@ -255,7 +255,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
       selectFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (selectFile == null) {
-        LOG.assertTrue(false, "nothing found for " + file.getPath());
         return null;
       }
     }
