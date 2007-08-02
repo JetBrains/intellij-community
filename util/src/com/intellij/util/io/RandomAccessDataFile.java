@@ -3,10 +3,10 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.TimedComputable;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -17,37 +17,17 @@ public class RandomAccessDataFile {
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
-  private final TimedComputable<FileChannel> myChannel;
+  private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
+
   private long mySize;
+  private final File myFile;
 
   public RandomAccessDataFile(final File file) throws IOException {
-    myChannel = new TimedComputable<FileChannel>(null) {
-      @NotNull
-      protected FileChannel calc() {
-        try {
-          RandomAccessFile raf = new RandomAccessFile(file, "rw");
-          return raf.getChannel();
-        }
-        catch (FileNotFoundException e) {
-          throw new RuntimeException(e);
-        }
-      }
+    myFile = file;
 
-      public synchronized void dispose() {
-        FileChannel channel = myT;
-        super.dispose();
-        try {
-          channel.close();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    };
-
-    final FileChannel channel = myChannel.acquire();
+    final FileChannel channel = ourCache.getChannel(file);
     mySize = channel.size();
-    myChannel.release();
+    ourCache.releaseChannel(file);
   }
 
   public void put(long addr, byte[] bytes, int off, int len) {
@@ -56,9 +36,9 @@ public class RandomAccessDataFile {
     if (len > Page.PAGE_SIZE) {
       try {
         ourPool.flushPagesInRange(this, addr, len);
-        final FileChannel channel = myChannel.acquire();
+        final FileChannel channel = getChannel();
         channel.write(ByteBuffer.wrap(bytes, off, len), addr);
-        myChannel.release();
+        releaseChannel();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -81,9 +61,9 @@ public class RandomAccessDataFile {
       try {
         ourPool.flushPagesInRange(this, addr, len);
 
-        final FileChannel channel = myChannel.acquire();
+        final FileChannel channel = getChannel();
         channel.read(ByteBuffer.wrap(bytes, off, len), addr);
-        myChannel.release();
+        releaseChannel();
 
         mySize = Math.max(mySize, addr + len);
       }
@@ -101,6 +81,14 @@ public class RandomAccessDataFile {
         ourPool.reclaim(page);
       }
     }
+  }
+
+  private void releaseChannel() {
+    ourCache.releaseChannel(myFile);
+  }
+
+  private FileChannel getChannel() throws FileNotFoundException {
+    return ourCache.getChannel(myFile);
   }
 
   public void putInt(long addr, int value) {
@@ -194,15 +182,15 @@ public class RandomAccessDataFile {
 
   public void dispose() {
     ourPool.flushPages(this);
-    myChannel.dispose();
+    ourCache.closeChannel(myFile);
   }
 
   public void loadPage(final Page page) {
     try {
       page.getBuf().position(0);
-      final FileChannel channel = myChannel.acquire();
+      final FileChannel channel = getChannel();
       channel.read(page.getBuf(), page.getOffset());
-      myChannel.release();
+      releaseChannel();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -228,9 +216,9 @@ public class RandomAccessDataFile {
       flush.position(0);
     }
 
-    final FileChannel channel = myChannel.acquire();
+    final FileChannel channel = getChannel();
     channel.write(flush, offset);
-    myChannel.release();
+    releaseChannel();
   }
 
   public int hashCode() {
