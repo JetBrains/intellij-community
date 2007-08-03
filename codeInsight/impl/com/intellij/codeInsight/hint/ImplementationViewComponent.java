@@ -100,7 +100,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static class FileDescriptor {
-    public VirtualFile myFile;
+    public final VirtualFile myFile;
 
     public FileDescriptor(VirtualFile file) {
       myFile = file;
@@ -407,14 +407,17 @@ public class ImplementationViewComponent extends JPanel {
       super.actionPerformed(e);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myHint.getContent().requestFocusInWindow();
+          if (myHint == null) return;
+          Component content = myHint.getContent();
+          if (content == null) return;
+          content.requestFocusInWindow();
         }
       });
     }
   }
 
   private class EditSourceActionBase extends AnAction {
-    private boolean myFocusEditor;
+    private final boolean myFocusEditor;
 
     public EditSourceActionBase(boolean focusEditor, Icon icon, String text) {
       super(text, null, icon);
