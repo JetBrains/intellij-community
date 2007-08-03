@@ -130,14 +130,13 @@ public class UpdateHighlightersUtil {
         if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
         HighlightSeverity severity = info.getSeverity();
         int layer;
-        if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO || severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
-          layer = HighlighterLayer.ADDITIONAL_SYNTAX;
-        }
-        else if (severity == HighlightSeverity.WARNING) {
+        if (severity == HighlightSeverity.WARNING) {
           layer = HighlighterLayer.WARNING;
         }
-        else {
+        else if (severity == HighlightSeverity.ERROR) {
           layer = HighlighterLayer.ERROR;
+        } else {
+          layer = HighlighterLayer.ADDITIONAL_SYNTAX;
         }
 
         final int docLength = document.getTextLength();

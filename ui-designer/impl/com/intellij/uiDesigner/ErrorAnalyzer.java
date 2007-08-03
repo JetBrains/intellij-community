@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IButtonGroup;
@@ -17,6 +18,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -365,11 +367,10 @@ public final class ErrorAnalyzer {
     return (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
   }
 
-  @Nullable public static HighlightDisplayLevel getHighlightDisplayLevel(final RadComponent component) {
+  @Nullable public static HighlightDisplayLevel getHighlightDisplayLevel(final Project project, final RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
-      if (displayLevel == null ||
-          errInfo.getHighlightDisplayLevel().getSeverity().myVal > displayLevel.getSeverity().myVal) {
+      if (displayLevel == null || SeverityRegistrar.getInstance(project).compare(errInfo.getHighlightDisplayLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
         displayLevel = errInfo.getHighlightDisplayLevel();
       }
     }

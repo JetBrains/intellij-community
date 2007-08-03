@@ -388,7 +388,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         final RadComponent component = ptr.getComponent();
         LOG.assertTrue(component != null);
 
-        final HighlightDisplayLevel level = ErrorAnalyzer.getHighlightDisplayLevel(component);
+        final HighlightDisplayLevel level = ErrorAnalyzer.getHighlightDisplayLevel(myProject, component);
 
         // Text
         boolean hasText = false;

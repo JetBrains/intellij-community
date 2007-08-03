@@ -169,7 +169,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         final String name = Messages.showInputDialog(myPanel, InspectionsBundle.message("highlight.severity.create.dialog.name.label"), InspectionsBundle.message("highlight.severity.create.dialog.title"), Messages.getQuestionIcon());
         if (name == null) return null;
         final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
-        HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 0),
+        HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
                                                                                                    TextAttributesKey.createTextAttributesKey(name));
         return new MyHighlightInfoTypeWithAtrributesDescription(textAttributes.clone(), info);
       }

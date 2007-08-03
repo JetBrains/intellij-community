@@ -397,7 +397,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static void setHighlights(Document document, HighlightInfo[] highlights, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
-    highlights = stripWarningsCoveredByErrors(highlights, markup);
+    highlights = stripWarningsCoveredByErrors(project, highlights, markup);
     markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, highlights);
 
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project); 
@@ -407,7 +407,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @NotNull
-  private static HighlightInfo[] stripWarningsCoveredByErrors(HighlightInfo[] highlights, MarkupModel markup) {
+  private static HighlightInfo[] stripWarningsCoveredByErrors(final Project project, HighlightInfo[] highlights, MarkupModel markup) {
     List<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
     List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
     for (HighlightInfo highlight : highlights) {
@@ -415,9 +415,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         errors.add(highlight);
       }
     }
-
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     for (HighlightInfo highlight : highlights) {
-      if (highlight.getSeverity().myVal < HighlightSeverity.ERROR.myVal &&
+      if (severityRegistrar.compare(HighlightSeverity.ERROR, highlight.getSeverity()) > 0 &&
           highlight.getSeverity().myVal > 0) {
         for (HighlightInfo errorInfo : errors) {
           if (isCoveredBy(highlight, errorInfo)) {
