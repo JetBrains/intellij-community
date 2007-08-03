@@ -16,6 +16,8 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.module.Module;
@@ -38,13 +40,22 @@ public abstract class BuildParticipantBase extends BuildParticipant {
     return myModule;
   }
 
+  public void buildStarted(final CompileContext context) {
+    new ReadAction() {
+      protected void run(final Result result) {
+        ConfigFile[] descriptors = getDeploymentDescriptors();
+        for (ConfigFile descriptor : descriptors) {
+          DeploymentUtil.getInstance().checkConfigFile(descriptor, context, myModule);
+        }
+      }
+    }.execute();
+  }
+
   protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
     final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (ConfigFile descriptor : deploymentDescriptors) {
-          DeploymentUtil.getInstance().checkConfigFile(descriptor, context, myModule);
-
           VirtualFile virtualFile = descriptor.getVirtualFile();
           if (virtualFile != null) {
             final File file = VfsUtil.virtualToIoFile(virtualFile);

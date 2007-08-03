@@ -147,6 +147,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   private static void addItemsForParticipant(final BuildParticipant participant, ProcessingItemsBuilderContext builderContext) {
+    participant.buildStarted(builderContext.getCompileContext());
     new ProcessingItemsBuilder(participant, builderContext).build();
   }
 

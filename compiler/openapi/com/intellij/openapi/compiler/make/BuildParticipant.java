@@ -30,6 +30,9 @@ public abstract class BuildParticipant {
   public void afterExplodedCreated(File outputDir, CompileContext context) throws Exception {
   }
 
+  public void buildStarted(CompileContext context) {
+  }
+
   public void buildFinished(CompileContext context) throws Exception {
   }
 
