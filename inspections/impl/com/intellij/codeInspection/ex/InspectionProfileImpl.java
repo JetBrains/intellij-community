@@ -196,7 +196,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey) {
     HighlightDisplayLevel level = getToolState(inspectionToolKey).getLevel();
-    if (!((SeverityProvider)getProfileManager()).getSeverityRegistrar().isSeverityValid(level.getSeverity())){
+    if (!((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().isSeverityValid(level.getSeverity())){
       level = HighlightDisplayLevel.WARNING;
       setErrorLevel(inspectionToolKey, level);
     }
@@ -246,7 +246,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) { //from old profiles
-      ((SeverityProvider)getProfileManager()).getSeverityRegistrar().readExternal(highlightElement);
+      ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
     myBaseProfile = getDefaultProfile();
@@ -257,7 +257,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
 
       final String levelName = toolElement.getAttributeValue(LEVEL_TAG);
-      HighlightDisplayLevel level = HighlightDisplayLevel.find(((SeverityProvider)getProfileManager()).getSeverityRegistrar().getSeverity(levelName));
+      HighlightDisplayLevel level = HighlightDisplayLevel.find(((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().getSeverity(levelName));
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {//from old profiles
         level = HighlightDisplayLevel.WARNING;
       }

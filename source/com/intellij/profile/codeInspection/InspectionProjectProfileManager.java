@@ -199,8 +199,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
-    super.readExternal(element);
     mySeverityRegistrar.readExternal(element);
+    super.readExternal(element);
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {

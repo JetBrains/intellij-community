@@ -108,12 +108,6 @@ public class Descriptor {
     myAdditionalConfigPanel = null;
   }
 
-  public SingleInspectionProfilePanel.LevelChooser getChooser(final SeverityRegistrar severityRegistrar) {
-    final SingleInspectionProfilePanel.LevelChooser chooser = new SingleInspectionProfilePanel.LevelChooser(severityRegistrar);
-    chooser.setLevel(myLevel);
-    return chooser;
-  }
-
   public Element getConfig() {
     return myConfig;
   }

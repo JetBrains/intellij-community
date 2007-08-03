@@ -684,8 +684,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
 
-      final LevelChooser chooser =
-        descriptor.getChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar());
+      final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar());
       chooser.getComboBox().addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           boolean toUpdate = mySelectedProfile.getErrorLevel(descriptor.getKey()) != chooser.getLevel();
@@ -800,7 +799,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private InspectionProfile getSavedProfile() {
-    return (InspectionProfile)mySelectedProfile.getProfileManager().getProfile(mySelectedProfile.getName());
+    return (InspectionProfile)mySelectedProfile.getProfileManager().getProfiles().get(mySelectedProfile.getName());
   }
 
   protected JPanel createInspectionProfileSettingsPanel() {

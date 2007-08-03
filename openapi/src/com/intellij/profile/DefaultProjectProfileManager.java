@@ -115,12 +115,12 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       for (Object p : profiles.getChildren(PROFILE)) {
         Element profileElement = (Element)p;
         final Profile profile = myApplicationProfileManager.createProfile();
+        profile.setProfileManager(this);
         profile.readExternal(profileElement);
         final String name = profile.getName();
         if (myApplicationProfileManager.getProfile(name) != null) { //override ide profile
           myApplicationProfileManager.deleteProfile(name);
         }
-        profile.setProfileManager(this);
         myProfiles.put(name, profile);
       }
     }
