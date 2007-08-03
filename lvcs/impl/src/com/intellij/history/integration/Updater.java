@@ -211,6 +211,9 @@ public class Updater implements CacheUpdater {
 
     b.append("already exists!!\n");
     b.append("file: " + f + "\n");
+    b.append("file.name: " + f.getName() + "\n");
+    b.append("file.parent: " + f.getParent() + "\n");
+    if (f.getParent() != null) b.append("file.parent.name: " + f.getParent().getName() + "\n");
     b.append("entry: " + e + "\n");
     b.append("entry.parent: " + e.getParent() + "\n");
     b.append("has vcs root: " + hasVcsRoot(f) + "\n");
