@@ -10,12 +10,15 @@ import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
+import com.intellij.debugger.ui.DebuggerStatementEditor;
 import com.intellij.debugger.ui.impl.UIUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
@@ -23,6 +26,7 @@ import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.classFilter.ClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,6 +73,7 @@ public abstract class BreakpointPropertiesPanel {
   public static final @NonNls String CONTROL_LOG_MESSAGE = "logMessage";
   private BreakpointComboboxHandler myBreakpointComboboxHandler;
   private static final int MAX_COMBO_WIDTH = 300;
+  private final FixedSizeButton myConditionMagnifierButton;
 
   public JComponent getControl(String control) {
     if(CONTROL_LOG_MESSAGE.equals(control)) {
@@ -177,7 +182,14 @@ public abstract class BreakpointPropertiesPanel {
       mySpecialBoxPanel.setVisible(false);
     }
 
-    insert(myConditionComboPanel, myConditionCombo);
+    final JPanel conditionPanel = new JPanel(new BorderLayout());
+    conditionPanel.add(myConditionCombo, BorderLayout.CENTER);
+    myConditionMagnifierButton = new FixedSizeButton(myConditionCombo);
+    conditionPanel.add(myConditionMagnifierButton, BorderLayout.EAST);
+    myConditionMagnifierButton.setFocusable(false);
+    myConditionMagnifierButton.addActionListener(new MagnifierButtonAction(project, myConditionCombo, myConditionCheckbox.getText()));
+
+    insert(myConditionComboPanel, conditionPanel);
     insert(myLogExpressionComboPanel, myLogExpressionCombo);
     insert(myDependentBreakpointComboPanel, baseBreakpointCombo);
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
@@ -477,6 +489,7 @@ public abstract class BreakpointPropertiesPanel {
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
     myPassCountField.setEnabled (myPassCountCheckbox.isSelected());
     myConditionCombo.setEnabled(myConditionCheckbox.isSelected());
+    myConditionMagnifierButton.setEnabled(myConditionCheckbox.isSelected());
     myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
     myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());
     myClassFiltersField.setEnabled(myClassFiltersCheckBox.isSelected());
@@ -626,6 +639,45 @@ public abstract class BreakpointPropertiesPanel {
       setIcon(icon);
       setDisabledIcon(icon);
       return this;
+    }
+  }
+
+  private static class MagnifierButtonAction implements ActionListener {
+    private final Project myProject;
+    private final CompletionEditor myTargetEditor;
+    private final String myDialogTitle;
+    private DebuggerStatementEditor myEditor;
+
+    private MagnifierButtonAction(final Project project, final CompletionEditor targetEditor, final String dialogTitle) {
+      myProject = project;
+      myTargetEditor = targetEditor;
+      myDialogTitle = dialogTitle;
+    }
+
+    public void actionPerformed(final ActionEvent e) {
+      new DialogWrapper(myTargetEditor, true){
+        public void show() {
+          setTitle(myDialogTitle);
+          setModal(true);
+          init();
+          super.show();
+        }
+
+        @Nullable
+        protected JComponent createCenterPanel() {
+          final JPanel panel = new JPanel(new BorderLayout());
+          myEditor = new DebuggerStatementEditor(myProject, myTargetEditor.getContext(), myTargetEditor.getRecentsId());
+          myEditor.setPreferredSize(new Dimension(400, 150));
+          myEditor.setText(myTargetEditor.getText());
+          panel.add(myEditor, BorderLayout.CENTER);
+          return panel;
+        }
+
+        protected void doOKAction() {
+          myTargetEditor.setText(myEditor.getText());
+          super.doOKAction();
+        }
+      }.show();
     }
   }
 }
