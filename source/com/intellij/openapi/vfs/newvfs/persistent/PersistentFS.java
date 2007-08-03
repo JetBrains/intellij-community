@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -215,7 +216,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private static int getFileId(final VirtualFile file) {
     final int id = ((NewVirtualFile)file).getId();
-    assert id > 0;
+    if (id <= 0) {
+      throw new InvalidVirtualFileAccessException(file);
+    }
     return id;
   }
 

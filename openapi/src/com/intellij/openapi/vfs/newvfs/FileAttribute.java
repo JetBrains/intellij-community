@@ -5,6 +5,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public class FileAttribute {
 
   @Nullable
   public DataInputStream readAttribute(VirtualFile file) {
-    LOG.assertTrue(((NewVirtualFile)file).getId() > 0, "File is either invalid or doesn't belong to a managed FS");
+    ensureFileIsValid(file);
 
     final DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
     if (stream != null) {
@@ -47,8 +48,15 @@ public class FileAttribute {
     return stream;
   }
 
+  private static void ensureFileIsValid(final VirtualFile file) {
+    int id = ((NewVirtualFile)file).getId();
+    if (id <= 0) {
+      throw new InvalidVirtualFileAccessException(file);
+    }
+  }
+
   public DataOutputStream writeAttribute(VirtualFile file) {
-    LOG.assertTrue(((NewVirtualFile)file).getId() > 0, "File is either invalid or doesn't belong to a managed FS");
+    ensureFileIsValid(file);
 
     final DataOutputStream stream = ManagingFS.getInstance().writeAttribute(file, this);
     try {
