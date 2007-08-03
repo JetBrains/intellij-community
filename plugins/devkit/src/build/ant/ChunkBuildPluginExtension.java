@@ -10,7 +10,6 @@ package org.jetbrains.idea.devkit.build.ant;
 
 import com.intellij.compiler.ant.*;
 import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.CompoundBuildInstruction;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -45,33 +44,14 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
       final BuildTargetsFactory factory = BuildTargetsFactory.getInstance();
       final Module module = modules[0];
       PluginBuildConfiguration buildProperties = PluginBuildConfiguration.getInstance(module);
-      ExplodedAndJarTargetParameters parameters = new ExplodedAndJarTargetParameters(chunk, module, module.getName(), genOptions,
-                                                                                     buildProperties, PluginBuildProperties.PLUGIN_DIR_EXPLODED,
-                                                                                     PluginBuildProperties.PLUGIN_PATH_JAR) {
-        public String getConfigurationName(final CompoundBuildInstruction instruction) {
-          throw new UnsupportedOperationException("'getConfigurationName' not implemented in " + getClass().getName());
-        }
-
-        @NonNls
-        public String getBuildExplodedTargetName(final String configurationName) {
-          return PluginBuildProperties.getBuildExplodedTargetName(configurationName);
-        }
-
-        @NonNls
-        public String getBuildJarTargetName(final String configurationName) {
-          return PluginBuildProperties.getBuildJarTargetName(configurationName);
-        }
-
-        @NonNls
-        public String getExplodedPathProperty(final String configurationName) {
-          return PluginBuildProperties.getExplodedPathProperty(configurationName);
-        }
-
-        @NonNls
-        public String getJarPathProperty(final String configurationName) {
-          return PluginBuildProperties.getJarPathProperty(configurationName);
-        }
-      };
+      String configurationName = module.getName();
+      ExplodedAndJarTargetParameters parameters =
+        new ExplodedAndJarTargetParameters(chunk, module, genOptions, buildProperties, 
+                                           PluginBuildProperties.PLUGIN_DIR_EXPLODED, PluginBuildProperties.PLUGIN_PATH_JAR,
+                                           PluginBuildProperties.getBuildExplodedTargetName(configurationName),
+                                           PluginBuildProperties.getBuildJarTargetName(configurationName),
+                                           PluginBuildProperties.getExplodedPathProperty(configurationName),
+                                           PluginBuildProperties.getJarPathProperty(configurationName), null);
       final Set<Library> libs = new HashSet<Library>();
       PluginBuildUtil.getLibraries(module, libs);
       @NonNls String jarPath = chunk.getBaseDir().getPath() + "/" + chunk.getName();
