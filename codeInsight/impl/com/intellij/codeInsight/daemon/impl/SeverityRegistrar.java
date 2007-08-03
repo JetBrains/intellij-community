@@ -6,6 +6,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public class SeverityRegistrar implements JDOMExternalizable, Comparator<HighlightSeverity> {
   @NonNls private static final String INFO = "info";
-  private final Map<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl> ourMap = new THashMap<HighlightSeverity, HighlightInfoType.HighlightInfoTypeImpl>();
+  private final Map<HighlightSeverity, SeverityBasedTextAttributes> ourMap = new THashMap<HighlightSeverity, SeverityBasedTextAttributes>();
   private final Map<HighlightSeverity, Color> ourRendererColors = new THashMap<HighlightSeverity, Color>();
   @NonNls private static final String COLOR = "color";
 
@@ -40,18 +41,22 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return project != null ? InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar() : getInstance();
   }
 
-  public void registerSeverity(HighlightInfoType.HighlightInfoTypeImpl info, Color renderColor){
-    final HighlightSeverity severity = info.getSeverity(null);
+  public void registerSeverity(SeverityBasedTextAttributes info, Color renderColor){
+    final HighlightSeverity severity = info.getType().getSeverity(null);
     ourMap.put(severity, info);
     ourRendererColors.put(severity, renderColor);
     HighlightDisplayLevel.registerSeverity(severity, renderColor);
   }
 
   public Collection<HighlightInfoType.HighlightInfoTypeImpl> getRegisteredHighlightingInfoTypes() {
-    return ourMap.values();
+    final Collection<HighlightInfoType.HighlightInfoTypeImpl> result = new ArrayList<HighlightInfoType.HighlightInfoTypeImpl>();
+    for (SeverityBasedTextAttributes highlightInfo : ourMap.values()) {
+      result.add(highlightInfo.getType());
+    }
+    return result;
   }
 
-  public HighlightInfoType.HighlightInfoTypeImpl unregisterSeverity(HighlightSeverity severity){
+  public SeverityBasedTextAttributes unregisterSeverity(HighlightSeverity severity){
     return ourMap.remove(severity);
   }
 
@@ -71,10 +76,18 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING){
       return (HighlightInfoType.HighlightInfoTypeImpl) HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER;
     }
-    final HighlightInfoType.HighlightInfoTypeImpl infoType = ourMap.get(severity);
-    return (HighlightInfoType.HighlightInfoTypeImpl)(infoType != null ? infoType : HighlightInfoType.WARNING);
+    final SeverityBasedTextAttributes infoType = ourMap.get(severity);
+    return (HighlightInfoType.HighlightInfoTypeImpl)(infoType != null ? infoType.getType() : HighlightInfoType.WARNING);
   }
 
+  @Nullable
+  public TextAttributes getTextAttributesBySeverity(HighlightSeverity severity) {
+    final SeverityBasedTextAttributes infoType = ourMap.get(severity);
+    if (infoType != null) {
+      return infoType.getAttributes();
+    }
+    return null;
+  }
 
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -83,15 +96,17 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     final List children = element.getChildren(INFO);
     if (children != null){
       for (Object child : children) {
-        HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl();
         final Element infoElement = (Element)child;
-        info.readExternal(infoElement);
+
+        final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes();
+        highlightInfo.readExternal(infoElement);
+
         Color color = null;
         final String colorStr = infoElement.getAttributeValue(COLOR);
         if (colorStr != null){
           color = new Color(Integer.parseInt(colorStr, 16));
         }
-        registerSeverity(info, color);
+        registerSeverity(highlightInfo, color);
       }
     }
     myOrder.clear();
@@ -101,7 +116,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   public void writeExternal(Element element) throws WriteExternalException {
     for (HighlightSeverity severity : ourMap.keySet()) {
       Element info = new Element(INFO);
-      final HighlightInfoType.HighlightInfoTypeImpl infoType = ourMap.get(severity);
+      final SeverityBasedTextAttributes infoType = ourMap.get(severity);
       infoType.writeExternal(info);
       final Color color = ourRendererColors.get(severity);
       if (color != null) {
@@ -170,5 +185,43 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   public void setOrder(List<String> order) {
     myOrder.clear();
     myOrder.addAll(order);
+  }
+
+  public static class SeverityBasedTextAttributes implements JDOMExternalizable {
+    private TextAttributes myAttributes;
+    private HighlightInfoType.HighlightInfoTypeImpl myType;
+
+    //readexternal
+    public SeverityBasedTextAttributes() {
+      myAttributes = new TextAttributes();
+      myType = new HighlightInfoType.HighlightInfoTypeImpl();
+    }
+
+    public SeverityBasedTextAttributes(final TextAttributes attributes, final HighlightInfoType.HighlightInfoTypeImpl type) {
+      myAttributes = attributes;
+      myType = type;
+    }
+
+    public TextAttributes getAttributes() {
+      return myAttributes;
+    }
+
+    public HighlightInfoType.HighlightInfoTypeImpl getType() {
+      return myType;
+    }
+
+    public void readExternal(Element element) throws InvalidDataException {
+      myAttributes.readExternal(element);
+      myType.readExternal(element);
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+      myAttributes.writeExternal(element);
+      myType.writeExternal(element);
+    }
+
+    public HighlightSeverity getSeverity() {
+      return myType.getSeverity(null);
+    }
   }
 }
