@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.Parsing;
@@ -16,6 +15,7 @@ import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private final PsiManager myManager;
@@ -111,7 +113,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return processor.getCandidates();
   }
 
-  private static Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
+  private Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
                                                  final PsiTypeParameter typeParameter,
                                                  final PsiParameter[] parameters,
                                                  PsiExpression[] arguments,
@@ -124,6 +126,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
         PsiExpression argument = arguments[j];
+        if (argument instanceof PsiMethodCallExpression &&
+          myBlockedForInferenceMethodCalls.get().contains(argument)) continue;
+
         final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
         if (j >= parameters.length && !parameter.isVarArgs()) break;
         PsiType parameterType = parameter.getType();
@@ -345,7 +350,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
-  private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
+  private Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
                                                      PsiElement parent,
                                                      final boolean forCompletion) {
@@ -545,7 +550,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
-  private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
+  private Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
                                                      PsiMethodCallExpression methodCall,
                                                      final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
@@ -623,7 +628,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiMethodCallExpression innerMethodCall,
+  private ThreadLocal<List<PsiMethodCallExpression>> myBlockedForInferenceMethodCalls = new ThreadLocal<List<PsiMethodCallExpression>>() {
+    protected List<PsiMethodCallExpression> initialValue() {
+      return new ArrayList<PsiMethodCallExpression>(2);
+    }
+  };
+
+  private Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiMethodCallExpression innerMethodCall,
                                                                                      final PsiExpressionList expressionList,
                                                                                      final PsiCallExpression contextCall,
                                                                                      final PsiTypeParameter typeParameter) {
@@ -639,8 +650,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         final PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)element;
-          //can't infer from generic method
-          if (method.getTypeParameters().length > 0) continue;
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           PsiParameter parameter = null;
           if (parameters.length > i) {
@@ -649,8 +658,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             parameter = parameters[parameters.length - 1];
           }
           if (parameter != null) {
-            //may substitute since method is not generic
+            //prevent infinite recursion
+            myBlockedForInferenceMethodCalls.get().add(innerMethodCall);
             PsiType type = result.getSubstitutor().substitute(parameter.getType());
+            myBlockedForInferenceMethodCalls.get().remove(innerMethodCall);
             final Pair<PsiType, ConstraintType> constraint =
               getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, PsiUtil.getLanguageLevel(innerMethodCall));
             if (constraint != null) return constraint;
