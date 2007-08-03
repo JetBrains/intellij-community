@@ -48,12 +48,8 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     HighlightDisplayLevel.registerSeverity(severity, renderColor);
   }
 
-  public Collection<HighlightInfoType.HighlightInfoTypeImpl> getRegisteredHighlightingInfoTypes() {
-    final Collection<HighlightInfoType.HighlightInfoTypeImpl> result = new ArrayList<HighlightInfoType.HighlightInfoTypeImpl>();
-    for (SeverityBasedTextAttributes highlightInfo : ourMap.values()) {
-      result.add(highlightInfo.getType());
-    }
-    return result;
+  public Collection<SeverityBasedTextAttributes> getRegisteredHighlightingInfoTypes() {
+    return ourMap.values();
   }
 
   public SeverityBasedTextAttributes unregisterSeverity(HighlightSeverity severity){
@@ -222,6 +218,25 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
     public HighlightSeverity getSeverity() {
       return myType.getSeverity(null);
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final SeverityBasedTextAttributes that = (SeverityBasedTextAttributes)o;
+
+      if (myAttributes != null ? !myAttributes.equals(that.myAttributes) : that.myAttributes != null) return false;
+      if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = (myAttributes != null ? myAttributes.hashCode() : 0);
+      result = 31 * result + (myType != null ? myType.hashCode() : 0);
+      return result;
     }
   }
 }

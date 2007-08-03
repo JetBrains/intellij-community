@@ -459,10 +459,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     severities.add(HighlightSeverity.ERROR);
     severities.add(HighlightSeverity.WARNING);
     severities.add(HighlightSeverity.INFO);
-    final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes =
+    final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
       ((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar().getRegisteredHighlightingInfoTypes();
-    for (HighlightInfoType.HighlightInfoTypeImpl info : infoTypes) {
-      severities.add(info.getSeverity(null));
+    for (SeverityRegistrar.SeverityBasedTextAttributes info : infoTypes) {
+      severities.add(info.getSeverity());
     }
     for (HighlightSeverity severity : severities) {
       final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
@@ -965,8 +965,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     private static void fillModel(DefaultComboBoxModel model, final SeverityRegistrar severityRegistrar) {
       model.removeAllElements();
       final TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
-      for (HighlightInfoType.HighlightInfoTypeImpl type : severityRegistrar.getRegisteredHighlightingInfoTypes()) {
-        severities.add(type.getSeverity(null));
+      for (SeverityRegistrar.SeverityBasedTextAttributes type : severityRegistrar.getRegisteredHighlightingInfoTypes()) {
+        severities.add(type.getSeverity());
       }
       severities.add(HighlightSeverity.ERROR);
       severities.add(HighlightSeverity.WARNING);
