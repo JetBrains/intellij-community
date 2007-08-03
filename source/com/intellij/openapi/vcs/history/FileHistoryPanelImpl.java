@@ -76,7 +76,7 @@ import java.util.List;
 public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements FileHistoryPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
-  private JEditorPane myComments;
+  private final JEditorPane myComments;
   private final DefaultActionGroup myPopupActions;
 
   private final Project myProject;
@@ -136,7 +136,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   };
 
   private static class MessageRenderer extends ColoredTableCellRenderer {
-    private IssueLinkRenderer myIssueLinkRenderer;
+    private final IssueLinkRenderer myIssueLinkRenderer;
 
     public MessageRenderer(Project project) {
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
@@ -183,7 +183,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     }
 
-    private int getSuitableIndex(int index10, int index13) {
+    private static int getSuitableIndex(int index10, int index13) {
       if (index10 < 0) {
         return index13;
       }
@@ -208,7 +208,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private final DualViewColumnInfo[] COLUMNS;
 
   public static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
-  private Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
+  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
 
   public FileHistoryPanelImpl(Project project,
@@ -344,6 +344,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     myDualView.rebuild();
+    myDualView.expandAll();
     myDualView.repaint();
   }
 
@@ -437,7 +438,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     else {
       final String message = getFirstSelectedRevision().getCommitMessage();
-      myComments.setText("<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message) + "</body></html>");
+      @NonNls final String text = "<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message) + "</body></html>";
+      myComments.setText(text);
       myComments.setCaretPosition(0);
     }
   }
@@ -798,10 +800,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     private File getIOFile() {
       return myFilePath.getIOFile();
-    }
-
-    private String getFilePath() {
-      return myFilePath.getPath();
     }
 
     private void write(byte[] revision) throws IOException {

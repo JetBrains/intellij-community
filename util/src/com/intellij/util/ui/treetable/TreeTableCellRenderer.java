@@ -28,7 +28,7 @@ import java.awt.*;
  * A TreeCellRenderer that displays a JTree.
  */
 public class TreeTableCellRenderer implements TableCellRenderer {
-  private TreeTable myTreeTable;
+  private final TreeTable myTreeTable;
   private final TreeTableTree myTree;
   private TreeCellRenderer myTreeCellRenderer;
   private Border myDefaultBorder = UIUtil.getTableFocusCellHighlightBorder();
