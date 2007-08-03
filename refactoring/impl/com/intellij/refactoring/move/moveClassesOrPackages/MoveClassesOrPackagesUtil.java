@@ -219,9 +219,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
 // Does not process non-code usages!
-  public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination)
-    throws IncorrectOperationException {
-
+  public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
 
@@ -236,6 +234,13 @@ public class MoveClassesOrPackagesUtil {
         }
       }
       newClass = (PsiClass)created.replace(aClass);
+      aClass.delete();
+    }
+    else if (!newDirectory.equals(file.getContainingDirectory()) && newDirectory.findFile(file.getName()) != null) {
+      // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
+      correctSelfReferences(aClass, newDirectory.getPackage());
+      PsiFile newFile = newDirectory.findFile(file.getName());
+      newClass = (PsiClass) newFile.add(aClass);
       aClass.delete();
     }
     else {

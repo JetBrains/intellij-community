@@ -56,6 +56,10 @@ public class MoveClassTest extends CodeInsightTestCase {
     doTest("localClass", new String[]{"pack1.A"}, "pack2");
   }
 
+  public void testClassAndSecondary() throws Exception{
+    doTest("classAndSecondary", new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
+  }
+
   private void doTest(String testName, String[] classNames, String newPackageName) throws Exception{
     String root = PathManagerEx.getTestDataPath()+ "/refactoring/moveClass/" + testName;
 
@@ -80,7 +84,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     }
 
     PsiPackage aPackage = myPsiManager.findPackage(newPackageName);
-    assertNotNull(aPackage);
+    assertNotNull("Package " + newPackageName + " not found", aPackage);
     final PsiDirectory[] dirs = aPackage.getDirectories();
     assertEquals(dirs.length, 1);
 

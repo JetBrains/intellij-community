@@ -378,8 +378,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiClass) {
           ChangeContextUtil.encodeContextInfo(element, true);
-          final PsiClass newElement =
-            MoveClassesOrPackagesUtil.doMoveClass((PsiClass)element, myMoveDestination);
+          final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass((PsiClass)element, myMoveDestination);
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;
         } else {
