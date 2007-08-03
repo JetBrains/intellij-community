@@ -1,17 +1,17 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -72,7 +72,7 @@ public class StaticImportMethodFix implements IntentionAction {
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
     if (name == null) return list;
     GlobalSearchScope scope = myMethodCall.getResolveScope();
-    PsiMethod[] methods = cache.getMethodsByName(name, scope);
+    PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 10);
     ArrayList<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       ProgressManager.getInstance().checkCanceled();

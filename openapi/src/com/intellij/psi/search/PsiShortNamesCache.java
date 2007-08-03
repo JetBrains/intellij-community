@@ -94,6 +94,9 @@ public interface PsiShortNamesCache {
   @NotNull
   PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
 
+  @NotNull
+  PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
+
   /**
    * Returns the list of names of all methods in the project and
    * (optionally) libraries.

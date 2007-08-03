@@ -13,11 +13,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -135,6 +136,18 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
     long[] methodIds = getRepositoryIndex().getMethodsByName(name, filter);
+
+    if (methodIds.length == 0) return PsiMethod.EMPTY_ARRAY;
+    ArrayList<PsiElement> list = new ArrayList<PsiElement>();
+    addElementsByIds(list, methodIds, scope);
+    return list.toArray(new PsiMethod[list.size()]);
+  }
+
+
+  @NotNull
+  public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
+    VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
+    long[] methodIds = getRepositoryIndex().getMethodsByNameIfNotMoreThan(name, filter, maxCount);
 
     if (methodIds.length == 0) return PsiMethod.EMPTY_ARRAY;
     ArrayList<PsiElement> list = new ArrayList<PsiElement>();

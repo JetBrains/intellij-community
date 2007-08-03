@@ -40,6 +40,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -111,6 +112,16 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     Merger<PsiMethod> merger = new Merger<PsiMethod>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getMethodsByName(name, scope));
+    }
+    PsiMethod[] result = merger.getResult();
+    return result != null ? result : PsiMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
+    Merger<PsiMethod> merger = new Merger<PsiMethod>();
+    for (PsiShortNamesCache cache : myCaches) {
+      merger.add(cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount));
     }
     PsiMethod[] result = merger.getResult();
     return result != null ? result : PsiMethod.EMPTY_ARRAY;
