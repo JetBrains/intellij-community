@@ -6,7 +6,6 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -168,9 +167,9 @@ public class DetectedFacetsTreeComponent {
       else if (value instanceof DetectedFacetInfo) {
         final DetectedFacetInfo info = (DetectedFacetInfo)value;
         FacetType type = info.myFacetInfo.getFacetType();
-        String title = ProjectBundle.message("checkbox.text.detected.facet.0.in.1", type.getPresentableName(), info.myRelativeFilePath);
         renderer.setIcon(type.getIcon());
-        renderer.append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(type.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(" (" + info.myRelativeFilePath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
   }

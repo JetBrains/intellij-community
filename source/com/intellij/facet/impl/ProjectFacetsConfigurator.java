@@ -44,6 +44,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
   private final StructureConfigrableContext myContext;
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
+  private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
   public ProjectFacetsConfigurator(final StructureConfigrableContext context, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
     myContext = context;
@@ -223,6 +224,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     for (FacetEditor editor : myEditors.values()) {
       editor.disposeUIResources();
     }
+    myProjectData = null;
   }
 
   @NotNull
@@ -249,10 +251,17 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     }
   }
 
+  private UserDataHolder getProjectData() {
+    if (myProjectData == null) {
+      myProjectData = new UserDataHolderBase();
+    }
+    return myProjectData;
+  }
+
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
     public MyProjectConfigurableContext(FacetInfo facetInfo, final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
       super(facetInfo, facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
-            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()));
+            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
     }
 
     public Library createProjectLibrary(final String baseName, final VirtualFile[] roots, final VirtualFile[] sources) {

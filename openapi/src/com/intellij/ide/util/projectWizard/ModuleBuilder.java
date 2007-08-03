@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.facet.FacetInfo;
-import com.intellij.facet.FacetManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,15 +36,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ModuleBuilder extends ProjectBuilder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   @NonNls private String myModuleFilePath;
   @Nullable
-  private FacetInfo[] myFacetInfos = FacetInfo.EMPTY_ARRAY;
   private List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
   private EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
@@ -104,7 +101,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
     module.setSavePathsRelative(true); // default setting
 
-    FacetManager.getInstance(module).createAndCommitFacets(myFacetInfos);
     return module;
   }
 
@@ -142,11 +138,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       onModuleInitialized(module);
     }
     return module;
-  }
-
-
-  public void setFacetInfos(final FacetInfo[] facetInfos) {
-    myFacetInfos = facetInfos;
   }
 
 

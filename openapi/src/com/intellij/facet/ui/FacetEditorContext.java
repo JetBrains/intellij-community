@@ -18,7 +18,6 @@
 package com.intellij.facet.ui;
 
 import com.intellij.facet.Facet;
-import com.intellij.facet.FacetInfo;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
@@ -31,9 +30,9 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
@@ -83,5 +82,5 @@ public interface FacetEditorContext extends UserDataHolder {
   VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType);
 
   @NotNull
-  FacetInfo getFacetInfo();
+  String getFacetName();
 }

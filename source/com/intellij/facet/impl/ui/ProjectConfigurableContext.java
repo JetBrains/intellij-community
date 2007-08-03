@@ -29,8 +29,9 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
 
   public ProjectConfigurableContext(final @NotNull FacetInfo facetInfo, final @NotNull Facet facet, final boolean isNewFacet,
                                     @Nullable FacetEditorContext parentContext,
-                                    final ModuleConfigurationState state, final UserDataHolder sharedModuleData) {
-    super(facetInfo, parentContext, state.getFacetsProvider(), state.getModulesProvider(), sharedModuleData);
+                                    final ModuleConfigurationState state, final UserDataHolder sharedModuleData,
+                                    final UserDataHolder sharedProjectData) {
+    super(facetInfo, parentContext, state.getFacetsProvider(), state.getModulesProvider(), sharedModuleData, sharedProjectData);
     myModuleConfigurationState = state;
     myFacet = facet;
     myNewFacet = isNewFacet;

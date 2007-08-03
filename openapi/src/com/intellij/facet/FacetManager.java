@@ -21,6 +21,5 @@ public abstract class FacetManager implements FacetModel {
   @NotNull
   public abstract ModifiableFacetModel createModifiableModel();
 
-  public abstract void createAndCommitFacets(final FacetInfo[] facetInfos);
 
 }

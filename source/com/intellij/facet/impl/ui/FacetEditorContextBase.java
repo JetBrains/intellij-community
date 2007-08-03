@@ -34,10 +34,13 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private final FacetInfo myFacetInfo;
   private UserDataHolder mySharedModuleData;
   private EventDispatcher<ModuleRootsChangeListener> myModuleRootsDispatcher = EventDispatcher.create(ModuleRootsChangeListener.class);
+  private UserDataHolder mySharedProjectData;
 
-  public FacetEditorContextBase(@NotNull FacetInfo facetInfo, final @Nullable FacetEditorContext parentContext, 
-                                final @Nullable FacetsProvider facetsProvider, final @NotNull ModulesProvider modulesProvider,
-                                final UserDataHolder sharedModuleData) {
+  public FacetEditorContextBase(@NotNull FacetInfo facetInfo, final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider,
+                                final @NotNull ModulesProvider modulesProvider,
+                                final UserDataHolder sharedModuleData,
+                                final UserDataHolder sharedProjectData) {
+    mySharedProjectData = sharedProjectData;
     myFacetInfo = facetInfo;
     mySharedModuleData = sharedModuleData;
     myParentContext = parentContext;
@@ -55,8 +58,8 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   }
 
   @NotNull
-  public FacetInfo getFacetInfo() {
-    return myFacetInfo;
+  public String getFacetName() {
+    return myFacetInfo.getName();
   }
 
   public VirtualFile[] getLibraryFiles(final Library library, final OrderRootType rootType) {
@@ -71,6 +74,11 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
       }
     }
     return null;
+  }
+
+  
+  public UserDataHolder getSharedProjectData() {
+    return mySharedProjectData;
   }
 
   //todo[nik] pull up to open API?
