@@ -20,7 +20,7 @@ public class RefreshWorker {
   private final boolean myIsRecursive;
   private final Queue<VirtualFile> myRefreshQueue = new Queue<VirtualFile>(100);
 
-  private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
   public RefreshWorker(final VirtualFile refreshRoot, final boolean isRecursive) {
     myRefreshRoot = refreshRoot;
@@ -137,6 +137,7 @@ public class RefreshWorker {
   }
 
   private void scheduleDeletion(final VirtualFile file) {
+    if (file == null) return;
     myEvents.add(new VFileDeleteEvent(null, file, true));
   }
 
