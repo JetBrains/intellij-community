@@ -10,5 +10,5 @@ class A implements Foo, Bar {
   def int foo () {}
 }
 -----
-Interface definition: Foo; MethodSignature: foo([])
 Interface definition: Bar; MethodSignature: foo([])
+Interface definition: Foo; MethodSignature: foo([])

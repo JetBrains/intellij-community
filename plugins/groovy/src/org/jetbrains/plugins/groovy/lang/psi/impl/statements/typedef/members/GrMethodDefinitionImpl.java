@@ -53,7 +53,7 @@ import java.util.*;
  * @date: 26.03.2007
  */
 
-public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
+public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod, Comparable<PsiMethod> {
   public GrMethodDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -102,6 +102,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public GrMember[] getMembers() {
     return new GrMember[]{this};
+  }
+
+  public int compareTo(PsiMethod method) {
+    return getSignature(PsiSubstitutor.EMPTY).toString().compareTo(method.getSignature(PsiSubstitutor.EMPTY).toString());
   }
 
   private static class MyTypeCalculator implements Function<GrMethod, PsiType> {
@@ -161,8 +165,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }
 
-
-  private void findSuperMethodRecursilvely(List<PsiMethod> methods, PsiClass psiClass) {
+  private void findSuperMethodRecursilvely(Set<PsiMethod> methods, PsiClass psiClass) {
     PsiClassType[] superClassTypes = psiClass.getSuperTypes();
 
     for (PsiClassType superClassType : superClassTypes) {
@@ -259,7 +262,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, parentClass);
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
@@ -273,7 +276,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   public PsiMethod[] findSuperMethods() {
     PsiClass containingClass = getContainingClass();
 
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, containingClass);
 
     return methods.toArray(PsiMethod.EMPTY_ARRAY);

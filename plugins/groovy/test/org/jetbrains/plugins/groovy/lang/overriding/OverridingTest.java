@@ -1,20 +1,13 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.testFramework.fixtures.*;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import junit.framework.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.util.Arrays;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -38,12 +31,11 @@ public abstract class OverridingTest extends SimpleGroovyFileSetTestCase {
 
     for (PsiMethod method : psiMethods) {
       PsiMethod[] superMethods = findMethod(method);
+      String[] classes = sortUseContaingClass(superMethods);
 
-      for (PsiMethod superMethod : superMethods) {
-        buffer.append(superMethod.getContainingClass().toString() + ": " + superMethod.getContainingClass().getName());
-        buffer.append("; ");
-        buffer.append(superMethod.getSignature(PsiSubstitutor.EMPTY).toString());
-        buffer.append("\n"); //between overring methods
+      for (String classAsString : classes) {
+        buffer.append(classAsString);
+        buffer.append("\n");   //between different super methods
       }
       buffer.append("\n");   //between different methods
     }
@@ -52,6 +44,19 @@ public abstract class OverridingTest extends SimpleGroovyFileSetTestCase {
 
     System.out.println(buffer);
     return buffer.toString();
+  }
+
+  private String[] sortUseContaingClass(PsiMethod[] psiMethods) {
+    String[] classes = new String[psiMethods.length];
+
+    for (int i = 0; i < psiMethods.length; i++) {
+      PsiMethod psiMethod = psiMethods[i];
+      classes[i] = psiMethod.getContainingClass().toString() + ": " + psiMethod.getContainingClass().getName() +
+          "; " + psiMethod.getSignature(PsiSubstitutor.EMPTY).toString();
+    }
+    Arrays.sort(classes);
+
+    return classes;
   }
 
   abstract PsiMethod[] findMethod(PsiMethod method);

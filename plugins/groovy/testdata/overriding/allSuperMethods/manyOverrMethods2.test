@@ -1,15 +1,16 @@
 class Foo1 {
   def int foo () {}
 }
-class Foo2 extends Foo1 {
+
+class Foo2 extends Foo1 implements Bar1{
   def int foo () {}
 }
 
-class Foo3 extends Foo2 {
+class Foo3 extends Foo2 implements Bar3{
   def int foo () {}
 }
 
-class Foo4 extends Foo3 {
+class Foo4 extends Foo3 implements Bar2{
   def int foo () {}
 }
 
@@ -21,7 +22,7 @@ interface Bar2 extends Bar1 {
   def int foo ()
 }
 
-interface Bar3 extends Bar2 {
+interface Bar3 extends Bar2, Bar1 {
   def int foo ()
 }
 

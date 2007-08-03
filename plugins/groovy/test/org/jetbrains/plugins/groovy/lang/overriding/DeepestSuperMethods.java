@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.ide.util.MemberChooser;
 import junit.framework.Test;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
 
 /**
  * User: Dmitry.Krasilschikov
