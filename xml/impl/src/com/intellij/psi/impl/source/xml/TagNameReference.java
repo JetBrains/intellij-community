@@ -7,6 +7,7 @@ import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -264,9 +265,23 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
           visited.add(nsDescriptor);
           final XmlElementDescriptor[] rootElementsDescriptors =
             nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));
-          
+
+          XmlTag parentTag = element.getParentTag();
+          XmlElementDescriptor parentDescriptor = elementDescriptor;
+
+          if (XmlUtil.JSP_URI.equals(namespace)) {
+            JspFile file = PsiUtil.getJspFile(element);
+
+            if (file.getFileType() == StdFileTypes.JSP) {
+              final XmlTag jspRootTag = file.getDocument().getRootTag(); // jsp implicit root tag
+              if (jspRootTag != null) {
+                parentDescriptor = (parentTag = jspRootTag).getDescriptor();
+              }
+            }
+          }
+
           for(XmlElementDescriptor containedDescriptor:rootElementsDescriptors) {
-            if (containedDescriptor != null && couldContainDescriptor(element, elementDescriptor, containedDescriptor, namespace)) {
+            if (containedDescriptor != null && couldContainDescriptor(parentTag, parentDescriptor, containedDescriptor, namespace)) {
               variants.add(containedDescriptor);
             }
           }
@@ -291,12 +306,11 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     return nsDescriptor;
   }
 
-  private static boolean couldContainDescriptor(final XmlTag element, final XmlElementDescriptor elementDescriptor,
+  private static boolean couldContainDescriptor(final XmlTag parentTag, final XmlElementDescriptor elementDescriptor,
                                                 final XmlElementDescriptor containedDescriptor, String containedDescriptorNs) {
-    if (XmlUtil.nsFromTemplateFramework(containedDescriptorNs) || true) return true;
-    final XmlTag parentTag = element.getParentTag();
+    if (XmlUtil.nsFromTemplateFramework(containedDescriptorNs)) return true;
     if (parentTag == null) return true;
-    final XmlTag childTag = element.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
+    final XmlTag childTag = parentTag.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
     childTag.putUserData(XmlElement.ORIGINAL_ELEMENT, parentTag);
     return elementDescriptor.getElementDescriptor(childTag) != null;
   }

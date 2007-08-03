@@ -42,7 +42,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   public static XmlElementDescriptor getRelaxedDescriptor(XmlElementDescriptor base, final XmlTag childTag) {
     final String namespace = childTag.getNamespace();
 
-    if(!XmlUtil.XHTML_URI.equals(namespace)) {
+    if(!XmlUtil.XHTML_URI.equals(namespace) && base.getContentType() != XmlElementDescriptor.CONTENT_TYPE_EMPTY) {
       return new AnyXmlElementDescriptor(base,childTag.getNSDescriptor(childTag.getNamespace(),true));
     }
     return null;
