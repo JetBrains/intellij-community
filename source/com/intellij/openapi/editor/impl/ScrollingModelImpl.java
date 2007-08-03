@@ -19,25 +19,24 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ScrollingModelImpl implements ScrollingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
 
-  private EditorImpl myEditor;
-  private CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = new CopyOnWriteArrayList<VisibleAreaListener>();
+  private final EditorImpl myEditor;
+  private final CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = new CopyOnWriteArrayList<VisibleAreaListener>();
 
   private AnimatedScrollingRunnable myCurrentAnimatedRunnable = null;
   private final Object myAnimatedLock = new Object();
   private boolean myAnimationDisabled = false;
-  private DocumentAdapter myDocumentListener;
+  private final DocumentAdapter myDocumentListener;
 
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -324,7 +323,7 @@ public class ScrollingModelImpl implements ScrollingModel {
     private final int myEndVOffset;
     private final int myAnimationDuration;
 
-    private ArrayList<Runnable> myPostRunnables = new ArrayList<Runnable>();
+    private final ArrayList<Runnable> myPostRunnables = new ArrayList<Runnable>();
 
     private final Runnable myStartCommand;
     private final int myHDist;
@@ -436,14 +435,13 @@ public class ScrollingModelImpl implements ScrollingModel {
     }
 
     private void finish(boolean needInvokeLater, boolean scrollToTarget) {
-      if (scrollToTarget || myPostRunnables.size() > 0) {
+      if (scrollToTarget || !myPostRunnables.isEmpty()) {
         Runnable runnable = new Runnable() {
           public void run() {
             _scrollHorizontally(myEndHOffset);
             _scrollVertically(myEndVOffset);
 
-            for (int i = 0; i < myPostRunnables.size(); i++) {
-              Runnable runnable = myPostRunnables.get(i);
+            for (Runnable runnable : myPostRunnables) {
               runnable.run();
             }
           }

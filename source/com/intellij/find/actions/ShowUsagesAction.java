@@ -80,9 +80,17 @@ public class ShowUsagesAction extends AnAction {
       usage.navigate(true);
       FileEditorLocation location = usage.getLocation();
       FileEditor newFileEditor = location == null ? null :location.getEditor();
-      Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
+      final Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
       if (newEditor != null) {
-        HintManager.getInstance().showInformationHint(newEditor, FindBundle.message("show.usages.only.usage"));
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+              public void run() {
+                HintManager.getInstance().showInformationHint(newEditor, FindBundle.message("show.usages.only.usage"));
+              }
+            });
+          }
+        });
       }
     }
     else {
