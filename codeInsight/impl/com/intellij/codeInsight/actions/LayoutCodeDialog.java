@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,7 @@ import java.awt.event.ItemListener;
 
 public class LayoutCodeDialog extends DialogWrapper {
   private final PsiFile myFile;
-  private final PsiDirectory myDirectory;
+  @Nullable private final PsiDirectory myDirectory;
   private final Boolean myTextSelected;
 
   private JRadioButton myRbFile;
@@ -31,7 +32,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   public LayoutCodeDialog(Project project,
                           String title,
                           PsiFile file,
-                          PsiDirectory directory,
+                          @Nullable PsiDirectory directory,
                           Boolean isTextSelected,
                           final String helpId) {
     super(project, true);
@@ -76,11 +77,11 @@ public class LayoutCodeDialog extends DialogWrapper {
     updateState();
   }
 
-  private boolean isOptmizeImportsOptionOn() {
+  private static boolean isOptmizeImportsOptionOn() {
     return Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(OPTIMIZE_IMPORTS_KEY));
   }
 
-  private void setOptimizeImportsOption(boolean state) {
+  private static void setOptimizeImportsOption(boolean state) {
     PropertiesComponent.getInstance().setValue(OPTIMIZE_IMPORTS_KEY, Boolean.toString(state));
   }
 
@@ -114,17 +115,19 @@ public class LayoutCodeDialog extends DialogWrapper {
       panel.add(myRbSelectedText, gbConstraints);
     }
 
-    myRbDirectory = new JRadioButton(CodeInsightBundle.message("reformat.option.all.files.in.directory",
-                                                               myDirectory.getVirtualFile().getPresentableUrl()));
-    gbConstraints.gridy++;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-    panel.add(myRbDirectory, gbConstraints);
-
-    myCbIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
-    if (myDirectory.getSubdirectories().length > 0) {
+    if (myDirectory != null) {
+      myRbDirectory = new JRadioButton(CodeInsightBundle.message("reformat.option.all.files.in.directory",
+                                                                 myDirectory.getVirtualFile().getPresentableUrl()));
       gbConstraints.gridy++;
-      gbConstraints.insets = new Insets(0, 20, 0, 0);
-      panel.add(myCbIncludeSubdirs, gbConstraints);
+      gbConstraints.insets = new Insets(0, 0, 0, 0);
+      panel.add(myRbDirectory, gbConstraints);
+
+      myCbIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
+      if (myDirectory.getSubdirectories().length > 0) {
+        gbConstraints.gridy++;
+        gbConstraints.insets = new Insets(0, 20, 0, 0);
+        panel.add(myCbIncludeSubdirs, gbConstraints);
+      }
     }
 
     myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
