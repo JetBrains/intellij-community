@@ -30,6 +30,7 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract void processEvents(List<? extends VFileEvent> events);
 
+  @Nullable
   public abstract NewVirtualFile findRoot(final String basePath, NewVirtualFileSystem fs);
 
   public abstract void refresh(final boolean asynchronous);

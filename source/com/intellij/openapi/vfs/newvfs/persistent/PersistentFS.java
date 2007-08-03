@@ -37,7 +37,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final FSRecords myRecords;
   private final MessageBus myEventsBus;
 
-  private Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
+  private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
 
   public PersistentFS(MessageBus bus) {
     myEventsBus = bus;
@@ -461,6 +461,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final Object LOCK = new Object();
 
+  @Nullable
   public NewVirtualFile findRoot(final String basePath, final NewVirtualFileSystem fs) { // TODO: read/write locks instead of sycnrhonized
     synchronized (LOCK) {
       final String rootUrl = fs.getProtocol() + "://" + basePath;
@@ -487,14 +488,19 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public void refresh(final boolean asynchronous) {
     final NewVirtualFile[] roots;
     synchronized (LOCK) {
-      roots = myRoots.values().toArray(new NewVirtualFile[0]);
+      Collection<NewVirtualFile> values = myRoots.values();
+      roots = values.toArray(new NewVirtualFile[values.size()]);
     }
 
     RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
   }
 
   public VirtualFile[] getRoots() {
-    List<NewVirtualFile> roots = new ArrayList<NewVirtualFile>(myRoots.values());
+    List<NewVirtualFile> roots;
+    synchronized (LOCK) {
+      roots = new ArrayList<NewVirtualFile>(myRoots.values());
+    }
+
     Collections.sort(roots, new Comparator<NewVirtualFile>() {
       public int compare(final NewVirtualFile f1, final NewVirtualFile f2) {
         final NewVirtualFileSystem fs1 = f1.getFileSystem();
@@ -593,7 +599,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
       if (parentId != 0) {
         removeIdFromParentList(parentId, id);
-        ((VirtualDirectoryImpl)file.getParent()).removeChild(file);
+        VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file.getParent();
+        assert directory != null;
+
+        directory.removeChild(file);
       }
       else {
         synchronized (LOCK) {
@@ -664,6 +673,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     ((NewVirtualFile)file).setModificationStamp(newModificationStamp);
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   private void executeCopy(final VirtualFile from, final VirtualFile newParent, final String copyName) {
     executeCreateChild(newParent, copyName);
   }
