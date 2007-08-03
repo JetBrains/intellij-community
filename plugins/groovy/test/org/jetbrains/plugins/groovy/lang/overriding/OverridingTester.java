@@ -13,8 +13,8 @@ import java.util.Arrays;
  * User: Dmitry.Krasilschikov
  * Date: 31.07.2007
  */
-public abstract class OverridingTest extends SimpleGroovyFileSetTestCase {
-  protected OverridingTest(String path) {
+public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
+  protected OverridingTester(String path) {
     super(path);
   }
 

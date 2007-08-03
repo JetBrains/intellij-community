@@ -7,17 +7,17 @@ import com.intellij.psi.PsiMethod;
  * User: Dmitry.Krasilschikov
  * Date: 02.08.2007
  */
-public class AllSuperMethods extends OverridingTest{
+public class AllSuperMethodsTest extends OverridingTester {
   private static final String DATA_PATH = "testdata/overriding/allSuperMethods/";
 
-  public AllSuperMethods() {
+  public AllSuperMethodsTest() {
     super(System.getProperty("path") != null ?
         System.getProperty("path") :
         DATA_PATH
     );
   }
   public static Test suite() {
-    return new AllSuperMethods();
+    return new AllSuperMethodsTest();
   }
 
   PsiMethod[] findMethod(PsiMethod method) {
