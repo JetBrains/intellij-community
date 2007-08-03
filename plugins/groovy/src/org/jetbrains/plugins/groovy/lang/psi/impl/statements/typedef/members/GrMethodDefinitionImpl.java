@@ -178,7 +178,8 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
         MethodSignature superMethodSignature = superClassMethod.getSignature(PsiSubstitutor.EMPTY);
 
         MethodSignature thisMethodSignature = getSignature(PsiSubstitutor.EMPTY);
-        if (superMethodSignature.equals(thisMethodSignature)) {
+
+        if (superMethodSignature.equals(thisMethodSignature) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
           methods.add(superClassMethod);
         }
       }
@@ -238,7 +239,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       for (PsiMethod superClassMethod : superClassMethods) {
         MethodSignature superMethodSignature = superClassMethod.getSignature(PsiSubstitutor.EMPTY);
 
-        if (superMethodSignature.equals(getSignature(PsiSubstitutor.EMPTY))) {
+        if (superMethodSignature.equals(getSignature(PsiSubstitutor.EMPTY)) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
           signaturesToMethods.put(superMethodSignature, superClassMethod);
         }
       }
@@ -257,7 +258,12 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
-    return new PsiMethod[0];  //To change body of implemented methods use File | Settings | File Templates.
+    PsiClass containingClass = getContainingClass();
+
+    Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    findSuperMethodRecursilvely(methods, containingClass);
+
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
