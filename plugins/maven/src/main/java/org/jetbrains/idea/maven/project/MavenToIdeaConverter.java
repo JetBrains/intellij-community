@@ -271,7 +271,8 @@ public class MavenToIdeaConverter {
       final String url = entry.getValue();
       if (url.startsWith(JAR_PREFIX) && url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
         final String path = url.substring(JAR_PREFIX.length(), url.lastIndexOf(JarFileSystem.JAR_SEPARATOR));
-        rootModel.updateModuleLibrary(entry.getKey(), getUrl(path, SOURCES_CLASSIFIER), getUrl(path, JAVADOC_CLASSIFIER));
+        String key = entry.getKey();
+        rootModel.updateModuleLibrary(key != null ? key : path, getUrl(path, SOURCES_CLASSIFIER), getUrl(path, JAVADOC_CLASSIFIER));
       }
     }
   }
