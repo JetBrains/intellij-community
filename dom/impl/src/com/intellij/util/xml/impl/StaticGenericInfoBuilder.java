@@ -70,7 +70,8 @@ public class StaticGenericInfoBuilder {
       final Class implClass = domManager1.getImplementation(myClass);
       if (implClass != null) {
         for (Method method : ReflectionCache.getMethods(implClass)) {
-          if (!Modifier.isAbstract(method.getModifiers())) {
+          final int modifiers = method.getModifiers();
+          if (!Modifier.isAbstract(modifiers) && !Modifier.isVolatile(modifiers)) {
             final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
             if (signature.findMethod(myClass) != null) {
               methods.remove(JavaMethod.getMethod(myClass, signature));
