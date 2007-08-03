@@ -39,7 +39,7 @@ public class CommitHelper {
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
   private final List<Document> myCommittingDocuments = new ArrayList<Document>();
-
+  private final VcsConfiguration myConfiguration;
 
   public CommitHelper(final Project project,
                       final ChangeList changeList,
@@ -57,6 +57,7 @@ public class CommitHelper {
     myHandlers = handlers;
     myAllOfDefaultChangeListChangesIncluded = allOfDefaultChangeListChangesIncluded;
     myForceSyncCommit = synchronously;
+    myConfiguration = VcsConfiguration.getInstance(myProject);
   }
 
   public boolean doCommit() {
@@ -70,7 +71,7 @@ public class CommitHelper {
     }
     else {
       Task.Backgroundable task =
-        new Task.Backgroundable(myProject, myActionName, true, VcsConfiguration.getInstance(myProject).getCommitOption()) {
+        new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
           public void run(final ProgressIndicator indicator) {
             final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
             vcsManager.startBackgroundVcsOperation();
@@ -151,8 +152,7 @@ public class CommitHelper {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
     }
     finally {
-      commitCompleted(vcsExceptions, changeList, changesFailedToCommit, VcsConfiguration.getInstance(myProject), myHandlers,
-                      myCommitMessage);
+      commitCompleted(vcsExceptions, changeList, changesFailedToCommit, myHandlers, myCommitMessage);
     }
   }
 
@@ -176,7 +176,6 @@ public class CommitHelper {
   private void commitCompleted(final List<VcsException> allExceptions,
                                final ChangeList changeList,
                                final List<Change> failedChanges,
-                               final VcsConfiguration config,
                                final List<CheckinHandler> checkinHandlers,
                                String commitMessage) {
     final List<VcsException> errors = collectErrors(allExceptions);
@@ -195,11 +194,11 @@ public class CommitHelper {
         if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault() && !localList.isReadOnly()) {
           changeListManager.removeChangeList(localList);
         }
-        else if (config.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) &&
+        else if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) &&
                  localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(config);
+              ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
               dialog.show();
               if (dialog.isOK()) {
                 final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
@@ -226,7 +225,7 @@ public class CommitHelper {
       }
     }
 
-    config.ERROR_OCCURED = errorsSize > 0;
+    myConfiguration.ERROR_OCCURED = errorsSize > 0;
 
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
