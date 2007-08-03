@@ -52,7 +52,7 @@ public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
     for (int i = 0; i < psiMethods.length; i++) {
       PsiMethod psiMethod = psiMethods[i];
       classes[i] = psiMethod.getContainingClass().toString() + ": " + psiMethod.getContainingClass().getName() +
-          "; " + psiMethod.getSignature(PsiSubstitutor.EMPTY).toString();
+          "; " + psiMethod.getHierarchicalMethodSignature().toString();
     }
     Arrays.sort(classes);
 

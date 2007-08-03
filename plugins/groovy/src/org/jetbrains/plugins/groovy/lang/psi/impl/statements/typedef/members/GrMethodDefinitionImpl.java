@@ -53,7 +53,7 @@ import java.util.*;
  * @date: 26.03.2007
  */
 
-public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod, Comparable<PsiMethod> {
+public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
   public GrMethodDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -102,10 +102,6 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public GrMember[] getMembers() {
     return new GrMember[]{this};
-  }
-
-  public int compareTo(PsiMethod method) {
-    return getSignature(PsiSubstitutor.EMPTY).toString().compareTo(method.getSignature(PsiSubstitutor.EMPTY).toString());
   }
 
   private static class MyTypeCalculator implements Function<GrMethod, PsiType> {
@@ -165,7 +161,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }
 
-  private void findSuperMethodRecursilvely(Set<PsiMethod> methods, PsiClass psiClass) {
+  private void findSuperMethodRecursilvely(Set<PsiMethod> methods, PsiClass psiClass, boolean allowStatic) {
     PsiClassType[] superClassTypes = psiClass.getSuperTypes();
 
     for (PsiClassType superClassType : superClassTypes) {
@@ -175,16 +171,18 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
 
       for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getSignature(PsiSubstitutor.EMPTY);
+        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
 
-        MethodSignature thisMethodSignature = getSignature(PsiSubstitutor.EMPTY);
+        MethodSignature thisMethodSignature = getHierarchicalMethodSignature();
 
-        if (superMethodSignature.equals(thisMethodSignature) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
-          methods.add(superClassMethod);
+        if (superMethodSignature.equals(thisMethodSignature)) {
+          if (allowStatic || !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
+            methods.add(superClassMethod);
+          }
         }
       }
 
-      findSuperMethodRecursilvely(methods, resolvedSuperClass);
+      findSuperMethodRecursilvely(methods, resolvedSuperClass, allowStatic);
     }
   }
 
@@ -208,9 +206,9 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
 
       for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getSignature(PsiSubstitutor.EMPTY);
+        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
 
-        if (superMethodSignature.equals(getSignature(PsiSubstitutor.EMPTY))) {
+        if (superMethodSignature.equals(getHierarchicalMethodSignature())) {
           deepestMethod[0] = superClassMethod;
           break;
         }
@@ -237,9 +235,9 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
 
       for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getSignature(PsiSubstitutor.EMPTY);
+        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
 
-        if (superMethodSignature.equals(getSignature(PsiSubstitutor.EMPTY)) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
+        if (superMethodSignature.equals(getHierarchicalMethodSignature()) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
           signaturesToMethods.put(superMethodSignature, superClassMethod);
         }
       }
@@ -261,7 +259,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, containingClass);
+    findSuperMethodRecursilvely(methods, containingClass, false);
 
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
@@ -269,13 +267,23 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, parentClass);
+    findSuperMethodRecursilvely(methods, parentClass, false);
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
-    return Collections.emptyList();
+    PsiClass containingClass = getContainingClass();
+
+    Set<PsiMethod> methods = new HashSet<PsiMethod>();
+    findSuperMethodRecursilvely(methods, containingClass, true);
+
+    List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>();
+    for (PsiMethod method : methods) {
+      result.add(method.getHierarchicalMethodSignature());
+    }
+
+    return result;
   }
 
   @NotNull
@@ -283,7 +291,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, containingClass);
+    findSuperMethodRecursilvely(methods, containingClass, false);
 
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
