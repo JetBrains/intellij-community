@@ -66,7 +66,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @NonNls private static final String OUTPUT_TAG = "output";
   @NonNls private static final String URL = "url";
   private final ProjectEx myProject;
-  private ProjectFileIndex myProjectFileIndex;
+  private final ProjectFileIndex myProjectFileIndex;
 
   private final PendingEventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = PendingEventDispatcher.create(ProjectJdkListener.class);
 
@@ -77,7 +77,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private String myProjectJdkName;
   private String myProjectJdkType;
 
-  private ArrayList<CacheUpdater> myChangeUpdaters = new ArrayList<CacheUpdater>();
+  private final ArrayList<CacheUpdater> myChangeUpdaters = new ArrayList<CacheUpdater>();
 
   private boolean myProjectOpened = false;
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_5;
@@ -87,8 +87,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Runnable myReloadProjectRequest = null;
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
-  private Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
+  private final Map<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
+  private final Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
   private VirtualFilePointer myCompilerOutput;
   private boolean myStartupActivityPerformed = false;
@@ -152,7 +152,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myProjectFileIndex;
   }
 
-  private Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
+  private final Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
 
   public void addModuleRootListener(final ModuleRootListener listener) {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
@@ -779,11 +779,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     multilistener.removeListener(libraryListener);
   }
 
-  private Map<LibraryTable, LibraryTableMultilistener> myLibraryTableMultilisteners = new HashMap<LibraryTable, LibraryTableMultilistener>();
+  private final Map<LibraryTable, LibraryTableMultilistener> myLibraryTableMultilisteners = new HashMap<LibraryTable, LibraryTableMultilistener>();
 
   private class LibraryTableMultilistener implements LibraryTable.Listener {
-    EventDispatcher<LibraryTable.Listener> myDispatcher = EventDispatcher.create(LibraryTable.Listener.class);
-    Set<LibraryTable.Listener> myListeners = new HashSet<LibraryTable.Listener>();
+    final EventDispatcher<LibraryTable.Listener> myDispatcher = EventDispatcher.create(LibraryTable.Listener.class);
+    final Set<LibraryTable.Listener> myListeners = new HashSet<LibraryTable.Listener>();
     private final LibraryTable myLibraryTable;
 
     private LibraryTableMultilistener(LibraryTable libraryTable) {
@@ -842,8 +842,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private JdkTableMultilistener myJdkTableMultilistener = null;
 
   private class JdkTableMultilistener implements ProjectJdkTable.Listener {
-    EventDispatcher<ProjectJdkTable.Listener> myDispatcher = EventDispatcher.create(ProjectJdkTable.Listener.class);
-    Set<ProjectJdkTable.Listener> myListeners = new HashSet<ProjectJdkTable.Listener>();
+    final EventDispatcher<ProjectJdkTable.Listener> myDispatcher = EventDispatcher.create(ProjectJdkTable.Listener.class);
+    final Set<ProjectJdkTable.Listener> myListeners = new HashSet<ProjectJdkTable.Listener>();
 
     private JdkTableMultilistener() {
       ProjectJdkTable.getInstance().addListener(this);
@@ -917,7 +917,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private class RootSetChangedMulticaster implements RootProvider.RootSetChangedListener {
-    EventDispatcher<RootProvider.RootSetChangedListener> myDispatcher = EventDispatcher.create(RootProvider.RootSetChangedListener.class);
+    private final EventDispatcher<RootProvider.RootSetChangedListener> myDispatcher = EventDispatcher.create(RootProvider.RootSetChangedListener.class);
     private final RootProvider myProvider;
 
     private RootSetChangedMulticaster(RootProvider provider) {
