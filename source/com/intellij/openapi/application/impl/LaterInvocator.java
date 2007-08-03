@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
@@ -73,11 +74,15 @@ public class LaterInvocator {
       }
     }
 
-    ArrayList<Window> result = new ArrayList<Window>();
+    ArrayList result = new ArrayList();
     for (int i = 0; i < ourModalEntities.size(); i++) {
       Object entity = ourModalEntities.get(i);
       if (entity instanceof Window){
-        result.add((Window)entity);
+        result.add(entity);
+      } else if (entity instanceof ProgressIndicator) {
+        if (((ProgressIndicator)entity).isModal()) {
+          result.add(entity);
+        }
       }
     }
     return new ModalityStateEx(result.toArray());
