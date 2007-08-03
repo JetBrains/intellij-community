@@ -37,7 +37,7 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private Map<String, Integer> standardGoalOrder;
 
-  private Comparator<String> myGoalOrderComparator = new Comparator<String>() {
+  private final Comparator<String> myGoalOrderComparator = new Comparator<String>() {
     public int compare(String o1, String o2) {
       return getStandardGoalOrder(o1) - getStandardGoalOrder(o2);
     }
@@ -109,12 +109,18 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     }
     if (dataId.equals(DataKeys.VIRTUAL_FILE.getName())) {
       final PomTreeStructure.PomNode pomNode = getContextPomNode();
-      return pomNode != null ? pomNode.getFile() : null;
+      if (pomNode == null) return null;
+      VirtualFile file = pomNode.getFile();
+      if (file == null || !file.isValid()) return null;
+      return file;
     }
     if (dataId.equals(DataKeys.VIRTUAL_FILE_ARRAY.getName())) {
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
       for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
-        files.add(pomNode.getFile());
+        VirtualFile file = pomNode.getFile();
+        if (file.isValid()) {
+          files.add(file);
+        }
       }
       return files.isEmpty() ? null : files.toArray(new VirtualFile[files.size()]);
     }
