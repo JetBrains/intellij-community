@@ -16,5 +16,5 @@ for (e in [1,2,3,4]) {
 8(2) element: CONTINUE statement
 9(10) READ print
 10(11) READ e
-11(5,3,3,12) READ ee
+11(5,3,12) READ ee
 12() element: null

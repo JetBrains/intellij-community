@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -79,8 +80,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   void addEdge(InstructionImpl beg, InstructionImpl end) {
-    beg.mySucc.add(end);
-    end.myPred.add(beg);
+    if (!beg.mySucc.contains(end)) {
+      beg.mySucc.add(end);
+    }
+
+    if (!end.myPred.contains(beg)) {
+      end.myPred.add(beg);
+    }
   }
 
   public void visitClosure(GrClosableBlock closure) {
@@ -243,7 +249,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   //add edge when instruction.getElement() is not contained in scopeWhenAdded
   private void addPendingEdge(GroovyPsiElement scopeWhenAdded) {
     if (myHead == null) return;
-    
+
     int i = 0;
     if (scopeWhenAdded != null) {
       for (; i < myPending.size(); i++) {
@@ -287,7 +293,47 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
-    super.visitTryStatement(tryCatchStatement);    //To change body of overridden methods use File | Settings | File Templates.
+    final GrOpenBlock tryBlock = tryCatchStatement.getTryBlock();
+    final GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
+    final GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
+    InstructionImpl tryBeg = null;
+    InstructionImpl tryEnd = null;
+    if (tryBlock != null) {
+      tryBeg = startNode(tryBlock);
+      tryBlock.accept(this);
+      tryEnd = myHead != tryBeg ? myHead : null;
+      finishNode(tryBeg);
+    }
+
+    InstructionImpl[] catches = new InstructionImpl[catchClauses.length];
+    for (int i = 0; i < catchClauses.length; i++) {
+      final InstructionImpl catchBeg = startNode(catchClauses[i]);
+      if (tryBeg != null) addEdge(tryBeg, catchBeg);
+      if (tryEnd != null) addEdge(tryEnd, catchBeg);
+      catchClauses[i].accept(this);
+      catches[i] = myHead;
+      finishNode(catchBeg);
+    }
+
+    if (finallyClause != null) {
+      final InstructionImpl finallyInstruction = startNode(finallyClause);
+      if (tryEnd != null) addEdge(tryEnd, finallyInstruction);
+      for (InstructionImpl catchEnd : catches) {
+        addEdge(catchEnd, finallyInstruction);
+      }
+      addFinallyEdges(finallyInstruction);
+      finallyClause.accept(this);
+      finishNode(finallyInstruction);
+    }
+  }
+
+  private void addFinallyEdges(InstructionImpl finallyInstruction) {
+    final List<Pair<InstructionImpl, GroovyPsiElement>> copy = myPending;
+    myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+    for (Pair<InstructionImpl, GroovyPsiElement> pair : copy) {
+      addEdge(pair.getFirst(), finallyInstruction);
+      addPendingEdge(pair.getSecond());
+    }
   }
 
   private InstructionImpl startNode(GroovyPsiElement element) {
@@ -302,9 +348,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 /*    myHead = myProcessingStack.peek();*/
   }
 
-  public void visitField(GrField field) {}
+  public void visitField(GrField field) {
+  }
 
-  public void visitParameter(GrParameter parameter) {}
+  public void visitParameter(GrParameter parameter) {
+  }
 
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
