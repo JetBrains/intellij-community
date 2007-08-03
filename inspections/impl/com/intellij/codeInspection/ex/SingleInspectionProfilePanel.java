@@ -455,12 +455,13 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private JPopupMenu compoundPopup() {
     final JPopupMenu popup = new JPopupMenu(InspectionsBundle.message("inspection.error.level.popup.menu.title"));
-    TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>();
+    final SeverityRegistrar severityRegistrar = ((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar();
+    TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
     severities.add(HighlightSeverity.ERROR);
     severities.add(HighlightSeverity.WARNING);
     severities.add(HighlightSeverity.INFO);
     final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
-      ((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar().getRegisteredHighlightingInfoTypes();
+      severityRegistrar.getRegisteredHighlightingInfoTypes();
     for (SeverityRegistrar.SeverityBasedTextAttributes info : infoTypes) {
       severities.add(info.getSeverity());
     }
