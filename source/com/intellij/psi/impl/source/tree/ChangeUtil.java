@@ -82,7 +82,7 @@ public class ChangeUtil {
     removeChildrenInner(first, last, charTableByTree);
   }
 
-  public static void replaceChild(final CompositeElement parent, final @NotNull TreeElement old, final @NotNull TreeElement newC) {
+  public static void replaceChild(final CompositeElement parent, @NotNull final TreeElement old, @NotNull final TreeElement newC) {
     LOG.assertTrue(old.getTreeParent() == parent);
     final TreeElement oldChild = transformAll(old);
     final TreeElement newChildNext = newC.getTreeNext();
@@ -508,7 +508,7 @@ public class ChangeUtil {
     return element;
   }
 
-  private static Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");
+  private static final Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");
 
   public static TreeElement copyElement(TreeElement original, CharTable table) {
     final TreeElement element = (TreeElement)original.clone();

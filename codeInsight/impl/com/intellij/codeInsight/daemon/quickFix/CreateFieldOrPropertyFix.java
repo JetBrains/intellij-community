@@ -85,7 +85,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     try {
       List<? extends GenerationInfo> prototypes = new GenerateFieldOrPropertyHandler(myName, myType, myMemberType, myAnnotations).generateMemberPrototypes(myClass, ClassMember.EMPTY_ARRAY);
       prototypes = GenerateMembersUtil.insertMembersAtOffset(myClass.getContainingFile(), editor.getCaretModel().getOffset(), prototypes);
-      if (prototypes == null || prototypes.isEmpty()) return;
+      if (prototypes.isEmpty()) return;
       final PsiElement scope = prototypes.get(0).getPsiMember().getContext();
       assert scope != null;
       final Expression expression = new EmptyExpression() {

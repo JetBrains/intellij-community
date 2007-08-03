@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import java.util.List;
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
 
-  private String myChooserTitle;
+  private final String myChooserTitle;
   protected boolean myToCopyJavaDoc = false;
 
   public GenerateMembersHandlerBase(String chooserTitle) {
@@ -76,7 +77,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       LOG.error(e);
       return;
     }
-    if (newMembers == null) return;
+    if (newMembers.isEmpty()) return;
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
@@ -141,6 +142,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return list == null ? null : list.toArray(new ClassMember[list.size()]);
   }
 
+  @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
     for (ClassMember member : members) {

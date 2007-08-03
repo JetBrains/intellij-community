@@ -57,7 +57,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
           List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
 
-          if (results != null) {
+          if (!results.isEmpty()) {
             PsiMethod firstMethod = results.get(0).getPsiMember();
             final PsiCodeBlock block = firstMethod.getBody();
             assert block != null;

@@ -9,8 +9,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,6 +37,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
   }
 
 
+  @NotNull
   public List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     final PsiElementFactory psiElementFactory = aClass.getManager().getElementFactory();
     try {
@@ -65,7 +68,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
     }
     catch (IncorrectOperationException e) {
       assert false : e;
-      return null;
+      return Collections.emptyList();
     }
   }
 

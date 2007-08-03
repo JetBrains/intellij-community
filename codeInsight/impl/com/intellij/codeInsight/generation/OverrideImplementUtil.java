@@ -139,7 +139,7 @@ public class OverrideImplementUtil {
         if (finals.get(signature) == null) {
           PsiMethod abstractOne = abstracts.get(signature);
           if (abstractOne == null || !abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true) ||
-              concrete.getContainingClass().getQualifiedName().equals(CommonClassNames.JAVA_LANG_OBJECT)) {
+              CommonClassNames.JAVA_LANG_OBJECT.equals(concrete.getContainingClass().getQualifiedName())) {
             PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(concrete, substitutors.get(concrete.getContainingClass()));
             CandidateInfo info = new CandidateInfo(concrete, subst);
             result.put(signature, info);
@@ -221,8 +221,9 @@ public class OverrideImplementUtil {
       }
 
       final PsiCodeBlock body = method.getManager().getElementFactory().createCodeBlockFromText("{}", null);
-      if (result.getBody() != null){
-        result.getBody().replace(body);
+      PsiCodeBlock oldbody = result.getBody();
+      if (oldbody != null){
+        oldbody.replace(body);
       }
       else{
         result.add(body);

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -83,6 +84,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return DUMMY_RESULT;
   }
 
+  @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     try {
       Project project = aClass.getProject();

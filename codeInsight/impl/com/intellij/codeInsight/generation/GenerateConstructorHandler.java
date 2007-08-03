@@ -18,10 +18,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateConstructorHandler");
@@ -108,15 +110,14 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       for (PsiMethod baseConstructor : baseConstructors) {
         array.add(new PsiMethodMember(baseConstructor));
       }
-      for (ClassMember member : members) {
-        array.add(member);
-      }
+      array.addAll(Arrays.asList(members));
       members = array.toArray(new ClassMember[array.size()]);
     }
 
     return members;
   }
 
+  @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
     ArrayList<PsiElement> fieldsVector = new ArrayList<PsiElement>();

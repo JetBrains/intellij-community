@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -30,17 +31,18 @@ public class GenerateMembersUtil {
   private GenerateMembersUtil() {
   }
 
-  @Nullable
-  public static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file, int offset, List<T> memberPrototypes) throws IncorrectOperationException {
+  @NotNull
+  public static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file, int offset, @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
     if (memberPrototypes.isEmpty()) return memberPrototypes;
     PsiElement anchor = findAnchor(file, offset);
-    if (anchor == null) return null;
+    if (anchor == null) return Collections.emptyList();
     PsiClass aClass = (PsiClass) anchor.getParent();
 
     PsiJavaToken lBrace = aClass.getLBrace();
     if (lBrace == null) {
       anchor = null;
-    } else {
+    }
+    else {
       PsiJavaToken rBrace = aClass.getRBrace();
       if (!isChildInRange(anchor, lBrace.getNextSibling(), rBrace)) {
         anchor = null;
@@ -85,7 +87,8 @@ public class GenerateMembersUtil {
     }
   }
 
-  public static <T extends GenerationInfo> List<T> insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, List<T> memberPrototypes) throws IncorrectOperationException {
+  @NotNull
+  public static <T extends GenerationInfo> List<T> insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
     boolean before = true;
     for (T memberPrototype : memberPrototypes) {
       memberPrototype.insert(aClass, anchor, before);
