@@ -216,6 +216,7 @@ public class Updater implements CacheUpdater {
     if (f.getParent() != null) b.append("file.parent.name: " + f.getParent().getName() + "\n");
     b.append("entry: " + e + "\n");
     b.append("entry.parent: " + e.getParent() + "\n");
+    if (f.getParent() != null) b.append("entry for file.parent: " + myVcs.findEntry(f.getParent().getPath()) + "\n");
     b.append("has vcs root: " + hasVcsRoot(f) + "\n");
     b.append("has vfs root: " + hasVfsRoot(e) + "\n");
     b.append("is file allowed: " + !notAllowed(f) + "\n");
