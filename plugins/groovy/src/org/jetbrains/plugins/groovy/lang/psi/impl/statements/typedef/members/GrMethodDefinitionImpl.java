@@ -199,9 +199,9 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     PsiClassType[] superClassTypes = psiClass.getSuperTypes();
 
     for (PsiClassType superClassType : superClassTypes) {
-      assert superClassType instanceof GrInterfaceDefinition;
-
       PsiClass resolvedSuperClass = superClassType.resolve();
+
+      assert resolvedSuperClass instanceof GrInterfaceDefinition;
 
       if (resolvedSuperClass == null) continue;
       PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
