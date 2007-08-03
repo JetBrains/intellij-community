@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -33,12 +34,12 @@ import java.util.Properties;
 public class FileTemplateImpl implements FileTemplate, Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateImpl");
 
-  private VirtualFile myDescription;
+  private String myDescription;
   private String myContent;
   private String myName;
   private String myExtension;
   private File myTemplateFile;      // file to save in
-  private VirtualFile myTemplateURL;
+  private String myTemplateURL;
   boolean myRenamed = false;
   private boolean myModified = false;
   private boolean myReadOnly = false;
@@ -67,7 +68,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   FileTemplateImpl(@NotNull VirtualFile templateURL, @NotNull String name, @NotNull String extension) {
-    myTemplateURL = templateURL;
+    myTemplateURL = templateURL.getUrl();
     myName = name;
     myExtension = extension;
     myModified = false;
@@ -105,7 +106,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   @NotNull
   public String getDescription(){
     try {
-      return myDescription != null ? VfsUtil.loadText(myDescription) : "";
+      return myDescription != null ? VfsUtil.loadText(VirtualFileManager.getInstance().findFileByUrl(myDescription)) : "";
     }
     catch (IOException e) {
       return "";
@@ -113,7 +114,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   void setDescription(VirtualFile file){
-    myDescription = file;
+    myDescription = file.getUrl();
   }
 
   @NotNull
@@ -259,7 +260,13 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
         myContent = StringUtil.convertLineSeparators(readExternal(myTemplateFile));
       }
       else if(myTemplateURL != null){
-        myContent = StringUtil.convertLineSeparators(readExternal(myTemplateURL));
+        VirtualFile templateFile = VirtualFileManager.getInstance().findFileByUrl(myTemplateURL);
+        if (templateFile != null) {
+          myContent = StringUtil.convertLineSeparators(readExternal(templateFile));
+        }
+        else {
+          myContent = "";
+        }
       }
       else{
         myContent = "";

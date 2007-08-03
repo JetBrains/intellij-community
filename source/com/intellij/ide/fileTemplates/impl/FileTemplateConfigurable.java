@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +58,9 @@ import java.util.ArrayList;
 
 public class FileTemplateConfigurable implements Configurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
+  @NonNls private static final String CONTENT_TYPE_HTML = "text/html";
+  @NonNls private static final String EMPTY_HTML = "<html></html>";
+  @NonNls private static final String CONTENT_TYPE_PLAIN = "text/plain";
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
@@ -67,18 +71,16 @@ public class FileTemplateConfigurable implements Configurable {
   private JPanel myTopPanel;
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
-  private ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
-  private VirtualFile myDefaultDescription;
-  @NonNls private static final String CONTENT_TYPE_HTML = "text/html";
-  @NonNls private static final String EMPTY_HTML = "<html></html>";
-  @NonNls private static final String CONTENT_TYPE_PLAIN = "text/plain";
+  private String myDefaultDescriptionUrl;
+
+  private final ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
 
   public FileTemplate getTemplate() {
     return myTemplate;
   }
 
   public void setTemplate(FileTemplate template, VirtualFile defaultDescription) {
-    myDefaultDescription = defaultDescription;
+    myDefaultDescriptionUrl = defaultDescription == null ? null : defaultDescription.getUrl();
     myTemplate = template;
     reset();
     myNameField.selectAll();
@@ -301,12 +303,13 @@ public class FileTemplateConfigurable implements Configurable {
     String name = (myTemplate == null) ? "" : myTemplate.getName();
     String extension = (myTemplate == null) ? "" : myTemplate.getExtension();
     String description = (myTemplate == null) ? "" : myTemplate.getDescription();
-    if (description == null) {
-      description = "";
-    }
-    if ((description.length() == 0) && (myDefaultDescription != null)) {
+
+    if ((description.length() == 0) && (myDefaultDescriptionUrl != null)) {
       try {
-        description = VfsUtil.loadText(myDefaultDescription);
+        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(myDefaultDescriptionUrl);
+        if (file != null) {
+          description = VfsUtil.loadText(file);
+        }
       }
       catch (IOException e) {
         LOG.error(e);
@@ -381,8 +384,8 @@ public class FileTemplateConfigurable implements Configurable {
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(FileTemplateTokenType.TEXT);
 
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
-    private Lexer myLexer;
-    private SyntaxHighlighter myOriginalHighlighter;
+    private final Lexer myLexer;
+    private final SyntaxHighlighter myOriginalHighlighter;
 
     public TemplateHighlighter(SyntaxHighlighter original) {
       myOriginalHighlighter = original;
