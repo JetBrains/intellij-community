@@ -22,7 +22,7 @@ public class BuildJarTarget extends Target {
   public BuildJarTarget(final ExplodedAndJarTargetParameters parameters,
                         final BuildRecipe buildRecipe,
                         final String description) {
-    super(parameters.getBuildJarTargetName(parameters.getConfigurationName()), null, description, null);
+    super(parameters.getBuildJarTargetName(), null, description, null);
     final File moduleBaseDir = parameters.getChunk().getBaseDir();
 
     BuildConfiguration buildConfiguration = parameters.getBuildConfiguration();
@@ -60,7 +60,6 @@ public class BuildJarTarget extends Target {
 
       public boolean visitCompoundBuildInstruction(CompoundBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
-        final String configurationName = parameters.getConfigurationName(instruction);
         // gather child module dependencies
         final BuildRecipe childModuleRecipe = instruction.getChildInstructions(DummyCompileContext.getInstance());
         childModuleRecipe.visitInstructions(new BuildInstructionVisitor() {
@@ -87,16 +86,16 @@ public class BuildJarTarget extends Target {
         }, false);
 
         if (instruction.getBuildProperties().isJarEnabled()) {
-          final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(parameters.getJarPathProperty(configurationName)), instruction.getOutputRelativePath(), false);
+          final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(parameters.getCompoundBuildInstructionNaming().getJarPathProperty(instruction)), instruction.getOutputRelativePath(), false);
           zipFileSetTags.add(zipFileSet);
         }
         else {
           final String jarName = new File(instruction.getOutputRelativePath()).getName();
           final String destJarPath = BuildProperties.propertyRef(tempDirProperty)+"/"+jarName;
           tempDirUsed[0] = true;
-          final AntCall makeJar = new AntCall(parameters.getBuildJarTargetName(configurationName));
+          final AntCall makeJar = new AntCall(parameters.getCompoundBuildInstructionNaming().getBuildJarTargetName(instruction));
           prepareTags.add(makeJar);
-          makeJar.add(new Param(parameters.getJarPathProperty(), destJarPath));
+          makeJar.add(new Param(parameters.getJarPathParameter(), destJarPath));
           zipFileSetTags.add(new ZipFileSet(destJarPath, instruction.getOutputRelativePath(), false));
         }
         return true;
@@ -109,7 +108,7 @@ public class BuildJarTarget extends Target {
     for (Tag tag : prepareTags) {
       add(tag);
     }
-    final String destFile = BuildProperties.propertyRef(parameters.getJarPathProperty());
+    final String destFile = BuildProperties.propertyRef(parameters.getJarPathParameter());
     final @NonNls String jarDirProperty = "jar.dir";
     add(new Dirname(jarDirProperty, destFile));
     add(new Mkdir(BuildProperties.propertyRef(jarDirProperty)));
@@ -141,7 +140,7 @@ public class BuildJarTarget extends Target {
         final Module instructionModule = instruction.getModule();
         String sourceLocation = GenerationUtils.toRelativePath(sourceFile.getPath(), moduleBaseDir, instructionModule,
                                                                parameters.getGenerationOptions());
-        String jarPathPropertyRef = BuildProperties.propertyRef(parameters.getJarPathProperty());
+        String jarPathPropertyRef = BuildProperties.propertyRef(parameters.getJarPathParameter());
 
         final Copy copy;
         if (instruction.isDirectory()) {
@@ -158,7 +157,7 @@ public class BuildJarTarget extends Target {
 
       public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws Exception {
         if (!instruction.isExternalDependencyInstruction()) return true;
-        String jarPathPropertyRef = BuildProperties.propertyRef(parameters.getJarPathProperty());
+        String jarPathPropertyRef = BuildProperties.propertyRef(parameters.getJarPathParameter());
         String pathToCreateJar = jarPathPropertyRef + DeploymentUtil.appendToPath("/",instruction.getOutputRelativePath());
         @NonNls final String jarDir = "jar.dir" + myJarDirCount++;
         add(new Dirname(jarDir, pathToCreateJar));

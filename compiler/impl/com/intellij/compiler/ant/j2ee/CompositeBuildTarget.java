@@ -29,7 +29,6 @@ public class CompositeBuildTarget extends CompositeGenerator {
                               final String depends, @Nullable String jarPath) {
 
     final File moduleBaseDir = parameters.getChunk().getBaseDir();
-    final String configurationName = parameters.getConfigurationName();
     final Module containingModule = parameters.getContainingModule();
     final Target buildTarget = new Target(targetName, depends, targetDescription, null);
     final BuildConfiguration buildConfiguration = parameters.getBuildConfiguration();
@@ -40,11 +39,11 @@ public class CompositeBuildTarget extends CompositeGenerator {
 
       String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, baseDirProperty,
                                                        parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
-      add(new Property(parameters.getExplodedPathProperty(configurationName), location));
+      add(new Property(parameters.getExplodedPathProperty(), location));
 
-      final AntCall antCall = new AntCall(parameters.getBuildExplodedTargetName(configurationName));
+      final AntCall antCall = new AntCall(parameters.getBuildExplodedTargetName());
       buildTarget.add(antCall);
-      antCall.add(new Param(parameters.getExplodedPathProperty(), BuildProperties.propertyRef(parameters.getExplodedPathProperty(configurationName))));
+      antCall.add(new Param(parameters.getExplodedPathParameter(), BuildProperties.propertyRef(parameters.getExplodedPathProperty())));
     }
 
     if (jarPath == null) {
@@ -54,11 +53,11 @@ public class CompositeBuildTarget extends CompositeGenerator {
     if (jarPath != null) {
       String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(jarPath), moduleBaseDir, baseDirProperty,
                                                        parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
-      add(new Property(parameters.getJarPathProperty(configurationName), location));
+      add(new Property(parameters.getJarPathProperty(), location));
 
-      final AntCall antCall = new AntCall(parameters.getBuildJarTargetName(configurationName));
+      final AntCall antCall = new AntCall(parameters.getBuildJarTargetName());
       buildTarget.add(antCall);
-      antCall.add(new Param(parameters.getJarPathProperty(), BuildProperties.propertyRef(parameters.getJarPathProperty(configurationName))));
+      antCall.add(new Param(parameters.getJarPathParameter(), BuildProperties.propertyRef(parameters.getJarPathProperty())));
     }
     add(buildTarget);
   }

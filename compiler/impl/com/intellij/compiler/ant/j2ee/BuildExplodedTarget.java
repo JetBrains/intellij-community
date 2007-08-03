@@ -18,7 +18,7 @@ public class BuildExplodedTarget extends Target {
   public BuildExplodedTarget(final ExplodedAndJarTargetParameters parameters,
                              final BuildRecipe buildRecipe,
                              final String description) {
-    super(parameters.getBuildExplodedTargetName(parameters.getConfigurationName()), null, description, null);
+    super(parameters.getBuildExplodedTargetName(), null, description, null);
     final Module containingModule = parameters.getContainingModule();
     final File moduleBaseDir = parameters.getChunk().getBaseDir();
 
@@ -37,12 +37,12 @@ public class BuildExplodedTarget extends Target {
 
         final Copy copy;
         if (instruction.isDirectory()) {
-          copy = new Copy(BuildProperties.propertyRef(parameters.getExplodedPathProperty()) + outputRelativePath);
+          copy = new Copy(BuildProperties.propertyRef(parameters.getExplodedPathParameter()) + outputRelativePath);
           final FileSet fileSet = new FileSet(sourceLocation);
           copy.add(fileSet);
         }
         else {
-          copy = new Copy(sourceLocation, BuildProperties.propertyRef(parameters.getExplodedPathProperty()) + outputRelativePath);
+          copy = new Copy(sourceLocation, BuildProperties.propertyRef(parameters.getExplodedPathParameter()) + outputRelativePath);
         }
         tags.add(copy);
         return true;
@@ -51,7 +51,7 @@ public class BuildExplodedTarget extends Target {
       public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = instruction.getOutputRelativePath();
-        final String destFile = BuildProperties.propertyRef(parameters.getExplodedPathProperty()) + outputRelativePath;
+        final String destFile = BuildProperties.propertyRef(parameters.getExplodedPathParameter()) + outputRelativePath;
         final @NonNls String jarDirProperty = "jar.dir";
         tags.add(new Dirname(jarDirProperty, destFile));
         tags.add(new Mkdir(BuildProperties.propertyRef(jarDirProperty)));
@@ -62,17 +62,16 @@ public class BuildExplodedTarget extends Target {
       public boolean visitCompoundBuildInstruction(CompoundBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = "/" + instruction.getOutputRelativePath();
-        final String outputPath = BuildProperties.propertyRef(parameters.getExplodedPathProperty()) + outputRelativePath;
-        final String configurationName = parameters.getConfigurationName(instruction);
+        final String outputPath = BuildProperties.propertyRef(parameters.getExplodedPathParameter()) + outputRelativePath;
 
         final Tag tag;
         if (instruction.getBuildProperties().isExplodedEnabled()) {
           tag = new Copy(outputPath);
-          tag.add(new FileSet(BuildProperties.propertyRef(parameters.getExplodedPathProperty(configurationName))));
+          tag.add(new FileSet(BuildProperties.propertyRef(parameters.getCompoundBuildInstructionNaming().getExplodedPathProperty(instruction))));
         }
         else {
-          tag = new AntCall(parameters.getBuildExplodedTargetName(configurationName));
-          tag.add(new Param(parameters.getExplodedPathProperty(), outputPath));
+          tag = new AntCall(parameters.getCompoundBuildInstructionNaming().getBuildExplodedTargetName(instruction));
+          tag.add(new Param(parameters.getExplodedPathParameter(), outputPath));
         }
         tags.add(tag);
         return true;

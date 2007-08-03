@@ -7,32 +7,42 @@ package com.intellij.compiler.ant;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.compiler.make.CompoundBuildInstruction;
 import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
  */
-public abstract class ExplodedAndJarTargetParameters {
+public class ExplodedAndJarTargetParameters {
   private ModuleChunk myChunk;
   private Module myContainingModule;
-  private String myConfigurationName;
   private GenerationOptions myGenerationOptions;
-  private String myExplodedPathProperty;
-  private String myJarPathProperty;
+  private String myExplodedPathParameter;
+  private String myJarPathParameter;
+  private final String myBuildExplodedTargetName;
+  private final String myBuildJarTargetName;
+  private final String myExplodedPathProperty;
+  private final String myJarPathProperty;
   private BuildConfiguration myBuildConfiguration;
+  private CompoundBuildInstructionNaming myCompoundBuildInstructionNaming;
 
-  protected ExplodedAndJarTargetParameters(final ModuleChunk chunk,
+  public ExplodedAndJarTargetParameters(final ModuleChunk chunk,
                                            final Module containingModule,
-                                           final String configurationName,
                                            final GenerationOptions generationOptions,
                                            final BuildConfiguration buildConfiguration,
+                                           final String explodedPathParameter,
+                                           final String jarPathParameter,
+                                           final String buildExplodedTargetName,
+                                           final String buildJarTargetName,
                                            final String explodedPathProperty,
-                                           final String jarPathProperty) {
+                                           final String jarPathProperty, final CompoundBuildInstructionNaming compoundBuildInstructionNaming) {
+    myCompoundBuildInstructionNaming = compoundBuildInstructionNaming;
     myBuildConfiguration = buildConfiguration;
     myChunk = chunk;
     myContainingModule = containingModule;
-    myConfigurationName = configurationName;
     myGenerationOptions = generationOptions;
+    myExplodedPathParameter = explodedPathParameter;
+    myJarPathParameter = jarPathParameter;
+    myBuildExplodedTargetName = buildExplodedTargetName;
+    myBuildJarTargetName = buildJarTargetName;
     myExplodedPathProperty = explodedPathProperty;
     myJarPathProperty = jarPathProperty;
   }
@@ -45,6 +55,26 @@ public abstract class ExplodedAndJarTargetParameters {
     return myGenerationOptions;
   }
 
+  public String getExplodedPathParameter() {
+    return myExplodedPathParameter;
+  }
+
+  public String getJarPathParameter() {
+    return myJarPathParameter;
+  }
+
+  public Module getContainingModule() {
+    return myContainingModule;
+  }
+
+  public String getBuildExplodedTargetName() {
+    return myBuildExplodedTargetName;
+  }
+
+  public String getBuildJarTargetName() {
+    return myBuildJarTargetName;
+  }
+
   public String getExplodedPathProperty() {
     return myExplodedPathProperty;
   }
@@ -53,27 +83,9 @@ public abstract class ExplodedAndJarTargetParameters {
     return myJarPathProperty;
   }
 
-  public Module getContainingModule() {
-    return myContainingModule;
+  public CompoundBuildInstructionNaming getCompoundBuildInstructionNaming() {
+    return myCompoundBuildInstructionNaming;
   }
-
-  public String getConfigurationName() {
-    return myConfigurationName;
-  }
-
-  public abstract String getConfigurationName(CompoundBuildInstruction instruction);
-
-  @NonNls
-  public abstract String getBuildExplodedTargetName(String configurationName);
-
-  @NonNls
-  public abstract String getBuildJarTargetName(String configurationName);
-
-  @NonNls
-  public abstract String getExplodedPathProperty(String configurationName);
-
-  @NonNls
-  public abstract String getJarPathProperty(String configurationName);
 
   public BuildConfiguration getBuildConfiguration() {
     return myBuildConfiguration;
