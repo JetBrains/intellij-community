@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class VFileDeleteEvent extends VFileEvent {
   private @NotNull final VirtualFile myFile;
+  private int myDepth = -1;
 
   public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
     super(requestor, isFromRefresh);
@@ -50,5 +51,19 @@ public class VFileDeleteEvent extends VFileEvent {
 
   public int hashCode() {
     return myFile.hashCode();
+  }
+
+  public int getFileDepth() {
+    if (myDepth == -1) {
+      int d = 0;
+      VirtualFile cur = myFile;
+      while (cur != null) {
+        d++;
+        cur = cur.getParent();
+      }
+      myDepth = d;
+    }
+
+    return myDepth;
   }
 }

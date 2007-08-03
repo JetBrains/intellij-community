@@ -6,10 +6,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -408,11 +405,44 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvents(Collections.singletonList(event));
   }
 
+  private static final Comparator<VFileDeleteEvent> DEPTH_COMPARATOR = new Comparator<VFileDeleteEvent>() {
+    public int compare(final VFileDeleteEvent o1, final VFileDeleteEvent o2) {
+      return o1.getFileDepth() - o2.getFileDepth();
+    }
+  };
+
   private static List<? extends VFileEvent> validateEvents(List<? extends VFileEvent> events) {
     List<VFileEvent> filtered = new ArrayList<VFileEvent>(events.size());
+    List<VFileDeleteEvent> deletionList = new ArrayList<VFileDeleteEvent>();
+
     for (VFileEvent event : events) {
       if (event.isValid()) {
+        if (event instanceof VFileDeleteEvent) {
+          deletionList.add((VFileDeleteEvent)event);
+        }
+        else {
+          filtered.add(event);
+        }
+      }
+    }
+
+    Collections.sort(deletionList, DEPTH_COMPARATOR);
+    List<VirtualFile> filesToBeDeleted = new ArrayList<VirtualFile>();
+    for (VFileDeleteEvent event : deletionList) {
+      boolean ok = true;
+      VirtualFile candidate = event.getFile();
+      for (VirtualFile file : filesToBeDeleted) {
+        if (VfsUtil.isAncestor(file, candidate, false)) {
+          ok = false;
+          break;
+        }
+      }
+
+      if (ok) {
         filtered.add(event);
+        if (candidate.isDirectory()) {
+          filesToBeDeleted.add(candidate);
+        }
       }
     }
 
