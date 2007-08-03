@@ -39,7 +39,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static InspectionProfileImpl DEFAULT_PROFILE;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
-  @NonNls private static String VALID_VERSION = "1.0";
+  @NonNls private static final String VALID_VERSION = "1.0";
 
   private HashMap<String, InspectionTool> myTools = new HashMap<String, InspectionTool>();
 
@@ -59,7 +59,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private String myEnabledTool = null;
   @NonNls private static final String USED_LEVELS = "used_levels";
 
-  private InspectionToolRegistrar myRegistrar;
+  private final InspectionToolRegistrar myRegistrar;
   @NonNls private static final String IS_LOCKED = "is_locked";
 
 //private String myBaseProfileName;
@@ -69,7 +69,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private boolean myModified = false;
-  private AtomicBoolean myInitialized = new AtomicBoolean(false);
+  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   private VisibleTreeState myVisibleTreeState = new VisibleTreeState();
 
@@ -572,7 +572,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private static class ToolState {
-    private HighlightDisplayLevel myLevel;
+    private final HighlightDisplayLevel myLevel;
     private boolean myEnabled;
 
     public ToolState(final HighlightDisplayLevel level, final boolean enabled) {
