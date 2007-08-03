@@ -51,11 +51,8 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
-    try {
+    if (isAvailable(project, null,null)) {
       invoke(project, null, psiElement.getContainingFile());
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
     }
   }
 
@@ -68,7 +65,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return myElement.isValid();
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiFile file) {
     PsiLiteralExpression literalExpression = myElement instanceof PsiLiteralExpression ? (PsiLiteralExpression)myElement : null;
     final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, file, literalExpression, getDefaultPropertyValue(), false, false) {
       protected void init() {
