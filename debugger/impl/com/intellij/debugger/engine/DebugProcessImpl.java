@@ -1641,13 +1641,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     });
 
-    final long time = System.currentTimeMillis();
 
     this.getManagerThread().invokeLater(new DebuggerCommandImpl() {
       protected void action() {
         VirtualMachine vm = null;
 
         try {
+          final long time = System.currentTimeMillis();
           while (System.currentTimeMillis() - time < LOCAL_START_TIMEOUT) {
             try {
               vm = createVirtualMachineInt();
