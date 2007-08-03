@@ -53,7 +53,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
@@ -1593,6 +1592,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       return myExecutionResult;
     }
 
+    /*
     final Alarm debugPortTimeout = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     myExecutionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
@@ -1615,6 +1615,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }, LOCAL_START_TIMEOUT);
       }
     });
+    */
 
     return myExecutionResult;
   }
