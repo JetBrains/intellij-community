@@ -176,6 +176,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
                                     final ArrayList<Filter> result,
                                     final boolean before) {
     if (useFilter) {
+      assert date != null;
       result.add(new Filter() {
         public boolean accepts(CommittedChangeList change) {
           final Date changeDate = change.getCommitDate();
