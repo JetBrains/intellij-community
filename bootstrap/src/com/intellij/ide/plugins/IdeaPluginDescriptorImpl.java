@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -43,15 +44,17 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private File myPath;
   private PluginId[] myDependencies;
   private PluginId[] myOptionalDependencies;
-  private Element myActionsElement = null;
+  private Map<PluginId, String> myOptionalConfigs;
+  private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
+  @Nullable private Element myActionsElement = null;
   private ComponentConfig[] myAppComponents = null;
   private ComponentConfig[] myProjectComponents = null;
   private ComponentConfig[] myModuleComponents = null;
   private boolean myDeleted = false;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-  private List<Element> myExtensions;
-  private List<Element> myExtensionsPoints;
+  @Nullable private List<Element> myExtensions;
+  @Nullable private List<Element> myExtensionsPoints;
   private String myDescriptionChildText;
   private String myDownloadCounter;
   private long myDate;
@@ -131,6 +134,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     Set<PluginId> dependentPlugins = new HashSet<PluginId>();
     Set<PluginId> optionalDependentPlugins = new HashSet<PluginId>();
+    myOptionalConfigs = new HashMap<PluginId, String>();
     if (pluginBean.dependencies != null) {
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
@@ -139,6 +143,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           dependentPlugins.add(id);
           if (dependency.optional) {
             optionalDependentPlugins.add(id);
+            if (dependency.configFile != null && dependency.configFile.length() > 0) {
+              myOptionalConfigs.put(id, dependency.configFile);  
+            }
           }
         }
       }
@@ -466,5 +473,43 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public String getUntilBuild() {
     return myUntilBuild;
+  }
+
+  Map<PluginId, String> getOptionalConfigs() {
+    return myOptionalConfigs;
+  }
+
+  Map<PluginId, IdeaPluginDescriptorImpl> getOptionalDescriptors() {
+    return myOptionalDescriptors;
+  }
+
+  void setOptionalDescriptors(final Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors) {
+    myOptionalDescriptors = optionalDescriptors;
+  }
+
+  void mergeOptionalConfig(final IdeaPluginDescriptorImpl descriptor) {
+    if (myExtensions == null) {
+      myExtensions = descriptor.myExtensions;
+    } else if (descriptor.myExtensions != null) {
+      myExtensions.addAll(descriptor.myExtensions);
+    }
+    if (myActionsElement == null) {
+      myActionsElement = descriptor.myActionsElement;
+    } else if (descriptor.myActionsElement != null) {
+      myActionsElement.addContent(descriptor.myActionsElement.getChildren());
+    }
+    myAppComponents = mergeComponents(myAppComponents, descriptor.myAppComponents);
+    myProjectComponents = mergeComponents(myProjectComponents, descriptor.myProjectComponents);
+    myModuleComponents = mergeComponents(myModuleComponents, descriptor.myModuleComponents);
+  }
+
+  private static ComponentConfig[] mergeComponents(ComponentConfig[] first, ComponentConfig[] second) {
+    if (first == null) {
+      return second;
+    } else if (second == null) {
+      return first;
+    } else {
+      return ArrayUtil.mergeArrays(first, second, ComponentConfig.class);
+    }
   }
 }

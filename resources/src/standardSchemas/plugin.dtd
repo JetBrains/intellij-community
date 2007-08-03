@@ -71,7 +71,9 @@
 
 <!ELEMENT depends (#PCDATA)>
 <!ATTLIST depends
-   optional (true | false) #IMPLIED>
+   optional (true | false) #IMPLIED
+   config-file CDATA #IMPLIED
+   >
 
 <!-- extensions. Most relaxed constraints since content of the particular extension cannot be expressed with DTD
   defaultExtensionNs - namespace prepended to referenced extension name to get qname,

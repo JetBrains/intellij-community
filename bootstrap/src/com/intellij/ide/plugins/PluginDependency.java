@@ -9,6 +9,9 @@ public class PluginDependency {
   @Attribute("optional")
   public boolean optional;
 
-  @Text 
+  @Attribute("config-file")
+  public String configFile;
+
+  @Text
   public String pluginId;
 }
