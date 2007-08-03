@@ -79,13 +79,10 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     if (classRef != null){
       ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
-        PsiType aClass = getManager().getElementFactory().createType(
-          (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
-        if (aClass != null) {
-          return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
-                                                                    (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                    this);
-        }
+        PsiType aClass = getManager().getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
+        return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
+                                                                  (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                  this);
       }
     }
     else{
@@ -169,7 +166,9 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
         if (firstChild != null && firstChild.getElementType() != NEW_KEYWORD) {
           return firstChild.getElementType() != NEW_KEYWORD ? firstChild : null;
         }
-        else return null;
+        else {
+          return null;
+        }
 
       case ChildRole.DOT:
         return TreeUtil.findChild(this, DOT);

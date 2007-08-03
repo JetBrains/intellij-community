@@ -83,7 +83,7 @@ public class PsiImmediateClassType extends PsiClassType {
     for (PsiTypeParameter parameter : parameters) {
       lst.add(mySubstitutor.substitute(parameter));
     }
-    return lst.toArray(PsiType.EMPTY_ARRAY);
+    return lst.toArray(new PsiType[lst.size()]);
   }
 
   @NotNull

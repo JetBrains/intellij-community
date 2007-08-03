@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -28,7 +27,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
   }
 
   public PsiType getType() {
-    return ((PsiManagerImpl)getManager()).getResolveCache().getType(this, ourTypeEvaluator);
+    return getManager().getResolveCache().getType(this, ourTypeEvaluator);
   }
 
   public PsiMethod resolveMethod() {
@@ -96,7 +95,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     return "PsiMethodCallExpression:" + getText();
   }
 
-  private TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
+  private static final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
   private static class TypeEvaluator implements Function<PsiExpression, PsiType> {
     public PsiType fun(final PsiExpression call) {

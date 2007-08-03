@@ -286,7 +286,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   public PsiSubstitutor putAll(PsiSubstitutor another) {
     if (another instanceof EmptySubstitutorImpl) return this;
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
-    final PsiTypeParameter[] params = anotherImpl.mySubstitutionMap.keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
+    Set<PsiTypeParameter> typeParameters = anotherImpl.mySubstitutionMap.keySet();
+    final PsiTypeParameter[] params = typeParameters.toArray(new PsiTypeParameter[typeParameters.size()]);
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
     for (final PsiTypeParameter param : params) {
       substitutor.mySubstitutionMap.put(param, another.substitute(param));
@@ -297,7 +298,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
 
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     final Set<Map.Entry<PsiTypeParameter, PsiType>> set = mySubstitutionMap.entrySet();
     for (Map.Entry<PsiTypeParameter, PsiType> entry : set) {
       final PsiTypeParameter typeParameter = entry.getKey();
