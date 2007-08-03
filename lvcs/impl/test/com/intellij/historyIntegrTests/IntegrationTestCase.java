@@ -10,14 +10,11 @@ import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -26,12 +23,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.ArrayList;
 
 public abstract class IntegrationTestCase extends IdeaTestCase {
   private Locale myDefaultLocale;
 
-  protected String EXCLUDED_DIR_NAME = "CVS";
+  protected String FILTERED_DIR_NAME = "CVS";
   protected VirtualFile root;
   protected IdeaGateway gateway;
 
@@ -173,14 +169,10 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   }
 
   protected VirtualFile addContentRoot() {
-    return addContentRoot(myModule);
+    return addContentRootWithFiles();
   }
 
-  protected VirtualFile addContentRoot(Module m) {
-    return addContentRootWithFiles(m);
-  }
-
-  protected VirtualFile addContentRootWithFiles(Module module, String... fileNames) {
+  protected VirtualFile addContentRootWithFiles(String... fileNames) {
     try {
       File dir = createTempDirectory();
 
@@ -189,12 +181,22 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
       }
 
       VirtualFile root = getFS().refreshAndFindFileByIoFile(dir);
-      PsiTestUtil.addContentRoot(module, root);
+      PsiTestUtil.addContentRoot(myModule, root);
       return root;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected void addExcludedDir(VirtualFile dir) {
+    ModuleRootManager rm = ModuleRootManager.getInstance(myModule);
+    ModifiableRootModel m = rm.getModifiableModel();
+    for (ContentEntry e : m.getContentEntries()) {
+      if (e.getFile() != root) continue;
+      e.addExcludeFolder(dir);
+    }
+    m.commit();
   }
 
   protected LocalFileSystem getFS() {

@@ -103,7 +103,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   }
 
   public void testRevertDeletionOfContentRootWithFiles() throws Exception {
-    VirtualFile newRoot = addContentRootWithFiles(myModule, "f.java");
+    VirtualFile newRoot = addContentRootWithFiles("f.java");
     String path = newRoot.getPath();
 
     newRoot.delete(null);

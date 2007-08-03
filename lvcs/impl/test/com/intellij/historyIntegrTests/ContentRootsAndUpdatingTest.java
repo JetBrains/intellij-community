@@ -26,19 +26,19 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   }
 
   public void testUpdatingFilesOnRootsChanges() throws Exception {
-    VirtualFile root = addContentRootWithFiles(myModule, "file1.java", "file2.java");
+    VirtualFile root = addContentRootWithFiles("file1.java", "file2.java");
 
     assertTrue(hasVcsEntry(root.getPath() + "/file1.java"));
     assertTrue(hasVcsEntry(root.getPath() + "/file2.java"));
   }
 
   public void testTreatingAllChangesDuringUpdateAsOne() {
-    VirtualFile root = addContentRootWithFiles(myModule, "file1.java", "file2.java");
+    VirtualFile root = addContentRootWithFiles("file1.java", "file2.java");
     assertEquals(1, getVcsRevisionsFor(root).size());
   }
 
   public void testDeletingContentRoot() throws Exception {
-    VirtualFile newRoot = addContentRootWithFiles(myModule, "file.java");
+    VirtualFile newRoot = addContentRootWithFiles("file.java");
     String path = newRoot.getPath();
 
     newRoot.delete(null);
@@ -90,7 +90,7 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     LocalHistory.putSystemLabel(myProject, "a");
     LocalHistory.putSystemLabel(myProject, "b");
 
-    VirtualFile newRoot = addContentRootWithFiles(myModule, "f.java");
+    VirtualFile newRoot = addContentRootWithFiles("f.java");
     assertEquals(1, getVcsRevisionsFor(newRoot).size());
     assertEquals(1, getVcsRevisionsFor(newRoot.findChild("f.java")).size());
   }

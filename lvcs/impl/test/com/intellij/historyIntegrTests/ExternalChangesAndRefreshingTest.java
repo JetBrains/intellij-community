@@ -171,8 +171,8 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
-    String path = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
+    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
+    String path = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
 
     assertFalse(hasVcsEntry(path));
 

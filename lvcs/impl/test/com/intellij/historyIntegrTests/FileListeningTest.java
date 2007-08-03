@@ -34,9 +34,29 @@ public class FileListeningTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(f));
   }
 
-  public void testIgnoringDirectories() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
+  public void testIgnoringFilteredDirectories() throws Exception {
+    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
     assertFalse(hasVcsEntry(f));
+  }
+
+  public void testIgnoringExcludedDirectoriesAfterItsRecreation() throws Exception {
+    VirtualFile dir = root.createChildDirectory(null, "dir");
+    assertTrue(hasVcsEntry(dir));
+
+    addExcludedDir(dir);
+    assertFalse(hasVcsEntry(dir));
+
+    int revCount = getVcsRevisionsFor(root).size();
+
+    dir.delete(null);
+    assertEquals(revCount, getVcsRevisionsFor(root).size());
+
+    dir = root.createChildDirectory(null, "dir");
+
+    // bug: excluded dir was created during fileCrated event
+    // end removed bu rootsChanges event right away
+    assertEquals(revCount, getVcsRevisionsFor(root).size());
+    assertFalse(hasVcsEntry(dir));
   }
 
   public void ignoreTestChangingContentOfDeletedFileDoesNotThrowException() throws Exception {
@@ -133,9 +153,9 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testRenamingFilteredDirectoriesToNonFiltered() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
+    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
 
-    String filtered = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
+    String filtered = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
     String notFiltered = Paths.appended(root.getPath(), "not_filtered");
 
     assertFalse(hasVcsEntry(filtered));
@@ -148,20 +168,20 @@ public class FileListeningTest extends IntegrationTestCase {
   public void testRenamingNonFilteredDirectoriesToFiltered() throws Exception {
     VirtualFile f = root.createChildDirectory(null, "not_filtered");
 
-    String filtered = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
+    String filtered = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
     String notFiltered = Paths.appended(root.getPath(), "not_filtered");
 
     assertTrue(hasVcsEntry(notFiltered));
-    f.rename(null, EXCLUDED_DIR_NAME);
+    f.rename(null, FILTERED_DIR_NAME);
 
     assertFalse(hasVcsEntry(notFiltered));
     assertFalse(hasVcsEntry(filtered));
   }
 
   public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
+    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
 
-    String filtered = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
+    String filtered = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
 
     assertFalse(hasVcsEntry(filtered));
     f.delete(null);
@@ -178,7 +198,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     assertNotNull(f);
-    
+
     f.move(null, root);
     assertTrue(hasVcsEntry(f));
 
