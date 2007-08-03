@@ -17,7 +17,7 @@ public class Storage implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
 
   private final ReentrantLock lock = new ReentrantLock();
-  private RecordsTable myRecordsTable;
+  private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
 
   public static boolean deleteFiles(String storageFilePath) {
@@ -43,16 +43,16 @@ public class Storage implements Disposable {
       dataFile.createNewFile();
     }
 
-    RecordsTable myRecordsTable = null;
-    DataTable myDataTable;
+    RecordsTable recordsTable = null;
+    DataTable dataTable;
     try {
-      myRecordsTable = new RecordsTable(recordsFile);
-      myDataTable = new DataTable(dataFile);
+      recordsTable = new RecordsTable(recordsFile);
+      dataTable = new DataTable(dataFile);
     }
     catch (IOException e) {
       LOG.info(e.getMessage());
-      if (myRecordsTable != null) {
-        myRecordsTable.dispose();
+      if (recordsTable != null) {
+        recordsTable.dispose();
       }
 
       boolean deleted = deleteFiles(storageFilePath);
@@ -60,7 +60,7 @@ public class Storage implements Disposable {
       return create(storageFilePath);
     }
 
-    return new Storage(storageFilePath, myRecordsTable, myDataTable);
+    return new Storage(storageFilePath, recordsTable, dataTable);
   }
 
   public Storage(String path, RecordsTable recordsTable, DataTable dataTable) {
