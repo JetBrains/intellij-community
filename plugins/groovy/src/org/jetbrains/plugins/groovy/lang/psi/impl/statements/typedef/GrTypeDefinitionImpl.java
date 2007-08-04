@@ -650,12 +650,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   private boolean isRenameFileOnClassRenaming() {
-    final GroovyFile file = (GroovyFile) getContainingFile();
-    if (file.isScript()) return false;
-    final GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
+    final PsiFile file = getContainingFile();
+    if (!(file instanceof GroovyFile)) return false;
+    final GroovyFile groovyFile = (GroovyFile) file;
+    if (groovyFile.isScript()) return false;
+    final GrTypeDefinition[] typeDefinitions = groovyFile.getTypeDefinitions();
     if (typeDefinitions.length > 1) return false;
     final String name = getName();
-    final VirtualFile vFile = file.getVirtualFile();
+    final VirtualFile vFile = groovyFile.getVirtualFile();
     return vFile != null && name.equals(vFile.getNameWithoutExtension());
   }
 
