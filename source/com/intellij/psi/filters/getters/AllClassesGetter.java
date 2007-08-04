@@ -2,6 +2,7 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
@@ -124,6 +125,11 @@ public class AllClassesGetter implements ContextGetter{
             endOffset++;
           }
         }
+      }
+
+      if (tailType == TailTypes.SMART_COMPLETION) {
+        document.insertString(endOffset, "(");
+        endOffset++;
       }
 
       return endOffset;
