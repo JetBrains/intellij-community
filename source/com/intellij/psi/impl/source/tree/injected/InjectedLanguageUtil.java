@@ -95,7 +95,7 @@ public class InjectedLanguageUtil {
       outChars.append(hostText, rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
     }
     else {
-      boolean result = textEscaper.decode(host, rangeInsideHost, outChars);
+      boolean result = textEscaper.decode(rangeInsideHost, outChars);
       if (!result) return null;
     }
     outChars.append(suffix);
@@ -238,6 +238,8 @@ public class InjectedLanguageUtil {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
       int currentSourceOffset = rangeInsideHost.getStartOffset();
+      LeafElement prevElement;
+      String prevElementTail;
       protected boolean visitNode(TreeElement element) {
         return true;
       }
@@ -258,11 +260,23 @@ public class InjectedLanguageUtil {
         int offsetInSource = currentSourceOffset;
         int endOffsetInSource = literalTextEscaper.getOffsetInHost(range.getEndOffset()-prefixLength, rangeInsideHost);
         String hostSubText = hostText.substring(offsetInSource, endOffsetInSource);
+        if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
+          // optimization: put all garbage into whitespace
+          hostSubText = prevElementTail + hostSubText;
+          newTexts.remove(prevElement);
+        }
         String leafText = leaf.getText();
         if (!Comparing.strEqual(leafText, hostSubText)) {
           newTexts.put(leaf, hostSubText);
         }
+        if (hostSubText.startsWith(leafText) && hostSubText.length() != leafText.length()) {
+          prevElementTail = hostSubText.substring(leafText.length());
+        }
+        else {
+          prevElementTail = null;
+        }
         currentSourceOffset += endOffsetInSource-offsetInSource;
+        prevElement = leaf;
       }
     });
 
@@ -412,10 +426,12 @@ public class InjectedLanguageUtil {
       final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @Nullable String prefix, @Nullable String suffix) {
-          PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, hostVirtualFile, hostRange, hostDocument, myTextEscaper,
+          TextRange relevantRange = myTextEscaper == null ? rangeInsideHost : rangeInsideHost.intersection(myTextEscaper.getRelevantTextRange());
+          if (relevantRange == null) return;
+          PsiElement psi = parseInjectedPsiFile(host, relevantRange, language, hostVirtualFile, hostRange, hostDocument, myTextEscaper,
                                                 prefix == null ? "" : prefix, suffix == null ? "" : suffix);
           if (psi != null) {
-            result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
+            result.add(new Pair<PsiElement, TextRange>(psi, relevantRange));
           }
         }
       };

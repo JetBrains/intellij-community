@@ -1,13 +1,20 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
 */
-public interface LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
-  boolean decode(T host, final TextRange rangeInsideHost, StringBuilder outChars);
+public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
+  protected final T myHost;
+
+  protected LiteralTextEscaper(@NotNull T host) {
+    myHost = host;
+  }
+
+  public abstract boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars);
 
   /**
    * 
@@ -15,5 +22,10 @@ public interface LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
    * @param rangeInsideHost
    * @return offset in the host PSI element
    */
-  int getOffsetInHost(int offsetInDecoded, final TextRange rangeInsideHost);
+  public abstract int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost);
+
+  @NotNull
+  public TextRange getRelevantTextRange() {
+    return TextRange.from(0, myHost.getTextLength());
+  }
 }

@@ -26,8 +26,8 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -159,7 +159,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
-      public PomModelEvent runInner() throws IncorrectOperationException {
+      public PomModelEvent runInner() {
         final String oldText = getText();
         replaceAllChildrenToChildrenOf(firstEncodedElement.getTreeParent());
         clearCaches();
@@ -217,7 +217,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       final PomModel model = getProject().getModel();
       final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
       model.runTransaction(new PomTransactionBase(this, aspect) {
-        public PomModelEvent runInner() throws IncorrectOperationException {
+        public PomModelEvent runInner() {
           final String oldText = getText();
 
           final ASTNode e =
@@ -250,7 +250,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       final IElementType elementType = psiElement.getNode().getElementType();
       final int elementDisplayEnd = physicalToDisplay(psiElement.getStartOffsetInParent() + psiElement.getTextLength());
       final int elementDisplayStart = physicalToDisplay(psiElement.getStartOffsetInParent());
-      if (elementType == XmlTokenType.XML_DATA_CHARACTERS || elementType == JavaTokenType.WHITE_SPACE) {
+      if (elementType == XmlTokenType.XML_DATA_CHARACTERS || elementType == TokenType.WHITE_SPACE) {
         if (elementDisplayEnd >= displayEnd && elementDisplayStart <= displayStart) {
           int physicalEnd = physicalStart;
           while (physicalEnd < getTextRange().getLength()) {
@@ -335,6 +335,26 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return InjectedLanguageUtil.getInjectedPsiFiles(this, new XmlTextLiteralEscaper(this));
   }
 
+  public TextRange getCDATAInterior() {
+    PsiElement[] elements = getChildren();
+    int start = 0;
+    if (elements.length != 0 && elements[0].getNode().getElementType() == XmlElementType.XML_CDATA) {
+      ASTNode startNode = elements[0].getNode().findChildByType(XmlElementType.XML_CDATA_START);
+      if (startNode != null) {
+        start = startNode.getTextRange().getEndOffset() - getTextRange().getStartOffset();
+      }
+    }
+    int end = getTextLength();
+    if (elements.length != 0 && elements[elements.length-1].getNode().getElementType() == XmlElementType.XML_CDATA) {
+      ASTNode startNode = elements[elements.length-1].getNode().findChildByType(XmlElementType.XML_CDATA_END);
+      if (startNode != null) {
+        end = startNode.getTextRange().getStartOffset() - getTextRange().getStartOffset();
+      }
+    }
+
+    return new TextRange(start, end);
+  }
+
   public void fixText(final String text) {
     try {
       doSetValue(text, new DefaultXmlPsiPolicy());
@@ -348,7 +368,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   protected XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
     final XmlTag xmlTag = (XmlTag)getParent();
     if(displayOffset == 0) return this;
-    final int length = this.getValue().length();
+    final int length = getValue().length();
     if(displayOffset >= length) {
       return null;
     }
@@ -399,7 +419,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           if (childElement.getNextSibling() != null) {
             TreeUtil.addChildren(myRight, (TreeElement)childElement.getNextSibling());
           }
-          TreeUtil.remove(((TreeElement)childElement));
+          TreeUtil.remove((TreeElement)childElement);
           TreeUtil.addChildren(XmlTextImpl.this, leftElement);
         }
         else {
@@ -410,7 +430,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
           TreeUtil.addChildren(holder, rightText);
 
-          ((XmlTagImpl)xmlTag).addChild(rightText, XmlTextImpl.this.getTreeNext());
+          ((XmlTagImpl)xmlTag).addChild(rightText, getTreeNext());
 
           final String value = getValue();
 

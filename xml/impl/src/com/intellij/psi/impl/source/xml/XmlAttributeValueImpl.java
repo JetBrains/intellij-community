@@ -97,8 +97,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   @Nullable
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
     PsiElement parent = getParent();
-    if (parent instanceof XmlAttribute) {
-      return InjectedLanguageUtil.getInjectedPsiFiles(this, new XmlAttributeLiteralEscaper((XmlAttribute)parent));
+    if (parent instanceof XmlAttributeImpl) {
+      return InjectedLanguageUtil.getInjectedPsiFiles(this, new XmlAttributeLiteralEscaper(this));
     }
     return null;
   }

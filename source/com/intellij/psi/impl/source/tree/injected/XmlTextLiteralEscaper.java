@@ -1,31 +1,35 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.psi.impl.source.xml.XmlTextImpl;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.xml.XmlTextImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
 */
-public class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlTextImpl> {
-  private final XmlText myXmlText;
-
-  public XmlTextLiteralEscaper(final XmlText xmlText) {
-    myXmlText = xmlText;
+public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
+  public XmlTextLiteralEscaper(final XmlTextImpl xmlText) {
+    super(xmlText);
   }
 
-  public boolean decode(XmlTextImpl host, final TextRange rangeInsideHost, StringBuilder outChars) {
-    int startInDecoded = host.physicalToDisplay(rangeInsideHost.getStartOffset());
-    int endInDecoded = host.physicalToDisplay(rangeInsideHost.getEndOffset());
-    outChars.append(host.getValue(), startInDecoded, endInDecoded);
+  public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+    int startInDecoded = myHost.physicalToDisplay(rangeInsideHost.getStartOffset());
+    int endInDecoded = myHost.physicalToDisplay(rangeInsideHost.getEndOffset());
+    outChars.append(myHost.getValue(), startInDecoded, endInDecoded);
     return true;
   }
 
-  public int getOffsetInHost(final int offsetInDecoded, final TextRange rangeInsideHost) {
-    int displayStart = myXmlText.physicalToDisplay(rangeInsideHost.getStartOffset());
+  public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+    int displayStart = myHost.physicalToDisplay(rangeInsideHost.getStartOffset());
 
-    return myXmlText.displayToPhysical(offsetInDecoded+displayStart);
-    
-    //return myXmlText.displayToPhysical(offsetInDecoded);
+    int i = myHost.displayToPhysical(offsetInDecoded + displayStart);
+    if (i < rangeInsideHost.getStartOffset()) i = rangeInsideHost.getStartOffset();
+    if (i > rangeInsideHost.getEndOffset()) i = rangeInsideHost.getEndOffset();
+    return i;
+  }
+
+  @NotNull
+  public TextRange getRelevantTextRange() {
+    return myHost.getCDATAInterior();
   }
 }

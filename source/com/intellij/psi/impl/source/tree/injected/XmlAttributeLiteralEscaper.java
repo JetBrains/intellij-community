@@ -3,18 +3,20 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
 */
-public class XmlAttributeLiteralEscaper implements LiteralTextEscaper<XmlAttributeValueImpl> {
+public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeValueImpl> {
   private final XmlAttribute myXmlAttribute;
 
-  public XmlAttributeLiteralEscaper(final XmlAttribute xmlAttribute) {
-    myXmlAttribute = xmlAttribute;
+  public XmlAttributeLiteralEscaper(XmlAttributeValueImpl host) {
+    super(host);
+    myXmlAttribute = (XmlAttribute)host.getParent();
   }
 
-  public boolean decode(XmlAttributeValueImpl host, final TextRange rangeInsideHost, StringBuilder outChars) {
+  public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
     int startInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset() - valueTextRange.getStartOffset());
     int endInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getEndOffset() - valueTextRange.getStartOffset());
@@ -22,7 +24,7 @@ public class XmlAttributeLiteralEscaper implements LiteralTextEscaper<XmlAttribu
     return true;
   }
 
-  public int getOffsetInHost(final int offsetInDecoded, final TextRange rangeInsideHost) {
+  public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
     int displayStart = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset());
 

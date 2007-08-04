@@ -422,7 +422,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     Object value = getValue();
     if (!(value instanceof String)) return null;
 
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, new StringLiteralEscaper());
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, new StringLiteralEscaper(this));
   }
 
   public void fixText(final String text) {
