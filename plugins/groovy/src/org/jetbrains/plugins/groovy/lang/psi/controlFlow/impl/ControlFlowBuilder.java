@@ -283,7 +283,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       body.accept(this);
     }
     checkPending(instruction); //check for breaks targeted here
-    addEdge(myHead, instruction); //loop
+    if (myHead != null) addEdge(myHead, instruction); //loop
     myHead = null;
     finishNode(instruction);
   }
