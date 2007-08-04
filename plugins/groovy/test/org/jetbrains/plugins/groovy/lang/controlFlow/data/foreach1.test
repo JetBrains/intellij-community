@@ -3,8 +3,8 @@ for (e in [1,2,3,4]) {
 }
 -----
 1(2) element: null
-2(3) element: For statement
+2(3,6) element: For statement
 3(4) element: Block statement
 4(5) READ print
-5(2,6) READ e
+5(2) READ e
 6() element: null

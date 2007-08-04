@@ -12,5 +12,5 @@ switch(i) {
 4(5) READ i
 5(8) WRITE j
 6(7) READ print
-7() READ i
+7(8) READ i
 8() element: null

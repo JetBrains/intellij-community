@@ -3,9 +3,11 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * @author ven
@@ -28,7 +30,7 @@ class InstructionImpl implements Instruction {
     myNumber = num;
   }
 
-  public Iterable<? extends Instruction> succ() {
+  public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
     return mySucc;
   }
 
@@ -50,5 +52,9 @@ class InstructionImpl implements Instruction {
 
   protected String getElementPresentation() {
     return "element: " + myPsiElement;
+  }
+
+  public int getNumber() {
+    return myNumber;
   }
 }

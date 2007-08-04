@@ -4,27 +4,29 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -62,10 +64,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myEndInScope = endInScope;
     myIsInScope = startInScope == null;
 
-    startNode(null);
+    final InstructionImpl first = startNode(null);
     scope.accept(this);
 
-    myHead = null; //to prevent first -> last edge
+    if (myHead == first) {
+      myHead = null; //to prevent first -> last edge
+    }
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
     return myInstructions.toArray(new Instruction[myInstructions.size()]);
@@ -97,7 +101,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitBreakStatement(breakStatement);
     final GrStatement target = breakStatement.getBreakedLoop();
     if (target != null) {
-      addPendingEdge(target);
+      addPendingEdge(target, myHead);
     }
     myHead = null;
   }
@@ -117,7 +121,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrExpression value = returnStatement.getReturnValue();
     if (value != null) value.accept(this);
 
-    addPendingEdge(null);
+    addPendingEdge(null, myHead);
+    myHead = null;
   }
 
   public void visitAssertStatement(GrAssertStatement assertStatement) {
@@ -138,10 +143,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitReferenceExpression(referenceExpression);
     if (referenceExpression.getQualifierExpression() == null) {
       if (isIncOrDecOperand(referenceExpression)) {
-        addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false));
+        final ReadWriteVariableInstructionImpl i = new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false);
+        addNode(i);
         addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, true));
+        checkPending(i);
       } else {
-        addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, PsiUtil.isLValue(referenceExpression)));
+        final ReadWriteVariableInstructionImpl i = new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, PsiUtil.isLValue(referenceExpression));
+        addNode(i);
+        checkPending(i);
       }
     }
   }
@@ -169,7 +178,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (thenBranch != null) {
       final InstructionImpl thenInstruction = startNode(thenBranch);
       thenBranch.accept(this);
-      addPendingEdge(ifStatement);
+      addPendingEdge(ifStatement, myHead);
       finishNode(thenInstruction);
     }
 
@@ -178,7 +187,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (elseBranch != null) {
       final InstructionImpl elseInstruction = startNode(elseBranch);
       elseBranch.accept(this);
-      addPendingEdge(ifStatement);
+      addPendingEdge(ifStatement, myHead);
       finishNode(elseInstruction);
     }
 
@@ -197,6 +206,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     InstructionImpl instruction = startNode(forStatement);
+    if (clause instanceof GrTraditionalForClause) {
+      final GrExpression condition = ((GrTraditionalForClause) clause).getCondition();
+      if (condition != null) {
+        condition.accept(this);
+      }
+    }
+    addPendingEdge(forStatement, myHead); //break cycle
 
     final GrStatement body = forStatement.getBody();
     if (body != null) {
@@ -207,21 +223,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     checkPending(instruction); //check for breaks targeted here
 
     if (clause instanceof GrTraditionalForClause) {
-      final GrExpression condition = ((GrTraditionalForClause) clause).getCondition();
-      if (condition != null) {
-        condition.accept(this);
-      }
-    }
-
-    addPendingEdge(forStatement); //break cycle
-
-    if (clause instanceof GrTraditionalForClause) {
       for (GrExpression expression : ((GrTraditionalForClause) clause).getUpdate()) {
         expression.accept(this);
       }
     }
-    addEdge(myHead, instruction);  //loop
-
+    if (myHead != null) addEdge(myHead, instruction);  //loop
+    myHead = null;
 
     finishNode(instruction);
   }
@@ -238,6 +245,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       for (int i = myPending.size() - 1; i >= 0; i--) {
         final Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
         final PsiElement scopeWhenToAdd = pair.getSecond();
+        if (scopeWhenToAdd == null) continue;
         if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, element, false)) {
           addEdge(pair.getFirst(), instruction);
           myPending.remove(i);
@@ -247,8 +255,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   //add edge when instruction.getElement() is not contained in scopeWhenAdded
-  private void addPendingEdge(GroovyPsiElement scopeWhenAdded) {
-    if (myHead == null) return;
+  private void addPendingEdge(GroovyPsiElement scopeWhenAdded, InstructionImpl instruction) {
+    if (instruction == null) return;
 
     int i = 0;
     if (scopeWhenAdded != null) {
@@ -260,7 +268,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         if (!PsiTreeUtil.isAncestor(currScope, scopeWhenAdded, true)) break;
       }
     }
-    myPending.add(i, new Pair<InstructionImpl, GroovyPsiElement>(myHead, scopeWhenAdded));
+    myPending.add(i, new Pair<InstructionImpl, GroovyPsiElement>(instruction, scopeWhenAdded));
   }
 
   public void visitWhileStatement(GrWhileStatement whileStatement) {
@@ -269,13 +277,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (condition != null) {
       condition.accept(this);
     }
-    addPendingEdge(whileStatement); //break
+    addPendingEdge(whileStatement, myHead); //break
     final GrCondition body = whileStatement.getBody();
     if (body != null) {
       body.accept(this);
     }
     checkPending(instruction); //check for breaks targeted here
     addEdge(myHead, instruction); //loop
+    myHead = null;
     finishNode(instruction);
   }
 
@@ -307,6 +316,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     InstructionImpl[] catches = new InstructionImpl[catchClauses.length];
     for (int i = 0; i < catchClauses.length; i++) {
+      myHead = null;
       final InstructionImpl catchBeg = startNode(catchClauses[i]);
       if (tryBeg != null) addEdge(tryBeg, catchBeg);
       if (tryEnd != null) addEdge(tryEnd, catchBeg);
@@ -316,23 +326,37 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     if (finallyClause != null) {
+      myHead = null;
       final InstructionImpl finallyInstruction = startNode(finallyClause);
-      if (tryEnd != null) addEdge(tryEnd, finallyInstruction);
-      for (InstructionImpl catchEnd : catches) {
-        addEdge(catchEnd, finallyInstruction);
-      }
       addFinallyEdges(finallyInstruction);
+
+      if (tryEnd != null) {
+        addEdge(tryEnd, addCallNode(finallyInstruction, tryCatchStatement));
+      }
+      for (InstructionImpl catchEnd : catches) {
+        addEdge(catchEnd, addCallNode(finallyInstruction, tryCatchStatement));
+      }
+      myHead = finallyInstruction;
       finallyClause.accept(this);
+      addNode(new RetInstruction(myInstructionNumber++));
       finishNode(finallyInstruction);
     }
+  }
+
+  private CallInstructionImpl addCallNode(InstructionImpl finallyInstruction, GroovyPsiElement scopeWhenAddPending) {
+    final CallInstructionImpl call = new CallInstructionImpl(myInstructionNumber++, finallyInstruction);
+    myHead = null;
+    addNode(call);
+    addPendingEdge(scopeWhenAddPending, call);
+    return call;
   }
 
   private void addFinallyEdges(InstructionImpl finallyInstruction) {
     final List<Pair<InstructionImpl, GroovyPsiElement>> copy = myPending;
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     for (Pair<InstructionImpl, GroovyPsiElement> pair : copy) {
-      addEdge(pair.getFirst(), finallyInstruction);
-      addPendingEdge(pair.getSecond());
+      final CallInstructionImpl call = addCallNode(finallyInstruction, pair.getSecond());
+      addEdge(pair.getFirst(), call);
     }
   }
 
@@ -361,11 +385,49 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private InstructionImpl findInstruction(GroovyPsiElement element) {
+  private InstructionImpl findInstruction(PsiElement element) {
     for (int i = myProcessingStack.size() - 1; i >= 0; i--) {
       InstructionImpl instruction = myProcessingStack.get(i);
       if (element.equals(instruction.getElement())) return instruction;
     }
     return null;
+  }
+
+  class CallInstructionImpl extends InstructionImpl implements CallInstruction {
+    private InstructionImpl myCallee;
+
+    public String toString() {
+      return super.toString() + " CALL " + myCallee.getNumber(); 
+    }
+
+    public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
+      callStack.push(this);
+      return Collections.singletonList(myCallee);
+    }
+
+    protected String getElementPresentation() { return ""; }
+
+    CallInstructionImpl(int num, InstructionImpl callee) {
+      super(null, num);
+      myCallee = callee;
+    }
+  }
+
+  class RetInstruction extends InstructionImpl {
+    RetInstruction(int num) {
+      super(null, num);
+    }
+
+    public String toString() {
+      return super.toString() + " RETURN";
+    }
+
+    protected String getElementPresentation() { return ""; }
+
+    public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
+      final List<InstructionImpl> callSucc = ((CallInstructionImpl) callStack.pop()).mySucc;
+      assert !callSucc.isEmpty();
+      return Collections.singletonList(callSucc.get(0));
+    }
   }
 }

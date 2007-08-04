@@ -1,0 +1,20 @@
+try {
+  if (c) return 0
+} finally {
+  e
+}
+print e
+-----
+1(2) element: null
+2(3) element: Open block
+3(4) element: IF statement
+4(5,8) READ c
+5(7) element: RETURN statement
+6(9) element: Finally clause
+7(13)  CALL 6
+8(11)  CALL 6
+9(10) READ e
+10(11)  RETURN
+11(12) READ print
+12(13) READ e
+13() element: null
