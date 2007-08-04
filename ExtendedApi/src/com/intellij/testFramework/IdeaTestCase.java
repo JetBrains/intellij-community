@@ -542,7 +542,7 @@ import java.util.HashSet;
     }
   }
 
-  public static File createTempDir(final String prefix) throws IOException {
+  public static File createTempDir(@NonNls final String prefix) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(prefix, null);
     myFilesToDelete.add(tempDirectory);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -72,7 +72,7 @@ public class CharsetToolkit {
   @NonNls public static final String UTF8 = "UTF-8";
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
 
-  private byte[] buffer;
+  private final byte[] buffer;
   private Charset defaultCharset;
   private boolean enforce8Bit = false;
 
@@ -297,15 +297,16 @@ public class CharsetToolkit {
   public static Charset guessEncoding(File f, int bufferLength, Charset defaultCharset) throws IOException {
     FileInputStream fis = new FileInputStream(f);
     byte[] buffer = new byte[bufferLength];
+    int read;
     try {
-      fis.read(buffer);
+      read = fis.read(buffer);
     }
     finally {
       fis.close();
     }
     CharsetToolkit toolkit = new CharsetToolkit(buffer);
     toolkit.setDefaultCharset(defaultCharset);
-    return toolkit.guessEncoding( bufferLength );
+    return toolkit.guessEncoding(read);
   }
 
   /**

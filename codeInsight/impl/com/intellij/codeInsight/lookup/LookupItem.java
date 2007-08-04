@@ -86,7 +86,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
     }
   };
   @NotNull private CompletionCharHandler<T> myCompletionCharHandler = DEFAULT_COMPLETION_CHAR_HANDLER;
-  private Set<String> myAllLookupStrings = new THashSet<String>();
+  private final Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
 
   public LookupItem(T o, @NotNull @NonNls String lookupString){
@@ -208,7 +208,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
 
   public int compareTo(Object o){
     if(o instanceof String){
-      return getLookupString().compareTo(((String) o));
+      return getLookupString().compareTo((String)o);
     }
     if(!(o instanceof LookupItem)){
       throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
@@ -217,7 +217,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   }
 
   public LookupItem<T> setInsertHandler(@NotNull final SimpleInsertHandler handler) {
-    setAttribute(LookupItem.INSERT_HANDLER_ATTR, new MyInsertHandler(handler));
+    setAttribute(INSERT_HANDLER_ATTR, new MyInsertHandler(handler));
     return this;
   }
 
@@ -227,13 +227,13 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   }
 
   public LookupItem<T> setBold() {
-    setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
+    setAttribute(HIGHLIGHTED_ATTR, "");
     return this;
   }
 
   @NotNull
   public LookupItem<T> setIcon(Icon icon) {
-    setAttribute(LookupItem.ICON_ATTR, icon);
+    setAttribute(ICON_ATTR, icon);
     return this;
   }
 
@@ -270,13 +270,13 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
 
   @NotNull
   public LookupItem setTypeText(final String text) {
-    setAttribute(LookupItem.TYPE_TEXT_ATTR, text);
+    setAttribute(TYPE_TEXT_ATTR, text);
     return this;
   }
 
   @NotNull
   public LookupItem<T> setCaseSensitive(final boolean caseSensitive) {
-    setAttribute(LookupItem.CASE_INSENSITIVE, !caseSensitive);
+    setAttribute(CASE_INSENSITIVE, !caseSensitive);
     return this;
   }
 
