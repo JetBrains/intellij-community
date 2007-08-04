@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiProximityComparator;
@@ -76,7 +77,7 @@ public abstract class ChooseByNameBase{
   private boolean myListIsUpToDate = false;
   protected boolean myDisposedFlag = false;
 
-  private String[][] myNames = new String[2][];
+  private final String[][] myNames = new String[2][];
   private CalcElementsThread myCalcElementsThread;
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
   private static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
@@ -88,7 +89,7 @@ public abstract class ChooseByNameBase{
   private static final int REBUILD_DELAY = 300;
 
   private static class MatchesComparator implements Comparator<String> {
-    private String myOriginalPattern;
+    private final String myOriginalPattern;
 
     public MatchesComparator(final String originalPattern) {
       myOriginalPattern = originalPattern.trim();
@@ -635,8 +636,8 @@ public abstract class ChooseByNameBase{
   }
 
   private class RemoveCmd implements Cmd {
-    private int start;
-    private int end;
+    private final int start;
+    private final int end;
 
     public RemoveCmd(final int start, final int end) {
       this.start = start;
@@ -649,8 +650,8 @@ public abstract class ChooseByNameBase{
   }
 
   private class InsertCmd implements Cmd {
-    private int idx;
-    private Object element;
+    private final int idx;
+    private final Object element;
 
     public InsertCmd(final int idx, final Object element) {
       this.idx = idx;
@@ -712,6 +713,7 @@ public abstract class ChooseByNameBase{
 
   protected abstract void close(boolean isOk);
 
+  @Nullable
   public Object getChosenElement() {
     final List<Object> elements = getChosenElements();
     return elements != null && elements.size() == 1 ? elements.get(0) : null;
@@ -912,6 +914,7 @@ public abstract class ChooseByNameBase{
             }
           }
           catch (ProcessCanceledException e) {
+            //OK
           }
         }
       };
@@ -959,8 +962,10 @@ public abstract class ChooseByNameBase{
       String namePattern = getNamePattern(pattern);
       String qualifierPattern = getQualifierPattern(pattern);
 
-      if (namePattern.length() == 0 && !isShowListForEmptyPattern()) return;
-      
+      boolean isAnnotation = namePattern.startsWith("@");
+      boolean empty = namePattern.length() == 0 || isAnnotation && namePattern.length() == 1;
+      if (empty && !isShowListForEmptyPattern()) return;
+
       List<String> namesList = new ArrayList<String>();
       getNamesByPattern(myCheckboxState, this, namesList, namePattern);
       if (myCancelled) {
@@ -978,6 +983,11 @@ public abstract class ChooseByNameBase{
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
         sameNameElements.clear();
         for (final Object element : elements) {
+          if (isAnnotation) {
+            if (!(element instanceof PsiClass)) continue;
+            if (!((PsiClass)element).isAnnotationType()) continue;
+          }
+
           if (matchesQualifier(element, qualifierPattern)) {
             sameNameElements.add(element);
           }
@@ -1046,9 +1056,13 @@ patterns:
   private void getNamesByPattern(final boolean checkboxState,
                                  CalcElementsThread calcElementsThread,
                                  final List<String> list,
-                                 final String pattern) throws ProcessCanceledException {
+                                 String pattern) throws ProcessCanceledException {
     if (!isShowListForEmptyPattern()) {
       LOG.assertTrue(pattern.length() > 0);
+    }
+
+    if (pattern.startsWith("@")) {
+      pattern = pattern.substring(1);
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
