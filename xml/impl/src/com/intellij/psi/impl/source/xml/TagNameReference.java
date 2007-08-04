@@ -312,7 +312,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     if (parentTag == null) return true;
     final XmlTag childTag = parentTag.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
     childTag.putUserData(XmlElement.ORIGINAL_ELEMENT, parentTag);
-    return elementDescriptor.getElementDescriptor(childTag) != null;
+    return elementDescriptor != null && elementDescriptor.getElementDescriptor(childTag) != null;
   }
 
   private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,
