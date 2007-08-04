@@ -25,7 +25,7 @@ public class XmlEncodingReferenceProvider implements PsiReferenceProvider {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
 
-    return new PsiReference[]{new XmlEncodingReference(value, value.getValue(), xmlAttributeValueRange(value))};
+    return new PsiReference[]{new XmlEncodingReference(value, value.getValue(), xmlAttributeValueRange(value), 0)};
   }
 
   protected static TextRange xmlAttributeValueRange(final XmlAttributeValue xmlAttributeValue) {
@@ -59,7 +59,7 @@ public class XmlEncodingReferenceProvider implements PsiReferenceProvider {
       if (end == -1) end = text.length();
       String charsetName = text.substring(start, end);
       TextRange textRange = new TextRange(start, end).shiftRight(xmlAttributeValueRange(value).getStartOffset());
-      return new PsiReference[]{new XmlEncodingReference(value, charsetName, textRange)};
+      return new PsiReference[]{new XmlEncodingReference(value, charsetName, textRange, 0)};
     }
     return PsiReference.EMPTY_ARRAY;
   }
