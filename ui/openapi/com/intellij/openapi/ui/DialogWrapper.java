@@ -25,6 +25,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,14 +352,24 @@ public abstract class DialogWrapper {
       final JRootPane rootPane = getRootPane();
       // if rootPane = null, dialog has already been disposed
       if (rootPane != null) {
-        final KeyStroke[] strokes = rootPane.getRegisteredKeyStrokes();
-        for (KeyStroke keyStroke : strokes) {
-          rootPane.unregisterKeyboardAction(keyStroke);
-        }
+        new AwtVisitor(rootPane) {
+          public boolean visit(final Component component) {
+            if (component instanceof JComponent) {
+              final JComponent eachComp = (JComponent)component;
+              final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
+              for (KeyStroke eachStroke : strokes) {
+                eachComp.unregisterKeyboardAction(eachStroke);                
+              }
+            }
+            return false;
+          }
+        };
         myPeer.dispose();
       }
     }
   }
+
+  
 
   /**
    * This method is invoked by default implementation of "Cancel" action. It just closes dialog
