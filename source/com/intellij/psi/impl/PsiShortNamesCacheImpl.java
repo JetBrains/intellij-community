@@ -138,8 +138,8 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     long[] methodIds = getRepositoryIndex().getMethodsByName(name, filter);
 
     if (methodIds.length == 0) return PsiMethod.EMPTY_ARRAY;
-    ArrayList<PsiElement> list = new ArrayList<PsiElement>();
-    addElementsByIds(list, methodIds, scope);
+    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    addMembersByIds(list, methodIds, scope);
     return list.toArray(new PsiMethod[list.size()]);
   }
 
@@ -150,8 +150,8 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     long[] methodIds = getRepositoryIndex().getMethodsByNameIfNotMoreThan(name, filter, maxCount);
 
     if (methodIds.length == 0) return PsiMethod.EMPTY_ARRAY;
-    ArrayList<PsiElement> list = new ArrayList<PsiElement>();
-    addElementsByIds(list, methodIds, scope);
+    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    addMembersByIds(list, methodIds, scope);
     return list.toArray(new PsiMethod[list.size()]);
   }
 
@@ -172,8 +172,8 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     long[] fieldIds = getRepositoryIndex().getFieldsByName(name, filter);
 
     if (fieldIds.length == 0) return PsiField.EMPTY_ARRAY;
-    ArrayList<PsiElement> list = new ArrayList<PsiElement>();
-    addElementsByIds(list, fieldIds, scope);
+    ArrayList<PsiField> list = new ArrayList<PsiField>();
+    addMembersByIds(list, fieldIds, scope);
     return list.toArray(new PsiField[list.size()]);
   }
 
@@ -188,38 +188,39 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     getRepositoryIndex().getAllFieldNames(filter, set);
   }
 
-  private void addElementsByIds(ArrayList<PsiElement> list, long[] ids, final GlobalSearchScope scope) {
+  private <T extends PsiMember> void addMembersByIds(ArrayList<T> list, long[] ids, final GlobalSearchScope scope) {
     RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
-    Set<PsiElement> set = new THashSet<PsiElement>(ids.length, new TObjectHashingStrategy<PsiElement>() {
-      public int computeHashCode(PsiElement psiElement) {
-        if (psiElement instanceof PsiMember) {
-          PsiMember member = (PsiMember)psiElement;
-          int code = 0;
-          String name = member.getName();
+    Set<PsiMember> set = new THashSet<PsiMember>(ids.length, new TObjectHashingStrategy<PsiMember>() {
+      public int computeHashCode(PsiMember member) {
+        int code = 0;
+        final PsiClass clazz = member.getContainingClass();
+        if (clazz != null) {
+          String name = clazz.getName();
           if (name != null) {
             code += name.hashCode();
+          } else {
+            //anonymous classes are not equivalent
+            code += clazz.hashCode();
           }
-          if (member instanceof PsiMethod) {
-            code += 37 * ((PsiMethod)member).getParameterList().getParametersCount();
-          }
-          return code;
         }
-        else {
-          LOG.error(psiElement.toString());
-          return 0;
+        if (member instanceof PsiMethod) {
+          code += 37 * ((PsiMethod)member).getParameterList().getParametersCount();
         }
+        return code;
       }
 
-      public boolean equals(PsiElement object, PsiElement object1) {
+      public boolean equals(PsiMember object, PsiMember object1) {
         return myManager.areElementsEquivalent(object, object1);
       }
     });
     for (long id : ids) {
       ProgressManager.getInstance().checkCanceled();
-      PsiElement element = repositoryElementsManager.findOrCreatePsiElementById(id);
-      if (!scope.contains(element.getContainingFile().getVirtualFile())) continue;
-      if (!set.add(element)) continue;
-      list.add(element);
+      // this is internal repository contract
+      //noinspection unchecked
+      T member = (T)repositoryElementsManager.findOrCreatePsiElementById(id);
+      if (!scope.contains(member.getContainingFile().getVirtualFile())) continue;
+      if (!set.add(member)) continue;
+      list.add(member);
     }
   }
 
