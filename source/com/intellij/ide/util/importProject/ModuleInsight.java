@@ -488,21 +488,17 @@ public class ModuleInsight {
     lexer.start(new CharArrayCharSequence(text), 0, text.length, 0);
     
     skipWhiteSpaceAndComments(lexer);
-    if (lexer.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) {
-      return;
-    }
-    
-    advanceLexer(lexer);
-    if (readPackageName(text, lexer) == null) {
-      return;
+    if (lexer.getTokenType() == JavaTokenType.PACKAGE_KEYWORD) {
+      advanceLexer(lexer);
+      if (readPackageName(text, lexer) == null) {
+        return;
+      }
     }
     
     while (true) {
-      if (lexer.getTokenType() != JavaTokenType.SEMICOLON) {
-        return;
+      if (lexer.getTokenType() == JavaTokenType.SEMICOLON) {
+        advanceLexer(lexer);
       }
-      advanceLexer(lexer);
-      
       if (lexer.getTokenType() != JavaTokenType.IMPORT_KEYWORD) {
         return;
       }
