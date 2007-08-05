@@ -106,6 +106,11 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
+  public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
+    return new PsiMethod[0];
+  }
+
+  @NotNull
   public String[] getAllMethodNames(boolean searchInLibraries) {
     return new String[0];
   }
