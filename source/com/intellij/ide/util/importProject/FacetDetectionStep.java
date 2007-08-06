@@ -8,23 +8,23 @@ import com.intellij.facet.FacetInfo;
 import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.awt.*;
 
 /**
  * @author nik

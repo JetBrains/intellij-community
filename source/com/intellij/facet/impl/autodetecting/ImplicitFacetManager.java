@@ -199,12 +199,12 @@ public class ImplicitFacetManager implements Disposable {
   }
 
   public void disableDetectionInModule(final Facet facet) {
-    myAutodetectingManager.getState().addDisabled(facet.getType().getStringId(), facet.getModule().getName());
+    myAutodetectingManager.disableAutodetectionInModule(facet.getType(), facet.getModule());
     FacetUtil.deleteImplicitFacets(facet.getModule(), facet.getTypeId());
   }
 
   public void disableDetectionInProject(final Facet facet) {
-    myAutodetectingManager.getState().addDisabled(facet.getType().getStringId());
+    myAutodetectingManager.disableAutodetectionInProject(facet.getType());
     FacetUtil.deleteImplicitFacets(facet.getModule().getProject(), facet.getTypeId());
   }
 
@@ -235,7 +235,7 @@ public class ImplicitFacetManager implements Disposable {
     public void beforeFacetRemoved(final F facet) {
       Set<String> files = myAutodetectingManager.getFiles(facet);
       if (files != null) {
-        myAutodetectingManager.getState().addDisabled(facet.getType().getStringId(), facet.getModule().getName(), files);
+        myAutodetectingManager.disableAutodetectionInFiles(facet.getType(), facet.getModule(), files.toArray(new String[files.size()]));
       }
       myAutodetectingManager.removeFacetFromCache(facet);
     }

@@ -251,6 +251,18 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     return fileTypes;
   }
 
+  public void disableAutodetectionInModule(final FacetType type, final Module module) {
+    getState().addDisabled(type.getStringId(), module.getName());
+  }
+
+  public void disableAutodetectionInProject(final FacetType type) {
+    getState().addDisabled(type.getStringId());
+  }
+
+  public void disableAutodetectionInFiles(@NotNull final FacetType type, @NotNull final Module module, @NotNull final String... fileUrls) {
+    getState().addDisabled(type.getStringId(), module.getName(), fileUrls);
+  }
+
   private class FacetOnTheFlyDetectorRegistryImpl<C extends FacetConfiguration, F extends Facet<C>> implements FacetOnTheFlyDetectorRegistry<C> {
     private final FacetType<F, C> myType;
     private boolean myHasDetectors;

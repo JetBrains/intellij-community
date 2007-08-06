@@ -5,6 +5,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.*;
+import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.IconLoader;
@@ -56,7 +57,7 @@ public class DetectedFacetsTreeComponent {
         }
 
         String relativePath = getRelativePath(root, pair.getSecond());
-        DetectedFacetInfo detectedFacet = new DetectedFacetInfo(pair.getFirst(), relativePath, parent);
+        DetectedFacetInfo detectedFacet = new DetectedFacetInfo(pair.getFirst(), relativePath, pair.getSecond(), parent);
         facetInfos.put(pair.getFirst(), detectedFacet);
         if (parent == null) {
           moduleInfo.addRootFacet(detectedFacet);
@@ -96,25 +97,31 @@ public class DetectedFacetsTreeComponent {
   public void createFacets(final ModuleDescriptor descriptor, final Module module, final ModifiableRootModel rootModel) {
     ModifiableFacetModel modifiableModel = FacetManager.getInstance(module).createModifiableModel();
     for (ModuleInfo moduleInfo : myModuleInfos) {
-      if (moduleInfo.isChecked() && moduleInfo.myModuleDescriptor.equals(descriptor)) {
-        createFacets(moduleInfo.myRootFacets, module, rootModel, modifiableModel, null);
+      if (moduleInfo.myModuleDescriptor.equals(descriptor)) {
+        processFacetsInfos(moduleInfo.myRootFacets, module, rootModel, modifiableModel, null, moduleInfo.isChecked());
       }
     }
     modifiableModel.commit();
   }
 
-  private static void createFacets(final List<DetectedFacetInfo> facets, final Module module, final ModifiableRootModel rootModel,
-                                   final ModifiableFacetModel facetModel, Facet underlyingFacet) {
+  private static void processFacetsInfos(final List<DetectedFacetInfo> facets, final Module module, final ModifiableRootModel rootModel,
+                                   final ModifiableFacetModel facetModel, Facet underlyingFacet, boolean createFacets) {
     for (DetectedFacetInfo detectedFacetInfo : facets) {
-      if (!detectedFacetInfo.isChecked()) continue;
-
+      boolean createFacet = createFacets && detectedFacetInfo.isChecked();
       FacetInfo facetInfo = detectedFacetInfo.myFacetInfo;
       FacetType type = facetInfo.getFacetType();
-      //noinspection unchecked
-      Facet facet = FacetManagerImpl.createFacet(type, module, facetInfo.getName(), facetInfo.getConfiguration(), underlyingFacet);
-      facetModel.addFacet(facet);
+      Facet facet = null;
 
-      createFacets(detectedFacetInfo.myChildren, module, rootModel, facetModel, facet);
+      if (createFacet) {
+        //noinspection unchecked
+        facet = FacetManagerImpl.createFacet(type, module, facetInfo.getName(), facetInfo.getConfiguration(), underlyingFacet);
+        facetModel.addFacet(facet);
+      }
+      else {
+        FacetAutodetectingManager.getInstance(module.getProject()).disableAutodetectionInFiles(type, module, detectedFacetInfo.myFile.getUrl());
+      }
+
+      processFacetsInfos(detectedFacetInfo.myChildren, module, rootModel, facetModel, facet, createFacet);
     }
   }
 
@@ -137,13 +144,15 @@ public class DetectedFacetsTreeComponent {
 
   private static class DetectedFacetInfo extends CheckedTreeNode {
     private FacetInfo myFacetInfo;
+    private final VirtualFile myFile;
     private final String myRelativeFilePath;
     private List<DetectedFacetInfo> myChildren = new ArrayList<DetectedFacetInfo>();
 
-    private DetectedFacetInfo(final FacetInfo facetInfo, String relativeFilePath, @Nullable DetectedFacetInfo parent) {
+    private DetectedFacetInfo(final FacetInfo facetInfo, String relativeFilePath, final VirtualFile file, @Nullable DetectedFacetInfo parent) {
       super(facetInfo);
       myRelativeFilePath = relativeFilePath;
       myFacetInfo = facetInfo;
+      myFile = file;
       if (parent != null) {
         parent.myChildren.add(this);
         parent.add(this);

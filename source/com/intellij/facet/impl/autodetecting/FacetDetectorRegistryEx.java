@@ -8,14 +8,20 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.VirtualFilePattern;
+import com.intellij.patterns.impl.StandardPatterns;
+import static com.intellij.patterns.impl.StandardPatterns.*;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Collection;
 
 /**
  * @author nik
@@ -27,6 +33,24 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   public FacetDetectorRegistryEx(final @Nullable FacetDetectorForWizardRegistry<C> forWizardDelegate, final @Nullable FacetOnTheFlyDetectorRegistry<C> onTheFlyDelegate) {
     myForWizardDelegate = forWizardDelegate;
     myOnTheFlyDelegate = onTheFlyDelegate;
+  }
+
+  public <U extends FacetConfiguration> void registerUniversalDetectorByFileNameAndRootTag(@NotNull @NonNls String fileName,
+                                                            @NotNull @NonNls String rootTag,
+                                                            @NotNull final FacetDetector<VirtualFile, C> detector,
+                                                            @Nullable UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
+    VirtualFilePattern fileNamePattern = StandardPatterns.virtualFile().withName(StandardPatterns.string().equalTo(fileName));
+    VirtualFilePattern wizardPattern = fileNamePattern.xmlWithRootTag(StandardPatterns.string().equalTo(rootTag));
+
+    if (underlyingFacetSelector != null) {
+      registerSubFacetDetectorForWizard(StdFileTypes.XML, wizardPattern, detector, underlyingFacetSelector);
+    }
+    else {
+      registerDetectorForWizard(StdFileTypes.XML, wizardPattern, detector);
+    }
+
+    registerOnTheFlyDetector(StdFileTypes.XML, fileNamePattern, xmlFile().withRootTag(xmlTag().withName(rootTag)),
+                             convertDetector(detector));
   }
 
   public void registerUniversalDetector(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
@@ -90,5 +114,14 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
     public boolean accept(final VirtualFile file) {
       return myVirtualFilePattern.accepts(file);
     }
+  }
+
+  public static <C extends FacetConfiguration> FacetDetector<PsiFile, C> convertDetector(final FacetDetector<VirtualFile, C> detector) {
+    return new FacetDetector<PsiFile, C>() {
+      public C detectFacet(final PsiFile source, final Collection<C> existentFacetConfigurations) {
+        VirtualFile virtualFile = source.getVirtualFile();
+        return virtualFile != null ? detector.detectFacet(virtualFile, existentFacetConfigurations) : null;
+      }
+    };
   }
 }

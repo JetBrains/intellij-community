@@ -6,12 +6,11 @@ package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author nik
@@ -74,7 +73,7 @@ public class DisabledAutodetectionInfo {
     }
   }
 
-  public void addDisabled(final @NotNull String facetTypeId, final @NotNull String moduleName, final @NotNull Set<String> urls) {
+  public void addDisabled(final @NotNull String facetTypeId, final @NotNull String moduleName, final @NotNull String... urls) {
     for (String url : urls) {
       addDisabled(facetTypeId, moduleName, url);
     }
