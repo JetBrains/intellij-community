@@ -171,7 +171,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
             if (descriptor != null) {
-              final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
+              final XmlFile descriptorFile = (XmlFile)descriptor.getDeclaration().getContainingFile();
 
               if (descriptorFile != null &&
                   !descriptorFile.getName().equals(((XmlFile)targetElement).getName()+".dtd")) {
