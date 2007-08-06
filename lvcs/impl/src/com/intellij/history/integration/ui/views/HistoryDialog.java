@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +35,7 @@ import com.intellij.ui.UIHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -266,6 +268,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   private void createPatch() {
     try {
       CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel();
+      p.setFileName(getDefaultPatchFile());
       if (!showAsDialog(p)) return;
       myModel.createPatch(p.getFileName(), p.isReversePatch());
       close(0);
@@ -278,12 +281,18 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     }
   }
 
+  private File getDefaultPatchFile() {
+    return FileUtil.findSequentNonexistentFile(new File(myGateway.getBaseDir()), "local_history", "patch");
+  }
+
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
     DialogBuilder b = new DialogBuilder(myGateway.getProject());
     b.setTitle(message("create.patch.dialog.title"));
     b.setCenterPanel(p.getPanel());
     return b.show() == OK_EXIT_CODE;
   }
+
+
 
   protected void showHelp() {
     HelpManager.getInstance().invokeHelp(getHelpId());
