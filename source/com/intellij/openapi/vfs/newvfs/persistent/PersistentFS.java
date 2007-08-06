@@ -459,7 +459,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events);
   }
 
-  private final Object LOCK = new Object();
+  public static final Object LOCK = new Object();
 
   @Nullable
   public NewVirtualFile findRoot(final String basePath, final NewVirtualFileSystem fs) { // TODO: read/write locks instead of sycnrhonized

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -17,16 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
-  private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-  private final Lock r = rwl.readLock();
-  private final Lock w = rwl.writeLock();
-
-  private Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
+  private final Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
   @NonNls private static final String IDEA_JAR = "idea.jar";
 
@@ -41,12 +36,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
           if (event.getFileSystem() instanceof LocalFileSystem) {
             final String path = event.getPath();
             List<String> jarPaths = new ArrayList<String>();
-            r.lock();
-            try {
+            synchronized (PersistentFS.LOCK) {
               jarPaths.addAll(myHandlers.keySet());
-            }
-            finally{
-              r.unlock();
             }
 
             for (String jarPath : jarPaths) {
@@ -61,13 +52,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   private void markDirty(final String path) {
-    r.lock();
     final JarHandler handler;
-    try {
+    synchronized (PersistentFS.LOCK) {
       handler = myHandlers.remove(path);
-    }
-    finally {
-      r.unlock();
     }
 
     if (handler != null) {
@@ -114,27 +101,12 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final String jarRootPath = extractRootPath(entryVFile.getPath());
 
     JarHandler handler;
-    r.lock();
-    try {
+    synchronized (PersistentFS.LOCK) {
       handler = myHandlers.get(jarRootPath);
       if (handler == null) {
-        r.unlock();
-        w.lock();
-        try {
-          handler = myHandlers.get(jarRootPath);
-          if (handler == null) {
-            handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
-            myHandlers.put(jarRootPath, handler);
-          }
-        }
-        finally {
-          r.lock();
-          w.unlock();
-        }
+        handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
+        myHandlers.put(jarRootPath, handler);
       }
-    }
-    finally{
-      r.unlock();
     }
 
     return handler;
