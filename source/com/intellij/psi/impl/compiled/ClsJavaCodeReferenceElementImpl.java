@@ -262,7 +262,8 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     PsiClass aClass = (PsiClass)element;
-    return myCanonicalText.equals(aClass.getQualifiedName());
+    if (myCanonicalText.equals(aClass.getQualifiedName())) return true;
+    return getManager().areElementsEquivalent(resolve(), element);
   }
 
   public Object[] getVariants() {
