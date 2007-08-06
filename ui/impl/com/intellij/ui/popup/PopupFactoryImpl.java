@@ -104,15 +104,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
     };
     popup.addListSelectionListener(new ListSelectionListener(){
       public void valueChanged(ListSelectionEvent e) {
-        JList list = (JList)e.getSource();
-        ActionItem actionItem = (ActionItem)list.getSelectedValue();
+        final JList list = (JList)e.getSource();
+        final ActionItem actionItem = (ActionItem)list.getSelectedValue();
         if (actionItem == null) return;
         AnAction action = actionItem.getAction();
         Presentation presentation = new Presentation();
         presentation.setDescription(action.getTemplatePresentation().getDescription());
-        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(list), ActionPlaces.UNKNOWN, presentation,
+        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(component), ActionPlaces.UNKNOWN, presentation,
                                         ActionManager.getInstance(), 0));
-        ActionMenu.showDescriptionInStatusBar(true, list, presentation.getDescription());
+        ActionMenu.showDescriptionInStatusBar(true, component, presentation.getDescription());
       }
     });
     return popup;
