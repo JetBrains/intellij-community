@@ -46,19 +46,17 @@ public class PsiProximityComparator implements Comparator<Object> {
 
   @Nullable
   public final PsiProximity getProximity(final PsiElement element) {
+    if (element instanceof MetadataPsiElementBase) return null;
     if (myContext == null) return null;
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
     if (contextModule == null) return null;
 
-    VirtualFile virtualFile = null;
-    if (!(element instanceof MetadataPsiElementBase)) {
-      final PsiElement commonContext = PsiTreeUtil.findCommonContext(myContext, element);
-      if (PsiTreeUtil.getContextOfType(commonContext, PsiMethod.class, false) != null) return PsiProximity.SAME_METHOD;
-      if (PsiTreeUtil.getContextOfType(commonContext, PsiClass.class, false) != null) return PsiProximity.SAME_CLASS;
+    final PsiElement commonContext = PsiTreeUtil.findCommonContext(myContext, element);
+    if (PsiTreeUtil.getContextOfType(commonContext, PsiMethod.class, false) != null) return PsiProximity.SAME_METHOD;
+    if (PsiTreeUtil.getContextOfType(commonContext, PsiClass.class, false) != null) return PsiProximity.SAME_CLASS;
 
-      virtualFile = PsiUtil.getVirtualFile(element);
-      if (isOpenedInEditor(virtualFile)) return PsiProximity.OPENED_IN_EDITOR;
-    }
+    final VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
+    if (isOpenedInEditor(virtualFile)) return PsiProximity.OPENED_IN_EDITOR;
 
     if (element instanceof PsiClass) {
       final String qname = ((PsiClass) element).getQualifiedName();
