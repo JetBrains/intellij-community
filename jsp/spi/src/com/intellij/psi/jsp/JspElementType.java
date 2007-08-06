@@ -14,19 +14,26 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.peer.PeerFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 
 /**
  * @author peter
  */
 public interface JspElementType extends JspTokenType {
   IElementType HOLDER_TEMPLATE_DATA = new IJspElementType("HOLDER_TEMPLATE_DATA");
+  Key<ASTNode> ourContextNodeKey = Key.create("EL.context.node");
+
   IChameleonElementType JSP_EL_HOLDER = new IChameleonElementType("EL_HOLDER", IELElementType.EL_LANGUAGE){
     public ASTNode parseContents(ASTNode chameleon) {
       final PeerFactory factory = PeerFactory.getInstance();
       final Project project = chameleon.getTreeParent().getPsi().getManager().getProject();
       final PsiBuilder builder = factory.createBuilder(chameleon, getLanguage(), chameleon.getText(), project);
       final PsiParser parser = getLanguage().getParserDefinition().createParser(project);
-      return parser.parse(this, builder).getFirstChildNode();
+
+      builder.putUserData(ourContextNodeKey, chameleon.getTreeParent());
+      final ASTNode result = parser.parse(this, builder).getFirstChildNode();
+      builder.putUserData(ourContextNodeKey, null);
+      return result;
     }
 
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
