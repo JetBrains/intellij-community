@@ -9,6 +9,6 @@ import com.intellij.openapi.project.Project;
  * Time: 7:38:32 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface DeferredUserLookupValue extends PresentableLookupValue {
-  boolean handleUserSelection(LookupItem item,Project project);
+public interface DeferredUserLookupValue<T> extends PresentableLookupValue {
+  boolean handleUserSelection(LookupItem<T> item,Project project);
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,6 +64,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
     }
   }
 
+  @Nullable
   protected String[] addSpecificCompletions(final PsiElement context) {
     return null;
   }
