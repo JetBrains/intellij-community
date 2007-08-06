@@ -14,12 +14,7 @@ import java.util.ArrayList;
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
   protected void update(VcsContext context, Presentation presentation) {
-    presentation.setVisible(isVisible(context));
     presentation.setEnabled(isEnabled(context));
-  }
-
-  protected boolean isVisible(VcsContext context) {
-    return true;
   }
 
   protected VcsHistoryProvider getProvider(AbstractVcs activeVcs) {
@@ -39,7 +34,8 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     if (vcs == null) return false;
     VcsHistoryProvider vcsHistoryProvider = getProvider(vcs);
     if (vcsHistoryProvider == null) return false;
-    return vcs.fileExistsInVcs(path) && isVisible(context);
+    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(someVFile);
+    return fileStatus != FileStatus.ADDED && fileStatus != FileStatus.UNKNOWN;
   }
 
   protected static FilePath[] getSelectedFiles(VcsContext context) {
@@ -68,6 +64,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     Project project = context.getProject();
     VirtualFile someVFile = path.getVirtualFile() != null ? path.getVirtualFile() : path.getVirtualFileParent();
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(someVFile);
+    assert activeVcs != null;
     VcsHistoryProvider vcsHistoryProvider = getProvider(activeVcs);
     AbstractVcsHelper.getInstance(project).showFileHistory(vcsHistoryProvider, activeVcs.getAnnotationProvider(), path);
   }
