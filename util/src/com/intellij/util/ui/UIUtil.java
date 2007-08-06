@@ -678,5 +678,17 @@ public class UIUtil {
     return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
   }
 
+  public static void requestFocus(@NotNull final JComponent c) {
+    if (c.isShowing()) {
+      c.requestFocus();
+    } else {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          c.requestFocus();
+        }
+      });
+    }
+  }
+
 }
 

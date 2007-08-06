@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
-import com.intellij.facet.Facet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -109,8 +108,8 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
     return myConfigurator.getModuleEditor(myModule);
   }
 
-  public ActionCallback navigateTo(@Nullable final Place place) {
-    return getModuleEditor().navigateTo(place);
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+    return getModuleEditor().navigateTo(place, requestFocus);
   }
 
   public void queryPlace(@NotNull final Place place) {

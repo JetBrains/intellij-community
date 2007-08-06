@@ -7,10 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -28,6 +25,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +44,7 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class ProjectStructureConfigurable implements SearchableConfigurable, PersistentStateComponent<ProjectStructureConfigurable.UIState>, Place.Navigator {
+public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, PersistentStateComponent<ProjectStructureConfigurable.UIState>, Place.Navigator {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
@@ -54,6 +52,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
   private Splitter mySplitter;
   private JComponent myToolbarComponent;
   @NonNls private static final String CATEGORY = "category";
+  private JComponent myToFocus;
 
   public static class UIState {
     public float proportion;
@@ -236,7 +235,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
 
     removeSelected();
 
-    navigateTo(toSelect != null ? createPlaceFor(toSelect) : null);
+    navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
 
     if (myUiState.proportion > 0) {
       mySplitter.setProportion(myUiState.proportion);
@@ -280,46 +279,43 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     Place.queryFurther(mySelectedConfigurable, place);
   }
 
-  public ActionCallback select(@Nullable final String moduleToSelect, String tab) {
+  public ActionCallback select(@Nullable final String moduleToSelect, String tab, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myModulesConfig);
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
       place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, module);
     }
-    return navigateTo(place);
+    return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(@Nullable final Facet facetToSelect) {
+  public ActionCallback select(@Nullable final Facet facetToSelect, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myModulesConfig);
     if (facetToSelect != null) {
       place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, facetToSelect);
     }
-    return navigateTo(place);
+    return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback select(Sdk sdk) {
+  public ActionCallback select(Sdk sdk, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myJdkListConfig);
     place.putPath(BaseStructureConfigurable.TREE_OBJECT, sdk);
-    return navigateTo(place);
+    return navigateTo(place, requestFocus);
   }
 
 
-  public ActionCallback navigateTo(@Nullable final Place place) {
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
+
+    JComponent detailsContent = myDetails.getTargetComponent();
 
     if (mySelectedConfigurable != toSelect) {
       saveSideProportion();
       removeSelected();
 
       if (toSelect != null) {
-        final JComponent c = toSelect.createComponent();
-        myDetails.setContent(c);
-        JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(c);
-        if (toFocus == null) {
-          toFocus = c;
-        }
-        c.requestFocus();
+        detailsContent = toSelect.createComponent();
+        myDetails.setContent(detailsContent);
       }
 
       mySelectedConfigurable = toSelect;
@@ -341,8 +337,20 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     }
 
 
+
+    if (detailsContent != null) {
+      JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(detailsContent);
+      if (toFocus == null) {
+        toFocus = detailsContent;
+      }
+      if (requestFocus) {
+        myToFocus = toFocus;
+        UIUtil.requestFocus(toFocus);
+      }
+    }
+
     final ActionCallback result = new ActionCallback();
-    Place.goFurther(toSelect, place).markDone(result);
+    Place.goFurther(toSelect, place, requestFocus).markDone(result);
 
     myDetails.revalidate();
     myDetails.repaint();
@@ -438,4 +446,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Per
     }
   }
 
+  public JComponent getPreferredFocusedComponent() {
+    return myToFocus;
+  }
 }

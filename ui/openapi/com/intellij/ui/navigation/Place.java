@@ -1,14 +1,12 @@
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Iterator;
 
 public class Place implements ComparableObject {
@@ -73,15 +71,15 @@ public class Place implements ComparableObject {
 
   public interface Navigator {
 
-    ActionCallback navigateTo(@Nullable Place place);
+    ActionCallback navigateTo(@Nullable Place place, final boolean requestFocus);
 
     void queryPlace(@NotNull Place place);
 
   }
 
-  public static ActionCallback goFurther(Object object, Place place) {
+  public static ActionCallback goFurther(Object object, Place place, final boolean requestFocus) {
     if (object instanceof Navigator) {
-      return ((Navigator)object).navigateTo(place);
+      return ((Navigator)object).navigateTo(place, false);
     } else {
       return new ActionCallback.Done();
     }

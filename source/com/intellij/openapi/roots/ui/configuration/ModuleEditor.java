@@ -200,7 +200,7 @@ public class ModuleEditor implements Place.Navigator {
     return myGenericSettingsPanel;
   }
 
-  public ActionCallback navigateTo(@Nullable final Place place) {
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     return new ActionCallback.Done();
   }
 

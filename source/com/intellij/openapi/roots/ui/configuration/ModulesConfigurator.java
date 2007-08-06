@@ -409,7 +409,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
         final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
-        config.select(facet).doWhenDone(new Runnable() {
+        config.select(facet, true).doWhenDone(new Runnable() {
           public void run() {
             modulesConfig.setStartModuleWizard(false);
           }
@@ -426,7 +426,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
         final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
-        config.select(moduleToSelect, tabNameToSelect).doWhenDone(new Runnable() {
+        config.select(moduleToSelect, tabNameToSelect, true).doWhenDone(new Runnable() {
           public void run() {
             modulesConfig.setStartModuleWizard(showModuleWizard);
             SwingUtilities.invokeLater(new Runnable() {

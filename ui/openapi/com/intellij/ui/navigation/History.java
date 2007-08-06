@@ -65,7 +65,7 @@ public final class History {
   }
 
   public void navigateTo(Place place) {
-    myRoot.navigateTo(place);
+    myRoot.navigateTo(place, false);
   }
 
   public void back() {
@@ -77,7 +77,7 @@ public final class History {
     myNavigatedNow = true;
     final Place next = myHistory.get(nextPos);
     try {
-      myRoot.navigateTo(next).doWhenDone(new Runnable() {
+      myRoot.navigateTo(next, false).doWhenDone(new Runnable() {
         public void run() {
           myCurrentPos = nextPos;
           myNavigatedNow = false;

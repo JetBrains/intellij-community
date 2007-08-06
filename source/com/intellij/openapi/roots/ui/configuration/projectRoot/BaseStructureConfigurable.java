@@ -71,7 +71,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
 
-  public ActionCallback navigateTo(@Nullable final Place place) {
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place == null) return new ActionCallback.Done();
 
     final Object object = place.getPath(TREE_OBJECT);
@@ -93,7 +93,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     selectNodeInTree(node).doWhenDone(new Runnable() {
       public void run() {
         updateSelection(config);
-        Place.goFurther(config, place).markDone(result);
+        Place.goFurther(config, place, requestFocus).markDone(result);
       }
     });
 
@@ -248,7 +248,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         ProjectBundle.message("dependencies.used.in.popup.title"), dependencies.toArray(new String[dependencies.size()])) {
 
         public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
-          ProjectStructureConfigurable.getInstance(myProject).select(nameToSelect, null);
+          ProjectStructureConfigurable.getInstance(myProject).select(nameToSelect, null, true);
           return PopupStep.FINAL_CHOICE;
         }
 

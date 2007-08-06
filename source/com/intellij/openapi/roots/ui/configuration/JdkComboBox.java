@@ -13,7 +13,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
@@ -103,7 +102,7 @@ class JdkComboBox extends JComboBox{
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ProjectJdk projectJdk = retrieveJDK.compute();
-        ProjectStructureConfigurable.getInstance(project).select(projectJdk);
+        ProjectStructureConfigurable.getInstance(project).select(projectJdk, true);
       }
     });
     addActionListener(new ActionListener(){
