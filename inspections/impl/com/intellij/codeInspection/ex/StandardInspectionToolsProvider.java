@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.LossyEncodingInspection;
 import com.intellij.codeInspection.testOnly.TestOnlyInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
@@ -114,6 +115,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
       InconsistentResourceBundleInspection.class,
+      LossyEncodingInspection.class,
 
       // html
       HtmlExtraClosingTagInspection.class,

@@ -10,9 +10,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
@@ -90,6 +90,9 @@ public final class LoadTextUtil {
   }
 
   private static Charset dodetectCharset(final VirtualFile virtualFile, final byte[] content) {
+    //Charset saved = EncodingManager.getInstance().getEncoding(virtualFile, true);
+    //if (saved != null) return saved;
+
     CharsetSettings settings = CharsetSettings.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing();
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset()) : null;
@@ -158,7 +161,7 @@ public final class LoadTextUtil {
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
   }
 
-  private static Charset getCharsetForWriting(@Nullable Project project, final VirtualFile virtualFile, final String text) {
+  public static Charset getCharsetForWriting(@Nullable Project project, final VirtualFile virtualFile, final String text) {
     FileType fileType = virtualFile.getFileType();
     Charset charset = null;
     if (fileType instanceof LanguageFileType) {

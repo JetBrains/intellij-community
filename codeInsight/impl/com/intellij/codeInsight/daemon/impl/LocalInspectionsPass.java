@@ -199,7 +199,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, textRange, message, toolTip);
     highlightInfo.isAfterEndOfLine = problemDescriptor.isAfterEndOfLine();
 
-    if (problemDescriptor.getPsiElement() instanceof PsiFile) {
+    PsiElement element = problemDescriptor.getPsiElement();
+    if (element instanceof PsiFile && textRange.equals(element.getTextRange())) {
       highlightInfo.isFileLevelAnnotation = true;
     }
 
@@ -311,7 +312,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls final String link = "<a href=\"" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") + "</a>";
     @NonNls String tooltip;
     if (message.startsWith("<html>")) {
-      tooltip = message.indexOf("</body>") != -1 ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
+      tooltip = message.contains("</body>") ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
     }
     else {
       tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";

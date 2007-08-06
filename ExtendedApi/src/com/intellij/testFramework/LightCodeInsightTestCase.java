@@ -2,11 +2,15 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -25,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -396,5 +401,22 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       myEditor = ((EditorDelegate)myEditor).getDelegate();
       myVFile = myFile.getVirtualFile();
     }
+  }
+  protected static void type(char c) {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    TypedAction action = actionManager.getTypedAction();
+    action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
+  }
+
+  protected static void type(@NonNls String s) {
+    for (char c : s.toCharArray()) {
+      type(c);
+    }
+  }
+  protected static void backspace() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+
+    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
 }

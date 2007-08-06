@@ -1,8 +1,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -23,6 +27,7 @@ import com.intellij.testFramework.PsiTestData;
 import com.intellij.util.Function;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -508,4 +513,22 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return myEditor;
   }
 
+  protected void type(char c) {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    TypedAction action = actionManager.getTypedAction();
+    action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
+  }
+
+  protected void type(@NonNls String s) {
+    for (char c : s.toCharArray()) {
+      type(c);
+    }
+  }
+
+  protected void backspace() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+
+    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
 }

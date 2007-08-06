@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
@@ -244,7 +242,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       return true;
     }
     // To enable T.O.D.O. highlighting
-    return !(file instanceof PsiPlainTextFile) || fileType instanceof CustomFileType;
+    return !fileType.isBinary();
   }
 
   public boolean isImportHintsEnabled(PsiFile file) {

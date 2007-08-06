@@ -12,10 +12,6 @@ import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class CanBeFinalTest extends InspectionTestCase {
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
   private void doTest() throws Exception {
     final CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = true;
