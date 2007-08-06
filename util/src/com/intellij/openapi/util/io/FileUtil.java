@@ -88,7 +88,7 @@ public class FileUtil {
   }
 
   public static boolean isAncestor(File ancestor, File file, boolean strict) throws IOException {
-    File parent = strict ? file.getParentFile() : file;
+    File parent = strict ? getParentFile(file) : file;
     while (true) {
       if (parent == null) {
         return false;
@@ -96,7 +96,31 @@ public class FileUtil {
       if (parent.equals(ancestor)) {
         return true;
       }
-      parent = parent.getParentFile();
+      parent = getParentFile(parent);
+    }
+  }
+
+  @Nullable
+  public static File getParentFile(final File file) {
+    int skipCount = 0;
+    File parentFile = file;
+    while (true) {
+      parentFile = parentFile.getParentFile();
+      if (parentFile == null) {
+        return null;
+      }
+      if (".".equals(parentFile.getName())) {
+        continue;
+      }
+      if ("..".equals(parentFile.getName())) {
+        skipCount++;
+        continue;
+      }
+      if (skipCount > 0) {
+        skipCount--;
+        continue;
+      }
+      return parentFile;
     }
   }
 
