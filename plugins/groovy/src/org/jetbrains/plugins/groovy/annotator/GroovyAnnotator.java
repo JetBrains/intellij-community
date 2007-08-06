@@ -473,6 +473,12 @@ public class GroovyAnnotator implements Annotator {
         checkNewExpression(holder, (GrNewExpression) parent, resolveResult);
         return;
       }
+      
+      if (parent instanceof GrImportStatement &&
+          ((GrImportStatement) parent).isStatic() &&
+          refElement.multiResolve(false).length > 0) {
+        return;
+      }
 
       checkSingleResolvedElement(holder, refElement, resolveResult);
     }
