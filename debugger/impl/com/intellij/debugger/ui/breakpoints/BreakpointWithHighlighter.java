@@ -521,7 +521,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public int getLineIndex() {
-    return getSourcePosition().getLine();
+    final SourcePosition sourcePosition = getSourcePosition();
+    return (sourcePosition != null) ? sourcePosition.getLine() : -1;
   }
 
   protected static RangeHighlighter createHighlighter(Project project,
