@@ -84,7 +84,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                       // Memory leak on static field in BasicPopupMenuUI
 
                       try {
-                        final Object helperObject = getField(BasicPopupMenuUI.class, null, Object.class, "menuKeyboardHelper");
+                        final Object helperObject = ReflectionUtil.getField(BasicPopupMenuUI.class, null, Object.class, "menuKeyboardHelper");
                         if (null != helperObject) {
                           resetField(helperObject, Component.class, "lastFocused");
                         }
@@ -172,22 +172,6 @@ public final class SwingCleanuper implements ApplicationComponent{
     }
     catch (Exception e) {
       LOG.info(e);
-    }
-  }
-
-  private static Object getField(Class objectClass, Object object, Class type, String name) {
-    try {
-      final Field field = ReflectionUtil.findAssignableField(objectClass, type, name);
-      field.setAccessible(true);
-      return field.get(object);
-    }
-    catch (NoSuchFieldException e) {
-      LOG.info(e);
-      return null;
-    }
-    catch (IllegalAccessException e) {
-      LOG.info(e);
-      return null;
     }
   }
 

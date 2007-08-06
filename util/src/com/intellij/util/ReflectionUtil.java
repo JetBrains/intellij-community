@@ -113,10 +113,10 @@ public class ReflectionUtil {
     return result;
   }
 
-  public static Field findField(Class clazz, Class type, String name) throws NoSuchFieldException {
+  public static Field findField(Class clazz, @Nullable Class type, String name) throws NoSuchFieldException {
     final ArrayList<Field> fields = collectFields(clazz);
     for (Field each : fields) {
-      if (name.equals(each.getName()) && each.getType().equals(type)) return each;
+      if (name.equals(each.getName()) && (type == null || each.getType().equals(type))) return each;
     }
 
     throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
@@ -146,28 +146,52 @@ public class ReflectionUtil {
     }
   }
 
-  public static void resetField(Class clazz, Class type, String name) throws NoSuchFieldException, IllegalAccessException {
-    resetField(null, findField(clazz, type, name));
+  public static void resetField(Class clazz, Class type, String name)  {
+    try {
+      resetField(null, findField(clazz, type, name));
+    }
+    catch (NoSuchFieldException e) {
+      LOG.info(e);
+    }
   }
-  public static void resetField(Object object, Class type, String name) throws NoSuchFieldException, IllegalAccessException {
-    resetField(object, findField(object.getClass(), type, name));
+  public static void resetField(Object object, Class type, String name)  {
+    try {
+      resetField(object, findField(object.getClass(), type, name));
+    }
+    catch (NoSuchFieldException e) {
+      LOG.info(e);
+    }
   }
 
-  private static void resetField(@Nullable final Object object, final Field field) throws IllegalAccessException {
+  public static void resetField(Object object, String name) {
+    try {
+      resetField(object, findField(object.getClass(), null, name));
+    }
+    catch (NoSuchFieldException e) {
+      LOG.info(e);
+    }
+  }
+
+  private static void resetField(@Nullable final Object object, final Field field)  {
     field.setAccessible(true);
     Class<?> type = field.getType();
-    if (type.isPrimitive()) {
-      if (boolean.class.equals(type)) {
-        field.set(object, Boolean.FALSE);
-      } else if (int.class.equals(type)){
-        field.set(object, new Integer(0));
-      } else if (double.class.equals(type)) {
-        field.set(object, new Double(0));
-      } else if (float.class.equals(type)) {
-        field.set(object, new Float(0));
+    try {
+      if (type.isPrimitive()) {
+        if (boolean.class.equals(type)) {
+          field.set(object, Boolean.FALSE);
+        } else if (int.class.equals(type)){
+          field.set(object, new Integer(0));
+        } else if (double.class.equals(type)) {
+          field.set(object, new Double(0));
+        } else if (float.class.equals(type)) {
+          field.set(object, new Float(0));
+        }
+      } else {
+        field.set(object, null);
       }
-    } else {
-      field.set(object, null);
+    }
+    catch (IllegalAccessException e) {
+      LOG.info(e);
     }
   }
 
@@ -189,4 +213,19 @@ public class ReflectionUtil {
     return findMethod(aClass.getDeclaredMethods(), name, parameters);
   }
 
+  public static Object getField(Class objectClass, Object object, Class type, String name) {
+    try {
+      final Field field = findAssignableField(objectClass, type, name);
+      field.setAccessible(true);
+      return field.get(object);
+    }
+    catch (NoSuchFieldException e) {
+      LOG.info(e);
+      return null;
+    }
+    catch (IllegalAccessException e) {
+      LOG.info(e);
+      return null;
+    }
+  }
 }
