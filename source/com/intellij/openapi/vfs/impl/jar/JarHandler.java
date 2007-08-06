@@ -77,9 +77,11 @@ public class JarHandler implements FileSystemInterface {
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
       if (root != null) {
         root.markDirty();
+        ManagingFS fs = ManagingFS.getInstance();
         for (VirtualFile child : root.getChildren()) {
-          ManagingFS fs = ManagingFS.getInstance();
-          fs.processEvents(Collections.singletonList(new VFileDeleteEvent(this, child, true)));
+          if (child != null) {
+            fs.processEvents(Collections.singletonList(new VFileDeleteEvent(this, child, true)));
+          }
         }
 
         root.markDirtyRecursively();
