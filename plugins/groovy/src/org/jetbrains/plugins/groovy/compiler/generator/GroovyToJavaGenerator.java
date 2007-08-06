@@ -376,7 +376,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private Map<String, String> getDefinedGetters(Map<String, String> gettersNames, GrMethod method) {
     String getVariable;
-    String methodName = method.getNameIdentifierGroovy().getText();
+    String methodName = method.getName();
     if (methodName.startsWith("get")) {
       String var = methodName.substring(methodName.indexOf("get") + "get".length());
 
@@ -395,7 +395,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private Map<String, String> getDefinedSetters(Map<String, String> settersNames, GrMethod method) {
     String setVariable;
-    String methodName = method.getNameIdentifierGroovy().getText();
+    String methodName = method.getName();
     if (methodName.startsWith("set")) {
       String var = methodName.substring(methodName.indexOf("set") + "set".length());
 

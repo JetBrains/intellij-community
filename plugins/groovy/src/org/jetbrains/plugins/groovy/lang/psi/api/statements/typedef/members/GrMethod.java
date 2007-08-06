@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -40,4 +42,8 @@ public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement
   GrTypeElement getReturnTypeElementGroovy();
 
   PsiElement getNameIdentifierGroovy();
+
+  @NotNull
+  @NonNls
+  String getName();
 }
