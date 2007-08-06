@@ -236,7 +236,7 @@ public class GroovyAnnotator implements Annotator {
       }
     }
 
-    checkDuplicateMethod(methods.toArray(GrMethod.EMPTY_ARRAY), holder);
+    checkDuplicateMethod(methods.toArray(new GrMethod[methods.size()]), holder);
   }
 
   private void checkDuplicateMethod(GrMethod[] grMethods, AnnotationHolder holder) {
@@ -414,7 +414,7 @@ public class GroovyAnnotator implements Annotator {
         } else {
           if (refExpr.getParent() instanceof GrReferenceExpression) {
             Annotation annotation = holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
-            if (!refExpr.getText().contains(".")) {
+            if (refExpr.getQualifierExpression() == null) {
               registerAddImportFixes(refExpr, annotation);
               registerCreateClassByTypeFix(refExpr, annotation, false);
             }
@@ -493,9 +493,8 @@ public class GroovyAnnotator implements Annotator {
       // Register quickfix
       final Annotation annotation = holder.createErrorAnnotation(refElement, message);
       // todo implement for nested classes
-      if (!refElement.getText().contains(".")) {
+      if (refElement.getQualifier() == null) {
         registerAddImportFixes(refElement, annotation);
-        PsiElement parent = refElement.getParent();
         registerCreateClassByTypeFix(refElement, annotation, false);
       }
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
