@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.popup.IconButton;
@@ -18,21 +19,22 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class InlineProgressIndicator extends ProgressIndicatorBase {
+public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
 
   private final FixedHeightLabel myText = new FixedHeightLabel();
   private final FixedHeightLabel myText2 = new FixedHeightLabel();
 
-  private final MyProgressBar myProgress;
+  private MyProgressBar myProgress;
 
-  private final JPanel myComponent;
+  private JPanel myComponent;
 
   private final InplaceButton myCancelButton;
 
   private final boolean myCompact;
-  private final TaskInfo myInfo;
+  private TaskInfo myInfo;
 
   private final FixedHeightLabel myProcessName = new FixedHeightLabel();
+  private boolean myDisposed;
 
   public InlineProgressIndicator(boolean compact, TaskInfo processInfo) {
     myCompact = compact;
@@ -126,7 +128,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   private void updateRunning() {
     queueRunningUpdate(new Runnable() {
       public void run() {
-
       }
     });
   }
@@ -134,6 +135,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   private void updateProgress() {
     queueProgressUpdate(new Runnable() {
       public void run() {
+        if (isDisposed()) return;
+
         _updateProgress();
 
         myComponent.repaint();
@@ -302,4 +305,19 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
+  public void dispose() {
+    if (myDisposed) return;
+
+    myDisposed = true;
+
+    myComponent.removeAll();
+
+    myComponent = null;
+    myProgress = null;
+    myInfo = null;
+  }
+
+  private boolean isDisposed() {
+    return myDisposed;
+  }
 }

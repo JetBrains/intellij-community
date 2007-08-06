@@ -313,6 +313,7 @@ public class InfoAndProgressPanel extends JPanel {
       queueRunningUpdate(new Runnable() {
         public void run() {
           removeProgress(MyInlineProgressIndicator.this);
+          dispose();
         }
       });
     }
@@ -326,6 +327,7 @@ public class InfoAndProgressPanel extends JPanel {
       queueRunningUpdate(new Runnable() {
         public void run() {
           removeProgress(MyInlineProgressIndicator.this);
+          dispose();
         }
       });
     }
