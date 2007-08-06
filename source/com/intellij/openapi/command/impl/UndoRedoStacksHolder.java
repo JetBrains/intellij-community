@@ -19,13 +19,20 @@ import java.util.Set;
  */
 
 class UndoRedoStacksHolder {
-  private HashMap<DocumentReference, LinkedList<UndoableGroup>> myStackOwnerToStack = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
-  private LinkedList<UndoableGroup> myGlobalStack = new LinkedList<UndoableGroup>();
-
   private final Key<LinkedList<UndoableGroup>> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
 
-  public LinkedList<UndoableGroup> getStack(Document document) {
-    return getStack(DocumentReferenceByDocument.createDocumentReference(document));
+  private UndoManagerImpl myManager;
+
+  private LinkedList<UndoableGroup> myGlobalStack = new LinkedList<UndoableGroup>();
+  private HashMap<DocumentReference, LinkedList<UndoableGroup>> myStackOwnerToStack = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
+
+  public UndoRedoStacksHolder(UndoManagerImpl m) {
+    myManager = m;
+  }
+
+  public LinkedList<UndoableGroup> getStack(Document d) {
+    Document original = myManager.getOriginal(d);
+    return getStack(DocumentReferenceByDocument.createDocumentReference(original));
   }
 
   public LinkedList<UndoableGroup> getStack(@NotNull DocumentReference docRef) {

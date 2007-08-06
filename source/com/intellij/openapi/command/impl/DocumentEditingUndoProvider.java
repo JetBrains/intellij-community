@@ -16,9 +16,14 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.FileViewProvider;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * author: lesya
@@ -29,6 +34,7 @@ class DocumentEditingUndoProvider {
 
   private final MyEditorDocumentListener myDocumentListener;
   private final Project myProject;
+  private final Map<Document, List<Document>> myDocumentCopies = new HashMap<Document, List<Document>>();
 
   public DocumentEditingUndoProvider(Project project, EditorFactory editorFactory) {
     myDocumentListener = new MyEditorDocumentListener();
@@ -43,9 +49,42 @@ class DocumentEditingUndoProvider {
     eventMulticaster.removeDocumentListener(myDocumentListener);
   }
 
+  public void registerDocumentCopy(Document d, Document copy) {
+    List<Document> copies = myDocumentCopies.get(d);
+    if (copies == null) {
+      copies = new ArrayList<Document>();
+      myDocumentCopies.put(d, copies);
+    }
+    copies.add(copy);
+  }
+
+  public void unregisterDocumentCopy(Document d, Document copy) {
+    List<Document> copies = myDocumentCopies.get(d);
+    copies.remove(copy);
+    if (copies.isEmpty()) myDocumentCopies.remove(d);
+  }
+
+  public Document getOriginal(Document d) {
+    for (Map.Entry<Document,List<Document>> copies: myDocumentCopies.entrySet()) {
+      for (Document copy : copies.getValue()) {
+        if (d == copy) return copies.getKey();
+      }
+    }
+    return d;
+  }
+
+  private boolean isCopy(Document document) {
+    for (List<Document> dd : myDocumentCopies.values()) {
+      if(dd.contains(document)) return true;
+    }
+    return false;
+  }
+
   private class MyEditorDocumentListener extends DocumentAdapter {
+
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();
+      if (isCopy(document)) return;
       if (allEditorsAreViewersFor(document)) return;
       if (myProject != null && !isToPostEvents(document)) return;
 

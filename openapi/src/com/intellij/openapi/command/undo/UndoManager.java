@@ -52,4 +52,7 @@ public abstract class UndoManager {
    * make undoable action in current document in order to Undo action work from current file
    */
   public abstract void markDocumentForUndo(PsiFile file);
+
+  public abstract void registerDocumentCopy(Document d, Document copy);
+  public abstract void unregisterDocumentCopy(Document d, Document copy);
 }

@@ -34,6 +34,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -59,8 +60,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private CommandListener myCommandListener;
 
-  private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder();
-  private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder();
+  private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(this);
+  private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(this);
 
 
   private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
@@ -179,7 +180,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private void registerRootChangesListener() {
     if (myProject == null) return;
-    
+
     myRootsChangesListener = new ModuleRootListener() {
       public void rootsChanged(ModuleRootEvent e) {
       }
@@ -267,6 +268,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public void projectClosed() {
+  }
+
+  @TestOnly
+  public void flushCurrentCommandMerger() {
+    myMerger.flushCurrentCommand();
   }
 
   public void clearUndoRedoQueue(FileEditor editor) {
@@ -407,55 +413,47 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public boolean isUndoAvailable(@Nullable FileEditor editor) {
-    if (editor instanceof TextEditor) {
-      Editor activeEditor = ((TextEditor)editor).getEditor();
-      if (activeEditor.isViewer()) {
-        return false;
-      }
-    }
-    final Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
-    if (documents != null && documents.length > 0) {
-      for (Document document : documents) {
-        if (myMerger != null && !myMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
-          return true;
-        }
-
-        LinkedList localStack = getUndoStacksHolder().getStack(document);
-        if (!localStack.isEmpty()) {
-          return true;
-        }
-      }
-
-      return false;
-
-    }
-    else {
-      if (myMerger != null && myMerger.isComplex() && !myMerger.isEmpty()) return true;
-      return !myUndoStacksHolder.getGlobalStack().isEmpty();
-    }
+    return isUndoOrRedoAvailable(editor, myUndoStacksHolder, true);
   }
 
   public boolean isRedoAvailable(@Nullable FileEditor editor) {
+    return isUndoOrRedoAvailable(editor, myRedoStacksHolder, false);
+  }
+
+  private boolean isUndoOrRedoAvailable(FileEditor editor, UndoRedoStacksHolder stackHolder, boolean shouldCheckMerger) {
     if (editor instanceof TextEditor) {
       Editor activeEditor = ((TextEditor)editor).getEditor();
       if (activeEditor.isViewer()) {
         return false;
       }
     }
-    final Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
+
+    Document[] documents = editor == null ? null : TextEditorProvider.getDocuments(editor);
+
     if (documents != null && documents.length > 0) {
       for (Document document : documents) {
-        LinkedList localStack = getRedoStacksHolder().getStack(document);
+        Document original = getOriginal(document);
+
+        if (shouldCheckMerger) {
+          if (myMerger != null && !myMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(original))) {
+            return true;
+          }
+        }
+
+        LinkedList localStack = stackHolder.getStack(original);
         if (!localStack.isEmpty()) {
           return true;
         }
       }
 
-
       return false;
     }
     else {
-      return !myRedoStacksHolder.getGlobalStack().isEmpty();
+      if (shouldCheckMerger) {
+        if (myMerger != null && myMerger.isComplex() && !myMerger.isEmpty()) return true;
+      }
+
+      return !stackHolder.getGlobalStack().isEmpty();
     }
   }
 
@@ -581,6 +579,19 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     });
   }
 
+  @Override
+  public void registerDocumentCopy(Document d, Document copy) {
+    myDocumentEditingUndoProvider.registerDocumentCopy(d, copy);
+  }
+
+  @Override
+  public void unregisterDocumentCopy(Document d, Document copy) {
+    myDocumentEditingUndoProvider.unregisterDocumentCopy(d, copy);
+  }
+
+  public Document getOriginal(Document d) {
+    return myDocumentEditingUndoProvider.getOriginal(d);
+  }
 
   private class MyBeforeDeletionListener extends VirtualFileAdapter {
     public void beforeFileDeletion(VirtualFileEvent event) {
