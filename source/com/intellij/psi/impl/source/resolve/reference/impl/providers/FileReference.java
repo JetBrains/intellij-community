@@ -209,7 +209,8 @@ public class FileReference
       public boolean execute(PsiFileSystemItem element) {
         final VirtualFile file = element.getVirtualFile();
         if (file != null && !file.isDirectory()) {
-          final PsiFile psiFile = getElement().getManager().findFile(file);
+          final PsiManager psiManager = getElement().getManager();
+          final PsiFile psiFile = psiManager.findFile(file);
           if (psiFile != null) {
             element = psiFile;
           }

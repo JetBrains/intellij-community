@@ -663,6 +663,10 @@ public abstract class BreakpointPropertiesPanel {
           super.show();
         }
 
+        public JComponent getPreferredFocusedComponent() {
+          return myEditor;
+        }
+
         @Nullable
         protected JComponent createCenterPanel() {
           final JPanel panel = new JPanel(new BorderLayout());
