@@ -1,6 +1,5 @@
-package com.intellij.codeInsight.hint.api.impls;
+package com.intellij.lang.parameterInfo;
 
-import com.intellij.codeInsight.hint.api.ParameterInfoHandler2;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -45,7 +44,7 @@ public class ParameterInfoUtils {
 
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset,
-                                                          @NotNull ParameterInfoHandler2 findArgumentListHelper){
+                                                          @NotNull ParameterInfoHandlerWithTabActionSupport findArgumentListHelper){
     if (file == null) return null;
 
     CharSequence chars = file.getViewProvider().getContents();
@@ -71,7 +70,7 @@ public class ParameterInfoUtils {
           if (offset == range.getEndOffset() - 1){
             PsiElement[] children = parent.getChildren();
             PsiElement last = children[children.length - 1];
-            if (last.getNode().getElementType() == findArgumentListHelper.getRBraceType()){
+            if (last.getNode().getElementType() == findArgumentListHelper.getActualParametersRBraceType()){
               parent = parent.getParent();
               continue;
             }

@@ -1,5 +1,6 @@
 package com.intellij.lang.xml;
 
+import com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
@@ -13,6 +14,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -171,5 +173,16 @@ public class XMLLanguage extends CompositeLanguage {
 
   protected DocumentationProvider createDocumentationProvider() {
     return new XmlDocumentationProvider();
+  }
+
+  private ParameterInfoHandler[] myHandlers;
+
+  public @Nullable ParameterInfoHandler[] getParameterInfoHandlers() {
+    if (myHandlers == null) {
+      myHandlers = new ParameterInfoHandler[] {
+        new XmlParameterInfoHandler()
+      };
+    }
+    return myHandlers;
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.lang.refactoring.JavaNamesValidator;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -543,6 +544,10 @@ public abstract class Language {
   }
 
   public @Nullable LanguageDialect[] getAvailableLanguageDialects() {
+    return null;
+  }
+
+  public @Nullable ParameterInfoHandler[] getParameterInfoHandlers() {
     return null;
   }
 }

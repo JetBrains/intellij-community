@@ -1,16 +1,12 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.hint.api.CreateParameterInfoContext;
-import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
-import com.intellij.codeInsight.hint.api.ParameterInfoProvider;
-import com.intellij.codeInsight.hint.api.impls.JavaParameterInfoProvider;
-import com.intellij.codeInsight.hint.api.impls.XmlParameterInfoProvider;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -20,13 +16,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -35,17 +28,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
   public boolean startInWriteAction() {
     return false;
-  }
-
-  private static Map<Language, ParameterInfoProvider> ourHandlers = new HashMap<Language, ParameterInfoProvider>(3);
-
-  static {
-    register(StdLanguages.JAVA,new JavaParameterInfoProvider());
-    register(StdLanguages.XML,new XmlParameterInfoProvider());
-  }
-
-  public static void register(@NotNull Language lang,@NotNull ParameterInfoProvider provider) {
-    ourHandlers.put(lang,provider);
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset,
@@ -68,8 +50,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     context.setHighlightedElement(highlightedElement);
 
     final Language language = psiElement.getLanguage();
-    final ParameterInfoProvider parameterInfoProvider = ourHandlers.get(language);
-    final ParameterInfoHandler[] handlers = parameterInfoProvider != null ? parameterInfoProvider.getHandlers():new ParameterInfoHandler[0];
+    ParameterInfoHandler[] handlers = language.getParameterInfoHandlers();
+    if (handlers == null) handlers = new ParameterInfoHandler[0];
 
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
@@ -112,10 +94,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                    0, false);
       }
     });
-  }
-
-  public static ParameterInfoProvider getHandler(final Language language) {
-    return ourHandlers.get(language);
   }
 
   interface BestLocationPointProvider {

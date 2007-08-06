@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.hint.api.*;
-import com.intellij.codeInsight.hint.api.impls.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +18,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lang.parameterInfo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,15 +273,15 @@ public class ParameterInfoController {
 
   public static void nextParameter (Editor editor, int lbraceOffset) {
     final ParameterInfoController controller = findControllerAtOffset(editor, lbraceOffset);
-    if (controller != null) controller.prevOrNextParameter(true, (ParameterInfoHandler2)controller.myHandler);
+    if (controller != null) controller.prevOrNextParameter(true, (ParameterInfoHandlerWithTabActionSupport)controller.myHandler);
   }
 
   public static void prevParameter (Editor editor, int lbraceOffset) {
     final ParameterInfoController parameterInfoController = findControllerAtOffset(editor, lbraceOffset);
-    if (parameterInfoController != null) parameterInfoController.prevOrNextParameter(false, (ParameterInfoHandler2)parameterInfoController.myHandler);
+    if (parameterInfoController != null) parameterInfoController.prevOrNextParameter(false, (ParameterInfoHandlerWithTabActionSupport)parameterInfoController.myHandler);
   }
 
-  private void prevOrNextParameter(boolean isNext, ParameterInfoHandler2 handler) {
+  private void prevOrNextParameter(boolean isNext, ParameterInfoHandlerWithTabActionSupport handler) {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     CharSequence chars = myEditor.getDocument().getCharsSequence();
     int offset = CharArrayUtil.shiftBackward(chars, myEditor.getCaretModel().getOffset() - 1, " \t") + 1;
@@ -291,13 +291,13 @@ public class ParameterInfoController {
       PsiElement argList = findArgumentList(file, offset, lbraceOffset);
 
       if (argList != null) {
-        int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getDelimiterType());
+        int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
         PsiElement currentParameter = null;
         if (currentParameterIndex > 0 && !isNext) {
-          currentParameter = handler.getParameters(argList)[currentParameterIndex - 1];
+          currentParameter = handler.getActualParameters(argList)[currentParameterIndex - 1];
         }
-        else if (currentParameterIndex < handler.getParameters(argList).length - 1 && isNext) {
-          currentParameter = handler.getParameters(argList)[currentParameterIndex + 1];
+        else if (currentParameterIndex < handler.getActualParameters(argList).length - 1 && isNext) {
+          currentParameter = handler.getActualParameters(argList)[currentParameterIndex + 1];
         }
 
         if (currentParameter != null) {
@@ -314,12 +314,12 @@ public class ParameterInfoController {
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
     if (file == null) return null;
-    final ParameterInfoProvider provider = ShowParameterInfoHandler.getHandler(PsiUtil.getLanguageAtOffset(file, offset));
+    final ParameterInfoHandler[] handlers = PsiUtil.getLanguageAtOffset(file, offset).getParameterInfoHandlers();
     
-    if (provider != null) {
-      for(ParameterInfoHandler handler:provider.getHandlers()) {
-        if (handler instanceof ParameterInfoHandler2) {
-          final ParameterInfoHandler2 parameterInfoHandler2 = (ParameterInfoHandler2)handler;
+    if (handlers != null) {
+      for(ParameterInfoHandler handler:handlers) {
+        if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
+          final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
           final E e = (E)ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
           if (e != null) return e;
@@ -339,7 +339,7 @@ public class ParameterInfoController {
       myFile = file;
     }
 
-    public int getParameterStart() {
+    public int getParameterListStart() {
       return myLbraceMarker.getStartOffset();
     }
 

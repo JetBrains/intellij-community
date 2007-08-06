@@ -1,10 +1,9 @@
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.hint.api.*;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod> {
-  public @Nullable Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
+  public @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }
 
@@ -61,8 +60,6 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
 
   public void showParameterInfo(final PsiAnnotationParameterList element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
-    //showParameterListHint(context.getEditor(), element, context.getProject(), ParameterInfoController.DEFAULT_PARAMETER_CLOSE_CHARS,
-    //                      context.getHighlightedElement(), context.getItemsToShow(),null);
   }
 
   public PsiAnnotationParameterList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
@@ -87,27 +84,24 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     return true;
   }
 
-  private static void updateAnnotationMethodPresentation(PsiAnnotationMethod method, ParameterInfoUIContext context) {
-      @NonNls StringBuffer buffer = new StringBuffer();
-      int highlightStartOffset;
-      int highlightEndOffset;
-      buffer.append(method.getReturnType().getPresentableText());
-      buffer.append(" ");
-      highlightStartOffset = buffer.length();
-      buffer.append(method.getName());
-      highlightEndOffset = buffer.length();
-      buffer.append("()");
-      if (method.getDefaultValue() != null) {
-        buffer.append(" default ");
-        buffer.append(method.getDefaultValue().getText());
-      }
+  public void updateUI(final PsiAnnotationMethod p, final ParameterInfoUIContext context) {
+    @NonNls StringBuffer buffer = new StringBuffer();
+    int highlightStartOffset;
+    int highlightEndOffset;
+    buffer.append(p.getReturnType().getPresentableText());
+    buffer.append(" ");
+    highlightStartOffset = buffer.length();
+    buffer.append(p.getName());
+    highlightEndOffset = buffer.length();
+    buffer.append("()");
 
-      context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, method.isDeprecated(),
-                                           false, context.getDefaultParameterColor());
+    if (p.getDefaultValue() != null) {
+      buffer.append(" default ");
+      buffer.append(p.getDefaultValue().getText());
     }
 
-  public void updateUI(final PsiAnnotationMethod p, final ParameterInfoUIContext context) {
-    updateAnnotationMethodPresentation(p,context);
+    context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(),
+                                         false, context.getDefaultParameterColor());
   }
 
   private static PsiAnnotationMethod findAnnotationMethod(PsiFile file, int offset) {

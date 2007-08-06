@@ -1,21 +1,20 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
-import com.intellij.codeInsight.hint.api.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SplittingUtil;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 class ParameterInfoComponent extends JPanel{
   private Object[] myObjects;

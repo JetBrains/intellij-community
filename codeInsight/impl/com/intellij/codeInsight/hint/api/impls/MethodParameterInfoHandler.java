@@ -3,15 +3,16 @@ package com.intellij.codeInsight.hint.api.impls;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.lang.parameterInfo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +23,12 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpressionList,Object,PsiExpression> {
+public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList,Object,PsiExpression> {
   private static Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
       Arrays.asList(PsiMethodCallExpression.class,PsiNewExpression.class, PsiAnonymousClass.class,PsiEnumConstant.class));
 
-  public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
-    final PsiElement[] allElements = LookupManager.getInstance(context.getProject()).getAllElementsForItem(item);
+  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+    final PsiElement[] allElements = LookupManager.getInstance(context.getProject()).getAllElementsForItem((LookupItem)item);
 
     if (allElements != null &&
         allElements.length > 0 &&
@@ -91,7 +92,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
   }
 
   public PsiExpressionList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
-    return findArgumentList(context.getFile(), context.getOffset(), context.getParameterStart());
+    return findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
   }
 
   public void updateParameterInfo(@NotNull final PsiExpressionList o, final UpdateParameterInfoContext context) {
@@ -199,7 +200,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
     return PsiExpressionList.class;
   }
 
-  public IElementType getRBraceType() {
+  public IElementType getActualParametersRBraceType() {
     return JavaTokenType.RBRACE;
   }
 
@@ -207,11 +208,11 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler2<PsiExpr
     return ourArgumentListAllowedParentClassesSet;
   }
 
-  public IElementType getDelimiterType() {
+  public IElementType getActualParameterDelimiterType() {
     return JavaTokenType.COMMA;
   }
 
-  public PsiExpression[] getParameters(PsiExpressionList psiExpressionList) {
+  public PsiExpression[] getActualParameters(PsiExpressionList psiExpressionList) {
     return psiExpressionList.getExpressions();
   }
 

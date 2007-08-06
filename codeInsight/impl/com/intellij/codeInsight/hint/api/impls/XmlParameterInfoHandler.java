@@ -2,8 +2,7 @@ package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.api.*;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,6 +12,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.lang.parameterInfo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     }
   };
 
-  public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
+  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     final Object lookupItem = item.getObject();
     if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
     return null;

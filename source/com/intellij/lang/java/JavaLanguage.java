@@ -2,6 +2,9 @@ package com.intellij.lang.java;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
 import com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor;
+import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
@@ -15,6 +18,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -139,5 +143,18 @@ public class JavaLanguage extends Language {
 
   protected DocumentationProvider createDocumentationProvider() {
     return new JavaDocumentationProvider();
+  }
+
+  private ParameterInfoHandler[] myHandlers;
+
+  public @Nullable ParameterInfoHandler[] getParameterInfoHandlers() {
+    if (myHandlers == null) {
+      myHandlers = new ParameterInfoHandler[] {
+        new MethodParameterInfoHandler(),
+        new ReferenceParameterInfoHandler(),
+        new AnnotationParameterInfoHandler()
+      };
+    }
+    return myHandlers;
   }
 }

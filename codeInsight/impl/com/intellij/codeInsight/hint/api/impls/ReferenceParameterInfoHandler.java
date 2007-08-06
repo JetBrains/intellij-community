@@ -1,10 +1,10 @@
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.hint.api.*;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
+import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import java.util.Arrays;
  * To change this template use File | Settings | File Templates.
  */
 public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
-  public Object[] getParametersForLookup(final LookupItem item, final ParameterInfoContext context) {
+  public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
     return null;
   }
 
