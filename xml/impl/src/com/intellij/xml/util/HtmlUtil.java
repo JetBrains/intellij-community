@@ -295,7 +295,7 @@ public class HtmlUtil {
     final Ref<String> charsetNameRef = new Ref<String>();
     try {
       new XmlBuilderDriver(content).build(new XmlBuilder() {
-        @NonNls Bag inTag = new HashBag();
+        @NonNls final Bag inTag = new HashBag();
         boolean metHttpEquiv = false;
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
                                         final int headerEndOffset) {
@@ -321,9 +321,9 @@ public class HtmlUtil {
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
-            @NonNls String value = v.toString();
+            @NonNls String value = v.toString().toLowerCase();
             if (name.equals("http-equiv")) {
-              metHttpEquiv |= value.equals("Content-Type");
+              metHttpEquiv |= value.equals("content-type");
             }
             if (metHttpEquiv && name.equals("content")) {
               int start = value.indexOf(CHARSET_PREFIX);

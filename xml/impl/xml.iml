@@ -12,6 +12,7 @@
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
