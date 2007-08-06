@@ -84,7 +84,6 @@ public class CompileDriver {
   private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
 
   public CompileDriver(Project project) {
-    //ApplicationManager.getApplication().assertIsDispatchThread(); // to be able to run WriteAction
     myProject = project;
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
     myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
@@ -93,33 +92,16 @@ public class CompileDriver {
 
     final GeneratingCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(GeneratingCompiler.class);
     if (generatingCompilers.length > 0) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-          for (GeneratingCompiler compiler : generatingCompilers) {
-            for (final Module module : allModules) {
-              final VirtualFile productionOutput = lookupVFile(compiler, module, false);
-              final VirtualFile testOutput = lookupVFile(compiler, module, true);
-              final Pair<GeneratingCompiler, Module> pair = new Pair<GeneratingCompiler, Module>(compiler, module);
-              final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
-              myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
-            }
-          }
+      final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
+      for (GeneratingCompiler compiler : generatingCompilers) {
+        for (final Module module : allModules) {
+          final VirtualFile productionOutput = lookupVFile(compiler, module, false);
+          final VirtualFile testOutput = lookupVFile(compiler, module, true);
+          final Pair<GeneratingCompiler, Module> pair = new Pair<GeneratingCompiler, Module>(compiler, module);
+          final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
+          myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
         }
-        private VirtualFile lookupVFile(final GeneratingCompiler compiler, final Module module, final boolean forTestSources) {
-          final String path = getGenerationOutputPath(compiler, module, forTestSources);
-          final File file = new File(path);
-          final VirtualFile vFile;
-          if (file.mkdirs()) {
-            vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          }
-          else {
-            vFile = LocalFileSystem.getInstance().findFileByPath(path);
-          }
-          return vFile;
-        }
-        
-      });
+      }
     }
 
     myProjectRootManager = ProjectRootManager.getInstance(myProject);
@@ -1975,5 +1957,17 @@ public class CompileDriver {
   private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
     ModulesConfigurator.showDialog(myProject, moduleNameToSelect, tabNameToSelect, false);
   }
-
+  
+  private VirtualFile lookupVFile(final GeneratingCompiler compiler, final Module module, final boolean forTestSources) {
+    final String path = getGenerationOutputPath(compiler, module, forTestSources);
+    final File file = new File(path);
+    final VirtualFile vFile;
+    if (file.mkdirs()) {
+      vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    }
+    else {
+      vFile = LocalFileSystem.getInstance().findFileByPath(path);
+    }
+    return vFile;
+  }
 }
