@@ -38,7 +38,7 @@ public class ImplicitFacetManager implements Disposable {
     public void onClosed(final JBPopup popup) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myNotificationIsShowing = false;
+          myNotificationPopup = null;
           firePendingNotifications();
         }
       });
@@ -52,7 +52,7 @@ public class ImplicitFacetManager implements Disposable {
   private StatusBar myStatusBar;
   private boolean myUIInitialized;
   private Set<Facet> myPendingNewFacets = new HashSet<Facet>();
-  private boolean myNotificationIsShowing;
+  private JBPopup myNotificationPopup;
   private Alarm myNotificationAlarm = new Alarm();
 
   public ImplicitFacetManager(final Project project, final FacetAutodetectingManagerImpl autodetectingManager) {
@@ -73,9 +73,15 @@ public class ImplicitFacetManager implements Disposable {
     if (!Comparing.haveEqualElements(myImplicitFacets, implicitFacets)) {
       final Set<Facet> newFacets = new HashSet<Facet>(implicitFacets);
       newFacets.removeAll(myImplicitFacets);
+      final boolean someFacetsDeleted = !implicitFacets.containsAll(myImplicitFacets);
+
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         Runnable runnable = new Runnable() {
           public void run() {
+            if (someFacetsDeleted && myNotificationPopup != null) {
+              myNotificationPopup.cancel();
+            }
+
             myPendingNewFacets.addAll(newFacets);
             queueNotificationPopup();
 
@@ -125,9 +131,8 @@ public class ImplicitFacetManager implements Disposable {
       return;
     }
 
-    if (!myNotificationIsShowing) {
-      myNotificationIsShowing = true;
-      createImplicitFacetsComponent(newFacets).fireNotificationPopup(myStatusBar, myNotificationPopupListener);
+    if (myNotificationPopup == null) {
+      myNotificationPopup = createImplicitFacetsComponent(newFacets).fireNotificationPopup(myStatusBar, myNotificationPopupListener);
     }
     else {
       myPendingNewFacets.addAll(newFacets);
@@ -175,6 +180,7 @@ public class ImplicitFacetManager implements Disposable {
   public void disposeUI() {
     if (!myUIInitialized) return;
 
+    myNotificationPopup = null;
     myNotificationAlarm.cancelAllRequests();
     myStatusBar.removeCustomIndicationComponent(myAttentionComponent);
     myAttentionComponent.disposeUI();
@@ -182,6 +188,10 @@ public class ImplicitFacetManager implements Disposable {
   }
 
   public void configureFacet(final Facet facet) {
+    if (!FacetUtil.isRegistered(facet)) {
+      return;
+    }
+
     facet.setImplicit(false);
     onImplicitFacetChanged();
     ModulesConfigurator.showFacetSettingsDialog(facet, null);
