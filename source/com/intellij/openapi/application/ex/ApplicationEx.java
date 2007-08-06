@@ -1,9 +1,9 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.progress.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,6 +31,8 @@ public interface ApplicationEx extends Application {
   String getComponentsDescriptor();
 
   String getName();
+
+  boolean holdsReadLock();
 
   void assertReadAccessToDocumentsAllowed();
 

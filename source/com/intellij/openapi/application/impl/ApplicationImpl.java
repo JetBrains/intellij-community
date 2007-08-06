@@ -213,6 +213,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myName;
   }
 
+  public boolean holdsReadLock() {
+    return myActionsLock.isReadLockAcquired(Thread.currentThread());
+  }
+
   @Override
   protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
     if (PluginManager.isPluginClass(componentClassName)) {

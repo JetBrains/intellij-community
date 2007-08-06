@@ -32,6 +32,10 @@ public class MockApplication extends MockComponentManager implements Application
     return "mock";
   }
 
+  public boolean holdsReadLock() {
+    return false;
+  }
+
   public void load(String path) throws IOException, InvalidDataException {
   }
 

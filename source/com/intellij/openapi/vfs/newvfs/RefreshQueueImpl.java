@@ -7,6 +7,7 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -49,7 +50,7 @@ public class RefreshQueueImpl extends RefreshQueue {
         }
       }
       else {
-        if (app.isReadAccessAllowed()) {
+        if (((ApplicationEx)app).holdsReadLock()) {
           LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. This will eventually cause deadlock if there are events to fire");
           return;
         }
