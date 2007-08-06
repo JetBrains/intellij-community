@@ -8,12 +8,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
-  public Annotation createErrorAnnotation(PsiElement elt, String message) {
+  public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.ERROR, message);
   }
 

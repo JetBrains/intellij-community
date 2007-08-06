@@ -18,6 +18,7 @@ package com.intellij.lang.annotation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +36,7 @@ public interface AnnotationHolder {
    * @param message the error message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createErrorAnnotation(PsiElement elt, @Nullable String message);
+  Annotation createErrorAnnotation(@NotNull PsiElement elt, @Nullable String message);
 
   /**
    * Creates an error annotation with the specified message over the specified AST node.
