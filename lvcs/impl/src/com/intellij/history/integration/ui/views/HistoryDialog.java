@@ -265,6 +265,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     myGateway.showError(message("message.can.not.revert.because", formatted));
   }
 
+  private boolean isCreatePatchEnabled() {
+    return myModel.isCreatePatchEnabled();
+  }
+
   private void createPatch() {
     try {
       CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel();
@@ -291,7 +295,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     b.setCenterPanel(p.getPanel());
     return b.show() == OK_EXIT_CODE;
   }
-
 
 
   protected void showHelp() {
@@ -332,6 +335,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     public void actionPerformed(AnActionEvent e) {
       createPatch();
+    }
+
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      p.setEnabled(isCreatePatchEnabled());
     }
   }
 

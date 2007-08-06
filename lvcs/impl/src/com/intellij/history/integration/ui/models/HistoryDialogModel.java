@@ -143,9 +143,16 @@ public abstract class HistoryDialogModel {
   protected abstract RevisionReverter createRevisionReverter();
 
   public boolean isRevertEnabled() {
-    if (myIsChangesSelected) {
-      return myLeftRevisionIndex - myRightRevisionIndex == 1;
-    }
+    if (myIsChangesSelected) return isCorrectChangeSelection();
     return isCurrentRevisionSelected() && myLeftRevisionIndex > 0;
+  }
+
+  public boolean isCreatePatchEnabled() {
+    if (myIsChangesSelected) return isCorrectChangeSelection();
+    return myLeftRevisionIndex > 0;
+  }
+
+  private boolean isCorrectChangeSelection() {
+    return myLeftRevisionIndex - myRightRevisionIndex == 1;
   }
 }

@@ -216,6 +216,36 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     m.selectChanges(0, 1);
     assertFalse(m.isRevertEnabled());
   }
+  
+  @Test
+  public void testIsCreatePatchEnabledForRevision() {
+    m.selectRevisions(1, 1);
+    assertTrue(m.isCreatePatchEnabled());
+
+    m.selectRevisions(2, 2);
+    assertTrue(m.isCreatePatchEnabled());
+
+    m.selectRevisions(1, 2);
+    assertTrue(m.isCreatePatchEnabled());
+
+    m.selectRevisions(0, 0);
+    assertFalse(m.isCreatePatchEnabled());
+
+    m.selectRevisions(-1, -1);
+    assertFalse(m.isCreatePatchEnabled());
+  }
+
+  @Test
+  public void testIsCreatePatchEnabledForChange() {
+    m.selectChanges(0, 0);
+    assertTrue(m.isCreatePatchEnabled());
+
+    m.selectChanges(1, 1);
+    assertTrue(m.isCreatePatchEnabled());
+
+    m.selectChanges(0, 1);
+    assertFalse(m.isCreatePatchEnabled());
+  }
 
   private void initModelFor(String name) {
     VirtualFile f = new TestVirtualFile(name, null, -1);
