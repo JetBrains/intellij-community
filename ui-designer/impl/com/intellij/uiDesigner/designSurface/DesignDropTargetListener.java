@@ -34,7 +34,7 @@ class DesignDropTargetListener implements DropTargetListener {
   private final GuiEditor myEditor;
   private final GridInsertProcessor myGridInsertProcessor;
   private boolean myUseDragDelta = false;
-  private ComponentTree myComponentTree;
+  private final ComponentTree myComponentTree;
 
   public DesignDropTargetListener(final GuiEditor editor) {
     myEditor = editor;
