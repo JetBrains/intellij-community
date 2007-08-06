@@ -362,6 +362,10 @@ public class ContainerUtil {
     return false;
   }
 
+  public static <T> T getFirstItem(final Collection<T> items, final T def) {
+    return items == null || items.isEmpty()? def : items.iterator().next();
+  }
+
   public static <T> Collection<T> subtract(Collection<T> from, Collection<T> what) {
     final HashSet<T> set = new HashSet<T>(from);
     set.removeAll(what);
