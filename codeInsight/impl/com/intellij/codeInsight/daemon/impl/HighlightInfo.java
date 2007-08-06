@@ -48,16 +48,22 @@ public class HighlightInfo {
     return severity;
   }
 
-  public TextAttributes getTextAttributes() {
-    return forcedTextAttributes == null ? getAttributesByType(type) : forcedTextAttributes;
+  public TextAttributes getTextAttributes(final PsiElement element) {
+    return forcedTextAttributes == null ? getAttributesByType(element, type) : forcedTextAttributes;
   }
-  public static TextAttributes getAttributesByType(@NotNull HighlightInfoType type) {
+
+  public static TextAttributes getAttributesByType(@Nullable final PsiElement element, @NotNull HighlightInfoType type) {
+    final TextAttributes textAttributes = SeverityRegistrar.getInstance(element != null ? element.getProject() : null).getTextAttributesBySeverity(type.getSeverity(element));
+    if (textAttributes != null) {
+      return textAttributes;
+    }
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributesKey key = type.getAttributesKey();
     return scheme.getAttributes(key);
   }
 
-  public Color getErrorStripeMarkColor() {
+  @Nullable
+  public Color getErrorStripeMarkColor(final PsiElement element) {
     if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
@@ -73,8 +79,10 @@ public class HighlightInfo {
     if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING).getErrorStripeColor();
     }
-    TextAttributes attributes = getAttributesByType(type);
+
+    TextAttributes attributes = getAttributesByType(element, type);
     return attributes == null ? null : attributes.getErrorStripeColor();
+
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description) {
@@ -114,7 +122,7 @@ public class HighlightInfo {
     HighlightInfoFilter[] filters = getFilters();
     HighlightInfo highlightInfo = new HighlightInfo(type, element, start, end, description, toolTip);
     for (HighlightInfoFilter filter : filters) {
-      if (!filter.accept(highlightInfo, null)) {
+      if (!filter.accept(highlightInfo, element != null ? element.getContainingFile() : null)) {
         return null;
       }
     }

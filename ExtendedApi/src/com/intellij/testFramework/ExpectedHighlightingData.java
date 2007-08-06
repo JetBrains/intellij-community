@@ -283,7 +283,7 @@ public class ExpectedHighlightingData {
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
       (expectedInfo.type == null || expectedInfo.type.equals(info.type)) &&
       (Comparing.strEqual("*", expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
-      && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes().equals(info.getTextAttributes()))
+      && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
       ;
   }
 }

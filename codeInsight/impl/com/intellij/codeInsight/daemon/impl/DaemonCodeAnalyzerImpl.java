@@ -408,14 +408,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @NotNull
   private static HighlightInfo[] stripWarningsCoveredByErrors(final Project project, HighlightInfo[] highlights, MarkupModel markup) {
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     List<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
     List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
     for (HighlightInfo highlight : highlights) {
-      if (highlight.getSeverity() == HighlightSeverity.ERROR) {
+      if (severityRegistrar.compare(highlight.getSeverity(), HighlightSeverity.ERROR) >= 0) {
         errors.add(highlight);
       }
     }
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+
     for (HighlightInfo highlight : highlights) {
       if (severityRegistrar.compare(HighlightSeverity.ERROR, highlight.getSeverity()) > 0 &&
           highlight.getSeverity().myVal > 0) {

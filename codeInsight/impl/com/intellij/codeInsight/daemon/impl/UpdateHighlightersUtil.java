@@ -133,7 +133,7 @@ public class UpdateHighlightersUtil {
         if (severity == HighlightSeverity.WARNING) {
           layer = HighlighterLayer.WARNING;
         }
-        else if (severity == HighlightSeverity.ERROR) {
+        else if (SeverityRegistrar.getInstance(project).compare(severity,  HighlightSeverity.ERROR) >= 0) {
           layer = HighlighterLayer.ERROR;
         } else {
           layer = HighlighterLayer.ADDITIONAL_SYNTAX;
@@ -148,8 +148,8 @@ public class UpdateHighlightersUtil {
           infoEndOffset = docLength;
         }
 
+        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
         if (info.isFileLevelAnnotation) {
-          final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
           if (psiFile != null) {
             if (psiFile.getViewProvider().isPhysical()) {
               VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
@@ -179,7 +179,7 @@ public class UpdateHighlightersUtil {
           infoStartOffset,
           infoEndOffset,
           layer,
-          info.getTextAttributes(),
+          info.getTextAttributes(psiFile),
           HighlighterTargetArea.EXACT_RANGE);
 
         //highlighter.setUserObject(info); // debug purposes only!
@@ -188,7 +188,7 @@ public class UpdateHighlightersUtil {
         info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
         info.group = group;
 
-        highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor());
+        highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor(psiFile));
         highlighter.setErrorStripeTooltip(info);
         highlighter.setGutterIconRenderer(info.getGutterIconRenderer());
 

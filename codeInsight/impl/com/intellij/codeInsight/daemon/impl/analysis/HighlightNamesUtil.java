@@ -40,7 +40,7 @@ public class HighlightNamesUtil {
   }
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element, final HighlightInfoType type) {
-    TextAttributes regularAttributes = HighlightInfo.getAttributesByType(type);
+    TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type);
     if (element == null) return regularAttributes;
     TextAttributes scopeAttributes = getScopeAttributes(element);
     return TextAttributes.merge(scopeAttributes, regularAttributes);
