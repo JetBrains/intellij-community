@@ -20,8 +20,11 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -34,14 +37,14 @@ import java.awt.event.KeyEvent;
 public class CreateClassDialog extends DialogWrapper {
   private final JLabel myInformationLabel = new JLabel("#");
   private final JLabel myPackageLabel = new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label"));
-  private final JTextField myTfPackage = new MyTextField();
-  private final FixedSizeButton myPackageChooseButton = new FixedSizeButton(myTfPackage);
+  private final ReferenceEditorComboWithBrowseButton myPackageComponent;
   private final JTextField myTfClassName = new MyTextField();
   private final Project myProject;
   private PsiDirectory myTargetDirectory;
   private String myClassName;
   private final boolean myClassNameEditable;
   private final Module myModule;
+  @NonNls private static final String RECENTS_KEY = "CreateClassDialog.RecentsKey";
 
   public CreateClassDialog(@NotNull Project project,
                            @NotNull String title,
@@ -53,9 +56,22 @@ public class CreateClassDialog extends DialogWrapper {
     super(project, true);
     myClassNameEditable = classNameEditable;
     myModule = defaultModule;
-    init();
     myClassName = targetClassName;
     myProject = project;
+    myPackageComponent = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        PackageChooserDialog chooser = new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
+        chooser.selectPackage(myPackageComponent.getText());
+        chooser.show();
+        PsiPackage aPackage = chooser.getSelectedPackage();
+        if (aPackage != null) {
+          myPackageComponent.setText(aPackage.getQualifiedName());
+        }
+      }
+    }, targetPackageName != null ? targetPackageName : "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
+
+
+    init();
 
     setTitle(title);
 
@@ -67,7 +83,6 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myTfPackage.setText(targetPackageName != null ? targetPackageName : "");
   }
 
   protected Action[] createActions() {
@@ -75,7 +90,7 @@ public class CreateClassDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myClassNameEditable ? myTfClassName : myTfPackage;
+    return myClassNameEditable ? myTfClassName : myPackageComponent.getChildComponent();
   }
 
   protected JComponent createCenterPanel() {
@@ -123,24 +138,12 @@ public class CreateClassDialog extends DialogWrapper {
 
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        myPackageChooseButton.doClick();
+        myPackageComponent.getButton().doClick();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myTfPackage);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myPackageComponent.getChildComponent());
 
-    myPackageChooseButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
-        chooser.selectPackage(myTfPackage.getText());
-        chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          myTfPackage.setText(aPackage.getQualifiedName());
-        }
-      }
-    });
     JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(myTfPackage, BorderLayout.CENTER);
-    _panel.add(myPackageChooseButton, BorderLayout.EAST);
+    _panel.add(myPackageComponent, BorderLayout.CENTER);
     panel.add(_panel, gbConstraints);
 
     return panel;
@@ -151,7 +154,7 @@ public class CreateClassDialog extends DialogWrapper {
   }
 
   private String getPackageName() {
-    String name = myTfPackage.getText();
+    String name = myPackageComponent.getText();
     return name != null ? name.trim() : "";
   }
 
@@ -165,6 +168,7 @@ public class CreateClassDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myPackageComponent.getText());
     final String packageName = getPackageName();
 
     final String[] errorString = new String[1];
