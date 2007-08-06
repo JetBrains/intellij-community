@@ -27,5 +27,5 @@ public abstract class FacetTypeRegistry {
   public abstract FacetType findFacetType(String id);
 
   @Nullable
-  public abstract FacetType findFacetType(FacetTypeId typeId);
+  public abstract <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(FacetTypeId<F> typeId);
 }

@@ -195,7 +195,7 @@ public class FacetDetectionProcessor {
       parentTypes.add(facetType.getId());
       while (typeId != null) {
         myLevel++;
-        FacetType underlying = FacetTypeRegistry.getInstance().findFacetType(typeId);
+        FacetType<?,?> underlying = FacetTypeRegistry.getInstance().findFacetType(typeId);
         LOG.assertTrue(underlying != null, "Cannot find facet type by id: " + typeId);
         typeId = underlying.getUnderlyingFacetType();
         if (!parentTypes.add(typeId)) {
@@ -220,7 +220,7 @@ public class FacetDetectionProcessor {
 
     public <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, final FacetDetector<VirtualFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
-      LOG.assertTrue(myFacetType.getUnderlyingFacetType() != null, "This method can be used oly for sub-facets");
+      LOG.assertTrue(myFacetType.getUnderlyingFacetType() != null, "This method can be used only for sub-facets");
       MyFacetDetectorWrapper<C, U> detector = new MyFacetDetectorWrapper<C, U>(myFacetType, fileType, virtualFileFilter,
                                                                                facetDetector, underlyingFacetSelector);
       getDetectorsMap() .put(fileType, detector);

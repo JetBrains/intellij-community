@@ -57,7 +57,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   @Nullable
-  public final FacetTypeId getUnderlyingFacetType() {
+  public final FacetTypeId<?> getUnderlyingFacetType() {
     return myUnderlyingFacetType;
   }
 

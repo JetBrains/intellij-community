@@ -4,15 +4,13 @@
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.FacetTypeRegistry;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.*;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -59,7 +57,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   }
 
   @Nullable
-  public FacetType findFacetType(FacetTypeId typeId) {
+  public <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(FacetTypeId<F> typeId) {
     return myFacetTypes.get(typeId);
   }
 

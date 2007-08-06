@@ -31,18 +31,18 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
     return FACET_SUPPORT_PREFIX + facetType.getStringId();
   }
 
-  protected static String getProviderId(final FacetTypeId typeId) {
-    FacetType type = FacetTypeRegistry.getInstance().findFacetType(typeId);
+  protected static String getProviderId(final FacetTypeId<?> typeId) {
+    FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
     LOG.assertTrue(type != null, typeId);
     return getProviderId(type);
   }
 
   @Nullable
   public String getUnderlyingFrameworkId() {
-    FacetTypeId typeId = myFacetType.getUnderlyingFacetType();
+    FacetTypeId<?> typeId = myFacetType.getUnderlyingFacetType();
     if (typeId == null) return null;
 
-    FacetType type = FacetTypeRegistry.getInstance().findFacetType(typeId);
+    FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
     return type != null ? getProviderId(type) : null;
 
   }
@@ -50,7 +50,7 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
   protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version, final @Nullable Library library) {
     ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
     Facet underlyingFacet = null;
-    FacetTypeId underlyingFacetType = myFacetType.getUnderlyingFacetType();
+    FacetTypeId<?> underlyingFacetType = myFacetType.getUnderlyingFacetType();
     if (underlyingFacetType != null) {
       underlyingFacet = model.getFacetByType(underlyingFacetType);
       LOG.assertTrue(underlyingFacet != null, underlyingFacetType);

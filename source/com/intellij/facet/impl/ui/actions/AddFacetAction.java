@@ -42,7 +42,7 @@ public class AddFacetAction extends AnAction {
       facetName = myType.getPresentableName() + i;
       i++;
     }
-    final FacetTypeId underlyingFacetType = myType.getUnderlyingFacetType();
+    final FacetTypeId<?> underlyingFacetType = myType.getUnderlyingFacetType();
     if (parent == null && underlyingFacetType == null || parent != null && parent.getFacetType().getId() == underlyingFacetType) {
       myEditor.createFacet(parent, myType, facetName);
     }
@@ -74,7 +74,7 @@ public class AddFacetAction extends AnAction {
       return false;
     }
 
-    final FacetTypeId underlyingTypeId = type.getUnderlyingFacetType();
+    final FacetTypeId<?> underlyingTypeId = type.getUnderlyingFacetType();
     final FacetInfo selectedFacet = editor.getSelectedFacetInfo();
     if (selectedFacet == null) {
       return underlyingTypeId == null && canAddFacet(null, type, editor);
