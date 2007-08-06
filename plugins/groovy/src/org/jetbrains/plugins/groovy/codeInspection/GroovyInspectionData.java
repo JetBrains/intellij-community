@@ -33,8 +33,12 @@ public class GroovyInspectionData {
   private static final GroovyInspectionData INSTANCE = new GroovyInspectionData();
 
   private Map<GroovyFile, Set<GrImportStatement>> myUsedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
+  private Map<GroovyFile, Boolean> myUsedImportsAreClear = new HashMap<GroovyFile, Boolean>();
 
   public void registerImportUsed(GrImportStatement importStatement) {
+    if (importStatement.getParent() == null) {
+      return;
+    }
     PsiFile file = importStatement.getContainingFile();
     if (file == null || !(file instanceof GroovyFile)) return;
     GroovyFile groovyFile = (GroovyFile) file;
@@ -46,10 +50,12 @@ public class GroovyInspectionData {
     } else {
       importStatements.add(importStatement);
     }
+    myUsedImportsAreClear.put(groovyFile, false);
   }
 
   public void clearImportsForFile(GroovyFile file) {
     if (file == null || myUsedImportStatements.get(file) == null) return;
+    myUsedImportsAreClear.put(file, true) ;
     myUsedImportStatements.get(file).clear();
   }
 
@@ -61,7 +67,7 @@ public class GroovyInspectionData {
       myUsedImportStatements.put(file, statements);
       return statements.toArray(new GrImportStatement[statements.size()]);
     } else if (importStatements.size() == 0) {
-      return new GrImportStatement[0];
+      return GrImportStatement.EMPTY_ARRAY;
     } else {
       return importStatements.toArray(new GrImportStatement[importStatements.size()]);
     }
@@ -69,5 +75,9 @@ public class GroovyInspectionData {
 
   public static GroovyInspectionData getInstance() {
     return INSTANCE;
+  }
+
+  public boolean isUsedImportsClear(GroovyFile file) {
+    return myUsedImportsAreClear.get(file) == null || myUsedImportsAreClear.get(file);
   }
 }

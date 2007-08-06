@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author ilyas
  */
 public interface GrImportStatement extends GrTopStatement {
+  public static final GrImportStatement[] EMPTY_ARRAY = new GrImportStatement[0];
   @Nullable
   GrCodeReferenceElement getImportReference();
 

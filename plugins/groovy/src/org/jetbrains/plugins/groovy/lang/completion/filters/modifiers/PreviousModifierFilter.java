@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public class PreviousModifierFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "final", "abstract",
+    String[] modifiers = new String[]{"private", "public", "protected", "transient", "final", "abstract",
         "native", "threadsafe", "volatile", "strictfp", "synchronized"};
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement) element;

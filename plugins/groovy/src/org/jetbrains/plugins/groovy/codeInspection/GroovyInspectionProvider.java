@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsInsp
 public class GroovyInspectionProvider implements InspectionToolProvider, ApplicationComponent {
   public Class[] getInspectionClasses() {
     return new Class[] {
-        GroovyUnusedImportsInspection.class
+        //GroovyUnusedImportsInspection.class
     };
   }
 

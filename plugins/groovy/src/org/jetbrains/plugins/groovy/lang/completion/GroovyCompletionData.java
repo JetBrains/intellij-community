@@ -150,12 +150,14 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerModifierCompletion() {
-    String[] modifiers = new String[]{"private", "public", "protected", "static", "transient", "abstract",
+    String[] modifiers = new String[]{"private", "public", "protected", "transient", "abstract",
         "native", "volatile", "strictfp"};
     registerStandardCompletion(new ModifiersFilter(), modifiers);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "static", "transient", "abstract",
-        "native", "volatile", "strictfp", "synchronized");
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "transient", "abstract",
+        "native", "volatile", "strictfp", "synchronized", "static");
+    registerStandardCompletion(new StaticFilter(), "static");
   }
+
 
   private static CompletionVariant ourReferenceVariant;
   static {
