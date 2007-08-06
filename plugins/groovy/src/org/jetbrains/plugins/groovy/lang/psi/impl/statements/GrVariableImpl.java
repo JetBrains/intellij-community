@@ -204,7 +204,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
     return null;
   }
 
-  //todo: see GrModifierListImpl.hasVariableModifierProperty()
+  //todo: see GrModifierListImpl.hasModifierProperty()
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
     if (modifierList != null) return modifierList.hasModifierProperty(property);

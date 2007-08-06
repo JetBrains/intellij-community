@@ -115,6 +115,17 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       });
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
+//        GrMembersDeclaration[] membersDeclarations = typeDefinition.getMemberDeclarations();
+//
+//        for (GrMembersDeclaration membersDeclaration : membersDeclarations) {
+//          GrMember[] grMembers = membersDeclaration.getMembers();
+//
+//          for (GrMember grMember : grMembers) {
+//            members.add(grMember.getName());
+//          }
+//        }
+//
+//        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TopLevelDependencyValidityState(file.getTimeStamp(), members), isInTestSources, file);
         item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file);
         generationItems.add(item);
       }
@@ -494,7 +505,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> settersNames) {
     GrModifierListImpl modifierList = (GrModifierListImpl) variableDeclaration.getModifierList();
-    if (modifierList.hasVariableModifierProperty(PsiModifier.FINAL)) return;
+    if (modifierList.hasModifierProperty(PsiModifier.FINAL)) return;
 
     GrTypeElement element = variableDeclaration.getTypeElementGroovy();
     String type;
@@ -722,7 +733,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasMethodModifierProperty(modifierType)) {
+      if (list.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -737,7 +748,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasVariableModifierProperty(modifierType)) {
+      if (list.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -752,7 +763,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasClassExplicitModifier(modifierType)) {
+      if (list.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -865,6 +876,27 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     public VirtualFile getVFile() {
       return myVFile;
+    }
+  }
+
+  class TopLevelDependencyValidityState implements ValidityState {
+    private long myTimestamp;
+    private List<String> members;  //fields
+
+    TopLevelDependencyValidityState(long timestamp, List<String> members) {
+      //use signature of method and access modifiers
+      this.members = members;
+      myTimestamp = timestamp;
+    }
+
+    public boolean equalsTo(ValidityState validityState) {
+      if (!(validityState instanceof TopLevelDependencyValidityState)) return false;
+
+      return ((TopLevelDependencyValidityState) validityState).myTimestamp == this.myTimestamp
+          && members.equals(((TopLevelDependencyValidityState) validityState).members);
+    }
+
+    public void save(DataOutputStream dataOutputStream) throws IOException {
     }
   }
 }

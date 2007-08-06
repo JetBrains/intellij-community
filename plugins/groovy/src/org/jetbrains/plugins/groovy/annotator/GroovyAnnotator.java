@@ -100,16 +100,16 @@ public class GroovyAnnotator implements Annotator {
       GrModifierListImpl modifiersList = (GrModifierListImpl) grVariableDeclaration.getModifierList();
       checkAccessModifiers(holder, modifiersList);
 
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.VOLATILE)
-          && modifiersList.hasClassImplicitModifier(PsiModifier.FINAL)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)
+          && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
       }
 
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.NATIVE)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.native"));
       }
 
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.ABSTRACT)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.abstract"));
       }
     }
@@ -122,14 +122,14 @@ public class GroovyAnnotator implements Annotator {
     assert modifiersList != null;
 
     //script methods
-    boolean isMethodAbstract = modifiersList.hasClassImplicitModifier(PsiModifier.ABSTRACT);
-    boolean isMethodStatic = modifiersList.hasClassImplicitModifier(PsiModifier.STATIC);
+    boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
+    boolean isMethodStatic = modifiersList.hasExplicitModifier(PsiModifier.STATIC);
     if (grMethod.getParent() instanceof GroovyFile) {
       if (isMethodAbstract) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
       }
 
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.NATIVE)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.native"));
       }
     } else  //type definition methods
@@ -138,11 +138,11 @@ public class GroovyAnnotator implements Annotator {
 
         //interface
         if (containingTypeDef.isInterface()) {
-          if (modifiersList.hasClassImplicitModifier(PsiModifier.STATIC)) {
+          if (modifiersList.hasExplicitModifier(PsiModifier.STATIC)) {
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.static.method"));
           }
 
-          if (modifiersList.hasClassImplicitModifier(PsiModifier.PRIVATE)) {
+          if (modifiersList.hasExplicitModifier(PsiModifier.PRIVATE)) {
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.private.method"));
           }
 
@@ -185,29 +185,29 @@ public class GroovyAnnotator implements Annotator {
     /**** class ****/
     checkAccessModifiers(holder, modifiersList);
 
-    if (modifiersList.hasClassImplicitModifier(PsiModifier.ABSTRACT)
-        && modifiersList.hasClassImplicitModifier(PsiModifier.FINAL)) {
+    if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)
+        && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
       holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
     }
 
-    if (modifiersList.hasClassImplicitModifier(PsiModifier.TRANSIENT)) {
+    if (modifiersList.hasExplicitModifier(PsiModifier.TRANSIENT)) {
       holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.transient.not.allowed.here"));
     }
-    if (modifiersList.hasClassImplicitModifier(PsiModifier.VOLATILE)) {
+    if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)) {
       holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.volatile.not.allowed.here"));
     }
 
     /**** interface ****/
     if (grTypeDefinition.isInterface()) {
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.FINAL)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("intarface.cannot.have.modifier.final"));
       }
 
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.VOLATILE)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.volatile.not.allowed.here"));
       }
 
-      if (modifiersList.hasClassImplicitModifier(PsiModifier.TRANSIENT)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.TRANSIENT)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.transient.not.allowed.here"));
       }
     }
@@ -216,9 +216,9 @@ public class GroovyAnnotator implements Annotator {
   private void checkAccessModifiers(AnnotationHolder holder, GrModifierListImpl modifierList) {
     Assert.assertNotNull("modifiers list must be not null", modifierList);
 
-    boolean hasPrivate = modifierList.hasClassImplicitModifier(PsiModifier.PRIVATE);
-    boolean hasPublic = modifierList.hasClassImplicitModifier(PsiModifier.PUBLIC);
-    boolean hasProtected = modifierList.hasClassImplicitModifier(PsiModifier.PROTECTED);
+    boolean hasPrivate = modifierList.hasExplicitModifier(PsiModifier.PRIVATE);
+    boolean hasPublic = modifierList.hasExplicitModifier(PsiModifier.PUBLIC);
+    boolean hasProtected = modifierList.hasExplicitModifier(PsiModifier.PROTECTED);
 
     if (hasPrivate && hasPublic
         || hasPrivate && hasProtected

@@ -17,24 +17,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -78,11 +73,25 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
 
   public boolean hasModifierProperty(@NotNull @NonNls String name) {
     if (name.equals(PsiModifier.PUBLIC)) {
-      //groovy class members are public by default
+      //groovy type definitions and methods are public by default
       return findChildByType(GroovyElementTypes.kPRIVATE) == null && findChildByType(GroovyElementTypes.kPROTECTED) == null;
     }
 
-    return hasExplicitModifier(name);
+    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
+    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
+    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
+    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
+    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
+    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
+    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
+    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
+
+    if (!(getParent() instanceof GrVariableDeclaration)) {
+      if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
+      if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
+    }
+
+    return false;
   }
 
   public boolean hasExplicitModifier(@NotNull @NonNls String name) {
@@ -97,72 +106,6 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
     if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
     if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
-    return false;
-  }
-
-  public boolean hasClassImplicitModifier(@NotNull @NonNls String name) {
-    if (name.equals(PsiModifier.PUBLIC)) return findChildByType(GroovyElementTypes.kPUBLIC) != null;
-    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
-    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
-    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
-    if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
-    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
-    if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
-    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
-    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
-    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
-    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
-    return false;
-  }
-
-  public boolean hasClassExplicitModifier(@NotNull @NonNls String name) {
-    if (name.equals(PsiModifier.PUBLIC)) {
-      //groovy class members are public by default
-      return findChildByType(GroovyElementTypes.kPRIVATE) == null && findChildByType(GroovyElementTypes.kPROTECTED) == null;
-    }
-
-    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
-    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
-    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
-    if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
-    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
-    if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
-    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
-    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
-    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
-    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
-    return false;
-  }
-
-  public boolean hasVariableModifierProperty(@NonNls @NotNull String name) {
-    if (name.equals(PsiModifier.PRIVATE)) {
-      return findChildByType(GroovyElementTypes.kPUBLIC) == null && findChildByType(GroovyElementTypes.kPROTECTED) == null;
-    }
-
-    if (name.equals(PsiModifier.PUBLIC)) return findChildByType(GroovyElementTypes.kPUBLIC) != null;
-    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
-    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
-    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
-    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
-    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
-    return false;
-  }
-
-  public boolean hasMethodModifierProperty(@NonNls @NotNull String name) {
-    if (name.equals(PsiModifier.PUBLIC)) {
-      return findChildByType(GroovyElementTypes.kPRIVATE) == null && findChildByType(GroovyElementTypes.kPROTECTED) == null;
-    }
-
-    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
-    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
-    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
-    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
-    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
-    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
-    if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
-    if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
-    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
-    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
     return false;
   }
 
