@@ -136,7 +136,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable(getModule());
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myModel);
     mainPanel.add(myLanguageLevelConfigurable.createComponent(), BorderLayout.NORTH);
     myLanguageLevelConfigurable.reset();
 
