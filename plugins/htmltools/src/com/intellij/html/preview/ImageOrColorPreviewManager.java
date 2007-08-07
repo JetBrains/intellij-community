@@ -57,11 +57,13 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (myEditor != null) {
         final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-        final Point location = pointerInfo.getLocation();
-        SwingUtilities.convertPointFromScreen(location, myEditor.getContentComponent());
+        if (pointerInfo != null) {
+          final Point location = pointerInfo.getLocation();
+          SwingUtilities.convertPointFromScreen(location, myEditor.getContentComponent());
 
-        myQueue.cancelAllUpdates();
-        myQueue.queue(new PreviewUpdate(this, location));
+          myQueue.cancelAllUpdates();
+          myQueue.queue(new PreviewUpdate(this, location));
+        }
       }
     }
   }
