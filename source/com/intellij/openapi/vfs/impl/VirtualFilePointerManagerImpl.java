@@ -22,6 +22,7 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -183,6 +184,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   public void disposeComponent() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "SmartVirtualPointerManager";
   }
@@ -212,6 +214,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     private List<VirtualFilePointer> myPointersToUdate = null;
 
     public void before(final List<? extends VFileEvent> events) {
+      cleanContainerCaches();
       List<VirtualFilePointer> toFireEvents = new ArrayList<VirtualFilePointer>();
       List<String> toUpdateUrl = new ArrayList<String>();
 
@@ -267,6 +270,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     public void after(final List<? extends VFileEvent> events) {
+      cleanContainerCaches();
+
       for (String url : myUrlsToUpdate) {
         VirtualFilePointer pointer = myUrlToPointerMap.remove(url);
         if (pointer != null) {
