@@ -152,8 +152,8 @@ public class CvsChangeListsBuilder {
     final int[] subRevisions = number.getSubRevisions();
     String branchName = null;
     String branchNumberString = null;
-    if (subRevisions != null && subRevisions.length == 4) {
-      int branchRevNumber = subRevisions [2];
+    if (subRevisions != null && subRevisions.length >= 4) {
+      int branchRevNumber = subRevisions [subRevisions.length-2];
       CvsRevisionNumber branchNumber = number.removeTailVersions(2).addTailVersions(0, branchRevNumber);
       branchNumberString = branchNumber.asString();
     }
