@@ -1,5 +1,6 @@
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -15,19 +16,23 @@ import java.awt.event.ActionEvent;
 /**
  * @author yole
  */
-public class TextComponentUndoProvider {
+public class TextComponentUndoProvider implements Disposable {
   private JTextComponent myTextComponent;
   private UndoManager myUndoManager = new UndoManager();
+  private UndoableEditListener myUndoableEditListener;
+  private Keymap myOldKeymap;
 
   public TextComponentUndoProvider(final JTextComponent textComponent) {
     myTextComponent = textComponent;
 
-    myTextComponent.getDocument().addUndoableEditListener(new UndoableEditListener() {
+    myUndoableEditListener = new UndoableEditListener() {
       public void undoableEditHappened(UndoableEditEvent e) {
         myUndoManager.addEdit(e.getEdit());
       }
-    });
-    Keymap keymap = myTextComponent.getKeymap();
+    };
+    myTextComponent.getDocument().addUndoableEditListener(myUndoableEditListener);
+    myOldKeymap = myTextComponent.getKeymap();
+    Keymap keymap = JTextComponent.addKeymap(null, myOldKeymap);
     com.intellij.openapi.keymap.Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] undoShortcuts = activeKeymap.getShortcuts("$Undo");
     Shortcut[] redoShortcuts = activeKeymap.getShortcuts("$Redo");
@@ -59,5 +64,16 @@ public class TextComponentUndoProvider {
     }
 
     myTextComponent.setKeymap(keymap);
+  }
+
+  public void dispose() {
+    if (myUndoableEditListener != null) {
+      myTextComponent.getDocument().removeUndoableEditListener(myUndoableEditListener);
+      myUndoableEditListener = null;
+    }
+    if (myOldKeymap != null) {
+      myTextComponent.setKeymap(myOldKeymap);
+      myOldKeymap = null;
+    }
   }
 }

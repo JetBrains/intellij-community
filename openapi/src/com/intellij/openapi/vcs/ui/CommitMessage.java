@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.TextComponentUndoProvider;
@@ -25,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class CommitMessage extends JPanel{
+public class CommitMessage extends JPanel implements Disposable {
   private final JTextArea myCommentArea = new JTextArea();
 
   public CommitMessage() {
@@ -35,7 +37,8 @@ public class CommitMessage extends JPanel{
     add(scrollPane, BorderLayout.CENTER);
     JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommentArea);
     add(separator, BorderLayout.NORTH);
-    new TextComponentUndoProvider(myCommentArea);
+    final TextComponentUndoProvider textComponentUndoProvider = new TextComponentUndoProvider(myCommentArea);
+    Disposer.register(this, textComponentUndoProvider);
   }
 
   @Nullable
@@ -67,5 +70,8 @@ public class CommitMessage extends JPanel{
   public void requestFocusInMessage() {
     myCommentArea.requestFocus();
     myCommentArea.selectAll();
+  }
+
+  public void dispose() {
   }
 }
