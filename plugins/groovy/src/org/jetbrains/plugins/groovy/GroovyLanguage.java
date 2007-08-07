@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
  * @author ilyas
  */
 public class GroovyLanguage extends Language {
+
   public GroovyLanguage() {
     super("Groovy");
   }

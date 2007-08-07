@@ -434,12 +434,13 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void registerUsedImport(GrReferenceElement refExpr, GroovyResolveResult resolveResult) {
+  private void registerUsedImport(GrReferenceElement referenceElement, GroovyResolveResult resolveResult) {
     GrImportStatement importStatement = resolveResult.getImportStatementContext();
     if (importStatement != null) {
-      PsiFile file = refExpr.getContainingFile();
+      PsiFile file = referenceElement.getContainingFile();
       if (file instanceof GroovyFile) {
-        GroovyInspectionData.getInstance().registerImportUsed(importStatement);
+        GroovyInspectionData inspectionData = GroovyInspectionData.getInstance(referenceElement.getProject());
+        inspectionData.updateImportUsed(importStatement, referenceElement);
       }
     }
   }

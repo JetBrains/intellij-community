@@ -15,6 +15,8 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -40,7 +42,9 @@ import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoProvider;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
+import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -93,6 +97,7 @@ public class GroovyLoader implements ApplicationComponent {
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
         new GroovyCompletionData());
 
+
     ShowParameterInfoHandler.register(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), GroovyParameterInfoProvider.INSTANCE);
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
@@ -106,6 +111,10 @@ public class GroovyLoader implements ApplicationComponent {
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(Project project) {
+        TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
+        GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
+        registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL,}, null, true, -1);
+
         CompilerManager compilerManager = CompilerManager.getInstance(project);
         GroovyToJavaGenerator generator = new GroovyToJavaGenerator(project);
         compilerManager.addCompiler(generator);
