@@ -42,7 +42,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     return QuickFixBundle.message("remove.unused.variable.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
       myVariable != null
       && myVariable.isValid()
@@ -50,7 +50,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myVariable.getContainingFile())) return;
     removeVariableAndReferencingStatements(editor);
   }
@@ -155,7 +155,8 @@ public class RemoveUnusedVariableFix implements IntentionAction {
         // there should not be read access to the variable, otherwise it is not unused
         LOG.assertTrue(
           lExpression instanceof PsiReferenceExpression &&
-          variable == ((PsiReferenceExpression)lExpression).resolve());
+          variable == ((PsiReferenceExpression)lExpression).resolve(),
+          expression.getText());
         PsiExpression rExpression = expression.getRExpression();
         rExpression = PsiUtil.deparenthesizeExpression(rExpression);
         if (rExpression == null) return true;
