@@ -35,16 +35,6 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   }
 
   @Test
-  public void testTakingPhysicalFileContentOnCreation() {
-    configureToReturnPhysicalContent("physical");
-
-    VirtualFile f = new TestVirtualFile("f", "memory", -1);
-    fireCreated(f);
-
-    assertEquals(c("physical"), vcs.getEntry("f").getContent());
-  }
-
-  @Test
   public void testCreatingDirectories() {
     VirtualFile f = new TestVirtualFile("dir");
     fireCreated(f);
@@ -101,18 +91,6 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
     Entry e = vcs.getEntry("file");
     assertEquals(c("new content"), e.getContent());
     assertEquals(505L, e.getTimestamp());
-  }
-
-  @Test
-  public void testTakingPhysicalFileContentOnContentChange() {
-    configureToReturnPhysicalContent("physical");
-
-    vcs.createFile("f", cf("content"), -1);
-
-    VirtualFile f = new TestVirtualFile("f", "memory", -1);
-    fireContentChanged(f);
-
-    assertEquals(c("physical"), vcs.getEntry("f").getContent());
   }
 
   @Test
@@ -345,9 +323,5 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
     fireMoved(f, f, f);
 
     verify(vcs);
-  }
-
-  private void configureToReturnPhysicalContent(String c) {
-    gateway.setPhysicalContent(c);
   }
 }

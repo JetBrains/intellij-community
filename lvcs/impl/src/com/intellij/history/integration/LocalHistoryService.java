@@ -58,9 +58,11 @@ public class LocalHistoryService {
     myCommandProcessor.addCommandListener(myEventDispatcher);
     myFileManager.addVirtualFileListener(myEventDispatcher);
     myFileManager.addVirtualFileManagerListener(myEventDispatcher);
+    myFileManager.registerRefreshUpdater(myEventDispatcher);
   }
 
   public void shutdown() {
+    myFileManager.unregisterRefreshUpdater(myEventDispatcher);
     myFileManager.removeVirtualFileListener(myEventDispatcher);
     myFileManager.removeVirtualFileManagerListener(myEventDispatcher);
     myCommandProcessor.removeCommandListener(myEventDispatcher);

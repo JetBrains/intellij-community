@@ -1,6 +1,5 @@
 package com.intellij.history.integration;
 
-import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.ide.startup.CacheUpdater;
@@ -9,24 +8,23 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class Updater implements CacheUpdater {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
   private VirtualFile[] myVfsRoots;
 
-  // usage of Set is for quick search
-  // usage of LinkedHashSet is for preserving order of files
-  // due to performance problems on idea startup caused by hard-drive seeks
-  private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
-  private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
+  private CacheUpdaterProcessor myProcessor;
 
   public Updater(ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
     myVfsRoots = selectParentlessRootsAndSort(gw.getContentRoots());
+    myProcessor = new CacheUpdaterProcessor(myVcs);
   }
 
   protected VirtualFile[] selectParentlessRootsAndSort(List<VirtualFile> roots) {
@@ -63,38 +61,11 @@ public class Updater implements CacheUpdater {
     deleteObsoleteRoots();
     createAndUpdateRoots();
 
-    List<VirtualFile> result = new ArrayList<VirtualFile>(myFilesToCreate);
-    result.addAll(myFilesToUpdate);
-    return result.toArray(new VirtualFile[0]);
+    return myProcessor.queryNeededFiles();
   }
 
   public void processFile(FileContent c) {
-    VirtualFile f = c.getVirtualFile();
-    if (myFilesToCreate.contains(f)) {
-      myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
-    }
-    else {
-      // todo catching IDEADEV-18801 bug (asking invalid file for timestamp)
-      // the only possibilities are:
-      // file was removed between queryNeededFiles and processFile
-      // processFile was called with file which was not into created nor updated files
-      assert myFilesToUpdate.contains(f);
-      myVcs.changeFileContent(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
-    }
-  }
-
-  private ContentFactory contentFactoryFor(final FileContent c) {
-    return new ContentFactory() {
-      @Override
-      public byte[] getBytes() throws IOException {
-        return c.getPhysicalBytes();
-      }
-
-      @Override
-      public long getLength() throws IOException {
-        return c.getPhysicalLength();
-      }
-    };
+    myProcessor.processFile(c);
   }
 
   public void updatingDone() {
@@ -159,7 +130,7 @@ public class Updater implements CacheUpdater {
         }
         else {
           if (e.isOutdated(f.getTimeStamp())) {
-            myFilesToUpdate.add(f);
+            myProcessor.addFileToUpdate(f);
           }
         }
       }
@@ -195,7 +166,7 @@ public class Updater implements CacheUpdater {
       }
     }
     else {
-      myFilesToCreate.add(fileOrDir);
+      myProcessor.addFileToCreate(fileOrDir);
     }
   }
 

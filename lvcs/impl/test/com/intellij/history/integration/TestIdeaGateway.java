@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class TestIdeaGateway extends IdeaGateway {
-  private String myPhysicalContent;
   private List<MyDocument> myUnsavedDocuments = new ArrayList<MyDocument>();
   private Map<String, FileType> myFileTypes = new HashMap<String, FileType>();
   private List<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
@@ -39,21 +38,6 @@ public class TestIdeaGateway extends IdeaGateway {
 
   public void setContentRoots(VirtualFile... roots) {
     myContentRoots = Arrays.asList(roots);
-  }
-
-  @Override
-  public byte[] getPhysicalContent(VirtualFile f) throws IOException {
-    if (myPhysicalContent == null) return f.contentsToByteArray();
-    return myPhysicalContent.getBytes();
-  }
-
-  @Override
-  public long getPhysicalLength(VirtualFile f) throws IOException {
-    return getPhysicalContent(f).length;
-  }
-
-  public void setPhysicalContent(String c) {
-    myPhysicalContent = c;
   }
 
   @Override

@@ -8,25 +8,17 @@ import java.io.IOException;
 
 public class CacheUpdaterHelper {
   public static void performUpdate(CacheUpdater u) {
-    performUpdate(u, null);
-  }
-
-  public static void performUpdate(CacheUpdater u, String physicalContent) {
     for (VirtualFile f : u.queryNeededFiles()) {
-      u.processFile(fileContentOf(f, physicalContent));
+      u.processFile(fileContentOf(f));
     }
     u.updatingDone();
   }
 
-  public static FileContent fileContentOf(VirtualFile f) {
-    return fileContentOf(f, null);
-  }
-
-  public static FileContent fileContentOf(final VirtualFile f, final String physicalContent) {
+  public static FileContent fileContentOf(final VirtualFile f) {
     return new FileContent(f) {
       @Override
       public byte[] getPhysicalBytes() throws IOException {
-        return physicalContent == null ? f.contentsToByteArray() : physicalContent.getBytes();
+        return f.contentsToByteArray();
       }
 
       @Override

@@ -177,6 +177,16 @@ public class FileListeningTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(notFiltered));
     assertFalse(hasVcsEntry(filtered));
   }
+  
+  public void testDeletion() throws Exception {
+    VirtualFile f = root.createChildDirectory(null, "f.java");
+
+    String path = f.getPath();
+    assertTrue(hasVcsEntry(path));
+
+    f.delete(null);
+    assertFalse(hasVcsEntry(path));
+  }
 
   public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws Exception {
     VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);

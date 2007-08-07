@@ -115,6 +115,7 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
   protected class MyVirtualFileManagerEx extends StubVirtualFileManagerEx {
     private VirtualFileListener myFileListener;
     private VirtualFileManagerListener myFileManagerListener;
+    private CacheUpdater myRefreshUpdater;
 
     public void fireBeforeRefreshStart(boolean async) {
       myFileManagerListener.beforeRefreshStart(async);
@@ -174,6 +175,20 @@ public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
 
     public boolean hasVirtualFileManagerListener() {
       return myFileManagerListener != null;
+    }
+
+    @Override
+    public void registerRefreshUpdater(CacheUpdater u) {
+      myRefreshUpdater = u;
+    }
+
+    @Override
+    public void unregisterRefreshUpdater(CacheUpdater u) {
+      if (myRefreshUpdater == u) myRefreshUpdater = null;
+    }
+
+    public boolean hasRefreshUpdater() {
+      return myRefreshUpdater != null;
     }
   }
 

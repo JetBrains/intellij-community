@@ -3,6 +3,8 @@ package com.intellij.history.integration;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
@@ -14,11 +16,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-// todo split this class and rename it
-public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
+public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener, CacheUpdater {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
   private LocalHistoryFacade myFacade;
+
+  private boolean isRefreshing;
+  private CacheUpdaterProcessor myProcessor;
 
   public EventDispatcher(ILocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
@@ -28,10 +32,29 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   public void beforeRefreshStart(boolean asynchonous) {
     myFacade.startRefreshing();
+    myProcessor = new CacheUpdaterProcessor(myVcs);
+    isRefreshing = true;
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
+  }
+
+  public VirtualFile[] queryNeededFiles() {
+    return myProcessor.queryNeededFiles();
+  }
+
+  public void processFile(FileContent c) {
+    myProcessor.processFile(c);
+  }
+
+  public void updatingDone() {
+    isRefreshing = false;
+    myProcessor = null;
     myFacade.finishRefreshing();
+  }
+
+  public void canceled() {
+    throw new UnsupportedOperationException();
   }
 
   public void commandStarted(CommandEvent e) {
@@ -66,7 +89,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
     }
     else {
       if (wasCreatedDuringRootsUpdate(f)) return;
-      myFacade.create(f);
+      create(f);
     }
   }
 
@@ -77,7 +100,25 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   @Override
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    myFacade.changeFileContent(e.getFile());
+    changeContent(e.getFile());
+  }
+
+  private void create(VirtualFile f) {
+    if (isRefreshing && !f.isDirectory()) {
+      myProcessor.addFileToCreate(f);
+    }
+    else {
+      myFacade.create(f);
+    }
+  }
+
+  private void changeContent(VirtualFile f) {
+    if (isRefreshing) {
+      myProcessor.addFileToUpdate(f);
+    }
+    else {
+      myFacade.changeFileContent(f);
+    }
   }
 
   @Override
@@ -127,14 +168,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   @Override
   public void fileDeleted(VirtualFileEvent e) {
-    VirtualFile f;
-    if (e.getParent() == null) {
-      f = e.getFile();
-    }
-    else {
-      f = new ReparentedVirtualFile(e.getParent(), e.getFile());
-    }
-
+    VirtualFile f = e.getFile();
     if (wasDeletedDuringRootsUpdate(f)) return;
     myFacade.delete(f);
   }

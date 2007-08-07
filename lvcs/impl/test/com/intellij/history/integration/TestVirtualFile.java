@@ -58,10 +58,6 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     return myTimestamp;
   }
 
-  public long getLength() {
-    throw new UnsupportedOperationException();
-  }
-
   public VirtualFile[] getChildren() {
     return myChildren.toArray(new VirtualFile[0]);
   }
@@ -69,6 +65,10 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
   public void addChild(TestVirtualFile f) {
     f.myParent = this;
     myChildren.add(f);
+  }
+
+  public long getLength() {
+    return myContent == null ? 0 : myContent.getBytes().length;
   }
 
   public byte[] contentsToByteArray() throws IOException {

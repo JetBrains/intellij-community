@@ -117,14 +117,6 @@ public class IdeaGateway {
     return result;
   }
 
-  public byte[] getPhysicalContent(VirtualFile f) throws IOException {
-    return getFileSystem().physicalContentsToByteArray(f);
-  }
-
-  public long getPhysicalLength(VirtualFile f) throws IOException {
-    return getFileSystem().physicalLength(f);
-  }
-
   public void registerUnsavedDocuments(ILocalVcs vcs) {
     vcs.beginChangeSet();
     for (Document d : getUnsavedDocuments()) {

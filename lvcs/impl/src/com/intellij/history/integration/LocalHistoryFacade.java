@@ -98,12 +98,12 @@ public class LocalHistoryFacade {
     return new ContentFactory() {
       @Override
       public byte[] getBytes() throws IOException {
-        return myGateway.getPhysicalContent(f);
+        return f.contentsToByteArray();
       }
 
       @Override
       public long getLength() throws IOException {
-        return myGateway.getPhysicalLength(f);
+        return f.getLength();
       }
     };
   }

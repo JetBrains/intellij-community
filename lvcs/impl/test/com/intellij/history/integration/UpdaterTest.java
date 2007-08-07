@@ -159,21 +159,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testAddingNewFilesWithPhysicalContentAndTimestamp() {
-    TestVirtualFile root = new TestVirtualFile("root");
-    TestVirtualFile file = new TestVirtualFile("file", "virtual content", 123L);
-    root.addChild(file);
-
-    configureToReturnPhysicalContent("physical content");
-
-    updateWith(root);
-
-    Entry e = vcs.getEntry("root/file");
-    assertEquals(c("physical content"), e.getContent());
-    assertEquals(123L, e.getTimestamp());
-  }
-
-  @Test
   public void testAddingNewFilesRecursively() {
     TestVirtualFile root = new TestVirtualFile("root");
     TestVirtualFile dir = new TestVirtualFile("dir");
@@ -369,25 +354,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testUpdatingOutdatedFilesWithPhysicalContent() {
-    TestVirtualFile root = new TestVirtualFile("root");
-    TestVirtualFile file = new TestVirtualFile("file", "virtual content", 666L);
-
-    root.addChild(file);
-
-    vcs.createDirectory("root");
-    vcs.createFile("root/file", null, 111L);
-
-    configureToReturnPhysicalContent("physical content");
-
-    updateWith(root);
-
-    Entry e = vcs.findEntry("root/file");
-    assertEquals(c("physical content"), e.getContent());
-    assertEquals(666L, e.getTimestamp());
-  }
-
-  @Test
   public void testUpdatingOutdatedFilesRecursively() {
     TestVirtualFile root = new TestVirtualFile("root");
     TestVirtualFile dir = new TestVirtualFile("dir");
@@ -493,19 +459,9 @@ public class UpdaterTest extends LocalVcsTestCase {
     assertEquals(1, vcs.getRevisionsFor("root").size());
   }
 
-  private String myPhysicalContent;
-
   private void updateWith(VirtualFile... roots) {
     gw.setContentRoots(roots);
-    doUpdate();
-  }
-
-  private void doUpdate() {
     Updater u = new Updater(vcs, gw);
-    CacheUpdaterHelper.performUpdate(u, myPhysicalContent);
-  }
-
-  private void configureToReturnPhysicalContent(String content) {
-    myPhysicalContent = content;
+    CacheUpdaterHelper.performUpdate(u);
   }
 }

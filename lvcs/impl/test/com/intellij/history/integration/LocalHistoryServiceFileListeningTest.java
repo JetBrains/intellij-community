@@ -30,6 +30,13 @@ public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTes
 
     assertFalse(vcs.hasEntry("file"));
   }
+  
+  @Test
+  public void testUnsubscribingRefreshUpdatersOnShutdown() {
+    assertTrue(fileManager.hasRefreshUpdater());
+    service.shutdown();
+    assertFalse(fileManager.hasRefreshUpdater());
+  }
 
   @Test
   public void testUnsubscribingFromFileManagerRefreshEventsOnShutdown() {
