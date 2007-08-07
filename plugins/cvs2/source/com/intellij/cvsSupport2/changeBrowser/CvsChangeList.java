@@ -167,6 +167,15 @@ public class CvsChangeList implements CommittedChangeList {
     return false;
   }
 
+  public boolean containsFile(final String file) {
+    for(RevisionWrapper revision: myRevisions) {
+      if (revision.getFile().equals(file)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void addFileRevision(RevisionWrapper revision) {
     myRevisions.add(revision);
 

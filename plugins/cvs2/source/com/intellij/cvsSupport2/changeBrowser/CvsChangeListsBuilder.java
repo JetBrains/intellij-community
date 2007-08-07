@@ -77,17 +77,19 @@ public class CvsChangeListsBuilder {
     CvsChangeList version = findOrCreateVersionFor(cvsRevision.getMessage(),
                                                    revision.getTime(),
                                                    cvsRevision.getAuthor(),
-                                                   revision.getBranch());
+                                                   revision.getBranch(),
+                                                   revision.getFile());
 
     version.addFileRevision(revision);
   }
 
-  private CvsChangeList findOrCreateVersionFor(final String message, final long date, final String author, final String branch) {
+  private CvsChangeList findOrCreateVersionFor(final String message, final long date, final String author,
+                                               final String branch, final String path) {
     final ChangeListKey key = new ChangeListKey(branch, author, message);
     final List<CvsChangeList> versions = myCache.get(key);
     if (versions != null) {
       final CvsChangeList lastVersion = versions.get(versions.size() - 1);
-      if (lastVersion.containsDate(date)) {
+      if (lastVersion.containsDate(date) && !lastVersion.containsFile(path)) {
         return lastVersion;
       }
     }
