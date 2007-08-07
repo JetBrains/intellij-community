@@ -1,0 +1,19 @@
+try {
+  a
+} catch (Exception e) {
+  b
+} finally {
+  c
+}
+-----
+1(2) element: null
+2(3,4) element: Open block
+3(4,7) READ a
+4(5) element: Catch clause
+5(8) READ b
+6(9) element: Finally clause
+7(11)  CALL 6
+8(11)  CALL 6
+9(10) READ c
+10(11)  RETURN
+11() element: null
