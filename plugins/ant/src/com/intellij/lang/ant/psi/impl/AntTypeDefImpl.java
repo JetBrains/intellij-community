@@ -33,12 +33,17 @@ import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
+  @NonNls private static final String CLASSPATH_ATTR = "classpath";
+  @NonNls private static final String URI_ATTR = "uri";
+  @NonNls private static final String RESOURCE_ATTR = "resource";
+  @NonNls private static final String FILE_ATTR = AntFileImpl.FILE_ATTR;
+  @NonNls private static final String CLASSNAME_ATTR = "classname";
 
   private static final ClassCache CLASS_CACHE = new ClassCache();
+
   private AntTypeDefinition[] myNewDefinitions;
   private boolean myClassesLoaded;
   private String myLocalizedError;
@@ -73,7 +78,18 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   @NotNull
   public List<String> getFileReferenceAttributes() {
-    return Collections.singletonList(AntFileImpl.FILE_ATTR);
+    final List<String> attribs = super.getFileReferenceAttributes();
+    
+    final String cp = getClassPath();
+    if (cp != null && cp.length() > 0 && !cp.contains(";") && !cp.contains(":")) {
+      // only single-entry classpath is accepted
+      final List<String> _attribs = new ArrayList<String>(attribs.size() + 1);
+      _attribs.addAll(attribs);
+      _attribs.add(CLASSPATH_ATTR);
+      return _attribs;
+    }
+    
+    return attribs;
   }
 
   @Nullable
@@ -83,27 +99,27 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   @Nullable
   public String getClassName() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("classname"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(CLASSNAME_ATTR));
   }
 
   @Nullable
   public String getClassPath() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("classpath"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(CLASSPATH_ATTR));
   }
 
   @Nullable
   public String getUri() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("uri"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(URI_ATTR));
   }
 
   @Nullable
   public String getFile() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("file"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(FILE_ATTR));
   }
 
   @Nullable
   public String getResource() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("resource"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(RESOURCE_ATTR));
   }
 
   @NonNls
