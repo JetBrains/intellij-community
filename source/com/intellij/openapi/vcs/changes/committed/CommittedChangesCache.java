@@ -67,6 +67,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private final ProjectLevelVcsManager myVcsManager;
 
   public static final Change[] ALL_CHANGES = new Change[0];
+  private CommittedChangesCache.MyRefreshRunnable myRefresnRunnable;
 
   public static class State {
     private int myInitialCount = 500;
@@ -718,22 +719,18 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private void updateRefreshTimer() {
     cancelRefreshTimer();
     if (myState.isRefreshEnabled()) {
-      myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
-        public void run() {
-          refreshAllCachesAsync(false);
-          final List<ChangesCacheFile> list = getAllCaches();
-          for(ChangesCacheFile file: list) {
-            if (file.getProvider().refreshIncomingWithCommitted()) {
-              refreshIncomingChangesAsync();
-              break;
-            }
-          }
-        }
-      }, myState.getRefreshInterval()*60, myState.getRefreshInterval()*60, TimeUnit.SECONDS);
+      myRefresnRunnable = new MyRefreshRunnable(this);
+      myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(myRefresnRunnable,
+                                                                 myState.getRefreshInterval()*60, myState.getRefreshInterval()*60,
+                                                                 TimeUnit.SECONDS);
     }
   }
 
   private void cancelRefreshTimer() {
+    if (myRefresnRunnable != null) {
+      myRefresnRunnable.cancel();
+      myRefresnRunnable = null;
+    }
     if (myFuture != null) {
       myFuture.cancel(false);
       myFuture = null;
@@ -767,5 +764,30 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private interface RefreshResultConsumer {
     void receivedChanges(List<CommittedChangeList> changes);
     void receivedError(VcsException ex);
+  }
+
+  private static class MyRefreshRunnable implements Runnable {
+    private CommittedChangesCache myCache;
+
+    private MyRefreshRunnable(final CommittedChangesCache cache) {
+      myCache = cache;
+    }
+
+    private void cancel() {
+      myCache = null;
+    }
+
+    public void run() {
+      final CommittedChangesCache cache = myCache;
+      if (cache == null) return;
+      cache.refreshAllCachesAsync(false);
+      final List<ChangesCacheFile> list = cache.getAllCaches();
+      for(ChangesCacheFile file: list) {
+        if (file.getProvider().refreshIncomingWithCommitted()) {
+          cache.refreshIncomingChangesAsync();
+          break;
+        }
+      }
+    }
   }
 }
