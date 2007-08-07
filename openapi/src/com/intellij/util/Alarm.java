@@ -105,7 +105,7 @@ public class Alarm implements Disposable {
       for (int i = myRequests.size()-1; i>=0; i--) {
         Request r = myRequests.get(i);
         if (r.getTask() == request) {
-          r.getFuture().cancel(false);
+          r.cancel();
           myRequests.remove(i);
         }
       }
@@ -119,7 +119,7 @@ public class Alarm implements Disposable {
       int count = 0;
       for (Request request : myRequests) {
         count++;
-        request.getFuture().cancel(false);
+        request.cancel();
       }
       myRequests.clear();
       return count;
@@ -133,7 +133,7 @@ public class Alarm implements Disposable {
   }
 
   private class Request implements Runnable {
-    private final Runnable myTask;
+    private Runnable myTask;
     private final ModalityState myModalityState;
     private Future<?> myFuture;
 
@@ -145,11 +145,13 @@ public class Alarm implements Disposable {
     public void run() {
       try {
         if (!myDisposed) {
+          final Runnable task = myTask;
+          if (task == null) return;
           if (myModalityState != null) {
             synchronized (LOCK) {
               myRequests.remove(this);
             }
-            ApplicationManager.getApplication().invokeLater(myTask, myModalityState);
+            ApplicationManager.getApplication().invokeLater(task, myModalityState);
           }
           else {
             myFuture = myExecutorService.submit(new Runnable() {
@@ -158,7 +160,7 @@ public class Alarm implements Disposable {
                   myRequests.remove(Request.this);
                 }
 
-                myTask.run();
+                task.run();
               }
             });
           }
@@ -183,6 +185,11 @@ public class Alarm implements Disposable {
 
     public ModalityState getModalityState() {
       return myModalityState;
+    }
+
+    private void cancel() {
+      myFuture.cancel(false);
+      myTask = null;
     }
   }
 }
