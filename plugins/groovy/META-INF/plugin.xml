@@ -31,6 +31,9 @@
 
   <project-components>
     <component>
+      <implementation-class>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsProvider</implementation-class>
+    </component>
+    <component>
       <interface-class>org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager</interface-class>
       <implementation-class>org.jetbrains.plugins.groovy.caches.project.GroovyCachesManagerImpl</implementation-class>
     </component>
@@ -60,7 +63,12 @@
       <implementation-class>org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsProvider</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory
+      </implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData</implementation-class>
+      <interface-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData</interface-class>
     </component>
   </project-components>
   <module-components>
