@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
 
 public class LocalHistoryComponent extends LocalHistory implements ProjectComponent {
   private Project myProject;
@@ -28,11 +29,14 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
   private CommandProcessor myCommandProcessor;
+  private LocalHistoryConfiguration myConfiguration;
   private Storage myStorage;
   private ILocalVcs myVcs;
   private LocalVcs myVcsImpl;
   private LocalHistoryService myService;
-  private LocalHistoryConfiguration myConfiguration;
+  private IdeaGateway myGateway;
+
+  private boolean isInitialized;
 
   @TestOnly
   public static LocalHistoryComponent getComponentInstance(Project p) {
@@ -68,10 +72,15 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
     myStartupManager.registerPreStartupActivity(new Runnable() {
       public void run() {
-        initVcs();
-        initService();
+        init();
       }
     });
+  }
+
+  protected void init() {
+    initVcs();
+    initService();
+    isInitialized = true;
   }
 
   protected void initVcs() {
@@ -81,8 +90,9 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   protected void initService() {
-    myService = new LocalHistoryService(myVcs, createIdeaGateway(), myConfiguration, myStartupManager, myRootManager, myFileManager,
-                                        myCommandProcessor);
+    myGateway = new IdeaGateway(myProject);
+    myService =
+      new LocalHistoryService(myVcs, myGateway, myConfiguration, myStartupManager, myRootManager, myFileManager, myCommandProcessor);
   }
 
   public File getStorageDir() {
@@ -95,24 +105,25 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public void save() {
-    if (isDefaultProject()) return;
-
-    if (myVcs != null) myVcs.save();
+    if (!isInitialized) return;
+    myVcs.save();
   }
 
   public void disposeComponent() {
-    if (isDefaultProject()) return;
+    if (!isInitialized) return;
 
     // save could haven't been called if user had canceled save of project files
     // so we have to force save. But that will be ignored if where were
     // no changes since last save, so there is no performance issues here
-    if (myVcs != null) myVcs.purgeObsolete(myConfiguration.PURGE_PERIOD);
+    myVcs.purgeObsolete(myConfiguration.PURGE_PERIOD);
     save();
 
     closeVcs();
     closeService();
 
     cleanupStorageAfterTestCase();
+
+    isInitialized = false;
   }
 
   protected void cleanupStorageAfterTestCase() {
@@ -124,15 +135,13 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public void closeVcs() {
-    if (myStorage != null) {
-      myStorage.close();
-    }
+    if (!isInitialized) return;
+    myStorage.close();
   }
 
   protected void closeService() {
-    if (myService != null) {
-      myService.shutdown();
-    }
+    if (!isInitialized) return;
+    myService.shutdown();
   }
 
   protected boolean isDefaultProject() {
@@ -141,49 +150,45 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   protected LocalHistoryAction startAction(String name) {
-    // todo temporary means to catch bug IDEADEV-19421 
-    assert myProject != null;
-    assert !isDefaultProject();
-    assert myVcs != null;
-    assert myService != null;
-
+    if (!isInitialized) return LocalHistoryAction.NULL;
     return myService.startAction(name);
   }
 
   @Override
   protected void putSystemLabel(String name, int color) {
+    if (!isInitialized) return;
     myVcs.putSystemLabel(name, color);
   }
 
   @Override
   protected Checkpoint putCheckpoint() {
-    return new CheckpointImpl(createIdeaGateway(), myVcs);
+    if (!isInitialized) return new NullCheckpoint();
+    return new CheckpointImpl(myGateway, myVcs);
   }
 
   @Override
   protected byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c) {
+    if (!isInitialized) return null;
     if (!isUnderControl(f)) return null;
     return myVcs.getByteContent(f.getPath(), c);
   }
 
   @Override
   protected boolean isUnderControl(VirtualFile f) {
-    return createIdeaGateway().getFileFilter().isAllowedAndUnderContentRoot(f);
+    if (!isInitialized) return false;
+    return myGateway.getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 
   @Override
   protected boolean hasUnavailableContent(VirtualFile f) {
+    if (!isInitialized) return false;
     return myVcs.getEntry(f.getPath()).hasUnavailableContent();
   }
 
   @NonNls
   @NotNull
   public String getComponentName() {
-    return "Project Local History";
-  }
-
-  private IdeaGateway createIdeaGateway() {
-    return new IdeaGateway(myProject);
+    return "Local History";
   }
 
   public ILocalVcs getLocalVcs() {
@@ -199,5 +204,13 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public void projectClosed() {
+  }
+
+  private static class NullCheckpoint implements Checkpoint {
+    public void revertToPreviousState() throws IOException {
+    }
+
+    public void revertToThatState() throws IOException {
+    }
   }
 }

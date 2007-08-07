@@ -155,6 +155,10 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
       }
 
       @Override
+      protected void initService() {
+      }
+
+      @Override
       protected void closeService() {
       }
 
@@ -164,7 +168,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
       }
     };
 
-    c.initVcs();
+    c.init();
     assertTrue(c.getStorageDir().exists());
 
     c.disposeComponent();
@@ -172,7 +176,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
 
     isUnitTestMode[0] = false;
 
-    c.initVcs();
+    c.init();
     assertTrue(c.getStorageDir().exists());
 
     c.disposeComponent();
