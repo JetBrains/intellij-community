@@ -47,13 +47,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +80,7 @@ public class LibraryLinkImpl extends LibraryLink {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.LibraryLink");
   private LibraryInfo myLibraryInfo;
   private final Project myProject;
+  @NonNls private static final String JAR_SUFFIX = ".jar";
 
   public LibraryLinkImpl(@Nullable Library library, @NotNull Module parentModule) {
     this(library, parentModule.getProject(), parentModule);
@@ -165,18 +166,6 @@ public class LibraryLinkImpl extends LibraryLink {
     return getUrls().equals(otherLibraryLink.getUrls());
   }
 
-  @Nullable
-  public String getSingleFileName() {
-    // non-module-level libs can contain multiple files
-    final String table = getLevel();
-    if (!MODULE_LEVEL.equals(table)) return null;
-
-    List<String> urls = getUrls();
-    if (urls.size() != 1) return null;
-    File file = new File(PathUtil.toPresentableUrl(urls.get(0)));
-    return file.getName();
-  }
-
   public boolean hasDirectoriesOnly() {
     List<String> urls = getUrls();
     boolean hasDirsOnly = true;
@@ -203,6 +192,27 @@ public class LibraryLinkImpl extends LibraryLink {
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myLibraryInfo.readExternal(element);
+
+    List<String> urls = getUrls();
+    if (LibraryLink.MODULE_LEVEL.equals(getLevel()) && urls.size() == 1) {
+      String url = urls.get(0);
+      if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+        url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
+        String jarName = url.substring(url.lastIndexOf('/') + 1);
+        if (jarName.endsWith(JAR_SUFFIX)) {
+          String outputPath = getURI();
+          int nameIndex = outputPath.lastIndexOf('/');
+          if (outputPath.substring(nameIndex + 1).equals(jarName)) {
+            if (nameIndex <= 0) {
+              setURI("/");
+            }
+            else {
+              setURI(outputPath.substring(0, nameIndex));
+            }
+          }
+        }
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
