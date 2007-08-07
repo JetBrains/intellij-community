@@ -32,15 +32,12 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   public void beforeRefreshStart(boolean asynchonous) {
     myFacade.startRefreshing();
-    getOrInitProcessor();
     isRefreshing = true;
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
     isRefreshing = false;
-    if (wasUpdatingDoneCalledBeforeRefreshFinished()) {
-      myFacade.finishRefreshing();
-    }
+    myFacade.finishRefreshing();
   }
 
   public VirtualFile[] queryNeededFiles() {
@@ -53,17 +50,6 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   public void updatingDone() {
     myProcessor = null;
-    if (wasRefreshFinishedCalledBeforeUpdateingDone()) {
-      myFacade.finishRefreshing();
-    }
-  }
-
-  private boolean wasUpdatingDoneCalledBeforeRefreshFinished() {
-    return myProcessor == null;
-  }
-
-  private boolean wasRefreshFinishedCalledBeforeUpdateingDone() {
-    return !isRefreshing;
   }
 
   public void canceled() {

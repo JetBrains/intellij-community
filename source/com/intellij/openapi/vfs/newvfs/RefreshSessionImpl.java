@@ -100,13 +100,12 @@ public class RefreshSessionImpl extends RefreshSession {
         scan();
       }
 
+      notifyCacheUpdaters();
       manager.fireAfterRefreshFinish(myIsAsync);
 
       if (myFinishRunnable != null) {
         myFinishRunnable.run();
       }
-
-      notifyCacheUpdaters();
     }
     finally {
       mySemaphore.up();

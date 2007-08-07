@@ -75,11 +75,14 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     }, "", null);
   }
 
-  public void testXXX() throws Exception {
+  public void testRefreshingSpecifiedFiles() throws Exception {
     String f1 = createFileExternally("f1.java");
     String f2 = createFileExternally("f2.java");
 
     LocalFileSystem.getInstance().refreshIoFiles(list(new File(f1), new File(f2)));
+
+    assertTrue(hasVcsEntry(f1));
+    assertTrue(hasVcsEntry(f2));
   }
 
   public void testCommandDuringRefresh() throws Exception {

@@ -121,7 +121,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   }
   
   @Test
-  public void testRefreshingInsideWrappingEvents() {
+  public void testSeveralUpdatesInsideOneRefresh() {
     vcs.createDirectory("dir");
     d.beforeRefreshStart(false);
 
@@ -145,7 +145,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   }
   
   @Test
-  public void testChangeSetsDuringWrappingEvents() {
+  public void testChangeSetsDuringSeveralUpdatersInsideOneRefresh() {
     vcs.createDirectory("dir");
     vcs.createFile("dir/f", null, -1);
 
@@ -174,12 +174,12 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   @Test
   public void testEmptyRefresh() {
     d.beforeRefreshStart(false);
-    d.afterRefreshFinish(false);
     CacheUpdaterHelper.performUpdate(d);
+    d.afterRefreshFinish(false);
   }
 
   @Test
-  public void testEmptyRefreshWithWrappingEvents() {
+  public void testEmptyRefreshWithSeveralUpdates() {
     d.beforeRefreshStart(false);
     CacheUpdaterHelper.performUpdate(d);
     CacheUpdaterHelper.performUpdate(d);
@@ -191,7 +191,7 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   }
 
   private void fireRefreshFinished() {
-    d.afterRefreshFinish(false);
     CacheUpdaterHelper.performUpdate(d);
+    d.afterRefreshFinish(false);
   }
 }
