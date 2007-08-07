@@ -39,33 +39,28 @@ import java.util.List;
 public class CompleteReferenceExpression {
   public static Object[] getVariants(GrReferenceExpressionImpl refExpr) {
     Object[] propertyVariants = getVariantsImpl(refExpr, GrReferenceExpressionImpl.getMethodOrPropertyResolveProcessor(refExpr, null, true, true));
-    PsiElement parent = refExpr.getParent();
-    if (parent instanceof GrArgumentList) {
-      GrExpression call = (GrExpression) parent.getParent(); //add named argument label variants
-      PsiType type = call.getType();
-      if (type instanceof PsiClassType) {
-        PsiClass clazz = ((PsiClassType) type).resolve();
-        if (clazz != null) {
-          List<LookupElement> props = new ArrayList<LookupElement>();
-          final LookupElementFactory factory = LookupElementFactory.getInstance();
-          final PsiClass eventListener = refExpr.getManager().findClass("java.util.EventListener", refExpr.getResolveScope());
-          for (PsiMethod method : clazz.getAllMethods()) {
-            if (PsiUtil.isSimplePropertySetter(method)) {
-              String prop = PropertyUtil.getPropertyName(method);
-              if (prop != null) {
-                props.add(factory.createLookupElement(prop).setIcon(Icons.PROPERTY));
-              }
-            } else if (eventListener != null) {
-              addListenerProperties(method, eventListener, props, factory);
-            }
-          }
+    PsiType type = null;
+    final GrExpression qualifier = refExpr.getQualifierExpression();
+    if (qualifier == null) {
+      PsiElement parent = refExpr.getParent();
+      if (parent instanceof GrArgumentList) {
+        GrExpression call = (GrExpression) parent.getParent(); //add named argument label variants
+        type = call.getType();
+      }
+    } else {
+      type = qualifier.getType();
+    }
+    
+    if (type instanceof PsiClassType) {
+      PsiClass clazz = ((PsiClassType) type).resolve();
+      if (clazz != null) {
+        List<LookupElement> props = getPropertyVariants(refExpr, clazz);
 
-          if (props.size() > 0) {
-            propertyVariants = ArrayUtil.mergeArrays(propertyVariants, props.toArray(new Object[props.size()]), Object.class);
-          }
-
-          propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
+        if (props.size() > 0) {
+          propertyVariants = ArrayUtil.mergeArrays(propertyVariants, props.toArray(new Object[props.size()]), Object.class);
         }
+
+        propertyVariants = ArrayUtil.mergeArrays(propertyVariants, clazz.getFields(), Object.class);
       }
     }
 
@@ -78,6 +73,23 @@ public class CompleteReferenceExpression {
 
 
     return propertyVariants;
+  }
+
+  private static List<LookupElement> getPropertyVariants(GrReferenceExpression refExpr, PsiClass clazz) {
+    List<LookupElement> props = new ArrayList<LookupElement>();
+    final LookupElementFactory factory = LookupElementFactory.getInstance();
+    final PsiClass eventListener = refExpr.getManager().findClass("java.util.EventListener", refExpr.getResolveScope());
+    for (PsiMethod method : clazz.getAllMethods()) {
+      if (PsiUtil.isSimplePropertySetter(method)) {
+        String prop = PropertyUtil.getPropertyName(method);
+        if (prop != null) {
+          props.add(factory.createLookupElement(prop).setIcon(Icons.PROPERTY));
+        }
+      } else if (eventListener != null) {
+        addListenerProperties(method, eventListener, props, factory);
+      }
+    }
+    return props;
   }
 
   private static void addListenerProperties(PsiMethod method, PsiClass eventListenerClass,
