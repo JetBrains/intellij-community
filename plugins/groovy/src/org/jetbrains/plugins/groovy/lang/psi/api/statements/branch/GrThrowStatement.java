@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
 public interface GrThrowStatement extends GrStatement {
+  GrExpression getException();
 }

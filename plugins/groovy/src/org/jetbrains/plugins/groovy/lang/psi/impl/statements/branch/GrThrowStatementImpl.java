@@ -18,14 +18,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
  */
-public class GrThrowStmtImpl extends GroovyPsiElementImpl implements GrThrowStatement {
-  public GrThrowStmtImpl(@NotNull ASTNode node) {
+public class GrThrowStatementImpl extends GroovyPsiElementImpl implements GrThrowStatement {
+  public GrThrowStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -35,5 +36,9 @@ public class GrThrowStmtImpl extends GroovyPsiElementImpl implements GrThrowStat
 
   public String toString() {
     return "THROW statement";
+  }
+
+  public GrExpression getException() {
+    return findChildByClass(GrExpression.class);
   }
 }

@@ -166,8 +166,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     //Branch statements
     if (elem.equals(RETURN_STATEMENT)) return new GrReturnStmtImpl(node);
-    if (elem.equals(THROW_STATEMENT)) return new GrThrowStmtImpl(node);
-    if (elem.equals(ASSERT_STATEMENT)) return new GrAssertStmtImpl(node);
+    if (elem.equals(THROW_STATEMENT)) return new GrThrowStatementImpl(node);
+    if (elem.equals(ASSERT_STATEMENT)) return new GrAssertStatementImpl(node);
     if (elem.equals(BREAK_STATEMENT)) return new GrBreakStatementImpl(node);
     if (elem.equals(CONTINUE_STATEMENT)) return new GrContinueStatementImpl(node);
 

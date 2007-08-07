@@ -18,14 +18,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
  */
-public class GrAssertStmtImpl extends GroovyPsiElementImpl implements GrAssertStatement {
-  public GrAssertStmtImpl(@NotNull ASTNode node) {
+public class GrAssertStatementImpl extends GroovyPsiElementImpl implements GrAssertStatement {
+  public GrAssertStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -35,5 +36,9 @@ public class GrAssertStmtImpl extends GroovyPsiElementImpl implements GrAssertSt
 
   public String toString() {
     return "ASSERT statement";
+  }
+
+  public GrExpression getAssertion() {
+    return findChildByClass(GrExpression.class);
   }
 }

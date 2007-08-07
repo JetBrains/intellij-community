@@ -1,0 +1,13 @@
+try {
+  throw new Exception ()
+} catch (Exception e) {
+  print e
+}
+-----
+1(2) element: null
+2(3,4) element: Open block
+3(4) element: THROW statement
+4(5) element: Catch clause
+5(6) READ print
+6(7) READ e
+7() element: null
