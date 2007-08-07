@@ -12,4 +12,11 @@ public class ImplicitArrayToString {
     private String[] meth() {
         return new String[10];
     }
+
+	public static void main(String[] args) {
+		char[] charArray = new char[]{'A', 'B', 'C'};
+		System.out.println(charArray); // should not warn
+		System.out.println(args); // should indeed warn
+
+	}
 }
