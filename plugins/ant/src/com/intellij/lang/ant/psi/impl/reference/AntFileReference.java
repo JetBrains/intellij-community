@@ -28,7 +28,7 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
   }
 
   @Nullable
-  protected String getText() {
+  public String getText() {
     final String path = super.getText();
     if (getIndex() == 0 && path != null && path.equals(BASEDIR_PROPERTY_REFERENCE) && getFileReferenceSet().isAbsolutePathReference()) {
       return ".";

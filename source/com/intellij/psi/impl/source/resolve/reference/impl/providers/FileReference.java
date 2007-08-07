@@ -249,7 +249,7 @@ public class FileReference
     return myText;
   }
 
-  protected String getText() {
+  public String getText() {
     return myText;
   }
 
