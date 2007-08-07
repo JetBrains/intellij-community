@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -130,7 +131,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     addToGroup(group, new FileDeleteAction(myFileSystemTree));
     group.addSeparator();
 
-    final SynchronizeAction syncAction = new SynchronizeAction();
+    final SynchronizeAction syncAction = new SynchronizeAction() {
+      public void actionPerformed(final AnActionEvent e) {
+        VirtualFileManager.getInstance().refresh(false);
+      }
+    };
+
     AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);
     syncAction.copyFrom(original);
     final JTree tree = myFileSystemTree.getTree();

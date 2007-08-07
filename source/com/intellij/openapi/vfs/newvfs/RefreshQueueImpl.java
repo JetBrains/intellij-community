@@ -30,7 +30,7 @@ public class RefreshQueueImpl extends RefreshQueue {
 
   public void execute(final RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      queueSession(session, ModalityState.defaultModalityState());
+      queueSession(session, ModalityState.NON_MODAL);
     }
     else {
       final Application app = ApplicationManager.getApplication();
