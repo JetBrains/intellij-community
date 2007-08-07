@@ -31,13 +31,18 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     myTreeUpdater = treeUpdater;
   }
 
-  public void addFacetsNodes(final Module module, final MasterDetailsComponent.MyNode moduleNode) {
+  public boolean addFacetsNodes(final Module module, final MasterDetailsComponent.MyNode moduleNode) {
+    boolean facetsExist = false;
+
     getFacetConfigurator().addFacetInfos(module);
 
     final FacetModel facetModel = getFacetConfigurator().getFacetModel(module);
     for (Facet facet : facetModel.getSortedFacets()) {
       addFacetNode(facet, moduleNode);
+      facetsExist = true;
     }
+
+    return facetsExist;
   }
 
   private MasterDetailsComponent.MyNode addFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {

@@ -268,10 +268,19 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     if (!myWasTreeInitialized) {
       initTree();
+      myTree.setShowsRootHandles(false);
+      loadTree();
+    } else {
+      myRoot.removeAllChildren();
+      myTree.setShowsRootHandles(false);
+      loadTree();
     }
 
     super.reset();
   }
+
+  protected abstract void loadTree();
+ 
 
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {

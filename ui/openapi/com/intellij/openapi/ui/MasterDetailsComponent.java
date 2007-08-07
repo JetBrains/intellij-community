@@ -21,8 +21,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
-import com.intellij.ui.navigation.Place;
 import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
@@ -52,7 +52,14 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected NamedConfigurable myCurrentConfigurable;
   private Splitter mySplitter;
 
-  protected History myHistory;
+  protected History myHistory = new History(new Place.Navigator() {
+    public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+      return null;
+    }
+
+    public void queryPlace(@NotNull final Place place) {
+    }
+  });
 
   public void setHistory(final History history) {
     myHistory = history;
@@ -126,7 +133,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       }
 
       protected void scrollToSource(Component tree) {
-        updateSelection();
+        updateSelectionFromTree();
       }
 
       protected boolean needToCheckFocus() {
@@ -138,10 +145,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   protected void addNotify() {
-    updateSelection();
+    updateSelectionFromTree();
   }
 
-  protected void updateSelection() {
+  private void updateSelectionFromTree() {
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       final Object lastPathComp = path.getLastPathComponent();

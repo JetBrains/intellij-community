@@ -50,16 +50,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   public void reset() {
     super.reset();
-
     myTree.setRootVisible(false);
-
-    reloadTree();
   }
 
-  private void reloadTree() {
-    myRoot.removeAllChildren();
-
-
+  protected void loadTree() {
     final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
 
     final LibrariesModifiableModel provider = myContext.myLevel2Providers.get(myLevel);

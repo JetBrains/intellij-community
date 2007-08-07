@@ -128,13 +128,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return result;
   }
 
-  private void reloadTree() {
-    myRoot.removeAllChildren();
-
+  protected void loadTree() {
     createProjectNodes();
 
     ((DefaultTreeModel)myTree.getModel()).reload();
-
 
     myUiDisposed = false;
   }
@@ -177,7 +174,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
-      myFacetEditorFacade.addFacetsNodes(module, moduleNode);
+      final boolean facetsExist = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
+      if (facetsExist) {
+        myTree.setShowsRootHandles(true);
+      }
       final String[] groupPath = myPlainMode ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
         addNode(moduleNode, myRoot);
@@ -304,15 +304,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   public void reset() {
-    super.reset();
-
     myProjectConfigurable = myContext.myModulesConfigurator.getModulesConfigurable();
-
-    reloadTree();
+    myContext.reset();
 
     super.reset();
-
-    myContext.reset();
   }
 
 

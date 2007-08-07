@@ -107,7 +107,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return null;
   }
 
-  private void createProjectJdks() {
+  protected void loadTree() {
     final TreeMap<ProjectJdk, ProjectJdk> sdks = myJdksTreeModel.getProjectJdks();
     for (ProjectJdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER);
@@ -137,12 +137,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   public void reset() {
     super.reset();
-
     myTree.setRootVisible(false);
-
-    myRoot.removeAllChildren();
-
-    createProjectJdks();
   }
 
   public void apply() throws ConfigurationException {
