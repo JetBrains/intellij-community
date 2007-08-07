@@ -1,10 +1,11 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.command.CommandEvent;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.List;
 
 public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   @Test
@@ -117,6 +118,72 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireCreated(new TestVirtualFile("dir"));
 
     assertTrue(vcs.hasEntry("dir"));
+  }
+  
+  @Test
+  public void testRefreshingInsideWrappingEvents() {
+    vcs.createDirectory("dir");
+    d.beforeRefreshStart(false);
+
+    fireCreated(new TestVirtualFile("dir/f1", null, -1));
+    assertFalse(vcs.hasEntry("dir/f1"));
+
+    CacheUpdaterHelper.performUpdate(d);
+    assertTrue(vcs.hasEntry("dir/f1"));
+
+    fireCreated(new TestVirtualFile("dir/f2", null, -1));
+    assertFalse(vcs.hasEntry("dir/f2"));
+
+    CacheUpdaterHelper.performUpdate(d);
+    assertTrue(vcs.hasEntry("dir/f2"));
+
+    d.afterRefreshFinish(false);
+
+    List<Revision> rr = vcs.getRevisionsFor("dir");
+    assertEquals(2, rr.size());
+    assertEquals("External change", rr.get(0).getCauseChangeName());
+  }
+  
+  @Test
+  public void testChangeSetsDuringWrappingEvents() {
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/f", null, -1);
+
+    assertEquals(2, vcs.getRevisionsFor("dir").size());
+
+    d.beforeRefreshStart(false);
+
+    vcs.createDirectory("dir/dir1");
+    vcs.createFile("dir/f1", null, -1);
+
+    CacheUpdaterHelper.performUpdate(d);
+
+    vcs.createDirectory("dir/dir2");
+    vcs.createFile("dir/f2", null, -1);
+
+    CacheUpdaterHelper.performUpdate(d);
+
+    d.afterRefreshFinish(false);
+
+    assertEquals(3, vcs.getRevisionsFor("dir").size());
+
+    vcs.createFile("dir/f3", null, -1);
+    assertEquals(4, vcs.getRevisionsFor("dir").size());
+  }
+
+  @Test
+  public void testEmptyRefresh() {
+    d.beforeRefreshStart(false);
+    d.afterRefreshFinish(false);
+    CacheUpdaterHelper.performUpdate(d);
+  }
+
+  @Test
+  public void testEmptyRefreshWithWrappingEvents() {
+    d.beforeRefreshStart(false);
+    CacheUpdaterHelper.performUpdate(d);
+    CacheUpdaterHelper.performUpdate(d);
+    d.afterRefreshFinish(false);
   }
 
   private void fireRefreshStarted() {

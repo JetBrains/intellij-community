@@ -32,25 +32,38 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   public void beforeRefreshStart(boolean asynchonous) {
     myFacade.startRefreshing();
-    myProcessor = new CacheUpdaterProcessor(myVcs);
+    getOrInitProcessor();
     isRefreshing = true;
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
+    isRefreshing = false;
+    if (wasUpdatingDoneCalledBeforeRefreshFinished()) {
+      myFacade.finishRefreshing();
+    }
   }
 
   public VirtualFile[] queryNeededFiles() {
-    return myProcessor.queryNeededFiles();
+    return getOrInitProcessor().queryNeededFiles();
   }
 
   public void processFile(FileContent c) {
-    myProcessor.processFile(c);
+    getOrInitProcessor().processFile(c);
   }
 
   public void updatingDone() {
-    isRefreshing = false;
     myProcessor = null;
-    myFacade.finishRefreshing();
+    if (wasRefreshFinishedCalledBeforeUpdateingDone()) {
+      myFacade.finishRefreshing();
+    }
+  }
+
+  private boolean wasUpdatingDoneCalledBeforeRefreshFinished() {
+    return myProcessor == null;
+  }
+
+  private boolean wasRefreshFinishedCalledBeforeUpdateingDone() {
+    return !isRefreshing;
   }
 
   public void canceled() {
@@ -105,7 +118,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   private void create(VirtualFile f) {
     if (isRefreshing && !f.isDirectory()) {
-      myProcessor.addFileToCreate(f);
+      getOrInitProcessor().addFileToCreate(f);
     }
     else {
       myFacade.create(f);
@@ -114,11 +127,16 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   private void changeContent(VirtualFile f) {
     if (isRefreshing) {
-      myProcessor.addFileToUpdate(f);
+      getOrInitProcessor().addFileToUpdate(f);
     }
     else {
       myFacade.changeFileContent(f);
     }
+  }
+
+  private CacheUpdaterProcessor getOrInitProcessor() {
+    if (myProcessor == null) myProcessor = new CacheUpdaterProcessor(myVcs);
+    return myProcessor;
   }
 
   @Override

@@ -59,6 +59,8 @@ public class LocalHistoryFacade {
   }
 
   private void endChangeSet(String name) {
+    assert myChangeSetDepth > 0;
+
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
       myVcs.endChangeSet(name);

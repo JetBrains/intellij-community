@@ -63,11 +63,11 @@ public abstract class LocalVcsTestCase extends Assert {
     };
   }
 
-  protected static <T> T[] array(T... objects) {
+  public static <T> T[] array(T... objects) {
     return objects;
   }
 
-  protected static <T> List<T> list(T... objects) {
+  public static <T> List<T> list(T... objects) {
     return Arrays.asList(objects);
   }
 

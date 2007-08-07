@@ -1,7 +1,7 @@
 package com.intellij.historyIntegrTests;
 
 
-import com.intellij.history.core.Paths;
+import com.intellij.history.core.Paths;import static com.intellij.history.core.LocalVcsTestCase.list;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
@@ -71,6 +73,13 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
         refreshVFS();
       }
     }, "", null);
+  }
+
+  public void testXXX() throws Exception {
+    String f1 = createFileExternally("f1.java");
+    String f2 = createFileExternally("f2.java");
+
+    LocalFileSystem.getInstance().refreshIoFiles(list(new File(f1), new File(f2)));
   }
 
   public void testCommandDuringRefresh() throws Exception {
