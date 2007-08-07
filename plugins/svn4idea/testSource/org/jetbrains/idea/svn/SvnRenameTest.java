@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -286,5 +287,37 @@ public class SvnRenameTest extends SvnTestCase {
 
     undo();
     verifySorted(runSvn("status"), "A + parent1\\child", "D parent2\\child", "D parent2\\child\\a.txt");
+  }
+
+  @Test
+  public void testMoveToNewPackage() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    moveToNewPackage(file, "child");
+    verifySorted(runSvn("status"), "A child", "A child\\a.txt");
+  }
+
+  @Test
+  public void testMoveToNewPackageCommitted() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    checkin();
+    moveToNewPackage(file, "child");
+    verifySorted(runSvn("status"), "A child", "A + child\\a.txt", "D a.txt");
+  }
+
+  private void moveToNewPackage(final VirtualFile file, final String packageName) {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          final VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, packageName);
+          file.move(this, dir);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+
+      }
+    }, "", null);
   }
 }

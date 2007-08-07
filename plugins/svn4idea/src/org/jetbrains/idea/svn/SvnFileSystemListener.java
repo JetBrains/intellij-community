@@ -87,8 +87,21 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
   }
 
+  private static class MovedFileInfo {
+    private final Project myProject;
+    private final File mySrc;
+    private final File myDst;
+
+    private MovedFileInfo(final Project project, final File src, final File dst) {
+      myProject = project;
+      mySrc = src;
+      myDst = dst;
+    }
+  }
+
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
+  private List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
   private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
   @Nullable private File myStorageForUndo;
   private List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
@@ -135,10 +148,16 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (vcs == null) {
       return false;
     }
-    final VirtualFile oldParent = file.getParent();
-    myFilesToRefresh.add(oldParent);
-    myFilesToRefresh.add(toDir);
-    return doMove(vcs, srcFile, dstFile);
+    if (isPendingAdd(toDir)) {
+      myMovedFiles.add(new MovedFileInfo(vcs.getProject(), srcFile, dstFile));
+      return true; 
+    }
+    else {
+      final VirtualFile oldParent = file.getParent();
+      myFilesToRefresh.add(oldParent);
+      myFilesToRefresh.add(toDir);
+      return doMove(vcs, srcFile, dstFile);
+    }
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
@@ -404,6 +423,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (myDeletedFiles.size() > 0) {
       processDeletedFiles(project);
     }
+    processMovedFiles(project);
     if (myFilesToRefresh.size() > 0) {
       final List<VirtualFile> toRefresh = new ArrayList<VirtualFile>(myFilesToRefresh);
       final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
@@ -565,6 +585,16 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         if (!exceptions.isEmpty()) {
           vcsHelper.showErrors(exceptions, "Errors Deleting Files");
         }
+      }
+    }
+  }
+
+  private void processMovedFiles(final Project project) {
+    for (Iterator<MovedFileInfo> iterator = myMovedFiles.iterator(); iterator.hasNext();) {
+      MovedFileInfo movedFileInfo = iterator.next();
+      if (movedFileInfo.myProject == project) {
+        doMove(SvnVcs.getInstance(project), movedFileInfo.mySrc, movedFileInfo.myDst);
+        iterator.remove();
       }
     }
   }
