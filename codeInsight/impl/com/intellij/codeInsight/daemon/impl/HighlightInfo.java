@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -119,6 +120,7 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
+    LOG.assertTrue(ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1 || element != null, "Custom type demands element to detect text attributes");
     HighlightInfoFilter[] filters = getFilters();
     HighlightInfo highlightInfo = new HighlightInfo(type, element, start, end, description, toolTip);
     for (HighlightInfoFilter filter : filters) {

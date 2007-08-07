@@ -62,6 +62,11 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   public static final HighlightSeverity ERROR = new HighlightSeverity("ERROR", 400);
 
   /**
+   * Standard severities levels
+   */
+  public static final HighlightSeverity[] DEFAULT_SEVERITIES = new HighlightSeverity[] {INFORMATION, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WARNING, ERROR};
+
+  /**
    * Creates a new highlighting severity level with the specified name and value.
    *
    * @param name the name of the highlighting level.
