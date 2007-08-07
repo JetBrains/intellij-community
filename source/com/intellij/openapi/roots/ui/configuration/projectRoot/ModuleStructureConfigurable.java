@@ -324,20 +324,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
 
     if (myContext.myModulesConfigurator.isModified()) myContext.myModulesConfigurator.apply();
-
-    //cleanup
-    myContext.myUpdateDependenciesAlarm.cancelAllRequests();
-    myContext.myUpdateDependenciesAlarm.addRequest(new Runnable(){
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            if (myUiDisposed) return;
-            dispose();
-            reset();
-          }
-        });
-      }
-    }, 0);
   }
 
   public boolean isModified() {

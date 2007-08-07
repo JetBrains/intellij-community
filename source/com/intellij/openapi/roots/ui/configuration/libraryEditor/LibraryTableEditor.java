@@ -109,15 +109,21 @@ public class LibraryTableEditor implements Disposable {
     });
   }
 
+
+  private LibraryTableEditor(LibraryTableModifiableModelProvider provider){
+    myLibraryTableProvider = provider;
+    myTableModifiableModel = myLibraryTableProvider.getModifiableModel();
+    final String tableLevel = provider.getTableLevel();
+    myEditingModuleLibraries = LibraryTableImplUtil.MODULE_LEVEL.equals(tableLevel);
+    if (!provider.isLibraryTableEditable()) {
+      myAddLibraryButton.setVisible(false);
+      myRenameLibraryButton.setVisible(false);
+    }
+  }
+
   public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider, Project project){
     LibraryTableEditor result = new LibraryTableEditor(provider);
     result.myProject = project;
-    result.init(new LibraryTableTreeStructure(result));
-    return result;
-  }
-
-  public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider){
-    LibraryTableEditor result = new LibraryTableEditor(provider);
     result.init(new LibraryTableTreeStructure(result));
     return result;
   }
@@ -133,6 +139,7 @@ public class LibraryTableEditor implements Disposable {
                                                final Project project) {
     final LibraryTableEditor tableEditor = editLibrary(provider, library);
     tableEditor.myProject = project;
+    Disposer.register(project, tableEditor);
     return tableEditor;
   }
 
@@ -156,17 +163,6 @@ public class LibraryTableEditor implements Disposable {
     String candidataName = name;
     for (int idx = 1; libraryAlreadyExists(table, candidataName); candidataName = name + (idx++));
     return candidataName;
-  }
-
-  private LibraryTableEditor(LibraryTableModifiableModelProvider provider){
-    myLibraryTableProvider = provider;
-    myTableModifiableModel = myLibraryTableProvider.getModifiableModel();
-    final String tableLevel = provider.getTableLevel();
-    myEditingModuleLibraries = LibraryTableImplUtil.MODULE_LEVEL.equals(tableLevel);
-    if (!provider.isLibraryTableEditable()) {
-      myAddLibraryButton.setVisible(false);
-      myRenameLibraryButton.setVisible(false);
-    }
   }
 
   private void init(AbstractTreeStructure treeStructure) {
@@ -199,6 +195,7 @@ public class LibraryTableEditor implements Disposable {
     myAttachAnnotationsButton.addActionListener(new AttachAnnotationsAction());
 
     treeSelectionListener.updateButtons();
+
     Disposer.register(this, myTreeBuilder);
   }
 

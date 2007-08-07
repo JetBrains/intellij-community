@@ -53,6 +53,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private JComponent myToolbarComponent;
   @NonNls private static final String CATEGORY = "category";
   private JComponent myToFocus;
+  private boolean myWasUiDisposed;
 
   public static class UIState {
     public float proportion;
@@ -211,9 +212,27 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
         each.apply();
       }
     }
+
+    //cleanup
+    myContext.myUpdateDependenciesAlarm.cancelAllRequests();
+    myContext.myUpdateDependenciesAlarm.addRequest(new Runnable(){
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            if (myWasUiDisposed) return;
+            reset();
+          }
+        });
+      }
+    }, 0);
+
   }
 
   public void reset() {
+    myWasUiDisposed = false;
+
+    myContext.reset();
+    
     myProjectJdksModel.reset(myProject);
 
     Configurable toSelect = null;
@@ -252,6 +271,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public void disposeUIResources() {
     if (!myWasIntialized) return;
+    myWasUiDisposed = true;
 
     myUiState.proportion = mySplitter.getProportion();
     saveSideProportion();
