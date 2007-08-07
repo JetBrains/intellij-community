@@ -49,6 +49,11 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   public VirtualFile getFile() {
     if (!myInitialized) update();
+    if (myFile != null && !myFile.isValid()) {
+      myUrl = myFile.getUrl();
+      myFile = null;
+      update();
+    }
     return myFile;
   }
 

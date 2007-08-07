@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +23,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
@@ -67,31 +67,48 @@ public class JarHandler implements FileSystemInterface {
   public void dispose() {
   }
 
-  public void markDirty() {
+  @Nullable
+  public VirtualFile markDirty() {
     lock.lock();
     try {
       myRelPathsToEntries.clear();
       myZipFile = new SoftReference<ZipFile>(null);
 
-      NewVirtualFile root = (NewVirtualFile)
+      final NewVirtualFile root = (NewVirtualFile)
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
       if (root != null) {
         root.markDirty();
-        ManagingFS fs = ManagingFS.getInstance();
-        for (VirtualFile child : root.getChildren()) {
-          if (child != null) {
-            fs.processEvents(Collections.singletonList(new VFileDeleteEvent(this, child, true)));
-          }
-        }
-
-        root.markDirtyRecursively();
-        RefreshQueue.getInstance().refresh(false, true, null, root);
+        return root;
       }
+      return null;
     }
     finally {
       lock.unlock();
     }
   }
+
+  /*
+        final Application app = ApplicationManager.getApplication();
+        app.invokeLater(new Runnable() {
+          public void run() {
+            final ManagingFS fs = ManagingFS.getInstance();
+            app.runWriteAction(new Runnable() {
+              public void run() {
+                for (VirtualFile child : root.getChildren()) {
+                  if (child != null) {
+                    fs.processEvents(Collections.singletonList(new VFileDeleteEvent(this, child, true)));
+                  }
+                }
+              }
+            });
+
+            root.markDirtyRecursively();
+            RefreshQueue.getInstance().refresh(true, true, null, root);
+          }
+        }, ModalityState.NON_MODAL);
+
+   */
+
 
   @NotNull
   private Map<String, EntryInfo> initEntries() {

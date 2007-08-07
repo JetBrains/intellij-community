@@ -1,17 +1,25 @@
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +40,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       public void before(final List<? extends VFileEvent> events) { }
 
       public void after(final List<? extends VFileEvent> events) {
+        final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
+
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
             final String path = event.getPath();
@@ -41,25 +51,57 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             }
 
             for (String jarPath : jarPaths) {
-              if (FileUtil.startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()), path, SystemInfo.isFileSystemCaseSensitive)) {
-                markDirty(jarPath);
+              if (FileUtil .startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()), path, SystemInfo.isFileSystemCaseSensitive)) {
+                VirtualFile jarRootToRefresh = markDirty(jarPath);
+                if (jarRootToRefresh != null) {
+                  rootsToRefresh.add(jarRootToRefresh);
+                }
               }
             }
           }
+        }
+
+        if (!rootsToRefresh.isEmpty()) {
+          final Application app = ApplicationManager.getApplication();
+          app.invokeLater(new Runnable() {
+            public void run() {
+              final List<VFileEvent> deleteEvents = new ArrayList<VFileEvent>();
+              for (VirtualFile root : rootsToRefresh) {
+                for (VirtualFile child : root.getChildren()) {
+                  if (child != null) {
+                    deleteEvents.add(new VFileDeleteEvent(this, child, true));
+                  }
+                }
+                ((NewVirtualFile)root).markDirtyRecursively();
+              }
+
+              app.runWriteAction(new Runnable() {
+                public void run() {
+                  ManagingFS.getInstance().processEvents(deleteEvents);
+                }
+              });
+
+              VirtualFile[] roots = rootsToRefresh.toArray(new VirtualFile[rootsToRefresh.size()]);
+              RefreshQueue.getInstance().refresh(true, true, null, roots);
+            }
+          }, ModalityState.NON_MODAL);
         }
       }
     });
   }
 
-  private void markDirty(final String path) {
+  @Nullable
+  private VirtualFile markDirty(final String path) {
     final JarHandler handler;
     synchronized (PersistentFS.LOCK) {
       handler = myHandlers.remove(path);
     }
 
     if (handler != null) {
-      handler.markDirty();
+      return handler.markDirty();
     }
+
+    return null;
   }
 
   @NotNull
