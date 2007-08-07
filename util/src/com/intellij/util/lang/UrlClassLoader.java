@@ -99,7 +99,12 @@ public class UrlClassLoader extends ClassLoader {
       // Check if package already loaded.
       Package pkg = getPackage(pkgname);
       if (pkg == null) {
-        definePackage(pkgname, null, null, null, null, null, null, null);
+        try {
+          definePackage(pkgname, null, null, null, null, null, null, null);
+        }
+        catch (IllegalArgumentException e) {
+          // do nothing, package already defined by some other thread
+        }
       }
     }
 
