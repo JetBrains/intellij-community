@@ -97,7 +97,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
-  public final PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (isReferenceTo(element)) return this;
 
@@ -142,7 +142,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return processor.isFound();
   }
 
-  private AbstractQualifiedReference replaceReference(final String newText) {
+  protected final AbstractQualifiedReference replaceReference(final String newText) {
     final ASTNode newNode = parseReference(newText).getNode();
     getNode().getTreeParent().replaceChild(getNode(), newNode);
     return (AbstractQualifiedReference)newNode.getPsi();
