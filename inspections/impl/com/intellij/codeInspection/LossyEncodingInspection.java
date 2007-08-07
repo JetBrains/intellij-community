@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +42,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (ArrayUtil.find(file.getPsiRoots(), file) != 0) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     String text = file.getText();
-    Charset charset = LoadTextUtil.getCharsetForWriting(file.getProject(), virtualFile, text);
+    Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
     for (int i=0; i<text.length();i++) {
       char c = text.charAt(i);

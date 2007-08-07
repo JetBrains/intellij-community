@@ -173,7 +173,31 @@ public class CharsetToolkit {
     // otherwise, the file would not be human readable
     Charset charset = guessFromBOM();
     if (charset != null) return charset;
-
+    GuessedEncoding encoding = guessFromContent(guess_length);
+    switch (encoding) {
+      case SEVEN_BIT:
+        // if no byte with an high order bit set, the encoding is US-ASCII
+        // (it might have been UTF-7, but this encoding is usually internally used only by mail systems)
+        // returns the default charset rather than US-ASCII if the enforce8Bit flag is set.
+        if (enforce8Bit) {
+          return defaultCharset;
+        }
+        else {
+          return Charset.forName("US-ASCII");
+        }
+      case INVALID_UTF8:
+        return defaultCharset;
+      case VALID_UTF8:
+        return UTF8_CHARSET;
+    }
+    return null;
+  }
+  public enum GuessedEncoding {
+    SEVEN_BIT,
+    VALID_UTF8,
+    INVALID_UTF8,
+  }
+  public GuessedEncoding guessFromContent(int guess_length) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
     boolean highOrderBit = false;
@@ -182,17 +206,15 @@ public class CharsetToolkit {
     // if it's not the case, we can assume the encoding is the default encoding of the system
     boolean validU8Char = true;
 
-    // TODO the buffer is not read up to the end, but up to length - 6
-
     int length = Math.min( buffer.length, guess_length );
     int i = 0;
-    while (i < length - 6) {
+    while (i < length) {
       byte b0 = buffer[i];
-      byte b1 = buffer[i + 1];
-      byte b2 = buffer[i + 2];
-      byte b3 = buffer[i + 3];
-      byte b4 = buffer[i + 4];
-      byte b5 = buffer[i + 5];
+      byte b1 = i+1>=length ? 0 : buffer[i + 1];
+      byte b2 = i+2>=length ? 0 : buffer[i + 2];
+      byte b3 = i+3>=length ? 0 : buffer[i + 3];
+      byte b4 = i+4>=length ? 0 : buffer[i + 4];
+      byte b5 = i+5>=length ? 0 : buffer[i + 5];
       if (b0 < 0) {
         // a high order bit was encountered, thus the encoding is not US-ASCII
         // it may be either an 8-bit encoding or UTF-8
@@ -247,20 +269,14 @@ public class CharsetToolkit {
       if (!validU8Char) break;
       i++;
     }
-    // if no byte with an high order bit set, the encoding is US-ASCII
-    // (it might have been UTF-7, but this encoding is usually internally used only by mail systems)
     if (!highOrderBit) {
-      // returns the default charset rather than US-ASCII if the enforce8Bit flag is set.
-      if (enforce8Bit)
-        return defaultCharset;
-      else
-        return Charset.forName("US-ASCII");
+      return GuessedEncoding.SEVEN_BIT;
     }
     // if no invalid UTF-8 were encountered, we can assume the encoding is UTF-8,
     // otherwise the file would not be human readable
-    if (validU8Char) return UTF8_CHARSET;
-    // finally, if it's not UTF-8 nor US-ASCII, let's assume the encoding is the default encoding
-    return defaultCharset;
+    if (validU8Char) return GuessedEncoding.VALID_UTF8;
+    // finally, if it's not UTF-8 nor US-ASCII
+    return GuessedEncoding.INVALID_UTF8;
   }
 
   public Charset guessFromBOM() {
@@ -274,7 +290,6 @@ public class CharsetToolkit {
   public Charset guessEncoding( int guess_length ) {
     return guessEncoding(guess_length, defaultCharset);
   }
-
 
   public static Charset guessEncoding(File f, int bufferLength) throws IOException {
     return guessEncoding(f, bufferLength, getIDEOptionsCharset());

@@ -21,7 +21,7 @@ import com.intellij.psi.*;
  * @author ik,dsl
  */
 public class CandidateInfo implements JavaResolveResult {
-  public static CandidateInfo[] EMPTY_ARRAY = new CandidateInfo[0];
+  public static final CandidateInfo[] EMPTY_ARRAY = new CandidateInfo[0];
 
   private final PsiElement myPlace;
   private final PsiClass myAccessClass;

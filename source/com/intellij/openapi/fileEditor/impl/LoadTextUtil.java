@@ -100,19 +100,13 @@ public final class LoadTextUtil {
       toolkit.setEnforce8Bit(true);
       Charset charset = toolkit.guessFromBOM();
       if (charset != null) return charset;
+      CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
+      if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) return CharsetToolkit.UTF8_CHARSET; //UTF detected, ignore all directives
     }
 
     FileType fileType = virtualFile.getFileType();
     String charsetName = fileType.getCharset(virtualFile);
-    if (charsetName != null) {
-      return CharsetToolkit.forName(charsetName);
-    }
-
-    if (shouldGuess) {
-      Charset charset = toolkit.guessEncoding(content.length);
-      if (charset != null) return charset;
-    }
-    return null;
+    return CharsetToolkit.forName(charsetName);
   }
 
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
@@ -153,15 +147,40 @@ public final class LoadTextUtil {
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static Writer getWriter(@Nullable Project project, final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp)
     throws IOException {
-    Charset charset = getCharsetForWriting(project, virtualFile, text);
+    Charset existing = virtualFile.getCharset();
+    Charset specified = extractCharsetFromFileContent(project, virtualFile, text);
+    Charset charset = chooseMostlyHarmlessCharset(existing, specified, text);
     if (charset != null) {
       virtualFile.setCharset(charset);
     }
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
-    return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
+    return new BufferedWriter(specified == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
   }
 
-  public static Charset getCharsetForWriting(@Nullable Project project, final VirtualFile virtualFile, final String text) {
+  private static Charset chooseMostlyHarmlessCharset(Charset existing, Charset specified, String text) {
+    if (existing == null) return specified;
+    if (specified == null) return existing;
+    if (specified.equals(existing)) return specified;
+    boolean isExistingLossy = false;
+    boolean isSpecifiedLossy = false;
+    for (int i=0; i<text.length();i++) {
+      char c = text.charAt(i);
+      String str = Character.toString(c);
+      isExistingLossy |= !isSupported(existing, str);
+      isSpecifiedLossy |= !isSupported(specified, str);
+    }
+    if (!isSpecifiedLossy) return specified; //if explicitly specified encoding is safe, return it
+    if (!isExistingLossy) return existing;   //otherwise stick to the old encoding if it's ok
+    return specified;                        //if both are bad it's no difference
+  }
+
+  private static boolean isSupported(Charset charset, String str) {
+    ByteBuffer out = charset.encode(str);
+    CharBuffer buffer = charset.decode(out);
+    return str.equals(buffer.toString());
+  }
+
+  public static Charset extractCharsetFromFileContent(@Nullable Project project, final VirtualFile virtualFile, final String text) {
     FileType fileType = virtualFile.getFileType();
     Charset charset = null;
     if (fileType instanceof LanguageFileType) {
