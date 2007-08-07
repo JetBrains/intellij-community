@@ -169,7 +169,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return SvnBundle.message("changes.browser.revision.term");
   }
 
-  public boolean isChangeLocallyAvailable(FilePath filePath,VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision) {
+  public boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision,
+                                          final SvnChangeList changeList) {
     return localRevision.compareTo(changeRevision) >= 0;
   }
 
