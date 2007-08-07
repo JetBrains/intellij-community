@@ -1,12 +1,13 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.hint.api.ParameterInfoProvider;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -16,10 +17,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -50,7 +54,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     context.setHighlightedElement(highlightedElement);
 
     final Language language = psiElement.getLanguage();
-    ParameterInfoHandler[] handlers = language.getParameterInfoHandlers();
+    ParameterInfoHandler[] handlers = getHandlers(language);
     if (handlers == null) handlers = new ParameterInfoHandler[0];
 
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
@@ -94,6 +98,12 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                    0, false);
       }
     });
+  }
+
+  public static ParameterInfoHandler[] getHandlers(final Language language) {
+    final ParameterInfoHandler[] infoHandlersFromLanguage = language.getParameterInfoHandlers();
+    if (infoHandlersFromLanguage != null) return infoHandlersFromLanguage;
+    return ourHandlers.get(language);
   }
 
   interface BestLocationPointProvider {
@@ -188,7 +198,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return aboveSpace > underSpace ? new Point(p2.x, 0) : p1;
   }
 
-  private static class MyShowParameterInfoContext implements CreateParameterInfoContext {
+  private static class MyShowParameterInfoContext implements com.intellij.codeInsight.hint.api.CreateParameterInfoContext {
     private final Editor myEditor;
     private final PsiFile myFile;
     private final Project myProject;
@@ -255,6 +265,10 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
         handler
       );
     }
+
+    public void showHint(final PsiElement element, final int offset, final com.intellij.codeInsight.hint.api.ParameterInfoHandler handler) {
+      showHint(element, offset, createParameterInfoHandler(handler));
+    }
   }
 
   private static class MyBestLocationPointProvider implements BestLocationPointProvider {
@@ -290,6 +304,64 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       }
       return p;
     }
+  }
+
+  private static Map<Language, ParameterInfoHandler[]> ourHandlers = new HashMap<Language, ParameterInfoHandler[]>(3);
+
+  public static void register(@NotNull Language lang,@NotNull ParameterInfoProvider provider) {
+    final com.intellij.codeInsight.hint.api.ParameterInfoHandler[] infoHandlers = provider.getHandlers();
+    final ParameterInfoHandler[] handlers = new ParameterInfoHandler[infoHandlers.length];
+
+    for(int i = 0; i < handlers.length; ++i) {
+      final com.intellij.codeInsight.hint.api.ParameterInfoHandler infoHandler = infoHandlers[i];
+
+      handlers[i] = createParameterInfoHandler(infoHandler);
+    }
+    ourHandlers.put(lang,handlers);
+  }
+
+  private static ParameterInfoHandler createParameterInfoHandler(final com.intellij.codeInsight.hint.api.ParameterInfoHandler infoHandler) {
+    return new ParameterInfoHandler() {
+      public boolean couldShowInLookup() {
+        return infoHandler.couldShowInLookup();
+      }
+
+      public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
+        return infoHandler.getParametersForLookup((LookupItem)item, (com.intellij.codeInsight.hint.api.ParameterInfoContext)context);
+      }
+
+      public Object[] getParametersForDocumentation(final Object p, final ParameterInfoContext context) {
+        return infoHandler.getParametersForDocumentation(p, (com.intellij.codeInsight.hint.api.ParameterInfoContext)context);
+      }
+
+      public Object findElementForParameterInfo(final CreateParameterInfoContext context) {
+        return infoHandler.findElementForParameterInfo((com.intellij.codeInsight.hint.api.CreateParameterInfoContext)context);
+      }
+
+      public void showParameterInfo(@NotNull final Object element, final CreateParameterInfoContext context) {
+        infoHandler.showParameterInfo(element, (com.intellij.codeInsight.hint.api.CreateParameterInfoContext)context);
+      }
+
+      public Object findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+        return infoHandler.findElementForUpdatingParameterInfo((com.intellij.codeInsight.hint.api.UpdateParameterInfoContext)context);
+      }
+
+      public void updateParameterInfo(final @NotNull Object o, final UpdateParameterInfoContext context) {
+        infoHandler.updateParameterInfo(o, (com.intellij.codeInsight.hint.api.UpdateParameterInfoContext)context);
+      }
+
+      public String getParameterCloseChars() {
+        return infoHandler.getParameterCloseChars();
+      }
+
+      public boolean tracksParameterIndex() {
+        return infoHandler.tracksParameterIndex();
+      }
+
+      public void updateUI(final Object p, final ParameterInfoUIContext context) {
+        infoHandler.updateUI(p, (com.intellij.codeInsight.hint.api.ParameterInfoUIContext)context);
+      }
+    };
   }
 }
 

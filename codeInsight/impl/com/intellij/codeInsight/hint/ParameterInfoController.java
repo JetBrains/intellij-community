@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.lang.parameterInfo.ParameterInfoUtils;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -18,7 +18,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.lang.parameterInfo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -314,7 +313,7 @@ public class ParameterInfoController {
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
     if (file == null) return null;
-    final ParameterInfoHandler[] handlers = PsiUtil.getLanguageAtOffset(file, offset).getParameterInfoHandlers();
+    final ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(PsiUtil.getLanguageAtOffset(file, offset));
     
     if (handlers != null) {
       for(ParameterInfoHandler handler:handlers) {
@@ -330,7 +329,7 @@ public class ParameterInfoController {
     return null;
   }
 
-  private class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
+  private class MyUpdateParameterInfoContext implements com.intellij.codeInsight.hint.api.UpdateParameterInfoContext {
     private final int myOffset;
     private final PsiFile myFile;
 
@@ -386,6 +385,14 @@ public class ParameterInfoController {
 
     public Object[] getObjectsToView() {
       return myComponent.getObjects();
+    }
+
+    public void setHighlightedParameter(final PsiElement parameter) {
+      setHighlightedParameter((Object)parameter);
+    }
+
+    public int getParameterStart() {
+      return getParameterListStart();
     }
   }
 }

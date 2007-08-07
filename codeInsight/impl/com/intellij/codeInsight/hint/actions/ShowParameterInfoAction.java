@@ -21,7 +21,7 @@ public class ShowParameterInfoAction extends BaseCodeInsightAction{
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     return file instanceof PsiJavaFile ||
            file instanceof XmlFile ||
-           file.getLanguage().getParameterInfoHandlers() != null
+           ShowParameterInfoHandler.getHandlers(file.getLanguage()) != null
       ;
   }
 
