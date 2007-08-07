@@ -25,15 +25,16 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class SimpleTree extends JTree implements CellEditorListener {
 
-  protected MouseListener myMouseListener = new MyMouseListener();
+  protected final MouseListener myMouseListener = new MyMouseListener();
 
   private ActionGroup myPopupGroup;
   private String myPlace;
 
-  private static SimpleNode NULL_NODE = new NullNode();
+  private static final SimpleNode NULL_NODE = new NullNode();
 
   // From FTree:
   private static final int INVALID = -1;
@@ -106,7 +107,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
       return NULL_NODE;
     }
 
-    DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode) aPath.getLastPathComponent());
+    DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)aPath.getLastPathComponent();
     if (treeNode == null) {
       return NULL_NODE;
     }
@@ -140,15 +141,12 @@ public class SimpleTree extends JTree implements CellEditorListener {
 
   public boolean isSelectionEmpty() {
     final TreePath selection = super.getSelectionPath();
-    if (selection == null) {
-      return true;
-    }
+    return selection == null || getNodeFor(selection) == NULL_NODE;
 
-    return getNodeFor(selection) == NULL_NODE;
   }
 
   public SimpleNode[] getSelectedNodesIfUniform() {
-    java.util.List<SimpleNode> result = new ArrayList<SimpleNode>();
+    List<SimpleNode> result = new ArrayList<SimpleNode>();
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       SimpleNode lastNode = null;
@@ -184,7 +182,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
     scrollPathToVisible(path);
   }
 
-  private boolean visitDown(AbstractTreeBuilder builder, final SimpleNode node, SimpleNodeVisitor visitor) {
+  private static boolean visitDown(AbstractTreeBuilder builder, final SimpleNode node, SimpleNodeVisitor visitor) {
     if (visitor.accept(node)) {
       return true;
     }
@@ -210,8 +208,8 @@ public class SimpleTree extends JTree implements CellEditorListener {
       }
 
       final Rectangle bounds = getRowBounds(row);
-      int x = (int) (bounds.getMaxX());
-      int y = (int) (bounds.getY() + (bounds.height / 2));
+      int x = (int)bounds.getMaxX();
+      int y = (int) (bounds.getY() + bounds.height / 2);
       g.drawLine(x, y, getWidth() - 5, y);
     }
   }

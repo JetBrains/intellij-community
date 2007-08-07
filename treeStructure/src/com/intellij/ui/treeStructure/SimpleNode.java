@@ -20,13 +20,14 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class SimpleNode extends NodeDescriptor implements ComparableObject {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
-  protected List<ColoredFragment> myColoredText = new ArrayList<ColoredFragment>();
-  private int myWeight = 10;
+  protected final List<ColoredFragment> myColoredText = new CopyOnWriteArrayList<ColoredFragment>();
+  private final int myWeight = 10;
   private Font myFont;
 
   protected SimpleNode(Project project) {
@@ -62,17 +63,13 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return new SimpleTextAttributes(Font.PLAIN, getColor());
   }
 
-  protected FileStatus getFileStatus() {
+  private FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;
   }
 
   @Nullable
   protected Object updateElement() {
     return getElement();
-  }
-
-  protected boolean shouldUpdate() {
-    return true;
   }
 
   public final boolean update() {
@@ -101,7 +98,8 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
         doUpdate();
         myName = getName();
 
-        return changed || !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor}, new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
+        return changed || !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
+                                           new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
       }
     }).booleanValue();
   }
@@ -202,9 +200,9 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public static class ColoredFragment {
-    private String myText;
-    private String myToolTip;
-    private SimpleTextAttributes myAttributes;
+    private final String myText;
+    private final String myToolTip;
+    private final SimpleTextAttributes myAttributes;
 
     public ColoredFragment(String aText, SimpleTextAttributes aAttributes) {
       this(aText, null, aAttributes);
