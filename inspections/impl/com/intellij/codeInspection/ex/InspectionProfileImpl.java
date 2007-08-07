@@ -311,15 +311,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void save() {
+  public void save() throws IOException {
     if (isLocal()) {
       if (myName.compareTo("Default") == 0 && myFile == null){
-        try {
-          myFile = InspectionProfileManager.getInstance().createUniqueProfileFile("Default");
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        myFile = InspectionProfileManager.getInstance().createUniqueProfileFile("Default");
       }
       if (myFile != null) {
         try {
@@ -335,9 +330,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           JDOMUtil.writeDocument(new Document(root), myFile, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
         }
         catch (WriteExternalException e) {
-          LOG.error(e);
-        }
-        catch (IOException e) {
           LOG.error(e);
         }
       }
@@ -532,14 +524,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   //invoke when isChanged() == true
-  public void commit() {
+  public void commit() throws IOException {
     LOG.assertTrue(mySource != null);
     mySource.commit(this);
     getProfileManager().updateProfile(mySource);
     mySource = null;
   }
 
-  private void commit(InspectionProfileImpl inspectionProfile) {
+  private void commit(InspectionProfileImpl inspectionProfile) throws IOException {
     myName = inspectionProfile.myName;
     myLocal = inspectionProfile.myLocal;
     myLockedProfile = inspectionProfile.myLockedProfile;

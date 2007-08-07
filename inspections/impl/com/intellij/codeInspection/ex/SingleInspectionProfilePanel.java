@@ -791,7 +791,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile != null && getSavedProfile() != null) {
       ModifiableModel profile = mySelectedProfile.getParentProfile().getModifiableModel();
       ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
-      profile.save();
+      try {
+        profile.save();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
       profile.getProfileManager().updateProfile(profile);
     }
     myAlarm.cancelAllRequests();
@@ -873,7 +878,12 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void apply() throws ConfigurationException {
     final ModifiableModel selectedProfile = getSelectedProfile();
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
-    selectedProfile.commit();
+    try {
+      selectedProfile.commit();
+    }
+    catch (IOException e) {
+      throw new ConfigurationException(e.getMessage());
+    }
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;

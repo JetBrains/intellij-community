@@ -4,6 +4,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
 
+import java.io.IOException;
+
 /**
  * User: anna
  * Date: Dec 7, 2004
@@ -24,7 +26,7 @@ public interface InspectionProfile extends Profile {
 
   boolean isExecutable();
 
-  void save();
+  void save() throws IOException;
 
   boolean isEditable();  
 

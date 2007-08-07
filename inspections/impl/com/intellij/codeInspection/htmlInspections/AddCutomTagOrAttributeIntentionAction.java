@@ -10,12 +10,16 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 /**
  * @author spleaner
@@ -64,6 +68,11 @@ public class AddCutomTagOrAttributeIntentionAction implements LocalQuickFix {
     final HtmlUnknownTagInspection inspection = (HtmlUnknownTagInspection)wrapper.getTool();
     inspection.addCustomPropertyName(myName);
     model.isProperSetting(HighlightDisplayKey.find(myInspectionName));
-    model.commit();
+    try {
+      model.commit();
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+    }
   }
 }

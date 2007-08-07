@@ -90,7 +90,12 @@ public class InspectionProfileConvertor {
       final ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
 
       fillErrorLevels(editorProfileModel);
-      editorProfileModel.commit();
+      try {
+        editorProfileModel.commit();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

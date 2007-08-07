@@ -9,10 +9,14 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public class DisableInspectionToolAction implements IntentionAction {
   private final String myToolId;
@@ -36,16 +40,21 @@ public class DisableInspectionToolAction implements IntentionAction {
     return NAME;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
     ModifiableModel model = inspectionProfile.getModifiableModel();
     model.disableTool(myToolId);
-    model.commit();
+    try {
+      model.commit();
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+    }
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

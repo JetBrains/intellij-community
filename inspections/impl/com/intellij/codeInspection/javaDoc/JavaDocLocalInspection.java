@@ -4,6 +4,7 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
@@ -18,6 +19,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -45,6 +47,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.io.IOException;
 
 public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private static final String REQUIRED_JAVADOC_IS_ABSENT = InspectionsBundle.message("inspection.javadoc.problem.descriptor");
@@ -950,7 +953,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myTag);
       //correct save settings
       ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
-      inspectionProfile.save();
+      try {
+        inspectionProfile.save();
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+      }
     }
   }
 }

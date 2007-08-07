@@ -25,12 +25,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.io.IOException;
 
 /**
  * User: anna
@@ -118,28 +121,33 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      if (myView.isProfileDefined()) {
-        final ModifiableModel model = myView.getCurrentProfile().getModifiableModel();
-        model.disableTool(myKey.toString());
-        model.commit();
-        myView.updateCurrentProfile();
-      } else {
-        final RefEntity[] selectedElements = myView.getTree().getSelectedElements();
-        final Set<InspectionProfile> files = new HashSet<InspectionProfile>();
-        final Project project = myView.getProject();
-        final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-        for (RefEntity selectedElement : selectedElements) {
-          if (selectedElement instanceof RefElement) {
-            final PsiElement element = ((RefElement)selectedElement).getElement();
-            files.add(profileManager.getInspectionProfile(element.getContainingFile()));
-          }
-        }
-        for (InspectionProfile inspectionProfile : files) {
-          ModifiableModel model = inspectionProfile.getModifiableModel();
+      try {
+        if (myView.isProfileDefined()) {
+          final ModifiableModel model = myView.getCurrentProfile().getModifiableModel();
           model.disableTool(myKey.toString());
           model.commit();
+          myView.updateCurrentProfile();
+        } else {
+          final RefEntity[] selectedElements = myView.getTree().getSelectedElements();
+          final Set<InspectionProfile> files = new HashSet<InspectionProfile>();
+          final Project project = myView.getProject();
+          final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+          for (RefEntity selectedElement : selectedElements) {
+            if (selectedElement instanceof RefElement) {
+              final PsiElement element = ((RefElement)selectedElement).getElement();
+              files.add(profileManager.getInspectionProfile(element.getContainingFile()));
+            }
+          }
+          for (InspectionProfile inspectionProfile : files) {
+            ModifiableModel model = inspectionProfile.getModifiableModel();
+            model.disableTool(myKey.toString());
+            model.commit();
+          }
+          DaemonCodeAnalyzer.getInstance(project).restart();
         }
-        DaemonCodeAnalyzer.getInstance(project).restart();
+      }
+      catch (IOException e1) {
+        Messages.showErrorDialog(myView.getProject(), e1.getMessage(), CommonBundle.getErrorTitle());
       }
     }
   }

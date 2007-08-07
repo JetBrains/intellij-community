@@ -8,6 +8,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
 
+import java.io.IOException;
+
 /**
  * User: anna
  * Date: 15-Feb-2006
@@ -32,7 +34,7 @@ public interface ModifiableModel extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  void commit();
+  void commit() throws IOException;
 
   boolean isChanged();
 
@@ -58,7 +60,7 @@ public interface ModifiableModel extends Profile {
 
   void setEditable(String toolDisplayName);
 
-  void save();
+  void save() throws IOException;
 
   boolean isProfileLocked();
 

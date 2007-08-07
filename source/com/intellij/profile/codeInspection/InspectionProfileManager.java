@@ -79,7 +79,12 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     for (Profile profile : profiles) {
       final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
       if (inspectionProfile.wasInitialized()) {
-        inspectionProfile.save();
+        try {
+          inspectionProfile.save();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     }
   }

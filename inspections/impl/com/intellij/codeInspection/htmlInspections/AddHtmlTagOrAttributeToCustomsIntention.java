@@ -12,10 +12,14 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -69,7 +73,12 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
     xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
     model.isProperSetting(HighlightDisplayKey.find(myInspectionName));//update map with non-default settings
-    model.commit();
+    try {
+      model.commit();
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+    }
   }
 
   public boolean startInWriteAction() {

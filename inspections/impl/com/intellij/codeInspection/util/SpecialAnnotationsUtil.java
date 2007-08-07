@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
@@ -33,6 +34,7 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -151,7 +153,12 @@ public class SpecialAnnotationsUtil {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
     //correct save settings
     ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
-    inspectionProfile.save();
+    try {
+      inspectionProfile.save();
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+    }
   }
 
   public static void createAddToSpecialAnnotationFixes(final PsiModifierListOwner owner, final Processor<String> processor) {
