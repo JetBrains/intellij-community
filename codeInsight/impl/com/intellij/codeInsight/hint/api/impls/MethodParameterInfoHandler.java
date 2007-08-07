@@ -286,6 +286,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         if (substitutor != null) {
           returnType = substitutor.substitute(returnType);
         }
+
+        appendModifierList(buffer, method.getModifierList());
         buffer.append(returnType.getPresentableText());
         buffer.append(" ");
       }
@@ -310,6 +312,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (substitutor != null) {
             paramType = substitutor.substitute(paramType);
           }
+          appendModifierList(buffer, parm.getModifierList());
           buffer.append(paramType.getPresentableText());
           String name = parm.getName();
           if (name != null){
@@ -351,6 +354,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       false,
       context.getDefaultParameterColor()
     );
+  }
+
+  private static void appendModifierList(final StringBuilder buffer, final PsiModifierList list) {
+    int lastSize = buffer.length();
+    for(PsiAnnotation a: list.getAnnotations()) {
+      if (lastSize != buffer.length()) buffer.append(" ");
+      buffer.append("@").append(a.getNameReferenceElement().getText());
+    }
+    if (lastSize != buffer.length()) buffer.append(" ");
   }
 
   public void updateUI(final Object p, final ParameterInfoUIContext context) {
