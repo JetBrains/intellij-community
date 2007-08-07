@@ -20,6 +20,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 class ScopeUtils
 {
 
@@ -67,6 +70,7 @@ class ScopeUtils
     @Nullable
     public static PsiElement getCommonParent(@NotNull PsiElement[] referenceElements)
     {
+	    Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
         PsiElement commonParent = null;
         for (PsiElement referenceElement : referenceElements)
         {
@@ -197,4 +201,23 @@ class ScopeUtils
         }
         return scope;
     }
+
+	private static class PsiElementOrderComparator implements Comparator<PsiElement>
+	{
+
+		private static final PsiElementOrderComparator INSTANCE =
+				new PsiElementOrderComparator();
+
+		public int compare(PsiElement element1, PsiElement element2)
+		{
+			final int offset1 = element1.getTextOffset();
+			final int offset2 = element2.getTextOffset();
+			return offset1 - offset2;
+		}
+
+		public static PsiElementOrderComparator getInstance()
+		{
+			return INSTANCE;
+		}
+	}
 }

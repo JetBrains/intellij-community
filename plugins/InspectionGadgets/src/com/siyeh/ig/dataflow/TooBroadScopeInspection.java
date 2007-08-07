@@ -389,7 +389,6 @@ public class TooBroadScopeInspection extends BaseInspection
 		        referenceElements[index] = referenceElement;
 		        index++;
 	        }
-	        Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
             PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
 	        if (commonParent == null)
             {
@@ -537,23 +536,4 @@ public class TooBroadScopeInspection extends BaseInspection
             return false;
         }
     }
-
-	private static class PsiElementOrderComparator implements Comparator<PsiElement>
-	{
-
-		private static final PsiElementOrderComparator INSTANCE =
-				new PsiElementOrderComparator();
-
-		public int compare(PsiElement element1, PsiElement element2)
-		{
-			final int offset1 = element1.getTextOffset();
-			final int offset2 = element2.getTextOffset();
-			return offset1 - offset2;
-		}
-
-		public static PsiElementOrderComparator getInstance()
-		{
-			return INSTANCE;
-		}
-	}
 }
