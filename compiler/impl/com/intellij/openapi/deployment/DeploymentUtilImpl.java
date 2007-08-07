@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -27,6 +28,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -41,6 +43,7 @@ import java.util.jar.Manifest;
  */
 public class DeploymentUtilImpl extends DeploymentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.MakeUtilImpl");
+  @NonNls private static final String JAR_SUFFIX = ".jar";
 
   public boolean addModuleOutputContents(@NotNull CompileContext context,
                                          @NotNull BuildRecipe items,
@@ -115,27 +118,39 @@ public class DeploymentUtilImpl extends DeploymentUtil {
         else {
           outputRelativePath = libraryLink.getURI();
         }
-        boolean isDestinationDirectory = libraryLink.getSingleFileName() == null;
+
         final List<String> urls = libraryLink.getUrls();
+
+        boolean isDestinationDirectory = true;
+        if (LibraryLink.MODULE_LEVEL.equals(libraryLink.getLevel()) && urls.size() == 1 && outputRelativePath.endsWith(JAR_SUFFIX)) {
+          isDestinationDirectory = false;
+        }
+
         for (String url : urls) {
           final String path = PathUtil.toPresentableUrl(url);
           final File file = new File(path);
-          String fileDestination = isDestinationDirectory ? appendToPath(outputRelativePath, file.getName()) : outputRelativePath;
+          boolean packagingMethodIsCopy = packagingMethod.equals(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST) ||
+                                          packagingMethod.equals(PackagingMethod.COPY_FILES);
+
+          String fileDestination = outputRelativePath;
+          if (isDestinationDirectory) {
+            if (file.isDirectory()) {
+              if (!packagingMethodIsCopy) {
+                fileDestination = appendToPath(fileDestination, file.getName() + JAR_SUFFIX);
+              }
+            }
+            else {
+              fileDestination = appendToPath(fileDestination, file.getName());
+            }
+          }
+
           if (file.isDirectory()) {
             boolean ok;
-            if (packagingMethod.equals(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST)
-                || packagingMethod.equals(PackagingMethod.COPY_FILES)) {
+            if (packagingMethodIsCopy) {
               ok = addItemsRecursively(items, file, module, fileDestination, null, possibleBaseOutputPath);
             }
             else {
-              if (!packagingMethod.equals(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST) &&
-                  !packagingMethod.equals(PackagingMethod.JAR_AND_COPY_FILE)) {
-                libraryLink.setPackagingMethod(PackagingMethod.JAR_AND_COPY_FILE);
-                context.addMessage(CompilerMessageCategory.WARNING,
-                                   CompilerBundle.message("message.text.packaging.method.for.library.reset", libraryLink.getPresentableName(),
-                                                      PackagingMethod.JAR_AND_COPY_FILE),
-                                   null, -1, -1);
-              }
+              fixPackagingMethod(packagingMethod, libraryLink, context);
               BuildInstruction instruction = new JarAndCopyBuildInstructionImpl(module, file, fileDestination);
               items.addInstruction(instruction);
               ok = true;
@@ -153,6 +168,16 @@ public class DeploymentUtilImpl extends DeploymentUtil {
         }
       }
     });
+  }
+
+  private static void fixPackagingMethod(final PackagingMethod packagingMethod, final LibraryLink libraryLink, final CompileContext context) {
+    if (!packagingMethod.equals(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST) &&
+        !packagingMethod.equals(PackagingMethod.JAR_AND_COPY_FILE)) {
+      libraryLink.setPackagingMethod(PackagingMethod.JAR_AND_COPY_FILE);
+      String message = CompilerBundle.message("message.text.packaging.method.for.library.reset", libraryLink.getPresentableName(),
+                                              PackagingMethod.JAR_AND_COPY_FILE);
+      context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1);
+    }
   }
 
   public void copyFile(@NotNull final File fromFile,
