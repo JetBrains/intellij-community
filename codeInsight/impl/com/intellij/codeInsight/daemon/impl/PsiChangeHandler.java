@@ -60,7 +60,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (psiFile != null) {
       Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
       if (document != null) {
-        ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markFileScopeDirtyDefensively(psiFile);
+        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(psiFile);
         //myDaemonCodeAnalyzer.stopProcess(true);
       }
     }
@@ -69,7 +69,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   public void propertyChanged(PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
-      ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markAllFilesDirty();
+      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
       myDaemonCodeAnalyzer.stopProcess(true);
     }
   }
@@ -99,7 +99,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       final ASTNode node = child.getNode();
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
           node != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(node.getElementType())) {
-        ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markFileScopeDirty(document, child);
+        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, child);
         return;
       }
     }
@@ -108,7 +108,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       // TODO: Hackery. Need an API for language plugin developers to define dirty scope for their changes.
       final FileViewProvider provider = file.getViewProvider();
       if (provider instanceof XmlFileViewProvider && ((XmlFileViewProvider)provider).getLanguageExtensions().length > 0) {
-        ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).getFileStatusMap().markAllFilesDirty();
+        myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
         return;
       }
     }
