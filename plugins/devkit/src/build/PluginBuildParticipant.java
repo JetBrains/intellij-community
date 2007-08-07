@@ -135,18 +135,12 @@ public class PluginBuildParticipant extends BuildParticipantBase {
       LibraryLink link = makeUtil.createLibraryLink(library, getModule());
       libraryLinks[i++] = link;
       link.setPackagingMethod(PackagingMethod.COPY_FILES);
-      final String singleFileName = link.getSingleFileName();
       final boolean onlyDirs = link.hasDirectoriesOnly();
       if (onlyDirs) {//todo split one lib into 2 separate libs if there are jars and dirs
         link.setURI(CLASSES);
       }
       else {
-        if (singleFileName != null) {
-          link.setURI(LIB + singleFileName);
-        }
-        else {
-          link.setURI(LIB);
-        }
+        link.setURI(LIB);
       }
     }
 
