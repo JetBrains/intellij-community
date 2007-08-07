@@ -20,7 +20,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
-  private PsiExpressionList myArgumentsList;
+  private final PsiExpressionList myArgumentsList;
 
   public JavaMethodsConflictResolver(PsiExpressionList list){
     myArgumentsList = list;

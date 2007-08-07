@@ -798,7 +798,7 @@ public final class PsiUtil {
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
       PsiType argType = args[args.length - 1].getType();
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
-      if (parmType.isAssignableFrom(argType)) return ApplicabilityLevel.FIXED_ARITY;
+      if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
     }
 
     if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {

@@ -717,8 +717,7 @@ public class TypeConversionUtil {
     if (psiClass == null) return false;
     final PsiClassType rightBoxed = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
     if (rightBoxed == null) return false;
-    final String qName = psiClass.getQualifiedName();
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(qName) || CommonClassNames.JAVA_LANG_NUMBER.equals(qName) || left.equals(rightBoxed);
+    return isAssignable(left, rightBoxed);
   }
 
   private static boolean isClassAssignable(PsiClassType.ClassResolveResult leftResult,
