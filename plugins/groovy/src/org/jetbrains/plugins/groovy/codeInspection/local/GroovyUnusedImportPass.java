@@ -97,9 +97,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    System.out.println("apply, null:" +(myUnusedImports == null));
     if (myUnusedImports == null) return;
-    System.out.println("unused imports: " + myUnusedImports.size());
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
     for (GrImportStatement unusedImport : myUnusedImports) {
       GrCodeReferenceElement importReference = unusedImport.getImportReference();
