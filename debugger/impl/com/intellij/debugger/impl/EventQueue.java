@@ -71,11 +71,7 @@ public class EventQueue<E> {
             return event;
           }
         }
-        try {
-          myEventsAvailable.await();
-        }
-        catch (InterruptedException ignored) {
-        }
+        myEventsAvailable.awaitUninterruptibly();
       }
     }
     finally {

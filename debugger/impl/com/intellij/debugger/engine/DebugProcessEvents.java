@@ -263,16 +263,17 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processVMDeathEvent(SuspendContextImpl suspendContext, Event event) {
-    preprocessEvent(suspendContext, null);
-
-    if (myEventThread != null) {
-      myEventThread.stopListening();
-      myEventThread = null;
+    try {
+      preprocessEvent(suspendContext, null);
+      cancelRunToCursorBreakpoint();
     }
-
-    cancelRunToCursorBreakpoint();
-
-    closeProcess(false);
+    finally {
+      if (myEventThread != null) {
+        myEventThread.stopListening();
+        myEventThread = null;
+      }
+      closeProcess(false);
+    }
 
     if(event != null) {
       showStatusText(this, event);
