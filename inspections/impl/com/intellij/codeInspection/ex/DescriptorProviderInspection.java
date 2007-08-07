@@ -26,13 +26,13 @@ import java.util.*;
  * @author max
  */
 public abstract class DescriptorProviderInspection extends InspectionTool implements ProblemDescriptionsProcessor {
-  private THashMap<RefEntity, CommonProblemDescriptor[]> myProblemElements;
+  private Map<RefEntity, CommonProblemDescriptor[]> myProblemElements;
   private HashMap<String, Set<RefEntity>> myPackageContents = null;
   private HashSet<RefModule> myModulesProblems = null;
-  private THashMap<CommonProblemDescriptor,RefEntity> myProblemToElements;
+  private Map<CommonProblemDescriptor, RefEntity> myProblemToElements;
   private DescriptorComposer myComposer;
-  private HashMap<RefEntity, Set<QuickFix>> myQuickFixActions;
-  private HashMap<RefEntity, CommonProblemDescriptor[]> myIgnoredElements;
+  private Map<RefEntity, Set<QuickFix>> myQuickFixActions;
+  private Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements;
 
   private HashMap<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
@@ -476,9 +476,9 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return getIgnoredElements().keySet();
   }
 
-  public THashMap<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
+  public Map<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
     if (myProblemElements == null) {
-      myProblemElements = new THashMap<RefEntity, CommonProblemDescriptor[]>();
+      myProblemElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>());
     }
     return myProblemElements;
   }
@@ -488,23 +488,23 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return myOldProblemElements;
   }
 
-  private THashMap<CommonProblemDescriptor, RefEntity> getProblemToElements() {
+  private Map<CommonProblemDescriptor, RefEntity> getProblemToElements() {
     if (myProblemToElements == null) {
-      myProblemToElements = new THashMap<CommonProblemDescriptor, RefEntity>();
+      myProblemToElements = Collections.synchronizedMap(new THashMap<CommonProblemDescriptor, RefEntity>());
     }
     return myProblemToElements;
   }
 
-  private HashMap<RefEntity, Set<QuickFix>> getQuickFixActions() {
+  private Map<RefEntity, Set<QuickFix>> getQuickFixActions() {
     if (myQuickFixActions == null) {
-      myQuickFixActions = new HashMap<RefEntity, Set<QuickFix>>();
+      myQuickFixActions = Collections.synchronizedMap(new HashMap<RefEntity, Set<QuickFix>>());
     }
     return myQuickFixActions;
   }
 
-  private HashMap<RefEntity, CommonProblemDescriptor[]> getIgnoredElements() {
+  private Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements() {
     if (myIgnoredElements == null) {
-      myIgnoredElements = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+      myIgnoredElements = Collections.synchronizedMap(new HashMap<RefEntity, CommonProblemDescriptor[]>());
     }
     return myIgnoredElements;
   }
