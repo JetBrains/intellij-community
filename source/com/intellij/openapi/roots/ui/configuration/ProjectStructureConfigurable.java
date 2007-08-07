@@ -146,10 +146,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     final JPanel left = new JPanel(new BorderLayout());
 
-    final DefaultActionGroup toolbar = new DefaultActionGroup();
-    toolbar.add(new BackAction(myComponent));
-    toolbar.add(new ForwardAction(myComponent));
-    myToolbarComponent = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbar, true).getComponent();
+    final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(new BackAction(myComponent));
+    toolbarGroup.add(new ForwardAction(myComponent));
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+    toolbar.setTargetComponent(myComponent);
+    myToolbarComponent = toolbar.getComponent();
     left.add(myToolbarComponent, BorderLayout.NORTH);
     left.add(mySidePanel, BorderLayout.CENTER);
 
