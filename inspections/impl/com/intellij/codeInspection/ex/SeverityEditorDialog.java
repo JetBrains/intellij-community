@@ -6,6 +6,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.TextAttributesDescription;
+import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ReorderableListController;
@@ -35,6 +37,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
@@ -56,7 +60,7 @@ public class SeverityEditorDialog extends DialogWrapper {
   @NonNls private static final String DEFAULT = "DEFAULT";
   @NonNls private static final String EDITABLE = "EDITABLE";
 
-  public SeverityEditorDialog(JComponent parent, final HighlightSeverity severity, final SeverityRegistrar severityRegistrar) {
+  public SeverityEditorDialog(final JComponent parent, final HighlightSeverity severity, final SeverityRegistrar severityRegistrar) {
     super(parent, true);
     mySeverityRegistrar = severityRegistrar;
     myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
@@ -90,8 +94,15 @@ public class SeverityEditorDialog extends DialogWrapper {
     myPanel.add(leftPanel, BorderLayout.WEST);
     myCard = new CardLayout();
     myRightPanel = new JPanel(myCard);
-    final JPanel disabled = new JPanel(new BorderLayout());
-    disabled.add(new JLabel(InspectionsBundle.message("severities.default.settings.message"), SwingConstants.CENTER), BorderLayout.CENTER);
+    final JPanel disabled = new JPanel(new GridBagLayout());
+    final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
+    button.addActionListener(new ActionListener(){
+      public void actionPerformed(final ActionEvent e) {
+        ShowSettingsUtil.getInstance()
+          .editConfigurable(myPanel, ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class));
+      }
+    });
+    disabled.add(button, new GridBagConstraints(0,0,1,1,0,0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
     myRightPanel.add(DEFAULT, disabled);
     myRightPanel.add(EDITABLE, myOptionsPanel);
     myCard.show(myRightPanel, EDITABLE);
