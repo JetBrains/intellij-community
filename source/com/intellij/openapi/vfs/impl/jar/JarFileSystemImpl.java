@@ -67,12 +67,14 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             public void run() {
               final List<VFileEvent> deleteEvents = new ArrayList<VFileEvent>();
               for (VirtualFile root : rootsToRefresh) {
-                for (VirtualFile child : root.getChildren()) {
-                  if (child != null) {
-                    deleteEvents.add(new VFileDeleteEvent(this, child, true));
+                if (root.isValid()) {
+                  for (VirtualFile child : root.getChildren()) {
+                    if (child != null) {
+                      deleteEvents.add(new VFileDeleteEvent(this, child, true));
+                    }
                   }
+                  ((NewVirtualFile)root).markDirtyRecursively();
                 }
-                ((NewVirtualFile)root).markDirtyRecursively();
               }
 
               app.runWriteAction(new Runnable() {
