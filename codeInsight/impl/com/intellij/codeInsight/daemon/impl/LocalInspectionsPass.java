@@ -196,10 +196,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                            final String message,
                                                            final String toolTip) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, textRange, message, toolTip);
+    PsiElement element = problemDescriptor.getPsiElement();
+    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, element, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip);
     highlightInfo.isAfterEndOfLine = problemDescriptor.isAfterEndOfLine();
 
-    PsiElement element = problemDescriptor.getPsiElement();
     if (element instanceof PsiFile && textRange.equals(element.getTextRange())) {
       highlightInfo.isFileLevelAnnotation = true;
     }
