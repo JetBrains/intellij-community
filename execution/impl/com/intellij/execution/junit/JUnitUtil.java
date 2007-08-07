@@ -83,6 +83,7 @@ public class JUnitUtil implements TestFramework {
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
+    if (!psiMethod.getName().startsWith("test")) return false;
     PsiClass testCaseClass = getTestCaseClassOrNull(location);
     return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
   }
