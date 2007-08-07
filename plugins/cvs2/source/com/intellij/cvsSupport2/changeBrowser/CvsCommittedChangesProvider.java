@@ -1,13 +1,6 @@
 /*
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.11.2006
- * Time: 20:38:08
- */
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
@@ -19,8 +12,10 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.cvsIntegration.CvsResult;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -28,13 +23,19 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * @author yole
+ */
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider");
+
   private final Project myProject;
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
@@ -158,7 +159,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return null;
   }
 
-  public boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision) {
+  public boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision,
+                                          final CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
       final CvsRevisionNumber cvsLocalRevision = (CvsRevisionNumber)localRevision;
       final CvsRevisionNumber cvsChangeRevision = (CvsRevisionNumber)changeRevision;
@@ -175,6 +177,18 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         }
       }
 
+      final VirtualFile parent = filePath.getVirtualFileParent();
+      if (parent != null) {
+        final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, filePath.getName());
+        if (entry != null) {
+          final String localTag = entry.getStickyTag();
+          final String remoteTag = changeList.getBranch();
+          if (!Comparing.equal(localTag, remoteTag)) {
+            LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
+            return true;
+          }
+        }
+      }
     }
     return localRevision.compareTo(changeRevision) >= 0;
   }

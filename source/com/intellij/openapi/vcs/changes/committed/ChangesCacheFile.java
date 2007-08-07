@@ -586,7 +586,7 @@ public class ChangesCacheFile {
         boolean updated = false;
         for(Change change: data.changeList.getChanges()) {
           if (data.accountedChanges.contains(change)) continue;
-          final boolean changeFound = processIncomingChange(change, currentRevisions, incomingFiles, deletedFiles, createdFiles);
+          final boolean changeFound = processIncomingChange(change, data.changeList, currentRevisions, incomingFiles, deletedFiles, createdFiles);
           if (changeFound) {
             data.accountedChanges.add(change);
           }
@@ -608,6 +608,7 @@ public class ChangesCacheFile {
   }
 
   private boolean processIncomingChange(final Change change,
+                                        final CommittedChangeList changeList,
                                         final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
                                         @Nullable final Collection<FilePath> incomingFiles,
                                         final Set<FilePath> deletedFiles,
@@ -639,7 +640,8 @@ public class ChangesCacheFile {
         VcsRevisionNumber revision = currentRevisions.get(file);
         if (revision != null) {
           LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
-          if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber())) {
+          //noinspection unchecked
+          if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
             return true;
           }
         }
