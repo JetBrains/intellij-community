@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +141,26 @@ public class ChangesUtil {
       }
     }
     return filePath;
+  }
+
+  @Nullable
+  public static VirtualFile findValidParent(FilePath file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    VirtualFile parent = file.getVirtualFile();
+    if (parent == null) {
+      parent = file.getVirtualFileParent();
+    }
+    if (parent == null) {
+      File ioFile = file.getIOFile();
+      do {
+        parent = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
+        if (parent != null) break;
+        ioFile = ioFile.getParentFile();
+        if (ioFile == null) return null;
+      }
+      while (true);
+    }
+    return parent;
   }
 
   public interface PerVcsProcessor<T> {

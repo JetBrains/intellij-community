@@ -11,17 +11,21 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
@@ -159,7 +163,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return null;
   }
 
-  public boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision,
+  public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision,
                                           final CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
       final CvsRevisionNumber cvsLocalRevision = (CvsRevisionNumber)localRevision;
@@ -171,26 +175,54 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
           // local is trunk, change is branch / vice versa
           return true;
         }
-        if (localSubRevisions.length == 4 && changeSubRevisions.length == 4 && localSubRevisions [2] != changeSubRevisions [2]) {
-          // local is one branch, change is a different branch
-          return true;
-        }
-      }
-
-      final VirtualFile parent = filePath.getVirtualFileParent();
-      if (parent != null) {
-        final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, filePath.getName());
-        if (entry != null) {
-          final String localTag = entry.getStickyTag();
-          final String remoteTag = changeList.getBranch();
-          if (!Comparing.equal(localTag, remoteTag)) {
-            LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
+        for(int i=2; i<localSubRevisions.length; i += 2) {
+          if (localSubRevisions [i] != changeSubRevisions [i]) {
+            // local is one branch, change is a different branch
             return true;
           }
         }
       }
     }
-    return localRevision.compareTo(changeRevision) >= 0;
+
+    return isDifferentBranch(filePath, changeList) || (localRevision != null && localRevision.compareTo(changeRevision) >= 0);
+  }
+
+  private static boolean isDifferentBranch(final FilePath filePath, final CvsChangeList changeList) {
+    String localTag;
+    final CvsEntriesManager cvsEntriesManager = CvsEntriesManager.getInstance();
+    final VirtualFile parent = filePath.getVirtualFileParent();
+    if (parent != null) {
+      Entry entry = cvsEntriesManager.getEntryFor(parent, filePath.getName());
+      if (entry != null) {
+        localTag = entry.getStickyTag();
+      }
+      else {
+        localTag = getDirectoryTag(parent);
+      }
+    }
+    else {
+      final VirtualFile validParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+        @Nullable
+        public VirtualFile compute() {
+          return ChangesUtil.findValidParent(filePath);
+        }
+      });
+      if (validParent == null) return false;
+      localTag = getDirectoryTag(validParent);
+    }
+    final String remoteTag = changeList.getBranch();
+    if (!Comparing.equal(localTag, remoteTag)) {
+      LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static String getDirectoryTag(@NotNull final VirtualFile parent) {
+    final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(parent).getStickyTag();
+    if (dirTag == null || !CvsUtil.isNonDateTag(dirTag)) return null;
+    return dirTag.substring(1);
   }
 
   public boolean refreshIncomingWithCommitted() {

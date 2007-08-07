@@ -61,10 +61,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
@@ -337,7 +334,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public AbstractVcs getVcsFor(final FilePath file) {
-    VirtualFile vFile = findValidParent(file);
+    VirtualFile vFile = ChangesUtil.findValidParent(file);
     if (vFile != null) {
       return getVcsFor(vFile);
     }
@@ -367,31 +364,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public VirtualFile getVcsRootFor(final FilePath file) {
-    VirtualFile vFile = findValidParent(file);
+    VirtualFile vFile = ChangesUtil.findValidParent(file);
     if (vFile != null) {
       return getVcsRootFor(vFile);
     }
     return null;
-  }
-
-  @Nullable
-  private static VirtualFile findValidParent(FilePath file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    VirtualFile parent = file.getVirtualFile();
-    if (parent == null) {
-      parent = file.getVirtualFileParent();
-    }
-    if (parent == null) {
-      File ioFile = file.getIOFile();
-      do {
-        parent = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
-        if (parent != null) break;
-        ioFile = ioFile.getParentFile();
-        if (ioFile == null) return null;
-      }
-      while (true);
-    }
-    return parent;
   }
 
   private void dispose() {

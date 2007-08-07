@@ -78,7 +78,7 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
   @Nullable @Nls
   String getChangelistTitle();
 
-  boolean isChangeLocallyAvailable(FilePath filePath, VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision, T changeList);
+  boolean isChangeLocallyAvailable(FilePath filePath, @Nullable VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision, T changeList);
 
   /**
    * Returns true if a timer-based refresh of committed changes should be followed by refresh of incoming changes, so that,

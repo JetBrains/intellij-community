@@ -93,6 +93,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
 
+  @NotNull
   private synchronized CvsInfo getInfoFor(VirtualFile parent) {
     if (!myInfoByParentDirectoryPath.containsKey(parent)) {
       CvsInfo cvsInfo = new CvsInfo(parent, this);

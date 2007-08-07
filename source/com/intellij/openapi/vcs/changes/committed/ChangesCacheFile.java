@@ -650,6 +650,10 @@ public class ChangesCacheFile {
         }
       }
       else {
+        //noinspection unchecked
+        if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), null, afterRevision.getRevisionNumber(), changeList)) {
+          return true;
+        }
         LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
       }
     }

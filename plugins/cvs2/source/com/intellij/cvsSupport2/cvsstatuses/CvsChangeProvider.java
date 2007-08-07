@@ -161,11 +161,10 @@ public class CvsChangeProvider implements ChangeProvider {
       if (dirTag == null) {
         builder.processSwitchedFile(dir, CvsUtil.HEAD, true);
       }
-      else if (dirTag.startsWith(CvsUtil.STICKY_BRANCH_TAG_PREFIX) || dirTag.startsWith(CvsUtil.STICKY_NON_BRANCH_TAG_PREFIX)) {
+      else if (CvsUtil.isNonDateTag(dirTag)) {
         final String tag = dirTag.substring(1);
         // a switch between a branch tag and a non-branch tag is not a switch
-        if (parentDirTag != null &&
-            (parentDirTag.startsWith(CvsUtil.STICKY_BRANCH_TAG_PREFIX) || parentDirTag.startsWith(CvsUtil.STICKY_NON_BRANCH_TAG_PREFIX))) {
+        if (parentDirTag != null && CvsUtil.isNonDateTag(parentDirTag)) {
           String parentTag = parentDirTag.substring(1);
           if (tag.equals(parentTag)) {
             return;

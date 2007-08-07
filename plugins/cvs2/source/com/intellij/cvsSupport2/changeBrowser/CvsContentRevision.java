@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.peer.PeerFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,8 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 
 public class CvsContentRevision implements ContentRevision {
-  private final RevisionOrDate myRevision;
-  private final File myFile;
+  protected final RevisionOrDate myRevision;
+  protected final File myFile;
   private final File myLocalFile;
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
@@ -98,5 +99,10 @@ public class CvsContentRevision implements ContentRevision {
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision.getCvsRevisionNumber();
+  }
+
+  @Override @NonNls
+  public String toString() {
+    return "CvsContentRevision:" + myFile + "@" + myRevision;
   }
 }

@@ -573,6 +573,10 @@ public class CvsUtil {
     return storedRevisionFile.isFile();
   }
 
+  public static boolean isNonDateTag(final String dirTag) {
+    return dirTag.startsWith(STICKY_BRANCH_TAG_PREFIX) || dirTag.startsWith(STICKY_NON_BRANCH_TAG_PREFIX);
+  }
+
   private static interface FileCondition {
     boolean verify(File file);
   }
