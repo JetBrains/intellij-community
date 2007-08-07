@@ -328,7 +328,10 @@ public class FileReference
       if (curItem.equals(dstItem)) {
         return getElement();
       }
-      newName = PsiFileSystemItemUtil.getNotNullRelativePath(curItem, dstItem);
+      newName = PsiFileSystemItemUtil.getRelativePath(curItem, dstItem);
+      if (newName == null) {
+        return element;
+      }
     }
 
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
