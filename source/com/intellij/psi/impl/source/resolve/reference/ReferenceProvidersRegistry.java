@@ -392,8 +392,13 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   @Nullable
   public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
+    return (ElementManipulator<T>)getManipulator(element.getClass());
+  }
+
+  @Nullable
+  public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull final Class<T> elementClass) {
     for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {
-      if (ReflectionCache.isAssignable(pair.getFirst(), element.getClass())) {
+      if (ReflectionCache.isAssignable(pair.getFirst(), elementClass)) {
         return (ElementManipulator<T>)pair.getSecond();
       }
     }
