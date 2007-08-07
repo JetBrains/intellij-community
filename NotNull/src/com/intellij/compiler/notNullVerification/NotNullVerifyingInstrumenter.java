@@ -13,6 +13,9 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
   private boolean myIsModification = false;
   private boolean myIsNotStaticInner = false;
   private String myClassName;
+  private String mySuperName;
+  private static final String ENUM_CLASS_NAME = "java/lang/Enum";
+  private static final String CONSTRUCTOR_NAME = "<init>";
 
   public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
     super(classVisitor);
@@ -30,6 +33,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                     final String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
+    mySuperName = superName;
   }
 
   public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
@@ -47,7 +51,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
     final String[] exceptions) {
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
-    final int startParameter = "<init>".equals(name) && myIsNotStaticInner ? 1 : 0;
+    final int startParameter = getStartParameterIndex(name);
     MethodVisitor v = cv.visitMethod(access,
                                      name,
                                      desc,
@@ -55,7 +59,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                                      exceptions);
     return new MethodAdapter(v) {
 
-      private ArrayList myNotNullParams = new ArrayList();
+      private final ArrayList myNotNullParams = new ArrayList();
       private boolean myIsNotNull = false;
       public Label myThrowLabel;
       private Label myStartGeneratedCodeLabel;
@@ -68,6 +72,10 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         av = mv.visitParameterAnnotation(parameter,
                                          anno,
                                          visible);
+        // TODO[yole]: remove once the ASM bug is fixed (http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023)
+        if (mySuperName.equals(ENUM_CLASS_NAME) && name.equals(CONSTRUCTOR_NAME)) {
+          return av;
+        }
         if (isReferenceType(args[parameter]) &&
             anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
           myNotNullParams.add(new Integer(parameter));
@@ -144,7 +152,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         mv.visitLdcInsn(descr);
         mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
                            exceptionClass,
-                           "<init>",
+                           CONSTRUCTOR_NAME,
                            exceptionParamClass);
         mv.visitInsn(Opcodes.ATHROW);
         mv.visitLabel(end);
@@ -152,6 +160,19 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         myIsModification = true;
       }
     };
+  }
+
+  private int getStartParameterIndex(final String name) {
+    int result = 0;
+    if (CONSTRUCTOR_NAME.equals(name)) {
+      if (mySuperName.equals(ENUM_CLASS_NAME)) {
+        result += 2;
+      }
+      if (myIsNotStaticInner) {
+        result += 1;
+      }
+    }
+    return result;
   }
 
   private static boolean isReferenceType(final Type type) {
