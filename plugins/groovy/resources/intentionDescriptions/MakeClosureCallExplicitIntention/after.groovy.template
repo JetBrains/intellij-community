@@ -1,0 +1,3 @@
+
+def Closure myClosure
+myClosure.call(arg1, arg2)

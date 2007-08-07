@@ -59,6 +59,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsProvider</implementation-class>
+    </component>
   </project-components>
   <module-components>
     <component>

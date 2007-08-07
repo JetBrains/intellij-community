@@ -1,0 +1,2 @@
+
+def myClosure = <spot>{print it}</spot>
