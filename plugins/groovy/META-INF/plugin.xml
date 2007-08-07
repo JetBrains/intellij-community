@@ -67,8 +67,8 @@
       </implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData</implementation-class>
-      <interface-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker</implementation-class>
+      <interface-class>org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker</interface-class>
     </component>
   </project-components>
   <module-components>

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -85,8 +85,12 @@ public class GroovyAnnotator implements Annotator {
       checkCommandArgument((GrNamedArgument) element, holder);
     } else if (element instanceof GrReturnStatement) {
       checkReturnStatement((GrReturnStatement) element, holder);
-    } else if (element instanceof GroovyFile && ((GroovyFile) element).isScript()) {
-      checkScriptDuplicateMethod(((GroovyFile) element).getTopLevelDefinitions(), holder);
+    } else if (element instanceof GroovyFile) {
+      final GroovyFile file = (GroovyFile) element;
+      GroovyImportsTracker.getInstance(file.getProject()).markFileAnnotated(file);
+      if (file.isScript()) {
+        checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
+      }
     }
   }
 
@@ -439,8 +443,8 @@ public class GroovyAnnotator implements Annotator {
     if (importStatement != null) {
       PsiFile file = referenceElement.getContainingFile();
       if (file instanceof GroovyFile) {
-        GroovyInspectionData inspectionData = GroovyInspectionData.getInstance(referenceElement.getProject());
-        inspectionData.updateImportUsed(importStatement, referenceElement);
+        GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(referenceElement.getProject());
+        importsTracker.registerImportUsed(importStatement, referenceElement);
       }
     }
   }

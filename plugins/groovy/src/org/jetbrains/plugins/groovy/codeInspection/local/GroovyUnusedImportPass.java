@@ -24,43 +24,39 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author ilyas
  */
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
-  private static PsiFile myFile;
+  private PsiFile myFile;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
-  private AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
-  private ArrayList<GrImportStatement> myUnusedImports = new ArrayList<GrImportStatement>();
-  private Editor myEditor;
+  private Set<GrImportStatement> myUnusedImports;
 
   public GroovyUnusedImportPass(PsiFile file, Editor editor) {
     super(file.getProject(), editor.getDocument());
     myFile = file;
-    myEditor = editor;
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
     if (!(myFile instanceof GroovyFile)) return;
     GroovyFile groovyFile = (GroovyFile) myFile;
-    GroovyInspectionData inspectionData = GroovyInspectionData.getInstance(groovyFile.getProject());
-    GrImportStatement[] usedImports = inspectionData.getUsedImportStatements(groovyFile);
-    HashSet<GrImportStatement> allImports = new HashSet<GrImportStatement>(Arrays.asList(groovyFile.getImportStatements()));
-    boolean changed = allImports.removeAll(Arrays.asList(usedImports));
-    if (allImports.size() > 0 && (usedImports.length == 0 || changed)) {
-      myUnusedImports.addAll(allImports);
-    }
+    GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(groovyFile.getProject());
+    if (importsTracker.isImportInformationUpToDate(groovyFile)) return;
+    GrImportStatement[] usedImports = importsTracker.getUsedImportStatements(groovyFile);
+    myUnusedImports = new HashSet<GrImportStatement>(Arrays.asList(groovyFile.getImportStatements()));
+    myUnusedImports.removeAll(Arrays.asList(usedImports));
+    importsTracker.clearImportsInFile(groovyFile);
   }
 
   private IntentionAction createUnusedImportIntention() {
@@ -101,11 +97,15 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
+    System.out.println("apply, null:" +(myUnusedImports == null));
+    if (myUnusedImports == null) return;
+    System.out.println("unused imports: " + myUnusedImports.size());
+    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
     for (GrImportStatement unusedImport : myUnusedImports) {
       GrCodeReferenceElement importReference = unusedImport.getImportReference();
       if (importReference != null && importReference.resolve() != null) {
         IntentionAction action = createUnusedImportIntention();
-        Annotation annotation = myAnnotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
+        Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         annotation.registerFix(action);
       }
@@ -113,7 +113,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
 
     HighlightInfoHolder holder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
     holder.setWritable(true);
-    for (Annotation annotation : myAnnotationHolder) {
+    for (Annotation annotation : annotationHolder) {
       holder.add(HighlightUtil.convertToHighlightInfo(annotation));
     }
 
