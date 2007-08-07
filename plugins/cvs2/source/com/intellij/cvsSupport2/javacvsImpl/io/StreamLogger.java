@@ -57,9 +57,6 @@ public class StreamLogger implements IStreamLogger {
   }
 
   public InputStream createLoggingInputStream(final InputStream inputStream) {
-    if (!CvsApplicationLevelConfiguration.getInstance().DO_OUTPUT) {
-      return inputStream;
-    }
     return new InputStream() {
       public int read() throws IOException {
         int result = inputStream.read();
