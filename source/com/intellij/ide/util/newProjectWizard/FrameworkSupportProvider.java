@@ -26,11 +26,13 @@ public abstract class FrameworkSupportProvider {
   @NotNull
   public abstract FrameworkSupportConfigurable createConfigurable();
 
+  @NonNls
   @Nullable
   public String getUnderlyingFrameworkId() {
     return null;
   }
 
+  @NonNls
   public String[] getPrecedingFrameworkProviderIds() {
     return new String[0];
   }
