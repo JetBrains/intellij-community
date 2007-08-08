@@ -57,8 +57,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message(
-                  "unnecessary.fully.qualified.name.ignore.option"),
+                InspectionGadgetsBundle.message(
+                        "unnecessary.fully.qualified.name.ignore.option"),
                 this, "m_ignoreJavadoc");
     }
 
@@ -66,10 +66,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "unnecessary.fully.qualified.name.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new UnnecessaryFullyQualifiedNameVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -115,23 +111,24 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                         file)) {
                     addImport(importList, aClass);
                 }
-            } else if (importList.findSingleClassImportStatement(
-                    qualifiedName) == null &&
-                    importList.findOnDemandImportStatement(
-                            packageName) == null) {
+            } else if (importList.findSingleClassImportStatement(qualifiedName)
+                       == null
+                       && importList.findOnDemandImportStatement(packageName)
+                          == null) {
                 addImport(importList, aClass);
             }
             final String fullyQualifiedText = referenceElement.getText();
             final QualificationRemover qualificationRemover =
                     new QualificationRemover(fullyQualifiedText);
             file.accept(qualificationRemover);
-            final Collection<PsiJavaCodeReferenceElement> shortenedElements =
+            final Collection<PsiElement> shortenedElements =
                     qualificationRemover.getShortenedElements();
             HighlightUtil.highlightElements(shortenedElements);
             showStatusMessage(file.getProject(), shortenedElements.size());
         }
 
-        private static void showStatusMessage(Project project, int elementCount) {
+        private static void showStatusMessage(Project project,
+                                              int elementCount) {
             final WindowManager windowManager = WindowManager.getInstance();
             final StatusBar statusBar = windowManager.getStatusBar(project);
             if (elementCount == 1) {
@@ -158,22 +155,23 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 extends PsiRecursiveElementVisitor {
 
             private final String fullyQualifiedText;
-            private final List<PsiJavaCodeReferenceElement> shortenedElements =
+            private final List<PsiElement> shortenedElements =
                     new ArrayList();
 
             QualificationRemover(String fullyQualifiedText) {
                 this.fullyQualifiedText = fullyQualifiedText;
             }
 
-            public Collection<PsiJavaCodeReferenceElement> getShortenedElements() {
+            public Collection<PsiElement> getShortenedElements() {
                 return Collections.unmodifiableCollection(shortenedElements);
             }
 
             public void visitReferenceElement(
                     PsiJavaCodeReferenceElement reference) {
                 super.visitReferenceElement(reference);
-                final PsiElement parent = reference.getParent();
-                if (parent instanceof PsiImportStatement) {
+                final PsiElement parent = PsiTreeUtil.getParentOfType(reference,
+                        PsiImportStatementBase.class);
+                if (parent != null) {
                     return;
                 }
                 final String text = reference.getText();
@@ -197,6 +195,10 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
         }
     }
 
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessaryFullyQualifiedNameVisitor();
+    }
+
     private class UnnecessaryFullyQualifiedNameVisitor
             extends BaseInspectionVisitor{
 
@@ -218,8 +220,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             }
             final PsiElement parent = reference.getParent();
             if (parent instanceof PsiMethodCallExpression ||
-                    parent instanceof PsiAssignmentExpression ||
-                    parent instanceof PsiVariable) {
+                parent instanceof PsiAssignmentExpression ||
+                parent instanceof PsiVariable) {
                 return;
             }
             final PsiElement element = PsiTreeUtil.getParentOfType(reference,
@@ -231,7 +233,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if(m_ignoreJavadoc){
                 final PsiElement containingComment =
                         PsiTreeUtil.getParentOfType(reference,
-                                                    PsiDocComment.class);
+                                PsiDocComment.class);
                 if(containingComment != null){
                     return;
                 }
