@@ -195,21 +195,17 @@ public class LibraryLinkImpl extends LibraryLink {
 
     List<String> urls = getUrls();
     if (LibraryLink.MODULE_LEVEL.equals(getLevel()) && urls.size() == 1) {
-      String url = urls.get(0);
-      if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-        url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
-        String jarName = url.substring(url.lastIndexOf('/') + 1);
-        if (jarName.endsWith(JAR_SUFFIX)) {
-          String outputPath = getURI();
-          if (outputPath != null) {
-            int nameIndex = outputPath.lastIndexOf('/');
-            if (outputPath.substring(nameIndex + 1).equals(jarName)) {
-              if (nameIndex <= 0) {
-                setURI("/");
-              }
-              else {
-                setURI(outputPath.substring(0, nameIndex));
-              }
+      String jarName = getJarFileName(urls.get(0));
+      if (jarName != null) {
+        String outputPath = getURI();
+        if (outputPath != null) {
+          int nameIndex = outputPath.lastIndexOf('/');
+          if (outputPath.substring(nameIndex + 1).equals(jarName)) {
+            if (nameIndex <= 0) {
+              setURI("/");
+            }
+            else {
+              setURI(outputPath.substring(0, nameIndex));
             }
           }
         }
@@ -217,11 +213,32 @@ public class LibraryLinkImpl extends LibraryLink {
     }
   }
 
+  @Nullable
+  private static String getJarFileName(final String url) {
+    if (!url.endsWith(JarFileSystem.JAR_SEPARATOR)) return null;
+
+    String path = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
+    String jarName = path.substring(path.lastIndexOf('/') + 1);
+    return jarName.endsWith(JAR_SUFFIX) ? jarName : null;
+  }
+
   public void writeExternal(Element element) throws WriteExternalException {
+    List<String> urls = getUrls();
+
+    String outputPath = getURI();
+    if (outputPath != null && LibraryLink.MODULE_LEVEL.equals(getLevel()) && urls.size() == 1
+      && (getPackagingMethod().equals(PackagingMethod.COPY_FILES) || getPackagingMethod().equals(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST))) {
+      String jarName = getJarFileName(urls.get(0));
+      if (jarName != null) {
+        //for compatibility with builds before 7119
+        setURI(DeploymentUtil.appendToPath(outputPath, jarName));
+      }
+    }
     super.writeExternal(element);
+    setURI(outputPath);
+
     String name = getName();
     if (name == null) {
-      List<String> urls = getUrls();
       for (final String url : urls) {
         final Element urlElement = new Element(URL_ELEMENT_NAME);
         urlElement.setText(url);
