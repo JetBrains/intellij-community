@@ -248,8 +248,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
         warning,
-        new TextRange(startOffset,startOffset + length),
-        localizedMessage
+        childByRole, startOffset, startOffset + length,
+        localizedMessage, HighlightInfo.htmlEscapeToolTip(localizedMessage)
       );
 
       for (final IntentionAction quickFixAction : quickFixActions) {

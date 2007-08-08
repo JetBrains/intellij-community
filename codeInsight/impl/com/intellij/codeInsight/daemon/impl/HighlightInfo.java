@@ -90,8 +90,9 @@ public class HighlightInfo {
     return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
   }
 
+  @Nullable
   @NonNls
-  private static String htmlEscapeToolTip(String description) {
+  public static String htmlEscapeToolTip(String description) {
     return description == null ? null : "<html><body>"+ XmlStringUtil.escapeString(description)+"</body></html>";
   }
 
