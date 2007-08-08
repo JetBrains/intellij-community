@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -94,11 +93,17 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   public boolean isPrimitive() {
     if (myIsPrimitive == null) {
-      try {
-        myIsPrimitive = (myField.type() instanceof PrimitiveType)? Boolean.TRUE : Boolean.FALSE;
+      final Value value = getValue();
+      if (value != null) {
+        myIsPrimitive = super.isPrimitive();
       }
-      catch (Exception e) {
-        return super.isPrimitive();
+      else {
+        try {
+          myIsPrimitive = (myField.type() instanceof PrimitiveType)? Boolean.TRUE : Boolean.FALSE;
+        }
+        catch (Exception e) {
+          return super.isPrimitive();
+        }
       }
     }
     return myIsPrimitive.booleanValue();
