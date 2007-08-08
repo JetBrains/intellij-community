@@ -29,9 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -392,7 +390,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static String getNormalizedExternalName(PsiModifierListOwner owner) {
     String externalName = PsiFormatUtil.getExternalName(owner);
     if (externalName != null) {
-      if (owner instanceof PsiParameter) {
+      if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
         if (method != null) {
           externalName = externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
