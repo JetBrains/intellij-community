@@ -844,9 +844,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
         return path.substring(0, idx);
       }
+
+      return "";
     }
 
-    return "/";
+    return path.startsWith("/") ? "/" : "";
   }
 
   public int getRank() {
