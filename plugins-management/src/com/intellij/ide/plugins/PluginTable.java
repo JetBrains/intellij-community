@@ -55,10 +55,6 @@ public class PluginTable extends Table {
       column = getColumnModel().getColumn(1);
       column.setMinWidth(70);
       column.setMaxWidth(70);
-
-      //  Date:
-      column = getColumnModel().getColumn(2);
-      column.setMaxWidth(95);
     }
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
