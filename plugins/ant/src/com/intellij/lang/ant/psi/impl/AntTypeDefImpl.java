@@ -249,7 +249,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
             }
             if (element instanceof AntTypeDefImpl) {
               final AntTypeDefImpl td = ((AntTypeDefImpl)element);
-              td.myNewDefinitions = ArrayUtil.append(td.myNewDefinitions, def);
+              final AntTypeDefinition[] defs = td.myNewDefinitions != null ? td.myNewDefinitions : AntTypeDefinition.EMPTY_ARRAY;
+              td.myNewDefinitions = ArrayUtil.append(defs, def);
               ((AntTypeDefinitionImpl)def).setDefiningElement(td);
             }
           }
