@@ -146,9 +146,12 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     }
     final String url = info.getURL() == null ? null : info.getURL().toString();
     String relativeUrl = url;
-    final String root = info.getRepositoryRootURL().toString();
-    if (url != null && url.startsWith(root)) {
-      relativeUrl = url.substring(root.length());
+    final SVNURL repoRootURL = info.getRepositoryRootURL();
+    if (repoRootURL != null) {
+      final String root = repoRootURL.toString();
+      if (url != null && url.startsWith(root)) {
+        relativeUrl = url.substring(root.length());
+      }
     }
     if (indicator != null) {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
