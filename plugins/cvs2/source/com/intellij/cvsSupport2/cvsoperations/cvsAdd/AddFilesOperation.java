@@ -2,12 +2,12 @@ package com.intellij.cvsSupport2.cvsoperations.cvsAdd;
 
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -20,12 +20,8 @@ public class AddFilesOperation extends CompositeOperaton {
   private int myFilesCount = -1;
 
 
-  public AddFilesOperation() {
-  }
-
   public boolean login(ModalityContext executor) throws CannotFindCvsRootException {
-    for (Iterator iterator = mySubstitutionToOperation.keySet().iterator(); iterator.hasNext();) {
-      KeywordSubstitution keywordSubstitution = (KeywordSubstitution)iterator.next();
+    for (final KeywordSubstitution keywordSubstitution : mySubstitutionToOperation.keySet()) {
       addOperation(mySubstitutionToOperation.get(keywordSubstitution));
     }
     return super.login(executor);
@@ -69,9 +65,9 @@ public class AddFilesOperation extends CompositeOperaton {
 
   private int calculateAllFilesCount() {
     int result = 0;
-    for (Iterator iterator = getSubOperations().iterator(); iterator.hasNext();) {
-      AddFileOperation addFileOprtation = (AddFileOperation)iterator.next();
-      result += addFileOprtation.getFilesCount();
+    for (final CvsOperation cvsOperation : getSubOperations()) {
+      AddFileOperation addFileOperation = (AddFileOperation)cvsOperation;
+      result += addFileOperation.getFilesCount();
     }
     return result;
   }

@@ -1,11 +1,9 @@
 package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCommit.CommitFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsRemove.RemoveFilesOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsCommit.CommitFilesOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -71,8 +69,8 @@ public class RepositoryModificationOperation extends CompositeOperaton {
   //  super.execute(executionEnvironment);
   //}
   //
-  protected List getSubOperations() {
-    ArrayList result = new ArrayList(super.getSubOperations());
+  protected List<CvsOperation> getSubOperations() {
+    ArrayList<CvsOperation> result = new ArrayList<CvsOperation>(super.getSubOperations());
     result.add(myCommitRequests);
     return result;
   }

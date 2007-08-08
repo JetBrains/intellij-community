@@ -1,20 +1,19 @@
 package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
+import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class CompositeOperaton extends CvsOperation {
-  private final List mySubOperations = new ArrayList();
+  private final List<CvsOperation> mySubOperations = new ArrayList<CvsOperation>();
   private CvsOperation myCurrentOperation;
 
   public void addOperation(CvsOperation operation) {
@@ -22,8 +21,7 @@ public class CompositeOperaton extends CvsOperation {
   }
 
   protected boolean login(Collection<CvsRootProvider> processedCvsRoots, ModalityContext executor) throws CannotFindCvsRootException {
-    for (Iterator each = getSubOperations().iterator(); each.hasNext();) {
-      CvsOperation operation = (CvsOperation) each.next();
+    for (final CvsOperation operation : getSubOperations()) {
       if (!operation.login(processedCvsRoots, executor)) return false;
     }
     return true;
@@ -32,10 +30,10 @@ public class CompositeOperaton extends CvsOperation {
   public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException {
     CvsEntriesManager.getInstance().lockSynchronizationActions();
     try{
-    for (Iterator each = getSubOperations().iterator(); each.hasNext();) {
-      myCurrentOperation = (CvsOperation) each.next();
-      myCurrentOperation.execute(executionEnvironment);
-    }
+      for (final CvsOperation cvsOperation : getSubOperations()) {
+        myCurrentOperation = cvsOperation;
+        myCurrentOperation.execute(executionEnvironment);
+      }
     } finally {
       CvsEntriesManager.getInstance().unlockSynchronizationActions();
     }
@@ -43,8 +41,8 @@ public class CompositeOperaton extends CvsOperation {
 
   public void executeFinishActions() {
     super.executeFinishActions();
-    for (Iterator each = getSubOperations().iterator(); each.hasNext();) {
-      ((CvsOperation) each.next()).executeFinishActions();
+    for (final CvsOperation cvsOperation : getSubOperations()) {
+      cvsOperation.executeFinishActions();
     }
 
   }
@@ -60,5 +58,12 @@ public class CompositeOperaton extends CvsOperation {
 
 
 
-  protected List getSubOperations() { return mySubOperations; }
+  protected List<CvsOperation> getSubOperations() { return mySubOperations; }
+
+  public boolean runInReadThread() {
+    for(CvsOperation op: mySubOperations) {
+      if (op.runInReadThread()) return true;
+    }
+    return false;
+  }
 }
