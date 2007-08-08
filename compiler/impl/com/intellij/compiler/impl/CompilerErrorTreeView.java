@@ -20,6 +20,8 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import javax.swing.*;
+
 public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project) {
     super(project, HelpID.COMPILER);
@@ -45,8 +47,10 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   }
 
   private static class CompilerPropertiesAction extends AnAction {
+    private static final Icon ICON_OPTIONS = IconLoader.getIcon("/general/ideOptions.png");
+
     public CompilerPropertiesAction() {
-      super(CompilerBundle.message("action.compiler.properties.text"), null, IconLoader.getIcon("/general/ideOptions.png"));
+      super(CompilerBundle.message("action.compiler.properties.text"), null, ICON_OPTIONS);
     }
 
     public void actionPerformed(AnActionEvent e) {

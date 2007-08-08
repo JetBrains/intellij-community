@@ -25,18 +25,18 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final Color myEvaluatingHighlightColor = Color.lightGray;
   private static final Color myExceptionHighlightColor = Color.red;
 
-  private static Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
-  private static Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
-  private static Icon myValueIcon = IconLoader.getIcon("/debugger/value.png");
-  private static Icon myWatchedValueIcon = IconLoader.getIcon("/debugger/watch.png");
-  private static Icon myArrayValueIcon = IconLoader.getIcon("/debugger/db_array.png");
-  private static Icon myPrimitiveValueIcon = IconLoader.getIcon("/debugger/db_primitive.png");
-  private static Icon myStaticFieldIcon = Icons.FIELD_ICON;
+  private static final Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
+  private static final Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
+  private static final Icon myValueIcon = IconLoader.getIcon("/debugger/value.png");
+  private static final Icon myWatchedValueIcon = IconLoader.getIcon("/debugger/watch.png");
+  private static final Icon myArrayValueIcon = IconLoader.getIcon("/debugger/db_array.png");
+  private static final Icon myPrimitiveValueIcon = IconLoader.getIcon("/debugger/db_primitive.png");
+  private static final Icon myStaticFieldIcon = Icons.FIELD_ICON;
 
   private static Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
 
-  private static Icon myErrorMessageIcon = IconLoader.getIcon("/debugger/db_error.png");
-  private static Icon myInformationMessageIcon = IconLoader.getIcon("/compiler/information.png");
+  private static final Icon myErrorMessageIcon = IconLoader.getIcon("/debugger/db_error.png");
+  private static final Icon myInformationMessageIcon = IconLoader.getIcon("/compiler/information.png");
   private static final SimpleTextAttributes DEFAULT_ATTR = new SimpleTextAttributes(Font.PLAIN, null);
   private static final SimpleTextAttributes GRAY_ATTR = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
   private static final SimpleTextAttributes HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myHighlightColor);

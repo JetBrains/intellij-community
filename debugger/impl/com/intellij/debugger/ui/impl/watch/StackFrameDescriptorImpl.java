@@ -37,8 +37,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private boolean myIsInLibraryContent;
   private Long myObjectId;
 
-  private static Icon myStackFrameIcon = IconLoader.getIcon("/debugger/stackFrame.png");
-  private static Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
+  private static final Icon myStackFrameIcon = IconLoader.getIcon("/debugger/stackFrame.png");
+  private static final Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
   private Icon myIcon = myStackFrameIcon;
 
   public StackFrameDescriptorImpl(StackFrameProxyImpl frame, final MethodsTracker tracker) {

@@ -53,6 +53,10 @@ import java.util.ArrayList;
 public class ValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
   private static final Icon COLLAPSED_TREE_ICON = IconLoader.getIcon("/general/add.png");
+  private static final Icon ICON_FWD = IconLoader.getIcon("/actions/forward.png");
+  private static final Icon ICON_BACK = IconLoader.getIcon("/actions/back.png");
+  private static final Icon ICON_UNMARK_WEBROOT = IconLoader.getIcon("/modules/unmarkWebroot.png");
+  
   public final static int MOUSE_OVER_HINT       = 0;
   public final static int MOUSE_ALT_OVER_HINT   = 1;
   public final static int MOUSE_CLICK_HINT      = 2;
@@ -502,7 +506,7 @@ public class ValueHint {
     }
 
     private AnAction createGoForwardAction(){
-      return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, IconLoader.getIcon("/actions/forward.png")){
+      return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, ICON_FWD){
         public void actionPerformed(AnActionEvent e) {
           if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
             myCurrentIndex ++;
@@ -519,7 +523,7 @@ public class ValueHint {
 
 
     private AnAction createGoBackAction(){
-      return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, IconLoader.getIcon("/actions/back.png")){
+      return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, ICON_BACK){
         public void actionPerformed(AnActionEvent e) {
           if (myHistory.size() > 1 && myCurrentIndex > 0) {
             myCurrentIndex--;
@@ -549,7 +553,7 @@ public class ValueHint {
 
     private AnAction createSetRoot() {
       final String title = DebuggerBundle.message("active.tooltip.set.root.title");
-      return new AnAction(title, title, IconLoader.getIcon("/modules/unmarkWebroot.png")) {
+      return new AnAction(title, title, ICON_UNMARK_WEBROOT) {
         public void actionPerformed(AnActionEvent e) {
           final TreePath path = myTree.getSelectionPath();
           if (path == null) return;

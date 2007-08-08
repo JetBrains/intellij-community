@@ -13,6 +13,7 @@ import javax.swing.*;
 public class CompilerConfigurable implements SearchableConfigurable {
   private CompilerUIConfigurable myDelegateConfigurable;
   private Project myProject;
+  private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
 
   public static CompilerConfigurable getInstance(Project project) {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, CompilerConfigurable.class);
@@ -43,7 +44,7 @@ public class CompilerConfigurable implements SearchableConfigurable {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableCompiler.png");
+    return ICON;
   }
 
   public JComponent createComponent() {
