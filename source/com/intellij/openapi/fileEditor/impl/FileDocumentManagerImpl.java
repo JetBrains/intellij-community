@@ -467,15 +467,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
                             new DocumentContent(project, document, fileType));
         request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
                                  UIBundle.message("file.cache.conflict.diff.content.memory.content"));
-        DialogBuilder diffBuidler = new DialogBuilder(project);
-        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuidler.getWindow(), project);
+        DialogBuilder diffBuilder = new DialogBuilder(project);
+        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project);
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
-        diffBuidler.setCenterPanel(diffPanel.getComponent());
+        diffBuilder.setCenterPanel(diffPanel.getComponent());
         diffPanel.setDiffRequest(request);
-        diffBuidler.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
-        diffBuidler.addCancelAction();
-        diffBuidler.setTitle(windowtitle);
-        if (diffBuidler.show() == DialogWrapper.OK_EXIT_CODE)
+        diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
+        diffBuilder.addCancelAction();
+        diffBuilder.setTitle(windowtitle);
+        diffBuilder.addDisposable(diffPanel);
+        if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE)
           builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
       }
     });
