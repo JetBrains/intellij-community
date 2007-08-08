@@ -17,7 +17,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -74,7 +77,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
-  public FileTemplateManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull FileTypeManagerEx fileTypeManagerEx) {
+  public FileTemplateManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull FileTypeManagerEx fileTypeManagerEx, MessageBus bus) {
     this(".", "fileTemplates", virtualFileManager, fileTypeManagerEx);
 
     myInternalTemplatesManager =
@@ -98,6 +101,22 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myLocalizedTemplateNames.put(INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, IdeBundle.message("template.annotationtype"));
     myLocalizedTemplateNames.put(INTERNAL_ENUM_TEMPLATE_NAME, IdeBundle.message("template.enum"));
     myLocalizedTemplateNames.put(FILE_HEADER_TEMPLATE_NAME, IdeBundle.message("template.file.header"));
+
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      public void before(final List<? extends VFileEvent> events) {
+      }
+
+      public void after(final List<? extends VFileEvent> events) {
+        if (ourTopDirs != null) {
+          for (VirtualFile dir : ourTopDirs) {
+            if (!dir.exists()) {
+              ourTopDirs = null;
+              break;
+            }
+          }
+        }
+      }
+    });
   }
 
   private FileTemplateManagerImpl(@NotNull @NonNls String defaultTemplatesDir,
