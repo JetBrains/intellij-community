@@ -201,13 +201,15 @@ public class LibraryLinkImpl extends LibraryLink {
         String jarName = url.substring(url.lastIndexOf('/') + 1);
         if (jarName.endsWith(JAR_SUFFIX)) {
           String outputPath = getURI();
-          int nameIndex = outputPath.lastIndexOf('/');
-          if (outputPath.substring(nameIndex + 1).equals(jarName)) {
-            if (nameIndex <= 0) {
-              setURI("/");
-            }
-            else {
-              setURI(outputPath.substring(0, nameIndex));
+          if (outputPath != null) {
+            int nameIndex = outputPath.lastIndexOf('/');
+            if (outputPath.substring(nameIndex + 1).equals(jarName)) {
+              if (nameIndex <= 0) {
+                setURI("/");
+              }
+              else {
+                setURI(outputPath.substring(0, nameIndex));
+              }
             }
           }
         }
