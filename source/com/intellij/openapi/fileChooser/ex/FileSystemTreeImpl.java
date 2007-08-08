@@ -197,7 +197,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
         });
       }
 
-      
       public void treeCollapsed(TreeExpansionEvent event) {
       }
     });
