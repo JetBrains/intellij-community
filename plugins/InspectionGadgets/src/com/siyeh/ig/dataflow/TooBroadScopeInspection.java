@@ -46,9 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 
 public class TooBroadScopeInspection extends BaseInspection
 {
@@ -206,11 +204,15 @@ public class TooBroadScopeInspection extends BaseInspection
 
             final PsiManager manager = variable.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
-            final PsiDeclarationStatement newDeclaration =
+	        String name = variable.getName();
+	        if (name == null)
+	        {
+		        name = "";
+	        }
+	        final PsiDeclarationStatement newDeclaration =
                     factory.createVariableDeclarationStatement(
-                            variable.getName(), variable.getType(),
-                            initializer);
-            final PsiLocalVariable newVariable =
+		                    name, variable.getType(), initializer);
+	        final PsiLocalVariable newVariable =
                     (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
             final PsiModifierList newModifierList =
                     newVariable.getModifierList();
@@ -454,23 +456,21 @@ public class TooBroadScopeInspection extends BaseInspection
                     return;
                 }
             }
-            final String blockChildText = blockChild.getText();
-            if (blockChildText.startsWith("<%=") &&
-                    blockChildText.endsWith("%>"))
-            {
-                // workaround because JspExpressionStatement is not part of
-                // the openapi.
-
-                final PsiElement element =
-                        PsiTreeUtil.skipSiblingsBackward(insertionPoint,
-                                PsiWhiteSpace.class, PsiComment.class);
-                if (variable.equals(element))
-                {
-                    return;
-                }
-                return;
-            }
-            registerVariableError(variable);
+	        if (insertionPoint != null && PsiUtil.isInJspFile(insertionPoint))
+	        {
+		        PsiElement elementBefore = insertionPoint.getPrevSibling();
+		        elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore,
+				        PsiWhiteSpace.class);
+		        if (elementBefore instanceof PsiDeclarationStatement)
+		        {
+			        final PsiElement variableParent = variable.getParent();
+			        if (elementBefore.equals(variableParent))
+			        {
+				        return;
+			        }
+		        }
+	        }
+	        registerVariableError(variable);
         }
 
         private boolean isMoveable(PsiExpression expression)
