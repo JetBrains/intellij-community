@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -534,7 +533,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private void pushStatisText(String text) {
     if (myStatusText == null) {
-      myStatusText = ((StatusBarEx)WindowManager.getInstance().getStatusBar(getProject())).getInfo();
+      myStatusText = ""/*((StatusBarEx)WindowManager.getInstance().getStatusBar(getProject())).getInfo()*/;
     }
 
     myStatusStack.addLast(myStatusText);
