@@ -9,6 +9,7 @@ import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,6 +31,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.*;
@@ -42,6 +44,8 @@ import java.util.List;
  * @author nik
  */
 public class LibraryDownloader {
+  @NonNls private static final String LIB_SCHEMA = "lib://";
+
   private LibraryDownloadInfo[] myLibraryInfos;
   private JComponent myParent;
   private @Nullable Project myProject;
@@ -178,8 +182,11 @@ public class LibraryDownloader {
     final File ioDir = VfsUtil.virtualToIoFile(dir);
     for (Pair<LibraryDownloadInfo, File> pair : downloadedFiles) {
       final LibraryDownloadInfo info = pair.getFirst();
-      final File toFile = generateName(info, ioDir);
-      FileUtil.rename(pair.getSecond(), toFile);
+      final boolean dontTouch = info.getDownloadUrl().startsWith(LIB_SCHEMA);
+      final File toFile = dontTouch? pair.getSecond() : generateName(info, ioDir);
+      if (!dontTouch) {
+        FileUtil.rename(pair.getSecond(), toFile);
+      }
       files.add(new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
@@ -226,63 +233,70 @@ public class LibraryDownloader {
   }
 
   private static boolean download(final LibraryDownloadInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles) throws IOException {
-    final String url = libraryInfo.getDownloadUrl();
-
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    String presentableUrl = libraryInfo.getPresentableUrl();
-    indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
-    File tempFile = null;
-    HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
+    final String presentableUrl = libraryInfo.getPresentableUrl();
+    final String url = libraryInfo.getDownloadUrl();
+    if (url.startsWith(LIB_SCHEMA)) {
+      indicator.setText2(IdeBundle.message("progress.locate.jar.text", getExpectedFileName(libraryInfo)));
+      final String path = url.substring(LIB_SCHEMA.length()).replace('/', File.separatorChar);
+      final String fullPath = PathManager.getLibPath() + File.separatorChar + path;
+      final File file = new File(fullPath);
+      downloadedFiles.add(Pair.create(libraryInfo, file));
+    }
+    else {
+      indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
+      HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 
-    InputStream input = null;
-    BufferedOutputStream output = null;
+      InputStream input = null;
+      BufferedOutputStream output = null;
 
-    boolean deleteFile = true;
-
-    try {
-      final int responseCode = connection.getResponseCode();
-      if (responseCode != HttpURLConnection.HTTP_OK) {
-        throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-      }
-
-      final int size = connection.getContentLength();
-      if (size != -1 && size == existingFileSize) {
-        return false;
-      }
-
-      tempFile = FileUtil.createTempFile("downloaded", "jar");
-      input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
-      output = new BufferedOutputStream(new FileOutputStream(tempFile));
-      indicator.setIndeterminate(size == -1);
-
-      int len;
-      final byte[] buf = new byte[1024];
-      int count = 0;
-      while ((len = input.read(buf)) > 0) {
-        indicator.checkCanceled();
-        count += len;
-        if (size > 0) {
-          indicator.setFraction((double)count / size);
+      boolean deleteFile = true;
+      File tempFile = null;
+      try {
+        final int responseCode = connection.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
         }
-        output.write(buf, 0, len);
-      }
 
-      deleteFile = false;
-      downloadedFiles.add(Pair.create(libraryInfo, tempFile));
-      return true;
+        final int size = connection.getContentLength();
+        if (size != -1 && size == existingFileSize) {
+          return false;
+        }
+
+        tempFile = FileUtil.createTempFile("downloaded", "jar");
+        input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
+        output = new BufferedOutputStream(new FileOutputStream(tempFile));
+        indicator.setIndeterminate(size == -1);
+
+        int len;
+        final byte[] buf = new byte[1024];
+        int count = 0;
+        while ((len = input.read(buf)) > 0) {
+          indicator.checkCanceled();
+          count += len;
+          if (size > 0) {
+            indicator.setFraction((double)count / size);
+          }
+          output.write(buf, 0, len);
+        }
+
+        deleteFile = false;
+        downloadedFiles.add(Pair.create(libraryInfo, tempFile));
+      }
+      finally {
+        if (input != null) {
+          input.close();
+        }
+        if (output != null) {
+          output.close();
+        }
+        if (deleteFile && tempFile != null) {
+          FileUtil.delete(tempFile);
+        }
+        connection.disconnect();
+      }
     }
-    finally {
-      if (input != null) {
-        input.close();
-      }
-      if (output != null) {
-        output.close();
-      }
-      if (deleteFile && tempFile != null) {
-        FileUtil.delete(tempFile);
-      }
-      connection.disconnect();
-    }
+    return true;
   }
 
   public static LibraryDownloadInfo[] getDownloadingInfos(final LibraryInfo[] libraries) {
