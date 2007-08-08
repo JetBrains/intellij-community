@@ -408,7 +408,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         parent.registerCustomType(def);
       }
       else {
-        antFile.registerCustomType(def);
+        if (antFile != null) {
+          antFile.registerCustomType(def);
+        }
       }
       if (antFile != null) {
         for (final AntTypeId typeId : def.getNestedElements()) {
