@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,10 +21,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
-import com.intellij.util.FileContentUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.SimpleNodeRenderer;
+import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
@@ -33,15 +33,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
@@ -198,6 +197,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
         });
       }
 
+      
       public void treeCollapsed(TreeExpansionEvent event) {
       }
     });
