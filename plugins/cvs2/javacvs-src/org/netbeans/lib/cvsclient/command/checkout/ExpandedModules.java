@@ -21,37 +21,36 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
-final class ExpandedModules
-        implements ICvsListener, IModuleExpansionListener {
+final class ExpandedModules implements ICvsListener, IModuleExpansionListener {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final List modules = new LinkedList();
+  private final List<String> modules = new LinkedList<String>();
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
-	public ExpandedModules() {
-	}
+  public ExpandedModules() {
+  }
 
-	// Implemented ============================================================
+  // Implemented ============================================================
 
-	public void moduleExpanded(String module) {
-		modules.add(module);
-	}
+  public void moduleExpanded(String module) {
+    modules.add(module);
+  }
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
-		listenerRegistry.addModuleExpansionListener(this);
-	}
+  public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+    listenerRegistry.addModuleExpansionListener(this);
+  }
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
-		listenerRegistry.removeModuleExpansionListener(this);
-	}
+  public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+    listenerRegistry.removeModuleExpansionListener(this);
+  }
 
-	// Accessing ==============================================================
+  // Accessing ==============================================================
 
-	public List getModules() {
-		return Collections.unmodifiableList(modules);
-	}
+  public List<String> getModules() {
+    return Collections.unmodifiableList(modules);
+  }
 }
