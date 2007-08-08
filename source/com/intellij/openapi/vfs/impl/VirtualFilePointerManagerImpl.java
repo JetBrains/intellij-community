@@ -272,24 +272,26 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     public void after(final List<? extends VFileEvent> events) {
       cleanContainerCaches();
 
-      for (String url : myUrlsToUpdate) {
-        VirtualFilePointer pointer = myUrlToPointerMap.remove(url);
-        if (pointer != null) {
-          myUrlToPointerMap.put(VfsUtil.urlToPath(pointer.getUrl()), pointer);
+      if (myUrlsToUpdate != null) {
+        for (String url : myUrlsToUpdate) {
+          VirtualFilePointer pointer = myUrlToPointerMap.remove(url);
+          if (pointer != null) {
+            myUrlToPointerMap.put(VfsUtil.urlToPath(pointer.getUrl()), pointer);
+          }
         }
-      }
 
-      for (VirtualFilePointer pointer : myPointersToUdate) {
-        ((VirtualFilePointerImpl)pointer).update();
-      }
+        for (VirtualFilePointer pointer : myPointersToUdate) {
+          ((VirtualFilePointerImpl)pointer).update();
+        }
 
-      for (EventDescriptor event : myEvents) {
-        event.fireAfter();
-      }
+        for (EventDescriptor event : myEvents) {
+          event.fireAfter();
+        }
 
-      myUrlsToUpdate = null;
-      myEvents = null;
-      myPointersToUdate = null;
+        myUrlsToUpdate = null;
+        myEvents = null;
+        myPointersToUdate = null;
+      }
     }
   }
 }
