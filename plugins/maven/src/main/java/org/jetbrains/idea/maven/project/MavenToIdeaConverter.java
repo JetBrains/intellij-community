@@ -310,6 +310,7 @@ public class MavenToIdeaConverter {
       stringToLanguageLevel.put("1.3", LanguageLevel.JDK_1_3);
       stringToLanguageLevel.put("1.4", LanguageLevel.JDK_1_4);
       stringToLanguageLevel.put("1.5", LanguageLevel.JDK_1_5);
+      stringToLanguageLevel.put("1.6", LanguageLevel.JDK_1_5);
     }
     return stringToLanguageLevel.get(level);
   }
