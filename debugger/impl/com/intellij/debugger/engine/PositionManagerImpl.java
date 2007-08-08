@@ -260,26 +260,23 @@ public class PositionManagerImpl implements PositionManager {
         if (fromClass.locationsOfLine(lineNumber).size() > 0) {
           return fromClass;
         }
-        // choose the second line to make sure that only this class' code exists on the line chosen
-        // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
-        // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
-        // Example of such line:
-        // list.add(new Runnable(){......
-        // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
-        int line = -1;
+        
+        int rangeBegin = Integer.MAX_VALUE;
+        int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
           final int locationLine = location.lineNumber() - 1;
-          if (line < 0) {
-            line = locationLine;
-          }
-          else {
-            if (locationLine != line) {
-              line = locationLine;
-              break;
-            }
-          }
+          rangeBegin = Math.min(rangeBegin,  locationLine);
+          rangeEnd = Math.max(rangeEnd,  locationLine);
         }
-        if (line >= 0) {
+
+        if (classPosition.getLine() >= rangeBegin && classPosition.getLine() <= rangeEnd) {
+          // choose the second line to make sure that only this class' code exists on the line chosen
+          // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
+          // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
+          // Example of such line:
+          // list.add(new Runnable(){......
+          // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
+          final int line = Math.min(rangeBegin + 1, rangeEnd); 
           final SourcePosition candidatePosition = SourcePosition.createFromLine(classToFind.getContainingFile(), line);
           if (classToFind.equals(JVMNameUtil.getClassAt(candidatePosition))) {
             return fromClass;
