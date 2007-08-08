@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -45,6 +46,9 @@ public class CleanupInspectionIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable(file.getVirtualFile());
+    if (status.hasReadonlyFiles()) return;
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);
