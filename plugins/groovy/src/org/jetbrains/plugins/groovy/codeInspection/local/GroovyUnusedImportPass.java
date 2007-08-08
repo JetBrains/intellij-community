@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +41,7 @@ import java.util.Set;
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   private PsiFile myFile;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
-  private volatile Iterable<GrImportStatement> myUnusedImports = Collections.emptySet();
+  private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
 
   public GroovyUnusedImportPass(PsiFile file, Editor editor) {
     super(file.getProject(), editor.getDocument());
@@ -92,7 +93,9 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
+    AnnotationHolder annotationHolder = new AnnotationHolderImpl();
+    Annotation[] annotations = new Annotation[myUnusedImports.size()];
+    int i = 0;
     for (GrImportStatement unusedImport : myUnusedImports) {
       GrCodeReferenceElement importReference = unusedImport.getImportReference();
       if (importReference != null) {
@@ -100,12 +103,13 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
         Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         annotation.registerFix(action);
+        annotations[i++] = annotation;
       }
     }
 
     HighlightInfoHolder holder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
     holder.setWritable(true);
-    for (Annotation annotation : annotationHolder) {
+    for (Annotation annotation : annotations) {
       holder.add(HighlightUtil.convertToHighlightInfo(annotation));
     }
 

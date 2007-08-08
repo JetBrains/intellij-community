@@ -46,7 +46,7 @@ public class GroovyImportsTracker implements ProjectComponent {
   }
 
   @NotNull
-  public synchronized Iterable<GrImportStatement> getUnusedImportStatements(GroovyFile file) {
+  public synchronized Set<GrImportStatement> getUnusedImportStatements(GroovyFile file) {
     Set<GrImportStatement> unused = myUnusedImportStatements.get(file);
     if (unused == null) {
       Set<GrImportStatement> used = myUsedImportStatements.get(file);

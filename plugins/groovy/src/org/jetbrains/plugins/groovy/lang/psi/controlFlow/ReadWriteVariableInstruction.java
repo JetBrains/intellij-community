@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author ven
  */
 public interface ReadWriteVariableInstruction extends Instruction {
-  PsiVariable getVariable();
+  String getVariableName();
 
   boolean isWrite();
 }
