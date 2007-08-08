@@ -29,7 +29,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -139,7 +141,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             if (!(entry instanceof ModuleOrderEntry)) {
               final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
               if (virtualFiles.length > 0) {
-                annotateExternally(listOwner, annotationFQName, createAnnotationsXml(virtualFiles[0], packageName));
+                final XmlFile annotationsXml = createAnnotationsXml(virtualFiles[0], packageName);
+                myExternalAnotations.put(virtualFile, xmlFile);
+                annotateExternally(listOwner, annotationFQName, annotationsXml);
               }
               else {
                 if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
@@ -159,7 +163,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                               if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
                               annotateExternally(listOwner, annotationFQName, xmlFile);
                             } else {
-                              annotateExternally(listOwner, annotationFQName, createAnnotationsXml(files[0], packageName));
+                              final XmlFile annotationsXml = createAnnotationsXml(files[0], packageName);
+                              myExternalAnotations.put(virtualFile, annotationsXml);
+                              annotateExternally(listOwner, annotationFQName, annotationsXml);
                             }
                           }
                         }
@@ -293,6 +299,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private XmlFile createAnnotationsXml(VirtualFile root, String packageName) {
     final String[] dirs = packageName.split("[\\.]");
     for (String dir : dirs) {
+      if (dir.length() == 0) break;
       VirtualFile subdir = root.findChild(dir);
       if (subdir == null) {
         try {
