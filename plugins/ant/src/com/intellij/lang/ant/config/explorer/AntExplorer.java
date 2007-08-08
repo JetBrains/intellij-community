@@ -245,6 +245,9 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   private boolean canRunSelection() {
+    if (myTree == null) {
+      return false;
+    }
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) {
       return false;
