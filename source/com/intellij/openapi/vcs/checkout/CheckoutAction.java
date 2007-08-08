@@ -5,14 +5,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 
 import java.io.File;
 
@@ -28,19 +29,23 @@ public class CheckoutAction extends AnAction {
     myProvider.doCheckout(new MyListener(project));
   }
 
-  private static void refreshVFS(final File directory) {
+  private static VirtualFile refreshVFS(final File directory) {
+    final Ref<VirtualFile> result = new Ref<VirtualFile>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         final VirtualFile vDir = lfs.refreshAndFindFileByIoFile(directory);
-        assert vDir != null;
-        final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
-        assert watchRequest != null;
-        ((NewVirtualFile)vDir).markDirtyRecursively();
-        vDir.refresh(false, true);
-        lfs.removeWatchedRoot(watchRequest);
+        result.set(vDir);
+        if (vDir != null) {
+          final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
+          assert watchRequest != null;
+          ((NewVirtualFile)vDir).markDirtyRecursively();
+          vDir.refresh(false, true);
+          lfs.removeWatchedRoot(watchRequest);
+        }
       }
     });
+    return result.get();
   }
 
   private static void processNoProject(final Project project, final File directory) {
@@ -66,15 +71,17 @@ public class CheckoutAction extends AnAction {
     }
 
     public void directoryCheckedOut(final File directory) {
-      if (myFirstDirectory == null) {
-        myFirstDirectory = directory;
-      }
       if (!myFoundProject) {
-        refreshVFS(directory);
-        CheckoutListener[] listeners = Extensions.getExtensions(CheckoutListener.EP_NAME);
-        for(CheckoutListener listener: listeners) {
-          myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
-          if (myFoundProject) break;
+        final VirtualFile virtualFile = refreshVFS(directory);
+        if (virtualFile != null) {
+          if (myFirstDirectory == null) {
+            myFirstDirectory = directory;
+          }
+          CheckoutListener[] listeners = Extensions.getExtensions(CheckoutListener.EP_NAME);
+          for(CheckoutListener listener: listeners) {
+            myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+            if (myFoundProject) break;
+          }
         }
       }
     }
