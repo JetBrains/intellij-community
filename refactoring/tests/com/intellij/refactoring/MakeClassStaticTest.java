@@ -29,6 +29,10 @@ public class MakeClassStaticTest extends CodeInsightTestCase {
 
   public void testIDEADEV12762() throws Exception { perform(); }
 
+  public void testRegularReference() throws Exception {
+    perform();
+  }
+
   private void perform() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);

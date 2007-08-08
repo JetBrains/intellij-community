@@ -342,11 +342,11 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
         qualifier = newExpression.getQualifier();
         if (qualifier instanceof PsiThisExpression) qualifier = null;
-      }
-      if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
-        result.add(new UsageInfo(element));
-      } else {
-        result.add(new InternalUsageInfo(element, myMember));
+        if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
+          result.add(new UsageInfo(element));
+        } else {
+          result.add(new InternalUsageInfo(element, myMember));
+        }
       }
     }
   }
