@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
-  protected final StatusBarEx myStatusBar;
+  protected StatusBarEx myStatusBar;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 
@@ -88,5 +88,21 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private void doBackground() {
     myStatusBar.add(this, myInfo);
     myFocusTrackback.kill();
+  }
+
+  public synchronized void stop() {
+    super.stop();
+    dispose();
+  }
+
+  public void cancel() {
+    super.cancel();
+    dispose();
+  }
+
+  private void dispose() {
+    myInfo = null;
+    myStatusBar = null;
+    myOption = null;
   }
 }
