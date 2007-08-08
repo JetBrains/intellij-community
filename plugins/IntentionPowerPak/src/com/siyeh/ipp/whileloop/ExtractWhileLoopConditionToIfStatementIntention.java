@@ -17,6 +17,7 @@ package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -42,8 +43,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
         }
         final String conditionText = condition.getText();
         final PsiManager manager = whileStatement.getManager();
-        final PsiElementFactory factory =
-                manager.getElementFactory();
+        final PsiElementFactory factory = manager.getElementFactory();
         final PsiExpression newCondition =
                 factory.createExpressionFromText("true", whileStatement);
         condition.replace(newCondition);
@@ -52,21 +52,22 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
         final PsiStatement ifStatement =
                 factory.createStatementFromText(ifStatementText,
                         whileStatement);
-
         final PsiElement newElement;
         if (body instanceof PsiBlockStatement) {
             final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
             final PsiElement bodyElement = codeBlock.getFirstBodyElement();
-            newElement = codeBlock.addBefore(ifStatement,
-                    bodyElement);
+            newElement = codeBlock.addBefore(ifStatement, bodyElement);
         } else if (body != null) {
             final PsiBlockStatement blockStatement =
                     (PsiBlockStatement)factory.createStatementFromText("{}",
                             whileStatement);
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-            newElement = codeBlock.add(ifStatement);
-            codeBlock.add(body);
+            codeBlock.add(ifStatement);
+            if (!(body instanceof PsiEmptyStatement)) {
+                codeBlock.add(body);
+            }
+            newElement = body.replace(blockStatement);
         } else {
             return;
         }
