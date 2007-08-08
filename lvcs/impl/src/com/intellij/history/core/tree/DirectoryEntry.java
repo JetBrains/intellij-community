@@ -99,7 +99,7 @@ public class DirectoryEntry extends Entry {
   public void collectDifferencesWith(Entry right, List<Difference> result) {
     DirectoryEntry e = (DirectoryEntry)right;
 
-    if (!myName.equals(e.myName)) {
+    if (!getPath().equals(e.getPath())) {
       result.add(new Difference(false, this, e));
     }
 

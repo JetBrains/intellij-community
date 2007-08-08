@@ -383,6 +383,30 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     assertFileDifference(dd.get(1), child1, child2);
   }
 
+  @Test
+  public void testIncludesDifferenceForChilderWhenParentWasModified() {
+    Entry dir1 = new DirectoryEntry(1, "dir1");
+    Entry dir2 = new DirectoryEntry(1, "dir2");
+
+    Entry subDir1 = new DirectoryEntry(2, "subDir");
+    Entry subDir2 = new DirectoryEntry(2, "subDir");
+
+    Entry child1 = new FileEntry(3, "name", c("content"), -1);
+    Entry child2 = new FileEntry(3, "name", c("content"), -1);
+
+    dir1.addChild(subDir1);
+    dir2.addChild(subDir2);
+    subDir1.addChild(child1);
+    subDir2.addChild(child2);
+
+    List<Difference> dd = dir1.getDifferencesWith(dir2);
+    assertEquals(3, dd.size());
+
+    assertDirDifference(dd.get(0), dir1, dir2);
+    assertDirDifference(dd.get(1), subDir1, subDir2);
+    assertFileDifference(dd.get(2), child1, child2);
+  }
+
   private void assertDirDifference(Difference d, Entry left, Entry right) {
     assertDifference(d, left, right, false);
   }

@@ -58,7 +58,7 @@ public class FileEntry extends Entry {
 
   @Override
   public void collectDifferencesWith(Entry e, List<Difference> result) {
-    if (myName.equals(e.getName()) && myContent.equals(e.getContent())) return;
+    if (getPath().equals(e.getPath()) && myContent.equals(e.getContent())) return;
     result.add(new Difference(true, this, e));
   }
 

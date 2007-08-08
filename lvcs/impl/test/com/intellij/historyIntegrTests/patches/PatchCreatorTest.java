@@ -60,6 +60,59 @@ public class PatchCreatorTest extends PatchingTestCase {
     assertNull(root.findChild("f.java"));
   }
 
+  public void testDirectoryCreationWithFiles() throws Exception {
+    VirtualFile dir = root.createChildDirectory(null, "dir");
+    dir.createChildData(null, "f.java");
+
+    createPatchBetweenRevisions(2, 0, false);
+    clearRoot();
+
+    applyPatch();
+
+    assertNotNull(root.findChild("dir"));
+    assertNotNull(root.findChild("dir").findChild("f.java"));
+  }
+
+  public void testDirectoryDeletionWithFiles() throws Exception {
+    VirtualFile dir = root.createChildDirectory(null, "dir");
+    dir.createChildData(null, "f1.java");
+    dir.createChildData(null, "f2.java");
+
+    dir.delete(null);
+    createPatchBetweenRevisions(1, 0, false);
+
+    dir = root.createChildDirectory(null, "dir");
+    dir.createChildData(null, "f1.java");
+    dir.createChildData(null, "f2.java");
+
+    applyPatch();
+
+    assertNotNull(root.findChild("dir"));
+    assertNull(root.findChild("dir").findChild("f1.java"));
+    assertNull(root.findChild("dir").findChild("f2.java"));
+  }
+
+  public void testDirectoryRename() throws Exception {
+    VirtualFile dir = root.createChildDirectory(null, "dir1");
+    dir.createChildData(null, "f.java");
+
+    dir.rename(null, "dir2");
+
+    createPatchBetweenRevisions(1, 0);
+
+    dir.rename(null, "dir1");
+
+    applyPatch();
+
+    VirtualFile afterDir1 = root.findChild("dir1");
+    VirtualFile afterDir2 = root.findChild("dir2");
+    assertNotNull(afterDir1);
+    assertNotNull(afterDir2);
+
+    assertNull(afterDir1.findChild("f.java"));
+    assertNotNull(afterDir2.findChild("f.java"));
+  }
+
   private void createPatchBetweenRevisions(int left, int right) throws Exception {
     createPatchBetweenRevisions(left, right, false);
   }
