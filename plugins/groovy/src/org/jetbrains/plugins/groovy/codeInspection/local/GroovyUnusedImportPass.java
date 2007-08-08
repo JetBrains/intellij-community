@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collections;
 
 /**
  * @author ilyas
@@ -41,7 +42,7 @@ import java.util.Set;
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   private PsiFile myFile;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
-  private Set<GrImportStatement> myUnusedImports;
+  private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
 
   public GroovyUnusedImportPass(PsiFile file, Editor editor) {
     super(file.getProject(), editor.getDocument());
@@ -97,7 +98,6 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    if (myUnusedImports == null) return;
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
     for (GrImportStatement unusedImport : myUnusedImports) {
       GrCodeReferenceElement importReference = unusedImport.getImportReference();

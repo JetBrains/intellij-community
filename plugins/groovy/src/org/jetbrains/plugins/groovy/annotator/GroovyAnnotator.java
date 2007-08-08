@@ -444,7 +444,7 @@ public class GroovyAnnotator implements Annotator {
       PsiFile file = referenceElement.getContainingFile();
       if (file instanceof GroovyFile) {
         GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(referenceElement.getProject());
-        importsTracker.registerImportUsed(importStatement, referenceElement);
+        importsTracker.registerImportUsed(importStatement);
       }
     }
   }

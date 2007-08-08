@@ -35,7 +35,7 @@ public class GroovyImportsTracker implements ProjectComponent {
 
   private Map<GroovyFile, Set<GrImportStatement>> myUsedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
 
-  public void registerImportUsed(GrImportStatement importStatement, GrReferenceElement element) {
+  public void registerImportUsed(GrImportStatement importStatement) {
     PsiFile file = importStatement.getContainingFile();
     if (file == null || !(file instanceof GroovyFile)) return;
     GroovyFile groovyFile = (GroovyFile) file;
@@ -92,7 +92,7 @@ public class GroovyImportsTracker implements ProjectComponent {
   }
 
   public void markFileAnnotated(GroovyFile file) {
-    if (!myUsedImportStatements.containsKey(file)) {
+    if (myUsedImportStatements.containsKey(file) && myUsedImportStatements.get(file) == null) {
       myUsedImportStatements.put(file, new HashSet<GrImportStatement>());
     }
   }
