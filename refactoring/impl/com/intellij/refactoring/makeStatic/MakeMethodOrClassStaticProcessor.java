@@ -182,19 +182,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     result.addAll(Arrays.asList(MakeStaticUtil.findClassRefsInMember(myMember, true)));
 
     if (mySettings.isReplaceUsages()) {
-      if (myMember instanceof PsiMethod) {
-        findExternalReferences((PsiMethod)myMember, result);
-      } else {
-        final PsiClass aClass = (PsiClass)myMember;
-        PsiMethod[] constructors = aClass.getConstructors();
-        if (constructors.length > 0) {
-          for (PsiMethod constructor : constructors) {
-            findExternalReferences(constructor, result);
-          }
-        } else {
-          findDefaultConstructorReferences(aClass, result);
-        }
-      }
+      findExternalUsages(result);
     }
 
     if (myMember instanceof PsiMethod) {
@@ -209,7 +197,9 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return result.toArray(new UsageInfo[result.size()]);
   }
 
-  private void findExternalReferences(final PsiMethod method, final ArrayList<UsageInfo> result) {
+  protected abstract void findExternalUsages(ArrayList<UsageInfo> result);
+
+  protected void findExternalReferences(final PsiMethod method, final ArrayList<UsageInfo> result) {
     for (PsiReference ref : ReferencesSearch.search(method).findAll()) {
       PsiElement element = ref.getElement();
       PsiElement qualifier = null;
@@ -219,23 +209,6 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       }
       if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
         result.add(new UsageInfo(element));
-      }
-    }
-  }
-
-  private void findDefaultConstructorReferences(final PsiClass aClass, final ArrayList<UsageInfo> result) {
-    for (PsiReference ref : ReferencesSearch.search(aClass).findAll()) {
-      PsiElement element = ref.getElement();
-      PsiElement qualifier = null;
-      if (element.getParent() instanceof PsiNewExpression) {
-        PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
-        qualifier = newExpression.getQualifier();
-        if (qualifier instanceof PsiThisExpression) qualifier = null;
-      }
-      if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
-        result.add(new UsageInfo(element));
-      } else {
-        result.add(new InternalUsageInfo(element, aClass));
       }
     }
   }
@@ -269,7 +242,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return false;
   }
 
-  protected boolean makeFieldParameterFinal(PsiField field, UsageInfo[] usages) {
+  protected static boolean makeFieldParameterFinal(PsiField field, UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof InternalUsageInfo) {
         final InternalUsageInfo internalUsageInfo = (InternalUsageInfo)usage;

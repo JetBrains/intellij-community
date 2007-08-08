@@ -227,4 +227,8 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       methodRef.getQualifierExpression().replace(newQualifier);
     }
   }
+
+  protected void findExternalUsages(final ArrayList<UsageInfo> result) {
+    findExternalReferences(myMember, result);
+  }
 }

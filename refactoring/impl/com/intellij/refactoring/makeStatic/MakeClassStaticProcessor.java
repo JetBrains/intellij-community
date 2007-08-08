@@ -7,17 +7,18 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -320,5 +321,33 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
 
     return conflicts;
+  }
+
+  protected void findExternalUsages(final ArrayList<UsageInfo> result) {
+    PsiMethod[] constructors = myMember.getConstructors();
+    if (constructors.length > 0) {
+      for (PsiMethod constructor : constructors) {
+        findExternalReferences(constructor, result);
+      }
+    } else {
+      findDefaultConstructorReferences(result);
+    }
+  }
+
+  private void findDefaultConstructorReferences(final ArrayList<UsageInfo> result) {
+    for (PsiReference ref : ReferencesSearch.search(myMember).findAll()) {
+      PsiElement element = ref.getElement();
+      PsiElement qualifier = null;
+      if (element.getParent() instanceof PsiNewExpression) {
+        PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
+        qualifier = newExpression.getQualifier();
+        if (qualifier instanceof PsiThisExpression) qualifier = null;
+      }
+      if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
+        result.add(new UsageInfo(element));
+      } else {
+        result.add(new InternalUsageInfo(element, myMember));
+      }
+    }
   }
 }
