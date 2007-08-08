@@ -145,6 +145,8 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public LocalQuickFix[] getQuickFixes() {
+      if (!canHaveAdequateFix(getElement())) return LocalQuickFix.EMPTY_ARRAY;
+
       return new LocalQuickFix[] {
         new CheckDtdReferencesInspection.AddDtdDeclarationFix(
           "xml.dtd.create.dtd.element.intention.name",
@@ -226,15 +228,8 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public LocalQuickFix[] getQuickFixes() {
-      final PsiFile containingFile = getElement().getContainingFile();
+      if (!canHaveAdequateFix(getElement())) return LocalQuickFix.EMPTY_ARRAY;
 
-      if (containingFile instanceof JspFile ||
-          containingFile.getFileType() == StdFileTypes.HTML ||
-          containingFile.getFileType() == StdFileTypes.XHTML
-        ) {
-        return LocalQuickFix.EMPTY_ARRAY;
-      }
-      
       return new LocalQuickFix[] {
         new CheckDtdReferencesInspection.AddDtdDeclarationFix(
           "xml.dtd.create.entity.intention.name",
@@ -249,6 +244,18 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     public String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.dtd.unresolved.entity.reference", getCanonicalText());
     }
+  }
+
+  private static boolean canHaveAdequateFix(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+
+    if (containingFile instanceof JspFile ||
+        containingFile.getFileType() == StdFileTypes.HTML ||
+        containingFile.getFileType() == StdFileTypes.XHTML
+      ) {
+      return false;
+    }
+    return true;
   }
 
   @NotNull
