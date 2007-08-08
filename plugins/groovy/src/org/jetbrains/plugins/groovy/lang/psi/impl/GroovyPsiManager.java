@@ -27,6 +27,8 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -68,6 +70,9 @@ public class GroovyPsiManager implements ProjectComponent {
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { int length }";
   public Runnable myUpdateRunnable;
+
+  private String myGroovyJarUrl = null;
+  private long myGroovyJarTimeStamp = -1;
 
   public GroovyPsiManager(Project project) {
     myProject = project;
@@ -118,6 +123,8 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void buildGDK() {
+    if (checkUpToDate()) return;
+
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
@@ -128,6 +135,23 @@ public class GroovyPsiManager implements ProjectComponent {
     buildGDKImpl();
 
     if (indicator != null) indicator.popState();
+  }
+
+  private boolean checkUpToDate() {
+    PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
+    if (defaultMethodsClass != null) {
+      final VirtualFile vFile = defaultMethodsClass.getContainingFile().getVirtualFile();
+      LOG.assertTrue(vFile != null);
+      final VirtualFile vRoot = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
+      LOG.assertTrue(vRoot != null);
+      final String url = vFile.getUrl();
+      final long timeStamp = vFile.getTimeStamp();
+      if (url.equals(myGroovyJarUrl) && timeStamp == myGroovyJarTimeStamp) return true;
+      myGroovyJarUrl = url;
+      myGroovyJarTimeStamp = timeStamp;
+    }
+
+    return false;
   }
 
   private void buildGDKImpl() {
