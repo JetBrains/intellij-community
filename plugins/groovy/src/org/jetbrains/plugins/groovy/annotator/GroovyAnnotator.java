@@ -87,10 +87,11 @@ public class GroovyAnnotator implements Annotator {
       checkReturnStatement((GrReturnStatement) element, holder);
     } else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile) element;
-      GroovyImportsTracker.getInstance(file.getProject()).markFileAnnotated(file);
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
+    } else if (element instanceof GrImportStatement) {
+      GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
     }
   }
 

@@ -113,7 +113,7 @@ public class GroovyLoader implements ApplicationComponent {
       public void projectOpened(Project project) {
         TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
         GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
-        registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL,}, null, true, -1);
+        registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, Pass.POST_UPDATE_ALL);
 
         CompilerManager compilerManager = CompilerManager.getInstance(project);
         GroovyToJavaGenerator generator = new GroovyToJavaGenerator(project);

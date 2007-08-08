@@ -31,10 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -42,7 +40,7 @@ import java.util.Collections;
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   private PsiFile myFile;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
-  private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
+  private volatile Iterable<GrImportStatement> myUnusedImports = Collections.emptySet();
 
   public GroovyUnusedImportPass(PsiFile file, Editor editor) {
     super(file.getProject(), editor.getDocument());
@@ -53,11 +51,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
     if (!(myFile instanceof GroovyFile)) return;
     GroovyFile groovyFile = (GroovyFile) myFile;
     GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(groovyFile.getProject());
-    if (importsTracker.isImportInformationUpToDate(groovyFile)) return;
-    GrImportStatement[] usedImports = importsTracker.getUsedImportStatements(groovyFile);
-    myUnusedImports = new HashSet<GrImportStatement>(Arrays.asList(groovyFile.getImportStatements()));
-    myUnusedImports.removeAll(Arrays.asList(usedImports));
-    importsTracker.clearImportsInFile(groovyFile);
+    myUnusedImports = importsTracker.getUnusedImportStatements(groovyFile);
   }
 
   private IntentionAction createUnusedImportIntention() {
@@ -101,7 +95,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
     for (GrImportStatement unusedImport : myUnusedImports) {
       GrCodeReferenceElement importReference = unusedImport.getImportReference();
-      if (importReference != null && importReference.resolve() != null) {
+      if (importReference != null) {
         IntentionAction action = createUnusedImportIntention();
         Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
