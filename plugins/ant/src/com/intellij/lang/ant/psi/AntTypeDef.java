@@ -38,4 +38,10 @@ public interface AntTypeDef extends AntTask {
 
   @Nullable
   String getLocalizedError();
+
+  @Nullable
+  String getAdapterName();
+
+  @Nullable
+  String getAdaptToName();
 }

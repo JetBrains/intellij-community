@@ -41,6 +41,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   @NonNls private static final String RESOURCE_ATTR = "resource";
   @NonNls private static final String FILE_ATTR = AntFileImpl.FILE_ATTR;
   @NonNls private static final String CLASSNAME_ATTR = "classname";
+  @NonNls private static final String ADAPTER_ATTR = "adapter";
+  @NonNls private static final String ADAPTTO_ATTR = "adaptto";
 
   private static final ClassCache CLASS_CACHE = new ClassCache();
 
@@ -100,6 +102,16 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   @Nullable
   public String getClassName() {
     return computeAttributeValue(getSourceElement().getAttributeValue(CLASSNAME_ATTR));
+  }
+
+  @Nullable
+  public String getAdapterName() {
+    return computeAttributeValue(getSourceElement().getAttributeValue(ADAPTER_ATTR));
+  }
+
+  @Nullable
+  public String getAdaptToName() {
+    return computeAttributeValue(getSourceElement().getAttributeValue(ADAPTTO_ATTR));
   }
 
   @Nullable
@@ -372,7 +384,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     else {
       myClassesLoaded = true;
-      final boolean isTask = isAssignableFrom(Task.class.getName(), clazz);
+      final boolean isTask = isTask(clazz);
       def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isTask);
       if (def == null) { // can be null if failed to introspect the class for some reason
         def = new AntTypeDefinitionImpl(id, classname, isTask);
@@ -412,6 +424,33 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       }
     }
     return def;
+  }
+
+  private boolean isTask(final Class clazz) {
+    if (isTask()) { // in taskdef, the adapter is always set to Task
+      return true;
+    }
+    
+    final String adaptto = getAdaptToName();
+    if (adaptto != null && isAssignableFrom(adaptto, clazz)) {
+      return isAssignableFrom(Task.class.getName(), clazz);
+    }
+    
+    final String adapter = getAdapterName();
+    if (adapter != null) {
+      try {
+        final Class adapterClass = clazz.getClassLoader().loadClass(adapter);
+        return isAssignableFrom(Task.class.getName(), adapterClass);
+      }
+      catch (ClassNotFoundException ignored) {
+      }
+      catch (NoClassDefFoundError ignored) {
+      }
+      catch (UnsupportedClassVersionError ignored) {
+      }
+    }
+    
+    return isAssignableFrom(Task.class.getName(), clazz);
   }
 
   private static boolean isAssignableFrom(final String baseClassName, final Class clazz) {
