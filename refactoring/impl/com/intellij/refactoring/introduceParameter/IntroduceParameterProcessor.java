@@ -607,6 +607,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             PsiParameterList parameterList = myMethodToReplaceIn.getParameterList();
             PsiParameter[] parameters = parameterList.getParameters();
 
+            if (subj.getParent() != parameterList) return;
             int index = parameterList.getParameterIndex((PsiParameter)subj);
             if (index < 0) return;
             if (index < parameters.length) {
