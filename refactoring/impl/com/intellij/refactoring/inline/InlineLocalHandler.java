@@ -54,7 +54,7 @@ class InlineLocalHandler {
       return;
     }
 
-    final Collection<PsiReference> refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).findAll();
+    final Collection<PsiReference> refs = ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false).findAll();
 
     if (refs.isEmpty()){
       LOG.assertTrue(refExpr == null);
