@@ -63,7 +63,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     if (moduleCount > 1) {
       enabled = true;
     }
-    else {
+    else if (moduleCount > 0) {
       final Module module = e.getData(DataKeys.MODULE);
       if (module == null || !(module.getModuleType() instanceof PluginModuleType)) {
         enabled = true;
