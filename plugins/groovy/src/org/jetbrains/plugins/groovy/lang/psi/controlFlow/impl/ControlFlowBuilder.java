@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -27,10 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * @author ven
@@ -400,17 +398,26 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (finallyClause != null) {
       flowAbrupted();
       final InstructionImpl finallyInstruction = startNode(finallyClause);
-      addFinallyEdges(finallyInstruction);
+      Set<CallInstructionImpl> calls = new HashSet<CallInstructionImpl>();
+      addFinallyEdges(finallyInstruction, calls);
 
       if (tryEnd != null) {
-        addEdge(tryEnd, addCallNode(finallyInstruction, tryCatchStatement));
+        final ControlFlowBuilder.CallInstructionImpl call = addCallNode(finallyInstruction, tryCatchStatement);
+        calls.add(call);
+        addEdge(tryEnd, call);
       }
       for (InstructionImpl catchEnd : catches) {
-        addEdge(catchEnd, addCallNode(finallyInstruction, tryCatchStatement));
+        final ControlFlowBuilder.CallInstructionImpl call = addCallNode(finallyInstruction, tryCatchStatement);
+        calls.add(call);
+        addEdge(catchEnd, call);
       }
       myHead = finallyInstruction;
       finallyClause.accept(this);
-      addNode(new RetInstruction(myInstructionNumber++));
+      final RetInstruction retInsn = new RetInstruction(myInstructionNumber++);
+      for (CallInstructionImpl call : calls) {
+        call.setReturnInstruction(retInsn);
+      }
+      addNode(retInsn);
       finishNode(finallyInstruction);
     }
   }
@@ -423,11 +430,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return call;
   }
 
-  private void addFinallyEdges(InstructionImpl finallyInstruction) {
+  private void addFinallyEdges(InstructionImpl finallyInstruction, Set<CallInstructionImpl> calls) {
     final List<Pair<InstructionImpl, GroovyPsiElement>> copy = myPending;
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     for (Pair<InstructionImpl, GroovyPsiElement> pair : copy) {
       final CallInstructionImpl call = addCallNode(finallyInstruction, pair.getSecond());
+      calls.add(call);
       addEdge(pair.getFirst(), call);
     }
   }
@@ -468,6 +476,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   class CallInstructionImpl extends InstructionImpl implements CallInstruction {
     private InstructionImpl myCallee;
 
+    public RetInstruction getReturnInstruction() {
+      return myReturnInsn;
+    }
+
+    private RetInstruction myReturnInsn;
+
     public String toString() {
       return super.toString() + " CALL " + myCallee.getNumber(); 
     }
@@ -477,11 +491,21 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return Collections.singletonList(myCallee);
     }
 
+    public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
+      callStack.push(this);
+      assert myReturnInsn != null;
+      return Collections.singletonList(myReturnInsn);
+    }
+
     protected String getElementPresentation() { return ""; }
 
     CallInstructionImpl(int num, InstructionImpl callee) {
       super(null, num);
       myCallee = callee;
+    }
+
+    public void setReturnInstruction(RetInstruction retInstruction) {
+      myReturnInsn = retInstruction;
     }
   }
 
@@ -496,10 +520,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     protected String getElementPresentation() { return ""; }
 
-    public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
-      final List<InstructionImpl> callSucc = ((CallInstructionImpl) callStack.pop()).mySucc;
-      assert !callSucc.isEmpty();
-      return Collections.singletonList(callSucc.get(0));
+    public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
+      return ((CallInstructionImpl) callStack.pop()).myPred;
     }
+
+    public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
+      return ((CallInstructionImpl) callStack.pop()).mySucc;
+   }
   }
 }

@@ -34,7 +34,7 @@ class InstructionImpl implements Instruction {
     return mySucc;
   }
 
-  public Iterable<? extends Instruction> pred() {
+  public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
     return myPred;
   }
 
