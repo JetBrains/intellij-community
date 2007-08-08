@@ -27,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ReferenceElement implements GroovyElementTypes {
+  public static final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz"; //inserted by completion
+
   public static GroovyElementType parseForImport(PsiBuilder builder) {
     return parse(builder, false, false, true, false);
   }
@@ -108,7 +110,7 @@ public class ReferenceElement implements GroovyElementTypes {
     if (lastIdentifier != null) firstChar = lastIdentifier.charAt(0);
     else return WRONGWAY;
 
-    if (checkUpperCase && !Character.isUpperCase(firstChar)) {
+    if (checkUpperCase && (!Character.isUpperCase(firstChar) || DUMMY_IDENTIFIER.equals(lastIdentifier))) { //hack to make completion work
       internalTypeMarker.rollbackTo();
       return WRONGWAY;
     }
