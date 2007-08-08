@@ -12,13 +12,12 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -87,12 +86,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  private boolean fileIsInContent(VirtualFile file) {
-    return ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
-  }
-
   private FileStatus calcLocalFileStatus(final VirtualFile virtualFile) {
-    if (!fileIsInContent(virtualFile)) return FileStatus.NOT_CHANGED;
     final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
     if (vcs == null) return FileStatus.NOT_CHANGED;
 
