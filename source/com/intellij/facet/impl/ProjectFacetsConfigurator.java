@@ -52,17 +52,26 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public void removeFacet(Facet facet) {
-    getTreeModel(facet.getModule()).removeFacetInfo(myFacet2Info.get(facet));
+    FacetTreeModel treeModel = getTreeModel(facet.getModule());
+    FacetInfo facetInfo = myFacet2Info.get(facet);
+
+    List<FacetInfo> children = treeModel.getChildren(facetInfo);
+    for (FacetInfo child : children) {
+      Facet childInfo = myInfo2Facet.get(child);
+      if (childInfo != null) {
+        removeFacet(childInfo);
+      }
+    }
+
+    treeModel.removeFacetInfo(facetInfo);
     getOrCreateModifiableModel(facet.getModule()).removeFacet(facet);
     myChangedFacets.remove(facet);
     final FacetEditor facetEditor = myEditors.remove(facet);
     if (facetEditor != null) {
       facetEditor.disposeUIResources();
     }
-    final FacetInfo facetInfo = myFacet2Info.remove(facet);
-    if (facetInfo != null) {
-      myInfo2Facet.remove(facetInfo);
-    }
+    myFacet2Info.remove(facet);
+    myInfo2Facet.remove(facetInfo);
   }
 
   public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {

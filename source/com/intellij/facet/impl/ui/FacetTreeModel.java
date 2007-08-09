@@ -54,6 +54,7 @@ public class FacetTreeModel {
     return root2Null(myParents.get(info));
   }
 
+  @NotNull
   public List<FacetInfo> getChildren(@Nullable FacetInfo info) {
     final List<FacetInfo> list = myParents.getKeysByValue(null2Root(info));
     if (list == null) {
