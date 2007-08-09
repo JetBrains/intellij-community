@@ -3,13 +3,14 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,11 +21,13 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
     GenerateAccessorProviderRegistrar.registerProvider(new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
       @NotNull
       public Collection<EncapsulatableClassMember> fun(PsiClass s) {
-        return ContainerUtil.map(s.getFields(), new Function<PsiField, EncapsulatableClassMember>() {
-          public EncapsulatableClassMember fun(PsiField s) {
-            return new PsiFieldMember(s);
+        final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
+        for(PsiField field: s.getFields()) {
+          if (!(field instanceof PsiEnumConstant)) {
+            result.add(new PsiFieldMember(field));
           }
-        });
+        }
+        return result;
       }
     });
   }
