@@ -1076,10 +1076,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         public void run() {
           final Runnable action = new Runnable() {
             public void run() {
-              ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-              for (OrderEntry entry : model.getOrderEntries()) {
+              ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+              OrderEntry[] orderEntries = rootManager.getOrderEntries();
+              ModifiableRootModel model = rootManager.getModifiableModel();
+              OrderEntry[] modifiableEntries = model.getOrderEntries();
+              for (int i = 0; i < orderEntries.length; i++) {
+                OrderEntry entry = orderEntries[i];
                 if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == orderEntry.getLibrary()) {
-                  model.removeOrderEntry(entry);
+                  model.removeOrderEntry(modifiableEntries[i]);
                 }
               }
               model.commit();
