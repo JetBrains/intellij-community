@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
@@ -91,7 +92,7 @@ public class ConvertAnnotationInspection extends LocalInspectionTool {
             }
             text.append(" = \"");
 
-            @NonNls String parameterText = pair.getValue().getText();
+            @NonNls String parameterText = StringUtil.stripQuotesAroundValue(pair.getValue().getText());
             if (parameterText.startsWith("{")) {
               parameterText = parameterText.replaceAll("(\\{\\\"|\\\"\\}|\\\"\\w*\\,\\w*\\\")", " ").trim();
             }
