@@ -152,12 +152,34 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null) {
       try {
-        final List<Method> methods = exceptionObj.referenceType().methodsByName("getStackTrace");
+        final ReferenceType refType = exceptionObj.referenceType();
+        final List<Method> methods = refType.methodsByName("getStackTrace");
         if (methods.size() > 0) {
-          evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, methods.get(0), Collections.emptyList());
+          final DebugProcessImpl process = evaluationContext.getDebugProcess();
+          process.invokeMethod(evaluationContext, exceptionObj, methods.get(0), Collections.emptyList());
+          
+          // print to console as well
+          
+          final Field traceField = refType.fieldByName("stackTrace");
+          final Value trace = traceField != null? exceptionObj.getValue(traceField) : null; 
+          if (trace instanceof ArrayReference) {
+            final ArrayReference traceArray = (ArrayReference)trace;
+            final Type componentType = ((ArrayType)traceArray.referenceType()).componentType();
+            if (componentType instanceof ClassType) {
+              process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj));
+              process.printToConsole("\n");
+              for (Value stackElement : traceArray.getValues()) {
+                process.printToConsole("\tat ");
+                process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, stackElement));
+                process.printToConsole("\n");
+              }
+            }
+          }
         }
       }
       catch (EvaluateException ignored) {
+      }
+      catch (ClassNotLoadedException ignored) {
       }
     }
     return exceptionObj;
