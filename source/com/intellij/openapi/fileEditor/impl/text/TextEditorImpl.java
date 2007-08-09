@@ -191,30 +191,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
   }
 
   public void navigateTo(@NotNull final Navigatable navigatable) {
-    assert navigatable instanceof OpenFileDescriptor;
-
-    final OpenFileDescriptor descriptor = (OpenFileDescriptor)navigatable;
-
-    final Editor _editor = getEditor();
-
-    if (descriptor.getOffset() >= 0) {
-      _editor.getCaretModel().moveToOffset(Math.min(descriptor.getOffset(), _editor.getDocument().getTextLength()));
-      _editor.getSelectionModel().removeSelection();
-      scrollToCaret(_editor);
-    }
-    else if (descriptor.getLine() != -1 && descriptor.getColumn() != -1) {
-      final LogicalPosition pos = new LogicalPosition(descriptor.getLine(), descriptor.getColumn());
-      _editor.getCaretModel().moveToLogicalPosition(pos);
-      _editor.getSelectionModel().removeSelection();
-      scrollToCaret(_editor);
-    }
-  }
-
-  private static void scrollToCaret(final Editor _editor) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-      }
-    });
+    OpenFileDescriptor d = (OpenFileDescriptor)navigatable;
+    d.navigateIn(getEditor());
   }
 }
