@@ -141,7 +141,7 @@ public class GroovyPsiManager implements ProjectComponent {
     PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultMethodsClass != null) {
       final VirtualFile vFile = defaultMethodsClass.getContainingFile().getVirtualFile();
-      LOG.assertTrue(vFile != null);
+      LOG.assertTrue(vFile != null && vFile.getFileSystem() == JarFileSystem.getInstance());
       final VirtualFile vRoot = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
       LOG.assertTrue(vRoot != null);
       final String url = vFile.getUrl();
