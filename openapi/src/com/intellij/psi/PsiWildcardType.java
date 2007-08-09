@@ -37,8 +37,7 @@ public class PsiWildcardType extends PsiType {
   @NonNls private static final String EXTENDS_PREFIX = "? extends ";
   @NonNls private static final String SUPER_PREFIX = "? super ";
 
-  private PsiWildcardType(PsiManager manager, boolean isExtending, PsiType bound) {
-    LOG.assertTrue(manager != null);
+  private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, PsiType bound) {
     myManager = manager;
     myIsExtending = isExtending;
     myBound = bound;
@@ -53,19 +52,17 @@ public class PsiWildcardType extends PsiType {
     return unboundedWildcard;
   }
 
-  public static PsiWildcardType createExtends(PsiManager manager, PsiType bound) {
-    LOG.assertTrue(bound != null && !(bound instanceof PsiWildcardType));
+  public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
+    LOG.assertTrue(!(bound instanceof PsiWildcardType));
     return new PsiWildcardType(manager, true, bound);
   }
 
-  public static PsiWildcardType createSuper(PsiManager manager, PsiType bound) {
-    LOG.assertTrue(bound != null);
+  public static PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
     return new PsiWildcardType(manager, false, bound);
   }
 
-  public static PsiWildcardType changeBound(PsiWildcardType type, PsiType newBound) {
+  public static PsiWildcardType changeBound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
     LOG.assertTrue(type.getBound() != null);
-    LOG.assertTrue(newBound != null);
     return new PsiWildcardType(type.myManager, type.myIsExtending, newBound);
   }
 
