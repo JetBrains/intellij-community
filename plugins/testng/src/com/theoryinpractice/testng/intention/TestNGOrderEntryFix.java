@@ -41,6 +41,7 @@ public class TestNGOrderEntryFix implements IntentionAction {
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     if (!(reference instanceof PsiJavaCodeReferenceElement)) return false;
+    if (reference.resolve() != null) return false;
     @NonNls final String referenceName = ((PsiJavaCodeReferenceElement)reference).getReferenceName();
     if (referenceName == null) return false;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
