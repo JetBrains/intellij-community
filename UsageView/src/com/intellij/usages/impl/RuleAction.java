@@ -46,5 +46,6 @@ abstract class RuleAction extends ToggleAction {
     setOptionValue(state);
     myState = state;
     myView.rulesChanged();
+    myView.select();
   }
 }

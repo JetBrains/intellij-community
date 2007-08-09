@@ -517,6 +517,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
+  public void select() {
+    if (myTree != null) {
+      myTree.requestFocusInWindow();
+    }
+  }
+
   private class CloseAction extends AnAction {
     private CloseAction() {
       super(UsageViewBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
