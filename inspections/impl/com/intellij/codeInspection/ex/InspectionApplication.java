@@ -19,7 +19,9 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.Profile;
@@ -40,6 +42,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author max
@@ -119,7 +122,7 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      ideaProjectPreparations();
+      patchProject(loadPatterns());
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
@@ -290,40 +293,60 @@ public class InspectionApplication {
     return prefix;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void ideaProjectPreparations() { //ignore test data
-    if (myProject.getName().compareTo("idea") == 0) {
-      final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
-      final Module[] modules = modulesModel.getModules();
-      final ModifiableRootModel[] models = new ModifiableRootModel[modules.length];
-      int idx = 0;
-      for (Module module : modules) {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final ContentEntry[] entries = model.getContentEntries();
-        models[idx++] = model;
-        for (ContentEntry entry : entries) {
-          final VirtualFile virtualFile = entry.getFile();
-          if (virtualFile == null) continue;
-          if (virtualFile.getName().compareToIgnoreCase("testData") == 0) {
-            entry.addExcludeFolder(virtualFile);
-            break;
-          }
-          if (virtualFile.isDirectory()) {
-            final VirtualFile[] children = virtualFile.getChildren();
-            for (VirtualFile child : children) {
-              if (child.getName().compareToIgnoreCase("testData") == 0) {
-                entry.addExcludeFolder(child);
+  private void patchProject(final List<Pattern> excludePatterns) {
+    if (excludePatterns.isEmpty()) return;
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    final Module[] modules = modulesModel.getModules();
+    final ModifiableRootModel[] models = new ModifiableRootModel[modules.length];
+    for (int i = 0; i < modules.length; i++) {
+      models[i] = ModuleRootManager.getInstance(modules[i]).getModifiableModel();
+      final ContentEntry[] contentEntries = models[i].getContentEntries();
+      for (final ContentEntry contentEntry : contentEntries) {
+        final VirtualFile contentRoot = contentEntry.getFile();
+        if (contentRoot == null) continue;
+        iterate(contentRoot, new ContentIterator() {
+          public boolean processFile(final VirtualFile fileOrDir) {
+            String relativeName = VfsUtil.getRelativePath(fileOrDir, contentRoot, '/');
+            for (Pattern excludePattern : excludePatterns) {
+              if (excludePattern.matcher(relativeName).matches()) {
+                contentEntry.addExcludeFolder(fileOrDir);
+                return false;
               }
             }
+            return true;
           }
-        }
+        }, index);
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(modulesModel, models);
-        }
-      });
     }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(modulesModel, models);
+      }
+    });
+  }
+
+  private static void iterate(VirtualFile contentRoot, ContentIterator iterator, ProjectFileIndex idx) {
+    if (!iterator.processFile(contentRoot)) return;
+    if (idx.getModuleForFile(contentRoot) == null) return; //already excluded
+    final VirtualFile[] files = contentRoot.getChildren();
+    for (VirtualFile file : files) {
+      iterate(file, iterator, idx);
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static List<Pattern> loadPatterns() {
+    final List<Pattern> result = new ArrayList<Pattern>();
+    final String patterns = System.getProperty("idea.exclude.patterns");
+    if (patterns != null) {
+      final String[] excludedPatterns = patterns.split(";");
+      for (String excludedPattern : excludedPatterns) {
+        result.add(Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern)));
+      }
+    }
+    return result;
   }
 
   public void setVerboseLevel(int verboseLevel) {
