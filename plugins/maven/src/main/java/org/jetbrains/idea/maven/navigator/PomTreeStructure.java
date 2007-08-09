@@ -704,7 +704,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     void removeFromParent() {
-      getParent(PomGroupNode.class).remove(this);
+      // parent can be null if we are trying to remove an excluded node
+      // thus not present in structure and has no parent
+      PomGroupNode parent = getParent(PomGroupNode.class);
+      if (parent != null) parent.remove(this);
     }
 
     public void unlinkNested() {
