@@ -5,20 +5,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.ui.ListScrollingUtil;
 
-class PageUpHandler extends EditorActionHandler {
-  private final EditorActionHandler myOriginalHandler;
-
+class PageUpHandler extends LookupActionHandler {
   public PageUpHandler(EditorActionHandler originalHandler){
-    myOriginalHandler = originalHandler;
+    super(originalHandler);
   }
 
-  public void execute(Editor editor, DataContext dataContext){
-    LookupImpl lookup = editor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY);
-    if (lookup == null){
-      myOriginalHandler.execute(editor, dataContext);
-      return;
-    }
-
+  protected void executeInLookup(final LookupImpl lookup) {
     ListScrollingUtil.movePageUp(lookup.getList());
   }
 }

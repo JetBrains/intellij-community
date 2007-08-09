@@ -18,9 +18,14 @@ public class PageUpAction extends EditorAction {
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretPageUp(editor, false);
     }
+
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      return !editor.isOneLineMode();
+    }
   }
 
   public PageUpAction() {
     super(new Handler());
+    
   }
 }

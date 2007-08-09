@@ -18,6 +18,10 @@ public class PageDownAction extends EditorAction {
     public void execute(Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretPageDown(editor, false);
     }
+
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      return !editor.isOneLineMode();
+    }
   }
 
   public PageDownAction() {
