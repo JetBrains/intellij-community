@@ -47,6 +47,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
   private ChangesViewContentManager.MyContentManagerListener myContentManagerListener;
+  private final ProjectLevelVcsManager myVcsManager;
 
   public static ChangesViewContentManager getInstance(Project project) {
     return project.getComponent(ChangesViewContentManager.class);
@@ -60,8 +61,9 @@ public class ChangesViewContentManager implements ProjectComponent {
   private final MessageBusConnection myConnection;
   private List<Content> myAddedContents = new ArrayList<Content>();
 
-  public ChangesViewContentManager(final Project project) {
+  public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
+    myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myConnection = project.getMessageBus().connect();
   }
@@ -82,7 +84,7 @@ public class ChangesViewContentManager implements ProjectComponent {
             myContentManager.addContent(content);
           }
           myAddedContents.clear();
-          ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+          myVcsManager.addVcsListener(myVcsListener);
           ProjectManager.getInstance().addProjectManagerListener(myProject, new MyProjectManagerListener());
           myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
           loadExtensionTabs();
@@ -142,12 +144,12 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   private void updateToolWindowAvailability() {
-    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
     myToolWindow.setAvailable(abstractVcses.length > 0, null);
   }
 
   public void projectClosed() {
-    ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
+    myVcsManager.removeVcsListener(myVcsListener);
     myVcsChangeAlarm.cancelAllRequests();
     myConnection.disconnect();
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
@@ -213,6 +215,7 @@ public class ChangesViewContentManager implements ProjectComponent {
       myVcsChangeAlarm.cancelAllRequests();
       myVcsChangeAlarm.addRequest(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           updateToolWindowAvailability();
           updateExtensionTabs();
         }
