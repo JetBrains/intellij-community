@@ -2,24 +2,25 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 
 import javax.swing.*;
@@ -701,12 +702,13 @@ final class FindDialog extends DialogWrapper {
     return (String)myDirectoryComboBox.getSelectedItem();
   }
 
-  private static void setStringsToComboBox(String[] strings, ComboBox combo, String s) {
+  private static void setStringsToComboBox(String[] strings, ComboBox combo, String selected) {
     if (combo.getItemCount() > 0){
       combo.removeAllItems();
     }
-    if (s != null && s.indexOf('\n') < 0 && (strings.length == 0 || !s.equals(strings[strings.length - 1]))) {
-      combo.addItem(s);
+    if (selected != null && selected.indexOf('\n') < 0) {
+      strings = ArrayUtil.remove(strings, selected);
+      strings = ArrayUtil.append(strings, selected);
     }
     for(int i = strings.length - 1; i >= 0; i--){
       combo.addItem(strings[i]);
