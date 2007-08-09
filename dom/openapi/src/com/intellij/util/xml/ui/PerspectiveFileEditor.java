@@ -108,11 +108,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   abstract protected void setSelectedDomElement(DomElement domElement);
 
-  public final void addWatchedElement(final DomElement domElement) {
+  public final void addWatchedElement(@NotNull final DomElement domElement) {
     addWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
   }
 
-  public final void removeWatchedElement(final DomElement domElement) {
+  public final void removeWatchedElement(@NotNull final DomElement domElement) {
     removeWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
   }
 
