@@ -267,8 +267,15 @@ public class JVMNameUtil {
     if (offset < 0) {
       return null;
     }
-    final FileViewProvider viewProvider = position.getFile().getViewProvider();
-    PsiElement element = viewProvider.findElementAt(offset, StdLanguages.JAVA);
+    final PsiFile psiFile = position.getFile();
+    final PsiElement element;
+    if (psiFile instanceof PsiCompiledElement) {
+      element = psiFile.findElementAt(offset);
+    } 
+    else {
+      final FileViewProvider viewProvider = psiFile.getViewProvider();
+      element = viewProvider.findElementAt(offset, StdLanguages.JAVA);
+    }
     return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
   }
 
