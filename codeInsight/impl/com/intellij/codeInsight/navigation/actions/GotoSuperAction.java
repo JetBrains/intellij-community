@@ -26,10 +26,6 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     return this;
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile;
-  }
-
   public void invoke(final Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
