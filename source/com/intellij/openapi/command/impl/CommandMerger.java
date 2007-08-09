@@ -96,8 +96,8 @@ class CommandMerger {
   private void clearRedoStacks(CommandMerger m) {
     for (DocumentReference d : m.myAffectedDocuments) {
       myManager.getRedoStacksHolder().clearFileQueue(d);
+      myManager.getRedoStacksHolder().clearGlobalStack();
     }
-    myManager.getRedoStacksHolder().clearGlobalStack();
   }
 
   private boolean shouldMerge(Object groupId, CommandMerger nextCommandToMerge) {
