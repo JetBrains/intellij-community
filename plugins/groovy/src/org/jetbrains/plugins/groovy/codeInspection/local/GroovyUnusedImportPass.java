@@ -114,7 +114,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
     }
 
     for (HighlightInfo info : holder) {
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, info.startOffset, info.endOffset, holder, Pass.EXTERNAL_TOOLS);
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, info.startOffset, info.endOffset, holder, getId());
     }
   }
 }
