@@ -523,17 +523,19 @@ public class HighlightUtil {
       boolean isMethodVoid = returnType == null || PsiType.VOID == returnType;
       PsiExpression returnValue = statement.getReturnValue();
       if (returnValue != null) {
+        PsiType valueType = returnValue.getType();
         if (isMethodVoid) {
           description = JavaErrorMessages.message("return.from.void.method");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
-          IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, returnValue.getType(), false);
-          QuickFixAction.registerQuickFixAction(errorResult, fix);
+          if (valueType != null) {
+            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
+            QuickFixAction.registerQuickFixAction(errorResult, fix);
+          }
         }
         else {
-          PsiType valueType = returnValue.getType();
           errorResult = checkAssignability(returnType, valueType, returnValue, statement);
-          if (errorResult != null) {
-            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, returnValue.getType(), false);
+          if (errorResult != null && valueType != null) {
+            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
           }
         }
