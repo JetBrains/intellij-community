@@ -679,9 +679,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       if (attributeById == null ||
           !attributeById.isValid() ||
           attributeById == attribute ||
-          soft
+          soft ||
+          isSoftContext(attributeById)
          ) {
-        refCountHolder.registerAttributeWithId(unquotedValue,attribute);
+        if (!soft || attributeById == null) refCountHolder.registerAttributeWithId(unquotedValue,attribute);
       } else {
         final XmlAttributeValue valueElement = attributeById.getValueElement();
 
@@ -704,6 +705,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
     return false;
+  }
+
+  private static boolean isSoftContext(final @NotNull XmlAttribute attr) {
+    if (attr.getDescriptor().hasIdType()) return false;
+    PsiReference reference = attr.getValueElement().getReference();
+    return reference != null && reference.isSoft();
   }
 
   public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
