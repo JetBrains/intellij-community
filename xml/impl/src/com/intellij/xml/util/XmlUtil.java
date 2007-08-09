@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -114,6 +115,7 @@ public class XmlUtil {
   public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
+  public static final List<String> ourSchemaUrisList = Arrays.asList(MetaRegistry.SCHEMA_URIS);
 
 
   private XmlUtil() {
@@ -820,7 +822,14 @@ public class XmlUtil {
 
   public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag) {
     XmlElementDescriptor elementDescriptor = null;
-    final String type = xmlTag.getAttributeValue("type", XML_SCHEMA_INSTANCE_URI);
+    String type = xmlTag.getAttributeValue("type", XML_SCHEMA_INSTANCE_URI);
+
+    if (type == null) {
+      String ns = xmlTag.getNamespace();
+      if (XmlUtil.ourSchemaUrisList.indexOf(ns) >= 0) {
+        type = xmlTag.getAttributeValue("type", null);
+      }
+    }
 
     if (type != null) {
       final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);

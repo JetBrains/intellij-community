@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -46,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -400,7 +398,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
       if (rootTag != null &&
           "schema".equals(rootTag.getLocalName()) &&
-          Arrays.asList(MetaRegistry.SCHEMA_URIS).indexOf(rootTag.getNamespace()) != -1 ) {
+          XmlUtil.ourSchemaUrisList.indexOf(rootTag.getNamespace()) != -1 ) {
         final String targetNS = rootTag.getAttributeValue(TARGET_NAMESPACE);
         if (targetNS != null) return targetNS;
       }
