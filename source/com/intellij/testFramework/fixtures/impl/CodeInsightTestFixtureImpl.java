@@ -568,8 +568,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RangeMarker selEndMarker;
 
     SelectionAndCaretMarkupLoader(String fullPath) throws IOException {
-      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
       assert vFile != null: "Cannot find file " + fullPath;
+      vFile.refresh(false, false);
       String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
       Document document = EditorFactory.getInstance().createDocument(fileText);
 
