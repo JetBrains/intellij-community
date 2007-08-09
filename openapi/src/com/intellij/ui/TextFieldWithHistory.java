@@ -22,9 +22,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -130,7 +132,15 @@ public class TextFieldWithHistory extends JPanel {
       }
     });
 
-    setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), myTextField.getBorder()));
+    final Border originalBorder;
+    if (SystemInfo.isMac) {
+      originalBorder = BorderFactory.createLoweredBevelBorder();
+    }
+    else {
+      originalBorder = myTextField.getBorder();
+    }
+
+    setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), originalBorder));
 
     myTextField.setOpaque(true);
     myTextField.setBorder(null);
