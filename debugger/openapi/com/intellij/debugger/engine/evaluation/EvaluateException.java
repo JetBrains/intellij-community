@@ -16,9 +16,13 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.InvocationException;
+import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.Nullable;
 
 public class EvaluateException extends Exception {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.EvaluateException");
+  private ObjectReference myTargetException;
 
   public EvaluateException(final String message) {
     super(message);
@@ -29,8 +33,24 @@ public class EvaluateException extends Exception {
 
   public EvaluateException(String msg, Throwable th) {
     super(msg, th);
+    if (th instanceof EvaluateException) {
+      myTargetException = ((EvaluateException)th).getExceptionFromTargetVM();
+    }
+    else if(th instanceof InvocationException){
+      InvocationException invocationException = (InvocationException) th;
+      myTargetException = invocationException.exception();
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug(msg);
     }
+  }
+  
+  @Nullable
+  public ObjectReference getExceptionFromTargetVM() {
+    return myTargetException;
+  }
+
+  public void setTargetException(final ObjectReference targetException) {
+    myTargetException = targetException;
   }
 }

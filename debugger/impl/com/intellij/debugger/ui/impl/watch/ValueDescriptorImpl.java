@@ -28,6 +28,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
@@ -138,11 +140,27 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     catch (EvaluateException e) {
       myValueException = e;
-      myValue = null;
+      myValue = getTargetExceptionWithStackTraceFilled(evaluationContext, e);
       myIsExpandable = false;
     }
 
     myIsNew = false;
+  }
+
+  @Nullable
+  private static ObjectReference getTargetExceptionWithStackTraceFilled(final EvaluationContextImpl evaluationContext, EvaluateException ex){
+    final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
+    if (exceptionObj != null) {
+      try {
+        final List<Method> methods = exceptionObj.referenceType().methodsByName("getStackTrace");
+        if (methods.size() > 0) {
+          evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, methods.get(0), Collections.emptyList());
+        }
+      }
+      catch (EvaluateException ignored) {
+      }
+    }
+    return exceptionObj;
   }
 
   public void setAncestor(NodeDescriptor oldDescriptor) {
@@ -156,7 +174,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
-    myIsExpandable = myValueException == null && getRenderer(context.getDebugProcess()).isExpandable(getValue(), context, this);
+    myIsExpandable = (myValueException == null || myValueException.getExceptionFromTargetVM() != null) && getRenderer(context.getDebugProcess()).isExpandable(getValue(), context, this);
 
     return setValueLabel(calcValueLabel(context, labelListener));
   }

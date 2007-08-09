@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-import com.sun.jdi.*;
 import com.intellij.debugger.DebuggerBundle;
+import com.sun.jdi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,11 +39,12 @@ public class EvaluateExceptionUtil {
   public static final EvaluateException DEBUG_INFO_UNAVAILABLE = createEvaluateException(DebuggerBundle.message("evaluation.error.debug.info.unavailable"));
 
   public static EvaluateException createEvaluateException(Throwable th) {
-    return new EvaluateException(reason(th), th instanceof EvaluateException ? th.getCause() : th);
+    return createEvaluateException(null, th);
   }
 
   public static EvaluateException createEvaluateException(String msg, Throwable th) {
-    return new EvaluateException(msg + ": " + reason(th), th instanceof EvaluateException ? th.getCause() : th);
+    final String message = msg != null? msg + ": " + reason(th) : reason(th);
+    return new EvaluateException(message, th instanceof EvaluateException ? th.getCause() : th);
   }
 
   public static EvaluateException createEvaluateException(String reason) {
