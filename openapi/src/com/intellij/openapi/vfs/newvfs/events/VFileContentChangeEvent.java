@@ -47,7 +47,7 @@ public class VFileContentChangeEvent extends VFileEvent {
   }
 
   public boolean isValid() {
-    return myFile.isValid();
+    return myFile.isValid() && myFile.getModificationStamp() == myOldModificationStamp;
   }
 
   public boolean equals(final Object o) {
