@@ -114,8 +114,7 @@ public class TypesUtil {
     RANK_TO_TYPE.put(4, "java.lang.Long");
     RANK_TO_TYPE.put(5, "java.lang.BigInteger");
     RANK_TO_TYPE.put(6, "java.math.BigDecimal");
-    RANK_TO_TYPE.put(7, "java.math.Double");
-    RANK_TO_TYPE.put(8, "java.lang.Double");
+    RANK_TO_TYPE.put(7, "java.lang.Double");
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
