@@ -1,11 +1,5 @@
 package com.theoryinpractice.testng.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFramework;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -41,6 +35,12 @@ import org.jetbrains.annotations.NonNls;
 import org.testng.Assert;
 import org.testng.TestNG;
 import org.testng.annotations.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
@@ -310,7 +310,7 @@ public class TestNGUtil implements TestFramework
   private static Collection<String> extractAnnotationValuesFromJavaDoc(PsiDocTag tag, String parameter) {
     if (tag == null) return Collections.emptyList();
     Collection<String> results = new ArrayList<String>();
-    Matcher matcher = Pattern.compile("\\@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*)\".*").matcher(tag.getText());
+    Matcher matcher = Pattern.compile("\\@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*?)\".*").matcher(tag.getText());
     if (matcher.matches()) {
       String groupTag = matcher.group(1);
       String[] groups = groupTag.split("[,\\s]");
