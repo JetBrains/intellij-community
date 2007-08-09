@@ -8,6 +8,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -23,7 +24,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
     CheckoutWizard checkoutWizard = new CheckoutWizard(null);
     checkoutWizard.show();
     if (!checkoutWizard.isOK()) return;
-    boolean useAlternateCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
+    final boolean useAlternateCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
     checkoutDirectory = checkoutWizard.getCheckoutDirectory();
 
     selectedElements = checkoutWizard.getSelectedElements();
@@ -45,13 +46,18 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
-        for(CvsElement element: selectedElements) {
-          listener.directoryCheckedOut(new File(checkoutDirectory, element.getCheckoutPath()));
-        }
-        listener.checkoutCompleted();
+        // shouldn't hold write action when calling this (IDEADEV-20086)
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            for (CvsElement element : selectedElements) {
+              File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
+              listener.directoryCheckedOut(path);
+            }
+            listener.checkoutCompleted();
+          }
+        });
       }
     });
-
   }
 
   private static String[] collectCheckoutPaths(final CvsElement[] mySelectedElements) {
