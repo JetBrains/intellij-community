@@ -436,8 +436,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       return getAttributeValue(_name);
     }
 
-    boolean hasNamespaceDefined = false;
-
     XmlTagImpl current = this;
     PsiElement parent = getParent();
 
@@ -446,8 +444,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       if(map != null){
         List<String> keysByValue = map.getKeysByValue(namespace);
         if (keysByValue != null && !keysByValue.isEmpty()) {
-          hasNamespaceDefined |= current == this;
-
+          
           for(String prefix:keysByValue) {
             if (prefix != null && prefix.length() > 0) {
               final String value = getAttributeValue(prefix.concat(":").concat(_name));
@@ -461,7 +458,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       parent = parent.getParent();
     }
 
-    if (hasNamespaceDefined || namespace.length() == 0) {
+    if (namespace.length() == 0 ||
+        getNamespace().equals(namespace)
+       ) {
       return getAttributeValue(_name);
     }
     return null;
