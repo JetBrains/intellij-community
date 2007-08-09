@@ -122,7 +122,7 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      patchProject(loadPatterns());
+      patchProject(loadPatterns("idea.exclude.patterns"), loadPatterns("idea.include.patterns"));
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
@@ -293,8 +293,8 @@ public class InspectionApplication {
     return prefix;
   }
 
-  private void patchProject(final List<Pattern> excludePatterns) {
-    if (excludePatterns.isEmpty()) return;
+  private void patchProject(final List<Pattern> excludePatterns, final List<Pattern> includePatterns) {
+    if (excludePatterns.isEmpty() && includePatterns.isEmpty()) return;
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
     final Module[] modules = modulesModel.getModules();
@@ -305,6 +305,7 @@ public class InspectionApplication {
       for (final ContentEntry contentEntry : contentEntries) {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) continue;
+        final Set<VirtualFile> included = new HashSet<VirtualFile>();
         iterate(contentRoot, new ContentIterator() {
           public boolean processFile(final VirtualFile fileOrDir) {
             String relativeName = VfsUtil.getRelativePath(fileOrDir, contentRoot, '/');
@@ -314,9 +315,17 @@ public class InspectionApplication {
                 return false;
               }
             }
+            if (includePatterns.isEmpty()) return true;
+            for (Pattern includePattern : includePatterns) {
+              if (includePattern.matcher(relativeName).matches()) {
+                included.add(fileOrDir);
+                return true;
+              }
+            }
             return true;
           }
         }, index);
+        processIncluded(contentEntry, included);
       }
     }
 
@@ -325,6 +334,23 @@ public class InspectionApplication {
         ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(modulesModel, models);
       }
     });
+  }
+
+  private static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
+    if (included.isEmpty()) return;
+    final Set<VirtualFile> parents = new HashSet<VirtualFile>();
+    for (VirtualFile file : included) {
+      if (file == contentEntry.getFile()) return;
+      final VirtualFile parent = file.getParent();
+      if (parent == null || parents.contains(parent)) continue;
+      parents.add(parent);
+      for (VirtualFile toExclude : parent.getChildren()) {
+        if (!included.contains(toExclude)) {
+          contentEntry.addExcludeFolder(toExclude);
+        }
+      }
+    }
+    processIncluded(contentEntry, parents);
   }
 
   private static void iterate(VirtualFile contentRoot, ContentIterator iterator, ProjectFileIndex idx) {
@@ -336,13 +362,12 @@ public class InspectionApplication {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static List<Pattern> loadPatterns() {
+  private static List<Pattern> loadPatterns(@NonNls String propertyKey) {
     final List<Pattern> result = new ArrayList<Pattern>();
-    final String patterns = System.getProperty("idea.exclude.patterns");
+    final String patterns = System.getProperty(propertyKey);
     if (patterns != null) {
-      final String[] excludedPatterns = patterns.split(";");
-      for (String excludedPattern : excludedPatterns) {
+      final String[] pathPatterns = patterns.split(";");
+      for (String excludedPattern : pathPatterns) {
         result.add(Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern)));
       }
     }
