@@ -225,7 +225,7 @@ public interface GroovyTokenTypes {
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
 
   TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR,
-      mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR);
+      mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR);
 
   TokenSet DOTS = TokenSet.create(
       mSPREAD_DOT,

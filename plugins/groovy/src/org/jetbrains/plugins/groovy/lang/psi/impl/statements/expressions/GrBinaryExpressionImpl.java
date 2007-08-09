@@ -19,10 +19,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -51,8 +52,11 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     }
   }
 
+  @Nullable
   public IElementType getOperationTokenType() {
-    final ASTNode node = findChildByType(TokenSets.BINARY_OP_SET).getNode();
+    final PsiElement child = findChildByType(TokenSets.BINARY_OP_SET);
+    if (child == null) return null;
+    final ASTNode node = child.getNode();
     assert node != null;
     return node.getElementType();
   }

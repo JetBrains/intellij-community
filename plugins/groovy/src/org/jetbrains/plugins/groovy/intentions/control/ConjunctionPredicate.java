@@ -15,6 +15,7 @@ class ConjunctionPredicate implements PsiElementPredicate {
     }
     final GrBinaryExpression expression = (GrBinaryExpression) element;
     final IElementType tokenType =  expression.getOperationTokenType();
+    if (tokenType == null) return false;
     if (!tokenType.equals(GroovyTokenTypes.mLAND) &&
         !tokenType.equals(GroovyTokenTypes.mLOR)) {
       return false;

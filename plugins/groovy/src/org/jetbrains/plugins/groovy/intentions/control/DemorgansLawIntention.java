@@ -20,7 +20,7 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
     final GrBinaryExpression binaryExpression =
         (GrBinaryExpression) element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(GroovyTokenTypes.mLAND)) {
+    if (GroovyTokenTypes.mLAND.equals(tokenType)) {
       return GroovyIntentionsBundle.message("demorgans.intention.name1");
     } else {
       return GroovyIntentionsBundle.message("demorgans.intention.name2");
@@ -110,6 +110,6 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
     }
     final GrBinaryExpression binExp = (GrBinaryExpression) exp;
     final IElementType tokenType = binExp.getOperationTokenType();
-    return tokenType.equals(conjunctionType);
+    return conjunctionType.equals(tokenType);
   }
 }

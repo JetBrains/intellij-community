@@ -17,6 +17,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
         (GrBinaryExpression) element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     final String conjunction;
+    assert tokenType != null;
     if (tokenType.equals(GroovyTokenTypes.mLAND)) {
       conjunction = "&&";
     } else {

@@ -15,8 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -31,7 +31,9 @@ public interface GrBinaryExpression extends GrExpression {
   /**
    * @return right operand of binary expression
    */
+  @Nullable
   public GrExpression getRightOperand();
 
+  @Nullable
   IElementType getOperationTokenType();
 }
