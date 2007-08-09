@@ -22,7 +22,8 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
   }
 
   public boolean isModification() {
-    return myIsModification;
+    // workaround for javac bug (see http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023)
+    return !mySuperName.equals(ENUM_CLASS_NAME) && myIsModification;
   }
 
   public void visit(final int version,
@@ -72,10 +73,6 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         av = mv.visitParameterAnnotation(parameter,
                                          anno,
                                          visible);
-        // TODO[yole]: remove once the ASM bug is fixed (http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023)
-        if (mySuperName.equals(ENUM_CLASS_NAME) && name.equals(CONSTRUCTOR_NAME)) {
-          return av;
-        }
         if (isReferenceType(args[parameter]) &&
             anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
           myNotNullParams.add(new Integer(parameter));
