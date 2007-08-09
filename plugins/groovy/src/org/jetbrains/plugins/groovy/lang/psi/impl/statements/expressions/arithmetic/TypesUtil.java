@@ -121,7 +121,7 @@ public class TypesUtil {
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     //all numeric types are assignable
     if (isNumericType(lType)) {
-      return isNumericType(rType) || rType.equalsToText("java.lang.String");
+      return isNumericType(rType) || rType.equalsToText("java.lang.String") || rType.equals(PsiType.NULL);
     } else {
       if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
       rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
