@@ -2,10 +2,10 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -297,6 +298,7 @@ public class ShowDiffAction extends AnAction {
     return false;
   }
 
+  @NotNull
   private static DiffContent createContent(Project project, ContentRevision revision) {
     if (revision == null) return new SimpleContent("");
     if (revision instanceof CurrentContentRevision) {
