@@ -11,13 +11,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 public class ManuallySetupExtResourceAction extends BaseIntentionAction {
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -32,11 +33,12 @@ public class ManuallySetupExtResourceAction extends BaseIntentionAction {
     return true;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("manually.setup.external.resource");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -57,4 +59,7 @@ public class ManuallySetupExtResourceAction extends BaseIntentionAction {
     );
   }
 
+  public boolean startInWriteAction() {
+    return false;
+  }
 }
