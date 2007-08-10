@@ -11,6 +11,7 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -57,7 +57,6 @@ public class CompilerTask extends Task.Backgroundable {
   private final Key<Key<?>> myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
-  private java.util.List<CompilerMessage> myDeferredMessages = new ArrayList<CompilerMessage>(); 
   private final Object myMessageViewLock = new Object();
   private final Project myProject;
   private final String myContentName;
@@ -67,6 +66,7 @@ public class CompilerTask extends Task.Backgroundable {
   private int myWarningCount = 0;
   private String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private boolean myMessagesAutoActivated = false;
 
   private ProgressIndicator myIndicator;
   private Runnable myCompileWork;
@@ -170,6 +170,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
     prepareMessageView();
+    openMessageView();
 
     final CompilerMessageCategory messageCategory = message.getCategory();
     if (CompilerMessageCategory.WARNING.equals(messageCategory)) {
@@ -180,15 +181,6 @@ public class CompilerTask extends Task.Backgroundable {
       informWolf(message, compileContext);
     }
 
-    synchronized (myMessageViewLock) {
-      if ( myErrorTreeView == null && (CompilerMessageCategory.INFORMATION.equals(messageCategory) || CompilerMessageCategory.STATISTICS.equals(messageCategory))) {
-        
-        myDeferredMessages.add(message);
-        return;
-      }
-    }
-
-    openMessageView();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       doAddMessage(message);
     }
@@ -227,14 +219,22 @@ public class CompilerTask extends Task.Backgroundable {
       if (myErrorTreeView != null) {
         final Navigatable navigatable = message.getNavigatable();
         final VirtualFile file = message.getVirtualFile();
-        final int type = translateCategory(message.getCategory());
+        final CompilerMessageCategory category = message.getCategory();
+        final int type = translateCategory(category);
         final String[] text = convertMessage(message);
         if (navigatable != null) {
-          final String groupName = file != null? file.getPresentableUrl() : message.getCategory().getPresentableText();
+          final String groupName = file != null? file.getPresentableUrl() : category.getPresentableText();
           myErrorTreeView.addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), null);
         }
         else {
           myErrorTreeView.addMessage(type, text, file, -1, -1, null);
+        }
+        
+        final boolean shouldAutoActivate = !myMessagesAutoActivated && 
+                                     (CompilerMessageCategory.ERROR.equals(category) || (CompilerMessageCategory.WARNING.equals(category) && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()));
+        if (shouldAutoActivate) {
+          myMessagesAutoActivated = true;
+          activateMessageView();
         }
       }
     }
@@ -346,8 +346,6 @@ public class CompilerTask extends Task.Backgroundable {
           return !myIndicator.isRunning();
         }
       });
-      deferred = myDeferredMessages.toArray(new CompilerMessage[myDeferredMessages.size()]);
-      myDeferredMessages.clear();
     }
     
     final Window window = getWindow();
@@ -366,19 +364,7 @@ public class CompilerTask extends Task.Backgroundable {
         new CloseListener(content, messageView.getContentManager());
         removeAllContents(myProject, content);
         messageView.getContentManager().setSelectedContent(content);
-        ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (toolWindow != null) {
-          if (CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND) {
-            toolWindow.activate(null);
-          }
-          else {
-            toolWindow.show(null);
-          }
-        }
         updateProgressText();
-        for (CompilerMessage message : deferred) {
-          doAddMessage(message);
-        }
       }
     }, modalityState);
   }
@@ -438,7 +424,7 @@ public class CompilerTask extends Task.Backgroundable {
                                         CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
               addMessage(null, new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                         CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
-              activateMessageView();
+              //activateMessageView();
               myErrorTreeView.selectFirstMessage();
             }
             else {
@@ -456,15 +442,6 @@ public class CompilerTask extends Task.Backgroundable {
       return pane != null? SwingUtilities.windowForComponent(pane) : null;
     }
     return null;
-  }
-
-  private CompilerProgressDialog openProgressDialog() {
-    synchronized (myMessageViewLock) {
-      if (myDialog == null) {
-        myDialog = new CompilerProgressDialog(this, myProject);
-      }
-      return myDialog;
-    }
   }
 
   private void closeProgressDialog() {
