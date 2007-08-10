@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
@@ -72,7 +72,8 @@ public class ProjectUtil {
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
     try {
-      final Project newProject = projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(projectFilePath, true, false) : projectToClose;
+      final Project newProject =
+        projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(projectFilePath, true, false) : projectToClose;
 
       final ProjectJdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
@@ -221,9 +222,9 @@ public class ProjectUtil {
   /**
    * @param path                project file path
    * @param projectToClose      currently active project
-   *@param forceOpenInNewFrame forces opening in new frame
+   * @param forceOpenInNewFrame forces opening in new frame
    * @return true if the path was recognized as IDEA project file or one of the project formats supported by
-   * installed importers (regardless of opening/import result)
+   *         installed importers (regardless of opening/import result)
    */
   public static boolean openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -263,7 +264,8 @@ public class ProjectUtil {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      if (Comparing.equal(path, ((ProjectImpl)project).getStateStore().getProjectFilePath())) {
+      if (isSameProject(path, project)) {
+        focusProjectWindow(project);
         return project;
       }
     }
@@ -300,6 +302,18 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     return project;
+  }
+
+  private static boolean isSameProject(String path, Project p) {
+    String projectPath = ((ProjectImpl)p).getStateStore().getProjectFilePath();
+    String p1 = FileUtil.toSystemIndependentName(path);
+    String p2 = FileUtil.toSystemIndependentName(projectPath);
+    return FileUtil.pathsEqual(p1, p2);
+  }
+
+  private static void focusProjectWindow(Project p) {
+    JFrame f = WindowManager.getInstance().getFrame(p);
+    f.requestFocus();
   }
 
   public static String mainModulePathByProjectPath(String path) {
