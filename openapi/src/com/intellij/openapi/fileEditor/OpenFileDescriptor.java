@@ -35,6 +35,12 @@ import javax.swing.*;
 import java.util.List;
 
 public class OpenFileDescriptor implements Navigatable {
+  /**
+   * Tells descriptor to navigate in specific editor rather than file editor
+   * in main IDEA window.
+   * For example if you want to navigate in editor embedded into modal dialog,
+   * you should provide this data.
+   */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
 
   @NotNull private final VirtualFile myFile;
