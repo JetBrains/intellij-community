@@ -67,9 +67,12 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOrderedEquals(Collection<T> actual, T... expected) {
     assertNotNull(actual);
     assertNotNull(expected);
-    final List<T> expectedList = Arrays.asList(expected);
-    if (!new ArrayList<T>(actual).equals(expectedList)) {
-      assertEquals(toString(expectedList), toString(actual));
+    assertOrderedEquals(Arrays.asList(expected), actual);
+  }
+
+  public static <T> void assertOrderedEquals(final Collection<? extends T> expected, final Collection<? extends T> actual) {
+    if (!new ArrayList<T>(actual).equals(expected)) {
+      assertEquals(toString(expected), toString(actual));
       fail();
     }
   }
@@ -187,7 +190,7 @@ public abstract class UsefulTestCase extends TestCase {
     return ts[0];
   }
 
-  protected void printThreadDump() {
+  public static void printThreadDump() {
     final Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
     for (final Map.Entry<Thread, StackTraceElement[]> entry : traces.entrySet()) {
       System.out.println("\n" + entry.getKey().getName() + "\n");

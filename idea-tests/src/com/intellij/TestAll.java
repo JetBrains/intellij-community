@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ProfilingUtil;
 import junit.framework.*;
 
@@ -88,7 +89,8 @@ public class TestAll implements Test {
                 long secondsSpent = (currTime - myLastTestStartTime) / 1000L;
                 Thread currentThread = getCurrentThread();
                 if (!mySavingMemorySnapshot) {
-                  if (false && secondsSpent > IdeaTestCase.ourTestTime * myLastTestTestMethodCount) {
+                  if (secondsSpent > IdeaTestCase.ourTestTime * myLastTestTestMethodCount) {
+                    UsefulTestCase.printThreadDump();
                     System.out.println("Interrupting current Test (out of time)! Test class: "+ myLastTestClass +" Seconds spent = " + secondsSpent);
                     myInterruptedByOutOfTime = true;
                     if (currentThread != null) {
