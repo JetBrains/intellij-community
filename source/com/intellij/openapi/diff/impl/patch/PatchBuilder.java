@@ -202,7 +202,9 @@ public class PatchBuilder {
   }
 
   private static String getRelativePath(final String basePath, final File ioFile) {
-    return FileUtil.getRelativePath(new File(basePath), ioFile).replace(File.separatorChar, '/');
+    String relPath = FileUtil.getRelativePath(new File(basePath), ioFile);
+    if (relPath == null) relPath = ioFile.getPath();
+    return relPath.replace(File.separatorChar, '/');
   }
 
   private static String getRevisionName(final ContentRevision revision, final File ioFile) {
