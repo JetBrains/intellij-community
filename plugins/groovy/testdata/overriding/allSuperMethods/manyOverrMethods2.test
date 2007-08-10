@@ -30,10 +30,5 @@ class A extends Foo4 implements Bar3 {
   def int foo () {}
 }
 -----
-Class definition: Foo1; MethodSignature: foo([])
-Class definition: Foo2; MethodSignature: foo([])
-Class definition: Foo3; MethodSignature: foo([])
 Class definition: Foo4; MethodSignature: foo([])
-Interface definition: Bar1; MethodSignature: foo([])
-Interface definition: Bar2; MethodSignature: foo([])
 Interface definition: Bar3; MethodSignature: foo([])
