@@ -335,9 +335,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     myProjectFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-    if (myInspections != null) {
-      configureInspections(myInspections);
-    }
+    configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
   }
 
   private void enableInspectionTool(LocalInspectionTool tool){
