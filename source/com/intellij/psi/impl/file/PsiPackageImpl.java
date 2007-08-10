@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -44,7 +43,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private final PsiManagerImpl myManager;
   private final String myQualifiedName;
-  private CachedValue<Ref<PsiModifierList>> myAnnotationList;
+  private volatile CachedValue<PsiModifierList> myAnnotationList;
 
   public PsiPackageImpl(PsiManagerImpl manager, String qualifiedName) {
     myManager = manager;
@@ -72,7 +71,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   @NotNull
-  public PsiDirectory[] getDirectories(GlobalSearchScope scope) {
+  public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
     return new DirectoriesSearch().search(scope).toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
@@ -122,14 +121,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return this;
   }
 
-  public void checkSetName(String name) throws IncorrectOperationException {
+  public void checkSetName(@NotNull String name) throws IncorrectOperationException {
     PsiDirectory[] dirs = getDirectories();
     for (PsiDirectory dir : dirs) {
       dir.checkSetName(name);
     }
   }
 
-  public void handleQualifiedNameChange(final String newQualifiedName) {
+  public void handleQualifiedNameChange(@NotNull final String newQualifiedName) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final String oldQualifedName = myQualifiedName;
     final boolean anyChanged = changePackagePrefixes(oldQualifedName, newQualifiedName);
@@ -346,7 +345,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   @NotNull
-  public PsiClass[] getClasses(GlobalSearchScope scope) {
+  public PsiClass[] getClasses(@NotNull GlobalSearchScope scope) {
     return myManager.getClasses(this, scope);
   }
 
@@ -355,7 +354,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     if (myAnnotationList == null) {
       myAnnotationList = myManager.getCachedValuesManager().createCachedValue(new PackageAnnotationValueProvider());
     }
-    return myAnnotationList.getValue().get();
+    return myAnnotationList.getValue();
   }
 
   @NotNull
@@ -364,7 +363,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   @NotNull
-  public PsiPackage[] getSubPackages(GlobalSearchScope scope) {
+  public PsiPackage[] getSubPackages(@NotNull GlobalSearchScope scope) {
     return myManager.getSubPackages(this, scope);
   }
 
@@ -485,21 +484,21 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return null;
   }
 
-  private class PackageAnnotationValueProvider implements CachedValueProvider<Ref<PsiModifierList> > {
+  private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
     @NonNls private static final String PACKAGE_INFO_FILE = "package-info.java";
     private final Object[] OOCB_DEPENDENCY = new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
 
-    public Result<Ref<PsiModifierList> > compute() {
+    public Result<PsiModifierList> compute() {
       for(PsiDirectory directory: getDirectories()) {
         PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
         if (file != null) {
           PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
           if (stmt != null) {
-            return new Result<Ref<PsiModifierList>>(Ref.create(stmt.getAnnotationList()), OOCB_DEPENDENCY );
+            return new Result<PsiModifierList>(stmt.getAnnotationList(), OOCB_DEPENDENCY );
           }
         }
       }
-      return new Result<Ref<PsiModifierList> >(new Ref<PsiModifierList>(), OOCB_DEPENDENCY );
+      return new Result<PsiModifierList>(null, OOCB_DEPENDENCY );
     }
   }
 }

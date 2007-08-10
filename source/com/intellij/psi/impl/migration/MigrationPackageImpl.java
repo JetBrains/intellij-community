@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -32,7 +33,7 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
     return null;
   }
 
-  public void handleQualifiedNameChange(String newQualifiedName) {
+  public void handleQualifiedNameChange(@NotNull String newQualifiedName) {
     throw new UnsupportedOperationException();
   }
 

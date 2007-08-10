@@ -35,7 +35,7 @@ public interface PsiElementFinder {
    * @see PsiManager#findClass(String, com.intellij.psi.search.GlobalSearchScope)
    */
   @Nullable
-  PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope);
+  PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -47,7 +47,7 @@ public interface PsiElementFinder {
    * @see PsiManager#findClasses(String, com.intellij.psi.search.GlobalSearchScope)
    */
   @NotNull
-  PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope);
+  PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the project for the package with the specified full-qualified name and returns one
@@ -58,7 +58,7 @@ public interface PsiElementFinder {
    * @see PsiManager#findPackage(String)
    */
   @Nullable
-  PsiPackage findPackage(String qualifiedName);
+  PsiPackage findPackage(@NotNull String qualifiedName);
 
   /**
    * Returns the list of subpackages of the specified package in the specified search scope.
@@ -69,7 +69,7 @@ public interface PsiElementFinder {
    * @see PsiPackage#getSubPackages(com.intellij.psi.search.GlobalSearchScope)
    */
   @NotNull
-  PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope);
+  PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of classes in the specified package and in the specified search scope.
@@ -80,5 +80,5 @@ public interface PsiElementFinder {
    * @see PsiPackage#getClasses(com.intellij.psi.search.GlobalSearchScope)
    */
   @NotNull
-  PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope);
+  PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope);
 }

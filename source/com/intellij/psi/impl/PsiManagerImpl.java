@@ -502,9 +502,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     List<PsiClass> classes = new SmartList<PsiClass>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
-      for (PsiClass finderClass : finderClasses) {
-        classes.add(finderClass);
-      }
+      classes.addAll(Arrays.asList(finderClasses));
     }
 
     return classes.toArray(new PsiClass[classes.size()]);
@@ -1123,9 +1121,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
-      for (PsiClass aClass : classes) {
-        result.add(aClass);
-      }
+      result.addAll(Arrays.asList(classes));
     }
 
     return result.toArray(new PsiClass[result.size()]);
@@ -1135,9 +1131,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     List<PsiPackage> result = new ArrayList<PsiPackage>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
-      for (PsiPackage aPackage : packages) {
-        result.add(aPackage);
-      }
+      result.addAll(Arrays.asList(packages));
     }
 
     return result.toArray(new PsiPackage[result.size()]);
@@ -1160,7 +1154,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   private class PsiElementFinderImpl implements PsiElementFinder {
-    public PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope) {
+    public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
 
       if (psiClass == null && myCurrentMigration != null) {
@@ -1171,7 +1165,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     @NotNull
-    public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
+    public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       final PsiClass[] classes = myFileManager.findClasses(qualifiedName, scope);
       if (classes.length == 0 && myCurrentMigration != null) {
         final PsiClass migrationClass = myCurrentMigration.getMigrationClass(qualifiedName);
@@ -1182,7 +1176,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       return classes;
     }
 
-    public PsiPackage findPackage(String qualifiedName) {
+    public PsiPackage findPackage(@NotNull String qualifiedName) {
       final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
       if (aPackage == null && myCurrentMigration != null) {
         final PsiPackage migrationPackage = myCurrentMigration.getMigrationPackage(qualifiedName);
@@ -1193,7 +1187,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     @NotNull
-    public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
+    public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
       final String qualifiedName = psiPackage.getQualifiedName();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
@@ -1213,14 +1207,12 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     @NotNull
-    public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
+    public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
       for (PsiDirectory dir : dirs) {
         PsiClass[] classes = dir.getClasses();
-        for (PsiClass aClass : classes) {
-          list.add(aClass);
-        }
+        list.addAll(Arrays.asList(classes));
       }
       return list.toArray(new PsiClass[list.size()]);
     }

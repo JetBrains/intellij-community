@@ -74,10 +74,10 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   @Nullable
   public T getValue() {
-    T value;
 
     r.lock();
 
+    T value;
     try {
       value = getUpToDateOrNull();
       if (value != null) {

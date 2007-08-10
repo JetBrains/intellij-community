@@ -51,7 +51,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    * @return the array of directories.
    */
   @NotNull
-  PsiDirectory[] getDirectories(GlobalSearchScope scope);
+  PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope);
 
   /**
    * Returns the parent of the package.
@@ -76,7 +76,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    * @return the array of subpackages.
    */
   @NotNull
-  PsiPackage[] getSubPackages(GlobalSearchScope scope);
+  PsiPackage[] getSubPackages(@NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of classes in all directories corresponding to the package.
@@ -94,7 +94,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    * @return the array of classes.
    */
   @NotNull
-  PsiClass[] getClasses(GlobalSearchScope scope);
+  PsiClass[] getClasses(@NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of package-level annotations for the package.
@@ -111,7 +111,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    * @param name the new name to check the renaming possibility for. 
    * @throws IncorrectOperationException if the rename is not supported or not possible for some reason.
    */
-  void checkSetName(String name) throws IncorrectOperationException;
+  void checkSetName(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * This method must be invoked on the package after all directoris corresponding
@@ -119,7 +119,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    *
    * @param newQualifiedName the new qualified name of the package.
    */
-  void handleQualifiedNameChange(String newQualifiedName);
+  void handleQualifiedNameChange(@NotNull String newQualifiedName);
 
   /**
    * Returns source roots that this package occurs in package prefixes of.
@@ -128,7 +128,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    */
   VirtualFile[] occursInPackagePrefixes();
 
-  @Nullable // default package 
+  @Nullable("default package")
   @NonNls
   String getName();
 }
