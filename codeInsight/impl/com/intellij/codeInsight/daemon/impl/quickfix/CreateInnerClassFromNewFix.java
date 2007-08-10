@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 
@@ -39,7 +40,9 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
           final PsiModifierList modifierList = created.getModifierList();
           LOG.assertTrue(modifierList != null);
           modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-
+          if (PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null) {
+            modifierList.setModifierProperty(PsiModifier.STATIC, true);            
+          }
           created = (PsiClass)targetClass.add(created);
 
           setupClassFromNewExpression(created, newExpression);
