@@ -226,7 +226,7 @@ public class LibraryLinkImpl extends LibraryLink {
     List<String> urls = getUrls();
 
     String outputPath = getURI();
-    if (outputPath != null && LibraryLink.MODULE_LEVEL.equals(getLevel()) && urls.size() == 1
+    if (outputPath != null && !outputPath.endsWith(JAR_SUFFIX) && LibraryLink.MODULE_LEVEL.equals(getLevel()) && urls.size() == 1
       && (getPackagingMethod().equals(PackagingMethod.COPY_FILES) || getPackagingMethod().equals(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST))) {
       String jarName = getJarFileName(urls.get(0));
       if (jarName != null) {
