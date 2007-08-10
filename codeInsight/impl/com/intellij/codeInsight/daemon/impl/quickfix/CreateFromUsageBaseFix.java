@@ -177,8 +177,11 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
           callExpression = PsiTreeUtil.getParentOfType(ref, PsiMethodCallExpression.class);
         }
 
-        if (callExpression != null && callExpression.getMethodExpression().getText().equals(PsiKeyword.SUPER)) {
-          return true;
+        if (callExpression != null) {
+          final String callText = callExpression.getMethodExpression().getText();
+          if (callText.equals(PsiKeyword.SUPER) || callText.equals(PsiKeyword.THIS)) {
+            return true;
+          }
         }
 
         PsiMethod method = (PsiMethod) enclosingContext;
