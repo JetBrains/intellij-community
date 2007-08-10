@@ -26,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOr
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
+import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 
 /**
  * @author ilyas
@@ -89,8 +91,8 @@ public class SwitchStatement implements GroovyElementTypes {
       builder.error(GroovyBundle.message("case.expected"));
       while (!builder.eof() &&
           !(kCASE.equals(builder.getTokenType()) ||
-        kDEFAULT.equals(builder.getTokenType()) ||
-          mRCURLY.equals(builder.getTokenType()))) {
+              kDEFAULT.equals(builder.getTokenType()) ||
+              mRCURLY.equals(builder.getTokenType()))) {
         builder.error(GroovyBundle.message("case.expected"));
         builder.advanceLexer();
       }
@@ -150,11 +152,16 @@ public class SwitchStatement implements GroovyElementTypes {
       return;
     }
     GroovyElementType result = Statement.parse(builder);
-    if (result.equals(WRONGWAY)) {
+    if (result.equals(WRONGWAY) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
       builder.error(GroovyBundle.message("wrong.statement"));
       return;
     }
 
+    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+      if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
+        Separators.parse(builder);
+      }
+    }
     if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
       Separators.parse(builder);
     }
@@ -165,9 +172,20 @@ public class SwitchStatement implements GroovyElementTypes {
       return;
     }
     result = Statement.parse(builder);
-    while (!result.equals(WRONGWAY) &&
-        (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
-      Separators.parse(builder);
+    while (!result.equals(WRONGWAY) && (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) ||
+        GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+
+      if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
+        Separators.parse(builder);
+      }
+      while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+        if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
+          Separators.parse(builder);
+        }
+      }
+      if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
+        Separators.parse(builder);
+      }
 
       if (kCASE.equals(builder.getTokenType()) ||
           kDEFAULT.equals(builder.getTokenType()) ||
@@ -176,7 +194,9 @@ public class SwitchStatement implements GroovyElementTypes {
       }
 
       result = Statement.parse(builder);
-      OpenOrClosableBlock.cleanAfterError(builder);
+      if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
+        OpenOrClosableBlock.cleanAfterError(builder);
+      }
     }
     Separators.parse(builder);
   }

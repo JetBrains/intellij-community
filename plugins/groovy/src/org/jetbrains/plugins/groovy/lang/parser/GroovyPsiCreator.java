@@ -62,6 +62,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GroovyExprInjectionImpl;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -93,7 +95,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIRS)) return new GrAnnotationNameValuePairsImpl(node);
 
     if (elem.equals(DEFAULT_ANNOTATION_VALUE)) return new GrDefaultAnnotationValueImpl(node);
-    
+
     //throws
     if (elem.equals(THROW_CLAUSE)) return new GrThrowsClauseImpl(node);
 
@@ -219,7 +221,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
-//    if (elem.equals(DECLARATION)) return new GrDeclarationStatementImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.S
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 
 /**
  * @autor: ilyas
@@ -60,6 +61,12 @@ public class ForStatement implements GroovyElementTypes {
     PsiBuilder.Marker warn = builder.mark();
     if (builder.getTokenType() == mNLS) {
       ParserUtils.getToken(builder, mNLS);
+    }
+
+    if (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+      warn.rollbackTo();
+      marker.done(FOR_STATEMENT);
+      return FOR_STATEMENT;
     }
 
     GroovyElementType result;

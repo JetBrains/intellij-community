@@ -70,6 +70,7 @@
 
   <target name="build.lexer" description="makes lexer file">
     <ant dir="./org/jetbrains/plugins/groovy/lang/lexer/" antfile="build.xml" target="generate.lexer"/>
+    <ant dir="./org/jetbrains/plugins/grails/lang/gsp/lexer/core" antfile="build.xml" target="generate.lexer"/>
   </target>
 
   <target name="make.project" description="makes project" depends="build.lexer, unzip.last.successful.IDEA.build">

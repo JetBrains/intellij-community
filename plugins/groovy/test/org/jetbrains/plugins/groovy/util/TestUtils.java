@@ -2,7 +2,9 @@
  * Copyright (c) 2007, Your Corporation. All Rights Reserved.
  */
 
-package org.jetbrains.plugins.groovy.util;import com.intellij.openapi.fileTypes.FileTypeManager;
+package org.jetbrains.plugins.groovy.util;
+
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,6 +31,7 @@ import org.junit.Assert;
 public abstract class TestUtils {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.util.TestUtils");
   public static final String TEMP_FILE = "temp.groovy";
+  public static final String GSP_TEMP_FILE = "temp.gsp";
   public static final String CARET_MARKER = "<caret>";
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";
@@ -41,10 +44,16 @@ public abstract class TestUtils {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
   }
 
+  public static PsiFile createPseudoPhysicalGspFile(final Project project, final String text) throws IncorrectOperationException {
+    return createPseudoPhysicalFile(project, GSP_TEMP_FILE, text);
+  }
+
+
+
   public static PsiFile createPseudoPhysicalFile(final Project project, final String fileName, final String text) throws IncorrectOperationException {
     return PsiManager.getInstance(project).getElementFactory().createFileFromText(
         fileName,
-        FileTypeManager.getInstance().getFileTypeByFileName(TEMP_FILE),
+        FileTypeManager.getInstance().getFileTypeByFileName(fileName),
         text,
         LocalTimeCounter.currentTime(),
         true);
