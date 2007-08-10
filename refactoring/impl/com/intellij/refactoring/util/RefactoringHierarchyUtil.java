@@ -16,6 +16,8 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public class RefactoringHierarchyUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringHierarchyUtil");
   private static final List<PsiType> PRIMITIVE_TYPES = Arrays.asList(
@@ -59,11 +61,16 @@ public class RefactoringHierarchyUtil {
     return null;
   }
 
+  @Nullable
   public static PsiClass getNearestBaseClass(PsiClass subClass, boolean includeNonProject) {
     PsiClassType[] superTypes = subClass.getSuperTypes();
 
     if (superTypes.length > 0) {
       PsiClass resolved = superTypes[0].resolve();
+      // if we have no superclass but have interfaces, prefer interfaces to class (IDEADEV-20104)
+      if (resolved != null && CommonClassNames.JAVA_LANG_OBJECT.equals(resolved.getQualifiedName()) && superTypes.length > 1) {
+        resolved = superTypes [1].resolve();
+      }
       if (resolved != null) {
         if (!includeNonProject) {
           if (resolved.getManager().isInProject(resolved)) {
