@@ -18,6 +18,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
@@ -144,7 +145,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final PsiManager psiManager = PsiManager.getInstance(baseClass.getProject());
 
     final Ref<PsiClass> currentBase = Ref.create(null);
-    final Queue<PsiClass> queue = new Queue<PsiClass>(10);
+    final Stack<PsiClass> stack = new Stack<PsiClass>();
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
         final Ref<Boolean> result = new Ref<Boolean>();
@@ -160,13 +161,6 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                 result.set(consumer.process(candidate));
               }
               else {
-                if (searchScope instanceof GlobalSearchScope) {
-                  String qName = candidate.getQualifiedName();
-                  if (qName != null) {
-                    PsiClass[] candidateClasses = psiManager.findClasses(qName, (GlobalSearchScope)searchScope);
-                    if (ArrayUtil.find(candidateClasses, candidate) == -1) result.set(true);
-                  }
-                }
                 if (!consumer.process(candidate)) result.set(false);
               }
             }
@@ -175,16 +169,16 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         if (!result.isNull()) return result.get();
 
         if (checkDeep && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
-          queue.addLast(candidate);
+          stack.push(candidate);
         }
 
         return true;
       }
     };
-    queue.addLast(baseClass);
+    stack.push(baseClass);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(baseClass.getProject());
-    while (!queue.isEmpty()) {
-      final PsiClass psiClass = queue.pullFirst();
+    while (!stack.isEmpty()) {
+      final PsiClass psiClass = stack.pop();
       currentBase.set(psiClass);
       if (!DirectClassInheritorsSearch.search(psiClass, scope, includeAnonymous).forEach(processor)) return false;
     }
