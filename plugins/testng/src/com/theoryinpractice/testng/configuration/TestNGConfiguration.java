@@ -6,8 +6,6 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import java.util.*;
-
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -33,6 +31,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration
 {
@@ -223,6 +226,11 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
         if (methods.length == 0) {
           throw new RuntimeConfigurationException("Invalid method '" + data.getMethodName() + "'specified");
+        }
+        for (PsiMethod method : methods) {
+          if (!method.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+            throw new RuntimeConfigurationException("Non public method '" + data.getMethodName() + "'specified");
+          }
         }
       }
     } else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
