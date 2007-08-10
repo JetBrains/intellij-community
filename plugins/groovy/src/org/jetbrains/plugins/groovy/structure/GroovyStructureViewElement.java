@@ -100,6 +100,8 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
     } else if (element instanceof GrTypeDefinition) {  //adding statements for type definition
       GrMembersDeclaration[] declarations = ((GrTypeDefinition) element).getMemberDeclarations();
 
+      if (declarations == null) return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
+
       for (GrMembersDeclaration declaration : declarations) {
         if (declaration instanceof GrVariableDeclaration) {
           addVariables(children, (GrVariableDeclaration) declaration);
