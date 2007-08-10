@@ -59,6 +59,8 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
   private GrParameter mySyntheticArgsParameter = null;
 
+  private GroovyPsiElement myContext;
+
   public GroovyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
   }
@@ -104,7 +106,7 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
   private GrParameter getSyntheticArgsParameter() {
     if (mySyntheticArgsParameter == null) {
       try {
-        mySyntheticArgsParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]");
+        mySyntheticArgsParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
       } catch (IncorrectOperationException e) {
         LOG.error(e);
       }
@@ -306,6 +308,14 @@ public class GroovyFileImpl extends PsiFileBase implements GroovyFile {
 
   public void removeVariable(GrVariable variable) throws IncorrectOperationException {
     PsiImplUtil.removeVariable(variable);
+  }
+
+  public GroovyPsiElement getContext() {
+    return myContext;
+  }
+
+  public void setContext(GroovyPsiElement context) {
+    myContext = context;
   }
 }
 

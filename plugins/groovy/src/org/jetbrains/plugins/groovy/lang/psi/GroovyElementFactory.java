@@ -75,7 +75,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
 
-  public abstract GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException;
+  public abstract GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException;
 
   public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
 

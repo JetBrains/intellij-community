@@ -1,0 +1,1 @@
+[].each {print <caret>it}

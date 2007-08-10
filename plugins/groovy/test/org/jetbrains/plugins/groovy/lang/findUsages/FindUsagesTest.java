@@ -80,6 +80,10 @@ public class FindUsagesTest extends IdeaTestCase {
     doTest("typeAlias/A.groovy", 2);
   }
 
+  public void testSytheticParameter() throws Throwable {
+    doTest("syntheticParameter/A.groovy", 1);
+  }
+
 
   private void doTest(String filePath, int expectedUsagesCount) throws Throwable {
 

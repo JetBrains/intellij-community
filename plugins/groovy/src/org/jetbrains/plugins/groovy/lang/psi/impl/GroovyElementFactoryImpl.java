@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
@@ -131,15 +134,17 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GroovyFile) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
   }
 
-  public GrParameter createParameter(String name, @Nullable String typeText) throws IncorrectOperationException {
+  public GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException {
     String fileText;
     if (typeText != null) {
       fileText = "def foo(" + typeText + " " + name + ") {}";
     } else {
       fileText = "def foo(" + name + ") {}";
     }
-    PsiFile psiFile = createDummyFile(fileText);
-    ASTNode node = psiFile.getFirstChild().getNode();
+    GroovyFileImpl groovyFile = (GroovyFileImpl) createDummyFile(fileText);
+    groovyFile.setContext(context);
+
+    ASTNode node = groovyFile.getFirstChild().getNode();
     if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION)
       throw new IncorrectOperationException("Invalid all text");
     return ((GrMethod) node.getPsi()).getParameters()[0];

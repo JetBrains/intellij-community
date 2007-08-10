@@ -96,7 +96,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   public GrParameter getSyntheticItParameter() {
     if (mySyntheticItParameter == null) {
       try {
-        mySyntheticItParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, null);
+        mySyntheticItParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, null, this);
       } catch (IncorrectOperationException e) {
         LOG.error(e);
       }
