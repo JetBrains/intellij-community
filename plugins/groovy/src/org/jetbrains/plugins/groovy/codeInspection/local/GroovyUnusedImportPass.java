@@ -97,14 +97,11 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
     Annotation[] annotations = new Annotation[myUnusedImports.size()];
     int i = 0;
     for (GrImportStatement unusedImport : myUnusedImports) {
-      GrCodeReferenceElement importReference = unusedImport.getImportReference();
-      if (importReference != null) {
-        IntentionAction action = createUnusedImportIntention();
-        Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
-        annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-        annotation.registerFix(action);
-        annotations[i++] = annotation;
-      }
+      IntentionAction action = createUnusedImportIntention();
+      Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
+      annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      annotation.registerFix(action);
+      annotations[i++] = annotation;
     }
 
     HighlightInfoHolder holder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);

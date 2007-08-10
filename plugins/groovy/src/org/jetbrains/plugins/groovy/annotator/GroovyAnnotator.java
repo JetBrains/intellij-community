@@ -90,7 +90,7 @@ public class GroovyAnnotator implements Annotator {
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
-    } else if (element instanceof GrImportStatement) {
+    } else if (!(element instanceof PsiWhiteSpace)) {
       GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
     }
   }
