@@ -280,15 +280,15 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public int hostToInjected(int offset) {
-    if (offset < getTextRange().getStartOffset()) return getPrefix().length();
-    if (offset >= getTextRange().getEndOffset()) return getTextRange().getEndOffset()-getTextRange().getStartOffset() + getPrefix().length();
-    return offset - getTextRange().getStartOffset() + getPrefix().length();
+    if (offset < getTextRange().getStartOffset()) return myPrefix.length();
+    if (offset >= getTextRange().getEndOffset()) return getTextRange().getEndOffset()-getTextRange().getStartOffset() + myPrefix.length();
+    return offset - getTextRange().getStartOffset() + myPrefix.length();
   }
 
   public int injectedToHost(int offset) {
     if (offset < myPrefix.length()) return getTextRange().getStartOffset();
     if (offset >= getTextLength() - mySuffix.length()) return getTextRange().getEndOffset();
-    return offset + getTextRange().getStartOffset() - getPrefix().length();
+    return offset + getTextRange().getStartOffset() - myPrefix.length();
   }
 
   public int injectedToHostLine(int line) {

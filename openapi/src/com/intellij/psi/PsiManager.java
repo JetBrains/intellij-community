@@ -120,7 +120,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
-   * Searches the project for the package with the specified full-qualified name and retunrs one
+   * Searches the project for the package with the specified full-qualified name and returns one
    * if it is found.
    *
    * @param qualifiedName the full-qualified name of the package to find.

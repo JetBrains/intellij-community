@@ -50,7 +50,7 @@ public interface PsiElementFinder {
   PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope);
 
   /**
-   * Searches the project for the package with the specified full-qualified name and retunrs one
+   * Searches the project for the package with the specified full-qualified name and returns one
    * if it is found.
    *
    * @param qualifiedName the full-qualified name of the package to find.
