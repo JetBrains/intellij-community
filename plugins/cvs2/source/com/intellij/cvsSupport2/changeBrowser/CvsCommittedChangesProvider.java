@@ -64,7 +64,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     final VirtualFile rootDir = root.isDirectory() ? root.getVirtualFile() : root.getVirtualFileParent();
     final String module = CvsUtil.getModuleName(root);
     final CvsEnvironment connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
-    return new CvsRepositoryLocation(rootDir, connectionSettings, module);
+    return new CvsRepositoryLocation(root.getVirtualFile(), connectionSettings, module);
   }
 
   public ChangeListColumn[] getColumns() {

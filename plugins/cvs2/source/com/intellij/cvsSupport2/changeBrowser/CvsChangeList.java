@@ -118,9 +118,15 @@ public class CvsChangeList implements CommittedChangeList {
         final String state = revision.getState();
         String path = wrapper.getFile();
         File localFile;
-        if (myRootFile != null && path.startsWith(myRootPath + "/")) {
-          path = path.substring(myRootPath.length()+1);
-          localFile = new File(myRootFile.getPresentableUrl(), path);
+        if (myRootFile != null) {
+          String directorySuffix = myRootFile.isDirectory() ? "/" : "";
+          if (path.startsWith(myRootPath + directorySuffix)) {
+            path = path.substring(myRootPath.length() + directorySuffix.length());
+            localFile = new File(myRootFile.getPresentableUrl(), path);
+          }
+          else {
+            localFile = new File(wrapper.getFile());
+          }
         }
         else {
           localFile = new File(wrapper.getFile());
