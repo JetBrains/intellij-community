@@ -326,7 +326,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
 
     // highlights from both passes should be in the same layer 
-    //HighlightInfo[] infos = UpdateHighlightersUtil.setAndGetHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.UPDATE_ALL);
     TextRange range = new TextRange(myStartOffset, myEndOffset);
     Collection<HighlightInfo> collection = myInjectedPsiHighlights.get(range);
     if (collection == null) {

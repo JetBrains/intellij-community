@@ -59,14 +59,13 @@ public abstract class PassExecutorService {
 
   public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress, final int jobPriority) {
     log(updateProgress, null, "---------------------------------------------");
-    final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
     int id = 1;
 
-    // (editor, passId) -> created pass
+    // (doc, passId) -> created pass
     Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted = new THashMap<Pair<Document, Integer>, ScheduledPass>(passesMap.size());
     // null keys are ok
-    Map<Document, List<FileEditor>> documentToEditor = new HashMap<Document, List<FileEditor>>();
-    Map<Document, List<TextEditorHighlightingPass>> textPasses = new HashMap<Document, List<TextEditorHighlightingPass>>(passesMap.size());
+    Map<Document, List<FileEditor>> documentToEditors = new HashMap<Document, List<FileEditor>>();
+    Map<FileEditor, List<TextEditorHighlightingPass>> textPasses = new HashMap<FileEditor, List<TextEditorHighlightingPass>>(passesMap.size());
     for (FileEditor fileEditor : passesMap.keySet()) {
       Document document = null;
       if (fileEditor instanceof TextEditor) {
@@ -99,28 +98,28 @@ public abstract class PassExecutorService {
         }
         document = textEditorHighlightingPass.getDocument();
 
-        List<TextEditorHighlightingPass> textPassesForDocument = textPasses.get(document);
+        List<TextEditorHighlightingPass> textPassesForDocument = textPasses.get(fileEditor);
         if (textPassesForDocument == null) {
           textPassesForDocument = new SmartList<TextEditorHighlightingPass>();
-          textPasses.put(document, textPassesForDocument);
+          textPasses.put(fileEditor, textPassesForDocument);
         }
         textPassesForDocument.add(textEditorHighlightingPass);
 
-
-        List<FileEditor> editors = documentToEditor.get(document);
+        List<FileEditor> editors = documentToEditors.get(document);
         if (editors == null) {
           editors= new SmartList<FileEditor>();
-          documentToEditor.put(document, editors);
+          documentToEditors.put(document, editors);
         }
         if (!editors.contains(fileEditor)) editors.add(fileEditor);
       }
-      threadsToStartCountdown.addAndGet(passes.length);
     }
 
-    List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditor.size());
-    for (Document document : documentToEditor.keySet()) {
-      List<FileEditor> fileEditors = documentToEditor.get(document);
-      List<TextEditorHighlightingPass> passes = textPasses.get(document);
+    List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditors.size());
+    final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
+    for (Document document : documentToEditors.keySet()) {
+      List<FileEditor> fileEditors = documentToEditors.get(document);
+      List<TextEditorHighlightingPass> passes = textPasses.get(fileEditors.get(0));
+      threadsToStartCountdown.addAndGet(passes.size());
 
       // create one scheduled pass per unique id (possibly for multiple fileeditors. they all will be applied at the pass finish)
       Collections.sort(passes, new Comparator<TextEditorHighlightingPass>(){
@@ -147,7 +146,7 @@ public abstract class PassExecutorService {
     }
   }
 
-  private ScheduledPass createScheduledPass(final List<FileEditor> fileEditor,
+  private ScheduledPass createScheduledPass(final List<FileEditor> fileEditors,
                                             final TextEditorHighlightingPass pass,
                                             final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
                                             final List<TextEditorHighlightingPass> textEditorHighlightingPasses,
@@ -160,10 +159,10 @@ public abstract class PassExecutorService {
     Pair<Document, Integer> key = Pair.create(document, passId);
     ScheduledPass scheduledPass = toBeSubmitted.get(key);
     if (scheduledPass != null) return scheduledPass;
-    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, threadsToStartCountdown, jobPriority);
+    scheduledPass = new ScheduledPass(fileEditors, pass, updateProgress, threadsToStartCountdown, jobPriority);
     toBeSubmitted.put(key, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
                                                               updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
@@ -171,7 +170,7 @@ public abstract class PassExecutorService {
       }
     }
     for (int predecessorId : pass.getStartingPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
                                                               updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
@@ -184,7 +183,7 @@ public abstract class PassExecutorService {
     return scheduledPass;
   }
 
-  private ScheduledPass findOrCreatePredecessorPass(final List<FileEditor> fileEditor, final Document document, final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
+  private ScheduledPass findOrCreatePredecessorPass(final List<FileEditor> fileEditors, final Document document, final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
                                                     final List<TextEditorHighlightingPass> textEditorHighlightingPasses,
                                                     final List<ScheduledPass> freePasses,
                                                     final DaemonProgressIndicator updateProgress,
@@ -195,7 +194,7 @@ public abstract class PassExecutorService {
     ScheduledPass predecessor = toBeSubmitted.get(predkey);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
-      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
+      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
                                                                         updateProgress, myThreadsToStartCountdown, jobPriority);
     }
     return predecessor;
@@ -234,7 +233,7 @@ public abstract class PassExecutorService {
   }
 
   private class ScheduledPass implements Runnable {
-    private final List<FileEditor> myFileEditor;
+    private final List<FileEditor> myFileEditors;
     private final TextEditorHighlightingPass myPass;
     private final AtomicInteger myThreadsToStartCountdown;
     private final int myJobPriority;
@@ -243,13 +242,14 @@ public abstract class PassExecutorService {
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
     private final DaemonProgressIndicator myUpdateProgress;
 
-    public ScheduledPass(final List<FileEditor> fileEditor,
+    public ScheduledPass(List<FileEditor> fileEditors,
                          TextEditorHighlightingPass pass,
-                         final DaemonProgressIndicator progressIndicator,
-                         final AtomicInteger myThreadsToStartCountdown, final int jobPriority) {
-      myFileEditor = fileEditor;
+                         DaemonProgressIndicator progressIndicator,
+                         AtomicInteger threadsToStartCountdown,
+                         int jobPriority) {
+      myFileEditors = fileEditors;
       myPass = pass;
-      this.myThreadsToStartCountdown = myThreadsToStartCountdown;
+      myThreadsToStartCountdown = threadsToStartCountdown;
       myJobPriority = jobPriority;
       myRunningPredecessorsCount = new AtomicInteger(0);
       myUpdateProgress = progressIndicator;
@@ -319,10 +319,29 @@ public abstract class PassExecutorService {
       log(myUpdateProgress, myPass, "Finished ");
     }
 
-    private void applyInformationToEditors(boolean hasMoreWorkTodo) {
-      for (FileEditor fileEditor : myFileEditor) {
-        applyInformationToEditor(myPass, fileEditor, myUpdateProgress, hasMoreWorkTodo);
-      }
+    private void applyInformationToEditors(final boolean hasMoreWorkTodo) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (myUpdateProgress.isCanceled()) return;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (isDisposed() || myProject.isDisposed()) return;
+          boolean applied = false;
+          for (final FileEditor fileEditor : myFileEditors) {
+            LOG.assertTrue(fileEditor != null);
+            if (fileEditor.getComponent().isDisplayable()) {
+              if (!applied) {
+                applied = true;
+                myPass.applyInformationToEditor();
+                Document document = myPass.getDocument();
+                if (!hasMoreWorkTodo && document != null) {
+                  reportToWolf(document, myProject);
+                }
+              }
+              afterApplyInformationToEditor(myPass, fileEditor, myUpdateProgress);
+            }
+          }
+        }
+      }, ModalityState.stateForComponent(myFileEditors.get(0).getComponent()));
     }
   }
 
@@ -338,27 +357,6 @@ public abstract class PassExecutorService {
   }
 
   protected abstract void afterApplyInformationToEditor(TextEditorHighlightingPass pass, FileEditor fileEditor, ProgressIndicator updateProgress);
-
-  private void applyInformationToEditor(final TextEditorHighlightingPass pass, final FileEditor fileEditor,
-                                        final ProgressIndicator updateProgress, final boolean hasMoreWorkTodo) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    final boolean wasCanceled = updateProgress.isCanceled();
-    if (fileEditor != null && !wasCanceled) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (isDisposed() || myProject.isDisposed()) return;
-          if (fileEditor.getComponent().isDisplayable()) {
-            pass.applyInformationToEditor();
-            Document document = pass.getDocument();
-            if (!hasMoreWorkTodo && document != null) {
-              reportToWolf(document, myProject);
-            }
-            afterApplyInformationToEditor(pass, fileEditor, updateProgress);    
-          }
-        }
-      }, ModalityState.stateForComponent(fileEditor.getComponent()));
-    }
-  }
 
   public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
     ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
