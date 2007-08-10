@@ -13,6 +13,7 @@ import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,8 @@ public class CreateFromSourcesMode extends WizardMode {
 
   @NotNull
   public String getDescription(final WizardContext context) {
-    return ProjectBundle.message("project.new.wizard.from.existent.sources.description", context.getPresentationName());
+    return ProjectBundle.message("project.new.wizard.from.existent.sources.description",
+                                 ApplicationNamesInfo.getInstance().getProductName(), context.getPresentationName());
   }
 
   @Nullable
