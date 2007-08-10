@@ -181,13 +181,6 @@ class UndoableGroup {
     myStateAfter = stateAfter;
   }
 
-  public void dispose() {
-    for (UndoableAction undoableAction : myActions) {
-      if (undoableAction instanceof Disposable) ((Disposable)undoableAction).dispose();
-
-    }
-  }
-
   public String getCommandName() {
     return myCommandName;
   }

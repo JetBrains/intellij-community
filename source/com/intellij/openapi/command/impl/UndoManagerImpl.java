@@ -230,8 +230,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private void dropGlobalHistory() {
     dropMergers();
-    myUndoStacksHolder.clearGlobalStack();
-    myRedoStacksHolder.clearGlobalStack();
+
+    myUndoStacksHolder.clearStacksWithComplexCommands();
+    myRedoStacksHolder.clearStacksWithComplexCommands();
   }
 
   private void dropMergers() {
@@ -255,10 +256,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myProject = null;
   }
 
-  public CurrentEditorProvider setCurrentEditorProvider(CurrentEditorProvider currentEditorProvider) {
-    final CurrentEditorProvider old = myCurrentEditorProvider;
-    myCurrentEditorProvider = currentEditorProvider;
-    return old;
+  public void setCurrentEditorProvider(CurrentEditorProvider p) {
+    myCurrentEditorProvider = p;
+  }
+
+  public CurrentEditorProvider getCurrentEditorProvider() {
+    return myCurrentEditorProvider;
   }
 
   public void projectOpened() {
@@ -292,8 +295,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myMerger.flushCurrentCommand();
     disposeCurrentMerger();
 
-    myUndoStacksHolder.clearFileQueue(docRef);
-    myRedoStacksHolder.clearFileQueue(docRef);
+    myUndoStacksHolder.clearFileStack(docRef);
+    myRedoStacksHolder.clearFileStack(docRef);
   }
 
   public void clearUndoRedoQueue(VirtualFile file) {
