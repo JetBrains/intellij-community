@@ -115,14 +115,15 @@ public class LayoutCodeDialog extends DialogWrapper {
       panel.add(myRbSelectedText, gbConstraints);
     }
 
+    myRbDirectory = new JRadioButton();
+    myCbIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
     if (myDirectory != null) {
-      myRbDirectory = new JRadioButton(CodeInsightBundle.message("reformat.option.all.files.in.directory",
-                                                                 myDirectory.getVirtualFile().getPresentableUrl()));
+      myRbDirectory.setText(CodeInsightBundle.message("reformat.option.all.files.in.directory",
+                                                      myDirectory.getVirtualFile().getPresentableUrl()));
       gbConstraints.gridy++;
       gbConstraints.insets = new Insets(0, 0, 0, 0);
       panel.add(myRbDirectory, gbConstraints);
 
-      myCbIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
       if (myDirectory.getSubdirectories().length > 0) {
         gbConstraints.gridy++;
         gbConstraints.insets = new Insets(0, 20, 0, 0);
