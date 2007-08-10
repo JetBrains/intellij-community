@@ -697,7 +697,8 @@ public class FileManagerImpl implements FileManager {
           continue;
         }
 
-        if (!psiFile1.getClass().equals(view.getPsi(view.getBaseLanguage()).getClass()) ||
+        PsiFile psi = view.getPsi(view.getBaseLanguage());
+        if (psi == null || !psiFile1.getClass().equals(psi.getClass()) ||
              psiFile1.getViewProvider().getBaseLanguage() != view.getBaseLanguage() // e.g. JSP <-> JSPX
            ) {
           iterator.remove();
