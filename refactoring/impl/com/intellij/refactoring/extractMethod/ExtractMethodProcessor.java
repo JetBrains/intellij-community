@@ -957,11 +957,18 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
     PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
+    Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(myControlFlow, end, myControlFlow.getSize());
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = isDeclaredInside(variable) && !variable.equals(outputVariable);
       if (toDeclare) {
         String name = variable.getName();
         PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
+        if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
+          final PsiElement[] psiElements = statement.getDeclaredElements();
+          assert psiElements != null && psiElements.length > 0;
+          PsiVariable var = (PsiVariable) psiElements [0];
+          var.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+        }
         addToMethodCallLocation(statement);
       }
     }

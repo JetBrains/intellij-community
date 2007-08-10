@@ -606,7 +606,7 @@ public class ControlFlowUtil {
       new ReturnPresentClientVisitor(flow),
       new UnreachableStatementClientVisitor(flow),
       new ReadBeforeWriteClientVisitor(flow),
-      new InitializedTwiceClientVisitor(flow),
+      new InitializedTwiceClientVisitor(flow, 0),
     };
     CompositeInstructionClientVisitor visitor = new CompositeInstructionClientVisitor(visitors);
     depthFirstSearch(flow, visitor);
@@ -1228,18 +1228,27 @@ public class ControlFlowUtil {
   }
 
   public static Collection<VariableInfo> getInitializedTwice(final ControlFlow flow) {
-    InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow);
+    InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, 0);
     depthFirstSearch(flow, visitor);
     return visitor.getResult();
   }
+
+  public static Collection<VariableInfo> getInitializedTwice(final ControlFlow flow, int startOffset, int endOffset) {
+    InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, startOffset);
+    depthFirstSearch(flow, visitor, startOffset, endOffset);
+    return visitor.getResult();
+  }
+
   private static class InitializedTwiceClientVisitor extends InstructionClientVisitor<Collection<VariableInfo>> {
     // map of variable->PsiReferenceExpressions for all read and not written variables for this point and below in control flow
     private final CopyOnWriteList[] writtenVariables;
     private final CopyOnWriteList[] writtenTwiceVariables;
     private final ControlFlow myFlow;
+    private final int myStartOffset;
 
-    public InitializedTwiceClientVisitor(ControlFlow flow) {
+    public InitializedTwiceClientVisitor(ControlFlow flow, final int startOffset) {
       myFlow = flow;
+      myStartOffset = startOffset;
       writtenVariables = new CopyOnWriteList[myFlow.getSize() + 1];
       writtenTwiceVariables = new CopyOnWriteList[myFlow.getSize() + 1];
     }
@@ -1297,7 +1306,7 @@ public class ControlFlowUtil {
     }
 
     public Collection<VariableInfo> getResult() {
-      CopyOnWriteList writtenTwiceVariable = writtenTwiceVariables[0];
+      CopyOnWriteList writtenTwiceVariable = writtenTwiceVariables[myStartOffset];
       if (writtenTwiceVariable == null) return Collections.emptyList();
       return writtenTwiceVariable.getList();
     }
