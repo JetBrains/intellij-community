@@ -449,6 +449,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   protected boolean askReloadFromDisk(final VirtualFile file, final Document document) {
+    if (!isDocumentUnsaved(document)) return true;
+
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     final DialogBuilder builder = new DialogBuilder((Project)null);
