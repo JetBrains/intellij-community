@@ -137,6 +137,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
     if (params1.length < params2.length) {
+      if (params1.length == 0) return false;
       final PsiType lastType = params1[params1.length - 1].getType(); //varargs applicability
       return lastType instanceof PsiArrayType;
     }
