@@ -802,7 +802,18 @@ public class PluginManager {
       // prepare plugins
       if (!isLoadingOfExternalPluginsDisabled()) {
         initPluginClasses();
-        StartupActionScriptManager.executeActionScript();
+        try {
+          StartupActionScriptManager.executeActionScript();
+        }
+        catch (IOException e) {
+          final String errorMessage = "Error executing plugin installation script: " + e.getMessage();
+          if (Main.isHeadless()) {
+            System.out.println(errorMessage);
+          } else {
+            JOptionPane
+              .showMessageDialog(JOptionPane.getRootFrame(), errorMessage, CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
+          }
+        }
       }
 
       Thread.currentThread().setContextClassLoader(newClassLoader);

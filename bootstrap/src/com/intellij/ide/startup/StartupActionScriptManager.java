@@ -30,9 +30,11 @@ public class StartupActionScriptManager {
       System.out.println("Execute " + actionCommand);
       actionCommand.execute();
     }
-    commands.clear();
+    if (commands.size() > 0) {
+      commands.clear();
 
-    saveActionScript(commands);
+      saveActionScript(commands);
+    }
   }
 
   public static synchronized void addActionCommand(ActionCommand command) throws IOException {
