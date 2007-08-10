@@ -128,7 +128,14 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
     connection.setConnectTimeout(3 * 1000);
     connection.setReadTimeout(3 * 1000);
     connection.connect();
-    connection.getInputStream();
+    try {
+      connection.getInputStream();
+    }
+    catch (Throwable e) {
+      if (e instanceof IOException) {
+        throw (IOException)e;
+      }
+    }
     if (connection instanceof HttpURLConnection) {
       ((HttpURLConnection)connection).disconnect();
     }

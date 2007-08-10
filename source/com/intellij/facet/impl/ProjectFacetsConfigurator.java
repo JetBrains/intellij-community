@@ -5,13 +5,16 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.ui.*;
+import com.intellij.facet.impl.ui.FacetEditor;
+import com.intellij.facet.impl.ui.FacetEditorContextBase;
+import com.intellij.facet.impl.ui.FacetTreeModel;
+import com.intellij.facet.impl.ui.ProjectConfigurableContext;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -21,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +45,9 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
   private Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
+  private Set<Facet> myFacetsToDispose = new HashSet<Facet>();
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
+  private Set<Facet> myCreatedFacets = new HashSet<Facet>();
   private final StructureConfigrableContext myContext;
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
@@ -54,6 +60,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   public void removeFacet(Facet facet) {
     FacetTreeModel treeModel = getTreeModel(facet.getModule());
     FacetInfo facetInfo = myFacet2Info.get(facet);
+    if (facetInfo == null) return;
 
     List<FacetInfo> children = treeModel.getChildren(facetInfo);
     for (FacetInfo child : children) {
@@ -66,6 +73,9 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     treeModel.removeFacetInfo(facetInfo);
     getOrCreateModifiableModel(facet.getModule()).removeFacet(facet);
     myChangedFacets.remove(facet);
+    if (myCreatedFacets.contains(facet)) {
+      Disposer.dispose(facet);
+    }
     final FacetEditor facetEditor = myEditors.remove(facet);
     if (facetEditor != null) {
       facetEditor.disposeUIResources();
@@ -76,6 +86,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
 
   public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {
     final Facet facet = createFacet(type, module, name, myInfo2Facet.get(underlyingFacet));
+    myCreatedFacets.add(facet);
     getOrCreateModifiableModel(module).addFacet(facet);
     addFacetInfo(facet);
     return facet;
@@ -230,6 +241,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public void disposeEditors() {
+    for (Facet facet : myFacetsToDispose) {
+      Disposer.dispose(facet);
+    }
+    myFacetsToDispose.clear();
+    myCreatedFacets.clear();
+
     for (FacetEditor editor : myEditors.values()) {
       editor.disposeUIResources();
     }
@@ -265,6 +282,18 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       myProjectData = new UserDataHolderBase();
     }
     return myProjectData;
+  }
+
+  public void onModuleRemoved(final Module module) {
+    FacetModel facetModel = getFacetModel(module);
+    for (Facet facet : facetModel.getAllFacets()) {
+      if (!myCreatedFacets.contains(facet)) {
+        myFacetsToDispose.add(facet);
+      }
+      removeFacet(facet);
+    }
+    mySharedModuleData.remove(module);
+    myModels.remove(module);
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {

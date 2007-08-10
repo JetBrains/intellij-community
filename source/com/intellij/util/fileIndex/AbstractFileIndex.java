@@ -6,6 +6,7 @@ package com.intellij.util.fileIndex;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +38,13 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
   private boolean myFormatChanged;
   private final Project myProject;
   private AbstractFileIndex.FileIndexCacheUpdater myRootsChangeCacheUpdater;
+  private StartupManagerEx myStartupManager;
   private FileIndexRefreshCacheUpdater myRefreshCacheUpdater;
 
   protected AbstractFileIndex(final Project project) {
     myProject = project;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myStartupManager = StartupManagerEx.getInstanceEx(project);
   }
 
   protected abstract IndexEntry createIndexEntry(DataInputStream input) throws IOException;
@@ -73,7 +76,7 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
   }
 
   public final void updateIndexEntry(final VirtualFile file) {
-    if (myProjectFileIndex.isIgnored(file)) {
+    if (!myStartupManager.startupActivityPassed() || myProjectFileIndex.isIgnored(file)) {
       return;
     }
     

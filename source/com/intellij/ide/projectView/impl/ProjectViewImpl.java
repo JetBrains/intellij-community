@@ -216,6 +216,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public synchronized void removeProjectPane(AbstractProjectViewPane pane) {
+    myUninitializedPanes.remove(pane);
     //assume we are completely initialized here
     String idToRemove = pane.getId();
 

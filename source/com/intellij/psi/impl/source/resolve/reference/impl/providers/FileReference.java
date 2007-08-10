@@ -210,9 +210,11 @@ public class FileReference
         final VirtualFile file = element.getVirtualFile();
         if (file != null && !file.isDirectory()) {
           final PsiManager psiManager = getElement().getManager();
-          final PsiFile psiFile = psiManager.findFile(file);
-          if (psiFile != null) {
-            element = psiFile;
+          if (psiManager != null) {
+            final PsiFile psiFile = psiManager.findFile(file);
+            if (psiFile != null) {
+              element = psiFile;
+            }
           }
         }
         return processor.execute(element, PsiSubstitutor.EMPTY);
