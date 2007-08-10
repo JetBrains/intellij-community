@@ -3,17 +3,19 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -411,9 +413,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
           }
         }
         // add itself
-        Object value = createSubclassLookupValue(context, extendClass, instantiatable);
-        if (value != null) {
-          lookups.add(value);
+        if (packageScope.contains(extendClass.getContainingFile().getVirtualFile())) {
+          Object value = createSubclassLookupValue(context, extendClass, instantiatable);
+          if (value != null) {
+            lookups.add(value);
+          }
         }
       }
     }
@@ -429,13 +433,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     if (name == null) return null;
     final String pack = context.getQualifiedName();
     if (pack.length() > 0) {
-      // paranoic check for IDEADEV-13982
-      if (pack.length() + 1 > name.length()) {
-        return null;
+      if (name.startsWith(pack)) {
+        name = name.substring(pack.length() + 1);
       }
-      name = name.substring(pack.length() + 1);
+      else return null;
     }
-    return LookupValueFactory.createLookupValue(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+    final LookupItem<PsiClass> lookup = LookupElementFactoryImpl.getInstance().createLookupElement(clazz, name);
+    return CompletionVariantPeerImpl.setShowFQN(lookup).setTailType(TailType.NONE);
    }
 
   public LocalQuickFix[] getQuickFixes() {
