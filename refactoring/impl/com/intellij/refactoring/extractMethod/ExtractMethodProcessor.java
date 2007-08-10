@@ -38,6 +38,7 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MatchProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -352,6 +353,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCanBeStatic = false;
     }
 
+    if (container instanceof PsiMethod) {
+      checkLocalClasses((PsiMethod) container);
+    }
+
     if (myExpression != null) {
       myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
@@ -362,6 +367,56 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return true;
+  }
+
+  private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
+    final List<PsiClass> localClasses = new ArrayList<PsiClass>();
+    container.accept(new PsiRecursiveElementVisitor() {
+      public void visitClass(final PsiClass aClass) {
+        localClasses.add(aClass);
+      }
+
+      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+        visitElement(aClass);
+      }
+    });
+    for(PsiClass localClass: localClasses) {
+      final boolean classExtracted = isExtractedElement(localClass);
+      final List<PsiElement> extractedReferences = new ArrayList<PsiElement>();
+      final List<PsiElement> remainingReferences = new ArrayList<PsiElement>();
+      ReferencesSearch.search(localClass).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference psiReference) {
+          final PsiElement element = psiReference.getElement();
+          final boolean elementExtracted = isExtractedElement(element);
+          if (elementExtracted && !classExtracted) {
+            extractedReferences.add(element);
+            return false;
+          }
+          if (!elementExtracted && classExtracted) {
+            remainingReferences.add(element);
+            return false;
+          }
+          return true;
+        }
+      });
+      if (!extractedReferences.isEmpty()) {
+        throw new PrepareFailedException("Cannot extract method because the selected code fragment uses local classes defined outside of the fragment", extractedReferences.get(0));
+      }
+      if (!remainingReferences.isEmpty()) {
+        throw new PrepareFailedException("Cannot extract method because the selected code fragment defines local classes used outside of the fragment", remainingReferences.get(0));
+      }
+    }
+  }
+
+  private boolean isExtractedElement(final PsiElement element) {
+    boolean isExtracted = false;
+    for(PsiElement psiElement: myElements) {
+      if (PsiTreeUtil.isAncestor(psiElement, element, false)) {
+        isExtracted = true;
+        break;
+      }
+    }
+    return isExtracted;
   }
 
   private static void removeParametersUsedInExitsOnly(PsiElement codeFragment,

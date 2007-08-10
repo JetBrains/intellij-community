@@ -2,8 +2,8 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,8 +38,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (dataContext != null) {
-      final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      final PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
+      final Editor editor = DataKeys.EDITOR.getData(dataContext);
       if (file != null && editor != null) {
         final ExtractMethodProcessor processor = getProcessor(elements, project, file, editor, true);
         if (processor != null) {

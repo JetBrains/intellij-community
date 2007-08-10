@@ -257,6 +257,25 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testLocalClass() throws Exception {
+    doPrepareErrorTest("Cannot extract method because the selected code fragment uses local classes defined outside of the fragment");
+  }
+
+  public void testLocalClassUsage() throws Exception {
+    doPrepareErrorTest("Cannot extract method because the selected code fragment defines local classes used outside of the fragment");
+  }
+
+  private void doPrepareErrorTest(final String expectedMessage) throws Exception {
+    String expectedError = null;
+    try {
+      doExitPointsTest(false);
+    }
+    catch(PrepareFailedException ex) {
+      expectedError = ex.getMessage();
+    }
+    assertEquals(expectedMessage, expectedError);
+  }
+
   private void doExitPointsTest(boolean shouldSucceed) throws Exception {
     String fileName = getTestName(false) + ".java";
     configureByFile(BASE_PATH + fileName);
