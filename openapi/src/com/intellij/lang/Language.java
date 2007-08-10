@@ -103,7 +103,7 @@ public abstract class Language {
       };
     }
   };
-  ;
+
   private Set<ExternalAnnotator> myInjectedExternalAnnotators;
   private Annotator myLastAnnotator;
   private ExternalAnnotator myLastExternalAnnotator;
@@ -117,7 +117,7 @@ public abstract class Language {
     this(id, "");
   }
 
-  protected Language(final @NonNls String ID, final @NonNls String... mimeTypes) {
+  protected Language(@NonNls final String ID, @NonNls final String... mimeTypes) {
     myID = ID;
     myMimeTypes = mimeTypes;
     Class<? extends Language> langClass = getClass();
@@ -292,11 +292,11 @@ public abstract class Language {
    *
    * @param annotator the annotator to inject.
    */
-  public synchronized final void injectAnnotator(@NotNull Annotator annotator) {
+  public final synchronized void injectAnnotator(@NotNull Annotator annotator) {
     myAnnotatorsSmartEP.getValue().addExplicitExtension(annotator);
   }
 
-  public synchronized final void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
+  public final synchronized void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
     injectAnnotator(annotator);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -310,7 +310,7 @@ public abstract class Language {
    *
    * @param annotator the annotator to remove.
    */
-  public synchronized final void removeAnnotator(@NotNull Annotator annotator) {
+  public final synchronized void removeAnnotator(@NotNull Annotator annotator) {
     myAnnotatorsSmartEP.getValue().removeExplicitExtension(annotator);
   }
 
@@ -320,7 +320,7 @@ public abstract class Language {
    * @return a list of all annotators for the language.
    */
   @NotNull
-  public synchronized final List<Annotator> getAnnotators() {
+  public final synchronized List<Annotator> getAnnotators() {
     final SmartExtensionPoint<AnnotatorEP, Annotator> smartEP = myAnnotatorsSmartEP.getValue();
     Annotator annotator = getAnnotator();
     if (annotator != myLastAnnotator) {
@@ -353,7 +353,7 @@ public abstract class Language {
    *
    * @param annotator the annotator to inject.
    */
-  public synchronized final void injectExternalAnnotator(@NotNull ExternalAnnotator annotator) {
+  public final synchronized void injectExternalAnnotator(@NotNull ExternalAnnotator annotator) {
     if (myInjectedExternalAnnotators == null) {
       myInjectedExternalAnnotators = new THashSet<ExternalAnnotator>();
     }
@@ -366,7 +366,7 @@ public abstract class Language {
    *
    * @param annotator the annotator to remove.
    */
-  public synchronized final void removeExternalAnnotator(@NotNull ExternalAnnotator annotator) {
+  public final synchronized void removeExternalAnnotator(@NotNull ExternalAnnotator annotator) {
     if (myInjectedExternalAnnotators != null) {
       myInjectedExternalAnnotators.remove(annotator);
       myCachedExternalAnnotators = null;
@@ -379,7 +379,7 @@ public abstract class Language {
    * @return a list of all annotators for the language.
    */
   @NotNull
-  public synchronized final List<ExternalAnnotator> getExternalAnnotators() {
+  public final synchronized List<ExternalAnnotator> getExternalAnnotators() {
     ExternalAnnotator annotator = getExternalAnnotator();
     if (annotator == myLastExternalAnnotator && myCachedExternalAnnotators != null) {
       return myCachedExternalAnnotators;
@@ -543,11 +543,13 @@ public abstract class Language {
     myDocumentationProvider = documentationProvider;
   }
 
-  public @Nullable LanguageDialect[] getAvailableLanguageDialects() {
+  @Nullable
+  public LanguageDialect[] getAvailableLanguageDialects() {
     return null;
   }
 
-  public @Nullable ParameterInfoHandler[] getParameterInfoHandlers() {
+  @Nullable
+  public ParameterInfoHandler[] getParameterInfoHandlers() {
     return null;
   }
 }

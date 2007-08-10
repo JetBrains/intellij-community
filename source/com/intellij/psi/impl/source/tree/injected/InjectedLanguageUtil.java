@@ -72,7 +72,7 @@ public class InjectedLanguageUtil {
     return cachedPsi.getValue();
   }
 
-  private static <T extends PsiLanguageInjectionHost> PsiElement parseInjectedPsiFile(@NotNull final T host,
+  private static <T extends PsiLanguageInjectionHost> PsiFile parseInjectedPsiFile(@NotNull final T host,
                                                                                       @NotNull final TextRange rangeInsideHost,
                                                                                       @NotNull final Language language,
                                                                                       @NotNull final VirtualFile hostVirtualFile,
@@ -226,6 +226,13 @@ public class InjectedLanguageUtil {
       }
 
       return null;
+    }
+
+    @Nullable
+    protected PsiFile getPsiInner(Language target) {
+      PsiFile file = super.getPsiInner(target);
+      if (file == null || file.getContext() == null) return null;
+      return file;
     }
   }
 
@@ -466,7 +473,6 @@ public class InjectedLanguageUtil {
   }
 
   private static final Key<List<DocumentRange>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
-  private static final Key<Project> INJECTED_PROJ = Key.create("INJECTED_PROJ");
   public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
     List<DocumentRange> injected = getCachedInjectedDocuments(hostDocument);
     if (injected.isEmpty()) return;
@@ -501,9 +507,8 @@ public class InjectedLanguageUtil {
 
   public static void clearCaches(PsiFile injected, DocumentRange documentRange) {
     VirtualFileDelegate virtualFile = (VirtualFileDelegate)injected.getVirtualFile();
-    injected.putUserData(ResolveUtil.INJECTED_IN_ELEMENT,null);
     ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(virtualFile, null);
-    documentRange.getDelegate().putUserData(INJECTED_DOCS_KEY, null);
+    getCachedInjectedDocuments(documentRange.getDelegate()).remove(documentRange);
     InjectedManagerImpl.getInstance().clearCaches(virtualFile);
   }
 
@@ -557,7 +562,6 @@ public class InjectedLanguageUtil {
       }
     }
     injected.add(documentRange);
-    hostDocument.putUserData(INJECTED_PROJ, injectedPsi.getProject());
     return injectedPsi;
   }
 

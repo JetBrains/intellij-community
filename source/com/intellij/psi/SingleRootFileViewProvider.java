@@ -265,7 +265,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
-      if (lengthInChars < (maxInBytes / 2) ) return false;
+      if (lengthInChars < maxInBytes / 2) return false;
       if (lengthInChars > maxInBytes ) return true;
     }
 
@@ -383,6 +383,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   private static PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
+    if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
     while (child != null) {
@@ -409,6 +410,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   protected static PsiElement findElementAt(final PsiElement psiFile, final int offset) {
+    if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
     while (child != null) {

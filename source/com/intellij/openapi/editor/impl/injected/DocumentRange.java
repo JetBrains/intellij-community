@@ -318,5 +318,4 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
       && mySuffix.equals(documentRange.mySuffix)
       ;
   }
-
 }
