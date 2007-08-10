@@ -155,7 +155,9 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     VfsUtil.saveText(myVFile, fileText);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
-    manager.reloadFromDisk(manager.getDocument(myVFile));
+    final Document document = manager.getDocument(myVFile);
+    assertNotNull("Can't create document for '" + fileName + "'", document);
+    manager.reloadFromDisk(document);
     myFile = getPsiManager().findFile(myVFile);
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     assertTrue(myFile.isPhysical());
