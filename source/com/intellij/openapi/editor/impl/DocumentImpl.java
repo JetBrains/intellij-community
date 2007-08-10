@@ -70,7 +70,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public DocumentImpl(String text) {
     this();
-    LOG.assertTrue(text.indexOf("\r") < 0, "Wrong line separators in Document");
+    LOG.assertTrue(!text.contains("\r"), "Wrong line separators in Document");
 
     setChars(text);
     setModificationStamp(LocalTimeCounter.currentTime());
@@ -540,7 +540,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public int getLineNumber(int offset) {
     assertReadAccessToDocumentsAllowed();
     int lineIndex = myLineSet.findLineIndex(offset);
-    assert (lineIndex >= 0);
+    assert lineIndex >= 0;
     return lineIndex;
   }
 
@@ -553,7 +553,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertReadAccessToDocumentsAllowed();
     if (line == 0) return 0; // otherwise it crashed for zero-length document
     int lineStart = myLineSet.getLineStart(line);
-    assert (lineStart >= 0);
+    assert lineStart >= 0;
     return lineStart;
   }
 
@@ -561,21 +561,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     if (getTextLength() == 0 && line == 0) return 0;
     int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
-    assert (result >= 0);
+    assert result >= 0;
     return result;
   }
 
   public final int getLineSeparatorLength(int line) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int separatorLength = myLineSet.getSeparatorLength(line);
-    assert (separatorLength >= 0);
+    assert separatorLength >= 0;
     return separatorLength;
   }
 
   public final int getLineCount() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int lineCount = myLineSet.getLineCount();
-    assert (lineCount >= 0);
+    assert lineCount >= 0;
     return lineCount;
   }
 

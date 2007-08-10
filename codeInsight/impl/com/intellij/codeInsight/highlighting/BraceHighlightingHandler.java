@@ -349,7 +349,7 @@ public class BraceHighlightingHandler {
   private void lineMarkFragment(int startLine, int endLine, Color color) {
     removeLineMarkers();
 
-    if (startLine >= endLine) return;
+    if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
 
     int startOffset = myDocument.getLineStartOffset(startLine);
     int endOffset = myDocument.getLineStartOffset(endLine);
