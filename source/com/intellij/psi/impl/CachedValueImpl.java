@@ -20,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.TimedReference;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   }
 
   private void setValue(final T value, final CachedValueProvider.Result<T> result) {
-    myData.set(computeData(value == null ? (T) NULL : value, result == null ? null : result.getDependencyItems()));
+    myData.setData(computeData(value == null ? (T) NULL : value, result == null ? null : result.getDependencyItems()));
     if (result != null) {
       myData.setIsLocked(result.isLockValue());
     }
@@ -133,7 +134,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   @Nullable
   private T getUpToDateOrNull() {
-    final Data<T> data = myData.get();
+    final Data<T> data = myData.getData();
 
     if (data != null) {
       T value = data.myValue;
@@ -256,8 +257,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
   }
 
-  private static class MyTimedReference<T> extends TimedReference<Data<T>> {
+  private static class MyTimedReference<T> extends TimedReference<SoftReference<Data<T>>> {
     private boolean myIsLocked;
+
 
     public MyTimedReference() {
       super(null);
@@ -269,6 +271,16 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
     protected boolean isLocked() {
       return super.isLocked() || myIsLocked;
+    }
+
+    public void setData(final Data<T> data) {
+      set(new SoftReference<Data<T>>(data));
+    }
+
+    @Nullable
+    public Data<T> getData() {
+      final SoftReference<Data<T>> ref = get();
+      return ref != null ? ref.get() : null;
     }
   }
 }
