@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -101,14 +103,22 @@ public abstract class OrderEntryFix implements IntentionAction {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-          LocateLibraryDialog dialog = new LocateLibraryDialog (currentModule, PathManager.getLibPath(), "annotations.jar", 
-                                                                QuickFixBundle.message("add.library.annotations.description"));
-          dialog.show();
-          if (dialog.isOK()) {
-            addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName,
-                                 dialog.getResultingLibraryPath());
-          }
+        public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              final LocateLibraryDialog dialog = new LocateLibraryDialog(currentModule, PathManager.getLibPath(), "annotations.jar",
+                                                                   QuickFixBundle.message("add.library.annotations.description"));
+              dialog.show();
+              if (dialog.isOK()) {
+                new WriteCommandAction(project, null) {
+                  protected void run(final Result result) throws Throwable {
+                    addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName,
+                                         dialog.getResultingLibraryPath());
+                  }
+                }.execute();
+              }
+            }
+          });
         }
       });
       return;
