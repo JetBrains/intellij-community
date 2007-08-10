@@ -151,9 +151,11 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         final Ref<Boolean> result = new Ref<Boolean>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            if (!processed.add(candidate) || checkInheritance && !candidate.isInheritor(currentBase.get(), false)) {
-              result.set(true);
-              return;
+            if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
+              if (!processed.add(candidate) || !candidate.isInheritor(currentBase.get(), false)) {
+                result.set(true);
+                return;
+              }
             }
 
             if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {

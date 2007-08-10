@@ -8,11 +8,11 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -171,7 +171,7 @@ public class ResolveCache {
       List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
       final Thread currentThread = Thread.currentThread();
       if (lockingThreads == null) {
-        lockingThreads = new ArrayList<Thread>(1);
+        lockingThreads = new SmartList<Thread>();
         elt.putUserData(IS_BEING_RESOLVED_KEY, lockingThreads);
       }
       else {
