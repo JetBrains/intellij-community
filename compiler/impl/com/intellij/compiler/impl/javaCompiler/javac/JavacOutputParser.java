@@ -217,7 +217,7 @@ public class JavacOutputParser extends OutputParser {
             addMessage(callback, CompilerMessageCategory.WARNING, line, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), -1, -1);
           }
           else {
-            addMessage(callback, CompilerMessageCategory.WARNING, line);
+            addMessage(callback, CompilerMessageCategory.INFORMATION, line);
           }
         }
       });

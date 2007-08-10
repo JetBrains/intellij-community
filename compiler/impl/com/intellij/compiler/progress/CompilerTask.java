@@ -57,6 +57,7 @@ public class CompilerTask extends Task.Backgroundable {
   private final Key<Key<?>> myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
+  private java.util.List<CompilerMessage> myDeferredMessages = new ArrayList<CompilerMessage>(); 
   private final Object myMessageViewLock = new Object();
   private final Project myProject;
   private final String myContentName;
@@ -110,9 +111,10 @@ public class CompilerTask extends Task.Backgroundable {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myIsBackgroundMode) {
-          openMessageView();
-        } else {
+        //if (myIsBackgroundMode) {
+        //  openMessageView();
+        //} 
+        //else {
           if (myIndicator.isRunning()) {
             synchronized (myMessageViewLock) {
               // clear messages from the previous compilation
@@ -122,7 +124,7 @@ public class CompilerTask extends Task.Backgroundable {
               }
             }
           }
-        }
+        //}
       }
     });
   }
@@ -169,15 +171,24 @@ public class CompilerTask extends Task.Backgroundable {
   public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
     prepareMessageView();
 
-    openMessageView();
-    if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
+    final CompilerMessageCategory messageCategory = message.getCategory();
+    if (CompilerMessageCategory.WARNING.equals(messageCategory)) {
+      myWarningCount += 1;
+    }
+    else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
       informWolf(message, compileContext);
     }
-    if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
-      myWarningCount += 1;
+
+    synchronized (myMessageViewLock) {
+      if ( myErrorTreeView == null && (CompilerMessageCategory.INFORMATION.equals(messageCategory) || CompilerMessageCategory.STATISTICS.equals(messageCategory))) {
+        
+        myDeferredMessages.add(message);
+        return;
+      }
     }
 
+    openMessageView();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       doAddMessage(message);
     }
@@ -304,14 +315,6 @@ public class CompilerTask extends Task.Backgroundable {
 
   public void sendToBackground() {
     myIsBackgroundMode = true;
-    openMessageView();
-    activateMessageView();
-    synchronized (myMessageViewLock) {
-      if (myErrorTreeView != null) { // when cancelled, openMessageView() may not create the view
-        //myErrorTreeView.setProgressText(myDialog.getStatusText());
-        myErrorTreeView.setProgressStatistics(myDialog.getStatistics());
-      }
-    }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         closeProgressDialog();
@@ -328,6 +331,7 @@ public class CompilerTask extends Task.Backgroundable {
     if (myIndicator.isCanceled()) {
       return;
     }
+    final CompilerMessage[] deferred;
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
         return;
@@ -342,7 +346,10 @@ public class CompilerTask extends Task.Backgroundable {
           return !myIndicator.isRunning();
         }
       });
+      deferred = myDeferredMessages.toArray(new CompilerMessage[myDeferredMessages.size()]);
+      myDeferredMessages.clear();
     }
+    
     final Window window = getWindow();
     final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
     // the work with ToolWindowManager should be done in the Swing thread
@@ -369,6 +376,9 @@ public class CompilerTask extends Task.Backgroundable {
           }
         }
         updateProgressText();
+        for (CompilerMessage message : deferred) {
+          doAddMessage(message);
+        }
       }
     }, modalityState);
   }

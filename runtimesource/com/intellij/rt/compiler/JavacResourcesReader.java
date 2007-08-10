@@ -33,7 +33,7 @@ public class JavacResourcesReader {
   public static final String MSG_CHECKING = "MSG_CHECKING";
   public static final String MSG_WROTE = "MSG_WROTE";
   public static final String MSG_WARNING = "MSG_WARNING";
-  public static final String MSG_NOTE = "MSG_WARNING";
+  public static final String MSG_NOTE = "MSG_NOTE";
   public static final String MSG_STATISTICS = "MSG_STATISTICS";
   public static final String MSG_IGNORED = "MSG_IGNORED";
 
