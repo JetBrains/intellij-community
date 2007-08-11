@@ -133,9 +133,6 @@
       <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleType</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.grails.fileType.GspFileType</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType</implementation-class>
     </component>
     <component>
@@ -144,6 +141,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider
       </implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.fileType.GspFileTypeLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</implementation-class>
