@@ -22,6 +22,7 @@ import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
@@ -39,6 +40,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class FramesPanel extends UpdatableDebuggerView {
   private final JComboBox myThreadsCombo;
@@ -155,11 +157,11 @@ public class FramesPanel extends UpdatableDebuggerView {
       }
     }
 
-    private java.util.List<ThreadDescriptorImpl> createThreadDescriptorsList() {
-      final java.util.List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(getSuspendContext().getDebugProcess().getVirtualMachineProxy().allThreads());
+    private List<ThreadDescriptorImpl> createThreadDescriptorsList() {
+      final List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(getSuspendContext().getDebugProcess().getVirtualMachineProxy().allThreads());
       Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
 
-      final java.util.List<ThreadDescriptorImpl> descriptors = new ArrayList<ThreadDescriptorImpl>(threads.size());
+      final List<ThreadDescriptorImpl> descriptors = new ArrayList<ThreadDescriptorImpl>(threads.size());
       EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
 
       for (ThreadReferenceProxyImpl thread : threads) {
@@ -215,7 +217,7 @@ public class FramesPanel extends UpdatableDebuggerView {
         });
       }
       else { // full rebuild
-        final java.util.List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
+        final List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {
             try {
@@ -275,7 +277,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       }
       
       final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
-      final java.util.List<StackFrameDescriptorImpl> descriptors = new ArrayList<StackFrameDescriptorImpl>();
+      final List<StackFrameDescriptorImpl> descriptors = new ArrayList<StackFrameDescriptorImpl>();
 
       synchronized (myFramesList) {
         final DefaultListModel model = myFramesList.getModel();
@@ -318,7 +320,7 @@ public class FramesPanel extends UpdatableDebuggerView {
         return;
       }
 
-      java.util.List<StackFrameProxyImpl> frames;
+      List<StackFrameProxyImpl> frames;
       try {
         frames = thread.frames();
       }
@@ -409,7 +411,7 @@ public class FramesPanel extends UpdatableDebuggerView {
             myFramesListener.setEnabled(false);
             synchronized (myFramesList) {
               final DefaultListModel model = myFramesList.getModel();
-              if (model.size() == 0 || myFramesLastUpdateTime < myTimestamp) {
+              if (model.isEmpty() || myFramesLastUpdateTime < myTimestamp) {
                 myFramesLastUpdateTime = myTimestamp;
                 model.clear();
                 for (int idx = 0; idx < myTotalFramesCount; idx++) {
@@ -441,5 +443,9 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   public void requestFocus() {
     myThreadsCombo.requestFocus();
+  }
+
+  public OccurenceNavigator getOccurenceNavigator() {
+    return myFramesList;
   }
 }

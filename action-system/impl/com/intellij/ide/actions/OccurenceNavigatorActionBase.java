@@ -48,7 +48,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = event.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       // make it invisible only in main menu to avoid initial invisibility in toolbars
