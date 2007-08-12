@@ -171,10 +171,6 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     }
   }
 
-//  public void setModal(boolean isModal) {
-//    myPopup.setModal(true);
-//  }
-
   protected abstract JComponent createContent();
 
   public void dispose() {

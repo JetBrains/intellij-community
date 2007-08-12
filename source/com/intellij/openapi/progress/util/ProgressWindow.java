@@ -17,6 +17,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.BlockBorder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -376,6 +377,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
       });
     }
 
+    private void dispose() {
+      UIUtil.dispose(myTitlePanel);
+    }
+
     public JPanel getPanel() {
       return myPanel;
     }
@@ -511,6 +516,11 @@ public class ProgressWindow extends BlockingProgressIndicator {
         protected Border createContentPaneBorder() {
         return null;
       }
+
+      protected void dispose() {
+        super.dispose();
+        MyDialog.this.dispose();
+      }
     }
   }
 
@@ -535,4 +545,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
       wnd.pack();
     }
   }
+
+
 }

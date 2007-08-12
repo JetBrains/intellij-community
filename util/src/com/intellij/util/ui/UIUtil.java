@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
+import com.intellij.ui.TitlePanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -690,5 +691,24 @@ public class UIUtil {
     }
   }
 
+//todo maybe should do for all kind of listeners via the AWTEventMulticaster class
+  public static void dispose(final Component c) {
+    if (c == null) return;
+
+    final MouseListener[] mouseListeners = c.getMouseListeners();
+    for (MouseListener each : mouseListeners) {
+      c.removeMouseListener(each);
+    }
+
+    final MouseMotionListener[] motionListeners = c.getMouseMotionListeners();
+    for (MouseMotionListener each : motionListeners) {
+      c.removeMouseMotionListener(each);
+    }
+
+    final MouseWheelListener[] mouseWheelListeners = c.getMouseWheelListeners();
+    for (MouseWheelListener each : mouseWheelListeners) {
+      c.removeMouseWheelListener(each);
+    }
+  }
 }
 
