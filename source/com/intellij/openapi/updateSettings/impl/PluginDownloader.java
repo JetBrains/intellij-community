@@ -31,9 +31,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
-public class PluginUploader {
+public class PluginDownloader {
 
-  private static final Logger LOG = Logger.getInstance("#" + PluginUploader.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + PluginDownloader.class.getName());
 
   private String myPluginId;
   private String myPluginUrl;
@@ -42,7 +42,7 @@ public class PluginUploader {
   private String myFileName;
   private String myPluginName;
 
-  public PluginUploader(final String pluginId, final String pluginUrl, final String pluginVersion) {
+  public PluginDownloader(final String pluginId, final String pluginUrl, final String pluginVersion) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
@@ -181,6 +181,6 @@ public class PluginUploader {
   public static void updateFromRepository(final String pluginId, final @Nullable String pluginVersion) throws IOException {
     @NonNls final String url =
       RepositoryHelper.DOWNLOAD_URL + URLEncoder.encode(pluginId, "UTF8") + "&build=" + ApplicationInfo.getInstance().getBuildNumber();
-    new PluginUploader(pluginId, url, pluginVersion).prepareToInstall();
+    new PluginDownloader(pluginId, url, pluginVersion).prepareToInstall();
   }
 }

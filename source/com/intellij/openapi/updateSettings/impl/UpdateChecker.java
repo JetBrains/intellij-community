@@ -113,7 +113,7 @@ public final class UpdateChecker {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
             public void run() {
               try {
-                final PluginUploader uploader = new PluginUploader(pluginId, pluginUrl, pluginVersion);
+                final PluginDownloader uploader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
                 if (uploader.prepareToInstall()) {
                   downloaded.add(uploader.getPluginName());
                 }
