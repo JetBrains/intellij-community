@@ -315,7 +315,7 @@ public class TypedHandler implements TypedActionHandler {
     return true;
   }
 
-  private boolean handleJavaArrayInitializerLBrace(final Editor editor) {
+  private static boolean handleJavaArrayInitializerLBrace(final Editor editor) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -325,13 +325,20 @@ public class TypedHandler implements TypedActionHandler {
     return true;
   }
 
-  private boolean checkArrayInitializerLBrace(final HighlighterIterator iterator) {
-    if (iterator.getTokenType() != JavaTokenType.LBRACE) return false;
-    iterator.retreat();
+  private static boolean checkArrayInitializerLBrace(final HighlighterIterator iterator) {
+    int lbraceCount = 0;
+    while(iterator.getTokenType() == JavaTokenType.LBRACE) {
+      lbraceCount++;
+      iterator.retreat();
+    }
+    if (lbraceCount == 0) return false;
     if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
-    if (iterator.getTokenType() != JavaTokenType.RBRACKET) return false;
-    iterator.retreat();
-    if (iterator.getTokenType() != JavaTokenType.LBRACKET) return false;
+    for(int i=0; i<lbraceCount; i++) {
+      if (iterator.getTokenType() != JavaTokenType.RBRACKET) return false;
+      iterator.retreat();
+      if (iterator.getTokenType() != JavaTokenType.LBRACKET) return false;
+      iterator.retreat();
+    }
     return true;
   }
 
