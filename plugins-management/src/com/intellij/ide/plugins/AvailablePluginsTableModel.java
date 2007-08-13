@@ -68,7 +68,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       PluginId descrId = descr.getPluginId();
       if (UpdateVersions.containsKey(descrId)) {
         String currVersion = UpdateVersions.get(descrId);
-        int state = PluginManagerColumnInfo.compareVersion(descr.getVersion(), currVersion);
+        int state = IdeaPluginDescriptorImpl.compareVersion(descr.getVersion(), currVersion);
         if (state > 0) {
           for (int i = 0; i < view.size(); i++) {
             IdeaPluginDescriptor obsolete = view.get(i);

@@ -82,7 +82,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
-    int state = PluginManagerColumnInfo.compareVersion(descr.getVersion(), existing.getVersion());
+    int state = IdeaPluginDescriptorImpl.compareVersion(descr.getVersion(), existing.getVersion());
     if (state > 0) {
       NewVersions2Plugins.put(existing.getPluginId(), 1);
     }

@@ -1,14 +1,15 @@
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseEvent;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,9 +21,11 @@ import java.awt.*;
 
 class NoUpdatesDialog extends DialogWrapper {
   private NoUpdatesPanel myNoUpdatesPanel;
+  private final String myUploadedPlugins;
 
-  protected NoUpdatesDialog(final boolean canBeParent) {
+  protected NoUpdatesDialog(final boolean canBeParent, final String updatePlugins) {
     super(canBeParent);
+    myUploadedPlugins = updatePlugins;
     setTitle(IdeBundle.message("updates.info.dialog.title"));
     init();
   }
@@ -35,7 +38,19 @@ class NoUpdatesDialog extends DialogWrapper {
   protected Action[] createActions() {
     final Action cancelAction = getCancelAction();
     cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
-    return new Action[] {cancelAction};
+    if (myUploadedPlugins != null) {
+      final Action okAction = getOKAction();
+      okAction.putValue(Action.NAME, CommonBundle.getOkButtonText());
+      return new Action[] {okAction, cancelAction};
+    }
+    return new Action[]{cancelAction};
+  }
+
+  protected void doOKAction() {
+    if (myUploadedPlugins != null) {
+      ApplicationManagerEx.getApplicationEx().exit(true);
+    }
+    super.doOKAction();
   }
 
   public boolean shouldCloseOnCross() {
@@ -66,11 +81,14 @@ class NoUpdatesDialog extends DialogWrapper {
     }
   }
 
-  private static class NoUpdatesPanel {
+  private class NoUpdatesPanel {
     private JLabel myUpdatesLink;
     private JPanel myPanel;
+    private JLabel myUpdatedPlugins;
 
     public NoUpdatesPanel() {
+      myUpdatedPlugins.setVisible(myUploadedPlugins != null);
+      myUpdatedPlugins.setText(myUploadedPlugins != null ? myUploadedPlugins : "");
       LabelTextReplacingUtil.replaceText(myPanel);
     }
   }

@@ -156,8 +156,11 @@ public class IdeaApplication {
             try {
               UpdateChecker.setMyVeryFirstOpening(false);
               final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+              final String updatedPlugins = UpdateChecker.updatePlugins();
               if (newVersion != null) {
-                UpdateChecker.showUpdateInfoDialog(true, newVersion);
+                UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
+              } else if (updatedPlugins != null) {
+                UpdateChecker.showNoUpdatesDialog(true, updatedPlugins);
               }
             }
             catch (ConnectionException e) {

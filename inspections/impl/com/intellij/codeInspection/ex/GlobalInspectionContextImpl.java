@@ -812,11 +812,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     //init manager in read action
-    RefManagerImpl refManager = (RefManagerImpl)ApplicationManager.getApplication().runReadAction(new Computable<RefManager>() {
-      public RefManager compute() {
-        return getRefManager();
-      }
-    });
+    RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     try {
       psiManager.startBatchFilesProcessingMode();
       refManager.inspectionReadActionStarted();

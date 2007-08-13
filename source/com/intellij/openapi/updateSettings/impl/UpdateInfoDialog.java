@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 
@@ -24,10 +25,12 @@ import java.awt.event.MouseListener;
 class UpdateInfoDialog extends DialogWrapper {
   private UpdateInfoPanel myUpdateInfoPanel;
   private UpdateChecker.NewVersion myNewVersion;
+  private final String myUploadedPlugins;
 
-  protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion) {
+  protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion, final String uploadedPlugins) {
     super(canBeParent);
     myNewVersion = newVersion;
+    myUploadedPlugins = uploadedPlugins;
     setTitle(IdeBundle.message("updates.info.dialog.title"));
     init();
   }
@@ -47,6 +50,9 @@ class UpdateInfoDialog extends DialogWrapper {
 
   protected void doOKAction() {
     BrowserUtil.launchBrowser(getDownloadUrl());
+    if (myUploadedPlugins != null) {
+      ApplicationManagerEx.getApplicationEx().exit(true);
+    }
   }
 
   private String getDownloadUrl() {
@@ -89,6 +95,7 @@ class UpdateInfoDialog extends DialogWrapper {
     private JLabel myNewVersionNumber;
     private JLabel myNewBuildNumber;
     private JLabel myUpdatesLink;
+    private JLabel myUpdatedPlugins;
 
     public UpdateInfoPanel() {
 
@@ -112,6 +119,8 @@ class UpdateInfoDialog extends DialogWrapper {
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
       myNewVersionNumber.setText(myNewVersion.getLatestVersion());
+      myUpdatedPlugins.setText(myUploadedPlugins != null ? myUploadedPlugins : "");
+      myUpdatedPlugins.setVisible(myUploadedPlugins != null);
 
       LabelTextReplacingUtil.replaceText(myPanel);
     }

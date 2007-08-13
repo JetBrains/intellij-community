@@ -1,14 +1,16 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.ui.ListUtil;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -16,12 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,6 +41,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @NonNls public static final String WEEKLY = "Weekly";
   @NonNls public static final String MONTHLY = "Monthly";
   private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
+
+  public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
 
   static {
     PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));
@@ -84,6 +88,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   public void apply() throws ConfigurationException {
     CHECK_PERIOD = (String)myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem();
     CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
+
+    myPluginHosts.clear();
+    myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
   }
 
   public void reset() {
@@ -91,9 +98,11 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myUpdatesSettingsPanel.myPeriodCombo.setSelectedItem(CHECK_PERIOD);
     myUpdatesSettingsPanel.myPeriodCombo.setEnabled(myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected());
     myUpdatesSettingsPanel.updateLastCheckedLabel();
+    myUpdatesSettingsPanel.setPluginHosts(myPluginHosts);
   }
 
   public boolean isModified() {
+    if (!myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
     return CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
            !Comparing.equal(CHECK_PERIOD, myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
   }
@@ -116,6 +125,13 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myUpdatesSettingsPanel = null;
   }
 
+  public List<String> getPluginHosts() {
+    if (myUpdatesSettingsPanel != null) {
+      return myUpdatesSettingsPanel.getPluginsHosts();
+    }
+    return myPluginHosts;
+  }
+
   private class UpdatesSettingsPanel {
 
     private JPanel myPanel;
@@ -125,6 +141,11 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
+
+    private JButton myAddButton;
+    private JButton myDeleteButton;
+    private JList myUrlsList;
+    private JButton myEditButton;
 
     public UpdatesSettingsPanel() {
 
@@ -167,12 +188,78 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       myBtnCheckNow.setEnabled(myCheckNowEnabled);
 
       LabelTextReplacingUtil.replaceText(myPanel);
+
+      myUrlsList.setModel(new DefaultListModel());
+      myUrlsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+      myUrlsList.addListSelectionListener(new ListSelectionListener() {
+        public void valueChanged(final ListSelectionEvent e) {
+          myDeleteButton.setEnabled(ListUtil.canRemoveSelectedItems(myUrlsList));
+          myEditButton.setEnabled(ListUtil.canRemoveSelectedItems(myUrlsList));
+        }
+      });
+
+      myAddButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          final String input = Messages.showInputDialog(myPanel, IdeBundle.message("update.plugin.host.url.message"), IdeBundle.message("update.add.new.plugin.host.title"), Messages.getQuestionIcon(), "", new InputValidator() {
+            public boolean checkInput(final String inputString) {
+              return inputString.length() > 0;
+            }
+
+            public boolean canClose(final String inputString) {
+              return checkInput(inputString);
+            }
+          });
+          if (input != null) {
+            ((DefaultListModel)myUrlsList.getModel()).addElement(input);
+          }
+        }
+      });
+
+      myEditButton.addActionListener(new ActionListener(){
+        public void actionPerformed(final ActionEvent e) {
+          final String input = Messages.showInputDialog(myPanel, IdeBundle.message("update.plugin.host.url.message"), IdeBundle.message("update.edit.plugin.host.title"), Messages.getQuestionIcon(), (String)myUrlsList.getSelectedValue(), new InputValidator() {
+            public boolean checkInput(final String inputString) {
+              return inputString.length() > 0;
+            }
+
+            public boolean canClose(final String inputString) {
+              return checkInput(inputString);
+            }
+          });
+          if (input != null) {
+            ((DefaultListModel)myUrlsList.getModel()).set(myUrlsList.getSelectedIndex(), input);
+          }
+        }
+      });
+
+      myDeleteButton.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          ListUtil.removeSelectedItems(myUrlsList);
+        }
+      });
     }
 
     private void updateLastCheckedLabel() {
       final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
       myLastCheckedDate
         .setText(LAST_TIME_CHECKED == 0 ? IdeBundle.message("updates.last.check.never") : dateFormat.format(new Date(LAST_TIME_CHECKED)));
+    }
+
+    public List<String> getPluginsHosts() {
+      final List<String> result = new ArrayList<String>();
+      for (int i = 0;i < myUrlsList.getModel().getSize(); i++) {
+        result.add((String)myUrlsList.getModel().getElementAt(i));
+      }
+      return result;
+    }
+
+    public void setPluginHosts(final List<String> pluginHosts) {
+      final DefaultListModel model = (DefaultListModel)myUrlsList.getModel();
+      model.clear();
+      for (String host : pluginHosts) {
+        model.addElement(host);
+      }
     }
   }
 

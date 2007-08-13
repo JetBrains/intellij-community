@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable.UpdatesSettingsPanel">
-  <grid id="5aa87" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="5aa87" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="62" y="37" width="412" height="217"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="62" y="37" width="666" height="434"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <hspacer id="e5897">
         <constraints>
-          <xy x="398" y="89" width="0" height="11"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1">
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <minimum-size width="0" height="-1"/>
             <preferred-size width="0" height="-1"/>
             <maximum-size width="0" height="-1"/>
@@ -21,23 +19,20 @@
       </hspacer>
       <vspacer id="3d6db">
         <constraints>
-          <xy x="186" y="189" width="11" height="28"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="6cede" row-count="6" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="6cede" layout-manager="GridLayoutManager" row-count="7" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="10" left="10" bottom="10" right="10"/>
         <constraints>
-          <xy x="0" y="0" width="384" height="189"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <border type="etched"/>
+        <border type="none"/>
         <children>
           <component id="db163" class="javax.swing.JLabel">
             <constraints>
-              <xy x="12" y="160" width="129" height="14"/>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/IdeBundle" key="updates.settings.last.check"/>
@@ -45,26 +40,15 @@
           </component>
           <component id="36fbb" class="javax.swing.JLabel">
             <constraints>
-              <xy x="12" y="135" width="110" height="14"/>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/IdeBundle" key="updates.settings.current.version"/>
             </properties>
           </component>
-          <component id="fd85b" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="12" y="15" width="360" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="5" vsize-policy="0" hsize-policy="1" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/IdeBundle" key="updates.settings.caption.1"/>
-            </properties>
-          </component>
           <component id="bd9c5" class="javax.swing.JLabel" binding="myVersionNumber">
             <constraints>
-              <xy x="165" y="135" width="44" height="14"/>
-              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
+              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="4.5.4"/>
@@ -72,27 +56,15 @@
           </component>
           <component id="b6709" class="javax.swing.JLabel" binding="myBuildNumber">
             <constraints>
-              <xy x="331" y="135" width="41" height="14"/>
-              <grid row="4" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
+              <grid row="5" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="3352"/>
             </properties>
           </component>
-          <vspacer id="dad57">
-            <constraints>
-              <xy x="346" y="92" width="11" height="40"/>
-              <grid row="3" column="4" row-span="1" col-span="1" vsize-policy="2" hsize-policy="1" anchor="0" fill="2">
-                <minimum-size width="-1" height="40"/>
-                <preferred-size width="-1" height="40"/>
-                <maximum-size width="-1" height="40"/>
-              </grid>
-            </constraints>
-          </vspacer>
           <component id="6af7e" class="javax.swing.JLabel">
             <constraints>
-              <xy x="239" y="135" width="69" height="14"/>
-              <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="5" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/IdeBundle" key="updates.settings.build.number"/>
@@ -100,26 +72,40 @@
           </component>
           <component id="6b5cb" class="javax.swing.JLabel" binding="myLastCheckedDate">
             <constraints>
-              <xy x="165" y="160" width="207" height="14"/>
-              <grid row="5" column="1" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
+              <grid row="6" column="1" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="01.05.2005"/>
             </properties>
           </component>
-          <grid id="e409a" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <vspacer id="dad57">
             <constraints>
-              <xy x="12" y="62" width="360" height="25"/>
-              <grid row="2" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="2" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                <minimum-size width="-1" height="20"/>
+                <preferred-size width="-1" height="20"/>
+                <maximum-size width="-1" height="20"/>
+              </grid>
+            </constraints>
+          </vspacer>
+          <component id="fd85b" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="5" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/IdeBundle" key="updates.settings.caption.1"/>
+            </properties>
+          </component>
+          <grid id="e409a" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="10" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="1aa0e" class="javax.swing.JCheckBox" binding="myCbCheckForUpdates">
                 <constraints>
-                  <xy x="0" y="1" width="118" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -128,8 +114,7 @@
               </component>
               <component id="eb3cf" class="javax.swing.JComboBox" binding="myPeriodCombo">
                 <constraints>
-                  <xy x="128" y="1" width="31" height="22"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <maximumRowCount value="4"/>
@@ -137,14 +122,12 @@
               </component>
               <hspacer id="c4fcd">
                 <constraints>
-                  <xy x="169" y="7" width="98" height="11"/>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
               </hspacer>
               <component id="cc207" class="javax.swing.JButton" binding="myBtnCheckNow">
                 <constraints>
-                  <xy x="267" y="0" width="93" height="25"/>
-                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <horizontalAlignment value="4"/>
@@ -153,15 +136,67 @@
               </component>
             </children>
           </grid>
-          <component id="cd4c1" class="javax.swing.JLabel">
+          <grid id="b56c7" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="12" y="40" width="223" height="14"/>
-              <grid row="1" column="0" row-span="1" col-span="5" vsize-policy="0" hsize-policy="1" anchor="8" fill="0"/>
+              <grid row="3" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <text resource-bundle="messages/IdeBundle" key="updates.settings.label.2"/>
-            </properties>
-          </component>
+            <properties/>
+            <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="update.plugin.hosts.title"/>
+            <children>
+              <scrollpane id="af53b">
+                <constraints>
+                  <grid row="0" column="0" row-span="4" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="b25ec" class="javax.swing.JList" binding="myUrlsList">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+              <component id="a916b" class="javax.swing.JButton" binding="myAddButton">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="button.add"/>
+                </properties>
+              </component>
+              <component id="403ef" class="javax.swing.JButton" binding="myDeleteButton">
+                <constraints>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="button.remove"/>
+                </properties>
+              </component>
+              <vspacer id="3bb12">
+                <constraints>
+                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </vspacer>
+              <component id="e4823" class="javax.swing.JButton" binding="myEditButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="button.edit"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <vspacer id="7a745">
+            <constraints>
+              <grid row="4" column="4" row-span="1" col-span="1" vsize-policy="2" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                <minimum-size width="-1" height="40"/>
+                <preferred-size width="-1" height="40"/>
+                <maximum-size width="-1" height="40"/>
+              </grid>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
     </children>

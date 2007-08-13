@@ -14,10 +14,13 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +98,43 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
+  public static String updatePlugins() throws ConnectionException {
+    final List<String> downloaded = new ArrayList<String>();
+    for (String host : UpdateSettingsConfigurable.getInstance().getPluginHosts()) {
+      try {
+        final Document document = loadVersionInfo(host);
+        if (document == null) continue;
+        for (Object plugin : document.getRootElement().getChildren("plugin")) {
+          Element pluginElement = (Element)plugin;
+          final String pluginId = pluginElement.getAttributeValue("id");
+          final String pluginUrl = pluginElement.getAttributeValue("url");
+          final String pluginVersion = pluginElement.getAttributeValue("version");
+
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+            public void run() {
+              try {
+                final PluginUploader uploader = new PluginUploader(pluginId, pluginUrl, pluginVersion);
+                if (uploader.prepareToInstall()) {
+                  downloaded.add(uploader.getPluginName());
+                }
+              }
+              catch (IOException e) {
+                //bad url
+              }
+            }
+          }, IdeBundle.message("update.uploading.plugin.progress.title", pluginUrl), true, null);
+
+        }
+      }
+      catch (Exception e) {
+        //bad url
+      }
+    }
+    if (downloaded.isEmpty()) return null;
+    return IdeBundle.message("update.plugin.upload.message", StringUtil.join(downloaded, "</li><li>"));
+  }
+
+
   @Nullable
   public static NewVersion checkForUpdates() throws ConnectionException {
     if (LOG.isDebugEnabled()) {
@@ -101,7 +143,7 @@ public final class UpdateChecker {
 
     final Document document;
     try {
-      document = loadVersionInfo();
+      document = loadVersionInfo(getUpdateUrl());
       if (document == null) return null;
     }
     catch (Throwable t) {
@@ -135,17 +177,17 @@ public final class UpdateChecker {
     }
   }
 
-  private static Document loadVersionInfo() throws Exception {
+  private static Document loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + getUpdateUrl() + "' )");
+      LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + url + "' )");
     }
     final Document[] document = new Document[] {null};
     final Exception[] exception = new Exception[] {null};
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          HttpConfigurable.getInstance().prepareURL(getUpdateUrl());
-          final InputStream inputStream = new URL(getUpdateUrl()).openStream();
+          HttpConfigurable.getInstance().prepareURL(url);
+          final InputStream inputStream = new URL(url).openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
           }
@@ -180,15 +222,15 @@ public final class UpdateChecker {
     return document[0];
   }
 
-  public static void showNoUpdatesDialog(boolean enableLink) {
-    NoUpdatesDialog dialog = new NoUpdatesDialog(true);
+  public static void showNoUpdatesDialog(boolean enableLink, final String updatePlugins) {
+    NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatePlugins);
     dialog.setLinkEnabled(enableLink);
     dialog.setResizable(false);
     dialog.show();
   }
 
-  public static void showUpdateInfoDialog(boolean enableLink, final NewVersion version) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(true, version);
+  public static void showUpdateInfoDialog(boolean enableLink, final NewVersion version, final String updatePlugins) {
+    UpdateInfoDialog dialog = new UpdateInfoDialog(true, version, updatePlugins);
     dialog.setLinkEnabled(enableLink);
     dialog.setResizable(false);
     dialog.show();

@@ -512,4 +512,42 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return ArrayUtil.mergeArrays(first, second, ComponentConfig.class);
     }
   }
+
+  public static int compareVersion(String v1, String v2) {
+    if (v1 == null && v2 == null) {
+      return 0;
+    }
+    else if (v1 == null) {
+      return -1;
+    }
+    else if (v2 == null) return 1;
+
+    String[] part1 = v1.split("\\.");
+    String[] part2 = v2.split("\\.");
+
+    int idx = 0;
+    for (; idx < part1.length && idx < part2.length; idx++) {
+      String p1 = part1[idx];
+      String p2 = part2[idx];
+
+      int cmp;
+      if (p1.matches("\\d+") && p2.matches("\\d+")) {
+        cmp = new Integer(p1).compareTo(new Integer(p2));
+      }
+      else {
+        cmp = part1[idx].compareTo(part2[idx]);
+      }
+      if (cmp != 0) return cmp;
+    }
+
+    if (part1.length == part2.length) {
+      return 0;
+    }
+    else if (part1.length > idx) {
+      return 1;
+    }
+    else {
+      return -1;
+    }
+  }
 }
