@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -23,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 
 /**
  * @author ilyas
@@ -123,7 +123,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     }
     GspTemplateStmtParsing.parseGspTemplateStmt(builder);
 
-    GroovyElementType result = Statement.parse(builder, true);
+    GroovyElementType result = Statement.parse(builder);
 
     while (!result.equals(WRONGWAY) &&
         (mSEMI.equals(builder.getTokenType()) ||
@@ -133,7 +133,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
         Separators.parse(builder);
       }
-      result = Statement.parse(builder, true);
+      result = Statement.parse(builder);
       if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
         cleanAfterError(builder);
       }
