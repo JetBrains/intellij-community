@@ -388,6 +388,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
     try {
       if (componentNames == null) return false;
 
+      // TODO[mike]: This is a hack to prevent NPE (assert != null) in StateStorageManagerImpl.reload, storage is null for...
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == null) return false;
+      }
+
       if (!isReloadPossible(componentNames)) return false;
     }
     finally {
