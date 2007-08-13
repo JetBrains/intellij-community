@@ -138,7 +138,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
         cleanAfterError(builder);
       }
     }
-
+    cleanAfterError(builder);
     Separators.parse(builder);
     while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
       Separators.parse(builder);
@@ -157,7 +157,8 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     while (!builder.eof() &&
         !(mNLS.equals(builder.getTokenType()) ||
             mRCURLY.equals(builder.getTokenType()) ||
-            mSEMI.equals(builder.getTokenType()))
+            mSEMI.equals(builder.getTokenType())) &&
+        !GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())
         ) {
       builder.advanceLexer();
       i++;
