@@ -50,7 +50,10 @@ public class DuplicateAction extends EditorAction {
       int start = editor.logicalPositionToOffset(lineStart);
       int end = editor.logicalPositionToOffset(nextLineStart);
       String s = document.getCharsSequence().subSequence(start, end).toString();
-      if(((DocumentEx) document).getLineSeparatorLength(nextLineStart.line - 1) == 0) {
+      final int lineToCheck = nextLineStart.line - 1;
+
+      if(lineToCheck == document.getLineCount () /*empty document*/ ||
+         ((DocumentEx) document).getLineSeparatorLength(lineToCheck) == 0) {
         s = "\n"+s;
       }
       document.insertString(end, s);
