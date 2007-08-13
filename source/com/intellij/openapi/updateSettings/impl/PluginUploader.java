@@ -8,7 +8,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -21,10 +23,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 
 public class PluginUploader {
 
@@ -49,7 +54,7 @@ public class PluginUploader {
       //store old plugins file
       final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(ideaPluginDescriptor != null);
-      if (IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) return false;
+      if (myPluginVersion != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) return false;
       oldFile = ideaPluginDescriptor.getPath();
     }
     // download plugin
@@ -165,5 +170,17 @@ public class PluginUploader {
       myPluginName = FileUtil.getNameWithoutExtension(getFileName());
     }
     return myPluginName;
+  }
+
+  /**
+   * Updates given plugin from Repository
+   * @param pluginId given plugin id
+   * @param pluginVersion available version or null if plugin must be uploaded even if current version is greater than uploading
+   * @throws IOException
+   */
+  public static void updateFromRepository(final String pluginId, final @Nullable String pluginVersion) throws IOException {
+    @NonNls final String url =
+      RepositoryHelper.DOWNLOAD_URL + URLEncoder.encode(pluginId, "UTF8") + "&build=" + ApplicationInfo.getInstance().getBuildNumber();
+    new PluginUploader(pluginId, url, pluginVersion).prepareToInstall();
   }
 }
