@@ -4,19 +4,23 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +37,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
+  private final ProjectRootManager myProjectRootManager;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
   private boolean myEverythingDirty = false;
@@ -40,7 +45,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public VcsDirtyScopeManagerImpl(Project project,
                                   ChangeListManager changeListManager,
-                                  ProjectLevelVcsManager vcsManager) {
+                                  ProjectLevelVcsManager vcsManager,
+                                  final ProjectRootManager projectRootManager) {
+    myProjectRootManager = projectRootManager;
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
@@ -85,12 +92,28 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       // avoid having leftover scopes or invalid roots in scopes after a directory mapping change (IDEADEV-17166)
       myScopes.clear();
     }
+
+    for(Module module: ModuleManager.getInstance(myProject).getModules()) {
+      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+      for(VirtualFile file: files) {
+        final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+        if (vcs != null) {
+          getScope(vcs).addDirtyDirRecursively(new FilePathImpl(file));
+        }
+      }
+    }
+
     final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
     for(AbstractVcs vcs: abstractVcses) {
       VcsDirtyScopeImpl scope = getScope(vcs);
       final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
       for(VirtualFile root: roots) {
-        scope.addDirtyDirRecursively(new FilePathImpl(root));
+        if (root.equals(myProject.getBaseDir())) {
+          scope.addDirtyFile(new FilePathImpl(root));
+        }
+        else {
+          scope.addDirtyDirRecursively(new FilePathImpl(root));
+        }
       }
     }
     synchronized(myScopes) {
@@ -116,18 +139,64 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myIsDisposed = true;
   }
 
-  public void fileDirty(VirtualFile file) {
-    if (!file.isInLocalFileSystem()) {
-      return;
+  @Nullable
+  private AbstractVcs getVcsForDirty(final VirtualFile file) {
+    if (!myIsInitialized || myIsDisposed) {
+      return null;
     }
-    fileDirty(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
+    if (!file.isInLocalFileSystem()) {
+      return null;
+    }
+    if (myProjectRootManager.getFileIndex().isInContent(file) || isFileInBaseDir(file)) {
+      if (myProjectRootManager.getFileIndex().isIgnored(file)) {
+        return null;
+      }
+      return myVcsManager.getVcsFor(file);
+    }
+    return null;
+  }
+
+  @Nullable
+  private AbstractVcs getVcsForDirty(final FilePath filePath) {
+    if (!myIsInitialized || myIsDisposed) {
+      return null;
+    }
+    if (filePath.isNonLocal()) {
+      return null;
+    }
+    final VirtualFile validParent = ChangesUtil.findValidParent(filePath);
+    if (validParent == null) {
+      return null;
+    }
+    if (myProjectRootManager.getFileIndex().isInContent(validParent) || isFileInBaseDir(filePath)) {
+      if (myProjectRootManager.getFileIndex().isIgnored(validParent)) {
+        return null;
+      }
+      return myVcsManager.getVcsFor(validParent);
+    }
+    return null;
+  }
+
+  private boolean isFileInBaseDir(final VirtualFile file) {
+    VirtualFile parent = file.getParent();
+    return !file.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
+  }
+
+  private boolean isFileInBaseDir(final FilePath filePath) {
+    final VirtualFile parent = filePath.getVirtualFileParent(); 
+    return !filePath.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
+  }
+
+  public void fileDirty(VirtualFile file) {
+    AbstractVcs vcs = getVcsForDirty(file);
+    if (vcs != null) {
+      getScope(vcs).addDirtyFile(new FilePathImpl(file));
+      myChangeListManager.scheduleUpdate();
+    }
   }
 
   public void fileDirty(FilePath file) {
-    if (!myIsInitialized || myIsDisposed) return;
-
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    AbstractVcs vcs = myVcsManager.getVcsFor(file);
+    AbstractVcs vcs = getVcsForDirty(file);
     if (vcs != null) {
       getScope(vcs).addDirtyFile(file);
       myChangeListManager.scheduleUpdate();
@@ -135,14 +204,15 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
-    final FilePathImpl path = new FilePathImpl(dir);
-    dirDirtyRecursively(path);
+    AbstractVcs vcs = getVcsForDirty(dir);
+    if (vcs != null) {
+      getScope(vcs).addDirtyFile(new FilePathImpl(dir));
+      myChangeListManager.scheduleUpdate();
+    }
   }
 
   private void dirDirtyRecursively(final FilePathImpl path) {
-    if (!myIsInitialized || myIsDisposed) return;
-
-    final AbstractVcs vcs = myVcsManager.getVcsFor(path);
+    AbstractVcs vcs = getVcsForDirty(path);
     if (vcs != null) {
       getScope(vcs).addDirtyDirRecursively(path);
       myChangeListManager.scheduleUpdate();

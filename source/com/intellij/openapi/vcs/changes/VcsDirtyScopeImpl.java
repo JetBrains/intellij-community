@@ -67,6 +67,10 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return result;
   }
 
+  public Set<FilePath> getDirtyFilesNoExpand() {
+    return new THashSet<FilePath>(myDirtyFiles);
+  }
+
   public synchronized Set<FilePath> getRecursivelyDirtyDirectories() {
     return new THashSet<FilePath>(myDirtyDirectoriesRecursively);
   }

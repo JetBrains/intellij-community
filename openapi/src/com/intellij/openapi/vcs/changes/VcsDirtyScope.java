@@ -17,6 +17,7 @@ public abstract class VcsDirtyScope {
   public abstract Project getProject();
   public abstract AbstractVcs getVcs();
   public abstract Set<FilePath> getDirtyFiles();
+  public abstract Set<FilePath> getDirtyFilesNoExpand();
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
   public abstract void iterate(Processor<FilePath> iterator);
   public abstract boolean belongsTo(final FilePath path);
