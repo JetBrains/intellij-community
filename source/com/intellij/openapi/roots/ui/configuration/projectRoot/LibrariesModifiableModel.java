@@ -66,7 +66,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public void deferredCommit(){
-    for (LibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
+    for (LibraryEditor libraryEditor : new ArrayList<LibraryEditor>(myLibrary2EditorMap.values())) {
       libraryEditor.commit();
     }
     if (!(myLibrary2EditorMap.isEmpty() && myRemovedLibraries.isEmpty())) {
