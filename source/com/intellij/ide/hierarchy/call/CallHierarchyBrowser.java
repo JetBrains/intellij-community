@@ -102,8 +102,8 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   public CallHierarchyBrowser(final Project project, final PsiMethod method) {
     myProject = project;
 
-    myType2ScopeMap.put(CallerMethodsTreeStructure.TYPE, SCOPE_PROJECT);
-    myType2ScopeMap.put(CalleeMethodsTreeStructure.TYPE, SCOPE_PROJECT);
+    myType2ScopeMap.put(CallerMethodsTreeStructure.TYPE, SCOPE_ALL);
+    myType2ScopeMap.put(CalleeMethodsTreeStructure.TYPE, SCOPE_ALL);
 
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
