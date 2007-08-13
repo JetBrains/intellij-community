@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +32,10 @@ public class ReplaceConditionalWithIfIntention extends Intention {
         return new ReplaceConditionalWithIfPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        PsiConditionalExpression expression = (PsiConditionalExpression)element;
+        final PsiConditionalExpression expression =
+                (PsiConditionalExpression)element;
         replaceConditionalWithIf(expression);
     }
 
@@ -67,9 +69,11 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             elseExpressionText = "";
         }
         final PsiExpression condition = expression.getCondition();
-        StringBuilder newStatement = new StringBuilder();
+        final PsiExpression strippedCondition =
+                ParenthesesUtils.stripParentheses(condition);
+        final StringBuilder newStatement = new StringBuilder();
         newStatement.append("if(");
-        newStatement.append(condition.getText());
+        newStatement.append(strippedCondition.getText());
         newStatement.append(')');
         if (variable != null) {
             final String name = variable.getName();
