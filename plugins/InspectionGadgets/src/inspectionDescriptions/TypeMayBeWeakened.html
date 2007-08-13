@@ -5,5 +5,9 @@ This inspection reports any variables which may be declared with a weaker type. 
 a variable may be of type <b><font color="#000080">ArrayList</font></b>, and only the method
 <b><font color="#000080">isEmpty()</font></b> is called on it. In this case the type
 <b><font color="#000080">List</font></b> would do just as well.
+<br>
+Enable the option below to prevent weakening the left side of assignments when the right side is not
+a type cast or new expression. When storing the result of a method call in a variable, it is
+useful to retain the type of the method call result instead of unnecessarily weakening it.
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets</font> </td> </tr> </table> </body>
 </html>
