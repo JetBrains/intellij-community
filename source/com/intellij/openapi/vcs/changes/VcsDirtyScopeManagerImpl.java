@@ -59,7 +59,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myIsInitialized = true;
-      markEverythingDirty();
+      dirDirtyRecursively(myProject.getBaseDir(), true);
     }
     else {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
