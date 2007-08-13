@@ -36,20 +36,17 @@ public class SynchronizedStatement implements GroovyElementTypes {
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.drop();
       return WRONGWAY;
-//      marker.done(SYNCHRONIZED_STATEMENT);
-//      return SYNCHRONIZED_STATEMENT;
     }
 
     if (StrictContextExpression.parse(builder).equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(SYNCHRONIZED_STATEMENT);
-      return SYNCHRONIZED_STATEMENT;
     }
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())) {
         builder.advanceLexer();
+        builder.error(GroovyBundle.message("rparen.expected"));
       }
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         marker.done(SYNCHRONIZED_STATEMENT);
