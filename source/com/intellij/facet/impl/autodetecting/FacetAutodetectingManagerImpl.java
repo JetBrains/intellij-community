@@ -127,6 +127,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void processFile(VirtualFile virtualFile) {
+    //todo[nik] do not detect facets if Project Structure dialog is opened. 
     if (!virtualFile.isValid() || myProject.isDisposed()) return;
 
     FileType fileType = virtualFile.getFileType();

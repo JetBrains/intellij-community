@@ -62,6 +62,10 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
     }
     model.addFacet(facet);
     model.commit();
+    onFacetCreated(facet, rootModel, version);
+  }
+
+  protected void onFacetCreated(final F facet, final ModifiableRootModel rootModel, final String version) {
   }
 
   protected void onLibraryAdded(final F facet, final @NotNull Library library) {

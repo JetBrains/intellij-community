@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -88,20 +89,29 @@ public class ImplicitFacetManager implements Disposable {
             if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
               myAttentionComponent.stopBlinking();
             }
-            if (myImplicitFacets.isEmpty() && !implicitFacets.isEmpty()) {
+            if (myImplicitFacets.isEmpty() && containsValid(implicitFacets)) {
               myAttentionComponent.startBlinking();
             }
           }
         };
-        if (ApplicationManager.getApplication().isDispatchThread()) {
+        if (ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().getCurrentModalityState() == ModalityState.NON_MODAL) {
           runnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(runnable);
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
         }
       }
       myImplicitFacets = implicitFacets;
     }
+  }
+
+  private static boolean containsValid(final List<Facet> facets) {
+    for (Facet facet : facets) {
+      if (FacetUtil.isRegistered(facet)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void queueNotificationPopup() {
