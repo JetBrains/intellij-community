@@ -97,7 +97,7 @@ public class FileSystemSynchronizer {
       catch (ProcessCanceledException e) {
         throw e;
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
         myUpdateSets[i] = new ArrayList();
       }
@@ -177,7 +177,7 @@ public class FileSystemSynchronizer {
           catch (ProcessCanceledException e) {
             throw e;
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.error(e);
           }
           if (myUpdateSets[i].isEmpty()) {
@@ -187,7 +187,7 @@ public class FileSystemSynchronizer {
             catch (ProcessCanceledException e) {
               throw e;
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               LOG.error(e);
             }
             myUpdaters.set(i, null);
