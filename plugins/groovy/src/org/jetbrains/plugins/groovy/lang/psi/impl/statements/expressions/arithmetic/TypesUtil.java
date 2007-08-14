@@ -139,7 +139,8 @@ public class TypesUtil {
       lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
     }
 
-    return TypeConversionUtil.isAssignable(lType, rType);
+    return !(lType == null || rType == null) && TypeConversionUtil.isAssignable(lType, rType);
+
   }
 
   public static boolean isNumericType(PsiType type) {
