@@ -438,16 +438,16 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
       // fill up crumb list first going from end to start
       for (int i = elements.size() - 1; i >= 0; i--) {
+        final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
+        final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
+
         final LineElement element = elements.get(i);
         final String s = element.getInfoString();
-        final Dimension d = DEFAULT_PAINTER.getSize(s, fm);
+        final Dimension d = DEFAULT_PAINTER.getSize(s, fm, width - forward.getWidth() - backward.getWidth());
         final Crumb crumb = new Crumb(this, s, d.width, element);
         if (screenWidth + d.width > width) {
-          final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
-          final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
-
           Crumb first = null;
-          if (screenWidth + backward.getWidth() > width) {
+          if (screenWidth + backward.getWidth() > width && !result.isEmpty()) {
             first = result.removeFirst();
             screenWidth -= first.getWidth();
           }
@@ -548,7 +548,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     public Dimension getPreferredSize() {
       final Graphics2D g2 = (Graphics2D)getGraphics();
-      return new Dimension(Integer.MAX_VALUE, DEFAULT_PAINTER.getSize("dummy", g2.getFontMetrics()).height);
+      return new Dimension(Integer.MAX_VALUE, DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height);
     }
 
     public Dimension getMaximumSize() {
@@ -750,7 +750,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     private CrumbLine myLine;
 
     public NavigationCrumb(@NotNull final CrumbLine line, @NotNull final FontMetrics fm, final boolean forward, @NotNull final Painter p) {
-      super(forward ? FORWARD : BACKWARD, p.getSize(forward ? FORWARD : BACKWARD, fm).width);
+      super(forward ? FORWARD : BACKWARD, p.getSize(forward ? FORWARD : BACKWARD, fm, Integer.MAX_VALUE).width);
       myForward = forward;
       myLine = line;
     }
@@ -885,6 +885,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
   }
 
   abstract static class Painter {
+    public static final int ROUND_VALUE = SystemInfo.isMac ? 5 : 2;
+
     private PainterSettings mySettings;
 
     public Painter(@NotNull final PainterSettings s) {
@@ -898,8 +900,9 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     abstract void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height, final int pageOffset);
 
     @NotNull
-    Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm) {
-      return new Dimension(fm.stringWidth(s), fm.getHeight());
+    Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
+      final int w = fm.stringWidth(s);
+      return new Dimension(w > maxWidth ? maxWidth : w, fm.getHeight());
     }
 
   }
@@ -910,24 +913,21 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     public void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height, final int pageOffset) {
-      final int roundValue = SystemInfo.isMac ? 5 : 2;
-
       final PainterSettings s = getSettings();
-
       final Font oldFont = g2.getFont();
-
       final int offset = c.getOffset() - pageOffset;
 
       final Color bg = s.getBackgroundColor(c);
+      final int width = c.getWidth();
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(offset + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
+        g2.fillRoundRect(offset + 1, 0, width - 3, height - 1, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color borderColor = s.getBorderColor(c);
       if (borderColor != null) {
         g2.setColor(borderColor);
-        g2.drawRoundRect(offset + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
+        g2.drawRoundRect(offset + 1, 0, width - 3, height - 1, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color textColor = s.getForegroundColor(c);
@@ -941,14 +941,34 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       final FontMetrics fm = g2.getFontMetrics();
-      g2.drawString(c.getString(), offset + 2, fm.getAscent() + (SystemInfo.isMac ? fm.getDescent() : 0)); //fm.getHeight());
+
+      String string = c.getString();
+      if (fm.stringWidth(string) > width) {
+      final int dotsWidth = fm.stringWidth("...");
+      final StringBuffer sb = new StringBuffer();
+      int length = 0;
+      for (int i = 0; i < string.length(); i++) {
+        final int charWidth = fm.charWidth(string.charAt(i));
+        if (length + charWidth + dotsWidth > width) {
+          break;
+        }
+
+        length += charWidth;
+        sb.append(string.charAt(i));
+      }
+
+        string = sb.append("...").toString();
+      }
+
+      g2.drawString(string, offset + 2, fm.getAscent() + (SystemInfo.isMac ? fm.getDescent() : 0)); //fm.getHeight());
 
       g2.setFont(oldFont);
     }
 
     @NotNull
-    Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm) {
-      return new Dimension(fm.stringWidth(s) + 5, fm.getHeight() + (SystemInfo.isMac ? 4 : 0));
+    Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
+      final int width = fm.stringWidth(s) + ROUND_VALUE;
+      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() /* + (SystemInfo.isMac ? 4 : 0)*/);
     }
   }
 
