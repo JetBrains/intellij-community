@@ -265,6 +265,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doPrepareErrorTest("Cannot extract method because the selected code fragment defines local classes used outside of the fragment");
   }
 
+  public void _testStaticImport() throws Exception {
+    doTest();
+  }
+
   public void testReassignedVarAfterCall() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
