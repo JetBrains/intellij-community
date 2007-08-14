@@ -110,7 +110,9 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (HighlightSeverity severity : ourMap.keySet()) {
+    final List<HighlightSeverity> registered = new ArrayList<HighlightSeverity>(ourMap.keySet());
+    Collections.sort(registered, this);
+    for (HighlightSeverity severity : registered) {
       Element info = new Element(INFO);
       final SeverityBasedTextAttributes infoType = ourMap.get(severity);
       infoType.writeExternal(info);
