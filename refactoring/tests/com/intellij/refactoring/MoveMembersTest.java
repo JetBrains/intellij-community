@@ -14,50 +14,54 @@ import java.util.LinkedHashSet;
 
 public class MoveMembersTest extends MultiFileTestCase {
   public void testJavadocRefs() throws Exception {
-    doTest("Class1", "Class2", new int[]{0});
+    doTest("Class1", "Class2", 0);
   }
 
   public void testWeirdDeclaration() throws Exception {
-    doTest("A", "B", new int[]{0});
+    doTest("A", "B", 0);
   }
 
   public void testInnerClass() throws Exception {
-    doTest("A", "B", new int[]{0});
+    doTest("A", "B", 0);
   }
 
   public void testScr11871() throws Exception {
-    doTest("pack1.A", "pack1.B", new int[]{0});
+    doTest("pack1.A", "pack1.B", 0);
   }
 
   public void testOuterClassTypeParameters() throws Exception {
-    doTest("pack1.A", "pack2.B", new int[]{0});
+    doTest("pack1.A", "pack2.B", 0);
   }
 
   public void testscr40064() throws Exception {
-    doTest("Test", "Test1", new int[]{0});
+    doTest("Test", "Test1", 0);
   }
 
   public void testscr40947() throws Exception {
-    doTest("A", "Test", new int[]{0, 1});
+    doTest("A", "Test", 0, 1);
   }
 
   public void testIDEADEV11416() throws Exception {
-    doTest("Y", "X", new int[]{0});
+    doTest("Y", "X", 0);
   }
 
   public void testTwoMethods() throws Exception {
-    doTest("pack1.A", "pack1.C", new int[]{0, 1, 2});
+    doTest("pack1.A", "pack1.C", 0, 1, 2);
   }
 
   public void testIDEADEV12448() throws Exception {
-    doTest("B", "A", new int[]{0});
+    doTest("B", "A", 0);
+  }
+
+  public void testFieldForwardRef() throws Exception {
+    doTest("A", "Constants", 0);
   }
 
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }
 
-  private void doTest(final String sourceClassName, final String targetClassName, final int[] memberIndices)
+  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices)
     throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

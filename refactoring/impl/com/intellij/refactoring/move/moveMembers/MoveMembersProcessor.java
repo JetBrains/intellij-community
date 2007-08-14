@@ -28,6 +28,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -185,6 +186,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
         final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
         ChangeContextUtil.encodeContextInfo(member, true);
+
+        PsiElement anchor = getAnchor(member);
+
         final PsiMember memberCopy = (PsiMember)member.copy();
 
         if (member.getContainingClass().isInterface() && !myTargetClass.isInterface()) {
@@ -209,7 +213,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
         member.delete();
 
-        PsiMember newMember = (PsiMember)myTargetClass.add(memberCopy);
+        PsiMember newMember = (anchor != null)
+                              ? (PsiMember)myTargetClass.addAfter(memberCopy, anchor)
+                              : (PsiMember)myTargetClass.add(memberCopy); 
 
         fixVisibility(newMember, usages);
         for (PsiReference reference : refsToBeRebind) {
@@ -229,6 +235,38 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Nullable
+  private PsiElement getAnchor(final PsiMember member) {
+    if (member instanceof PsiField && member.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+      final List<PsiField> referencedFields = new ArrayList<PsiField>();
+      final PsiExpression psiExpression = ((PsiField)member).getInitializer();
+      if (psiExpression != null) {
+        psiExpression.accept(new PsiRecursiveElementVisitor() {
+          @Override
+          public void visitReferenceExpression(final PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement psiElement = expression.resolve();
+            if (psiElement instanceof PsiField) {
+              final PsiField psiField = (PsiField)psiElement;
+              if (psiField.getContainingClass() == myTargetClass && !referencedFields.contains(psiField)) {
+                referencedFields.add(psiField);
+              }
+            }
+          }
+        });
+      }
+      if (referencedFields.size() > 0) {
+        Collections.sort(referencedFields, new Comparator<PsiField>() {
+          public int compare(final PsiField o1, final PsiField o2) {
+            return -PsiUtil.compareElementsByPosition(o1, o2);
+          }
+        });
+        return referencedFields.get(0);
+      }
+    }
+    return null;
   }
 
   private void fixVisibility(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
