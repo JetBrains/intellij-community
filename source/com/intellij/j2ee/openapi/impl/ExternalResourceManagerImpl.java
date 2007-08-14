@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -174,7 +176,14 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
-    final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile.getProject());
+    VirtualFile file = baseFile.getVirtualFile();
+    if (file == null && baseFile.getOriginalFile() != null) {
+      file = baseFile.getOriginalFile().getVirtualFile();
+    }
+    
+    final Module moduleForFile =
+      file != null ? ProjectRootManager.getInstance(baseFile.getProject()).getFileIndex().getModuleForFile(file):null;
+    final XmlFile schema = moduleForFile != null ? XmlSchemaProvider.findSchema(url, moduleForFile):null;
     if (schema != null) {
       return schema;
     }
