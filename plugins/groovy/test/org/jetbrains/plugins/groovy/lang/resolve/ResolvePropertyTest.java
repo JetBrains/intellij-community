@@ -5,7 +5,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -100,7 +100,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("undefinedVar1/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrReferenceExpression);
-    GrTopStatement statement = ((GroovyFile) resolved.getContainingFile()).getTopStatements()[2];
+    GrTopStatement statement = ((GroovyFileBase) resolved.getContainingFile()).getTopStatements()[2];
     assertTrue(resolved.equals(((GrAssignmentExpression) statement).getLValue()));
   }
 

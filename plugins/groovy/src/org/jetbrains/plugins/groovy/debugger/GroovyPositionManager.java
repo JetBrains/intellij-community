@@ -15,9 +15,9 @@
 
 package org.jetbrains.plugins.groovy.debugger;
 
+import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -30,10 +30,10 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -43,11 +43,12 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -86,7 +87,7 @@ public class GroovyPositionManager implements PositionManager {
 
   private GroovyPsiElement findReferenceTypeSourceImage(SourcePosition position) {
     PsiFile file = position.getFile();
-    if (!(file instanceof GroovyFile)) return null;
+    if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     if (element == null) return null;
     return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, GrClosableBlock.class);
@@ -94,7 +95,7 @@ public class GroovyPositionManager implements PositionManager {
 
   private GrTypeDefinition findEnclosingTypeDefinition(SourcePosition position) {
     PsiFile file = position.getFile();
-    if (!(file instanceof GroovyFile)) return null;
+    if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     if (element == null) return null;
     return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
@@ -211,7 +212,7 @@ public class GroovyPositionManager implements PositionManager {
           VirtualFile vFile = vDir.findChild(fileName);
           if (vFile != null) {
             PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-            if (psiFile instanceof GroovyFile) {
+            if (psiFile instanceof GroovyFileBase) {
               result.set(psiFile);
               return false;
             }

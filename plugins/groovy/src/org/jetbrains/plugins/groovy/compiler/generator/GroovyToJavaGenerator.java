@@ -14,6 +14,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -89,7 +90,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
-      final GroovyFile psiFile = findPsiFile(file);
+      final GroovyFileBase psiFile = findPsiFile(file);
       boolean isInTestSources = ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(file);
 
       GrTopStatement[] statements = getTopStatementsInReadAction(psiFile);
@@ -240,7 +241,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return prefix;
   }
 
-  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFile file, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
+  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFileBase file, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
     //prefix defines structure of directories tree
     String prefix = "";
     if (packageDefinition != null) {
@@ -259,7 +260,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return prefix + typeDefinitionName + "." + "java";
   }
 
-  private GrTopStatement[] getTopStatementsInReadAction(final GroovyFile myPsiFile) {
+  private GrTopStatement[] getTopStatementsInReadAction(final GroovyFileBase myPsiFile) {
     if (myPsiFile == null) return new GrTopStatement[0];
 
     return ApplicationManager.getApplication().runReadAction(new Computable<GrTopStatement[]>() {

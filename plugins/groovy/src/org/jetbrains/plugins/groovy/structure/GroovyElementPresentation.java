@@ -1,15 +1,15 @@
 package org.jetbrains.plugins.groovy.structure;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -20,8 +20,8 @@ public class GroovyElementPresentation {
     assert element != null;
     StringBuffer presentableText = new StringBuffer();
 
-    if (element instanceof GroovyFile) {
-      VirtualFile virtualFile = ((GroovyFile) element).getVirtualFile();
+    if (element instanceof GroovyFileBase) {
+      VirtualFile virtualFile = ((GroovyFileBase) element).getVirtualFile();
       assert virtualFile != null;
       presentableText.append(virtualFile.getName());
 

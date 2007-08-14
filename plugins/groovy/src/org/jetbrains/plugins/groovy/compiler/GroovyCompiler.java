@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -132,7 +132,7 @@ public class GroovyCompiler implements TranslatingCompiler {
           String url = compilerMessage.getUrl();
 
 
-          final GroovyFile[] myPsiFile = new GroovyFile[1];
+          final GroovyFileBase[] myPsiFile = new GroovyFileBase[1];
           final VirtualFile myFile;
 
           try {
@@ -145,7 +145,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
-                myPsiFile[0] = (GroovyFile) PsiManager.getInstance(project).findFile(myFile);
+                myPsiFile[0] = (GroovyFileBase) PsiManager.getInstance(project).findFile(myFile);
               }
             });
 

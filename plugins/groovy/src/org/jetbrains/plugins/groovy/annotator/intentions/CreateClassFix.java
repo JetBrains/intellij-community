@@ -32,10 +32,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 /**
  * @author ilyas
@@ -62,12 +64,13 @@ public abstract class CreateClassFix {
       }
 
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        if (!(file instanceof GroovyFile)) return;
+        if (!(file instanceof GroovyFileBase || file instanceof GspFile)) return;
         final PsiManager manager = refElement.getManager();
         final String name = refElement.getReferenceName();
         final Module module = ModuleUtil.findModuleForPsiElement(file);
-        GroovyFile groovyFile = (GroovyFile) file;
-        final String qualifier = groovyFile.getPackageName();
+        GroovyFileBase groovyFile = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() :
+            (GroovyFileBase) file;
+        final String qualifier = groovyFile instanceof GroovyFile ? ((GroovyFile) groovyFile).getPackageName() : "";
         String title = GroovyBundle.message("create.class.family.name");
         GroovyCreateClassDialog dialog = new GroovyCreateClassDialog(project, title, name, qualifier, module);
         dialog.show();
@@ -83,7 +86,7 @@ public abstract class CreateClassFix {
           String qualifiedName = targetClass.getQualifiedName();
           if (qualifiedName != null && qualifiedName.contains(".")) {
             String packageName = qualifiedName.substring(0, qualifiedName.lastIndexOf("."));
-            if (!packageName.equals(groovyFile.getPackageName())) {
+            if (!packageName.equals(qualifier)) {
               groovyFile.addImportForClass(targetClass);
             }
           }

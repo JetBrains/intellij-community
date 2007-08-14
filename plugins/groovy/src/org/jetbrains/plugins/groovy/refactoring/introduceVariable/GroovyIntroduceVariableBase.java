@@ -29,8 +29,11 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -64,11 +67,14 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    if (!(file instanceof GroovyFile)) {
+    if (!(file instanceof GroovyFileBase /* || file instanceof GspFile*/)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
+      showErrorMessage(message, project);
       return false;
     }
     // Expression or block to be introduced as a variable
-    GrExpression tempExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFile) file), startOffset, endOffset, GrExpression.class);
+    GroovyFileBase fileBase = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() : ((GroovyFileBase) file);
+    GrExpression tempExpr = GroovyRefactoringUtil.findElementInRange(fileBase, startOffset, endOffset, GrExpression.class);
     return invokeImpl(project, tempExpr, editor);
   }
 
@@ -280,8 +286,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       if (realContainer instanceof GrCodeBlock) {
         GrCodeBlock block = (GrCodeBlock) realContainer;
         varDecl = (GrVariableDeclaration) block.addStatementBefore(varDecl, (GrStatement) anchorElement);
-      } else if (realContainer instanceof GroovyFile) {
-        varDecl = (GrVariableDeclaration) ((GroovyFile) realContainer).addStatement(varDecl, (GrStatement) anchorElement);
+      } else if (realContainer instanceof GroovyFileBase) {
+        varDecl = (GrVariableDeclaration) ((GroovyFileBase) realContainer).addStatement(varDecl, (GrStatement) anchorElement);
       }
     } else {
       GrStatement tempStatement = ((GrStatement) anchorElement);

@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -26,8 +28,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOr
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 
 /**
  * @author ilyas
@@ -44,14 +44,12 @@ public class SwitchStatement implements GroovyElementTypes {
     }
     if (StrictContextExpression.parse(builder).equals(WRONGWAY)) {
       builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(SWITCH_STATEMENT);
-      return SWITCH_STATEMENT;
     }
-
     ParserUtils.getToken(builder, mNLS);
 
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
       while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())) {
+        builder.error(GroovyBundle.message("rparen.expected"));
         builder.advanceLexer();
       }
       if (!ParserUtils.getToken(builder, mRPAREN)) {
@@ -124,11 +122,14 @@ public class SwitchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, TokenSet.create(kCASE, kDEFAULT));
 
     if (kCASE.equals(elem)) {
+      AssignmentExpression.parse(builder);
+/*
       if (WRONGWAY.equals(AssignmentExpression.parse(builder))) {
         label.done(CASE_LABEL);
         builder.error(GroovyBundle.message("expression.expected"));
         return;
       }
+*/
     }
     ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);

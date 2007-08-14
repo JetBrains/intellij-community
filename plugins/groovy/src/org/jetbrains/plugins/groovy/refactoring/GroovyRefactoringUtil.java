@@ -31,7 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -58,7 +58,7 @@ public abstract class GroovyRefactoringUtil {
     while (parent != null &&
         !(parent instanceof GrCodeBlock) &&
         !(parent instanceof GrCaseSection) &&
-        !(parent instanceof GroovyFile) &&
+        !(parent instanceof GroovyFileBase) &&
         !isLoopOrForkStatement(parent)) {
       parent = parent.getParent();
     }
@@ -71,7 +71,7 @@ public abstract class GroovyRefactoringUtil {
         elem instanceof GrIfStatement;
   }
 
-  public static <T extends PsiElement> T findElementInRange(final GroovyFile file,
+  public static <T extends PsiElement> T findElementInRange(final GroovyFileBase file,
                                                             int startOffset,
                                                             int endOffset,
                                                             final Class<T> klass) {
@@ -118,7 +118,7 @@ public abstract class GroovyRefactoringUtil {
     }
     for (PsiElement child : scope.getChildren()) {
       if (!(child instanceof GrTypeDefinition) &&
-          !(child instanceof GrMethod && scope instanceof GroovyFile)) {
+          !(child instanceof GrMethod && scope instanceof GroovyFileBase)) {
         Comparator<PsiElement> psiComparator = new Comparator<PsiElement>() {
           public int compare(PsiElement psiElement, PsiElement psiElement1) {
             if (psiElement instanceof GrParameter &&
@@ -185,7 +185,7 @@ public abstract class GroovyRefactoringUtil {
   public static boolean isAppropriateContainerForIntroduceVariable(PsiElement tempContainer) {
     return tempContainer instanceof GrOpenBlock ||
         tempContainer instanceof GrClosableBlock ||
-        tempContainer instanceof GroovyFile ||
+        tempContainer instanceof GroovyFileBase ||
         tempContainer instanceof GrCaseSection ||
         isLoopOrForkStatement(tempContainer);
   }

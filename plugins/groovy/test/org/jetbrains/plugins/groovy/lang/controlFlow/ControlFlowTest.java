@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.controlFlow;
 
+import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import junit.framework.Test;
 
 /**
  * @author ven
@@ -31,7 +31,7 @@ public class ControlFlowTest extends SimpleGroovyFileSetTestCase {
 
   public String transform(String testName, String[] data) throws Exception {
     String methodText = data[0];
-    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, methodText);
+    final GroovyFileBase file = (GroovyFileBase) TestUtils.createPseudoPhysicalFile(myProject, methodText);
     final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(file, null, null);
     return dumpControlFlow(instructions);
   }

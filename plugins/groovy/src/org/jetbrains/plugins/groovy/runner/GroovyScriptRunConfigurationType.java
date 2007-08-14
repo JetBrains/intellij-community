@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.*;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;

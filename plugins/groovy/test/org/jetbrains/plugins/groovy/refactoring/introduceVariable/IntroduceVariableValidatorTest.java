@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -82,8 +82,8 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
       // gathering data for introduce variable
       GroovyIntroduceVariableBase introduceVariableBase = new GroovyIntroduceVariableHandler();
 
-      Assert.assertTrue(myFile instanceof GroovyFile);
-      GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFile) myFile), startOffset, endOffset, GrExpression.class);
+      Assert.assertTrue(myFile instanceof GroovyFileBase);
+      GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) myFile), startOffset, endOffset, GrExpression.class);
 
       Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
 

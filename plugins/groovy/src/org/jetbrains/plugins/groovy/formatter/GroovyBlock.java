@@ -25,11 +25,11 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 
 import java.util.List;
 
@@ -113,7 +113,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     ASTNode astNode = getNode();
     final PsiElement psiParent = astNode.getPsi();
-    if (psiParent instanceof GroovyFile) {
+    if (psiParent instanceof GroovyFileBase) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     if (BLOCK_SET.contains(astNode.getElementType()) ||

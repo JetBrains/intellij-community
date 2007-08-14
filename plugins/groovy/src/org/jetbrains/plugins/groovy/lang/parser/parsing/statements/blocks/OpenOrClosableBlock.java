@@ -121,7 +121,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
       Separators.parse(builder);
     }
-    GspTemplateStmtParsing.parseGspTemplateStmt(builder);
+    while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+      Separators.parse(builder);
+    }
 
     GroovyElementType result = Statement.parse(builder);
 

@@ -13,7 +13,7 @@ import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -35,10 +35,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
   }
 
   private class MyProcessor implements Runnable {
-    private GroovyFile myFile;
+    private GroovyFileBase myFile;
 
     public MyProcessor(PsiFile file) {
-      myFile = (GroovyFile) file;
+      myFile = (GroovyFileBase) file;
     }
 
     public void run() {
@@ -207,7 +207,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     }
 
     private boolean isClassImplicitlyImported(String importedClass) {
-      for (String implicitlyImportedClass : GroovyFile.IMPLICITLY_IMPORTED_CLASSES) {
+      for (String implicitlyImportedClass : GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) {
         if (importedClass.equals(implicitlyImportedClass)) return true;
       }
 
@@ -215,7 +215,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     }
 
     private boolean isPackageImplicitlyImported(String packageName) {
-      for (String implicitlyImportedPackage : GroovyFile.IMPLICITLY_IMPORTED_PACKAGES) {
+      for (String implicitlyImportedPackage : GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES) {
         if (packageName.equals(implicitlyImportedPackage)) return true;
       }
       return false;

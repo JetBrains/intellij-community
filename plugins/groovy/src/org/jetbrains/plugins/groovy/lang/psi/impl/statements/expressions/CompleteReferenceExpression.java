@@ -14,7 +14,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -218,7 +218,7 @@ public class CompleteReferenceExpression {
   private static String[] getVariantsWithSameQualifier(GrExpression qualifier, GrReferenceExpression refExpr) {
     if (qualifier != null && qualifier.getType() != null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFile.class);
+    final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFileBase.class);
     List<String> result = new ArrayList<String>();
     addVariantsWithSameQualifier(scope, refExpr, qualifier, result);
     return result.toArray(new String[result.size()]);

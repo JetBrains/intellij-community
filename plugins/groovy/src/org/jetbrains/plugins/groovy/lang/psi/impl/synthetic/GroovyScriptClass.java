@@ -14,6 +14,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -112,7 +113,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   }
 
   public PsiClass getSuperClass() {
-    return myManager.findClass(GroovyFile.SCRIPT_BASE_CLASS_NAME, getResolveScope());
+    return myManager.findClass(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope());
   }
 
   public PsiClass[] getInterfaces() {
@@ -126,7 +127,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[] {getManager().getElementFactory().createTypeByFQClassName(GroovyFile.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
+    return new PsiClassType[] {getManager().getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
   }
 
   public PsiClass getContainingClass() {

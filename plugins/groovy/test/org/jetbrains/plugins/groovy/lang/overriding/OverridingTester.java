@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -20,7 +19,7 @@ public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
 
   public String transform(String testName, String[] data) throws Exception {
     String fileText = data[0];
-    GroovyFile psiFile = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    GroovyFileBase psiFile = (GroovyFileBase) TestUtils.createPseudoPhysicalFile(myProject, fileText);
 
     StringBuffer buffer = new StringBuffer();
 

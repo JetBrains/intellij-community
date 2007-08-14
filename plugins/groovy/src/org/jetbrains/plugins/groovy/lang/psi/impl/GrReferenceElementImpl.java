@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -82,7 +82,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     if (isReferenceTo(element)) return this;
 
     if (element instanceof PsiClass) {
-      final GroovyFile file = (GroovyFile) getContainingFile();
+      final GroovyFileBase file = (GroovyFileBase) getContainingFile();
       final PsiClass clazz = (PsiClass) element;
       final String qName = clazz.getQualifiedName();
       if (qName != null) {

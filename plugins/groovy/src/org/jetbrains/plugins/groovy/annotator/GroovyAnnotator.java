@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -104,7 +105,7 @@ public class GroovyAnnotator implements Annotator {
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
-    } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) { // todo remove me!
+    } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) {
       GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
     }
   }
@@ -143,7 +144,7 @@ public class GroovyAnnotator implements Annotator {
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
     boolean isMethodStatic = modifiersList.hasExplicitModifier(PsiModifier.STATIC);
-    if (grMethod.getParent() instanceof GroovyFile) {
+    if (grMethod.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
       }

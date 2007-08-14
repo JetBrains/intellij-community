@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
@@ -52,7 +52,7 @@ public class GroovyIndentProcessor implements GroovyElementTypes {
     final PsiElement psiParent = astNode.getPsi();
 
     // For Groovy file
-    if (psiParent instanceof GroovyFile) {
+    if (psiParent instanceof GroovyFileBase) {
       return Indent.getNoneIndent();
     }
 

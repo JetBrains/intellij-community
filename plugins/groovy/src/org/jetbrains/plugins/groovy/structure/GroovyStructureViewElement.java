@@ -9,7 +9,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -85,8 +85,8 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
     List<GroovyStructureViewElement> children = new ArrayList<GroovyStructureViewElement>();
 
     GroovyPsiElement element = myElementPointer.getElement();
-    if (element instanceof GroovyFile) {
-      GrTopStatement[] topStatements = ((GroovyFile) element).getTopStatements();
+    if (element instanceof GroovyFileBase) {
+      GrTopStatement[] topStatements = ((GroovyFileBase) element).getTopStatements();
 
       for (GrTopStatement topStatement : topStatements) {
         if (topStatement instanceof GrTypeDefinition || topStatement instanceof GrMethod) {

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,8 +64,8 @@ public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (final PsiDirectory dir : psiPackage.getDirectories(scope)) {
       for (final PsiFile file : dir.getFiles()) {
-        if (file instanceof GroovyFile) {
-          result.addAll(Arrays.asList(((GroovyFile) file).getTypeDefinitions()));
+        if (file instanceof GroovyFileBase) {
+          result.addAll(Arrays.asList(((GroovyFileBase) file).getTypeDefinitions()));
         }
       }
     }

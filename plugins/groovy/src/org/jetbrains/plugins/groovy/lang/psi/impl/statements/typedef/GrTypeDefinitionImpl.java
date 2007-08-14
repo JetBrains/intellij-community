@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.Icons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -576,7 +577,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     PsiImplUtil.setName(name, getNameIdentifierGroovy());
 
     if (renameFile) {
-      final GroovyFile file = (GroovyFile) getContainingFile();
+      final GroovyFileBase file = (GroovyFileBase) getContainingFile();
       file.setName(name + "." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension());
     }
 

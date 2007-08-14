@@ -15,58 +15,19 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
 /**
  * @author ven
  */
-public interface GroovyFile extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner {
-  String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
-
-  String[] IMPLICITLY_IMPORTED_PACKAGES = {
-      "java.lang",
-      "java.util",
-      "java.io",
-      "java.net",
-      "groovy.lang",
-      "groovy.util",
-  };
-
-  String[] IMPLICITLY_IMPORTED_CLASSES = {
-      "java.math.BigInteger",
-      "java.math.BigDecimal",
-  };
-
-  GrTypeDefinition[] getTypeDefinitions();
-
-  GrTopLevelDefintion[] getTopLevelDefinitions();
+public interface GroovyFile extends GroovyFileBase {
 
   @NotNull
   String getPackageName();
 
   GrPackageDefinition getPackageDefinition();
-
-  GrTopStatement[] getTopStatements();
-
-  GrImportStatement[] getImportStatements();
-
-  GrImportStatement addImportForClass(PsiClass aClass);
-  void removeImport(GrImportStatement importStatement) throws IncorrectOperationException;
-  GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException;
-
-  GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
-
-  boolean isScript();
 
   @Nullable
   PsiClass getScriptClass();

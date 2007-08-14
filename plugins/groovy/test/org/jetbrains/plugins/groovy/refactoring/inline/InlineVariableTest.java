@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
@@ -29,7 +28,7 @@ import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -87,15 +86,15 @@ public class InlineVariableTest extends CommonRefactoringTestCase {
 
 
     file = PsiManager.getInstance(myProject).findFile(virtualFile);
-    Assert.assertTrue(file instanceof GroovyFile);
+    Assert.assertTrue(file instanceof GroovyFileBase);
 
     try {
       myEditor.getSelectionModel().setSelection(startOffset, endOffset);
       myEditor.getCaretModel().moveToOffset(endOffset);
 
-      GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(((GroovyFile) file), startOffset, endOffset, GrReferenceExpression.class);
+      GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrReferenceExpression.class);
       if (selectedArea == null) {
-        PsiElement identifier = GroovyRefactoringUtil.findElementInRange(((GroovyFile) file), startOffset,
+        PsiElement identifier = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset,
             endOffset, PsiElement.class);
         if (identifier != null){
           Assert.assertTrue("Selected area doesn't point to variable", identifier.getParent() instanceof GrVariable);
