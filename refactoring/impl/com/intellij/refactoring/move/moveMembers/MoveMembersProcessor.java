@@ -301,8 +301,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException{
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
+    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
+      removeQualifier(refExpr);
+    }
+    else {
+      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
+    }
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

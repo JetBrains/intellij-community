@@ -57,6 +57,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "Constants", 0);
   }
 
+  public void testStaticImport() throws Exception {
+    doTest("C", "B", 0);
+  }
+
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }
@@ -71,9 +75,9 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {
-    PsiClass sourceClass = myPsiManager.findClass(sourceClassName);
+    PsiClass sourceClass = myPsiManager.findClass(sourceClassName, myProject.getProjectScope());
     assertNotNull("Class " + sourceClassName + " not found", sourceClass);
-    PsiClass targetClass = myPsiManager.findClass(targetClassName);
+    PsiClass targetClass = myPsiManager.findClass(targetClassName, myProject.getProjectScope());
     assertNotNull("Class " + targetClassName + " not found", targetClass);
 
     PsiElement[] children = sourceClass.getChildren();

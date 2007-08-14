@@ -231,6 +231,21 @@ public class RefactoringUtil {
     return null;
   }
 
+  public static boolean hasOnDemandStaticImport(final PsiElement element, final PsiClass aClass) {
+    if (element.getContainingFile() instanceof PsiJavaFile) {
+      final PsiImportList importList = ((PsiJavaFile)element.getContainingFile()).getImportList();
+      if (importList != null) {
+        final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+        for(PsiImportStaticStatement stmt: importStaticStatements) {
+          if (stmt.isOnDemand() && stmt.resolveTargetClass() == aClass) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public static interface UsageInfoFactory {
     UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset);
   }
