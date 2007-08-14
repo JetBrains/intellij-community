@@ -51,6 +51,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
           myTodoTreeBuilder.rebuildCache();
         }
       });
+      updateTree();
     }
   }
 }
