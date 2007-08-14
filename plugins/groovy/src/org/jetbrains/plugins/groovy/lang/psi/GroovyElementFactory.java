@@ -20,15 +20,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -39,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 
 /**
- * @author ven
+ * @author dimaskin
  */
 public abstract class GroovyElementFactory {
 
@@ -57,6 +54,9 @@ public abstract class GroovyElementFactory {
 
   public abstract PsiElement createWhiteSpace();
 
+  @NotNull
+  public abstract PsiElement createLineTerminator();
+
   public abstract GrArgumentList createExpressionArgumentList(GrExpression ... expressions);
 
   public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
@@ -67,7 +67,9 @@ public abstract class GroovyElementFactory {
 
   public abstract GrExpression createExpressionFromText(String exprText);
 
-  public abstract GrVariableDeclaration createVariableDeclaration(String identifier, GrExpression initializer, PsiType type, boolean isFinal);
+  public abstract GrVariableDeclaration createSimpleVariableDeclaration (String[] modifiers, String identifier, String type);
+
+  public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
 
   public abstract PsiElement createReferenceNameFromText(String idText);
 

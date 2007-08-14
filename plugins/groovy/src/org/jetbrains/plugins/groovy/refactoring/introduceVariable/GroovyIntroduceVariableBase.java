@@ -30,17 +30,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -126,8 +123,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final boolean replaceAllOccurrences = settings.isReplaceAllOccurrences();
 
     // Generating varibable declaration
-    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(varName,
-        GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
+    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(isFinal ? new String[]{PsiModifier.FINAL} : null, varName,
+        GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType);
 
     runRefactoring(selectedExpr, editor, tempContainer, occurrences, varName, varType, replaceAllOccurrences, varDecl);
 
@@ -244,7 +241,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             varDef.getNameIdentifierGroovy().getText().equals(((GrField) psiReference.resolve()).getNameIdentifierGroovy().getText())) {
           GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
           try {
-            ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this."+ child.getText()));
+            ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()));
           } catch (IncorrectOperationException e) {
             e.printStackTrace();
           }
@@ -344,9 +341,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
    * Replaces an expression occurrence by appropriate variable declaration
    */
   private GrVariable replaceOnlyExpression(@NotNull GrExpression expr,
-                                         GrExpression selectedExpr,
-                                         @NotNull PsiElement context,
-                                         @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
+                                           GrExpression selectedExpr,
+                                           @NotNull PsiElement context,
+                                           @NotNull GrVariableDeclaration definition) throws IncorrectOperationException {
     if (context.equals(expr.getParent()) &&
         !GroovyRefactoringUtil.isLoopOrForkStatement(context)) {
       definition = (GrVariableDeclaration) expr.replaceWithStatement(definition);

@@ -19,16 +19,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -98,10 +94,9 @@ public class IntroduceVariableTest extends ActionTestCase {
 
       PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
       String varName = "preved";
-      final boolean isFinal = false;
       final PsiType varType = null;
-      final GrVariableDeclaration varDecl = GroovyElementFactory.getInstance(myProject).createVariableDeclaration(varName,
-          GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, isFinal);
+      final GrVariableDeclaration varDecl = GroovyElementFactory.getInstance(myProject).createVariableDeclaration(new String[0], 
+          varName, GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType);
 
       introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),
           occurences, varName, varType, replaceAllOccurences, varDecl);
