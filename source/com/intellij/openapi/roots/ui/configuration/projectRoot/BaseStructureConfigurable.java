@@ -58,8 +58,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   private boolean myWasTreeInitialized;
 
-  @NonNls public static final String TREE_OBJECT = "treeObject";
-
   protected boolean myAutoScrollEnabled = true;
 
   protected BaseStructureConfigurable(final Project project) {

@@ -52,6 +52,9 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected NamedConfigurable myCurrentConfigurable;
   private Splitter mySplitter;
 
+
+  @NonNls public static final String TREE_OBJECT = "treeObject";
+
   protected History myHistory = new History(new Place.Navigator() {
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
       return null;
@@ -514,6 +517,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
         configurable.reset();
         initializeConfigurable(configurable);
       }
+       myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
     } else {
       myDetails.setContent(null);
       myDetails.setEmptyContentText(getEmptySelectionString());

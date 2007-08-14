@@ -138,10 +138,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     ApplicationManager.getApplication().assertIsDispatchThread();
     final String selectedTab = ModuleEditor.getSelectedTab();
     updateSelection(configurable, selectedTab);
-
-    if (configurable != null) {
-      myHistory.pushPlaceForElement(TREE_OBJECT, configurable.getEditableObject());
-    }
   }
 
 

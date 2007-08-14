@@ -194,6 +194,9 @@ public class ModuleEditor implements Place.Navigator {
     myTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         ourSelectedTabName = getSelectedTabName();
+        if (myHistory != null) {
+          myHistory.pushQueryPlace();
+        }
       }
     });
 
@@ -201,10 +204,12 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+    myTabbedPane.setSelectedTitle((String)place.getPath("moduleTab"));
     return new ActionCallback.Done();
   }
 
   public void queryPlace(@NotNull final Place place) {
+    place.putPath("moduleTab", ourSelectedTabName);
   }
 
   public static String getSelectedTab(){

@@ -110,14 +110,14 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   protected void loadTree() {
     final TreeMap<ProjectJdk, ProjectJdk> sdks = myJdksTreeModel.getProjectJdks();
     for (ProjectJdk sdk : sdks.keySet()) {
-      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER);
+      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory);
       addNode(new MyNode(configurable), myRoot);
     }
   }
 
   public boolean addJdkNode(final ProjectJdk jdk, final boolean selectInTree) {
     if (!myUiDisposed) {
-      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER)), myRoot);
+      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory)), myRoot);
       if (selectInTree) {
         selectNodeInTree(MasterDetailsComponent.findNodeByObject(myRoot, jdk));
       }

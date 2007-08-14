@@ -242,10 +242,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
         toSelect = each;
       }
-      each.reset();
       if (each instanceof MasterDetailsComponent) {
         ((MasterDetailsComponent)each).setHistory(myHistory);
       }
+      each.reset();
     }
 
     myHistory.clear();

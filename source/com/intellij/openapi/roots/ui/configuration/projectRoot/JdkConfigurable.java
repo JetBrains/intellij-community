@@ -10,8 +10,12 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -19,16 +23,16 @@ import javax.swing.*;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class JdkConfigurable extends NamedConfigurable<ProjectJdk> {
+public class JdkConfigurable extends NamedConfigurable<ProjectJdk> implements Place.Navigator {
   private ProjectJdkImpl myProjectJdk;
   private SdkEditor mySdkEditor;
 
   public JdkConfigurable(final ProjectJdkImpl projectJdk,
                          final ProjectJdksModel configurable,
-                         final Runnable updateTree) {
+                         final Runnable updateTree, @NotNull History history) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
-    mySdkEditor = new SdkEditor(configurable);
+    mySdkEditor = new SdkEditor(configurable, history);
     mySdkEditor.setSdk(myProjectJdk);
   }
 
@@ -77,5 +81,13 @@ public class JdkConfigurable extends NamedConfigurable<ProjectJdk> {
 
   public void disposeUIResources() {
     mySdkEditor.disposeUIResources();
+  }
+
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+    return mySdkEditor.navigateTo(place, requestFocus);
+  }
+
+  public void queryPlace(@NotNull final Place place) {
+    mySdkEditor.queryPlace(place);
   }
 }

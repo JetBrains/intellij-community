@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -276,6 +277,23 @@ public class TabbedPaneWrapper {
 
   public final String getTitleAt(final int i) {
     return myTabbedPane.getTitleAt(i);
+  }
+
+  public void setSelectedTitle(@Nullable final String title) {
+    if (title == null) return;
+
+    for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
+      final String each = myTabbedPane.getTitleAt(i);
+      if (title.equals(each)) {
+        myTabbedPane.setSelectedIndex(i);
+        break;
+      }
+    }
+  }
+
+  @Nullable
+  public String getSelectedTitle() {
+    return getSelectedIndex() < 0 ? null : getTitleAt(getSelectedIndex());
   }
 
   private static final class TabWrapper extends JPanel implements DataProvider{

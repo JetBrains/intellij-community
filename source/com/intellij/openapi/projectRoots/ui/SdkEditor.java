@@ -13,15 +13,21 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,7 +43,7 @@ import java.util.Set;
  * Time: 1:27:59 PM
  */
 
-public class SdkEditor implements Configurable{
+public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
   private ProjectJdk mySdk;
   private PathEditor myClassPathEditor;
@@ -61,9 +67,11 @@ public class SdkEditor implements Configurable{
 
   private String myInitialName;
   private String myInitialPath;
+  private History myHistory;
 
-  public SdkEditor(NotifiableSdkModel sdkModel) {
+  public SdkEditor(NotifiableSdkModel sdkModel, History history) {
     mySdkModel = sdkModel;
+    myHistory = history;
     createMainPanel();
   }
 
@@ -114,6 +122,12 @@ public class SdkEditor implements Configurable{
     myTabbedPane.addTab(mySourcePathEditor.getDisplayName(), mySourcePathEditor.createComponent());
     myTabbedPane.addTab(myJavadocPathEditor.getDisplayName(), myJavadocPathEditor.createComponent());
     myTabbedPane.addTab(myAnnotationPathEditor.getDisplayName(), myAnnotationPathEditor.createComponent());
+
+    myTabbedPane.addChangeListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        myHistory.pushQueryPlace();
+      }
+    });
 
     myHomeComponent = new TextFieldWithBrowseButton(new ActionListener(){
       public void actionPerformed(ActionEvent e){
@@ -503,5 +517,14 @@ public class SdkEditor implements Configurable{
     public boolean isWritable() {
       return true;
     }
+  }
+
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+    myTabbedPane.setSelectedTitle((String)place.getPath("sdkTab"));
+    return new ActionCallback.Done();
+  }
+
+  public void queryPlace(@NotNull final Place place) {
+    place.putPath("sdkTab", myTabbedPane.getSelectedTitle());
   }
 }
