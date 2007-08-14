@@ -56,7 +56,7 @@ public class RemoveChangeListAction extends AnAction {
 
     for(ChangeList list: lists) {
       if (((LocalChangeList) list).isDefault()) {
-        removeActiveChangeList(project, lists);
+        removeActiveChangeList(project, lists, list.getChanges().isEmpty());
         return;
       }
     }
@@ -83,14 +83,15 @@ public class RemoveChangeListAction extends AnAction {
     }
   }
 
-  private static void removeActiveChangeList(final Project project, final ChangeList[] lists) {
+  private static void removeActiveChangeList(final Project project, final ChangeList[] lists, final boolean empty) {
     List<LocalChangeList> remainingLists = new ArrayList<LocalChangeList>(ChangeListManager.getInstance(project).getChangeLists());
     remainingLists.removeAll(Arrays.asList(lists));
     String[] names = new String[remainingLists.size()];
     for(int i=0; i<remainingLists.size(); i++) {
       names [i] = remainingLists.get(i).getName();
     }
-    int nameIndex = Messages.showChooseDialog(project, VcsBundle.message("changes.remove.active.prompt"),
+    int nameIndex = Messages.showChooseDialog(project,
+                                              empty ? VcsBundle.message("changes.remove.active.empty.prompt") : VcsBundle.message("changes.remove.active.prompt"),
                                               VcsBundle.message("changes.remove.active.title"),
                                               Messages.getQuestionIcon(), names, names [0]);
     if (nameIndex < 0) return;
