@@ -11,8 +11,8 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
@@ -294,7 +294,7 @@ public class HtmlUtil {
   public static Charset detectCharsetFromMetaHttpEquiv(@NotNull String content) {
     final Ref<String> charsetNameRef = new Ref<String>();
     try {
-      new XmlBuilderDriver(content).build(new XmlBuilder() {
+      new HtmlBuilderDriver(content).build(new XmlBuilder() {
         @NonNls final Bag inTag = new HashBag();
         boolean metHttpEquiv = false;
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,

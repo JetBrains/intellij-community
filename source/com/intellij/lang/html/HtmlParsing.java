@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
 
-class HtmlParsing {
+public class HtmlParsing {
   @NonNls private static final String TR_TAG = "tr";
   @NonNls private static final String TD_TAG = "td";
   @NonNls private static final String TABLE_TAG = "table";

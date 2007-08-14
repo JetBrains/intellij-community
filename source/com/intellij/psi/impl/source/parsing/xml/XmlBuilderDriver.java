@@ -30,17 +30,17 @@ public class XmlBuilderDriver {
     myText = text;
   }
 
+  protected CharSequence getText() {
+    return myText;
+  }
+
   public void addImplicitBinding(String prefix, String namespace) {
     myNamespacesStack.push(namespace);
     myPrefixesStack.push(prefix);
   }
 
   public void build(XmlBuilder builder) {
-    final ParserDefinition xmlParserDefinition = StdLanguages.XML.getParserDefinition();
-    assert xmlParserDefinition != null;
-
-    PsiBuilderImpl b = new PsiBuilderImpl(xmlParserDefinition.createLexer(null), xmlParserDefinition.getWhitespaceTokens(), TokenSet.EMPTY, null, myText);
-    new XmlParsing(b).parseDocument();
+    PsiBuilderImpl b = createBuilderAndParse();
 
     FlyweightCapableTreeStructure<LighterASTNode> structure = b.getLightTree();
 
@@ -54,7 +54,7 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       final IElementType tt = child.getTokenType();
-      if (tt == XmlElementType.XML_TAG) {
+      if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) {
         processTagNode(structure, child, builder);
       }
     }
@@ -62,9 +62,19 @@ public class XmlBuilderDriver {
     structure.disposeChildren(children, count);
   }
 
+  protected PsiBuilderImpl createBuilderAndParse() {
+    final ParserDefinition xmlParserDefinition = StdLanguages.XML.getParserDefinition();
+    assert xmlParserDefinition != null;
+
+    PsiBuilderImpl b = new PsiBuilderImpl(xmlParserDefinition.createLexer(null), xmlParserDefinition.getWhitespaceTokens(), TokenSet.EMPTY, null, myText);
+    new XmlParsing(b).parseDocument();
+    return b;
+  }
+
 
   private void processTagNode(FlyweightCapableTreeStructure<LighterASTNode> structure, LighterASTNode node, XmlBuilder builder) {
-    assert node.getTokenType() == XmlElementType.XML_TAG;
+    final IElementType nodeTT = node.getTokenType();
+    assert nodeTT == XmlElementType.XML_TAG || nodeTT == XmlElementType.HTML_TAG;
 
     node = structure.prepareForGetChildren(node);
 
@@ -101,7 +111,7 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       IElementType tt = child.getTokenType();
-      if (tt == XmlElementType.XML_TAG) processTagNode(structure, child, builder);
+      if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) processTagNode(structure, child, builder);
       if (processAttrs && tt == XmlElementType.XML_ATTRIBUTE) processAttributeNode(child, structure, builder);
       if (processTexts && tt == XmlElementType.XML_TEXT) processTextNode(structure, child, builder);
       if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(myText.subSequence(child.getStartOffset(), child.getEndOffset()), child.getStartOffset(), child.getEndOffset());
