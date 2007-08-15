@@ -94,6 +94,10 @@
       <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
               text="Groovy Script" description="Create new Groovy script">
       </action>
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
+    <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
+           text="Grails">
       <action id="Grails.NewApp" class="org.jetbrains.plugins.grails.actions.NewGrailsAppAction"
               text="Grails Application"
               description="Create new Grails application"/>
