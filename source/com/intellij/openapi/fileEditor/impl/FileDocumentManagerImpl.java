@@ -556,7 +556,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
       }
