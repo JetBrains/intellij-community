@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.junit2.configuration.JUnitConfigurable">
+  <grid id="ece1c" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="28" y="28" width="531" height="464"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="e7277" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="f0b3" class="javax.swing.JRadioButton" binding="myAllInPackageButton">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <actionCommand resource-bundle="messages/ExecutionBundle" key="jnit.configuration.all.tests.in.package.radio"/>
+              <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.all.in.package.radio"/>
+            </properties>
+          </component>
+          <component id="b4d8a" class="javax.swing.JRadioButton" binding="myClassButton">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <actionCommand resource-bundle="messages/ExecutionBundle" key="junit.configuration.test.class.radio"/>
+              <enabled value="true"/>
+              <selected value="false"/>
+              <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.class.radio"/>
+            </properties>
+          </component>
+          <component id="56313" class="javax.swing.JRadioButton" binding="myTestMethodButton">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <actionCommand resource-bundle="messages/ExecutionBundle" key="junit.configuration.test.method.radio"/>
+              <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.method.radio"/>
+            </properties>
+          </component>
+          <component id="52bca" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <horizontalAlignment value="2"/>
+              <horizontalTextPosition value="2"/>
+              <iconTextGap value="4"/>
+              <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.configure.junit.test.label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="1c9c1" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="5947e" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="5" left="5" bottom="5" right="5"/>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false">
+                <minimum-size width="-1" height="120"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="junit.configuration.test.border"/>
+            <children>
+              <component id="89ba4" class="com.intellij.openapi.ui.LabeledComponent" binding="myClass">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+                  <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.class.label"/>
+                </properties>
+              </component>
+              <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+                  <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.method.label"/>
+                </properties>
+              </component>
+              <vspacer id="c588d">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </vspacer>
+              <grid id="27b84" binding="myPackagePanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="e6070" class="com.intellij.openapi.ui.LabeledComponent" binding="myPackage">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
+                      <enabled value="true"/>
+                      <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.package.label"/>
+                      <visible value="true"/>
+                    </properties>
+                  </component>
+                  <grid id="c9a5f" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="4baf8" class="javax.swing.JLabel">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.search.for.tests.label"/>
+                        </properties>
+                      </component>
+                      <component id="8a66a" class="javax.swing.JRadioButton" binding="myWholeProjectScope">
+                        <constraints>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.in.whole.project.radio"/>
+                        </properties>
+                      </component>
+                      <component id="bccef" class="javax.swing.JRadioButton" binding="mySingleModuleScope">
+                        <constraints>
+                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.in.single.module.radio"/>
+                        </properties>
+                      </component>
+                      <component id="3b541" class="javax.swing.JRadioButton" binding="myModuleWDScope">
+                        <constraints>
+                          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.across.module.dependencies.radio"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <vspacer id="72285">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <grid id="92997" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+        <margin top="5" left="0" bottom="5" right="0"/>
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="f3e49" class="com.intellij.execution.junit2.configuration.CommonJavaParameters" binding="myCommonJavaParameters">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="350c9" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <componentClass value="javax.swing.JComboBox"/>
+              <enabled value="true"/>
+              <labelInsets top="7" left="0" bottom="2" right="0"/>
+              <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.use.classpath.and.jdk.of.module.label"/>
+            </properties>
+          </component>
+          <component id="e5163" class="com.intellij.execution.ui.AlternativeJREPanel" binding="myAlternativeJREPanel">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </component>
+          <component id="132fa" class="com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent" binding="myEnvVariablesComponent">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

@@ -12,7 +12,6 @@ import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit2.ui.Formatters;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
@@ -55,6 +54,7 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.text.NumberFormat;
 
 public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleManager
 {
@@ -179,7 +179,8 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         if (failed.size() > 0)
             sb.append("   Failed: ").append(failed.size()).append(' ');
         if (end != 0) {
-            sb.append(" (").append(Formatters.printTime(end - start)).append(")  ");
+          final long time = end - start;
+          sb.append(" (").append(time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time/1000.0) + " s").append(")  ");
         }
         label.setText(sb.toString());
     }

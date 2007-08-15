@@ -6,12 +6,12 @@
  */
 package com.theoryinpractice.testng.model;
 
-import com.intellij.execution.junit2.ui.Formatters;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -88,7 +88,10 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
 
     public String valueOf(final TestResultMessage result) {
       long time = getDuration(result);
-      return Formatters.printTime(time);
+      if (time == 0) {
+        return "0.0 s";
+      }
+      return NumberFormat.getInstance().format((double)time/1000.0) + " s";
     }
 
     public Comparator<TestResultMessage> getComparator() {

@@ -6,19 +6,12 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Map;
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.text.Document;
-
 import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.junit.TestSearchScope;
-import com.intellij.execution.junit2.configuration.*;
+import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.junit2.configuration.CommonJavaParameters;
+import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -37,6 +30,16 @@ import com.intellij.ui.table.TableView;
 import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.Document;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration>
 {

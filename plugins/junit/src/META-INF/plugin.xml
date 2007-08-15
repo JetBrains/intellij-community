@@ -1,0 +1,25 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin>
+  <name>JUnit</name>
+  <description>JUnit Integration</description>
+  <version>1.0</version>
+  <extensions xmlns="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <configurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
+    <configurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
+    <configurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
+    <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitDeadCodeExtension"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnitTestFramework"/>
+  </extensions>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.execution.junit.JUnitConfigurationType</implementation-class>
+    </component>
+  </application-components>
+  <actions>
+    <group>
+      <action class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
+      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
+    </group>
+  </actions>
+</idea-plugin>

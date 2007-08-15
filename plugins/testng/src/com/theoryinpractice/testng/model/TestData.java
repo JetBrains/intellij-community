@@ -1,17 +1,23 @@
 package com.theoryinpractice.testng.model;
 
-import java.util.*;
-
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.ExternalizablePath;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit.TestSearchScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:11:01 PM

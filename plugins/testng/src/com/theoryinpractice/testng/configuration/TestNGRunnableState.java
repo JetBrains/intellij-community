@@ -6,23 +6,17 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.*;
-
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.junit.TestSearchScope;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.PathManager;
@@ -38,7 +32,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
@@ -48,7 +45,19 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
-import org.testng.xml.*;
+import org.testng.xml.LaunchSuite;
+import org.testng.xml.Parser;
+import org.testng.xml.SuiteGenerator;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
