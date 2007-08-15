@@ -41,6 +41,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.Field;
+import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
@@ -773,13 +774,18 @@ public class BreakpointManager implements JDOMExternalizable {
       abstract class FilterSetter <T extends EventRequest> {
          void applyFilter(final List<T> requests, final ThreadReference thread) {
           for (T request : requests) {
-            final boolean wasEnabled = request.isEnabled();
-            if (wasEnabled) {
-              request.disable();
+            try {
+              final boolean wasEnabled = request.isEnabled();
+              if (wasEnabled) {
+                request.disable();
+              }
+              addFilter(request, thread);
+              if (wasEnabled) {
+                request.enable();
+              }
             }
-            addFilter(request, thread);
-            if (wasEnabled) {
-              request.enable();
+            catch (InternalException e) {
+              LOG.info(e);
             }
           }
         }
