@@ -22,6 +22,10 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.regex.Pattern;
+
 /**
  * @author ilyas
  */
@@ -94,4 +98,13 @@ public abstract class GroovyUtils {
     return urls;
   }
 
+  public static File[] getFilesInDirectoryByPattern(String dirPath, final String patternString) {
+    File distDir = new File(dirPath);
+    return distDir.listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        Pattern pattern = Pattern.compile(patternString);
+        return pattern.matcher(name).matches();
+      }
+    });
+  }
 }

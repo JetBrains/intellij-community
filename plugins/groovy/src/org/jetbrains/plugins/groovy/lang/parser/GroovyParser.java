@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
 
 /**
@@ -31,6 +32,8 @@ public class GroovyParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
+
+    String s = GroovyGrailsConfiguration.getInstance().getGrailsVersion();
 
     PsiBuilder.Marker rootMarker = builder.mark();
 
