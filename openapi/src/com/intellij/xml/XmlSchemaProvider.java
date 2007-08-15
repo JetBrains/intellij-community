@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +34,9 @@ public abstract class XmlSchemaProvider {
   public final static ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
 
   @Nullable
-  public static XmlFile findSchema(@NotNull @NonNls String url, @NotNull Module module) {
+  public static XmlFile findSchema(@NotNull @NonNls String url, @NotNull Module module, @NotNull PsiFile file) {
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
-      final XmlFile schema = provider.getSchema(url, module);
+      final XmlFile schema = provider.getSchema(url, module, file);
       if (schema != null) {
         return schema;
       }
@@ -44,5 +45,5 @@ public abstract class XmlSchemaProvider {
   }
 
   @Nullable
-  public abstract XmlFile getSchema(@NotNull @NonNls String url, @NotNull Module module);
+  public abstract XmlFile getSchema(@NotNull @NonNls String url, @NotNull Module module,@NotNull final PsiFile baseFile);
 }

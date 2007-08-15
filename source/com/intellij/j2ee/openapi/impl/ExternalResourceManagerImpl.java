@@ -183,7 +183,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     
     final Module moduleForFile =
       file != null ? ProjectRootManager.getInstance(baseFile.getProject()).getFileIndex().getModuleForFile(file):null;
-    final XmlFile schema = moduleForFile != null ? XmlSchemaProvider.findSchema(url, moduleForFile):null;
+    final XmlFile schema = moduleForFile != null ? XmlSchemaProvider.findSchema(url, moduleForFile,baseFile):null;
     if (schema != null) {
       return schema;
     }
