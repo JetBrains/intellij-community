@@ -562,8 +562,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 	        if (useRighthandTypeAsWeakestTypeInAssignments) {
 		        if (variable instanceof PsiLocalVariable) {
 			        final PsiExpression initializer = variable.getInitializer();
-			        if (initializer instanceof PsiNewExpression ||
-					        initializer instanceof PsiTypeCastExpression) {
+			        if (!(initializer instanceof PsiNewExpression) &&
+					        !(initializer instanceof PsiTypeCastExpression)) {
 				        return;
 			        }
 		        }
