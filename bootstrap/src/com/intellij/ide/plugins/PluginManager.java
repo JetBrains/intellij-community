@@ -1081,27 +1081,29 @@ public class PluginManager {
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
       ourDisabledPlugins = new ArrayList<String>();
-      final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
-      if (file.isFile()) {
-        BufferedReader reader = null;
-        try {
-          reader = new BufferedReader(new FileReader(file));
-          String id;
-          while ((id = reader.readLine()) != null) {
-            ourDisabledPlugins.add(id.trim());
-          }
-        }
-        catch (IOException e) {
-          //do nothing
-        }
-        finally {
+      if (System.getProperty("idea.ignore.disabled.plugins") != null) {
+        final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
+        if (file.isFile()) {
+          BufferedReader reader = null;
           try {
-            if (reader != null) {
-              reader.close();
+            reader = new BufferedReader(new FileReader(file));
+            String id;
+            while ((id = reader.readLine()) != null) {
+              ourDisabledPlugins.add(id.trim());
             }
           }
           catch (IOException e) {
             //do nothing
+          }
+          finally {
+            try {
+              if (reader != null) {
+                reader.close();
+              }
+            }
+            catch (IOException e) {
+              //do nothing
+            }
           }
         }
       }
