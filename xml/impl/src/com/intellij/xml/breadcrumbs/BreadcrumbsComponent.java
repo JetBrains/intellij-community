@@ -968,7 +968,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
       final int width = fm.stringWidth(s) + ROUND_VALUE;
-      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() /* + (SystemInfo.isMac ? 4 : 0)*/);
+      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() + (SystemInfo.isMac ? 4 : 0));
     }
   }
 
