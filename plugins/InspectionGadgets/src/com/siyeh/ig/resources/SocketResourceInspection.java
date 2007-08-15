@@ -160,12 +160,10 @@ public class SocketResourceInspection extends BaseInspection {
         }
 
         private static boolean isSocketResource(PsiNewExpression expression){
-            return TypeUtils.expressionHasTypeOrSubtype("java.net.Socket",
-                    expression)||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.net.DatagramSocket", expression) ||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.net.ServerSocket", expression);
+            return TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.net.Socket",
+		            "java.net.DatagramSocket",
+		            "java.net.ServerSocket");
         }
 
         private static boolean isSocketFactoryMethod(
@@ -182,12 +180,12 @@ public class SocketResourceInspection extends BaseInspection {
             if(qualifier == null) {
                 return false;
             }
-            return TypeUtils.expressionHasTypeOrSubtype("java.net.ServerSocket",
-                    qualifier);
+            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		            "java.net.ServerSocket");
         }
     }
 
-    private static class CloseVisitor extends PsiRecursiveElementVisitor{
+	private static class CloseVisitor extends PsiRecursiveElementVisitor{
 
         private boolean containsClose = false;
         private PsiVariable objectToClose;

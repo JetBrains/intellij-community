@@ -129,8 +129,8 @@ public class SafeLockInspection extends BaseInspection {
             if (qualifier == null) {
                 return false;
             }
-            return TypeUtils.expressionHasTypeOrSubtype(
-                    "java.util.concurrent.locks.Lock", qualifier);
+            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		            "java.util.concurrent.locks.Lock");
         }
     }
 

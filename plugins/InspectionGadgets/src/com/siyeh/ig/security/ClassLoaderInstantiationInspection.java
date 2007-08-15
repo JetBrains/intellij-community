@@ -46,8 +46,8 @@ public class ClassLoaderInstantiationInspection extends BaseInspection {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            if (!TypeUtils.expressionHasTypeOrSubtype("java.lang.ClassLoader",
-                    expression)) {
+            if (!TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.lang.ClassLoader")) {
                 return;
             }
             registerNewExpressionError(expression);

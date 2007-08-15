@@ -186,8 +186,8 @@ public class JNDIResourceInspection extends BaseInspection {
         }
 
         private static boolean isJNDIResource(PsiNewExpression expression){
-            return TypeUtils.expressionHasTypeOrSubtype(
-                    "javax.naming.InitialContext", expression);
+            return TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "javax.naming.InitialContext");
         }
 
         private static boolean isJNDIFactoryMethod(
@@ -203,8 +203,8 @@ public class JNDIResourceInspection extends BaseInspection {
             if(qualifier == null){
                 return false;
             }
-            return TypeUtils.expressionHasTypeOrSubtype("javax.naming.Context",
-                    qualifier);
+            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		            "javax.naming.Context");
         }
     }
 

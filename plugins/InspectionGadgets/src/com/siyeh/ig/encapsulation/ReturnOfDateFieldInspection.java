@@ -32,7 +32,9 @@ public class ReturnOfDateFieldInspection extends BaseInspection{
 
     @NotNull
     public String buildErrorString(Object... infos){
-        final boolean date = ((Boolean)infos[0]).booleanValue();
+        final PsiExpression expression = (PsiExpression)infos[0];
+	    final boolean date = TypeUtils.expressionHasTypeOrSubtype(
+			    expression, "java.util.Date");
         if (date) {
             return InspectionGadgetsBundle.message(
                     "return.date.calendar.field.problem.descriptor",
@@ -63,14 +65,11 @@ public class ReturnOfDateFieldInspection extends BaseInspection{
             if(!(element instanceof PsiField)){
                 return;
             }
-            final boolean date = TypeUtils.expressionHasTypeOrSubtype(
-                    "java.util.Date", returnValue);
-            final boolean calendar = TypeUtils.expressionHasTypeOrSubtype(
-                    "java.util.Calendar", returnValue);
-            if(!date && !calendar) {
-                return;
+            if (!TypeUtils.expressionHasTypeOrSubtype(
+                    returnValue, "java.util.Date", "java.util.Calendar")) {
+	            return;
             }
-            registerError(returnValue, Boolean.valueOf(date));
+	        registerError(returnValue, returnValue);
         }
     }
 }

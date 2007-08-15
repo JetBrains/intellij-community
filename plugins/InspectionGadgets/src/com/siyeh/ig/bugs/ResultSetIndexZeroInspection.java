@@ -85,8 +85,8 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasTypeOrSubtype("java.sql.ResultSet",
-                    qualifier)) {
+            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, 
+		            "java.sql.ResultSet")) {
                 return;
             }
             registerError(argument);

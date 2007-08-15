@@ -70,8 +70,8 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
             if(qualifier == null){
                 return;
             }
-            if(!TypeUtils.expressionHasTypeOrSubtype("java.util.Properties",
-                                                     qualifier)){
+            if(!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		            "java.util.Properties")){
                 return;
             }
             registerMethodCallError(expression);

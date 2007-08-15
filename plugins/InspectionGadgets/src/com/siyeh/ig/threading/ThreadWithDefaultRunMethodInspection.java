@@ -75,11 +75,11 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
                 if (argumentList == null) {
                     return;
                 }
-                final PsiExpression[] args = argumentList.getExpressions();
-                for (PsiExpression arg : args) {
-                    if (TypeUtils.expressionHasTypeOrSubtype(
-                            "java.lang.Runnable", arg)) {
-                        return;
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                for (PsiExpression argument : arguments) {
+                    if (TypeUtils.expressionHasTypeOrSubtype(argument,
+		                    "java.lang.Runnable")) {
+	                    return;
                     }
                 }
                 registerNewExpressionError(expression);
@@ -104,11 +104,11 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
                 if (argumentList == null) {
                     return;
                 }
-                final PsiExpression[] args = argumentList.getExpressions();
-                for (PsiExpression arg : args) {
-                    if (TypeUtils.expressionHasTypeOrSubtype(
-                            "java.lang.Runnable", arg)) {
-                        return;
+                final PsiExpression[] arguments = argumentList.getExpressions();
+                for (PsiExpression argument : arguments) {
+                    if (TypeUtils.expressionHasTypeOrSubtype(argument,
+		                    "java.lang.Runnable")) {
+	                    return;
                     }
                 }
                 registerNewExpressionError(expression);

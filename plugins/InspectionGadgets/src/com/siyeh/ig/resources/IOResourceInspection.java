@@ -290,43 +290,38 @@ public class IOResourceInspection extends BaseInspection {
         return isNonTrivialInputStream(expression) ||
                 isNonTrivialWriter(expression) ||
                 isNonTrivialReader(expression) ||
-                TypeUtils.expressionHasTypeOrSubtype("java.io.RandomAccessFile",
-                        expression) ||
+                TypeUtils.expressionHasTypeOrSubtype(expression,
+		                "java.io.RandomAccessFile") ||
                 isNonTrivialOutputStream(expression);
     }
 
     private static boolean isNonTrivialOutputStream(PsiNewExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype("java.io.OutputStream",
-                expression)
+        return TypeUtils.expressionHasTypeOrSubtype(expression,
+		        "java.io.OutputStream")
                 &&
-                !TypeUtils.expressionHasTypeOrSubtype(
-                        "java.io.ByteArrayOutputStream", expression);
+                !TypeUtils.expressionHasTypeOrSubtype(expression,
+		                "java.io.ByteArrayOutputStream");
     }
 
-    private static boolean isNonTrivialReader(PsiNewExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype("java.io.Reader",
-                expression) &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.CharArrayReader",
-                        expression) &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.StringReader",
-                        expression);
+	private static boolean isNonTrivialReader(PsiNewExpression expression){
+        return TypeUtils.expressionHasTypeOrSubtype(expression,
+		        "java.io.Reader") &&
+                !TypeUtils.expressionHasTypeOrSubtype(expression,
+		                "java.io.CharArrayReader", "java.io.StringReader");
     }
 
     private static boolean isNonTrivialWriter(PsiNewExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype("java.io.Writer",
-                expression) &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.CharArrayWriter",
-                        expression) &&
-                !TypeUtils.expressionHasTypeOrSubtype("java.io.StringWriter",
-                        expression);
+        return TypeUtils.expressionHasTypeOrSubtype(expression,
+		        "java.io.Writer") &&
+                !TypeUtils.expressionHasTypeOrSubtype(expression,
+		                "java.io.CharArrayWriter", "java.io.StringWriter");
     }
 
     private static boolean isNonTrivialInputStream(PsiNewExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype("java.io.InputStream",
-                expression) &&
-                !TypeUtils.expressionHasTypeOrSubtype(
-                        "java.io.ByteArrayInputStream", expression) &&
-                !TypeUtils.expressionHasTypeOrSubtype(
-                        "java.io.StringBufferInputStream", expression);
+        return TypeUtils.expressionHasTypeOrSubtype(expression,
+		        "java.io.InputStream") &&
+                !TypeUtils.expressionHasTypeOrSubtype(expression,
+		                "java.io.ByteArrayInputStream",
+		                "java.io.StringBufferInputStream");
     }
 }

@@ -120,9 +120,9 @@ public class MethodCallUtils {
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (qualifier != null) {
-                if (!TypeUtils.expressionHasTypeOrSubtype(calledOnClassName,
-                        qualifier)) {
-                    return false;
+                if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		                calledOnClassName)) {
+	                return false;
                 }
                 return MethodUtils.methodMatches(method, null, returnType,
                         methodName, parameterTypes);

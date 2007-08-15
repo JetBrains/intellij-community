@@ -108,18 +108,13 @@ public class ChannelResourceInspection extends BaseInspection {
             if(qualifier == null) {
                 return false;
             }
-            return TypeUtils.expressionHasTypeOrSubtype(
-                    "java.net.Socket", qualifier) ||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.net.DatagramSocket", qualifier) ||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.net.ServerSocket", qualifier) ||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.io.FileInputStream", qualifier) ||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.io.FileOutputStream", qualifier) ||
-                    TypeUtils.expressionHasTypeOrSubtype(
-                            "java.io.RandomAccessFile", qualifier);
+            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		            "java.net.Socket",
+		            "java.net.DatagramSocket",
+		            "java.net.ServerSocket",
+		            "java.io.FileInputStream",
+		            "java.io.FileOutputStream",
+		            "java.io.RandomAccessFile");
         }
 
         private static boolean resourceIsOpenedInTryAndClosedInFinally(

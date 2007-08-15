@@ -181,8 +181,8 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 }
                 final PsiExpression qualifier =
                         methodExpression.getQualifierExpression();
-	            if (!TypeUtils.expressionHasTypeOrSubtype(
-			            "java.io.PrintStream", qualifier)) {
+	            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+			            "java.io.PrintStream")) {
 		            return false;
 	            }
 	            final PsiArrayType arrayType = (PsiArrayType)type;

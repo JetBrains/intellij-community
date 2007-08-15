@@ -136,8 +136,8 @@ public class HibernateResourceInspection extends BaseInspection {
             if(qualifier == null){
                 return false;
             }
-            return TypeUtils.expressionHasTypeOrSubtype(
-                    "org.hibernate.SessionFactory", qualifier);
+            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                    "org.hibernate.SessionFactory");
         }
     }
 

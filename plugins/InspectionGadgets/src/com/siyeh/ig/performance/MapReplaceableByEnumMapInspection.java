@@ -61,13 +61,13 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
             if (!(argumentType instanceof PsiClassType)) {
                 return;
             }
-            if (!TypeUtils.expressionHasTypeOrSubtype("java.util.Map",
-                    expression)) {
+            if (!TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.util.Map")) {
                 return;
             }
-            if (TypeUtils.expressionHasTypeOrSubtype("java.util.EnumMap",
-                    expression)) {
-                return;
+            if (TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.util.EnumMap")) {
+	            return;
             }
             final PsiClassType argumentClassType = (PsiClassType)argumentType;
             final PsiClass argumentClass = argumentClassType.resolve();

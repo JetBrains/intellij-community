@@ -77,9 +77,9 @@ public class AssignmentToDateFieldFromParameterInspection
             if (!(lhs instanceof PsiReferenceExpression)) {
                 return;
             }
-            if (!TypeUtils.expressionHasTypeOrSubtype("java.util.Date", lhs)
-                    && !TypeUtils.expressionHasTypeOrSubtype(
-                    "java.util.Calendar", lhs)) {
+            if (!TypeUtils.expressionHasTypeOrSubtype(lhs, "java.util.Date")
+                    && !TypeUtils.expressionHasTypeOrSubtype(lhs,
+		            "java.util.Calendar")) {
                 return;
             }
             final PsiExpression rhs = expression.getRExpression();

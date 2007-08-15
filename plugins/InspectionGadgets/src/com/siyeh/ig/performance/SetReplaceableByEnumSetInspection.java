@@ -61,12 +61,12 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
             if (!(argumentType instanceof PsiClassType)) {
                 return;
             }
-            if (!TypeUtils.expressionHasTypeOrSubtype("java.util.Set",
-                    expression)) {
+            if (!TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.util.Set")) {
                 return;
             }
-            if (TypeUtils.expressionHasTypeOrSubtype("java.util.EnumSet",
-                    expression)) {
+            if (TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.util.EnumSet")) {
                 return;
             }
             final PsiClassType argumentClassType = (PsiClassType)argumentType;

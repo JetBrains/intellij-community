@@ -235,8 +235,8 @@ public class ObjectEqualityInspection extends BaseInspection {
             }
             return !(type instanceof PsiPrimitiveType)
                     && !TypeUtils.isJavaLangString(type)
-                    && !TypeUtils.expressionHasTypeOrSubtype("java.lang.Number",
-                    expression);
+                    && !TypeUtils.expressionHasTypeOrSubtype(expression,
+		            "java.lang.Number");
         }
     }
 }

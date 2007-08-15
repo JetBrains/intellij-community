@@ -56,28 +56,8 @@ public class TypeUtils {
     }
 
     public static boolean expressionHasTypeOrSubtype(
-            @NonNls @NotNull String typeName,
-            @Nullable PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
-        final PsiType type = expression.getType();
-        if (type == null) {
-            return false;
-        }
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final PsiClass aClass = classType.resolve();
-        if (aClass == null) {
-            return false;
-        }
-        return ClassUtils.isSubclass(aClass, typeName);
-    }
-
-    public static boolean expressionHasTypeOrSubtype(
             @Nullable PsiExpression expression,
+            @NonNls @NotNull String typeName,
             @NonNls @NotNull String... typeNames) {
         if (expression == null) {
             return false;
@@ -94,8 +74,11 @@ public class TypeUtils {
         if (aClass == null) {
             return false;
         }
-        for (String typeName : typeNames) {
-            if (ClassUtils.isSubclass(aClass, typeName)) {
+	    if (ClassUtils.isSubclass(aClass, typeName)) {
+		    return true;
+	    }
+        for (String typeName1 : typeNames) {
+            if (ClassUtils.isSubclass(aClass, typeName1)) {
                 return true;
             }
         }

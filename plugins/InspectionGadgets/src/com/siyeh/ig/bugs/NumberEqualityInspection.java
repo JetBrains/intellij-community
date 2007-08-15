@@ -86,7 +86,7 @@ public class NumberEqualityInspection extends BaseInspection {
         }
 
         private static boolean hasNumberType(PsiExpression lhs) {
-            return TypeUtils.expressionHasTypeOrSubtype("java.lang.Number", lhs);
+            return TypeUtils.expressionHasTypeOrSubtype(lhs, "java.lang.Number");
         }
     }
 }

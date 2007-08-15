@@ -79,9 +79,8 @@ public class WaitCalledOnConditionInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasTypeOrSubtype(
-                    "java.util.concurrent.locks.Condition",
-                    qualifier)) {
+            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+		            "java.util.concurrent.locks.Condition")) {
                 return;
             }
             registerMethodCallError(expression);
