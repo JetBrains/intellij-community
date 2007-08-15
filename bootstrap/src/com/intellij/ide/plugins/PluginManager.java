@@ -1081,7 +1081,7 @@ public class PluginManager {
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
       ourDisabledPlugins = new ArrayList<String>();
-      if (System.getProperty("idea.ignore.disabled.plugins") != null) {
+      if (System.getProperty("idea.ignore.disabled.plugins") == null) {
         final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
         if (file.isFile()) {
           BufferedReader reader = null;
