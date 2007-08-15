@@ -238,6 +238,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           ListUtil.removeSelectedItems(myUrlsList);
         }
       });
+      myEditButton.setEnabled(false);
+      myDeleteButton.setEnabled(false);
     }
 
     private void updateLastCheckedLabel() {
