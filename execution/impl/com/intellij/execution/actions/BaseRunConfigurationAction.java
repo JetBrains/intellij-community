@@ -1,14 +1,22 @@
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.LocatableConfiguration;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Iterator;
+import java.util.List;
 
 abstract class BaseRunConfigurationAction extends AnAction {
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
@@ -18,7 +26,47 @@ abstract class BaseRunConfigurationAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final ConfigurationContext context = new ConfigurationContext(dataContext);
-    final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+    final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+    if (existing == null) {
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
+      if (producers == null || producers.size() == 0) return;
+      final RuntimeConfigurationProducer first = producers.get(0);
+      for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
+        RuntimeConfigurationProducer producer = it.next();
+        if (RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
+          it.remove();
+        }
+      }
+      if (producers.size() > 1) {
+        final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+        final ListPopup popup =
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RuntimeConfigurationProducer>(ExecutionBundle.message("configuration.action.chooser.title"), producers) {
+            @NotNull
+            public String getTextFor(final RuntimeConfigurationProducer producer) {
+              return producer.getConfigurationType().getDisplayName();
+            }
+
+            public Icon getIconFor(final RuntimeConfigurationProducer producer) {
+              return producer.getConfigurationType().getIcon();
+            }
+
+            public PopupStep onChosen(final RuntimeConfigurationProducer producer, final boolean finalChoice) {
+              final RunnerAndConfigurationSettings configuration = context.getConfiguration(producer);
+              if (configuration != null) {
+                perform(context);
+              }
+              return PopupStep.FINAL_CHOICE;
+            }
+          });
+        if (editor != null) {
+          popup.showInBestPositionFor(editor);
+        } else {
+          popup.showInBestPositionFor(dataContext);
+        }
+        return;
+      }
+    }
+    final RunnerAndConfigurationSettingsImpl configuration = existing != null ? existing : context.getConfiguration();
     if (configuration == null) return;
     perform(context);
   }

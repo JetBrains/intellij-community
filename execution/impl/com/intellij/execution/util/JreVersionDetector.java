@@ -8,7 +8,6 @@ package com.intellij.execution.util;
 
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JdkVersionUtil;
@@ -20,10 +19,6 @@ public class JreVersionDetector {
   private boolean myLastIsJre50;
 
   public boolean isJre50Configured(final ApplicationConfiguration configuration) {
-    return isJre50Configured(configuration, configuration.ALTERNATIVE_JRE_PATH_ENABLED, configuration.ALTERNATIVE_JRE_PATH);
-  }
-
-  public boolean isJre50Configured(final JUnitConfiguration configuration) {
     return isJre50Configured(configuration, configuration.ALTERNATIVE_JRE_PATH_ENABLED, configuration.ALTERNATIVE_JRE_PATH);
   }
 

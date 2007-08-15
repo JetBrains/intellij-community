@@ -1,7 +1,6 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -31,7 +30,7 @@ public class TestsUIUtil {
   public static Object getData(final AbstractTestProxy testProxy, final String dataId, final TestFrameworkRunningModel model) {
     final Project project = model.getProperties().getProject();
     if (testProxy == null) return null;
-    if (TestProxy.DATA_CONSTANT.equals(dataId)) return testProxy;
+    if (AbstractTestProxy.DATA_CONSTANT.equals(dataId)) return testProxy;
     if (DataConstants.NAVIGATABLE.equals(dataId)) return getOpenFileDescriptor(testProxy, model);
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       final Location location = testProxy.getLocation(project);

@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -70,6 +71,20 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
 
   protected ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
+  }
+
+  public ConfigurationType getConfigurationType() {
+    return myConfigurationFactory.getType();
+  }
+
+  public static RuntimeConfigurationProducer getInstance(final Class aClass) {
+    final RuntimeConfigurationProducer[] configurationProducers = Extensions.getExtensions(RUNTIME_CONFIGURATION_PRODUCER);
+    for (RuntimeConfigurationProducer configurationProducer : configurationProducers) {
+      if (configurationProducer.getClass() == aClass) {
+        return configurationProducer;
+      }
+    }
+    return null;
   }
 
   private static class ProducerComparator implements Comparator<RuntimeConfigurationProducer> {

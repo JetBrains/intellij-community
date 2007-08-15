@@ -6,7 +6,6 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.junit2.ui.PoolOfTestIcons;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
-import com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -66,7 +65,7 @@ public abstract class TestTreeView extends Tree implements DataProvider {
     return TestsUIUtil.getData(testProxy, dataId, myModel);
   }
 
-  private void installHandlers() {
+  protected void installHandlers() {
     EditSourceOnDoubleClickHandler.install(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(final TreePath path) {
@@ -78,6 +77,5 @@ public abstract class TestTreeView extends Tree implements DataProvider {
     TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
-    ViewAssertEqualsDiffAction.registerShortcut(this);
   }
 }

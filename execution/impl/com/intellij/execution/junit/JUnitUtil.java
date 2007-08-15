@@ -1,13 +1,11 @@
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.TestFramework;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -16,10 +14,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.Graph;
-import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -27,7 +23,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-public class JUnitUtil implements TestFramework {
+public class JUnitUtil {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
@@ -41,36 +37,6 @@ public class JUnitUtil implements TestFramework {
     if (returnType != null && !returnType.equalsToText(TEST_INTERFACE) && !returnType.equalsToText(TESTSUITE_CLASS)) return false;
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     return parameters.length == 0;
-  }
-
-  public static interface FindCallback {
-    /**
-     * Invoked in dispatch thread
-     */
-    void found(@NotNull Collection<PsiClass> classes, final boolean isJunit4);
-  }
-
-  public static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
-    if (isSyncSearch()) {
-      THashSet<PsiClass> classes = new THashSet<PsiClass>();
-      boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      callback.found(classes, isJUnit4);
-      return;
-    }
-
-    final THashSet<PsiClass> classes = new THashSet<PsiClass>();
-    final boolean[] isJunit4 = new boolean[1];
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      }
-    }, ExecutionBundle.message("seaching.test.progress.title"), true, classFilter.getProject());
-
-    callback.found(classes, isJunit4[0]);
-  }
-
-  private static boolean isSyncSearch() {
-    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
@@ -102,10 +68,6 @@ public class JUnitUtil implements TestFramework {
    */
   public static boolean isTestClass(final Location<? extends PsiClass> aClassLocation) {
     return isTestClass(aClassLocation.getPsiElement());
-  }
-
-  public boolean isTestKlass(final PsiClass psiClass) {
-    return isTestClass(psiClass);
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
@@ -208,7 +170,20 @@ public class JUnitUtil implements TestFramework {
   }
 
   public static PsiClass getTestClass(final PsiElement element) {
-    return JUnitConfigurationProducer.getTestClass(PsiLocation.fromPsiElement(element));
+    return getTestClass(PsiLocation.fromPsiElement(element));
+  }
+
+  public static PsiClass getTestClass(final Location<?> location) {
+    for (Iterator<Location<PsiClass>> iterator = location.getAncestors(PsiClass.class, false); iterator.hasNext();) {
+      final Location<PsiClass> classLocation = iterator.next();
+      if (JUnitUtil.isTestClass(classLocation)) return classLocation.getPsiElement();
+    }
+    PsiElement element = location.getPsiElement();
+    if (element instanceof PsiJavaFile) {
+      PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+      if (classes.length == 1) return classes[0];
+    }
+    return null;
   }
 
   public static PsiMethod getTestMethod(final PsiElement element) {

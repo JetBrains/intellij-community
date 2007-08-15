@@ -7,9 +7,6 @@
       <implementation-class>com.intellij.execution.applet.AppletConfigurationType</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.execution.junit.JUnitConfigurationType</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.execution.remote.RemoteConfigurationType</implementation-class>
     </component>
 

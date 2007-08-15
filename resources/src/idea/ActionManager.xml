@@ -1115,8 +1115,6 @@
       <reference ref="$Delete"/>
     </group>
     <group id="TestTreePopupMenu">
-      <action id="openAssertEqualsDiff" class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction"/>
-      <separator/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="EditSource"/>

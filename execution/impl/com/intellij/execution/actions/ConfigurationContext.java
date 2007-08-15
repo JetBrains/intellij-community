@@ -1,12 +1,10 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.LocatableConfigurationType;
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -59,12 +57,24 @@ public class ConfigurationContext {
         null;
   }
 
-  private Location getLocation() {
+  @Nullable
+  public RunnerAndConfigurationSettings getConfiguration(final RuntimeConfigurationProducer producer) {
+    myConfiguration = producer.getConfiguration();
+    return myConfiguration;
+  }
+
+  Location getLocation() {
     return myLocation;
   }
 
   public RunnerAndConfigurationSettingsImpl findExisting() {
-    final ConfigurationType type = getConfiguration().getType();
+    final RuntimeConfiguration configuration = (RuntimeConfiguration)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
+    final ConfigurationType type;
+    if (configuration != null) {
+      type = configuration.getType();
+    } else {
+      type = getConfiguration().getType();
+    }
     if (!(type instanceof LocatableConfigurationType)) return null;
     final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
     final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);

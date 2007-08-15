@@ -47,6 +47,10 @@ public class CreateAction extends BaseRunConfigurationAction {
 
     public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
       updateText(presentation, actionText);
+      updateIcon(presentation, context);
+    }
+
+    protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
       presentation.setIcon(context.getConfiguration().getFactory().getIcon());
     }
 
@@ -74,6 +78,15 @@ public class CreateAction extends BaseRunConfigurationAction {
       final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
       if (configuration == null) return;
       context.getRunManager().setActiveConfiguration(configuration);
+    }
+
+    protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
+      final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+      if (configuration != null) {
+        presentation.setIcon(configuration.getType().getIcon());
+      } else {
+        super.updateIcon(presentation, context);
+      }
     }
   }
 
@@ -119,6 +132,15 @@ public class CreateAction extends BaseRunConfigurationAction {
     public void perform(final ConfigurationContext context) {
       RunnerAndConfigurationSettings settings = context.findExisting();
       if (settings != null) context.getRunManager().makeStable(settings.getConfiguration());
+    }
+
+    protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
+      final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+      if (configuration != null) {
+        presentation.setIcon(configuration.getType().getIcon());
+      } else {
+        super.updateIcon(presentation, context);
+      }
     }
   }
 

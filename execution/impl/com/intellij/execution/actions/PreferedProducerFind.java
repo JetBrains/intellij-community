@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 class PreferedProducerFind {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferedProducerFind");
@@ -39,7 +40,7 @@ class PreferedProducerFind {
   }
 
   @Nullable
-  private static RuntimeConfigurationProducer findPreferedProducer(final Location location, final ConfigurationContext context) {
+  public static List<RuntimeConfigurationProducer> findPreferedProducers(final Location location, final ConfigurationContext context) {
     final RuntimeConfigurationProducer[] configurationProducers =
       ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
     final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
@@ -52,6 +53,15 @@ class PreferedProducerFind {
     }
     if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
-    return producers.get(0);
+    return producers;
+  }
+
+  @Nullable
+  private static RuntimeConfigurationProducer findPreferedProducer(final Location location, final ConfigurationContext context) {
+    final List<RuntimeConfigurationProducer> producers = findPreferedProducers(location, context);
+    if (producers != null){
+      return producers.get(0);
+    }
+    return null;
   }
 }
