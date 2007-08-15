@@ -33,7 +33,7 @@ public class SessionDialog extends DialogWrapper {
     mySession = session;
     myChanges = changes;
     myCommitMessage = commitMessage;
-    myConfigurationComponent = mySession.getAdditionalConfigurationUI();
+    myConfigurationComponent = createConfigurationUI(mySession, myChanges, myCommitMessage);
     if (title.endsWith("...")) {
       setTitle(title.substring(0, title.length()-3));
     }
@@ -44,6 +44,14 @@ public class SessionDialog extends DialogWrapper {
     updateButtons();
   }
 
+  public static JComponent createConfigurationUI(final CommitSession session, final List<Change> changes, final String commitMessage) {
+    try {
+      return session.getAdditionalConfigurationUI(changes, commitMessage);
+    }
+    catch(AbstractMethodError e) {
+      return session.getAdditionalConfigurationUI();
+    }
+  }
 
   @Nullable
   protected JComponent createCenterPanel() {

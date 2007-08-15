@@ -108,22 +108,22 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
 
   private class CreatePatchCommitSession implements CommitSession {
     private CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel();
-    private boolean myFileNameInitialized = false;
 
     @Nullable
     public JComponent getAdditionalConfigurationUI() {
       return myPanel.getPanel();
     }
 
-    public boolean canExecute(Collection<Change> changes, String commitMessage) {
-      if (!myFileNameInitialized) {
-        if (PATCH_PATH == "") {
-          PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
-        }
-        myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
-        myPanel.setReversePatch(REVERSE_PATCH);
-        myFileNameInitialized = true;
+    public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
+      if (PATCH_PATH == "") {
+        PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
       }
+      myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
+      myPanel.setReversePatch(REVERSE_PATCH);
+      return myPanel.getPanel();
+    }
+
+    public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return true;
     }
 

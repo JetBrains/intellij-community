@@ -65,6 +65,11 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
       return null;
     }
 
+    @Nullable
+    public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
+      return null;
+    }
+
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return changes.size() > 0;
     }

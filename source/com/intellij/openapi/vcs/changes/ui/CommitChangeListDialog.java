@@ -291,7 +291,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!saveDialogState()) return;
     final CommitSession session = commitExecutor.createCommitSession();
     boolean isOK = true;
-    if (session.getAdditionalConfigurationUI() != null) {
+    if (SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage())!= null) {
       DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
                                                       getProject(),
                                                       session,
