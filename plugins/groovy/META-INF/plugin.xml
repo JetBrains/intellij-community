@@ -110,9 +110,6 @@
       <action id="Grails.Service" class="org.jetbrains.plugins.grails.actions.NewGrailsServiceAction"
               text="Grails Service" description="Create new Grails service">
       </action>
-      <action id="Grails.Job" class="org.jetbrains.plugins.grails.actions.NewGrailsJobAction"
-              text="Grails Job" description="Create new Grails job">
-      </action>
       <action id="Grails.Script" class="org.jetbrains.plugins.grails.actions.NewGrailsScriptAction"
               text="Grails Script" description="Create new Grails script">
       </action>
