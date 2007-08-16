@@ -19,14 +19,14 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a Java package.
  */
-public interface PsiPackage extends PsiNamedElement, NavigationItem {
+public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifierListOwner {
   /**
    * Returns the full-qualified name of the package.
    *

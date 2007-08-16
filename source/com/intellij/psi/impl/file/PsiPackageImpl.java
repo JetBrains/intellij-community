@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -489,16 +490,37 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     private final Object[] OOCB_DEPENDENCY = new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
 
     public Result<PsiModifierList> compute() {
+      List<PsiModifierList> list = new ArrayList<PsiModifierList>();
       for(PsiDirectory directory: getDirectories()) {
         PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
         if (file != null) {
           PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
           if (stmt != null) {
-            return new Result<PsiModifierList>(stmt.getAnnotationList(), OOCB_DEPENDENCY );
+            list.add(stmt.getAnnotationList());
           }
         }
       }
-      return new Result<PsiModifierList>(null, OOCB_DEPENDENCY );
+
+      final PsiClass[] classes = getManager().findClasses(getQualifiedName() + ".package-info", getProject().getAllScope());
+      for (PsiClass aClass : classes) {
+        list.add(aClass.getModifierList());
+      }
+
+      if (list.isEmpty()) {
+        return new Result<PsiModifierList>(null, OOCB_DEPENDENCY );
+      }
+      else {
+        return new Result<PsiModifierList>(new PsiCompositeModifierList(getManager(), list), OOCB_DEPENDENCY);
+      }
     }
+  }
+
+  @Nullable
+  public PsiModifierList getModifierList() {
+    return getAnnotationList();
+  }
+
+  public boolean hasModifierProperty(@NonNls @NotNull final String name) {
+    return false;
   }
 }
