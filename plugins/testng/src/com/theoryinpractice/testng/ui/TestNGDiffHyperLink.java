@@ -2,7 +2,7 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.junit2.*;
-import com.intellij.execution.junit2.states.DiffHyperlink;
+import com.intellij.execution.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;

@@ -3,6 +3,7 @@ package com.intellij.execution.junit2.states;
 import com.intellij.execution.junit2.Printer;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.stacktrace.DiffHyperlink;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 

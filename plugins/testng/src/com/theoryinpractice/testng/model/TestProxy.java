@@ -2,7 +2,7 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.junit2.states.StackTraceLine;
+import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.ui.ConsoleViewContentType;
