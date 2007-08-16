@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -46,7 +45,7 @@ public class TestNGPackageConfigurationProducer extends TestNGConfigurationProdu
     } else {
       final RunnerAndConfigurationSettingsImpl template =
         ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
-      final Module selectedModule = (Module)context.getDataContext().getData(DataConstants.MODULE);
+      final Module selectedModule = context.getModule();
       if (selectedModule != null) {
         final ModuleBasedConfiguration templateConfiguration = (ModuleBasedConfiguration)template.getConfiguration();
         if (templateConfiguration.getConfigurationModule().getModule() == null) {
