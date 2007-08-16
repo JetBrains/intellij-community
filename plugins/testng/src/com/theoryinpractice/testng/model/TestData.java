@@ -218,6 +218,16 @@ public class TestData implements Cloneable
   }
 
   public boolean isConfiguredByElement(PsiElement element) {
+    if (TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
+      if (element instanceof PsiPackage) {
+        return Comparing.strEqual(PACKAGE_NAME, ((PsiPackage)element).getQualifiedName());
+      }
+      else if (element instanceof PsiDirectory) {
+        final PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
+        return psiPackage != null && Comparing.strEqual(PACKAGE_NAME, psiPackage.getQualifiedName());
+      }
+    }
+
     element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
     if (element instanceof PsiMethod && TEST_OBJECT.equals(TestType.METHOD.getType())) {
       final PsiClass aClass = ((PsiMethod) element).getContainingClass();
