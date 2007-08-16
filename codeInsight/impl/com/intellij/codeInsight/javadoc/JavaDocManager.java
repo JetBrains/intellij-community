@@ -38,6 +38,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
@@ -310,11 +312,16 @@ public class JavaDocManager implements ProjectComponent {
           element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
                                                              parent.getParent().getTextRange().getStartOffset() + 1
                                                            );
-        } else if (parent instanceof XmlTag) {
+        } else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
           element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
                                                              parent.getTextRange().getStartOffset() + 1
                                                            );
-        }
+        } else if (parent instanceof XmlAttributeValue) {
+          final PsiElement grandParent = parent.getParent();
+          element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
+                                                             grandParent.getTextRange().getStartOffset() + 1
+                                                           );
+        } 
     }
 
     if (element == null && editor != null) {
