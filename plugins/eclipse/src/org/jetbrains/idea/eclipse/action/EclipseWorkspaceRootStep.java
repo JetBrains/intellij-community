@@ -28,7 +28,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
 
   public EclipseWorkspaceRootStep(final WizardContext context) {
     super(context);
-    myWorkspaceRootComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.label.select.workspace"), "", null,
+    myWorkspaceRootComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.select.workspace"), "", null,
                                                      new FileChooserDescriptor(false, true, false, false, false, false));
 
     myDirComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.module.dir"), "", null,
