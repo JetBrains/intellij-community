@@ -18,10 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrComparableByName;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -30,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
-public interface GrVariable extends GrNamedElement, PsiVariable, GroovyPsiElement {
+public interface GrVariable extends GrComparableByName, PsiVariable, GroovyPsiElement {
   public static final GrVariable[] EMPTY_ARRAY = new GrVariable[0];
 
   @NotNull

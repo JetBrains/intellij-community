@@ -15,15 +15,17 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.DuplicableElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
 /**
  * @author ilyas
  */
-public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement {
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement, DuplicableElement<PsiReference>{
   GrExpression getQualifierExpression();
 
   @Nullable

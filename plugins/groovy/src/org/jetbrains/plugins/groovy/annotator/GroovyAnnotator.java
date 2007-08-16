@@ -17,55 +17,42 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -100,14 +87,29 @@ public class GroovyAnnotator implements Annotator {
       checkCommandArgument((GrNamedArgument) element, holder);
     } else if (element instanceof GrReturnStatement) {
       checkReturnStatement((GrReturnStatement) element, holder);
+    } else if (element instanceof GrListOrMap) {
+      checkMap(((GrListOrMap) element).getNamedArguments(), holder);
     } else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile) element;
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
+      if (DomainClassUtils.isDomainClass(element.getContainingFile().getVirtualFile())) {
+        checkDomainClass((GroovyFile) element, holder);
+      }
     } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) {
       GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
     }
+  }
+
+  private void checkDomainClass(GroovyFile file, AnnotationHolder holder) {
+    DomainClassAnnotator domainClassAnnotator = new DomainClassAnnotator();
+    domainClassAnnotator.annotate(file, holder);
+  }
+
+  private void checkMap(GrNamedArgument[] namedArguments, AnnotationHolder holder) {
+    GroovyMapElementsDuplecator mapDuplecator = new GroovyMapElementsDuplecator(holder);
+    mapDuplecator.checkDuplicates(namedArguments);
   }
 
   private void checkVariableDeclaration(AnnotationHolder holder, GrVariableDeclaration grVariableDeclaration) {
@@ -182,7 +184,7 @@ public class GroovyAnnotator implements Annotator {
               holder.createErrorAnnotation(modifiersList, GroovyBundle.message("not.abstract.class.cannot.have.abstract.method"));
             }
           } else {
-             if (isMethodStatic) {
+            if (isMethodStatic) {
               holder.createErrorAnnotation(modifiersList, GroovyBundle.message("abstract.class.cannot.have.static.method"));
             }
           }
@@ -260,62 +262,8 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkDuplicateMethod(GrMethod[] grMethods, AnnotationHolder holder) {
-    HashSet<GrMethod> duplicateMethodsWarning = new HashSet<GrMethod>();
-    HashSet<GrMethod> duplicateMethodsErrors = new HashSet<GrMethod>();
-    HashMap<MethodSignature, List<GrMethod>> methodSignatureToMethodsListMap = new HashMap<MethodSignature, List<GrMethod>>();
-
-
-    for (GrMethod grMethod : grMethods) {
-      MethodSignature signature = grMethod.getSignature(PsiSubstitutor.EMPTY);
-
-      List<GrMethod> list = methodSignatureToMethodsListMap.get(signature);
-      if (list == null) {
-        list = new ArrayList<GrMethod>();
-      }
-      list.add(grMethod);
-
-      methodSignatureToMethodsListMap.put(signature, list);
-    }
-
-    Set<MethodSignature> methodSignatures = methodSignatureToMethodsListMap.keySet();
-    for (MethodSignature methodSignature : methodSignatures) {
-      List<GrMethod> duplicateMethods = methodSignatureToMethodsListMap.get(methodSignature);
-
-      if (duplicateMethods != null && duplicateMethods.size() > 1) {
-        HashMap<PsiType, GrMethod> duplicateMethodsToReturnTypeMap = new HashMap<PsiType, GrMethod>();
-
-        for (GrMethod duplicateMethod : duplicateMethods) {
-          GrTypeElement typeElement = duplicateMethod.getReturnTypeElementGroovy();
-
-          PsiType methodReturnType;
-          if (typeElement != null) {
-            methodReturnType = typeElement.getType();
-          } else {
-            methodReturnType = PsiType.NULL;
-          }
-
-          duplicateMethodsWarning.add(duplicateMethod);
-
-          GrMethod grMethodWithType = duplicateMethodsToReturnTypeMap.get(methodReturnType);
-          if (grMethodWithType != null) {
-            duplicateMethodsErrors.add(duplicateMethod);
-            duplicateMethodsErrors.add(grMethodWithType);
-            duplicateMethodsWarning.remove(duplicateMethod);
-            duplicateMethodsWarning.remove(grMethodWithType);
-          }
-
-          duplicateMethodsToReturnTypeMap.put(methodReturnType, duplicateMethod);
-        }
-      }
-    }
-
-    for (GrMethod duplicateMethod : duplicateMethodsErrors) {
-      holder.createErrorAnnotation(duplicateMethod.getNameIdentifierGroovy(), GroovyBundle.message("repetitive.method.name.signature.and.return.type"));
-    }
-
-    for (GrMethod duplicateMethod : duplicateMethodsWarning) {
-      holder.createWarningAnnotation(duplicateMethod.getNameIdentifierGroovy(), GroovyBundle.message("repetitive.method.name.signature"));
-    }
+    GroovyMethodDuplector methodDuplector = new GroovyMethodDuplector(holder);
+    methodDuplector.checkDuplicates(grMethods);
   }
 
   private void checkReturnStatement(GrReturnStatement returnStatement, AnnotationHolder holder) {
@@ -494,7 +442,7 @@ public class GroovyAnnotator implements Annotator {
         checkNewExpression(holder, (GrNewExpression) parent, resolveResult);
         return;
       }
-      
+
       if (parent instanceof GrImportStatement &&
           ((GrImportStatement) parent).isStatic() &&
           refElement.multiResolve(false).length > 0) {
@@ -558,6 +506,7 @@ public class GroovyAnnotator implements Annotator {
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation, boolean createConstructor) {
     annotation.registerFix(CreateClassFix.createClassFixAction(refElement, createConstructor));
   }
+
 
 }
 

@@ -19,6 +19,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -29,10 +30,12 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
   /*
    * Use for list
    */
+  @Nullable
   GrExpression[] getInitializers();
 
   /*
    * Use for map
    */
+  @Nullable
   GrNamedArgument[] getNamedArguments();
 }

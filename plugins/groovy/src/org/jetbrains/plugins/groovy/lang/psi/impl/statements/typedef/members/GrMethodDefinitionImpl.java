@@ -104,6 +104,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return new GrMember[]{this};
   }
 
+  public MethodSignature getElementToCompare() {
+    return getSignature(PsiSubstitutor.EMPTY);
+  }
+
   private static class MyTypeCalculator implements Function<GrMethod, PsiType> {
 
     public PsiType fun(GrMethod method) {

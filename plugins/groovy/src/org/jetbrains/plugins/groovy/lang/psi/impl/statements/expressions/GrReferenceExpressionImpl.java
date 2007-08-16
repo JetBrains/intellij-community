@@ -84,7 +84,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
-      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL) return getValueText(nameElement);
+      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL)
+        return getValueText(nameElement);
       return nameElement.getText();
     }
     return null;
@@ -161,6 +162,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static final MyTypesCalculator TYPES_CALCULATOR = new MyTypesCalculator();
 
+  public PsiReference getElementToCompare() {
+    return getReference();
+  }
+
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
 
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
@@ -186,7 +191,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         result = ((GrVariable) resolved).getTypeGroovy();
       } else if (resolved instanceof PsiVariable) {
         result = ((PsiVariable) resolved).getType();
-      } else if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
+      } else
+      if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
         if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
           return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", refExpr.getResolveScope());
         }
@@ -437,5 +443,21 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
     return RESOLVER.resolve(this, true);
+  }
+
+  public boolean equals(Object o) {
+    if (!(o instanceof GrReferenceExpression)) return false;
+
+    String name = getName();
+    assert name != null;
+    return name.equals(((GrReferenceExpression) o).getName());
+  }
+
+  public int hashCode() {
+    String name = getName();
+    assert name != null;
+    int result = 29 * name.hashCode();
+    result += 31;
+    return result;
   }
 }

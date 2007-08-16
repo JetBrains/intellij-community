@@ -662,4 +662,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return vFile != null && name.equals(vFile.getNameWithoutExtension());
   }
 
+  public String getElementToCompare() {
+    return getName();
+  }
 }

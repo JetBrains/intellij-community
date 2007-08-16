@@ -153,11 +153,27 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         return method.getReturnType();
       if (PropertyUtil.isSimplePropertySetter(method))
         return method.getParameterList().getParameters()[0].getType();
-      
+
     } else if (resolved instanceof PsiField) {
       return ((PsiField) resolved).getType();
     }
 
     return null;
+  }
+
+  public boolean equals(Object o) {
+    if (!(o instanceof GrArgumentLabelImpl)) return false;
+
+    String text = getText();
+    assert text != null;
+    return text.equals(((GrArgumentLabelImpl) o).getText());
+  }
+
+  public int hashCode() {
+    String text = getText();
+    assert text != null;
+    int result = 29 * text.hashCode();
+    result += 31;
+    return result;
   }
 }

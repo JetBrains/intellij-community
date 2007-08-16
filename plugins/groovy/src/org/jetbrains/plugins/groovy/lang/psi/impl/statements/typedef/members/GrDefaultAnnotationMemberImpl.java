@@ -30,4 +30,8 @@ public class GrDefaultAnnotationMemberImpl extends GroovyPsiElementImpl implemen
   public String toString() {
     return "Default annotation member";
   }
+
+  public String getElementToCompare() {
+    return getName();
+  }
 }

@@ -215,4 +215,8 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   public PsiDocComment getDocComment() {
     return null;
   }
+
+  public String getElementToCompare() {
+    return getName();
+  }
 }

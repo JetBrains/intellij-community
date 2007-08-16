@@ -13,21 +13,12 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
+package org.jetbrains.plugins.groovy.lang.psi;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.annotator.DuplicableElement;
+import com.intellij.psi.PsiNamedElement;
 
 /**
- * @author ilyas
+ * @author ven
  */
-public interface GrNamedArgument extends GroovyPsiElement, DuplicableElement<GrArgumentLabel> {
-  public static final GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
-
-  @Nullable
-  GrArgumentLabel getLabel();
-
-  GrExpression getExpression();
+public interface GrNamedElement extends PsiNamedElement, GroovyPsiElement {  
 }

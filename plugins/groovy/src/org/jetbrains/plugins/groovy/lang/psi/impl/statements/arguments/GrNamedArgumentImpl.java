@@ -50,4 +50,8 @@ public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamed
   public GrExpression getExpression() {
     return findChildByClass(GrExpression.class);
   }
+
+  public GrArgumentLabel getElementToCompare() {
+    return getLabel();
+  }
 }
