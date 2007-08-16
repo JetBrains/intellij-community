@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -136,15 +138,26 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     });
 
     if (candidates.isEmpty()) return null;
-    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+
     for (PsiField field : candidates) {
-      if (usedFields.contains(field)) {
+      if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
         result.add(manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
     return result.toArray(new ProblemDescriptor[result.size()]);
+  }
+
+  private static boolean hasImplicitReadOrWriteUsage(final PsiField field, ImplicitUsageProvider[] implicitUsageProviders) {
+    for(ImplicitUsageProvider provider: implicitUsageProviders) {
+      if (provider.isImplicitRead(field) || provider.isImplicitWrite(field)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MyQuickFix implements LocalQuickFix {
