@@ -35,6 +35,8 @@ public class PluginDownloader {
 
   private static final Logger LOG = Logger.getInstance("#" + PluginDownloader.class.getName());
 
+  @NonNls private static final String FILENAME = "filename=";
+
   private String myPluginId;
   private String myPluginUrl;
   private final String myPluginVersion;
@@ -48,7 +50,23 @@ public class PluginDownloader {
     myPluginVersion = pluginVersion;
   }
 
+  public PluginDownloader(final String pluginId,
+                          final String pluginUrl,
+                          final String pluginVersion,
+                          final String fileName,
+                          final String pluginName) {
+    myPluginId = pluginId;
+    myPluginUrl = pluginUrl;
+    myPluginVersion = pluginVersion;
+    myFileName = fileName;
+    myPluginName = pluginName;
+  }
+
   public boolean prepareToInstall() throws IOException {
+    return prepareToInstall(new ProgressIndicatorBase());
+  }
+
+  public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
     File oldFile = null;
     if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
@@ -61,7 +79,7 @@ public class PluginDownloader {
     File file;
     String errorMessage = IdeBundle.message("unknown.error");
     try {
-      file = downloadPlugin();
+      file = downloadPlugin(pi);
     }
     catch (IOException ex) {
       file = null;
@@ -111,11 +129,10 @@ public class PluginDownloader {
     return true;
   }
 
-  private File downloadPlugin() throws IOException {
+  public File downloadPlugin(ProgressIndicator pi) throws IOException {
     HttpURLConnection connection = (HttpURLConnection)new URL(myPluginUrl).openConnection();
     try
     {
-      final ProgressIndicator pi = new ProgressIndicatorBase();//ProgressManager.getInstance().getProgressIndicator();
       pi.setText(IdeBundle.message("progress.connecting"));
 
       InputStream is = UrlConnectionUtil.getConnectionInputStream(connection, pi);
@@ -126,8 +143,7 @@ public class PluginDownloader {
 
       pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-      File file =  new File (PathManagerEx.getPluginTempPath(), getFileName());
-      file.createNewFile();
+      File file = File.createTempFile("plugin", "download", new File(PathManagerEx.getPluginTempPath()));
 
       int responseCode = connection.getResponseCode();
       switch (responseCode) {
@@ -138,7 +154,7 @@ public class PluginDownloader {
           throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
       }
 
-      pi.setIndeterminate(true);
+      pi.setIndeterminate(connection.getContentLength() == -1);
 
       OutputStream fos = null;
       try {
@@ -151,7 +167,38 @@ public class PluginDownloader {
         }
         is.close();
       }
-      return file;
+      if (myFileName == null) {
+        String contentDisposition = connection.getHeaderField("Content-Disposition");
+        if (contentDisposition == null || contentDisposition.indexOf(FILENAME) < 0) {
+          // try to find filename in URL
+          String usedURL = connection.getURL().toString();
+          int startPos = usedURL.lastIndexOf("/");
+
+          myFileName = usedURL.substring(startPos + 1);
+          if (myFileName.length() == 0 || myFileName.contains("?")) {
+            myFileName = myPluginUrl.substring(myPluginUrl.lastIndexOf("/") + 1);
+          }
+        }
+        else {
+          int startIdx = contentDisposition.indexOf(FILENAME);
+          myFileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
+          // according to the HTTP spec, the filename is a quoted string, but some servers don't quote it
+          // for example: http://www.jspformat.com/Download.do?formAction=d&id=8
+          if (myFileName.startsWith("\"") && myFileName.endsWith("\"")) {
+            myFileName = myFileName.substring(1, myFileName.length()-1);
+          }
+          if (myFileName.indexOf('\\') >= 0 || myFileName.indexOf('/') >= 0 || myFileName.indexOf(File.separatorChar) >= 0 ||
+              myFileName.indexOf('\"') >= 0) {
+            // invalid path name passed by the server - fail to download
+            FileUtil.delete(file);
+            throw new IOException("Invalid filename returned by server");
+          }
+        }
+      }
+
+      File newFile = new File (file.getParentFile(), myFileName);
+      FileUtil.rename(file, newFile);
+      return newFile;
     }
     finally {
       connection.disconnect();

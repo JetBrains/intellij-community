@@ -2,20 +2,20 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -137,60 +137,12 @@ public class PluginInstaller {
     }
 
     synchronized (PluginManager.lock) {
-      File oldFile = null;
-      if (PluginManager.isPluginInstalled(pluginNode.getPluginId())) {
-        //store old plugins file
-        oldFile = PluginManager.getPlugin(pluginNode.getPluginId()).getPath();
-      }
-      // download plugin
-      File file;
-      String errorMessage = IdeBundle.message("unknown.error");
-      try {
-        file = RepositoryHelper.downloadPlugin(pluginNode, packet, count, available);
-      }
-      catch(IOException ex) {
-        file = null;
-        errorMessage = ex.getMessage();
-      }
-      if (file == null) {
-        final String errorMessage1 = errorMessage;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(IdeBundle.message("error.plugin.was.not.installed", pluginNode.getName(), errorMessage1),
-                                     IdeBundle.message("title.failed.to.download"));
-          }
-        });
-        return false;
-      }
-
-      if (oldFile != null){
-        // add command to delete the 'action script' file
-        StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(oldFile);
-        StartupActionScriptManager.addActionCommand(deleteOld);
-      }
-
-      //noinspection HardCodedStringLiteral
-      if (file.getName().endsWith(".jar")) {
-        // add command to copy file to the IDEA/plugins path
-        StartupActionScriptManager.ActionCommand copyPlugin = new StartupActionScriptManager.CopyCommand(file,
-                                                                                                         new File (PathManager.getPluginsPath() +
-                                                                                                                   File.separator + file.getName()));
-        StartupActionScriptManager.addActionCommand(copyPlugin);
-      } else {
-        // add command to unzip file to the IDEA/plugins path
-        String unzipPath;
-        if (ZipUtil.isZipContainsFolder(file))
-          unzipPath = PathManager.getPluginsPath();
-        else
-          unzipPath = PathManager.getPluginsPath() + File.separator + pluginNode.getName();
-
-        StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(file, new File (unzipPath));
-        StartupActionScriptManager.addActionCommand(unzip);
-      }
-
-      // add command to remove temp plugin file
-      StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(file);
-      StartupActionScriptManager.addActionCommand(deleteTemp);
+      final String buildNumber = RepositoryHelper.ExtractBuildNumber();
+      final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
+                         URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
+                         "&build=" + buildNumber;
+      new PluginDownloader(pluginNode.getPluginId().getIdString(), url, null, null, pluginNode.getName())
+        .prepareToInstall(ProgressManager.getInstance().getProgressIndicator());
 
       pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
     }
