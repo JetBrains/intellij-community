@@ -533,6 +533,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaRight instanceof DfaConstValue && dfaRight == myFactory.getConstFactory().getNull()) {
       if (dfaLeft instanceof DfaVariableValue) {
         final DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
+        if (varState.isNotNull()) return isNegated;
         varState.setNullable(true);
       }
     }

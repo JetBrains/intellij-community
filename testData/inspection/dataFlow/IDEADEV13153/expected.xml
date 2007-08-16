@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Npe.java</file>
+    <line>9</line>
+    <description>Condition 'foo != null' is always 'true'</description>
+  </problem>
+</problems>
