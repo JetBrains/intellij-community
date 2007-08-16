@@ -62,8 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GroovyExprInjectionImpl;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
 
 /**
  * Creates Groovy PSI element by given AST node
