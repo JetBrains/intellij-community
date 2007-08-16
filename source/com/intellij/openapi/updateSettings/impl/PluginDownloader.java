@@ -129,7 +129,7 @@ public class PluginDownloader {
     return true;
   }
 
-  public File downloadPlugin(ProgressIndicator pi) throws IOException {
+  private File downloadPlugin(ProgressIndicator pi) throws IOException {
     HttpURLConnection connection = (HttpURLConnection)new URL(myPluginUrl).openConnection();
     try
     {
