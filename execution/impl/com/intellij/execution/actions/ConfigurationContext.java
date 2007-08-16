@@ -5,11 +5,13 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -18,23 +20,28 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
-  private final DataContext myDataContext;
   private RunnerAndConfigurationSettingsImpl myConfiguration;
+  private Module myModule;
+  private RuntimeConfiguration myRuntimeConfiguration;
+  private Component myContextComponent;
 
   public ConfigurationContext(final DataContext dataContext) {
-    myDataContext = dataContext;
-    final Object location = myDataContext.getData(Location.LOCATION);
+    myRuntimeConfiguration = (RuntimeConfiguration)dataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
+    myContextComponent = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
+    myModule = (Module)dataContext.getData(DataConstants.MODULE);
+    final Object location = dataContext.getData(Location.LOCATION);
     if (location != null) {
       myLocation = (Location<PsiElement>)location;
       return;
     }
-    final Project project = (Project)myDataContext.getData(DataConstants.PROJECT);
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
       myLocation = null;
       return;
@@ -71,10 +78,9 @@ public class ConfigurationContext {
   }
 
   public RunnerAndConfigurationSettingsImpl findExisting() {
-    final RuntimeConfiguration configuration = (RuntimeConfiguration)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
     final List<ConfigurationType> types = new ArrayList<ConfigurationType>();
-    if (configuration != null) {
-      types.add(configuration.getType());
+    if (myRuntimeConfiguration != null) {
+      types.add(myRuntimeConfiguration.getType());
     } else {
       final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
       if (producers == null) return null;
@@ -122,13 +128,16 @@ public class ConfigurationContext {
 
   public Project getProject() { return myLocation.getProject(); }
 
+  public Module getModule() {
+    return myModule;
+  }
+
   public DataContext getDataContext() {
-    return myDataContext;
+    return DataManager.getInstance().getDataContext(myContextComponent);
   }
 
   @Nullable
   public RuntimeConfiguration getOriginalConfiguration(final ConfigurationType type) {
-    final RuntimeConfiguration config = (RuntimeConfiguration)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
-    return config != null && type.equals(config.getType()) ? config : null;
+    return myRuntimeConfiguration != null && type.equals(myRuntimeConfiguration.getType()) ? myRuntimeConfiguration : null;
   }
 }

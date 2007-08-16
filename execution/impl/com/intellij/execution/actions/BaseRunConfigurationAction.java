@@ -15,8 +15,10 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Comparator;
 
 abstract class BaseRunConfigurationAction extends AnAction {
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
@@ -39,6 +41,11 @@ abstract class BaseRunConfigurationAction extends AnAction {
       }
       if (producers.size() > 1) {
         final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+        Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
+          public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
+            return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
+          }
+        });
         final ListPopup popup =
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RuntimeConfigurationProducer>(ExecutionBundle.message("configuration.action.chooser.title"), producers) {
             @NotNull
