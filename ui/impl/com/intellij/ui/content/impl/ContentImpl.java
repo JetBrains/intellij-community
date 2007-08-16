@@ -201,7 +201,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
     clearUserData();
     if (myDisposer != null) {
-      myDisposer.dispose();
+      Disposer.dispose(myDisposer);
       myDisposer = null;
     }
   }
