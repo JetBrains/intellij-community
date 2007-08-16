@@ -1,4 +1,4 @@
-package com.intellij.execution.junit2.states;
+package com.intellij.execution.stacktrace;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Iterator;
 
 class PreferedProducerFind {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferedProducerFind");
@@ -53,6 +54,13 @@ class PreferedProducerFind {
     }
     if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
+    final RuntimeConfigurationProducer first = producers.get(0);
+    for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
+      RuntimeConfigurationProducer producer = it.next();
+      if (RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
+        it.remove();
+      }
+    }
     return producers;
   }
 

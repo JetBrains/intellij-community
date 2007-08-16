@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 abstract class BaseRunConfigurationAction extends AnAction {
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
@@ -31,14 +30,7 @@ abstract class BaseRunConfigurationAction extends AnAction {
     final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
     if (existing == null) {
       final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
-      if (producers == null || producers.size() == 0) return;
-      final RuntimeConfigurationProducer first = producers.get(0);
-      for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
-        RuntimeConfigurationProducer producer = it.next();
-        if (RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
-          it.remove();
-        }
-      }
+      if (producers == null) return;
       if (producers.size() > 1) {
         final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
         Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
@@ -58,10 +50,7 @@ abstract class BaseRunConfigurationAction extends AnAction {
             }
 
             public PopupStep onChosen(final RuntimeConfigurationProducer producer, final boolean finalChoice) {
-              final RunnerAndConfigurationSettings configuration = context.getConfiguration(producer);
-              if (configuration != null) {
-                perform(context);
-              }
+              perform(producer, context);
               return PopupStep.FINAL_CHOICE;
             }
           });
@@ -70,12 +59,19 @@ abstract class BaseRunConfigurationAction extends AnAction {
         } else {
           popup.showInBestPositionFor(dataContext);
         }
-        return;
+      } else {
+        perform(producers.get(0), context);
       }
+      return;
     }
-    final RunnerAndConfigurationSettingsImpl configuration = existing != null ? existing : context.getConfiguration();
-    if (configuration == null) return;
     perform(context);
+  }
+
+  private void perform(final RuntimeConfigurationProducer producer, final ConfigurationContext context) {
+    final RunnerAndConfigurationSettings configuration = context.getConfiguration(producer);
+    if (configuration != null) {
+      perform(context);
+    }
   }
 
   protected abstract void perform(ConfigurationContext context);

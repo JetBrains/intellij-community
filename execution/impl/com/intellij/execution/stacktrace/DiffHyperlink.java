@@ -2,7 +2,7 @@
  * User: anna
  * Date: 15-Aug-2007
  */
-package com.intellij.execution.junit2.states;
+package com.intellij.execution.stacktrace;
 
 import com.intellij.execution.junit2.Printable;
 import com.intellij.execution.junit2.Printer;

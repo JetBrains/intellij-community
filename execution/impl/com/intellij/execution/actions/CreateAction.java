@@ -3,11 +3,14 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.Presentation;
+
+import java.util.List;
 
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
@@ -51,7 +54,10 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      presentation.setIcon(context.getConfiguration().getFactory().getIcon());
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
+      if (producers != null && producers.size() == 1) { //hide fuzzy icon when multiple run configurations are possible
+        presentation.setIcon(context.getConfiguration().getFactory().getIcon());
+      }
     }
 
     protected void updateText(final Presentation presentation, final String actionText) {
