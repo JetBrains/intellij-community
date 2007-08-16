@@ -313,6 +313,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myComponent.removeAll();
 
     myComponent = null;
+
+    if (myProgress != null) {
+      UIUtil.disposeProgress(myProgress);  
+    }
     myProgress = null;
     myInfo = null;
   }

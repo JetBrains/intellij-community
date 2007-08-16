@@ -378,6 +378,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
 
     private void dispose() {
+      UIUtil.disposeProgress(myProgressBar);
       UIUtil.dispose(myTitlePanel);
     }
 

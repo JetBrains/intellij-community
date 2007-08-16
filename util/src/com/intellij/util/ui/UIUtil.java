@@ -21,15 +21,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
-import com.intellij.ui.TitlePanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.ProgressBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -47,7 +48,8 @@ public class UIUtil {
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
 
-  private UIUtil() {}
+  private UIUtil() {
+  }
 
   public static boolean isReallyTypedEvent(KeyEvent e) {
     char c = e.getKeyChar();
@@ -128,21 +130,25 @@ public class UIUtil {
           if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
             realValue.append('&');
             i++;
-          } else {
+          }
+          else {
             realValue.append(c);
           }
-        } else if (c == '&') {
+        }
+        else if (c == '&') {
           if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
             if (SystemInfo.isMac) {
               realValue.append(MNEMONIC);
             }
             i++;
-          } else {
+          }
+          else {
             if (!SystemInfo.isMac || !useMacMnemonic) {
               realValue.append(MNEMONIC);
             }
           }
-        } else {
+        }
+        else {
           realValue.append(c);
         }
         i++;
@@ -174,7 +180,7 @@ public class UIUtil {
   }
 
   public static Color getListSelectionForeground() {
-     return UIManager.getColor("List.selectionForeground");
+    return UIManager.getColor("List.selectionForeground");
   }
 
   public static Color getFieldForegroundColor() {
@@ -286,7 +292,7 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-     return UIManager.getColor("List.background");
+    return UIManager.getColor("List.background");
   }
 
   public static Color getListForeground() {
@@ -302,7 +308,7 @@ public class UIUtil {
   }
 
   public static Color getTableFocusCellBackground() {
-     return UIManager.getColor("Table.focusCellBackground");
+    return UIManager.getColor("Table.focusCellBackground");
   }
 
   public static Color getListSelectionBackground() {
@@ -358,15 +364,15 @@ public class UIUtil {
   }
 
   public static Border getTableFocusCellHighlightBorder() {
-    return  UIManager.getBorder("Table.focusCellHighlightBorder");
+    return UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
   public static void setLineStyleAngled(final TreeTableCellRenderer component) {
-      component.putClientProperty("JTree.lineStyle", "Angled");
+    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
   public static void setLineStyleAngled(final JTree component) {
-      component.putClientProperty("JTree.lineStyle", "Angled");
+    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
   public static Color getTableFocusCellForeground() {
@@ -436,7 +442,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void removeQuaquaVisualMarginsIn(Component component) {
-    if (component instanceof JComponent ) {
+    if (component instanceof JComponent) {
       final JComponent jComponent = (JComponent)component;
       final Component[] children = jComponent.getComponents();
       for (Component child : children) {
@@ -457,14 +463,8 @@ public class UIUtil {
     for (Font font : fonts) {
       // Adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
       try {
-        if (
-          font.canDisplay('a') &&
-          font.canDisplay('z') &&
-          font.canDisplay('A') &&
-          font.canDisplay('Z') &&
-          font.canDisplay('0') &&
-          font.canDisplay('1')
-          ) {
+        if (font.canDisplay('a') && font.canDisplay('z') && font.canDisplay('A') && font.canDisplay('Z') && font.canDisplay('0') &&
+            font.canDisplay('1')) {
           result.add(familyName ? font.getFamily() : font.getName());
         }
       }
@@ -484,8 +484,7 @@ public class UIUtil {
     component.repaint();
     final Window window = SwingUtilities.windowForComponent(component);
     if (window != null &&
-        (window.getSize().height < window.getMinimumSize().height ||
-         window.getSize().width < window.getMinimumSize().width)) {
+        (window.getSize().height < window.getMinimumSize().height || window.getSize().width < window.getMinimumSize().width)) {
       window.pack();
     }
   }
@@ -528,26 +527,26 @@ public class UIUtil {
 
   /**
    * @param g
-   * @param x top left X coordinate.
-   * @param y top left Y coordinate.
+   * @param x  top left X coordinate.
+   * @param y  top left Y coordinate.
    * @param x1 right bottom X coordinate.
    * @param y1 right bottom Y coordinate.
    */
   public static void drawDottedRectangle(Graphics g, int x, int y, int x1, int y1) {
     int i1;
-    for(i1 = x; i1 <= x1; i1 += 2){
+    for (i1 = x; i1 <= x1; i1 += 2) {
       drawLine(g, i1, y, i1, y);
     }
 
-    for(i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2){
+    for (i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2) {
       drawLine(g, x1, i1, x1, i1);
     }
 
-    for(i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2){
+    for (i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2) {
       drawLine(g, i1, y1, i1, y1);
     }
 
-    for(i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2){
+    for (i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2) {
       drawLine(g, x, i1, x, i1);
     }
   }
@@ -557,7 +556,7 @@ public class UIUtil {
     //noinspection HardCodedStringLiteral
     Map map = (Map)(tk.getDesktopProperty("awt.font.desktophints"));
     if (map != null) {
-        ((Graphics2D) g).addRenderingHints(map);
+      ((Graphics2D)g).addRenderingHints(map);
     }
   }
 
@@ -577,6 +576,7 @@ public class UIUtil {
       }
     }
   }
+
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
     final BlockingQueue queue = new LinkedBlockingQueue();
@@ -625,9 +625,15 @@ public class UIUtil {
   }
 
   public static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2, final Color bgColor, final Color fgColor) {
-    if (x1 == x2) drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
-    else if (y1 == y2) drawHDottedLine(g, x1, x2, y1, bgColor, fgColor);
-    else throw new IllegalArgumentException("Only vertical or horizontal lines are supported");
+    if (x1 == x2) {
+      drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
+    }
+    else if (y1 == y2) {
+      drawHDottedLine(g, x1, x2, y1, bgColor, fgColor);
+    }
+    else {
+      throw new IllegalArgumentException("Only vertical or horizontal lines are supported");
+    }
   }
 
   public static boolean isFocusAncestor(@NotNull final JComponent component) {
@@ -643,14 +649,18 @@ public class UIUtil {
     return e.getButton() == MouseEvent.BUTTON2 || (e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown());
   }
 
-  public static @NotNull Color getBgFillColor(@NotNull JComponent c) {
+  public static
+  @NotNull
+  Color getBgFillColor(@NotNull JComponent c) {
     final Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
-  private static @Nullable Component findNearestOpaque(JComponent c) {
+  private static
+  @Nullable
+  Component findNearestOpaque(JComponent c) {
     Component eachParent = c;
-    while(eachParent != null) {
+    while (eachParent != null) {
       if (eachParent.isOpaque()) return eachParent;
       eachParent = eachParent.getParent();
     }
@@ -682,7 +692,8 @@ public class UIUtil {
   public static void requestFocus(@NotNull final JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           c.requestFocus();
@@ -691,7 +702,7 @@ public class UIUtil {
     }
   }
 
-//todo maybe should do for all kind of listeners via the AWTEventMulticaster class
+  //todo maybe should do for all kind of listeners via the AWTEventMulticaster class
   public static void dispose(final Component c) {
     if (c == null) return;
 
@@ -708,6 +719,26 @@ public class UIUtil {
     final MouseWheelListener[] mouseWheelListeners = c.getMouseWheelListeners();
     for (MouseWheelListener each : mouseWheelListeners) {
       c.removeMouseWheelListener(each);
+    }
+  }
+
+  public static void disposeProgress(final JProgressBar progress) {
+    final ProgressBarUI ui = progress.getUI();
+    final Class<? extends ProgressBarUI> uiClass = ui.getClass();
+    if (uiClass.getName().equals("apple.laf.CUIAquaProgressBar")) {
+      try {
+        final Field animatorField = uiClass.getDeclaredField("animator");
+        animatorField.setAccessible(true);
+        final Object animator = animatorField.get(ui);
+        final Class animatorClass = animator.getClass();
+        final Field timerField = animatorClass.getDeclaredField("timer");
+        timerField.setAccessible(true);
+        final javax.swing.Timer timer = (javax.swing.Timer)timerField.get(animator);
+        timer.stop();
+      }
+      catch (Exception e) {
+        // No luck...
+      }
     }
   }
 }
