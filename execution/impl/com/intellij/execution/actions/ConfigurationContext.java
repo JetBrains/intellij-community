@@ -18,6 +18,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
@@ -69,18 +72,24 @@ public class ConfigurationContext {
 
   public RunnerAndConfigurationSettingsImpl findExisting() {
     final RuntimeConfiguration configuration = (RuntimeConfiguration)myDataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
-    final ConfigurationType type;
+    final List<ConfigurationType> types = new ArrayList<ConfigurationType>();
     if (configuration != null) {
-      type = configuration.getType();
+      types.add(configuration.getType());
     } else {
-      type = getConfiguration().getType();
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(myLocation, this);
+      if (producers == null) return null;
+      for (RuntimeConfigurationProducer producer : producers) {
+        types.add(producer.createProducer(myLocation, this).getConfigurationType());
+      }
     }
-    if (!(type instanceof LocatableConfigurationType)) return null;
-    final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
-    final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);
-    for (final RunnerAndConfigurationSettingsImpl existingConfiguration : configurations) {
-      if (factoryLocatable.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())) {
-        return existingConfiguration;
+    for (ConfigurationType type : types) {
+      if (!(type instanceof LocatableConfigurationType)) continue;
+      final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
+      final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);
+      for (final RunnerAndConfigurationSettingsImpl existingConfiguration : configurations) {
+        if (factoryLocatable.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())) {
+          return existingConfiguration;
+        }
       }
     }
     return null;
