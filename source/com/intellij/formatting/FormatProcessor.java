@@ -52,6 +52,7 @@ class FormatProcessor {
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private WhiteSpace myLastWhiteSpace;
   private boolean myDisposed;
+  private int myInterestingOffset;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -77,6 +78,7 @@ class FormatProcessor {
                                                                       processHeadingWhitespace,
                                                                       interestingOffset);
     myInfos = builder.getBlockToInfoMap();
+    myInterestingOffset = interestingOffset;
     myRootBlockWrapper = builder.getRootBlockWrapper();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myLastTokenBlock = builder.getLastTokenBlock();
@@ -748,7 +750,10 @@ class FormatProcessor {
         message.append(myInfos.get(blockWrapper)).append(" (").append(blockWrapper.getStartOffset()).append(',').append(blockWrapper.getEndOffset()).append(')');
       }
       message.insert(0, "Invalid formatter block, formatting blocks hierarchy followed:");
+      message.append("\nrequested:").append(myInfos.get(parent)).append(parent.getStartOffset()).append(',').append(parent.getEndOffset());
+      message.append("\ninterested offset:").append(myInterestingOffset).append(',').append(offset);
       assert false:message.toString();
+      return new IndentInfo(0, 0, 0);
     }
 
     ChildAttributesInfo info = getChildAttributesInfo(block, index, parent);
