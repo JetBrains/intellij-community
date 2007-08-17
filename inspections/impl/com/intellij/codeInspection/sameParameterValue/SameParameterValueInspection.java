@@ -135,7 +135,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiParameter.class, false);
-      LOG.assertTrue(parameter != null);
+      if (parameter == null) return; //incompatible teamcity version
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, parameter)) return;
 
       final PsiExpression defToInline;
