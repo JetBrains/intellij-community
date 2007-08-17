@@ -243,6 +243,11 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     return ICON;
   }
 
+  @NonNls
+  public String getHelpId() {
+    return "reference.dialogs.new.project.technologies";
+  }
+
   private static void setDescendantsEnabled(FrameworkSupportSettings frameworkSupport, final boolean enable) {
     for (FrameworkSupportSettings child : frameworkSupport.myChildren) {
       child.setEnabled(enable);

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -114,6 +115,11 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  @NonNls
+  public String getHelpId() {
+    return "reference.dialogs.new.project.fromCode.facets";
   }
 
   public void updateModule(final ModuleDescriptor descriptor, final Module module, final ModifiableRootModel rootModel) {

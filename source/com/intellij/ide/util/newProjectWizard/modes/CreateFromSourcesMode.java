@@ -42,7 +42,7 @@ public class CreateFromSourcesMode extends WizardMode {
     final ProjectWizardStepFactory factory = ProjectWizardStepFactory.getInstance();
     final StepSequence sequence = new StepSequence();
     sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
-    sequence.addCommonStep(factory.createSourcePathsStep(context, projectBuilder, null, null));
+    sequence.addCommonStep(factory.createSourcePathsStep(context, projectBuilder, null, "reference.dialogs.new.project.fromCode.source"));
     sequence.addCommonStep(new LibrariesDetectionStep(projectBuilder, moduleInsight, null, "reference.dialogs.new.project.fromCode.page1"));
     sequence.addCommonStep(new ModulesDetectionStep(projectBuilder, moduleInsight, null, "reference.dialogs.new.project.fromCode.page2"));
     sequence.addCommonStep(factory.createProjectJdkStep(context));

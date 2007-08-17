@@ -87,7 +87,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   }
 
   public String getHelpId() {
-    return "project.new.page1";
+    return "reference.dialogs.new.project.fromCode.name";
   }
 
   public String getProjectFilePath() {
