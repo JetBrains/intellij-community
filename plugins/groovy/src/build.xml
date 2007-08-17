@@ -31,7 +31,7 @@
   <property name="0" value="unknown"/>
   <property name="build.vcs.number.1" value="unknown"/>
   <property name="plugin.revision" value="${build.vcs.number.1}"/>
-  <property name="plugin.version" value="${groovy.plugin.version}.${0}"/>
+  <property name="plugin.version" value="${groovy.plugin.version}.${plugin.revision}"/>
 
   <property name="output" value="${basedir}/dist"/>
 
