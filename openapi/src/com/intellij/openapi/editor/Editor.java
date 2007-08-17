@@ -288,4 +288,11 @@ public interface Editor extends UserDataHolder {
    * @return the editor area, or null if the event occurred over an unknown area.
    */
   @Nullable EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e);
+
+  /**
+   * Set up a header component for this text editor. Please note this is used for textual find feature so your component will most
+   * probably will be reset once the user presses Ctrl+F.
+   * @param header a component to setup as header for this text editor or <code>null</code> to remove one.
+   */
+  void setHeaderComponent(@Nullable JComponent header);
 }

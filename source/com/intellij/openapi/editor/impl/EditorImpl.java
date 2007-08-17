@@ -7,10 +7,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -85,11 +82,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ComplementaryFontsRegistry registry; // load costly font info
   }
 
-  private CommandProcessor myCommandProcessor;
+  private final CommandProcessor myCommandProcessor;
   private MyScrollBar myVerticalScrollBar;
 
-  private CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = new CopyOnWriteArrayList<EditorMouseListener>();
-  private CopyOnWriteArrayList<EditorMouseMotionListener> myMouseMotionListeners = new CopyOnWriteArrayList<EditorMouseMotionListener>();
+  private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = new CopyOnWriteArrayList<EditorMouseListener>();
+  private final CopyOnWriteArrayList<EditorMouseMotionListener> myMouseMotionListeners;
 
   private int myCharHeight = -1;
   private int myLineHeight = -1;
@@ -104,7 +101,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final DocumentListener myEditorDocumentAdapter;
 
-  private SettingsImpl mySettings;
+  private final SettingsImpl mySettings;
 
   private boolean isReleased = false;
 
@@ -152,14 +149,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final ArrayList<CachedFontContent> myFontCache = new ArrayList<CachedFontContent>();
   private FontInfo myCurrentFontType = null;
 
-  private EditorSizeContainer mySizeContainer = new EditorSizeContainer();
+  private final EditorSizeContainer mySizeContainer = new EditorSizeContainer();
 
   private Runnable myCursorUpdater;
   private int myCaretUpdateVShift;
-  Project myProject;
+  final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
-  private ArrayList<FocusChangeListener> myFocusListeners = new ArrayList<FocusChangeListener>();
+  private final ArrayList<FocusChangeListener> myFocusListeners = new ArrayList<FocusChangeListener>();
 
   private MyInputMethodHandler myInputMethodRequestsHandler;
   private InputMethodRequests myInputMethodRequestsSwingWrapper;
@@ -278,6 +275,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+    myMouseMotionListeners = new CopyOnWriteArrayList<EditorMouseMotionListener>();
   }
 
   public boolean isViewer() {
@@ -618,7 +616,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public VisualPosition xyToVisualPosition(Point p) {
+  public VisualPosition xyToVisualPosition(@NotNull Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
 
     int offset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(line, 0)));
@@ -720,7 +718,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public LogicalPosition xyToLogicalPosition(Point p) {
+  public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
     final Point pp;
     if (p.x >= 0 && p.y >= 0) {
       pp = p;
@@ -738,7 +736,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public Point logicalPositionToXY(LogicalPosition pos) {
+  public Point logicalPositionToXY(@NotNull LogicalPosition pos) {
     VisualPosition visible = logicalToVisualPosition(pos);
     int y = visibleLineNumberToYPosition(visible.line);
 
@@ -761,7 +759,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public Point visualPositionToXY(VisualPosition visible) {
+  public Point visualPositionToXY(@NotNull VisualPosition visible) {
     int y = visibleLineNumberToYPosition(visible.line);
     int logLine = visualToLogicalPosition(new VisualPosition(visible.line, 0)).line;
 
@@ -1057,6 +1055,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintComposedTextDecoration((Graphics2D)g);
   }
 
+  public void setHeaderComponent(JComponent header) {
+    myScrollPane.setColumnHeaderView(header);
+  }
+
   public void setBackgroundColor(Color color) {
     myForcedBackground = color;
   }
@@ -1290,8 +1292,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void paintRectangularSelection(Graphics g) {
     final SelectionModel model = getSelectionModel();
     if (!model.hasBlockSelection()) return;
-    final Point start = logicalPositionToXY(model.getBlockStart());
-    final Point end = logicalPositionToXY(model.getBlockEnd());
+    final LogicalPosition blockStart = model.getBlockStart();
+    final LogicalPosition blockEnd = model.getBlockEnd();
+    assert blockStart != null;
+    assert blockEnd != null;
+
+    final Point start = logicalPositionToXY(blockStart);
+    final Point end = logicalPositionToXY(blockEnd);
     g.setColor(myScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
     final int y;
     final int height;
@@ -1933,7 +1940,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myScrollPane;
   }
 
-  public int logicalPositionToOffset(LogicalPosition pos) {
+  public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -1970,7 +1977,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public VisualPosition logicalToVisualPosition(LogicalPosition logicalPos) {
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myFoldingModel.isFoldingEnabled()) return new VisualPosition(logicalPos.line, logicalPos.column);
 
@@ -2080,7 +2087,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public LogicalPosition visualToLogicalPosition(VisualPosition visiblePos) {
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
 
@@ -2403,7 +2410,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private DataContext getProjectAwareDataContext(final DataContext original) {
-    if (original.getData(DataConstants.PROJECT) == myProject) return original;
+    if (DataKeys.PROJECT.getData(original) == myProject) return original;
 
     return new DataContext() {
       public Object getData(String dataId) {
@@ -2416,7 +2423,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
 
-  public EditorMouseEventArea getMouseEventArea(MouseEvent e) {
+  public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
     if (myGutterComponent != e.getSource()) return EditorMouseEventArea.EDITING_AREA;
 
     int x = myGutterComponent.convertX(e.getX());
@@ -2603,7 +2610,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     private EditorImpl myEditor = null;
-    private MyRepaintRunnable myRepaintRunnable;
+    private final MyRepaintRunnable myRepaintRunnable;
     private ScheduledFuture<?> mySchedulerHandle;
 
     private RepaintCursorCommand() {
@@ -2782,7 +2789,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       g.setColor(myScheme.getColor(EditorColors.CARET_COLOR));
 
-      if (EditorImpl.this.myIsInsertMode != mySettings.isBlockCursor()) {
+      if (myIsInsertMode != mySettings.isBlockCursor()) {
         for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
           UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
         }
@@ -3174,7 +3181,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
-    private InputMethodRequests myDelegate;
+    private final InputMethodRequests myDelegate;
 
     private MyInputMethodHandleSwingThreadWrapper(InputMethodRequests delegate) {
       myDelegate = delegate;
@@ -3566,8 +3573,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyColorSchemeDelegate implements EditorColorsScheme {
-    private HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
-    private HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
+    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
     private HashMap<EditorFontType, Font> myFontsMap = null;
     private int myFontSize = -1;
     private String myFaceName = null;
