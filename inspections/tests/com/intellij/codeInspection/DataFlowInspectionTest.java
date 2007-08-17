@@ -131,4 +131,6 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testSwitchQualifierProducesNPE() throws Exception {doTest15();}
   public void testIDEADEV15583() throws Exception {doTest15();}
   public void testIDEADEV13153() throws Exception { doTest15(); }
+  
+  //public void testIDEADEV11033() throws Exception { doTest15(); }
 }
