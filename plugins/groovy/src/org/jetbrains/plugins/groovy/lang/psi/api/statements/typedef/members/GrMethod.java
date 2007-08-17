@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.MethodSignature;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.annotator.DuplicableElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -31,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement, PsiMethod, GrParametersOwner, GrTopLevelDefintion, DuplicableElement<MethodSignature> {
+public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement, PsiMethod, GrParametersOwner, GrTopLevelDefintion, DuplicableElement<GrMethodSignature> {
   public static final GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
 

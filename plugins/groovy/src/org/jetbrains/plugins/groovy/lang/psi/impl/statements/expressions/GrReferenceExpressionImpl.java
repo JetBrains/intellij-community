@@ -27,35 +27,23 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.EnumSet;
 
@@ -162,8 +150,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static final MyTypesCalculator TYPES_CALCULATOR = new MyTypesCalculator();
 
-  public PsiReference getElementToCompare() {
-    return getReference();
+  public GrReferenceExpression getElementToCompare() {
+    return this;
+  }
+
+  public int compareTo(GrReferenceExpression grReferenceExpression) {
+    if (this.equals(grReferenceExpression)) return 0;
+    else return getText().compareTo(grReferenceExpression.getText());
   }
 
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
@@ -443,21 +436,5 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
     return RESOLVER.resolve(this, true);
-  }
-
-  public boolean equals(Object o) {
-    if (!(o instanceof GrReferenceExpression)) return false;
-
-    String name = getName();
-    assert name != null;
-    return name.equals(((GrReferenceExpression) o).getName());
-  }
-
-  public int hashCode() {
-    String name = getName();
-    assert name != null;
-    int result = 29 * name.hashCode();
-    result += 31;
-    return result;
   }
 }

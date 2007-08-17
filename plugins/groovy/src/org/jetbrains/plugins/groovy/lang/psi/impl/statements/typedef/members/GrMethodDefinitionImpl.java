@@ -36,8 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
@@ -104,8 +103,8 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return new GrMember[]{this};
   }
 
-  public MethodSignature getElementToCompare() {
-    return getSignature(PsiSubstitutor.EMPTY);
+  public GrMethodSignature getElementToCompare() {
+    return new GrMethodSignatureWrapper(getSignature(PsiSubstitutor.EMPTY));
   }
 
   private static class MyTypeCalculator implements Function<GrMethod, PsiType> {

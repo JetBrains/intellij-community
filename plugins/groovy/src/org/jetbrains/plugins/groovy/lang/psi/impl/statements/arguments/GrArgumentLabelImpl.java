@@ -160,20 +160,9 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
     return null;
   }
-
-  public boolean equals(Object o) {
-    if (!(o instanceof GrArgumentLabelImpl)) return false;
-
-    String text = getText();
-    assert text != null;
-    return text.equals(((GrArgumentLabelImpl) o).getText());
-  }
-
-  public int hashCode() {
-    String text = getText();
-    assert text != null;
-    int result = 29 * text.hashCode();
-    result += 31;
-    return result;
+  
+  public int compareTo(GrArgumentLabel grArgumentLabel) {
+    if (this.equals(grArgumentLabel)) return 0;
+    else return 1;
   }
 }
