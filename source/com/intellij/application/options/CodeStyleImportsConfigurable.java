@@ -49,6 +49,6 @@ public class CodeStyleImportsConfigurable extends BaseConfigurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode.imports";
+    return "reference.settingsdialog.IDE.globalcodestyle.imports";
   }
 }

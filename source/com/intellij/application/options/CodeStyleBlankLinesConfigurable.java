@@ -20,6 +20,6 @@ public class CodeStyleBlankLinesConfigurable extends CodeStyleAbstractConfigurab
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode.blankLines";
+    return "reference.settingsdialog.IDE.globalcodestyle.blanklines";
   }
 }

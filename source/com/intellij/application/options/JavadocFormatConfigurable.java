@@ -20,6 +20,6 @@ public class JavadocFormatConfigurable extends CodeStyleAbstractConfigurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode.javadoc";
+    return "reference.settingsdialog.IDE.globalcodestyle.javadoc";
   }
 }

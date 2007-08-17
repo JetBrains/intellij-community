@@ -20,6 +20,6 @@ public class WrappingConfigurable extends CodeStyleAbstractConfigurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode.wrap";
+    return "reference.settingsdialog.IDE.globalcodestyle.wrap";
   }
 }

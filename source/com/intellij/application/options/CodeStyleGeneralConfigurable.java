@@ -71,7 +71,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode.codeGeneration";
+    return "reference.settingsdialog.IDE.globalcodestyle.codegen";
   }
 
   public Icon getIcon() {

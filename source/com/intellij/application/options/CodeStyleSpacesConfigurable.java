@@ -20,6 +20,6 @@ public class CodeStyleSpacesConfigurable extends CodeStyleAbstractConfigurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode.spacing";
+    return "reference.settingsdialog.IDE.globalcodestyle.spaces";
   }
 }
