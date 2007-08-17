@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -237,6 +236,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     if (configurable instanceof ScopeConfigurable) {
       ((ScopeConfigurable)configurable).restoreCanceledProgress();
     }
+  }
+
+  protected
+  @Nullable
+  String getEmptySelectionString() {
+    return "Select a scope to view or edit its details here";
   }
 
   private String createUniqueName() {

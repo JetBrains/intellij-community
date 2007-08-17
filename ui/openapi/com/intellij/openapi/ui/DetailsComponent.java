@@ -5,6 +5,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -105,8 +106,8 @@ public class DetailsComponent  {
     myBannerLabel.setText(text);
   }
 
-  public void setEmptyContentText(final String emptyContentText) {
-    final String s = "<html><body><center>" + emptyContentText + "</center></body><html>";
+  public void setEmptyContentText(@Nullable final String emptyContentText) {
+    @NonNls final String s = "<html><body><center>" + (emptyContentText!= null ? emptyContentText : "") + "</center></body><html>";
     myEmptyContentLabel.setText(s);
   }
 

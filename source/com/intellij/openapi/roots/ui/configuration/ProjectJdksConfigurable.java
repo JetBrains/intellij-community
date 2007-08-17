@@ -203,6 +203,9 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     return null;
   }
 
-
-
+  protected
+  @Nullable
+  String getEmptySelectionString() {
+    return "Select a JDK to view or edit its details here";
+  }
 }
