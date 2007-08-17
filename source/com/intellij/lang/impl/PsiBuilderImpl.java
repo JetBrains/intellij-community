@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.LeafPsiElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.jsp.el.IELElementType;
@@ -1029,6 +1030,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
       return Factory.createLeafElement(type, myText, start, end, myCharTable);
     }
+    else if (type instanceof LeafPsiElementType) {
+      return (LeafElement)((LeafPsiElementType)type).createLeafNode(myText, start, end, myCharTable);
+    }
+
     return new LeafPsiElement(type, myText, start, end, myCharTable);
   }
 
