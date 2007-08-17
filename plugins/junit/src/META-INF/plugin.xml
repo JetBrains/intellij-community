@@ -19,7 +19,13 @@
   <actions>
     <group>
       <action class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
+      <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
+    </group>
+    <group>
+      <separator/>
+      <action id="JUnitTesting.SelectInTree" class="com.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
+      <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
     </group>
   </actions>
 </idea-plugin>
