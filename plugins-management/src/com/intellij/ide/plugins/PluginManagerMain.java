@@ -517,6 +517,7 @@ public class PluginManagerMain {
     public void filter() {
       if (installedPluginTable.isShowing()) {
         filter(installedPluginsModel, myFilteredInstalled);
+        installedPluginsModel.modifyData(pluginsList);
       }
       else {
         filter(availablePluginsModel, myFilteredAvailable);
