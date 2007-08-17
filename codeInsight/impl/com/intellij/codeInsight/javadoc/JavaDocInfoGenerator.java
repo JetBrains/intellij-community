@@ -447,7 +447,7 @@ class JavaDocInfoGenerator {
     }
   }
 
-  private void generateAnnotations (@NonNls StringBuilder buffer, PsiDocCommentOwner owner) {
+  private void generateAnnotations (@NonNls StringBuilder buffer, PsiModifierListOwner owner) {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
     PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
@@ -501,6 +501,7 @@ class JavaDocInfoGenerator {
       buffer.append(modifiers);
       buffer.append(" ");
     }
+    generateAnnotations(buffer, parameter);
     generateType(buffer, parameter.getType(), parameter);
     buffer.append(" ");
     buffer.append("<b>");
