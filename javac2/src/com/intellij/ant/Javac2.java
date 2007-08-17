@@ -45,46 +45,21 @@ public class Javac2 extends Javac{
     // compile java
     super.compile();
 
-    instrumentForms();
+    ClassLoader loader = buildClasspathClassLoader();
+    if (loader == null) return;
+    instrumentForms(loader);
 
     //NotNull instrumentation
-    final int instrumented = instrumentNotNull(getDestdir());
+    final int instrumented = instrumentNotNull(getDestdir(), loader);
     log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
   }
 
-  private void instrumentForms() {
+  private void instrumentForms(final ClassLoader loader) {
     // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
     final ArrayList formsToInstrument = myFormFiles;
 
     if (formsToInstrument.size() == 0){
       log("No forms to instrument found", Project.MSG_VERBOSE);
-      return;
-    }
-
-    final StringBuffer classPathBuffer = new StringBuffer();
-
-    classPathBuffer.append(getDestdir().getAbsolutePath());
-
-    final Path classpath = getClasspath();
-    final String[] pathElements = classpath.list();
-    for (int i = 0; i < pathElements.length; i++) {
-      final String pathElement = pathElements[i];
-      classPathBuffer.append(File.pathSeparator);
-      classPathBuffer.append(pathElement);
-    }
-
-    classPathBuffer.append(File.pathSeparator);
-    classPathBuffer.append(getInternalClassPath());
-
-    final String classPath = classPathBuffer.toString();
-    log("classpath=" + classPath, Project.MSG_INFO);
-
-    final ClassLoader loader;
-    try {
-      loader = createClassLoader(classPath);
-    }
-    catch (MalformedURLException e) {
-      fireError(e.getMessage());
       return;
     }
 
@@ -153,7 +128,7 @@ public class Javac2 extends Javac{
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
                                                                   new AntNestedFormLoader(loader), false,
-                                                                  new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+                                                                  new AntClassWriter(ClassWriter.COMPUTE_FRAMES, loader));
       codeGenerator.patchFile(classFile);
       final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -174,7 +149,35 @@ public class Javac2 extends Javac{
     }
   }
 
-  private int instrumentNotNull(File dir) {
+  private ClassLoader buildClasspathClassLoader() {
+    final StringBuffer classPathBuffer = new StringBuffer();
+
+    classPathBuffer.append(getDestdir().getAbsolutePath());
+
+    final Path classpath = getClasspath();
+    final String[] pathElements = classpath.list();
+    for (int i = 0; i < pathElements.length; i++) {
+      final String pathElement = pathElements[i];
+      classPathBuffer.append(File.pathSeparator);
+      classPathBuffer.append(pathElement);
+    }
+
+    classPathBuffer.append(File.pathSeparator);
+    classPathBuffer.append(getInternalClassPath());
+
+    final String classPath = classPathBuffer.toString();
+    log("classpath=" + classPath, Project.MSG_INFO);
+
+    try {
+      return createClassLoader(classPath);
+    }
+    catch (MalformedURLException e) {
+      fireError(e.getMessage());
+      return null;
+    }
+  }
+
+  private int instrumentNotNull(File dir, final ClassLoader loader) {
     int instrumented = 0;
     final File[] files = dir.listFiles();
     for (int i = 0; i < files.length; i++) {
@@ -187,7 +190,7 @@ public class Javac2 extends Javac{
           final FileInputStream inputStream = new FileInputStream(file);
           try {
             ClassReader reader = new ClassReader(inputStream);
-            ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+            ClassWriter writer = new AntClassWriter(ClassWriter.COMPUTE_FRAMES, loader);
 
             final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
             reader.accept(instrumenter, 0);
@@ -210,7 +213,7 @@ public class Javac2 extends Javac{
           log("Failed to instrument @NotNull assertion for " + path + ": " + e.getMessage(), Project.MSG_WARN);
         }
       } else if (file.isDirectory()) {
-        instrumented += instrumentNotNull(file);
+        instrumented += instrumentNotNull(file, loader);
       }
     }
 
@@ -320,8 +323,8 @@ public class Javac2 extends Javac{
   }
 
   private class AntNestedFormLoader implements NestedFormLoader {
-    private ClassLoader myLoader;
-    private HashMap myFormCache = new HashMap();
+    private final ClassLoader myLoader;
+    private final HashMap myFormCache = new HashMap();
 
     public AntNestedFormLoader(final ClassLoader loader) {
       myLoader = loader;
