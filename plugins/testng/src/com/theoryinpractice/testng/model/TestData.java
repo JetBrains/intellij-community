@@ -1,9 +1,8 @@
 package com.theoryinpractice.testng.model;
 
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.ExternalizablePath;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunJavaConfiguration;
+import java.util.*;
+
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -13,11 +12,6 @@ import com.intellij.openapi.roots.ui.order.AdditionalClasspath;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:11:01 PM
@@ -34,6 +28,7 @@ public class TestData implements Cloneable
   public String PARAMETERS;
   public String WORKING_DIRECTORY;
   public String OUTPUT_DIRECTORY;
+  public String ANNOTATION_TYPE;
 
   public String ENV_VARIABLES;
 
@@ -80,6 +75,10 @@ public class TestData implements Cloneable
 
   public String getOutputDirectory() {
     return OUTPUT_DIRECTORY == null ? "" : OUTPUT_DIRECTORY;
+  }
+
+  public String getAnnotationType() {
+    return ANNOTATION_TYPE == null ? "" : ANNOTATION_TYPE;
   }
 
   @Override
@@ -220,10 +219,9 @@ public class TestData implements Cloneable
   public boolean isConfiguredByElement(PsiElement element) {
     if (TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       if (element instanceof PsiPackage) {
-        return Comparing.strEqual(PACKAGE_NAME, ((PsiPackage)element).getQualifiedName());
-      }
-      else if (element instanceof PsiDirectory) {
-        final PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
+        return Comparing.strEqual(PACKAGE_NAME, ((PsiPackage) element).getQualifiedName());
+      } else if (element instanceof PsiDirectory) {
+        final PsiPackage psiPackage = ((PsiDirectory) element).getPackage();
         return psiPackage != null && Comparing.strEqual(PACKAGE_NAME, psiPackage.getQualifiedName());
       }
     }

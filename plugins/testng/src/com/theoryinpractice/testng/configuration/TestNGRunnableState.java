@@ -6,6 +6,12 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
+
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
@@ -32,10 +38,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
@@ -45,19 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
-import org.testng.xml.LaunchSuite;
-import org.testng.xml.Parser;
-import org.testng.xml.SuiteGenerator;
-import org.testng.xml.XmlSuite;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.*;
+import org.testng.xml.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
@@ -199,11 +190,13 @@ public class TestNGRunnableState extends JavaCommandLineState
     }
 
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
+      StringBuilder sb = new StringBuilder();
       for (String listenerClassName : data.TEST_LISTENERS) {
         if (listenerClassName != null && !"".equals(listenerClassName)) {
-          javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, listenerClassName);
+          sb.append(listenerClassName).append(";");
         }
       }
+      javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, sb.toString());
     }
 
     // Always include the source paths - just makes things easier :)
@@ -261,7 +254,11 @@ public class TestNGRunnableState extends JavaCommandLineState
 
       Map<String, String> testParams = buildTestParameters(data);
 
-      String annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
+      String annotationType = data.ANNOTATION_TYPE;
+      if (annotationType == null || "".equals(annotationType)) {
+        annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
+      }
+
       LOGGER.info("Using annotationType of " + annotationType);
 
       LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, 1);
@@ -278,9 +275,11 @@ public class TestNGRunnableState extends JavaCommandLineState
 
           params.putAll(buildTestParameters(data));
 
-          //String annotationType = is15 ? TestNG.JDK5_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
-          //LOGGER.info("Using annotationType of " + annotationType);
-          //suite.setAnnotations(annotationType);
+          String annotationType = data.ANNOTATION_TYPE;
+          if (annotationType != null && !"".equals(annotationType)) {
+            suite.setAnnotations(annotationType);
+          }
+          LOGGER.info("Using annotationType of " + annotationType);
 
           final String fileId =
               (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml").replace(' ', '_');

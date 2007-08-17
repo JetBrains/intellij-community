@@ -6,11 +6,18 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Map;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.Document;
+
 import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
-import com.intellij.execution.junit2.configuration.CommonJavaParameters;
-import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
-import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.junit2.configuration.*;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.ide.util.TreeClassChooser;
@@ -30,16 +37,7 @@ import com.intellij.ui.table.TableView;
 import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.text.Document;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Map;
+import org.testng.TestNG;
 
 public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration>
 {
@@ -77,6 +75,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JButton addListener;
   private JList listenersTable;
   private JButton removeListener;
+  private LabeledComponent<JComboBox> annotationType;
   private CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
   private ArrayList<Map.Entry> propertiesList;
   private TestNGListenersTableModel listenerModel;
@@ -213,6 +212,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
     outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
 
+    annotationType.getComponent().setSelectedItem(data.ANNOTATION_TYPE);
   }
 
   @Override
@@ -233,6 +233,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
     config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isPathEnabled();
 
+    data.ANNOTATION_TYPE = (String) annotationType.getComponent().getSelectedItem();
     data.TEST_PROPERTIES.clear();
     for (Map.Entry<String, String> entry : propertiesList) {
       data.TEST_PROPERTIES.put(entry.getKey(), entry.getValue());
@@ -283,6 +284,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     packageField.setVisible(true);
     packageField.setEnabled(true);
     packageField.setComponent(new TextFieldWithBrowseButton());
+
+    JComboBox annotationTypeCombo = new JComboBox(new Object[] {"", TestNG.JDK_ANNOTATION_TYPE, TestNG.JAVADOC_ANNOTATION_TYPE});
+    annotationType.setComponent(annotationTypeCombo);
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);
