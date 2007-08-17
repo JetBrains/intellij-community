@@ -17,7 +17,7 @@
   <property file="groovy.properties"/>
   <property environment="env"/>
 
-  <property name="0" value="unknown"/>
+
   <property name="production.dest" location="${project.dir}/classes/production"/>
   <property name="production.dest.groovy" location="${production.dest}/Groovy"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
@@ -28,6 +28,7 @@
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
   <property name="resources.file" value="resources_en.jar"/>
 
+  <property name="0" value="unknown"/>
   <property name="build.vcs.number.1" value="unknown"/>
   <property name="plugin.revision" value="${build.vcs.number.1}"/>
   <property name="plugin.version" value="${groovy.plugin.version}.${0}"/>
@@ -97,7 +98,7 @@
       <classpath refid="groovy.path"/>
     </javac2>
 
-    <replace file="${project.dir}/META-INF/plugin.xml" token="VERSION" value="${plugin.version}"/>
+    <replace file="${production.dest.groovy}/META-INF/plugin.xml" token="VERSION" value="${plugin.version}"/>
 
   </target>
 
