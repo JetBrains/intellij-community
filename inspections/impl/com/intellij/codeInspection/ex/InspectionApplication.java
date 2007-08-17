@@ -293,7 +293,7 @@ public class InspectionApplication {
     return prefix;
   }
 
-  private void patchProject(final List<Pattern> excludePatterns, final List<Pattern> includePatterns) {
+  private void patchProject(final Map<Pattern, Pattern> excludePatterns, final Map<Pattern, Pattern> includePatterns) {
     if (excludePatterns.isEmpty() && includePatterns.isEmpty()) return;
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
@@ -301,6 +301,7 @@ public class InspectionApplication {
     final ModifiableRootModel[] models = new ModifiableRootModel[modules.length];
     for (int i = 0; i < modules.length; i++) {
       models[i] = ModuleRootManager.getInstance(modules[i]).getModifiableModel();
+      final int idx = i;
       final ContentEntry[] contentEntries = models[i].getContentEntries();
       for (final ContentEntry contentEntry : contentEntries) {
         final VirtualFile contentRoot = contentEntry.getFile();
@@ -309,17 +310,21 @@ public class InspectionApplication {
         iterate(contentRoot, new ContentIterator() {
           public boolean processFile(final VirtualFile fileOrDir) {
             String relativeName = VfsUtil.getRelativePath(fileOrDir, contentRoot, '/');
-            for (Pattern excludePattern : excludePatterns) {
-              if (excludePattern.matcher(relativeName).matches()) {
-                contentEntry.addExcludeFolder(fileOrDir);
-                return false;
+            for (Pattern module : excludePatterns.keySet()) {
+              if (module == null || module.matcher(modules[idx].getName()).matches()) {
+                if (excludePatterns.get(module).matcher(relativeName).matches()) {
+                  contentEntry.addExcludeFolder(fileOrDir);
+                  return false;
+                }
               }
             }
             if (includePatterns.isEmpty()) return true;
-            for (Pattern includePattern : includePatterns) {
-              if (includePattern.matcher(relativeName).matches()) {
-                included.add(fileOrDir);
-                return true;
+            for (Pattern module : includePatterns.keySet()) {
+              if (module == null || module.matcher(modules[idx].getName()).matches()) {
+                if (includePatterns.get(module).matcher(relativeName).matches()) {
+                  included.add(fileOrDir);
+                  return true;
+                }
               }
             }
             return true;
@@ -362,13 +367,19 @@ public class InspectionApplication {
     }
   }
 
-  private static List<Pattern> loadPatterns(@NonNls String propertyKey) {
-    final List<Pattern> result = new ArrayList<Pattern>();
+  private static Map<Pattern, Pattern> loadPatterns(@NonNls String propertyKey) {
+    final Map<Pattern, Pattern> result = new HashMap<Pattern, Pattern>();
     final String patterns = System.getProperty(propertyKey);
     if (patterns != null) {
       final String[] pathPatterns = patterns.split(";");
       for (String excludedPattern : pathPatterns) {
-        result.add(Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern)));
+        String module = null;
+        int idx = 0;
+        if (excludedPattern.startsWith("[")) {
+          idx = excludedPattern.indexOf("]") + 1;
+          module = excludedPattern.substring(1, idx - 1);
+        }
+        result.put(module != null ? Pattern.compile(module) : null, Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx))));
       }
     }
     return result;
