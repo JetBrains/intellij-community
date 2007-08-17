@@ -17,10 +17,7 @@
   <property file="groovy.properties"/>
   <property environment="env"/>
 
-  <property name="current.plugin.version" value="0.1"/>
-  <property name="build.version" value="${0}"/>
   <property name="0" value="unknown"/>
-  <property name="plugin.version" value="${current.plugin.version}.${build.version}"/>
   <property name="production.dest" location="${project.dir}/classes/production"/>
   <property name="production.dest.groovy" location="${production.dest}/Groovy"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
@@ -33,7 +30,7 @@
 
   <property name="build.vcs.number.1" value="unknown"/>
   <property name="plugin.revision" value="${build.vcs.number.1}"/>
-  <property name="plugin.version" value="${groovy.plugin.version}.${plugin.revision}"/>
+  <property name="plugin.version" value="${groovy.plugin.version}.${0}"/>
 
   <property name="output" value="${basedir}/dist"/>
 
