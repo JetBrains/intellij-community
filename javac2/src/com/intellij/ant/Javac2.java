@@ -152,7 +152,8 @@ public class Javac2 extends Javac{
       class2form.put(classToBind, formFile);
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                  new AntNestedFormLoader(loader), false);
+                                                                  new AntNestedFormLoader(loader), false,
+                                                                  new ClassWriter(ClassWriter.COMPUTE_FRAMES));
       codeGenerator.patchFile(classFile);
       final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -186,10 +187,10 @@ public class Javac2 extends Javac{
           final FileInputStream inputStream = new FileInputStream(file);
           try {
             ClassReader reader = new ClassReader(inputStream);
-            ClassWriter writer = new ClassWriter(true);
+            ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
             final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-            reader.accept(instrumenter, false);
+            reader.accept(instrumenter, 0);
             if (instrumenter.isModification()) {
               final FileOutputStream fileOutputStream = new FileOutputStream(path);
               try {

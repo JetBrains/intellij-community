@@ -13,7 +13,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.psi.util.ClassUtil;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -22,7 +22,7 @@ import java.util.HashMap;
  * @author yole
  */
 public class PsiNestedFormLoader implements NestedFormLoader {
-  private Module myModule;
+  protected Module myModule;
   private Map<String, LwRootContainer> myFormCache = new HashMap<String, LwRootContainer>();
 
   public PsiNestedFormLoader(final Module module) {
@@ -46,7 +46,7 @@ public class PsiNestedFormLoader implements NestedFormLoader {
     PsiClass psiClass = PsiManager.getInstance(myModule.getProject()).findClass(container.getClassToBind(),
                                                                                 myModule.getModuleWithDependenciesScope());
     if (psiClass != null) {
-      return RefactoringUtil.getInnerClassNameForClassLoader(psiClass);
+      return ClassUtil.getJVMClassName(psiClass);
     }
 
     return container.getClassToBind();

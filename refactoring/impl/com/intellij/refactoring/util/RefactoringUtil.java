@@ -987,27 +987,6 @@ public class RefactoringUtil {
     }
   }
 
-  public static String getInnerClassNameForClassLoader(PsiClass aClass) {
-    final String qName = aClass.getQualifiedName();
-    if (qName == null) return null;
-    return replaceDotsWithDollars(qName, aClass);
-  }
-
-  private static String replaceDotsWithDollars(final String qName, PsiClass aClass) {
-    StringBuilder qNameBuffer = new StringBuilder(qName);
-
-    int fromIndex = qNameBuffer.length();
-    PsiElement parent = aClass.getParent();
-    while (parent instanceof PsiClass) {
-      final int dotIndex = qNameBuffer.lastIndexOf(".", fromIndex);
-      if (dotIndex < 0) break;
-      qNameBuffer.replace(dotIndex, dotIndex + 1, "$");
-      fromIndex = dotIndex - 1;
-      parent = parent.getParent();
-    }
-    return qNameBuffer.toString();
-  }
-
   public static String getNewInnerClassName(PsiClass aClass, String oldInnerClassName, String newName) {
     if (!oldInnerClassName.endsWith(aClass.getName())) return newName;
     StringBuilder buffer = new StringBuilder(oldInnerClassName);

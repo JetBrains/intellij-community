@@ -8,8 +8,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.uiDesigner.lw.*;
-import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +102,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
         PsiClass propClass = psiManager.findClass(propertyClassName, scope);
         if (propClass == null) continue;
         if (propClass.isEnum()) {
-          final String enumClassName = RefactoringUtil.getInnerClassNameForClassLoader(propClass);
+          final String enumClassName = ClassUtil.getJVMClassName(propClass);
           final ClassLoader loader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myModule);
           try {
             property = new LwIntroEnumProperty(name, loader.loadClass(enumClassName));

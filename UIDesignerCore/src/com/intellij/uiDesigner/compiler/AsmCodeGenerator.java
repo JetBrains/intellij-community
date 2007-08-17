@@ -64,6 +64,7 @@ public class AsmCodeGenerator {
 
   private NestedFormLoader myFormLoader;
   private final boolean myIgnoreCustomCreation;
+  private final ClassWriter myClassWriter;
 
   static {
     myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_INTELLIJ, new GridLayoutCodeGenerator());
@@ -92,7 +93,8 @@ public class AsmCodeGenerator {
   public AsmCodeGenerator(LwRootContainer rootContainer,
                           ClassLoader loader,
                           NestedFormLoader formLoader,
-                          final boolean ignoreCustomCreation) {
+                          final boolean ignoreCustomCreation,
+                          final ClassWriter classWriter) {
     myFormLoader = formLoader;
     myIgnoreCustomCreation = ignoreCustomCreation;
     if (loader == null){
@@ -106,6 +108,7 @@ public class AsmCodeGenerator {
 
     myErrors = new ArrayList();
     myWarnings = new ArrayList();
+    myClassWriter = classWriter;
   }
 
   public void patchFile(final File classFile) {
@@ -173,11 +176,10 @@ public class AsmCodeGenerator {
     }
 
     FirstPassClassVisitor visitor = new FirstPassClassVisitor();
-    reader.accept(visitor, true);
+    reader.accept(visitor, 0);
 
-    ClassWriter cw = new ClassWriter(true);
-    reader.accept(new FormClassVisitor(cw, visitor.isExplicitSetupCall()), false);
-    myPatchedData = cw.toByteArray();
+    reader.accept(new FormClassVisitor(myClassWriter, visitor.isExplicitSetupCall()), 0);
+    myPatchedData = myClassWriter.toByteArray();
     return myPatchedData;
   }
 

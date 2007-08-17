@@ -1,24 +1,28 @@
 package com.intellij.uiDesigner.core;
 
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.FormErrorInfo;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.NestedFormLoader;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
-import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.uiDesigner.compiler.NestedFormLoader;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.LwRootContainer;
 import junit.framework.TestCase;
+import org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
@@ -50,7 +54,8 @@ public class AsmCodeGeneratorTest extends TestCase {
     com.sun.tools.javac.Main.compile(new String[] { javaPath } );
     String classPath = testDataPath + className + ".class";
     final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassLoader, myNestedFormLoader, false);
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassLoader, myNestedFormLoader, false,
+                                                                new ClassWriter(ClassWriter.COMPUTE_FRAMES));
     final FileInputStream classStream = new FileInputStream(classPath);
     try {
       codeGenerator.patchClass(classStream);

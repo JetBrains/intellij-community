@@ -4,6 +4,7 @@
 
 package com.intellij.uiDesigner.make;
 
+import com.intellij.compiler.PsiClassWriter;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.actions.PreviewFormAction;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -14,8 +15,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -50,7 +51,7 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
 
   private void generateStubClass(final LwRootContainer rootContainer, final String generatedClassName) throws IOException,
                                                                                                               CodeGenerationException {
-    @NonNls ClassWriter cw = new ClassWriter(true);
+    @NonNls ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
     cw.visit(Opcodes.V1_1, Opcodes.ACC_PUBLIC, generatedClassName, null, "java/lang/Object", ArrayUtil.EMPTY_STRING_ARRAY);
 
     cw.visitField(Opcodes.ACC_PUBLIC, PreviewFormAction.PREVIEW_BINDING_FIELD, "Ljavax/swing/JComponent;", null, null);
@@ -69,7 +70,8 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
     cw.visitEnd();
 
     ByteArrayInputStream bais = new ByteArrayInputStream(cw.toByteArray());
-    AsmCodeGenerator acg = new AsmCodeGenerator(rootContainer, myLoader, this, true);
+    AsmCodeGenerator acg = new AsmCodeGenerator(rootContainer, myLoader, this, true,
+                                                new PsiClassWriter(myModule.getProject(), ClassWriter.COMPUTE_FRAMES));
     byte[] data = acg.patchClass(bais);
     FormErrorInfo[] errors = acg.getErrors();
     if (errors.length > 0) {

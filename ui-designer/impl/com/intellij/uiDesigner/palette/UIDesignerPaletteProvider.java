@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
@@ -83,7 +83,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
     public RefactoringElementListener getListener(PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass psiClass = (PsiClass) element;
-        final String oldName = RefactoringUtil.getInnerClassNameForClassLoader(psiClass);
+        final String oldName = ClassUtil.getJVMClassName(psiClass);
         if (oldName != null) {
           final ComponentItem item = myPalette.getItem(oldName);
           if (item != null) {
@@ -107,7 +107,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
 
       public void elementRenamed(PsiElement newElement) {
         PsiClass psiClass = (PsiClass) newElement;
-        final String qName = RefactoringUtil.getInnerClassNameForClassLoader(psiClass);
+        final String qName = ClassUtil.getJVMClassName(psiClass);
         if (qName != null) {
           myItem.setClassName(qName);
           fireGroupsChanged();

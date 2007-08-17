@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
@@ -17,6 +18,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -33,7 +35,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -49,6 +50,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
 import java.io.File;
@@ -165,7 +167,8 @@ public final class PreviewFormAction extends AnAction{
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + RUNTIME_BUNDLE_EXTENSION);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormLoader, true);
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormLoader, true,
+                                                                  new PsiClassWriter(module.getProject(), ClassWriter.COMPUTE_FRAMES));
       codeGenerator.patchFile(tempFile);
       final FormErrorInfo[] errors = codeGenerator.getErrors();
       if(errors.length != 0){

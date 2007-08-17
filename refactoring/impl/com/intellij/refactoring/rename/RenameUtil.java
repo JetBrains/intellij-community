@@ -114,7 +114,7 @@ public class RenameUtil {
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
           if (aClass.getParent() instanceof PsiClass) {
-            final String dollaredStringToSearch = RefactoringUtil.getInnerClassNameForClassLoader(aClass);
+            final String dollaredStringToSearch = ClassUtil.getJVMClassName(aClass);
             final String dollaredStringToReplace = dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
             if (dollaredStringToReplace != null) {
               addTextOccurence(aClass, result, projectScope, dollaredStringToSearch, dollaredStringToReplace);

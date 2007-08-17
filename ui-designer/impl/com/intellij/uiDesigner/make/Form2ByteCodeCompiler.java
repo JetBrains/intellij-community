@@ -1,32 +1,34 @@
 package com.intellij.uiDesigner.make;
 
+import com.intellij.compiler.PsiClassWriter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -295,7 +297,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         LOG.assertTrue(classFile.exists(), classFile.getPath());
 
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                    new PsiNestedFormLoader(module), false);
+                                                                    new PsiNestedFormLoader(module), false,
+                                                                    new PsiClassWriter(module.getProject(), ClassWriter.COMPUTE_FRAMES));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             codeGenerator.patchFile(classFile);
