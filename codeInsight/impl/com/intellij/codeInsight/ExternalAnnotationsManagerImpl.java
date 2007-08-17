@@ -140,7 +140,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
               final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
               if (virtualFiles.length > 0) {
                 final XmlFile annotationsXml = createAnnotationsXml(virtualFiles[0], packageName);
-                myExternalAnotations.put(virtualFile, xmlFile);
+                myExternalAnotations.put(virtualFile, annotationsXml);
                 annotateExternally(listOwner, annotationFQName, annotationsXml);
               }
               else {
