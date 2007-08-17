@@ -80,7 +80,9 @@ public class CommittedChangesBrowser extends JPanel {
 
     add(splitter, BorderLayout.CENTER);
 
-    updateBySelectionChange();
+    if (myTableModel.getRowCount() > 0) {
+      myChangeListsView.getSelectionModel().setSelectionInterval(0, 0);
+    }
   }
 
   public void addToolBar(JComponent toolBar) {
