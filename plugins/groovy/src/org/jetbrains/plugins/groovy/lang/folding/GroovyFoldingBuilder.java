@@ -32,6 +32,7 @@ import java.util.List;
 public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes {
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
+    node.getPsi().getChildren();
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     appendDescriptors(node, document, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);

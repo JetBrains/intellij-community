@@ -19,6 +19,8 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -35,7 +37,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedAr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -68,7 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
  *
  * @author ilyas, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator implements GroovyElementTypes {
+public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyElementTypes {
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -217,8 +222,16 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ARGUMENT)) return new GrNamedArgumentImpl(node);
     if (elem.equals(ARGUMENT_LABEL)) return new GrArgumentLabelImpl(node);
 
-
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
+
+    // GSP-specific Element types
+    if (GROOVY_EXPR_CODE.equals(elem)) return new GrExprInjectionImpl();
+    if (GROOVY_DECLARATION.equals(elem)) return new GrDeclarationImpl();
+
+    if (GSP_CLASS.equals(elem)) return new GspClassImpl(node);
+    if (GSP_RUN_METHOD.equals(elem)) return new GspRunMethodImpl(node);
+    if (GSP_RUN_BLOCK.equals(elem)) return new GspRunBlockImpl(node);
+
 
     return new ASTWrapperPsiElement(node);
   }
