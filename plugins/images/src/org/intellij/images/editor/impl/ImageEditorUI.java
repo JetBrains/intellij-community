@@ -17,7 +17,6 @@ package org.intellij.images.editor.impl;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -333,24 +332,24 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     @Nullable
     public Object getData(String dataId) {
 
-        if (DataConstantsEx.PROJECT.equals(dataId)) {
+        if (DataConstants.PROJECT.equals(dataId)) {
             return editor.getProject();
-        } else if (DataConstantsEx.VIRTUAL_FILE.equals(dataId)) {
+        } else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
             return editor.getFile();
-        } else if (DataConstantsEx.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+        } else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
             return new VirtualFile[]{editor.getFile()};
-        } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
-            return getData(DataConstantsEx.PSI_ELEMENT);
+        } else if (DataConstants.PSI_FILE.equals(dataId)) {
+            return getData(DataConstants.PSI_ELEMENT);
         } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
             VirtualFile file = editor.getFile();
             return file != null ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
-        } else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+        } else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
             return new PsiElement[]{(PsiElement) getData(DataConstants.PSI_ELEMENT)};
-        } else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getCopyProvider();
-        } else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.CUT_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getCutProvider();
-        } else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
             return deleteProvider;
         } else if (ImageComponentDecorator.class.getName().equals(dataId)) {
             return editor;

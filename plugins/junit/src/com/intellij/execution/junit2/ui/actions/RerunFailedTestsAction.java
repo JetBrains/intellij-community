@@ -6,18 +6,18 @@ import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestMethods;
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategyImpl;
 import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public class RerunFailedTestsAction extends AnAction {
 
   private boolean isActive(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
     if (myModel == null || myModel.getRoot() == null) return false;
     List<AbstractTestProxy> failed = getFailedTests();
@@ -73,7 +73,7 @@ public class RerunFailedTestsAction extends AnAction {
     List<AbstractTestProxy> failed = getFailedTests();
 
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     JUnitConfiguration configuration = myModel.getProperties().getConfiguration();
     final TestMethods testMethods = new TestMethods(project, configuration, myRunnerSettings, myConfigurationPerRunnerSettings, failed);
     boolean isDebug = myConsoleProperties.getDebugSession() != null;

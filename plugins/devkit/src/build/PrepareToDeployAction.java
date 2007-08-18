@@ -17,7 +17,7 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -62,7 +62,7 @@ public class PrepareToDeployAction extends AnAction {
   private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
   public void actionPerformed(final AnActionEvent e) {
-    final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
+    final Module module = DataKeys.MODULE.getData(e.getDataContext());
     if (module != null && module.getModuleType() instanceof PluginModuleType) {
       doPrepare(Arrays.asList(module));
     }
@@ -321,7 +321,7 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
+    final Module module = DataKeys.MODULE.getData(e.getDataContext());
     boolean enabled = module != null && module.getModuleType() instanceof PluginModuleType;
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);

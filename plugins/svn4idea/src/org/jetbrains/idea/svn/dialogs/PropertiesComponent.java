@@ -242,7 +242,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(e.getDataContext());
       SVNWCClient wcClient = myVcs.createWCClient();
       SVNPropertyData propValue = null;
       try {
@@ -299,7 +299,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(e.getDataContext());
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, null,
               myFile.isDirectory());
       dialog.show();
@@ -332,7 +332,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(e.getDataContext());
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, getSelectedPropertyName(), myFile.isDirectory());
       dialog.show();
       boolean recursive = false;
@@ -380,12 +380,12 @@ public class PropertiesComponent extends JPanel {
       if (myVcs == null) {
         return;
       }
-      VirtualFile vf = (VirtualFile) e.getDataContext().getData(DataConstants.VIRTUAL_FILE);
+      VirtualFile vf = DataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (vf != null) {
         File f = new File(vf.getPath());
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
-          Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+          Project p = DataKeys.PROJECT.getData(e.getDataContext());
           ToolWindowManager.getInstance(p).getToolWindow(ID).setTitle(f.getName());
         }
 

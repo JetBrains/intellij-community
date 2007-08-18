@@ -19,7 +19,6 @@ package org.intellij.images.thumbnail.impl;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -408,32 +407,32 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     @Nullable
     public Object getData(String dataId) {
-        if (DataConstantsEx.PROJECT.equals(dataId)) {
+        if (DataConstants.PROJECT.equals(dataId)) {
             return thumbnailView.getProject();
-        } else if (DataConstantsEx.VIRTUAL_FILE.equals(dataId)) {
+        } else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? selectedFiles[0] : null;
-        } else if (DataConstantsEx.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+        } else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
             return getSelectedFiles();
-        } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
-            return getData(DataConstantsEx.PSI_ELEMENT);
+        } else if (DataConstants.PSI_FILE.equals(dataId)) {
+            return getData(DataConstants.PSI_ELEMENT);
         } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
-        } else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+        } else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
             return getSelectedElements();
-        } else if (DataConstantsEx.NAVIGATABLE.equals(dataId)) {
+        } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return new ThumbnailNavigatable(selectedFiles.length > 0 ? selectedFiles[0] : null);
-        } else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getCopyProvider();
-        } else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.CUT_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getCutProvider();
-        } else if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getPasteProvider();
-        } else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+        } else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
             return deleteProvider;
-        } else if (DataConstantsEx.NAVIGATABLE_ARRAY.equals(dataId)) {
+        } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             Set<Navigatable> navigatables = new HashSet<Navigatable>(selectedFiles.length);
             for (VirtualFile selectedFile : selectedFiles) {

@@ -5,7 +5,6 @@ import com.intellij.execution.junit2.states.ComparisonFailureState;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -16,7 +15,7 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final AbstractTestProxy testProxy = TestProxy.fromDataContext(dataContext);
     final ComparisonFailureState state = (ComparisonFailureState)((TestProxy)testProxy).getState();
-    state.openDiff((Project)dataContext.getData(DataConstants.PROJECT));
+    state.openDiff(DataKeys.PROJECT.getData(dataContext));
   }
 
   public void update(final AnActionEvent e) {

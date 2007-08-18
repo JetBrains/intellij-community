@@ -1,8 +1,8 @@
 package org.intellij.images.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileEditor;
 import org.intellij.images.editor.ImageEditor;
@@ -33,7 +33,7 @@ public final class ImageEditorActionUtil {
 
     public static ImageEditor getEditor(AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
-        FileEditor editor = (FileEditor) dataContext.getData(DataConstants.FILE_EDITOR);
+      FileEditor editor = DataKeys.FILE_EDITOR.getData(dataContext);
         if (editor instanceof ImageFileEditor) {
             ImageFileEditor fileEditor = (ImageFileEditor) editor;
             return fileEditor.getImageEditor();

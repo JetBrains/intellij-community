@@ -85,13 +85,13 @@ public class GenerateComponentExternalizationAction extends AnAction {
 
   @Nullable
   private PsiClass getComponentInContext(DataContext context) {
-    Editor editor = (Editor)context.getData(DataConstants.EDITOR);
-    Project project = (Project)context.getData(DataConstants.PROJECT);
+    Editor editor = DataKeys.EDITOR.getData(context);
+    Project project = DataKeys.PROJECT.getData(context);
     if (editor == null || project == null) return null;
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-    PsiFile file = (PsiFile)context.getData(DataConstants.PSI_FILE);
+    PsiFile file = DataKeys.PSI_FILE.getData(context);
     if (file == null) return null;
 
     PsiClass contextClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiClass.class, false);
