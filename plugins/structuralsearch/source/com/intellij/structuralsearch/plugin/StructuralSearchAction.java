@@ -2,8 +2,10 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.SearchDialog;
 
 public class StructuralSearchAction extends AnAction {
   // context of the search
@@ -46,7 +48,7 @@ public class StructuralSearchAction extends AnAction {
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext context = event.getDataContext();
-    final Project project = (Project)context.getData( DataConstants.PROJECT );
+    final Project project = DataKeys.PROJECT.getData(context);
     final StructuralSearchPlugin plugin = project==null ? null:StructuralSearchPlugin.getInstance( project );
 
     if (plugin == null || plugin.isSearchInProgress()) {

@@ -1,14 +1,14 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.impl.matcher.DataProvider;
 
 /**
@@ -48,14 +48,14 @@ public final class SearchContext implements DataProvider, Cloneable {
   }
 
   public void configureFromDataContext(DataContext context) {
-    Project project = (Project)context.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(context);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
     setProject(project);
 
-    setFile((PsiFile)context.getData(DataConstants.PSI_FILE));
-    setCurrentFile((VirtualFile)context.getData(DataConstants.VIRTUAL_FILE));
+    setFile(DataKeys.PSI_FILE.getData(context));
+    setCurrentFile(DataKeys.VIRTUAL_FILE.getData(context));
   }
 
   private final Editor selectedEditor() {
