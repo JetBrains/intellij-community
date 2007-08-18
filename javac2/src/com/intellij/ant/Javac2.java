@@ -128,7 +128,7 @@ public class Javac2 extends Javac{
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
                                                                   new AntNestedFormLoader(loader), false,
-                                                                  new AntClassWriter(ClassWriter.COMPUTE_FRAMES, loader));
+                                                                  new AntClassWriter(getAsmClassWriterFlags(), loader));
       codeGenerator.patchFile(classFile);
       final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -147,6 +147,10 @@ public class Javac2 extends Javac{
         fireError(message.toString());
       }
     }
+  }
+
+  private int getAsmClassWriterFlags() {
+    return (getTarget().equals("6") || getTarget().equals("1.6")) ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
   private ClassLoader buildClasspathClassLoader() {
@@ -190,7 +194,7 @@ public class Javac2 extends Javac{
           final FileInputStream inputStream = new FileInputStream(file);
           try {
             ClassReader reader = new ClassReader(inputStream);
-            ClassWriter writer = new AntClassWriter(ClassWriter.COMPUTE_FRAMES, loader);
+            ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(), loader);
 
             final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
             reader.accept(instrumenter, 0);
