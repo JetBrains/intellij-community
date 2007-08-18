@@ -150,7 +150,15 @@ public class Javac2 extends Javac{
   }
 
   private int getAsmClassWriterFlags() {
-    return (getTarget().equals("6") || getTarget().equals("1.6")) ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+    boolean isJdk16;
+    String targetVersion = getTarget();
+    if (targetVersion != null) {
+      isJdk16 = targetVersion.equals("6") || targetVersion.equals("1.6");
+    }
+    else {
+      isJdk16 = getCompilerVersion().equals("javac1.6");
+    }
+    return isJdk16 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
   private ClassLoader buildClasspathClassLoader() {
