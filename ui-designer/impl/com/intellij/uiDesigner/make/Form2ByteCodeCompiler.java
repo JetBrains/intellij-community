@@ -28,7 +28,6 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassWriter;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -298,7 +297,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
                                                                     new PsiNestedFormLoader(module), false,
-                                                                    new PsiClassWriter(module.getProject(), ClassWriter.COMPUTE_FRAMES));
+                                                                    new PsiClassWriter(module));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             codeGenerator.patchFile(classFile);

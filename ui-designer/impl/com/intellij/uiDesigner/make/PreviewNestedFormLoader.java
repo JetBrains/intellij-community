@@ -70,8 +70,7 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
     cw.visitEnd();
 
     ByteArrayInputStream bais = new ByteArrayInputStream(cw.toByteArray());
-    AsmCodeGenerator acg = new AsmCodeGenerator(rootContainer, myLoader, this, true,
-                                                new PsiClassWriter(myModule.getProject(), ClassWriter.COMPUTE_FRAMES));
+    AsmCodeGenerator acg = new AsmCodeGenerator(rootContainer, myLoader, this, true, new PsiClassWriter(myModule));
     byte[] data = acg.patchClass(bais);
     FormErrorInfo[] errors = acg.getErrors();
     if (errors.length > 0) {

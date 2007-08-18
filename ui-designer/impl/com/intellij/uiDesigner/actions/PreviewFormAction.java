@@ -50,7 +50,6 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
 import java.io.File;
@@ -168,7 +167,7 @@ public final class PreviewFormAction extends AnAction{
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + RUNTIME_BUNDLE_EXTENSION);
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormLoader, true,
-                                                                  new PsiClassWriter(module.getProject(), ClassWriter.COMPUTE_FRAMES));
+                                                                  new PsiClassWriter(module));
       codeGenerator.patchFile(tempFile);
       final FormErrorInfo[] errors = codeGenerator.getErrors();
       if(errors.length != 0){
