@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -550,6 +551,11 @@ public abstract class Language {
 
   @Nullable
   public ParameterInfoHandler[] getParameterInfoHandlers() {
+    return null;
+  }
+
+  @Nullable
+  public CodeInsightActionHandler getGotoSuperHandler() {
     return null;
   }
 }

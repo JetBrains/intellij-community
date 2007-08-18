@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.lang.Language;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +32,14 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
+    final Language language = PsiUtil.getLanguageAtOffset(file, offset);
+
+    final CodeInsightActionHandler codeInsightActionHandler = language.getGotoSuperHandler();
+    if (codeInsightActionHandler != null) {
+      codeInsightActionHandler.invoke(project, editor, file);
+      return;
+    }
+
     PsiElement[] superElements = findSuperElements(file, offset);
     if (superElements == null || superElements.length == 0) return;
     if (superElements.length == 1) {
