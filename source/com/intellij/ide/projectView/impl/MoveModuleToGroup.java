@@ -5,7 +5,6 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +24,8 @@ public class MoveModuleToGroup extends ActionGroup {
 
   public void update(AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
-    final Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     boolean active = project != null && modules != null && modules.length != 0;
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(active);

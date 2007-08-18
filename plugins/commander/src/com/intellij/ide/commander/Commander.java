@@ -455,10 +455,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   }
 
   public Object getData(final String dataId) {
-    if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (DataConstants.HELP_ID.equals(dataId)) {
       return HelpID.COMMANDER;
     }
-    else if (DataConstantsEx.PROJECT.equals(dataId)) {
+    else if (DataConstants.PROJECT.equals(dataId)) {
       return myProject;
     }
     else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {

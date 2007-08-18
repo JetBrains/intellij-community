@@ -4,7 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -16,7 +16,7 @@ import com.intellij.util.ArrayUtil;
  */
 public class AddNewFavoritesListAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
       doAddNewFavoritesList(project);
     }

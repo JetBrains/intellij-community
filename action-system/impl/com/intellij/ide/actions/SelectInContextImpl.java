@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -69,11 +68,11 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
     if (selectInContext == null) {
-      Navigatable descriptor = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
+      Navigatable descriptor = DataKeys.NAVIGATABLE.getData(dataContext);
       if (descriptor instanceof OpenFileDescriptor) {
         final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
         if (file.isValid()) {
-          Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+          Project project = DataKeys.PROJECT.getData(dataContext);
           selectInContext = OpenFileDescriptorContext.create(project, file);
         }
       }
@@ -92,8 +91,8 @@ abstract class SelectInContextImpl implements SelectInContext {
 
   @Nullable
   private static SelectInContext createEditorContext(DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final FileEditor editor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final FileEditor editor = DataKeys.FILE_EDITOR.getData(dataContext);
     if (project == null || editor == null) {
       return null;
     }
@@ -116,7 +115,7 @@ abstract class SelectInContextImpl implements SelectInContext {
   @Nullable
   private static SelectInContext createPsiContext(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiElement == null || !psiElement.isValid()) {
       return null;
     }
@@ -135,7 +134,7 @@ abstract class SelectInContextImpl implements SelectInContext {
       return (JComponent)source;
     }
     else {
-      return safeCast(event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT), JComponent.class);
+      return safeCast(event.getDataContext().getData(DataConstants.CONTEXT_COMPONENT), JComponent.class);
     }
   }
 

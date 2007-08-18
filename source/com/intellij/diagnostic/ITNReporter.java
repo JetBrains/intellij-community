@@ -11,17 +11,17 @@ import com.intellij.errorreport.error.ThreadClosedException;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.Component;
+import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -57,7 +57,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     SubmittedReportInfo.SubmissionStatus submissionStatus = SubmittedReportInfo.SubmissionStatus.FAILED;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
 
     String description = "";
     do {

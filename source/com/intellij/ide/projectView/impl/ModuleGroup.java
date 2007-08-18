@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,7 +65,7 @@ public class ModuleGroup {
 
   public Collection<ModuleGroup> childGroups(DataContext dataContext) {
     return childGroups((ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL),
-                       (Project)dataContext.getData(DataConstantsEx.PROJECT));
+                       (Project)dataContext.getData(DataConstants.PROJECT));
   }
 
   public Collection<ModuleGroup> childGroups(ModifiableModuleModel model, Project project) {

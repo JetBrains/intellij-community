@@ -1,10 +1,7 @@
 package com.intellij.moduleDependencies;
 
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -24,7 +21,7 @@ import java.awt.*;
 public class ShowModuleDependenciesAction extends AnAction{
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
     }
@@ -64,7 +61,7 @@ public class ShowModuleDependenciesAction extends AnAction{
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null);
   }
 

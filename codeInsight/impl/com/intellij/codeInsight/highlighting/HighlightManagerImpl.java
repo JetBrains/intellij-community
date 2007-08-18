@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ProjectComponent;
@@ -297,7 +297,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
 
     private void requestHideHighlights(final DataContext dataContext) {
-      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      final Editor editor = DataKeys.EDITOR.getData(dataContext);
       if (editor == null) return;
       hideHighlights(editor, HIDE_BY_ANY_KEY);
     }

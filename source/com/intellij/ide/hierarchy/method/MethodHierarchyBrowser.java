@@ -8,7 +8,6 @@ import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -473,16 +472,16 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       return getSelectedElement();
     }
-    else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return null;
     }
     else if (METHOD_HIERARCHY_BROWSER_DATA_CONSTANT.equals(dataId)) {
       return this;
     }
-    else if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    else if (DataConstants.HELP_ID.equals(dataId)) {
       return HELP_ID;
     }
-    else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return getSelectedMethods();
     } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
       final PsiElement[] selectedElements = getSelectedElements();

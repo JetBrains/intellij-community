@@ -1,5 +1,7 @@
 package com.intellij.find.actions;
 
+import com.intellij.CommonBundle;
+import com.intellij.find.FindBundle;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -10,8 +12,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.find.FindBundle;
-import com.intellij.CommonBundle;
 
 public class FindUsagesInFileAction extends AnAction {
 
@@ -21,7 +21,7 @@ public class FindUsagesInFileAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if(project==null){
       return;
     }
@@ -29,7 +29,7 @@ public class FindUsagesInFileAction extends AnAction {
 
     UsageTarget[] usageTargets = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
     if (usageTargets != null) {
-      FileEditor fileEditor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
+      FileEditor fileEditor = DataKeys.FILE_EDITOR.getData(dataContext);
       if (fileEditor != null) {
         usageTargets[0].findUsagesInEditor(fileEditor);
       }
@@ -49,12 +49,12 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   private static boolean isEnabled(DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
     }
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 

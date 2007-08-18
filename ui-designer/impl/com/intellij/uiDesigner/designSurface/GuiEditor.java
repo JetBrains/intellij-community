@@ -6,7 +6,6 @@ import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -453,14 +452,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
       return null;
     }
 
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteProvider;
     }
 
     if (
-      DataConstantsEx.COPY_PROVIDER.equals(dataId) ||
-      DataConstantsEx.CUT_PROVIDER.equals(dataId) ||
-      DataConstantsEx.PASTE_PROVIDER.equals(dataId)
+      DataConstants.COPY_PROVIDER.equals(dataId) ||
+      DataConstants.CUT_PROVIDER.equals(dataId) ||
+      DataConstants.PASTE_PROVIDER.equals(dataId)
     ) {
       return myCutCopyPasteSupport;
     }

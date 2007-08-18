@@ -5,8 +5,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -141,7 +141,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   public void execute(Editor editor, char charTyped, DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null || editor.isColumnMode()){
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, charTyped, dataContext);

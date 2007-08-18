@@ -1,9 +1,9 @@
 package com.intellij.ide.hierarchy.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.method.MethodHierarchyBrowser;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,7 @@ import java.awt.*;
 public final class BrowseMethodHierarchyAction extends AnAction {
   public final void actionPerformed(final AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
     final PsiMethod method = getMethod(dataContext);
     final MethodHierarchyBrowser hierarchyBrowser = new MethodHierarchyBrowser(project, method);
@@ -94,17 +94,17 @@ public final class BrowseMethodHierarchyAction extends AnAction {
   }
 
   private static PsiMethod getMethodImpl(final DataContext dataContext){
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
 
     if (method != null) {
       return method;
     }
 
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }

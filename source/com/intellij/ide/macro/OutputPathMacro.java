@@ -1,7 +1,8 @@
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -11,7 +12,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -25,12 +25,12 @@ public final class OutputPathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }
 
-    VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+    VirtualFile file = DataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file != null) {
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Module module = projectFileIndex.getModuleForFile(file);

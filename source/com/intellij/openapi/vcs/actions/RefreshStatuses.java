@@ -17,21 +17,21 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 
 public class RefreshStatuses extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
       VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
     }
   }
 
   public void update(AnActionEvent e) {
-    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     boolean isEnabled = project != null &&
         ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0;
     e.getPresentation().setEnabled(isEnabled);

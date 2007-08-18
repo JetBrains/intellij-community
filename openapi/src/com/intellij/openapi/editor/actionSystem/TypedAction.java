@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -50,7 +50,7 @@ public class TypedAction {
 
       Document doc = editor.getDocument();
       if (!doc.isWritable()) {
-        if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(doc, (Project)dataContext.getData(DataConstants.PROJECT))) {
+        if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(doc, DataKeys.PROJECT.getData(dataContext))) {
           return;
         }
       }
@@ -118,7 +118,7 @@ public class TypedAction {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand((Project)dataContext.getData(DataConstants.PROJECT), command, "", TYPING_COMMAND_GROUP);
+    CommandProcessor.getInstance().executeCommand(DataKeys.PROJECT.getData(dataContext), command, "", TYPING_COMMAND_GROUP);
   }
 
   private static class PsiModificationTracker extends PsiTreeChangeAdapter {

@@ -6,7 +6,7 @@ import com.apple.eawt.ApplicationEvent;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -94,7 +94,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     }
 
     private static Project getProject() {
-      return (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+      return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
   }
 }

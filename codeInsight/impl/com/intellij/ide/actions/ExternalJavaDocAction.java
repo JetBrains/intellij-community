@@ -12,12 +12,12 @@ import com.intellij.psi.util.PsiUtil;
 public class ExternalJavaDocAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
 
-    PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       Messages.showMessageDialog(
         project,
@@ -29,8 +29,8 @@ public class ExternalJavaDocAction extends AnAction {
     }
 
 
-    PsiFile context = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    PsiFile context = DataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     PsiElement originalElement = (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
     try {
       element.putUserData(
@@ -48,11 +48,11 @@ public class ExternalJavaDocAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (editor != null) {
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       boolean enabled = (file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
                         (file!=null && JavaDocManager.getProviderFromElement(file)!=null

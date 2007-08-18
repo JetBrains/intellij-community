@@ -4,8 +4,8 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
@@ -50,7 +50,7 @@ public class RestartAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     try {
       RunStrategyImpl.getInstance().execute(myProfile, new DataContext() {
         public Object getData(final String dataId) {

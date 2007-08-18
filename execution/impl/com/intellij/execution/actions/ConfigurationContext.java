@@ -8,6 +8,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -34,14 +35,14 @@ public class ConfigurationContext {
 
   public ConfigurationContext(final DataContext dataContext) {
     myRuntimeConfiguration = (RuntimeConfiguration)dataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
-    myContextComponent = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
-    myModule = (Module)dataContext.getData(DataConstants.MODULE);
+    myContextComponent = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+    myModule = DataKeys.MODULE.getData(dataContext);
     final Object location = dataContext.getData(Location.LOCATION);
     if (location != null) {
       myLocation = (Location<PsiElement>)location;
       return;
     }
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       myLocation = null;
       return;
@@ -103,7 +104,7 @@ public class ConfigurationContext {
 
   private static PsiElement getSelectedPsiElement(final DataContext dataContext, final Project project) {
     PsiElement element = null;
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -111,10 +112,10 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      element = DataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null) {
-      final VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+      final VirtualFile file = DataKeys.VIRTUAL_FILE.getData(dataContext);
       if (file != null) {
         element = PsiManager.getInstance(project).findFile(file);
       }

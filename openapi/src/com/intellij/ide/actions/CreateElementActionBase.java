@@ -1,10 +1,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -56,12 +56,12 @@ public abstract class CreateElementActionBase extends AnAction {
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
-    final IdeView view = (IdeView)dataContext.getData(DataConstants.IDE_VIEW);
+    final IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
     if (view == null) {
       return;
     }
 
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
@@ -76,14 +76,14 @@ public abstract class CreateElementActionBase extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
 
-    final IdeView view = (IdeView)dataContext.getData(DataConstants.IDE_VIEW);
+    final IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
     if (view == null || view.getDirectories().length == 0) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

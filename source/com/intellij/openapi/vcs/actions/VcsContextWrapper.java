@@ -32,7 +32,6 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +66,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public PsiElement getPsiElement() {
-    return (PsiElement)myContext.getData(DataConstants.PSI_ELEMENT);
+    return DataKeys.PSI_ELEMENT.getData(myContext);
   }
 
   public static VcsContext createCachedInstanceOn(AnActionEvent event) {
@@ -80,7 +78,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Project getProject() {
-    return (Project)myContext.getData(DataConstants.PROJECT);
+    return DataKeys.PROJECT.getData(myContext);
   }
 
   public VirtualFile getSelectedFile() {
@@ -90,12 +88,12 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public VirtualFile[] getSelectedFiles() {
-    VirtualFile[] fileArray = (VirtualFile[])myContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] fileArray = DataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {
       return filterLocalFiles(fileArray);
     }
 
-    VirtualFile virtualFile = (VirtualFile)myContext.getData(DataConstants.VIRTUAL_FILE);
+    VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(myContext);
     if (virtualFile != null && isLocal(virtualFile)) {
       return new VirtualFile[]{virtualFile};
     }
@@ -118,7 +116,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Editor getEditor() {
-    return (Editor)myContext.getData(DataConstants.EDITOR);
+    return DataKeys.EDITOR.getData(myContext);
   }
 
   public Collection<VirtualFile> getSelectedFilesCollection() {

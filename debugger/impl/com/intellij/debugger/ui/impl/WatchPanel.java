@@ -14,7 +14,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
@@ -55,7 +55,7 @@ public abstract class WatchPanel extends DebuggerTreePanel {
   }
 
   public Object getData(String dataId) {
-    if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (DataConstants.HELP_ID.equals(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

@@ -10,7 +10,6 @@ import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -489,16 +488,16 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
       return getNavigatables();
     }
-    else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return null;
     }
     else if (CALL_HIERARCHY_BROWSER_DATA_CONSTANT.equals(dataId)) {
       return this;
     }
-    else if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    else if (DataConstants.HELP_ID.equals(dataId)) {
       return HELP_ID;
     }
-    else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return getSelectedMethods();
     }
     return null;
@@ -608,7 +607,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   private final class ChangeScopeAction extends ComboBoxAction {
     public final void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+      final Project project = DataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
 
       presentation.setText(getCurrentScopeType());

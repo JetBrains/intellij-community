@@ -33,8 +33,8 @@ package com.intellij.openapi.diff.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -48,12 +48,12 @@ import java.io.IOException;
 public class MergeFilesAction extends AnAction{
   public void update(AnActionEvent e) {
     DataContext context = e.getDataContext();
-    Project project = (Project)context.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(context);
     if (project == null){
       e.getPresentation().setEnabled(false);
       return;
     }
-    VirtualFile[] files = (VirtualFile[])context.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = DataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (files == null || files.length != 3){
       e.getPresentation().setEnabled(false);
     }
@@ -61,7 +61,7 @@ public class MergeFilesAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     DataContext context = e.getDataContext();
-    VirtualFile[] files = (VirtualFile[])context.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = DataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (files == null || files.length != 3){
       return;
     }
@@ -74,7 +74,7 @@ public class MergeFilesAction extends AnAction{
       String leftText = VfsUtil.loadText(files[0]);
       String rightText = VfsUtil.loadText(files[2]);
 
-      Project project = (Project)context.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(context);
       final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,
                                                                           ActionButtonPresentation.createApplyButton());
       diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),

@@ -1,7 +1,6 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,10 +12,10 @@ public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.actions.MakeModuleAction");
 
   protected void doAction(DataContext dataContext, Project project) {
-    Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     Module module;
     if (modules == null) {
-      module = (Module)dataContext.getData(DataConstants.MODULE);
+      module = DataKeys.MODULE.getData(dataContext);
       if (module == null) {
         return;
       }
@@ -39,8 +38,8 @@ public class MakeModuleAction extends CompileActionBase {
       return;
     }
     final DataContext dataContext = event.getDataContext();
-    final Module module = (Module)dataContext.getData(DataConstants.MODULE);
-    Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    final Module module = DataKeys.MODULE.getData(dataContext);
+    Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     final boolean isEnabled = module != null || modules != null;
     presentation.setEnabled(isEnabled);
     final String actionName = getTemplatePresentation().getTextWithMnemonic();

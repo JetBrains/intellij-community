@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class CloseEditorAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
 
     final FileEditorManagerEx editorManager = ((FileEditorManagerEx)FileEditorManager.getInstance(project));
     EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
@@ -23,7 +23,7 @@ public class CloseEditorAction extends AnAction {
       file = window.getSelectedFile();
     }
     else {
-      file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+      file = DataKeys.VIRTUAL_FILE.getData(dataContext);
     }
     if (file != null) {
       editorManager.closeFile(file, window);
@@ -33,7 +33,7 @@ public class CloseEditorAction extends AnAction {
   public void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

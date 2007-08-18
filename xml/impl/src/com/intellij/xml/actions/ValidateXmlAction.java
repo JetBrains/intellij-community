@@ -1,14 +1,11 @@
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -40,7 +37,7 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final PsiFile psiFile = (PsiFile) e.getDataContext().getData(DataConstants.PSI_FILE);
+    final PsiFile psiFile = DataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile == null) return;
     doRunAction(psiFile);
   }

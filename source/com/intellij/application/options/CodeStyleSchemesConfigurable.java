@@ -2,7 +2,7 @@ package com.intellij.application.options;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorFactory;
@@ -258,7 +258,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
 
     myGlassPanel = new GlassPanel(myPanel);
 
-    final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if (project == null || !CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS) return myPanel;
 
     final CardLayout cards = new CardLayout();

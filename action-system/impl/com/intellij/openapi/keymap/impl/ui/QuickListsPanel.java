@@ -7,7 +7,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -149,7 +149,7 @@ public class QuickListsPanel extends JPanel {
       updateList(myCurrentIndex);
       myKeymapPanel.processCurrentKeymapChanged();
     }
-    Project project = (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
     myQuickListPanel = new QuickListPanel(quickList, getCurrentQuickListIds(), project);
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {

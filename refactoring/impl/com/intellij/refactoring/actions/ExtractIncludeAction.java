@@ -1,14 +1,13 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
@@ -35,7 +34,7 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
-    PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
     if (PsiUtil.isInJspFile(file)) {
       return new ExtractJspIncludeFileHandler(file);
     }

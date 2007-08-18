@@ -404,7 +404,7 @@ public class AntExplorer extends JPanel implements DataProvider {
         }
       }
     }
-    else if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    else if (DataConstants.HELP_ID.equals(dataId)) {
       return HelpID.ANT;
     }
     else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {

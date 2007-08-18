@@ -11,7 +11,7 @@ public final class GenerateJavadocAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     final PsiDirectory dir = getDirectoryFromContext(dataContext);
     JavadocGenerationManager.getInstance(project).generateJavadoc(dir, dataContext);
   }
@@ -22,14 +22,14 @@ public final class GenerateJavadocAction extends AnAction{
   }
 
   private static PsiDirectory getDirectoryFromContext(final DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) return psiFile.getContainingDirectory();
     } else {
-      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
         if (element instanceof PsiDirectory) return (PsiDirectory)element;
         else{
@@ -38,7 +38,7 @@ public final class GenerateJavadocAction extends AnAction{
         }
       } else {
         //This is the case with GUI designer
-        VirtualFile virtualFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+        VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
         if (virtualFile != null && virtualFile.isValid()) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
           if (psiFile != null) return psiFile.getContainingDirectory();

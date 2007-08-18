@@ -7,7 +7,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -218,14 +217,14 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myEditor;
     }
 
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteProvider;
     }
 
     if (
-      DataConstantsEx.COPY_PROVIDER.equals(dataId) ||
-      DataConstantsEx.CUT_PROVIDER.equals(dataId) ||
-      DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+      DataConstants.COPY_PROVIDER.equals(dataId) ||
+      DataConstants.CUT_PROVIDER.equals(dataId) ||
+      DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myEditor == null ? null : myEditor.getData(dataId);
     }
 

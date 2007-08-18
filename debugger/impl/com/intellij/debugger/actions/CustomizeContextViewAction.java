@@ -1,20 +1,23 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.settings.*;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.settings.BaseRenderersConfigurable;
+import com.intellij.debugger.settings.CompositeConfigurable;
+import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: lex
@@ -23,7 +26,7 @@ import java.util.ArrayList;
  */
 public class CustomizeContextViewAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
     final CompositeConfigurable configurable = new CompositeConfigurable() {
       protected List<Configurable> createConfigurables() {

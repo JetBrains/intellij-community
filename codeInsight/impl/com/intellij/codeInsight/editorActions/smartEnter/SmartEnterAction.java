@@ -3,8 +3,8 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +31,7 @@ public class SmartEnterAction extends EditorAction {
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document doc = editor.getDocument();
-      Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       if (project == null || doc.getLineCount() < 2) {
         plainEnter(editor, dataContext);
         return;

@@ -11,7 +11,6 @@ import com.intellij.lang.ant.config.AntBuildTargetBase;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -575,7 +574,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
 
     public Object getData(String dataId) {
-      if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+      if (DataConstants.COPY_PROVIDER.equals(dataId)) {
         return new CopyProvider() {
           public boolean isCopyEnabled(DataContext dataContext) {
             return getSelectionPath() != null;

@@ -1,10 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -120,7 +117,7 @@ public abstract class AutoScrollToSourceHandler {
 
   protected void scrollToSource(Component tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+    final VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
     if (vFile != null) {
       // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
       // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.

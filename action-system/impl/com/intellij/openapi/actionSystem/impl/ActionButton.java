@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
@@ -89,7 +88,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();
       manager.fireBeforeActionPerformed(myAction, dataContext);
-      Component component = ((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
+      Component component = ((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
       if (component != null && !component.isShowing()) {
         return;
       }

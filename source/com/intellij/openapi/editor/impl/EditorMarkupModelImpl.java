@@ -15,7 +15,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -526,7 +526,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           next.setSelected(!isErrorsFirst);
           hLevel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-              final PsiFile psiFile = (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE);
+              final PsiFile psiFile = DataKeys.PSI_FILE.getData(myEditor.getDataContext());
               if (psiFile == null) return;
               final HectorComponent component = new HectorComponent(psiFile);
               final Dimension dimension = component.getPreferredSize();
@@ -534,7 +534,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
             }
           });
-          PsiFile file = (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE);
+          PsiFile file = DataKeys.PSI_FILE.getData(myEditor.getDataContext());
           if (file != null && DaemonCodeAnalyzer.getInstance(myEditor.getProject()).isHighlightingAvailable(file)){
             popupMenu.show(comp, x, y);
           }

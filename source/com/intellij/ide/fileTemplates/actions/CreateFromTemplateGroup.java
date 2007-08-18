@@ -11,7 +11,6 @@ import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -113,7 +112,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
   private static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
-    IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+    IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
     if (view == null) return false;
 
     PsiDirectory[] dirs = view.getDirectories();
@@ -131,11 +130,11 @@ public class CreateFromTemplateGroup extends ActionGroup{
     public final void actionPerformed(AnActionEvent e){
       DataContext dataContext = e.getDataContext();
 
-      IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+      IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
       if (view == null) {
         return;
       }
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
 
       PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
       if (dir == null) return;

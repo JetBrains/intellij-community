@@ -14,8 +14,8 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -45,8 +45,8 @@ public class SaveAsTemplateAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
 
     Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -157,8 +157,8 @@ public class SaveAsTemplateAction extends AnAction {
 
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
 
     if (file == null || editor == null) {
       e.getPresentation().setEnabled(false);

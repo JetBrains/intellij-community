@@ -20,13 +20,13 @@ public abstract class CodeInsightAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     Editor editor = getEditor(dataContext, project);
     actionPerformedImpl(project, editor);
   }
 
   protected Editor getEditor(final DataContext dataContext, final Project project) {
-    return (Editor)dataContext.getData(DataConstants.EDITOR);
+    return DataKeys.EDITOR.getData(dataContext);
   }
 
   public void actionPerformedImpl(final Project project, final Editor editor) {
@@ -56,7 +56,7 @@ public abstract class CodeInsightAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

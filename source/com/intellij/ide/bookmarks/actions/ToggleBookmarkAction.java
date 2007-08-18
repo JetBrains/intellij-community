@@ -1,9 +1,9 @@
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.bookmarks.BookmarkContainer;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.EditorBookmark;
-import com.intellij.ide.bookmarks.BookmarkContainer;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -19,12 +19,12 @@ public class ToggleBookmarkAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     BookmarkManager bookmarkManager = BookmarkManager.getInstance(project);
 
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      Editor editor = DataKeys.EDITOR.getData(dataContext);
       // toggle editor bookmark if editor is active
       if (editor != null) {
         EditorBookmark bookmark = bookmarkManager.findEditorBookmark(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line);
@@ -57,7 +57,7 @@ public class ToggleBookmarkAction extends AnAction {
     String s = IdeBundle.message("action.toggle.bookmark");
 
     DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setText(s);

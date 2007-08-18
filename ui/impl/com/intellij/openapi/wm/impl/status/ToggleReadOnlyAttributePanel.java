@@ -1,18 +1,17 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.StatusBarInformer;
+import com.intellij.ui.UIBundle;
+import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
@@ -79,6 +78,6 @@ public class ToggleReadOnlyAttributePanel extends JLabel {
   }
 
   private Project getProject() {
-    return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
+    return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 }

@@ -40,7 +40,7 @@ public abstract class EditorAction extends AnAction {
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     actionPerformed(editor, dataContext);
   }
 
@@ -67,7 +67,7 @@ public abstract class EditorAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
     }

@@ -32,7 +32,7 @@ abstract class BaseRunConfigurationAction extends AnAction {
       final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferedProducers(context.getLocation(), context);
       if (producers == null) return;
       if (producers.size() > 1) {
-        final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+        final Editor editor = DataKeys.EDITOR.getData(dataContext);
         Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
           public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
             return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());

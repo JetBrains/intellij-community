@@ -17,7 +17,7 @@ public class CutAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     CutProvider provider = (CutProvider)dataContext.getData(DataConstants.CUT_PROVIDER);
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(project != null && project.isOpen() && provider != null && provider.isCutEnabled(dataContext));
   }
 }

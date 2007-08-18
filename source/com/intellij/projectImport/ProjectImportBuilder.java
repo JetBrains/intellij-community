@@ -3,7 +3,7 @@ package com.intellij.projectImport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
 
   @Nullable
   public static Project getCurrentProject() {
-    return (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
   }
 
   protected String getTitle() {

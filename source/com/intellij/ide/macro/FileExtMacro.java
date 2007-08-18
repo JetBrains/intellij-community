@@ -1,10 +1,10 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public final class FileExtMacro extends Macro {
   public String getName() {
@@ -16,7 +16,7 @@ public final class FileExtMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    VirtualFile file = (VirtualFile)dataContext.getData(DataConstantsEx.VIRTUAL_FILE);
+    VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
     if (file == null ) return null;
     return file.getExtension();
   }

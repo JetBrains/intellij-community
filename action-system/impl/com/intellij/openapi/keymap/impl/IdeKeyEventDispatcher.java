@@ -6,7 +6,6 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -225,7 +224,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if(KeyEvent.KEY_RELEASED==e.getID()){
       myFirstKeyStroke=null;
       myState=STATE_INIT;
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       WindowManager.getInstance().getStatusBar(project).setInfo(null);
       return false;
     }
@@ -241,7 +240,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // finally user had managed to enter the second keystroke, so let it be processed
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
     if (processAction(e, dataContext)) {
       statusBar.setInfo(null);
@@ -319,7 +318,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         }
       }
 
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       StringBuffer message = new StringBuffer();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
@@ -405,7 +404,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext());
-      Component component = (Component)actionEvent.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT);
+      Component component = (Component)actionEvent.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;
       }

@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.impl.HectorComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -19,8 +19,8 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.StatusBarInformer;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -164,7 +164,7 @@ public class TogglePopupHintsPanel extends JPanel {
 
   @Nullable
   private Project getCurrentProject() {
-    return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
+    return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public Point getToolTipLocation(MouseEvent event) {

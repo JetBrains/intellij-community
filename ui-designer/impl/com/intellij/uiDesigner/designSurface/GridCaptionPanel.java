@@ -7,9 +7,8 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -242,7 +241,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     if (dataId.equals(CaptionSelection.class.getName())) {
       return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex());
     }
-    if (dataId.equals(DataConstantsEx.DELETE_ELEMENT_PROVIDER)) {
+    if (dataId.equals(DataConstants.DELETE_ELEMENT_PROVIDER)) {
       return myDeleteProvider;
     }
     return myEditor.getData(dataId);

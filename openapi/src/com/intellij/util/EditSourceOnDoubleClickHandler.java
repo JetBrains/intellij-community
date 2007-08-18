@@ -17,8 +17,8 @@ package com.intellij.util;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -38,7 +38,7 @@ public class EditSourceOnDoubleClickHandler {
         if (e.getClickCount() != 2) return;
         if (tree.getPathForLocation(e.getX(), e.getY()) == null) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(tree);
-        Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+        Project project = DataKeys.PROJECT.getData(dataContext);
         if (project == null) return;
 
         final TreePath selectionPath = tree.getSelectionPath();
@@ -68,7 +68,7 @@ public class EditSourceOnDoubleClickHandler {
         if (e.getClickCount() != 2) return;
         if (treeTable.getTree().getPathForLocation(e.getX(), e.getY()) == null) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
-        Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+        Project project = DataKeys.PROJECT.getData(dataContext);
         if (project == null) return;
         OpenSourceUtil.openSourcesFrom(dataContext, true);
       }
@@ -82,7 +82,7 @@ public class EditSourceOnDoubleClickHandler {
         if (table.columnAtPoint(e.getPoint()) < 0) return;
         if (table.rowAtPoint(e.getPoint()) < 0) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(table);
-        Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+        Project project = DataKeys.PROJECT.getData(dataContext);
         if (project == null) return;
         OpenSourceUtil.openSourcesFrom(dataContext, true);
       }

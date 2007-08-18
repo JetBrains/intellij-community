@@ -13,7 +13,7 @@ public class FoldingGroup extends DefaultActionGroup {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null){
       presentation.setVisible(false);
       return;

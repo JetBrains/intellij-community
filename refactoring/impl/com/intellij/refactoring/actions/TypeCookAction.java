@@ -1,15 +1,14 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.typeCook.TypeCookHandler;
-import com.intellij.lang.Language;
 
 public class TypeCookAction extends BaseRefactoringAction {
 
@@ -22,7 +21,7 @@ public class TypeCookAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
     if (project == null) {
       return false;

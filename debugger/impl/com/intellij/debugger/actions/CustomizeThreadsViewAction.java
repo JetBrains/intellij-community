@@ -4,7 +4,7 @@ import com.intellij.debugger.settings.ThreadsViewConfigurable;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
  */
 public class CustomizeThreadsViewAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new ThreadsViewConfigurable(ThreadsViewSettings.getInstance()));
     editor.show();
   }

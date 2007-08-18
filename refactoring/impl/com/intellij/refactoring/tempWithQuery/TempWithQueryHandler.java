@@ -2,8 +2,8 @@ package com.intellij.refactoring.tempWithQuery;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,10 +28,9 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 public class TempWithQueryHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.tempWithQuery.TempWithQueryHandler");
@@ -161,8 +160,8 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
       if (dataContext != null) {
-        final PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-        final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+        final PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
+        final Editor editor = DataKeys.EDITOR.getData(dataContext);
         if (file != null && editor != null) {
           invokeOnVariable(file, project, (PsiLocalVariable)elements[0], editor);
         }

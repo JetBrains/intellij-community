@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -24,7 +23,7 @@ import java.awt.*;
 public final class BrowseTypeHierarchyAction extends AnAction {
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
@@ -83,9 +82,9 @@ public final class BrowseTypeHierarchyAction extends AnAction {
     }
 
     final DataContext dataContext = event.getDataContext();
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
-      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      final Project project = DataKeys.PROJECT.getData(dataContext);
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       final boolean enabled = file instanceof PsiJavaFile || PsiUtil.isInJspFile(file);
       presentation.setVisible(enabled);
@@ -99,10 +98,10 @@ public final class BrowseTypeHierarchyAction extends AnAction {
   }
 
   private static PsiClass getPsiClass(final DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;
@@ -124,7 +123,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
       return null;
     }
     else {
-      final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
   }

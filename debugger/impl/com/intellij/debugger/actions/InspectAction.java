@@ -17,14 +17,14 @@ import com.intellij.debugger.ui.impl.InspectDialog;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.sun.jdi.Field;
 
 public class InspectAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     final DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
     if(node == null) return;
     final NodeDescriptorImpl descriptor = node.getDescriptor();

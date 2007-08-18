@@ -32,7 +32,7 @@ public final class TargetAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {

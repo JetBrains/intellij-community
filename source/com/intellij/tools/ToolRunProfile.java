@@ -14,8 +14,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
@@ -49,7 +49,7 @@ public class ToolRunProfile implements RunProfile{
   }
 
   public RunProfileState getState(DataContext context, RunnerInfo runnerInfo, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
-    final Project project = (Project)context.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(context);
     if (project == null || myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
       return null;

@@ -1,8 +1,8 @@
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,7 +13,7 @@ public class AddToFavoritesActionGroup extends ActionGroup {
 
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       return AnAction.EMPTY_ARRAY;
     }

@@ -5,8 +5,8 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
@@ -504,7 +504,7 @@ public class ModuleEditor implements Place.Navigator {
     }
 
     public Object getData(String dataId) {
-      if (dataId.equals(DataConstantsEx.MODULE_CONTEXT)) {
+      if (dataId.equals(DataConstants.MODULE_CONTEXT)) {
         return getModule();
       }
       return null;

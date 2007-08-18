@@ -564,7 +564,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (paths == null) return null;
 
     if (paths.length > 1) {
-      if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+      if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
         return collectPsiElements();
       }
       else {

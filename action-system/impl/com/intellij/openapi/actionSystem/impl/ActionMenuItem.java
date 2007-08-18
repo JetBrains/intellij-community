@@ -2,7 +2,6 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
@@ -143,7 +142,7 @@ public class ActionMenuItem extends JMenuItem {
       if (myPresentation.isEnabled()) {
         ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
         actionManager.fireBeforeActionPerformed(myAction, myContext);
-        Component component = ((Component)event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));
+        Component component = ((Component)event.getDataContext().getData(DataConstants.CONTEXT_COMPONENT));
         if (component != null && !isInTree(component)) {
           return;
         }

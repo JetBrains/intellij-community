@@ -1,8 +1,8 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -21,17 +21,17 @@ import java.util.ArrayList;
 
 class PrintManager {
   public static void executePrint(DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
 
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
 
     final PsiDirectory[] psiDirectory = new PsiDirectory[1];
-    PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       psiDirectory[0] = (PsiDirectory)psiElement;
     }
 
-    final PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
     final String[] shortFileName = new String[1];
     final String[] directoryName = new String[1];
     if(psiFile != null || psiDirectory[0] != null) {
@@ -46,7 +46,7 @@ class PrintManager {
       }
     }
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     boolean isSelectedTextEnabled = false;
     if(editor != null && editor.getSelectionModel().hasSelection()) {
       isSelectedTextEnabled = true;

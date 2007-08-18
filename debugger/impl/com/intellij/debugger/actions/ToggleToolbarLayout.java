@@ -1,11 +1,11 @@
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.ui.DebuggerSessionTab;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
 
 public class ToggleToolbarLayout extends ToggleAction {
 
@@ -26,7 +26,7 @@ public class ToggleToolbarLayout extends ToggleAction {
   }
 
   private DebuggerSessionTab getSessionTab(final AnActionEvent e) {
-    Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if(project == null) return null;
     return DebuggerPanelsManager.getInstance(project).getSessionTab();
   }

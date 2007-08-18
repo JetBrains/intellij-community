@@ -200,7 +200,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     JComponent focusOwner=component instanceof JComponent ? (JComponent)component : null;
 
     if (focusOwner == null) {
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       IdeFrameImpl frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
@@ -212,7 +212,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     Point popupMenuPoint = null;
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null && focusOwner == editor.getContentComponent()) {
       return guessBestPopupLocation(editor);
     }

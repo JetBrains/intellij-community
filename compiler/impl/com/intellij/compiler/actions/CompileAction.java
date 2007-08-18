@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -26,13 +25,13 @@ import java.util.List;
 public class CompileAction extends CompileActionBase {
   
   protected void doAction(DataContext dataContext, Project project) {
-    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    final Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
     final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
     if (module != null) {
       CompilerManager.getInstance(project).compile(module, null, trackDependencies);
     }
     else {
-      VirtualFile[] files = getCompilableFiles(project, (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY));
+      VirtualFile[] files = getCompilableFiles(project, DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
       if (files.length > 0) {
         CompilerManager.getInstance(project).compile(files, null, trackDependencies);
       }
@@ -51,16 +50,16 @@ public class CompileAction extends CompileActionBase {
     presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
     presentation.setVisible(true);
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    final Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
 
-    final VirtualFile[] files = getCompilableFiles(project, (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY));
+    final VirtualFile[] files = getCompilableFiles(project, DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
       return;
@@ -79,7 +78,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+        PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }

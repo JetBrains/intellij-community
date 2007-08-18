@@ -27,7 +27,6 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.ex.TimerListener;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ModalityState;
@@ -682,16 +681,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     if (dataId.equals(DataConstants.CONTEXT_COMPONENT)) {
       return this;
     }
-    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return getSelectedElement(Module.class) != null ? myDeleteModuleProvider : new DeleteHandler.DefaultDeleteProvider();
     }
 

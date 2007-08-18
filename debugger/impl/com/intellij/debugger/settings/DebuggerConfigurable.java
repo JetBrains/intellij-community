@@ -2,7 +2,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -38,7 +38,7 @@ public class DebuggerConfigurable extends CompositeConfigurable implements Searc
 
   protected List<Configurable> createConfigurables() {
     ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-    Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if(project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

@@ -3,7 +3,6 @@ package com.intellij.cyclicDependencies.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -38,10 +37,10 @@ public class CyclicDependenciesAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Module module = (Module)dataContext.getData(DataConstants.MODULE);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Module module = DataKeys.MODULE.getData(dataContext);
     if (project != null) {
-      PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+      PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
       if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
         return;
       }
@@ -68,7 +67,7 @@ public class CyclicDependenciesAction extends AnAction{
 
 
   private AnalysisScope getInspectionScope(final DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -78,22 +77,22 @@ public class CyclicDependenciesAction extends AnAction{
 
   private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: package, project, module.
-    Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
+    Project projectContext = DataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return new AnalysisScope(projectContext);
     }
 
-    Module moduleContext = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     if (moduleContext != null) {
       return new AnalysisScope(moduleContext);
     }
 
-    Module [] modulesArray = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    Module [] modulesArray = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
 
-    PsiElement psiTarget = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiTarget = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
@@ -113,11 +112,11 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   private AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT));
+    return new AnalysisScope(DataKeys.PROJECT.getData(dataContext));
   }
 
   private AnalysisScope getModuleScope(DataContext dataContext) {
-    return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE));
+    return new AnalysisScope(DataKeys.MODULE.getData(dataContext));
   }
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {

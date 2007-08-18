@@ -1,13 +1,13 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.util.PathUtil;
-import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -21,7 +21,7 @@ public final class JdkPathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }

@@ -24,8 +24,8 @@ public class HighlightUsagesAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = (Editor) e.getDataContext().getData(DataConstants.EDITOR);
-    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    final Editor editor = DataKeys.EDITOR.getData(e.getDataContext());
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (editor == null) return;
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";

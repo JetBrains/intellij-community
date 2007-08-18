@@ -18,8 +18,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 abstract class OverrideImplementMethodAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
@@ -28,7 +28,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
     final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)dataContext.getData(MethodHierarchyBrowser.METHOD_HIERARCHY_BROWSER_DATA_CONSTANT);
     if (methodHierarchyBrowser == null) return;
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     final String commandName = event.getPresentation().getText();
@@ -85,7 +85,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
       presentation.setVisible(false);
       return;
     }
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);

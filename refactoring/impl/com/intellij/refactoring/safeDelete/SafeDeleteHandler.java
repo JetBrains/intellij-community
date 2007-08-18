@@ -2,8 +2,8 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -38,7 +38,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("safe.delete.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null || !SafeDeleteProcessor.validElement(element)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));

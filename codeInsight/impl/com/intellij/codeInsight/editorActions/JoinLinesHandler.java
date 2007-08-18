@@ -11,8 +11,8 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -43,7 +43,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
     final DocumentEx doc = (DocumentEx) editor.getDocument();
-    final Project project = (Project) DataManager.getInstance().getDataContext(editor.getContentComponent()).getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

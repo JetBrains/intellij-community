@@ -1,20 +1,19 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Vladimir Kondratyev
@@ -25,7 +24,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
 
   private static IdeFrameImpl getFrame(AnActionEvent e){
     WindowManagerEx windowManagerEx=WindowManagerEx.getInstanceEx();
-    Project project=(Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     return windowManagerEx.getFrame(project);
   }
 
@@ -36,7 +35,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
 
   public void setSelected(AnActionEvent e,boolean state){
     // Hide all all visible floating tool windows.
-    Project project=(Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if(project!=null){
       ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
       String[] ids=toolWindowManager.getToolWindowIds();

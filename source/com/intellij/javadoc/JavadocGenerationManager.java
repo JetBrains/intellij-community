@@ -5,8 +5,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
@@ -50,7 +50,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
   }
 
   public void generateJavadoc(final PsiDirectory directory, DataContext dataContext) {
-    Component component = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
+    Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     final PsiPackage aPackage = directory != null ? directory.getPackage() : null;
     String packageFQName = aPackage != null ? aPackage.getQualifiedName() : null;
 

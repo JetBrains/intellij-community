@@ -8,14 +8,14 @@ import com.intellij.openapi.project.Project;
 public class ReplaceInPathAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     
     ReplaceInProjectManager.getInstance(project).replaceInProject(dataContext);
   }
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
     }

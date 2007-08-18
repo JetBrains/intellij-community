@@ -5,7 +5,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 
 /*
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 
 public class StopAction extends AnAction{
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
     if(project == null) return;
 
@@ -35,7 +35,7 @@ public class StopAction extends AnAction{
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
     boolean enable = false;
 

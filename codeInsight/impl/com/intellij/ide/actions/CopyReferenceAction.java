@@ -11,8 +11,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,25 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -77,7 +59,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static boolean isEnabled(final DataContext dataContext) {
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
     PsiElement member = getMember(element);
     return member != null;
@@ -85,8 +67,8 @@ public class CopyReferenceAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
     PsiElement member = getMember(element);
@@ -114,7 +96,7 @@ public class CopyReferenceAction extends AnAction {
     }
 
     if (element == null) {
-      element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      element = DataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
       element = element.getParent();
@@ -274,8 +256,8 @@ public class CopyReferenceAction extends AnAction {
 
   public static class MyPasteProvider implements PasteProvider {
     public void performPaste(DataContext dataContext) {
-      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      final Project project = DataKeys.PROJECT.getData(dataContext);
+      final Editor editor = DataKeys.EDITOR.getData(dataContext);
       if (project == null || editor == null) return;
 
       final String fqn = getCopiedFqn();
@@ -288,8 +270,8 @@ public class CopyReferenceAction extends AnAction {
     }
 
     public boolean isPasteEnabled(DataContext dataContext) {
-      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      final Project project = DataKeys.PROJECT.getData(dataContext);
+      final Editor editor = DataKeys.EDITOR.getData(dataContext);
       return project != null && editor != null && getCopiedFqn() != null;
     }
   }

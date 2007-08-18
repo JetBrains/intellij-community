@@ -2,7 +2,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +22,7 @@ public class ContextHelpAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Object helpIDObj = dataContext.getData(DataConstantsEx.HELP_ID);
+    Object helpIDObj = dataContext.getData(DataConstants.HELP_ID);
     if (myHelpID != null) {
       HelpManager.getInstance().invokeHelp(myHelpID);
     } else if (helpIDObj != null) {
@@ -35,7 +34,7 @@ public class ContextHelpAction extends AnAction {
     Presentation presentation = event.getPresentation();
     if (ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
       DataContext dataContext = event.getDataContext();
-      presentation.setEnabled(dataContext.getData(DataConstantsEx.HELP_ID) != null || myHelpID != null);
+      presentation.setEnabled(dataContext.getData(DataConstants.HELP_ID) != null || myHelpID != null);
     }
     else {
       presentation.setIcon(myIcon);

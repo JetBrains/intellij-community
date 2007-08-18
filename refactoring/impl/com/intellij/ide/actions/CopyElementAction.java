@@ -12,7 +12,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 public class CopyElementAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -23,7 +23,7 @@ public class CopyElementAction extends AnAction {
     PsiElement[] elements;
     PsiDirectory defaultTargetDirectory;
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      Editor editor = DataKeys.EDITOR.getData(dataContext);
       PsiClass aClass = getTopLevelClass(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       elements = new PsiElement[]{aClass};
@@ -35,7 +35,7 @@ public class CopyElementAction extends AnAction {
     else {
       Object element = dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
       defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
-      elements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+      elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
     }
 
     doCopy(elements, defaultTargetDirectory);
@@ -48,7 +48,7 @@ public class CopyElementAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -64,14 +64,14 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForEditor(DataContext dataContext, Presentation presentation) {
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
     }
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     PsiClass topLevelClass = getTopLevelClass(editor, project);
@@ -86,7 +86,7 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForToolWindow(String toolWindowId, DataContext dataContext,Presentation presentation) {
-    PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+    PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements));
     presentation.setVisible(true);
   }

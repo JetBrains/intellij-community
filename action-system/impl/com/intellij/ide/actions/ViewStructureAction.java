@@ -40,9 +40,9 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    final FileEditor fileEditor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
+    Project project = DataKeys.PROJECT.getData(dataContext);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final FileEditor fileEditor = DataKeys.FILE_EDITOR.getData(dataContext);
     if (editor == null) return;
     if (fileEditor == null) return;
 
@@ -53,7 +53,7 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
+    Navigatable navigatable = DataKeys.NAVIGATABLE.getData(dataContext);
     DialogWrapper dialog = createDialog(psiFile, editor, project, navigatable, fileEditor);
     if (dialog != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -111,12 +111,12 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner {
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
       return;

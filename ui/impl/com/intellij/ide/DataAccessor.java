@@ -2,7 +2,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -42,7 +41,7 @@ public abstract class DataAccessor<T> {
   };
 
   public static final DataAccessor<PsiElement> PSI_ELEMENT = new SimpleDataAccessor<PsiElement>(DataConstants.PSI_ELEMENT);
-  public static final DataAccessor<PsiElement[]> PSI_ELEMENT_ARRAY = new SimpleDataAccessor<PsiElement[]>(DataConstantsEx.PSI_ELEMENT_ARRAY);
+  public static final DataAccessor<PsiElement[]> PSI_ELEMENT_ARRAY = new SimpleDataAccessor<PsiElement[]>(DataConstants.PSI_ELEMENT_ARRAY);
 
   public static final DataAccessor<VirtualFile> VIRTUAL_FILE = new SimpleDataAccessor<VirtualFile>(DataConstants.VIRTUAL_FILE);
   public static final DataAccessor<VirtualFile[]> VIRTUAL_FILE_ARRAY = new SimpleDataAccessor<VirtualFile[]>(DataConstants.VIRTUAL_FILE_ARRAY);

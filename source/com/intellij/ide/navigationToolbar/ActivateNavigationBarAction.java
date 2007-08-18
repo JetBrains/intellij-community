@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 
 /**
  * User: anna
@@ -30,7 +30,7 @@ import com.intellij.ide.ui.UISettings;
  */
 public class ActivateNavigationBarAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project  = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project != null){
       if (UISettings.getInstance().SHOW_NAVIGATION_BAR){
         final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
@@ -41,7 +41,7 @@ public class ActivateNavigationBarAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Project project  = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       e.getPresentation().setEnabled(false);
       return;

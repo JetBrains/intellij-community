@@ -14,7 +14,7 @@ import java.util.Set;
 public final class AntBuildGroup extends ActionGroup {
 
   public void update(AnActionEvent event) {
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(event.getDataContext());
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(project != null);
     presentation.setVisible(project != null);
@@ -22,7 +22,7 @@ public final class AntBuildGroup extends ActionGroup {
 
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return AnAction.EMPTY_ARRAY;
 
     final List<AnAction> children = new ArrayList<AnAction>();

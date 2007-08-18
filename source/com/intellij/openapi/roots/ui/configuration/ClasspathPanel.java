@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1000,7 +999,7 @@ public class ClasspathPanel extends JPanel {
 
     private static FileChooserDescriptor createFileChooserDescriptor(Component parent) {
       final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, false, true);
-      final Module contextModule = (Module)DataManager.getInstance().getDataContext(parent).getData(DataConstantsEx.MODULE_CONTEXT);
+      final Module contextModule = (Module)DataManager.getInstance().getDataContext(parent).getData(DataConstants.MODULE_CONTEXT);
       descriptor.setContextModule(contextModule);
       return descriptor;
     }

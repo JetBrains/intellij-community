@@ -19,7 +19,7 @@ public class SendToFavoritesGroup extends ActionGroup{
 
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       return AnAction.EMPTY_ARRAY;
     }
@@ -53,7 +53,7 @@ public class SendToFavoritesGroup extends ActionGroup{
 
     public void actionPerformed(AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
       String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
       

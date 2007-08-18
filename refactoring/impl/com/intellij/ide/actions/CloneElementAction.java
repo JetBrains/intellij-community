@@ -1,8 +1,8 @@
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDirectory;
@@ -24,7 +24,7 @@ public class CloneElementAction extends CopyElementAction {
 
   protected void updateForToolWindow(String id, DataContext dataContext,Presentation presentation) {
     // work only with single selection
-    PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+    PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
     presentation.setEnabled(elements != null && elements.length == 1 && CopyHandler.canCopy(elements));
     presentation.setVisible(true);
 

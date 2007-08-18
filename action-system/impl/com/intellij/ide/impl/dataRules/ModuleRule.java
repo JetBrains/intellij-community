@@ -17,7 +17,7 @@ import com.intellij.psi.PsiElement;
  */
 public class ModuleRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    Object moduleContext = dataProvider.getData(DataConstantsEx.MODULE_CONTEXT);
+    Object moduleContext = dataProvider.getData(DataConstants.MODULE_CONTEXT);
     if (moduleContext != null) {
       return moduleContext;
     }

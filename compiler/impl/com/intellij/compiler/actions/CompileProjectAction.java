@@ -3,8 +3,8 @@ package com.intellij.compiler.actions;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -35,7 +35,7 @@ public class CompileProjectAction extends CompileActionBase {
     if (!presentation.isEnabled()) {
       return;
     }
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
   }
 }

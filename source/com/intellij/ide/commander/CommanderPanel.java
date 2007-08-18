@@ -1,5 +1,7 @@
 package com.intellij.ide.commander;
 
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
@@ -16,8 +18,6 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -427,7 +427,7 @@ public class CommanderPanel extends JPanel {
       final PsiElement selectedElement = getSelectedElement();
       return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
     }
-    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return filterInvalidElements(getSelectedElements());
     }
     else if (DataConstantsEx.PASTE_TARGET_PSI_ELEMENT.equals(dataId)) {
@@ -438,19 +438,19 @@ public class CommanderPanel extends JPanel {
     else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
       return getNavigatables();
     }
-    else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCopyProvider() : null;
     }
-    else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    else if (DataConstants.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCutProvider() : null;
     }
-    else if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    else if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getPasteProvider() : null;
     }
-    else if (DataConstantsEx.IDE_VIEW.equals(dataId)) {
+    else if (DataConstants.IDE_VIEW.equals(dataId)) {
       return myIdeView;
     }
-    else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
     }
     else if (DataConstants.MODULE.equals(dataId)) {

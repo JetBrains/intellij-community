@@ -1,14 +1,14 @@
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
 
 import java.util.ArrayList;
 
@@ -24,7 +24,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       return;
     }
@@ -49,7 +49,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
   }
 
   public void update(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       e.getPresentation().setEnabled(false);
       return;

@@ -2,8 +2,8 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 
@@ -24,7 +24,7 @@ public class IntroduceVariableAction extends BaseRefactoringAction {
   }
 
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    final Language language = (Language)dataContext.getData(DataConstants.LANGUAGE);
+    final Language language = DataKeys.LANGUAGE.getData(dataContext);
     if (language != null) {
       return language.getRefactoringSupportProvider().getIntroduceVariableHandler();
     }

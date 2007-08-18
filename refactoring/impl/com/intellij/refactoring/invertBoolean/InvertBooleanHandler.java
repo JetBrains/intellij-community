@@ -1,8 +1,8 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -21,7 +21,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof PsiMethod) {
       invoke(((PsiMethod)element), project);
     } else if (element instanceof PsiVariable) {

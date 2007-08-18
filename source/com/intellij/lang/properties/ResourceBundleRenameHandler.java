@@ -7,8 +7,8 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -19,8 +19,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -52,16 +52,16 @@ public class ResourceBundleRenameHandler implements RenameHandler {
 
   @Nullable
   private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
-    PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof Property) return null; //rename property
-    VirtualFile virtualFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+    VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {
       return null;
     }
     if (virtualFile instanceof ResourceBundleAsVirtualFile) {
       return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
     }
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PropertiesFile) {

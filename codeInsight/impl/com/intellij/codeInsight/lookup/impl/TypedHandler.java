@@ -3,13 +3,12 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ListScrollingUtil;
 
@@ -33,18 +32,15 @@ class TypedHandler implements TypedActionHandler {
     CharFilter charFilter = lookup.getCharFilter();
     final int result = charFilter.accept(charTyped, lookup.getPrefix());
 
-    CommandProcessor.getInstance().executeCommand(
-        (Project)dataContext.getData(DataConstants.PROJECT), new Runnable() {
-        public void run(){
-          EditorModificationUtil.deleteSelectedText(editor);
-          if (result == CharFilter.ADD_TO_PREFIX) {
-            lookup.setPrefix(lookup.getPrefix() + charTyped);
-            EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));                                                                                   }
-          }
-      },
-      "",
-      null
-    );
+    CommandProcessor.getInstance().executeCommand(DataKeys.PROJECT.getData(dataContext), new Runnable() {
+      public void run() {
+        EditorModificationUtil.deleteSelectedText(editor);
+        if (result == CharFilter.ADD_TO_PREFIX) {
+          lookup.setPrefix(lookup.getPrefix() + charTyped);
+          EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
+        }
+      }
+    }, "", null);
 
     if (result == CharFilter.ADD_TO_PREFIX){
       if (LookupImpl.isNarrowDownMode()){

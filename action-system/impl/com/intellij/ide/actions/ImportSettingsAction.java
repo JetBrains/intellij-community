@@ -7,8 +7,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -32,7 +32,7 @@ import java.util.zip.ZipFile;
 public class ImportSettingsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Component component = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
+    final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     final String path = ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component,
                                                                 IdeBundle.message("title.import.file.location"),
                                                                 IdeBundle.message("prompt.choose.import.file.path"));

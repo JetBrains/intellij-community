@@ -9,7 +9,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -128,13 +127,13 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
   }
 
   private static Editor getEditor(final AnActionEvent e) {
-    return (Editor)e.getDataContext().getData(DataConstants.EDITOR);
+    return DataKeys.EDITOR.getData(e.getDataContext());
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = getEditor(e);
     final Project project = editor.getProject();
-    final PsiFile psiFile = (PsiFile)e.getDataContext().getData(DataConstants.PSI_FILE);
+    final PsiFile psiFile = DataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile == null) return;
     final I18nQuickFixHandler handler = getHandler(e);
     if (handler == null) return;

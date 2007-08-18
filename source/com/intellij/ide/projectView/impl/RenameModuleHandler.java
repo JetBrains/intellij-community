@@ -1,8 +1,8 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,7 @@ public class RenameModuleHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
     return module != null;
   }
 
@@ -42,7 +42,7 @@ public class RenameModuleHandler implements RenameHandler {
 
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(dataContext != null);
-    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    final Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,
                              IdeBundle.message("prompt.enter.new.module.name"),

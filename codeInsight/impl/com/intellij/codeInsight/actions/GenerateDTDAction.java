@@ -2,18 +2,21 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlProlog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -70,8 +73,8 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
 
     final DataContext dataContext = event.getDataContext();
     final Presentation presentation = event.getPresentation();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Project project = DataKeys.PROJECT.getData(dataContext);
 
     final boolean enabled;
     if (editor != null && project != null) {

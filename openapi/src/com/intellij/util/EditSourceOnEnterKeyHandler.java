@@ -16,8 +16,8 @@
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public class EditSourceOnEnterKeyHandler{
           if (KeyEvent.VK_ENTER == e.getKeyCode()) {
             DataContext dataContext = DataManager.getInstance().getDataContext(tree);
 
-            Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+            Project project = DataKeys.PROJECT.getData(dataContext);
             if (project == null) return;
 
             OpenSourceUtil.openSourcesFrom(dataContext, false);

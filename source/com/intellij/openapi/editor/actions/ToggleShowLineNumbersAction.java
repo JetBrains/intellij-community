@@ -32,7 +32,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 
@@ -47,7 +47,7 @@ public class ToggleShowLineNumbersAction extends ToggleAction {
   }
 
   private Editor getEditor(AnActionEvent e) {
-    return (Editor) e.getDataContext().getData(DataConstants.EDITOR);
+    return DataKeys.EDITOR.getData(e.getDataContext());
   }
 
   public void update(AnActionEvent e){

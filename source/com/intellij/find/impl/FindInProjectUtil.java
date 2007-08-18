@@ -4,6 +4,7 @@ import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -33,9 +34,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -63,7 +64,7 @@ public class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setDirectoryName(FindModel model, DataContext dataContext) {
-    PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
 
     String directoryName = null;
 
@@ -71,7 +72,7 @@ public class FindInProjectUtil {
       directoryName = ((PsiDirectory)psiElement).getVirtualFile().getPresentableUrl();
     }
     else {
-      final PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+      final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
       if (psiFile != null) {
         PsiDirectory psiDirectory = psiFile.getContainingDirectory();
         if (psiDirectory != null) {
@@ -85,7 +86,7 @@ public class FindInProjectUtil {
       directoryName = directories.length == 1 ? directories[0].getVirtualFile().getPresentableUrl():null;
     }
 
-    Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
     if (module != null) {
       model.setModuleName(module.getName());
     }

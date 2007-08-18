@@ -30,13 +30,13 @@ import java.awt.event.KeyEvent;
 public class ShowRecentFilesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     show(project);
   }
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
   }
 

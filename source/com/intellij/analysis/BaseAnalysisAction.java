@@ -1,7 +1,6 @@
 package com.intellij.analysis;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.help.HelpManager;
@@ -119,17 +118,17 @@ public abstract class BaseAnalysisAction extends AnAction {
   @Nullable
   private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: file, directory, package, project, module.
-    Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
+    Project projectContext = DataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return new AnalysisScope(projectContext);
     }
 
-    Module moduleContext = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     if (moduleContext != null) {
       return new AnalysisScope(moduleContext);
     }
 
-    Module [] modulesArray = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
+    Module [] modulesArray = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
@@ -155,7 +154,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       return null;
     }
 
-    final VirtualFile[] virtualFiles = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) { //analyze on selection
       final Project project = DataKeys.PROJECT.getData(dataContext);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

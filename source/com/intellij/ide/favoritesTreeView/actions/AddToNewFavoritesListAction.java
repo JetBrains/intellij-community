@@ -5,8 +5,8 @@ import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
@@ -24,10 +24,10 @@ class AddToNewFavoritesListAction extends AnAction {
 
  public void actionPerformed(AnActionEvent e) {
    final DataContext dataContext = e.getDataContext();
-   Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+   Project project = DataKeys.PROJECT.getData(dataContext);
    Collection<AbstractTreeNode> nodesToAdd = AddToFavoritesAction.getNodesToAdd(dataContext, true);
    if (nodesToAdd != null) {
-     final String newName = AddNewFavoritesListAction.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
+     final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(DataKeys.PROJECT.getData(dataContext));
      if (newName != null) {
        FavoritesManager.getInstance(project).addRoots(newName, nodesToAdd);
      }
@@ -36,7 +36,7 @@ class AddToNewFavoritesListAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       e.getPresentation().setEnabled(false);
     }

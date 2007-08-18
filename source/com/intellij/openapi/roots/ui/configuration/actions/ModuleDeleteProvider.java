@@ -1,8 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -17,11 +17,11 @@ import java.util.List;
 
 public class ModuleDeleteProvider  implements DeleteProvider  {
   public boolean canDeleteElement(DataContext dataContext) {
-    return dataContext.getData(DataConstantsEx.MODULE_CONTEXT) != null;
+    return dataContext.getData(DataConstants.MODULE_CONTEXT) != null;
   }
 
   public void deleteElement(DataContext dataContext) {
-    final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
 
     int ret = Messages.showOkCancelDialog(ProjectBundle.message("module.remove.confirmation.prompt", module.getName()),
                                           ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());

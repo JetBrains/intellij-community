@@ -31,12 +31,12 @@ public class ViewBreakpointsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
 
     if (myInitialBreakpoint == null) {
-      Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+      Editor editor = DataKeys.EDITOR.getData(dataContext);
       if (editor != null) {
         BreakpointManager manager = debugManager.getBreakpointManager();
         int offset = editor.getCaretModel().getOffset();
@@ -52,7 +52,7 @@ public class ViewBreakpointsAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;

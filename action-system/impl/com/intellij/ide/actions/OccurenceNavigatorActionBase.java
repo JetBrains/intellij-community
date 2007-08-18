@@ -21,7 +21,7 @@ import java.util.LinkedList;
 
 abstract class OccurenceNavigatorActionBase extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
     OccurenceNavigator navigator = getNavigator(e.getDataContext());
@@ -123,7 +123,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
       }
     }
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }

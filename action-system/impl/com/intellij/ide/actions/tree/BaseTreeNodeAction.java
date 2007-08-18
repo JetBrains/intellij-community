@@ -2,7 +2,7 @@ package com.intellij.ide.actions.tree;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
@@ -33,6 +33,6 @@ abstract class BaseTreeNodeAction extends AnAction {
   }
 
   private static Object getSourceComponent(AnActionEvent e) {
-    return e.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT);
+    return e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
   }
 }

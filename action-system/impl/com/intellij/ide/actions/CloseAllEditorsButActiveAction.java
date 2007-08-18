@@ -1,23 +1,23 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.IdeBundle;
 
 public class CloseAllEditorsButActiveAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     FileEditorManagerEx fileEditorManager=FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (window != null){
-      selectedFile = (VirtualFile)dataContext.getData(DataConstantsEx.VIRTUAL_FILE);
+      selectedFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
       final VirtualFile[] files = window.getFiles();
       for (int i = 0; i < files.length; i++) {
         VirtualFile file = files[i];
@@ -39,7 +39,7 @@ public class CloseAllEditorsButActiveAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

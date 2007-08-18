@@ -2,7 +2,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -16,11 +15,11 @@ public class OptimizeImportsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
 
-    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
 
     PsiFile file = null;
     PsiDirectory dir;
@@ -38,8 +37,8 @@ public class OptimizeImportsAction extends AnAction {
       return;
     }
     else{
-      Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
-      Module moduleContext = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+      Project projectContext = DataKeys.PROJECT_CONTEXT.getData(dataContext);
+      Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
 
       if (projectContext != null || moduleContext != null) {
         final String text;
@@ -61,7 +60,7 @@ public class OptimizeImportsAction extends AnAction {
         return;
       }
 
-      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiPackage) {
         dir = ((PsiPackage)element).getDirectories()[0];
@@ -91,15 +90,15 @@ public class OptimizeImportsAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;
     }
 
-    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !isOptimizeImportsAvailable(file)){
@@ -119,9 +118,9 @@ public class OptimizeImportsAction extends AnAction {
     else if (files != null && files.length == 1) {
       // skip. Both directories and single files are supported.
     }
-    else if (dataContext.getData(DataConstantsEx.MODULE_CONTEXT) == null &&
-             dataContext.getData(DataConstantsEx.PROJECT_CONTEXT) == null) {
-      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    else if (dataContext.getData(DataConstants.MODULE_CONTEXT) == null &&
+             dataContext.getData(DataConstants.PROJECT_CONTEXT) == null) {
+      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null){
         presentation.setEnabled(false);
         return;

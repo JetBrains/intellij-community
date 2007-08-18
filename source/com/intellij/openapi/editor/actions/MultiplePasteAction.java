@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -31,9 +30,9 @@ public class MultiplePasteAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    Component focusedComponent = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Project project = DataKeys.PROJECT.getData(dataContext);
+    Component focusedComponent = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
 
     if (!(focusedComponent instanceof JComponent)) return;
 
@@ -100,7 +99,7 @@ public class MultiplePasteAction extends AnAction {
   }
 
   private boolean isEnabled(DataContext dataContext) {
-    Object component = dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
+    Object component = dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) return false;
     if (dataContext.getData(DataConstants.EDITOR) != null) return true;
     Action pasteAction = ((JComponent)component).getActionMap().get(DefaultEditorKit.pasteAction);

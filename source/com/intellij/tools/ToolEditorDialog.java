@@ -3,8 +3,8 @@ package com.intellij.tools;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -15,12 +15,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -182,7 +181,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
-    myProject = (Project)dataContext.getData(DataConstants.PROJECT);
+    myProject = DataKeys.PROJECT.getData(dataContext);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
     setTitle(ToolsBundle.message("tools.edit.title"));
     init();

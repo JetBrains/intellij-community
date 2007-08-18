@@ -18,8 +18,8 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -61,7 +61,7 @@ public class EnterHandler extends EditorWriteActionHandler {
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
-    final Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project != null) {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
         public void run() {

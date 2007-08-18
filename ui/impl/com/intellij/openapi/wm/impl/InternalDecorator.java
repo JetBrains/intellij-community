@@ -3,12 +3,11 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -20,10 +19,10 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -772,7 +771,7 @@ public final class InternalDecorator extends JPanel {
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       actionManager.fireBeforeActionPerformed(myAction, dataContext);
-      final Component component = ((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
+      final Component component = ((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
       if (component != null && !component.isShowing()) {
         return;
       }

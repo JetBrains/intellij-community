@@ -7,17 +7,17 @@ import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.psi.xml.XmlTag;
 
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore {
   public ShowJavaDocInfoAction() {
@@ -51,14 +51,14 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (editor == null && element == null) {
       presentation.setEnabled(false);
       return;
@@ -103,9 +103,9 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (project != null && editor != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc");

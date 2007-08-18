@@ -1,7 +1,7 @@
 package com.intellij.ui.content;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -12,7 +12,7 @@ public class ContentManagerUtil {
    * This is utility method. It returns <code>ContentManager</code> from the current context.
    */
   public static ContentManager getContentManagerFromContext(DataContext dataContext, boolean requiresVisibleToolWindow){
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }

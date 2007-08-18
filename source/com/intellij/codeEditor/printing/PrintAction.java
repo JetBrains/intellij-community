@@ -10,7 +10,7 @@ public class PrintAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -20,12 +20,12 @@ public class PrintAction extends AnAction{
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       presentation.setEnabled(true);
       return;
     }
-    PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null);
   }
 

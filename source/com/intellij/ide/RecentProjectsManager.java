@@ -3,7 +3,7 @@ package com.intellij.ide;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -217,7 +217,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ProjectUtil.openProject(myProjectPath, (Project)e.getDataContext().getData(DataConstants.PROJECT), false);
+      ProjectUtil.openProject(myProjectPath, DataKeys.PROJECT.getData(e.getDataContext()), false);
     }
   }
 }

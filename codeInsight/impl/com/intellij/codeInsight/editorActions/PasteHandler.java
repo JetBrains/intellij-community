@@ -4,8 +4,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -21,11 +21,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +52,7 @@ public class PasteHandler extends EditorActionHandler {
     if (editor.isViewer()) return;
 
     if (!editor.getDocument().isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), (Project)dataContext.getData(DataConstants.PROJECT))){
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), DataKeys.PROJECT.getData(dataContext))){
         return;
       }
     }

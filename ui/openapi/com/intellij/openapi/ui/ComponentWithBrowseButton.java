@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -23,9 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.UIBundle;
-import com.intellij.ide.DataManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,7 +99,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     final BrowseFolderActionListener<Comp> actionListener =
       new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor);
     if (project == null) {
-      project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+      project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
     if (project != null) {
       Disposer.register(project, new Disposable(){

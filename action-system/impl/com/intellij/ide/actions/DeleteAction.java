@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
@@ -31,7 +30,7 @@ public class DeleteAction extends AnAction {
   }
 
   protected DeleteProvider getDeleteProvider(DataContext dataContext) {
-    return (DeleteProvider)dataContext.getData(DataConstantsEx.DELETE_ELEMENT_PROVIDER);
+    return (DeleteProvider)dataContext.getData(DataConstants.DELETE_ELEMENT_PROVIDER);
   }
 
   public void update(AnActionEvent event){
@@ -42,14 +41,14 @@ public class DeleteAction extends AnAction {
     else
       presentation.setText(IdeBundle.message("action.delete"));
     DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
     DeleteProvider provider = getDeleteProvider(dataContext);
     if (event.getInputEvent() instanceof KeyEvent) {
-      Object component = dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
+      Object component = dataContext.getData(DataConstants.CONTEXT_COMPONENT);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
     }
     presentation.setEnabled(provider != null && provider.canDeleteElement(dataContext));

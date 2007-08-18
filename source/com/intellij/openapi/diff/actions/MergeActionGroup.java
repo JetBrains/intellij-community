@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ public class MergeActionGroup extends ActionGroup {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myOperation.perform((Project) e.getDataContext().getData(DataConstants.PROJECT));
+      myOperation.perform(DataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 }

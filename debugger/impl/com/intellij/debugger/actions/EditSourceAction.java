@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Computable;
 
 public class EditSourceAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
     if(project == null) return;
 
@@ -74,7 +74,7 @@ public class EditSourceAction extends DebuggerAction{
   }
 
   public void update(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());

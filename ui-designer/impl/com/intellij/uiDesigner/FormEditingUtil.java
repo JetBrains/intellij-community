@@ -2,8 +2,8 @@ package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
@@ -18,8 +18,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.editor.UIFormEditor;
@@ -33,8 +33,8 @@ import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -524,7 +524,7 @@ public final class FormEditingUtil {
    */
   @Nullable
   public static GuiEditor getEditorFromContext(@NotNull final DataContext context){
-    final FileEditor editor = (FileEditor)context.getData(DataConstants.FILE_EDITOR);
+    final FileEditor editor = DataKeys.FILE_EDITOR.getData(context);
     if(editor instanceof UIFormEditor){
       return ((UIFormEditor)editor).getEditor();
     }
@@ -534,7 +534,7 @@ public final class FormEditingUtil {
   }
 
   @Nullable public static GuiEditor getActiveEditor(final DataContext context){
-    Project project = (Project) context.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(context);
     return project == null ? null : UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
   }
 

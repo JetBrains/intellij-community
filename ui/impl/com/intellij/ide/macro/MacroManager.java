@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -90,7 +91,7 @@ public final class MacroManager {
 
   private static DataContext getCorrectContext(DataContext dataContext) {
     if (dataContext.getData(DataConstants.FILE_EDITOR) != null) return dataContext;
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return dataContext;
     FileEditorManager editorManager = FileEditorManager.getInstance(project);
     VirtualFile[] files = editorManager.getSelectedFiles();

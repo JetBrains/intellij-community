@@ -16,7 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -42,7 +42,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     if (ApplicationManager.getApplication() != null) {
       final DataManager manager = DataManager.getInstance();
       if (manager != null) {
-        installPathCompletion((Project)manager.getDataContext().getData(DataConstants.PROJECT), FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+        installPathCompletion(DataKeys.PROJECT.getData(manager.getDataContext()), FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
       }
     }
   }

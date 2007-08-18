@@ -14,8 +14,8 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction{
 
   public void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (vFile == null || project == null){
       return;
     }
@@ -33,7 +33,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction{
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
-    final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+    final VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (vFile != null && window != null) {
       final EditorWindow[] siblings = window.findSiblings ();

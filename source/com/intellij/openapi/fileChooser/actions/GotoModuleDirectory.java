@@ -1,20 +1,21 @@
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.GotoProjectDirectory");
@@ -41,10 +42,10 @@ public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooser
   private VirtualFile getModulePath(AnActionEvent e) {
     Module module = myModuleToGo;
     if (module == null) {
-      module = (Module)e.getDataContext().getData(DataConstantsEx.MODULE_CONTEXT);
+      module = (Module)e.getDataContext().getData(DataConstants.MODULE_CONTEXT);
     }
     if (module == null) {
-      module = (Module)e.getDataContext().getData(DataConstantsEx.MODULE);
+      module = DataKeys.MODULE.getData(e.getDataContext());
     }
     if (module == null) {
       return null;

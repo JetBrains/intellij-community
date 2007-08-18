@@ -1,5 +1,7 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -13,8 +15,6 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.history.LocalHistoryAction;
-import com.intellij.history.LocalHistory;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -218,13 +218,13 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return selectedElements.toArray(new Navigatable[selectedElements.size()]);
     }
 
-    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
     if (DataConstants.HELP_ID.equals(dataId)) {
@@ -250,7 +250,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
       return psiElement != null && psiElement.isValid() ? psiElement : null;
     }
-    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       final PsiElement[] elements = getSelectedPsiElements();
       if (elements == null) {
         return null;
@@ -280,7 +280,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return getSelectedModules();
     }
 
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       final Object[] elements = getSelectedNodeElements();
       return elements != null && elements.length >= 1 && elements[0] instanceof Module
              ? myDeleteModuleProvider

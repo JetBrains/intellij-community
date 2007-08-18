@@ -1,13 +1,13 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.IdeBundle;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -41,7 +41,7 @@ public class CopyPathsAction extends AnAction {
   }
 
   private static VirtualFile[] getFiles(AnActionEvent e) {
-    return (VirtualFile[])e.getDataContext().getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    return DataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
   }
 
 }

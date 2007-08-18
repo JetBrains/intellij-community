@@ -1,13 +1,13 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
-import com.intellij.history.LocalHistoryAction;
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -41,7 +41,7 @@ public class DeleteHandler {
 
     @Nullable
     private PsiElement[] getPsiElements(DataContext dataContext) {
-      PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+      PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
       if (elements == null) {
         final Object data = dataContext.getData(DataConstants.PSI_ELEMENT);
         if (data != null) {
@@ -60,7 +60,7 @@ public class DeleteHandler {
     public void deleteElement(DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       LocalHistoryAction a = LocalHistory.startAction(project, IdeBundle.message("progress.deleting"));
       try {

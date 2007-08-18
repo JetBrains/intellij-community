@@ -1,9 +1,9 @@
 package com.intellij.ide.hierarchy.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.call.CallHierarchyBrowser;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -23,7 +23,7 @@ import java.awt.*;
 public final class BrowseCallHierarchyAction extends AnAction {
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
@@ -87,10 +87,10 @@ public final class BrowseCallHierarchyAction extends AnAction {
   }
 
   private static PsiMethod getMethod(final DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 }

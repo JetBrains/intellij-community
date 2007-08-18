@@ -1,5 +1,7 @@
 package com.intellij.ide.hierarchy.type;
 
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
@@ -9,10 +11,7 @@ import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.history.LocalHistoryAction;
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -422,10 +421,10 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
       final PsiClass aClass = getSelectedClass();
       return aClass != null && aClass.isValid() ? aClass : null;
     }
-    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
     }
-    if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (DataConstants.HELP_ID.equals(dataId)) {
       return HELP_ID;
     }
     if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
@@ -434,7 +433,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     if (TYPE_HIERARCHY_BROWSER_DATA_CONSTANT.equals(dataId)) {
       return this;
     }
-    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return getSelectedClasses();
     }
     if (TYPE_HIERARCHY_BROWSER_ID.equals(dataId)) {

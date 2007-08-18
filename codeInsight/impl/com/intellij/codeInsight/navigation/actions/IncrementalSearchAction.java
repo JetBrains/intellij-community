@@ -12,8 +12,8 @@ public class IncrementalSearchAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Project project = DataKeys.PROJECT.getData(dataContext);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
     new IncrementalSearchHandler().invoke(project, editor);
@@ -22,13 +22,13 @@ public class IncrementalSearchAction extends AnAction{
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null){
       presentation.setEnabled(false);
       return;

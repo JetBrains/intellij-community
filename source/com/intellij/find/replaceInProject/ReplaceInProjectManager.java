@@ -7,8 +7,8 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -30,10 +30,10 @@ import com.intellij.usages.*;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Collection;
 
 public class ReplaceInProjectManager {
   private Project myProject;
@@ -77,7 +77,7 @@ public class ReplaceInProjectManager {
     findModel.setReplaceState(true);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       String s = editor.getSelectionModel().getSelectedText();
       if (s != null && !s.contains("\r") && !s.contains("\n")){

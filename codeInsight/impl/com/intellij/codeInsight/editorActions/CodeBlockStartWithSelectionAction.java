@@ -8,8 +8,8 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -23,7 +23,7 @@ public class CodeBlockStartWithSelectionAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     public void execute(Editor editor, DataContext dataContext) {
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         CodeBlockUtil.moveCaretToCodeBlockStart(project, editor, true);
       }

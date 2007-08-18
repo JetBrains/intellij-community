@@ -4,11 +4,7 @@ import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,7 +41,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
   }
 
   public Object getData(String dataId) {
-    if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (DataConstants.HELP_ID.equals(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

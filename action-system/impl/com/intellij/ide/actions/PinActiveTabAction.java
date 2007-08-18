@@ -1,5 +1,6 @@
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -10,14 +11,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
-import com.intellij.ide.IdeBundle;
 
 public class PinActiveTabAction extends ToggleAction {
   /**
    * @return selected editor or <code>null</code>
    */
   private VirtualFile getFile(final DataContext context){
-    Project project = (Project)context.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(context);
     if(project == null){
       return null;
     }
@@ -27,7 +27,7 @@ public class PinActiveTabAction extends ToggleAction {
       return null;
     }
 
-    return (VirtualFile)context.getData(DataConstants.VIRTUAL_FILE);
+    return DataKeys.VIRTUAL_FILE.getData(context);
   }
 
   /**
@@ -87,7 +87,7 @@ public class PinActiveTabAction extends ToggleAction {
   }
 
   private EditorWindow getEditorWindow(DataContext context) {
-    final Project project = (Project) context.getData(DataConstants.PROJECT);
+    final Project project = DataKeys.PROJECT.getData(context);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow editorWindow = (EditorWindow) context.getData(DataConstantsEx.EDITOR_WINDOW);
     if (editorWindow == null) {

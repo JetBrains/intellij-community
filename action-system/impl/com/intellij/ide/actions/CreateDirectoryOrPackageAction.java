@@ -1,13 +1,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -29,8 +28,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
-    IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
+    Project project = DataKeys.PROJECT.getData(dataContext);
 
     PsiDirectory directory = PackageUtil.getOrChooseDirectory(view);
 
@@ -53,14 +52,14 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
 
-    IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+    IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
     if (view == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

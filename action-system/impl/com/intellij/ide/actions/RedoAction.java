@@ -13,7 +13,7 @@ public class RedoAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    FileEditor editor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
+    FileEditor editor = DataKeys.FILE_EDITOR.getData(dataContext);
 
     Project project = getProject(editor, dataContext);
     UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
@@ -26,7 +26,7 @@ public class RedoAction extends AnAction {
       project = ((TextEditor)editor).getEditor().getProject();
     }
     else {
-      project = (Project)dataContext.getData(DataConstants.PROJECT);
+      project = DataKeys.PROJECT.getData(dataContext);
     }
     return project;
   }
@@ -34,7 +34,7 @@ public class RedoAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    FileEditor editor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
+    FileEditor editor = DataKeys.FILE_EDITOR.getData(dataContext);
 
     // do not allow global redo in dialogs
     if (editor == null && dataContext.getData(DataConstants.IS_MODAL_CONTEXT) == Boolean.TRUE){

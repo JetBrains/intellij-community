@@ -10,13 +10,12 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.GuiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -52,7 +51,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     }
 
     public final void update(AnActionEvent e) {
-      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+      Project project = DataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
       boolean isGroupActive = isActionActive(GroupByWordPrefixes.ID);
       String separator = getCurrentSeparator();

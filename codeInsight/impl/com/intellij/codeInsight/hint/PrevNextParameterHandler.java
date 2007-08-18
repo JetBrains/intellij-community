@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -27,7 +27,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement exprList = getExpressionList(editor, project);
@@ -35,7 +35,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
   }
 
   public void execute(Editor editor, DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     PsiElement exprList = getExpressionList(editor, project);
     int listOffset = exprList.getTextRange().getStartOffset();
     if (myIsNextParameterHandler) {

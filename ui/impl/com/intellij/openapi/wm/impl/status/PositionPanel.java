@@ -2,14 +2,14 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.StatusBarInformer;
+import com.intellij.ui.UIBundle;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -61,6 +61,6 @@ public class PositionPanel extends TextPanel {
   }
 
   private Project getProject() {
-    return (Project)DataManager.getInstance().getDataContext(PositionPanel.this).getData(DataConstants.PROJECT);
+    return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(PositionPanel.this));
   }
 }

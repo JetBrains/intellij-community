@@ -10,10 +10,9 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class CreateHtmlAction extends CreateElementActionBase {
-  private FileType myFileType;
-  private String myTemplateName;
+  private final FileType myFileType;
+  private final String myTemplateName;
 
   public CreateHtmlAction() {
     this(StdFileTypes.HTML, FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME);
@@ -107,12 +106,12 @@ public class CreateHtmlAction extends CreateElementActionBase {
   public void update(final AnActionEvent e) {
     super.update(e);
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      Module module = (Module)dataContext.getData(DataConstantsEx.MODULE);
+      Module module = DataKeys.MODULE.getData(dataContext);
       if (module != null) {
-        IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+        IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
         if (view != null) {
           ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           PsiDirectory[] dirs = view.getDirectories();
