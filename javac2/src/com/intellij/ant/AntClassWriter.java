@@ -26,7 +26,7 @@ public class AntClassWriter extends ClassWriter {
         c = myClassLoader.loadClass(type1.replace('/', '.'));
         d = myClassLoader.loadClass(type2.replace('/', '.'));
     } catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(e.getMessage());
     }
     if (c.isAssignableFrom(d)) {
         return type1;
