@@ -161,12 +161,21 @@ public class Javac2 extends Javac{
   private boolean isJdkVersion(int ver) {
     String versionString = Integer.toString(ver);
     String targetVersion = getTarget();
+    if (targetVersion == null) {
+      final String[] strings = getCurrentCompilerArgs();
+      for(int i=0; i<strings.length; i++) {
+        log("currentCompilerArgs: " + strings[i], Project.MSG_VERBOSE);
+        if (strings [i].equals("-target") && i < strings.length-1) {
+          targetVersion = strings [i+1];
+          break;
+        }
+      }
+    }
     if (targetVersion != null) {
+      log("targetVersion: " + targetVersion, Project.MSG_VERBOSE);
       return targetVersion.equals(versionString) || targetVersion.equals("1." + versionString);
     }
-    else {
-      return getCompilerVersion().equals("javac1." + versionString);
-    }
+    return getCompilerVersion().equals("javac1." + versionString);
   }
 
   private ClassLoader buildClasspathClassLoader() {
