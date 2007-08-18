@@ -50,8 +50,13 @@ public class Javac2 extends Javac{
     instrumentForms(loader);
 
     //NotNull instrumentation
-    final int instrumented = instrumentNotNull(getDestdir(), loader);
-    log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
+    if (isJdkVersion(5) || isJdkVersion(6)) {
+      final int instrumented = instrumentNotNull(getDestdir(), loader);
+      log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
+    }
+    else {
+      log("Skipped @NotNull instrumentation because target JDK is not 1.5 or 1.6", Project.MSG_INFO);
+    }
   }
 
   private void instrumentForms(final ClassLoader loader) {
@@ -150,15 +155,18 @@ public class Javac2 extends Javac{
   }
 
   private int getAsmClassWriterFlags() {
-    boolean isJdk16;
+    return isJdkVersion(6) ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+  }
+
+  private boolean isJdkVersion(int ver) {
+    String versionString = Integer.toString(ver);
     String targetVersion = getTarget();
     if (targetVersion != null) {
-      isJdk16 = targetVersion.equals("6") || targetVersion.equals("1.6");
+      return targetVersion.equals(versionString) || targetVersion.equals("1." + versionString);
     }
     else {
-      isJdk16 = getCompilerVersion().equals("javac1.6");
+      return getCompilerVersion().equals("javac1." + versionString);
     }
-    return isJdk16 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
   private ClassLoader buildClasspathClassLoader() {
