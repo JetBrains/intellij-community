@@ -486,11 +486,16 @@ public class ModuleEditor implements Place.Navigator {
     return myFacetsConfigurator.getOrCreateEditor(facet);
   }
 
+  @Nullable
   public String getHelpTopic() {
     if (myTabbedPane == null || myEditors.isEmpty()) {
       return null;
     }
-    final ModuleConfigurationEditor moduleElementsEditor = myEditors.get(myTabbedPane.getSelectedIndex());
+    final int selectedIdx = myTabbedPane.getSelectedIndex();
+    if (selectedIdx == -1) {
+      return null;
+    }
+    final ModuleConfigurationEditor moduleElementsEditor = myEditors.get(selectedIdx);
     return moduleElementsEditor.getHelpTopic();
   }
 
