@@ -17,6 +17,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     myProject = project;
     myEditor = editor;
 
-    JPanel leadPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    JPanel leadPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     add(leadPanel, BorderLayout.WEST);
 
     mySearchField = new JTextField();
@@ -65,6 +66,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     final JComponent prevnextToolbar = tb.getComponent();
     prevnextToolbar.setBorder(null);
+    prevnextToolbar.setOpaque(false);
     leadPanel.add(prevnextToolbar);
 
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
@@ -74,7 +76,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     leadPanel.add(cbWholeWords);
 
     cbMatchCase.setSelected(isCaseSensitive());
+    cbMatchCase.setOpaque(false);
     cbWholeWords.setSelected(isWholeWords());
+    cbWholeWords.setOpaque(false);
 
     cbMatchCase.setMnemonic('C');
     cbWholeWords.setMnemonic('M');
@@ -96,13 +100,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
     });
 
-    JPanel tailPanel = new JPanel(new BorderLayout(5, 0));
+    JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
     add(tailPanel, BorderLayout.EAST);
 
     myMatchInfoLabel = new JLabel();
     setSmallerFont(myMatchInfoLabel);
 
-    JLabel closeLabel = new JLabel(IconLoader.getIcon("/actions/cross.png"));
+    JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), JLabel.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         close();
@@ -311,4 +315,20 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       e.getPresentation().setEnabled(mySearchField.getText().length() > 0);
     }
   }
+
+  public final static Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
+  public final static Color BND_ACTIVE_COLOR = new Color(0xefefef);
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    final Graphics2D g2d = (Graphics2D) g;
+
+    g.setColor(new Color(0x87, 0x87, 0x87));
+    g.drawLine(0, 0, getWidth(), 0);
+//    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+    g2d.setPaint(new GradientPaint(0, 0, new Color(0xe8, 0xe8, 0xe8), 0, getHeight(), new Color(0xD0, 0xD0, 0xD0)));
+
+    g2d.fillRect(0, 1, getWidth(), getHeight() - 1);
+  }  
 }
