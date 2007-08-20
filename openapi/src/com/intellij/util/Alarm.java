@@ -43,7 +43,7 @@ public class Alarm implements Disposable {
   private static final ExecutorService ourSharedExecutorService = Executors.newSingleThreadExecutor(THREAD_FACTORY);
 
   private final Object LOCK = new Object();
-  private ThreadToUse myThreadToUse;
+  private final ThreadToUse myThreadToUse;
 
   public void dispose() {
     myDisposed = true;

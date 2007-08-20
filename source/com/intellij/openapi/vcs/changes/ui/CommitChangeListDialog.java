@@ -52,17 +52,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private MultipleChangeListBrowser myBrowser;
   private CommitLegendPanel myLegend;
 
-  private List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
-  private List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
+  private final List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
+  private final List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private String myActionName;
-  private Project myProject;
+  private final Project myProject;
   private final List<CommitExecutor> myExecutors;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
   private boolean myAllOfDefaultChangeListChangesIncluded;
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
-  private boolean myShowVcsCommit;
+  private final boolean myShowVcsCommit;
   private ChangeList myLastSelectedChangeList = null;
 
   private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
@@ -716,7 +716,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static class DiffCommitMessageEditor extends JPanel implements Disposable {
     private CommitChangeListDialog myCommitDialog;
-    private JTextArea myArea = new JTextArea();
+    private final JTextArea myArea = new JTextArea();
 
     public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
       super(new BorderLayout());
