@@ -203,6 +203,10 @@ public class FindUtil {
     TextEditor textEditor = (TextEditor)fileEditor;
     Editor editor = textEditor.getEditor();
 
+    searchBack(project, editor);
+  }
+
+  public static void searchBack(final Project project, final Editor editor) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed()) {
       find(project, editor);
@@ -241,6 +245,10 @@ public class FindUtil {
     TextEditor textEditor = (TextEditor)fileEditor;
     Editor editor = textEditor.getEditor();
 
+    return searchAgain(project, editor);
+  }
+
+  public static boolean searchAgain(final Project project, final Editor editor) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed()) {
       find(project, editor);

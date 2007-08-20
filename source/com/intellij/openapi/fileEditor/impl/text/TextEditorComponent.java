@@ -41,6 +41,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -264,23 +265,37 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     statusBar.updateEditorHighlightingStatus(false);
   }
 
+  @Nullable
+  private Editor validateCurrentEditor() {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner instanceof JComponent) {
+      final JComponent jComponent = (JComponent)focusOwner;
+      if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
+    }
+
+    return myEditor;
+  }
+
   public Object getData(final String dataId) {
     if (!myProject.isDisposed()) {
       final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, myEditor);
       if (o != null) return o;
     }
 
+    final Editor e = validateCurrentEditor();
+    if (e == null) return null;
+
     if (dataId.equals(DataConstants.EDITOR)) {
-      return myEditor;
+      return e;
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, getPsiFile());
+      return InjectedLanguageUtil.getEditorForInjectedLanguage(e, getPsiFile());
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_ELEMENT))) {
       return getPsiElementIn((Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR)));
     }
     if (DataConstants.PSI_ELEMENT.equals(dataId)){
-      return getPsiElementIn(myEditor);
+      return getPsiElementIn(e);
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.LANGUAGE))) {
       PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
@@ -289,10 +304,9 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       return getLanguageAtCurrentPositionInEditor(editor, psiFile);
     }
     if (DataConstants.LANGUAGE.equals(dataId)) {
-      final Editor editor = myEditor;
       final PsiFile psiFile = getPsiFile();
       if (psiFile == null) return null;
-      return getLanguageAtCurrentPositionInEditor(editor, psiFile);
+      return getLanguageAtCurrentPositionInEditor(e, psiFile);
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.VIRTUAL_FILE))) {
       PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));

@@ -540,8 +540,11 @@
       <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="ccffcc"/>
+          <option name="BACKGROUND" value="ffff00"/>
+          <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE" value="0"/>
+          <option name="ERROR_STRIPE_COLOR" value="00ff00"/>
         </value>
       </option>
 

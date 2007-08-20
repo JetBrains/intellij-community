@@ -295,4 +295,10 @@ public interface Editor extends UserDataHolder {
    * @param header a component to setup as header for this text editor or <code>null</code> to remove one.
    */
   void setHeaderComponent(@Nullable JComponent header);
+
+  /**
+   *
+   * @return <code>true</code> if this editor has active header component set up by {@link #setHeaderComponent(javax.swing.JComponent)}
+   */
+  boolean hasHeaderComponent();
 }

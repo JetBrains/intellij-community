@@ -3,9 +3,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
+import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
@@ -116,34 +114,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static void doRangeHighlighting(Editor editor, Project project) {
     if (!editor.getSelectionModel().hasSelection()) return;
 
-    String text = editor.getSelectionModel().getSelectedText();
-    FindManager findManager = FindManager.getInstance(project);
-    FindModel model = new FindModel();
-    model.setCaseSensitive(true);
-    model.setFromCursor(false);
-    model.setStringToFind(text);
-    model.setSearchHighlighters(true);
-    int offset = 0;
-    HighlightManager highlightManager = HighlightManager.getInstance(project);
-    EditorColorsManager colorManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-    int count = 0;
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    while (true) {
-      FindResult result = findManager.findString(editor.getDocument().getCharsSequence(), offset, model);
-      if (!result.isStringFound()) break;
-      highlightManager.addRangeHighlight(editor, result.getStartOffset(), result.getEndOffset(), attributes, false, highlighters);
-      offset = result.getEndOffset();
-      count++;
-    }
-    for (RangeHighlighter highlighter : highlighters) {
-      highlighter.setErrorStripeTooltip(text);
-    }
-    findManager.setFindWasPerformed();
-    findManager.setFindNextModel(model);
-
-    WindowManager.getInstance().getStatusBar(project).
-      setInfo(CodeInsightBundle.message("status.bar.highlighted.occurences.message", count, model.getStringToFind()));
+    final EditorSearchComponent header = new EditorSearchComponent(editor, project);
+    editor.setHeaderComponent(header);
   }
 
   private static final Runnable EMPTY_HIGHLIGHT_RUNNABLE = EmptyRunnable.getInstance();

@@ -176,6 +176,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Color myLastBackgroundColor = null;
   private int myLastBackgroundWidth;
   private static final boolean ourIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+  private JPanel myHeaderPanel;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -416,6 +417,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     //myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
     myPanel.setLayout(new BorderLayout());
+    myHeaderPanel = new JPanel(new BorderLayout()) {
+      private int myOldHeight = 0;
+
+      public void revalidate() {
+        myOldHeight = getHeight();
+        super.revalidate();
+      }
+
+      protected void validateTree() {
+        int height = myOldHeight;
+        super.validateTree();
+        height -= getHeight();
+
+        if (height != 0) {
+          myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
+        }
+        myOldHeight = getHeight();
+      }
+    };
+
+    myPanel.add(myHeaderPanel, BorderLayout.NORTH);
 
     myVerticalScrollBar = new MyScrollBar(JScrollBar.VERTICAL);
 
@@ -1056,7 +1078,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setHeaderComponent(JComponent header) {
-    myScrollPane.setColumnHeaderView(header);
+    myHeaderPanel.removeAll();
+    if (header != null) {
+      myHeaderPanel.add(header);
+    }
+
+    myHeaderPanel.revalidate();
+  }
+
+  public boolean hasHeaderComponent() {
+    return myHeaderPanel.getComponentCount() > 0;
   }
 
   public void setBackgroundColor(Color color) {
@@ -3501,6 +3532,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyMouseAdapter extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
+      requestFocus();
       runMousePressedCommand(e);
     }
 

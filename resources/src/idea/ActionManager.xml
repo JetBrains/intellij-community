@@ -10,6 +10,7 @@
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
     <action id="CloseWindow" class="com.intellij.ide.actions.CloseWindowAction"/>
+    <action id="IncrementalSearch" class="com.intellij.openapi.editor.actions.IncrementalFindAction"/>
 
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"/>
@@ -267,12 +268,11 @@
 
       <!-- Search -->
       <group id="SearchMenu" popup="true">
-        <action id="Find" class="com.intellij.openapi.editor.actions.FindAction" icon="/actions/menu-find.png"/>
+        <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
         <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="/actions/menu-replace.png"/>
         <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction"/>
         <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
         <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
-        <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
         <separator/>
         <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
         <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>

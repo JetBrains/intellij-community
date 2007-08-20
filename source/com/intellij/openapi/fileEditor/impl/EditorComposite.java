@@ -247,6 +247,7 @@ public abstract class EditorComposite{
     } else {
       container.add(component);
     }
+    container.revalidate();
   }
 
   public FileEditorInfoPane getPane(FileEditor editor) {
