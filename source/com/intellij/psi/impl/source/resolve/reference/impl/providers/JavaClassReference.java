@@ -4,10 +4,11 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
+import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
@@ -16,6 +17,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -266,7 +269,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
           if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, psiElement);
           return JavaResolveResult.EMPTY;
       } else if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames() ) {
-        return JavaResolveResult.EMPTY;        
+        return JavaResolveResult.EMPTY;
       }
     }
 
@@ -340,9 +343,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private GlobalSearchScope getScope() {
-    GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
+    final GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
     if (scope == null) {
-      scope = GlobalSearchScope.allScope(getElement().getProject());
+      final Module module = ModuleUtil.findModuleForPsiElement(getElement());
+      if (module != null) {
+        return module.getModuleWithDependenciesAndLibrariesScope(false);
+      }
+      return GlobalSearchScope.allScope(getElement().getProject());
     }
     return scope;
   }
@@ -363,7 +370,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     registerFixes(info);
   }
 
+  @Nullable
   private List<? extends LocalQuickFix> registerFixes(final HighlightInfo info) {
+
+    final List<LocalQuickFix> list = OrderEntryFix.registerFixes(info, this);
+
     final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
     final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
     final PsiReference contextReference = getContextReference();
@@ -376,10 +387,18 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
                                 JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.isAssignableTo(primitives[0]);
       final List<PsiDirectory> writableDirectoryList = getWritableDirectoryList(context);
       if (writableDirectoryList.size() != 0 && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
-        return Arrays.asList(doRegisterQuickFix(info, writableDirectoryList, createJavaClass, extendClass));
+        final CreateClassOrPackageFix fix = doRegisterQuickFix(info, writableDirectoryList, createJavaClass, extendClass);
+        if (list == null) {
+          return Arrays.asList(fix);
+        } else {
+          final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
+          fixes.addAll(list);
+          fixes.add(fix);
+          return fixes;
+        }
       }
     }
-    return Collections.emptyList();
+    return list;
   }
 
   protected CreateClassOrPackageFix doRegisterQuickFix(final HighlightInfo info, final List<PsiDirectory> writableDirectoryList,
@@ -444,7 +463,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   public LocalQuickFix[] getQuickFixes() {
     final List<? extends LocalQuickFix> list = registerFixes(null);
-    return list.toArray(new LocalQuickFix[list.size()]);
+    return list == null ? LocalQuickFix.EMPTY_ARRAY : list.toArray(new LocalQuickFix[list.size()]);
   }
 
   private boolean checkCreateClassOrPackage(final List<PsiDirectory> writableDirectoryList, final boolean createJavaClass) {

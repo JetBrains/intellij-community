@@ -1,11 +1,11 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -26,11 +26,14 @@ public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
 
   private Project myProject;
-  private PsiJavaCodeReferenceElement myReference;
+  private PsiJavaReference myReference;
   private PsiClass[] myTargetClasses;
   private Editor myEditor;
 
-  public AddImportAction(@NotNull Project project, @NotNull PsiJavaCodeReferenceElement ref, @NotNull Editor editor, @NotNull PsiClass... targetClasses) {
+  public AddImportAction(@NotNull Project project,
+                         @NotNull PsiJavaReference ref,
+                         @NotNull Editor editor,
+                         @NotNull PsiClass... targetClasses) {
     myProject = project;
     myReference = ref;
     myTargetClasses = targetClasses;
@@ -40,7 +43,7 @@ public class AddImportAction implements QuestionAction {
   public boolean execute() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (!myReference.isValid()){
+    if (!myReference.getElement().isValid()){
       return false;
     }
 
@@ -60,7 +63,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void chooseClassAndImport() {
-    Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference, myProject));
+    Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference.getElement(), myProject));
     final JList list = new JList(myTargetClasses);
     list.setCellRenderer(new FQNameCellRenderer());
     Runnable runnable = new Runnable() {
@@ -79,7 +82,7 @@ public class AddImportAction implements QuestionAction {
       showInBestPositionFor(myEditor);
   }
 
-  private void addImport(final PsiJavaCodeReferenceElement ref, final PsiClass targetClass) {
+  private void addImport(final PsiJavaReference ref, final PsiClass targetClass) {
     StatisticsManager.getInstance().incMemberUseCount(null, targetClass);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -92,11 +95,11 @@ public class AddImportAction implements QuestionAction {
     }, QuickFixBundle.message("add.import"), null);
   }
 
-  private void _addImport(PsiJavaCodeReferenceElement ref, PsiClass targetClass) {
-    if (!ref.isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
+  private void _addImport(PsiJavaReference ref, PsiClass targetClass) {
+    if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
       return;
     }
-    if (!CodeInsightUtil.preparePsiElementForWrite(ref)){
+    if (!CodeInsightUtil.preparePsiElementForWrite(ref.getElement())){
       return;
     }
 
@@ -143,6 +146,5 @@ public class AddImportAction implements QuestionAction {
         }
       }
     });
-
   }
 }
