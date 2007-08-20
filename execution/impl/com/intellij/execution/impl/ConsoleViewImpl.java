@@ -86,6 +86,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   private final int CYCLIC_BUFFER_SIZE = GeneralSettings.getInstance().getCyclicBufferSize();
   private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
+  private Alarm mySpareTimeAlarm = new Alarm();
 
   private static class TokenInfo{
     private final ConsoleViewContentType contentType;
@@ -205,7 +206,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       runnable.run();
     }
     else{
-      new Alarm().addRequest(
+      mySpareTimeAlarm.addRequest(
         new Runnable() {
           public void run() {
             performWhenNoDeferredOutput(runnable);
@@ -251,6 +252,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     myState = myState.dispose();
     if (myEditor != null){
       myFlushAlarm.cancelAllRequests();
+      mySpareTimeAlarm.cancelAllRequests();
       EditorFactory.getInstance().releaseEditor(myEditor);
       synchronized (LOCK) {
         myDeferredOutput = new StringBuffer();
