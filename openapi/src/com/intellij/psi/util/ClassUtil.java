@@ -125,6 +125,16 @@ public class ClassUtil {
       }
 
       public void visitClass(PsiClass aClass) {
+        if (!jvmCompatible) {
+          super.visitClass(aClass);
+          if (aClass.getQualifiedName() == null) {
+            myCurrentIdx++;
+            if (myCurrentIdx == idx && Comparing.strEqual(name, aClass.getName())) {
+              result[0] = aClass;
+            }
+          }
+          return;
+        }
         if (aClass == containingClass) {
           super.visitClass(aClass);
           return;
