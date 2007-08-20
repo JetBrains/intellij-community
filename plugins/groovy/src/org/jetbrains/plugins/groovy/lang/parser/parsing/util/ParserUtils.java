@@ -90,6 +90,7 @@ public abstract class ParserUtils {
    * @param builder
    * @param tokenSet
    * @return
+   *
    */
   public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg) {
     if (tokenSet.contains(builder.getTokenType())) {

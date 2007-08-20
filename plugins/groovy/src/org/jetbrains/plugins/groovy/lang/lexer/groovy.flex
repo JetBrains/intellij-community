@@ -138,12 +138,14 @@ mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | \\ \" | \\ \' | \\ \\ | \\ "$"
 
 /// Regexes ////////////////////////////////////////////////////////////////
 
+ESCAPPED_REGEX_SEP = \\ "/"
 mREGEX_BEGIN = "/""$"
-   |  "/" ([^"/""$"] | {mSTRING_ESC})? {mREGEX_CONTENT}"$"
-mREGEX_CONTENT = ({mSTRING_ESC}
+   |  "/" ([^"/""$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
+mREGEX_CONTENT = ({mSTRING_ESC}         
+   | {ESCAPPED_REGEX_SEP}
    | [^"/"\r\n"$"])*
 
-mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC})? {mREGEX_CONTENT} ("$""/" | "/")
+mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
 
 ////////////////////////////////////////////////////////////////////////////
 
