@@ -339,7 +339,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       reduceSuggestedClassesBasedOnDependencyRuleViolation(psiFile, availableClasses);
     }
     classes = availableClasses.toArray(new PsiClass[availableClasses.size()]);
-    CodeInsightUtil.sortIdenticalShortNameClasses(classes);
+    CodeInsightUtil.sortIdenticalShortNameClasses(classes, psiFile);
     @NonNls String messageKey = classes.length > 1 ? "import.popup.multiple" : "import.popup.text";
 
     String hintText = QuickFixBundle.message(messageKey, classes[0].getQualifiedName());

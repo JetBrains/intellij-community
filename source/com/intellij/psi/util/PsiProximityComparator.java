@@ -6,6 +6,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -16,8 +17,9 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.extapi.psi.MetadataPsiElementBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -28,7 +30,7 @@ public class PsiProximityComparator implements Comparator<Object> {
   private final PsiElement myContext;
   private final Project myProject;
 
-  public PsiProximityComparator(PsiElement context, Project project) {
+  public PsiProximityComparator(PsiElement context, @NotNull Project project) {
     myContext = context;
     myProject = project;
   }
@@ -41,7 +43,16 @@ public class PsiProximityComparator implements Comparator<Object> {
 
     final PsiProximity proximity1 = getProximity(element1);
     final PsiProximity proximity2 = getProximity(element2);
-    return proximity1 != null && proximity2 != null ? proximity1.compareTo(proximity2) : 0;
+    if (proximity1 == null || proximity2 == null) {
+      return 0;
+    }
+    if (!proximity1.equals(proximity2) || !(element1 instanceof PsiMember) || !(element2 instanceof PsiMember)) {
+      return proximity1.compareTo(proximity2);
+    }
+    StatisticsManager statisticsManager = StatisticsManager.getInstance();
+    int count1 = statisticsManager.getMemberUseCount(null, (PsiMember)element1);
+    int count2 = statisticsManager.getMemberUseCount(null, (PsiMember)element2);
+    return count2 - count1;
   }
 
   @Nullable

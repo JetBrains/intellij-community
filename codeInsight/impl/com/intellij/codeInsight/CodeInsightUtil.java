@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -35,12 +35,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.FilteredQuery;
+import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -50,8 +49,6 @@ import java.util.*;
  */
 public class CodeInsightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightUtil");
-  @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
-  @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
 
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if (!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
@@ -270,27 +267,10 @@ public class CodeInsightUtil {
     return left;
   }
 
-  public static void sortIdenticalShortNameClasses(PsiClass[] classes) {
+  public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiElement context) {
     if (classes.length <= 1) return;
 
-    final StatisticsManager statisticsManager = StatisticsManager.getInstance();
-    Comparator<PsiClass> comparator = new Comparator<PsiClass>() {
-      public int compare(PsiClass aClass, PsiClass bClass) {
-        int count1 = statisticsManager.getMemberUseCount(null, aClass);
-        int count2 = statisticsManager.getMemberUseCount(null, bClass);
-        if (count1 != count2) return count2 - count1;
-        boolean inProject1 = aClass.getManager().isInProject(aClass);
-        boolean inProject2 = bClass.getManager().isInProject(aClass);
-        if (inProject1 != inProject2) return inProject1 ? -1 : 1;
-        String qName1 = aClass.getQualifiedName();
-        boolean isJdk1 = qName1 != null && (qName1.startsWith(JAVA_PACKAGE_PREFIX) || qName1.startsWith(JAVAX_PACKAGE_PREFIX));
-        String qName2 = bClass.getQualifiedName();
-        boolean isJdk2 = qName2 != null && (qName2.startsWith(JAVA_PACKAGE_PREFIX) || qName2.startsWith(JAVAX_PACKAGE_PREFIX));
-        if (isJdk1 != isJdk2) return isJdk1 ? -1 : 1;
-        return 0;
-      }
-    };
-    Arrays.sort(classes, comparator);
+    Arrays.sort(classes, new PsiProximityComparator(context, context.getProject()));
   }
 
   public static Indent getMinLineIndent(Project project, Document document, int line1, int line2, FileType fileType) {

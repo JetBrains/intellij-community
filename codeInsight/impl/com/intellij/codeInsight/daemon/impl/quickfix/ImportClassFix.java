@@ -41,7 +41,7 @@ public class ImportClassFix implements IntentionAction {
     return QuickFixBundle.message("import.class.fix");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myRef == null || !myRef.isValid()) return false;
     if (!file.getManager().isInProject(file)) return false;
 
@@ -78,7 +78,7 @@ public class ImportClassFix implements IntentionAction {
     return classList;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -86,7 +86,7 @@ public class ImportClassFix implements IntentionAction {
         List<PsiClass> classesToImport = getClassesToImport(manager);
         PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
         if (classes.length == 0) return;
-        CodeInsightUtil.sortIdenticalShortNameClasses(classes);
+        CodeInsightUtil.sortIdenticalShortNameClasses(classes, file);
 
         AddImportAction action = new AddImportAction(project, myRef, editor, classes);
         action.execute();
@@ -95,6 +95,6 @@ public class ImportClassFix implements IntentionAction {
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

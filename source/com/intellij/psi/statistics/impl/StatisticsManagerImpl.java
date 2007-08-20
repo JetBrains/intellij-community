@@ -8,16 +8,16 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.codeStyle.StatisticsManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ScrambledInputStream;
 import com.intellij.util.ScrambledOutputStream;
-import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -26,6 +26,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   private static final int MAX_NAME_SUGGESTIONS_COUNT = 5;
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.impl.StatisticsManagerImpl");
 
+  @NotNull
   public String getComponentName() {
     return "StatisticsManager";
   }
@@ -38,11 +39,10 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
   private static final int UNIT_COUNT = 997;
 
-  private static final @NonNls String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
+  @NonNls private static final String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
 
   private SoftReference[] myUnits = new SoftReference[UNIT_COUNT];
   private HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
-  private final StringInterner myKeys = new StringInterner();
 
   private StatisticsManagerImpl() {
   }
@@ -162,7 +162,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return unit;
   }
 
-  private StatisticsUnit loadUnit(int unitNumber) {
+  private static StatisticsUnit loadUnit(int unitNumber) {
     StatisticsUnit unit = new StatisticsUnit(unitNumber);
     if (!ApplicationManager.getApplication().isUnitTestMode()){
       String path = getPathToUnit(unitNumber);
@@ -211,15 +211,16 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return Math.abs(key1.hashCode()) % UNIT_COUNT;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   private static String getMemberUseKey1(PsiType qualifierType) {
     return "member#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
   }
 
-  private static @NonNls String getMemberUseKey2(PsiMember member) {
+  @NonNls
+  private static String getMemberUseKey2(PsiMember member) {
     if (member instanceof PsiMethod){
       PsiMethod method = (PsiMethod)member;
-      @NonNls StringBuffer buffer = new StringBuffer();
+      @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append("method#");
       buffer.append(method.getName());
       PsiParameter[] parms = method.getParameterList().getParameters();
@@ -230,7 +231,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
       return buffer.toString();
     }
     else if (member instanceof PsiField){
-      return "field#" + ((PsiField)member).getName();
+      return "field#" + member.getName();
     }
     else if (member instanceof PsiClass){
       return "class#" + ((PsiClass)member).getQualifiedName();
@@ -240,8 +241,8 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     }
   }
 
-  private String getNameUseKey(final NameContext context, final String name) {
-    final @NonNls StringBuffer buffer = new StringBuffer();
+  private static String getNameUseKey(final NameContext context, final String name) {
+    @NonNls final StringBuilder buffer = new StringBuilder();
     buffer.append("variableName#");
     buffer.append(context.name());
     buffer.append('#');
@@ -249,8 +250,8 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return buffer.toString();
   }
 
-  private String getVariableNameUseKey1(String propertyName, PsiType type) {
-    @NonNls StringBuffer buffer = new StringBuffer();
+  private static String getVariableNameUseKey1(String propertyName, PsiType type) {
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("variableName#");
     if (propertyName != null){
       buffer.append(propertyName);
@@ -262,15 +263,15 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return buffer.toString();
   }
 
-  private String getVariableNameUseKey2(VariableKind kind, String name) {
-    StringBuffer buffer = new StringBuffer();
+  private static String getVariableNameUseKey2(VariableKind kind, String name) {
+    StringBuilder buffer = new StringBuilder();
     buffer.append(kind);
     buffer.append("#");
     buffer.append(name);
     return buffer.toString();
   }
 
-  private NameContext getNameUsageContext(String key2){
+  private static NameContext getNameUsageContext(String key2){
     final int startIndex = key2.indexOf("#");
     LOG.assertTrue(startIndex >= 0);
     @NonNls String s = key2.substring(0, startIndex);
@@ -280,7 +281,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return NameContext.valueOf(s);
   }
 
-  private String getName(String key2){
+  private static String getName(String key2){
     final int startIndex = key2.indexOf("#");
     LOG.assertTrue(startIndex >= 0);
     @NonNls String s = key2.substring(0, startIndex);
@@ -290,20 +291,20 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return key2.substring(index + 1);
   }
 
-  private VariableKind getVariableKindFromKey2(String key2){
+  private static VariableKind getVariableKindFromKey2(String key2){
     int index = key2.indexOf("#");
     LOG.assertTrue(index >= 0);
     String s = key2.substring(0, index);
     return VariableKind.valueOf(s);
   }
 
-  private String getVariableNameFromKey2(String key2){
+  private static String getVariableNameFromKey2(String key2){
     int index = key2.indexOf("#");
     LOG.assertTrue(index >= 0);
     return key2.substring(index + 1);
   }
 
-  private boolean createStoreFolder(){
+  private static boolean createStoreFolder(){
     File homeFile = new File(STORE_PATH);
     if (!homeFile.exists()){
       if (!homeFile.mkdirs()){
@@ -319,7 +320,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private String getPathToUnit(int unitNumber) {
+  private static String getPathToUnit(int unitNumber) {
     return STORE_PATH + File.separator + "unit." + unitNumber;
   }
 }
