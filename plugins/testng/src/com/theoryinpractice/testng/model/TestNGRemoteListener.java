@@ -8,6 +8,7 @@ package com.theoryinpractice.testng.model;
 
 import org.testng.remote.strprotocol.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
+import com.theoryinpractice.testng.ui.TestNGResults;
 
 public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestListener {
     private TestNGConsoleView console;
@@ -20,15 +21,24 @@ public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestLi
     }
 
     public void onStart(SuiteMessage suiteMessage) {
-        console.getResultsView().start();
+      final TestNGResults view = console.getResultsView();
+      if (view != null) {
+        view.start();
+      }
     }
 
     public void onFinish(SuiteMessage suiteMessage) {
-        console.getResultsView().finish();
+      final TestNGResults view = console.getResultsView();
+      if (view != null) {
+        view.finish();
+      }
     }
 
     public void onStart(TestMessage tm) {
-        console.getResultsView().setTotal(tm.getTestMethodCount());
+      final TestNGResults view = console.getResultsView();
+      if (view != null) {
+        view.setTotal(tm.getTestMethodCount());
+      }
     }
 
     public void onTestStart(TestResultMessage trm) {
