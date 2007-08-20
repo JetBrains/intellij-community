@@ -66,19 +66,19 @@ public class VcsUtil {
   public static void markFileAsDirty(final Project project, final VirtualFile file) {
     final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        mgr.fileDirty(file);
-      }
+      public void run() {  mgr.fileDirty(file);  }
+    });
+  }
+
+  public static void markFileAsDirty(final Project project, final FilePath path) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {  VcsDirtyScopeManager.getInstance(project).fileDirty( path );  }
     });
   }
 
   public static void markFileAsDirty(final Project project, final String path) {
     final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
-      }
-    });
+    markFileAsDirty( project, filePath );
   }
 
   public static void refreshFiles(Project project, HashSet<FilePath> paths) {
