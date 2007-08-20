@@ -9,13 +9,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Stack;
+import java.util.Iterator;
 
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
@@ -36,6 +39,7 @@ public class LaterInvocator {
       this.modalityState = modalityState;
     }
 
+    @NonNls
     public String toString() {
       return "[runnable: " + runnable + "; state=" + modalityState + "] ";
     }
@@ -46,11 +50,11 @@ public class LaterInvocator {
   private static volatile int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();
 
-  private static Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>();
+  private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>();
 
   static boolean IS_TEST_MODE = false;
 
-  private static EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
+  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
   public static void addModalityStateListener(ModalityStateListener listener){
     ourModalityStateMulticaster.addListener(listener);
@@ -67,7 +71,7 @@ public class LaterInvocator {
       if (owner == null) return (ModalityStateEx)ApplicationManager.getApplication().getNoneModalityState();
       ModalityStateEx ownerState = modalityStateForWindow(owner);
       if (window instanceof Dialog && ((Dialog)window).isModal()) {
-        return ownerState.appendEnitity(window);
+        return ownerState.appendEntity(window);
       }
       else{
         return ownerState;
@@ -93,16 +97,14 @@ public class LaterInvocator {
     invokeLater(runnable, modalityState);
   }
 
-  public static void invokeLater(Runnable runnable, ModalityState modalityState) {
-    LOG.assertTrue(modalityState != null);
+  public static void invokeLater(Runnable runnable, @NotNull ModalityState modalityState) {
     synchronized (LOCK) {
       ourQueue.add(new RunnableInfo(runnable, modalityState));
     }
     requestFlush();
   }
 
-  public static void invokeAndWait(final Runnable runnable, ModalityState modalityState) {
-    LOG.assertTrue(modalityState != null);
+  public static void invokeAndWait(final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -117,6 +119,7 @@ public class LaterInvocator {
         }
       }
 
+      @NonNls
       public String toString() {
         return "InvokeAndWait[" + runnable.toString() + "]";
       }
@@ -156,8 +159,23 @@ public class LaterInvocator {
 
     boolean removed = ourModalEntities.remove(modalEntity);
     LOG.assertTrue(removed, modalEntity);
+    cleanupQueueForModal(modalEntity);
     ourQueueSkipCount = 0;
     requestFlush();
+  }
+
+  private static void cleanupQueueForModal(final Object modalEntity) {
+    synchronized (LOCK) {
+      for (Iterator<RunnableInfo> iterator = ourQueue.iterator(); iterator.hasNext();) {
+        RunnableInfo runnableInfo = iterator.next();
+        if (runnableInfo.modalityState instanceof ModalityStateEx) {
+          ModalityStateEx stateEx = (ModalityStateEx) runnableInfo.modalityState;
+          if (stateEx.contains(modalEntity)) {
+            iterator.remove();
+          }
+        }
+      }
+    }
   }
 
   static void leaveAllModals() {
@@ -255,6 +273,7 @@ public class LaterInvocator {
       }
     }
 
+    @NonNls
     public String toString() {
       return "LaterInvocator[lastRunnable=" + myLastRunnable + "]";
     }

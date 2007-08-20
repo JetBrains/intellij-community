@@ -26,10 +26,10 @@ public class ModalityStateEx extends ModalityState {
   }
 
   public ModalityState appendProgress(ProgressIndicator progress){
-    return appendEnitity(progress);
+    return appendEntity(progress);
   }
 
-  ModalityStateEx appendEnitity(Object anEntity){
+  ModalityStateEx appendEntity(Object anEntity){
     ArrayList<Object> list = new ArrayList<Object>();
     for (WeakReference modalEntity : myModalEntities) {
       Object entity = modalEntity.get();
@@ -56,6 +56,10 @@ public class ModalityStateEx extends ModalityState {
       if (!contains(((ModalityStateEx)anotherState).myModalEntities, entity)) return true; // I have entity which is absent in anotherState
     }
     return false;
+  }
+
+  boolean contains(Object modalEntity) {
+    return contains(myModalEntities, modalEntity);
   }
 
   @NonNls
