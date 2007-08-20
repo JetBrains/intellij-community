@@ -118,6 +118,7 @@ public class FindUtil {
     }
 
     if (model.isFindAll()) {
+      findManager.setFindNextModel(model);
       doFindAll(project, editor, model);
       return;
     }
