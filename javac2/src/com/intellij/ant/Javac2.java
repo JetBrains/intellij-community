@@ -184,11 +184,13 @@ public class Javac2 extends Javac{
     classPathBuffer.append(getDestdir().getAbsolutePath());
 
     final Path classpath = getClasspath();
-    final String[] pathElements = classpath.list();
-    for (int i = 0; i < pathElements.length; i++) {
-      final String pathElement = pathElements[i];
-      classPathBuffer.append(File.pathSeparator);
-      classPathBuffer.append(pathElement);
+    if (classpath != null) {
+      final String[] pathElements = classpath.list();
+      for (int i = 0; i < pathElements.length; i++) {
+        final String pathElement = pathElements[i];
+        classPathBuffer.append(File.pathSeparator);
+        classPathBuffer.append(pathElement);
+      }
     }
 
     classPathBuffer.append(File.pathSeparator);
