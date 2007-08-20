@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vcs.AbstractVcs;
 
 import java.util.Arrays;
 
@@ -30,7 +31,8 @@ public class CommitAction extends AnAction {
     boolean enabled = false;
     if (changes != null && changeList != null) {
       for(Change c: changes) {
-        if (ChangesUtil.getVcsForChange(c, project).getCheckinEnvironment() != null) {
+        final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
+        if (vcs != null && vcs.getCheckinEnvironment() != null) {
           enabled = true;
         }
       }
