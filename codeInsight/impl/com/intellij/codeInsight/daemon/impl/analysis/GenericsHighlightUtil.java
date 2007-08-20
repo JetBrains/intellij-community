@@ -153,7 +153,7 @@ public class GenericsHighlightUtil {
                                                                                   description);
             if (bound instanceof PsiClassType) {
               QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true),
-                                                    (HighlightDisplayKey)null);
+                                                    null);
             }
             return highlightInfo;
           }
@@ -200,14 +200,14 @@ public class GenericsHighlightUtil {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
-      QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), (HighlightDisplayKey)null);
+      QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), null);
     }
     else if (referenceElements.length != 0 && element != referenceElements[0] && referenceElements[0].resolve() instanceof PsiTypeParameter) {
       final String description = JavaErrorMessages.message("type.parameter.cannot.be.followed.by.other.bounds");
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       IntentionAction fix = QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false);
-      QuickFixAction.registerQuickFixAction(errorResult, fix, (HighlightDisplayKey)null);
+      QuickFixAction.registerQuickFixAction(errorResult, fix, null);
     }
     return errorResult;
   }
@@ -419,13 +419,7 @@ public class GenericsHighlightUtil {
                                                    HighlightUtil.formatType(rType),
                                                    HighlightUtil.formatType(lType));
 
-    if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, UncheckedWarningLocalInspection.ID)) return null;
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
-                                                                    elementToHighlight,
-                                                                    description);
-    String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
-    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), key);
-    return highlightInfo;
+    return createUncheckedWarning(elementToHighlight, key, description, elementToHighlight);
   }
 
   private static boolean isRawToGeneric(PsiType lType, PsiType rType) {
@@ -520,15 +514,7 @@ public class GenericsHighlightUtil {
       String description = JavaErrorMessages.message("generics.unchecked.cast",
                                                      HighlightUtil.formatType(exprType),
                                                      HighlightUtil.formatType(castType));
-      if (InspectionManagerEx.inspectionResultSuppressed(expression, UncheckedWarningLocalInspection.ID)) return null;
-
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
-                                                                      typeCast,
-                                                                      description);
-      String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
-      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()),
-                                            key);
-      return highlightInfo;
+      return createUncheckedWarning(expression, key, description, typeCast);
     }
     return null;
   }
@@ -647,14 +633,17 @@ public class GenericsHighlightUtil {
         PsiElement element = call instanceof PsiMethodCallExpression
                              ? ((PsiMethodCallExpression)call).getMethodExpression()
                              : call;
-        if (InspectionManagerEx.inspectionResultSuppressed(call, UncheckedWarningLocalInspection.ID)) return null;
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
-        String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
-        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), key);
-        return highlightInfo;
+        return createUncheckedWarning(call, key, description, element);
       }
     }
     return null;
+  }
+
+  private static HighlightInfo createUncheckedWarning(PsiElement context, HighlightDisplayKey key, String description, PsiElement elementToHighlight) {
+    if (InspectionManagerEx.inspectionResultSuppressed(context, UncheckedWarningLocalInspection.ID)) return null;
+    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, elementToHighlight, description);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), key);
+    return highlightInfo;
   }
 
   public static HighlightInfo checkForeachLoopParameterType(PsiForeachStatement statement) {
@@ -672,8 +661,7 @@ public class GenericsHighlightUtil {
     final PsiType parameterType = parameter.getType();
     HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
-      String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), (HighlightDisplayKey)null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null);
     } else {
       highlightInfo = checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
     }
@@ -936,8 +924,7 @@ public class GenericsHighlightUtil {
         if (params[params.length - 1] != parameter) {
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter,
                                                                  JavaErrorMessages.message("vararg.not.last.parameter"));
-          String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
-          QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), (HighlightDisplayKey)null);
+          QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null);
           return info;
         }
       }
@@ -1066,7 +1053,6 @@ public class GenericsHighlightUtil {
         final PsiTypeElement returnTypeElement = overrider.getReturnTypeElement();
         LOG.assertTrue(returnTypeElement != null);
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, returnTypeElement, message);
-        String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding")),
                                               key);
