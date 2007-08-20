@@ -134,8 +134,20 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
     }
 
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiParameter.class, false);
-      if (parameter == null) return; //incompatible teamcity version
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      LOG.assertTrue(method != null);
+      PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameter == null) {
+        for (PsiParameter psiParameter : parameters) {
+          if (Comparing.strEqual(psiParameter.getName(), myParameterName)) {
+            parameter = psiParameter;
+            break;
+          }
+        }
+      }
+      if (parameter == null) return;
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, parameter)) return;
 
       final PsiExpression defToInline;
@@ -146,10 +158,9 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
         return;
       }
 
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-
-      LOG.assertTrue(method != null);
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
+
+      final PsiParameter param = parameter;
       final Runnable runnable = new Runnable() {
         public void run() {
           try {
@@ -157,7 +168,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
             int idx = 0;
             for (PsiReference reference : refsToInline) {
               PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)reference;
-              exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, refElement);
+              exprs[idx++] = InlineUtil.inlineVariable(param, defToInline, refElement);
             }
 
             for (final PsiExpression expr : exprs) {
@@ -165,9 +176,8 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
             }
 
             final List<ParameterInfo> psiParameters = new ArrayList<ParameterInfo>();
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
             int paramIdx = 0;
-            final String paramName = parameter.getName();
+            final String paramName = param.getName();
             for (PsiParameter param : parameters) {
               if (!Comparing.strEqual(paramName, param.getName())) {
                 psiParameters.add(new ParameterInfo(paramIdx, param.getName(), param.getType()));
