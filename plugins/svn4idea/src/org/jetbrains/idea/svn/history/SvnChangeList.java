@@ -104,17 +104,14 @@ public class SvnChangeList implements CommittedChangeList {
   private void loadChanges() {
     myChanges = new ArrayList<Change>();
     for(String path: myAddedPaths) {
-      myChanges.add(new Change(null,
-                               new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision)));
+      myChanges.add(new Change(null, SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision)));
     }
     for(String path: myDeletedPaths) {
-      myChanges.add(new Change(new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision-1),
-                               null));
-
+      myChanges.add(new Change(SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision-1), null));
     }
     for(String path: myChangedPaths) {
-      SvnRepositoryContentRevision beforeRevision = new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision-1);
-      SvnRepositoryContentRevision afterRevision = new SvnRepositoryContentRevision(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision);
+      SvnRepositoryContentRevision beforeRevision = SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision-1);
+      SvnRepositoryContentRevision afterRevision = SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, getLocalPath(path), myRevision);
       myChanges.add(new Change(beforeRevision, afterRevision));
     }
   }

@@ -29,6 +29,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,14 +45,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
 public class SvnRepositoryContentRevision implements ContentRevision {
-  private String myRepositoryRoot;
+  private final String myRepositoryRoot;
   private final SvnVcs myVcs;
-  private String myPath;
-  @Nullable private FilePath myLocalPath;
-  private long myRevision;
+  private final String myPath;
+  @Nullable private final FilePath myLocalPath;
+  private final long myRevision;
   private String myContent;
 
-  public SvnRepositoryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path, @Nullable final FilePath localPath,
+  SvnRepositoryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path, @Nullable final FilePath localPath,
                                       final long revision) {
     myVcs = vcs;
     myPath = path;
@@ -62,22 +64,27 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   @Nullable
   public String getContent() throws VcsException {
     if (myContent == null) {
-      final OutputStream buffer = new ByteArrayOutputStream();
-      ContentLoader loader = new ContentLoader(myPath, buffer, myRevision);
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"), false, null);
-      }
-      else {
-        loader.run();
-      }
-      final SVNException exception = loader.getException();
-      if (exception != null) {
-        throw new VcsException(exception);
-      }
+      final OutputStream buffer = loadContent();
       myContent = buffer.toString();
     }
     return myContent;
+  }
+
+  protected ByteArrayOutputStream loadContent() throws VcsException {
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    ContentLoader loader = new ContentLoader(myPath, buffer, myRevision);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"), false, null);
+    }
+    else {
+      loader.run();
+    }
+    final SVNException exception = loader.getException();
+    if (exception != null) {
+      throw new VcsException(exception);
+    }
+    return buffer;
   }
 
   @NotNull
@@ -93,10 +100,23 @@ public class SvnRepositoryContentRevision implements ContentRevision {
     return new SvnRevisionNumber(SVNRevision.create(myRevision));
   }
 
+  public static SvnRepositoryContentRevision create(final SvnVcs vcs, final String repositoryRoot, final String path, 
+                                                    @Nullable final FilePath localPath, final long revision) {
+    int fileNamePos = path.lastIndexOf('/');
+    if (fileNamePos >= 0) {
+      String fileName = path.substring(fileNamePos);
+      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+      if (fileType.isBinary()) {
+        return new SvnRepositoryBinaryContentRevision(vcs, repositoryRoot, path, localPath, revision);
+      }
+    }
+    return new SvnRepositoryContentRevision(vcs, repositoryRoot, path, localPath, revision);
+  }
+
   private class ContentLoader implements Runnable {
-    private String myPath;
-    private long myRevision;
-    private OutputStream myDst;
+    private final String myPath;
+    private final long myRevision;
+    private final OutputStream myDst;
     private SVNException myException;
 
     public ContentLoader(String path, OutputStream dst, long revision) {
