@@ -411,6 +411,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
                                                                     final List<CommittedChangeList> newChanges) throws IOException {
+    // ensure that changes are loaded before taking read action, to avoid stalling UI
+    for(CommittedChangeList changeList: newChanges) {
+      changeList.getChanges();
+    }
     final Ref<IOException> ref = new Ref<IOException>();
     final List<CommittedChangeList> savedChanges = ApplicationManager.getApplication().runReadAction(new Computable<List<CommittedChangeList>>() {
       public List<CommittedChangeList> compute() {
