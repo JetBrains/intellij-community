@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.TitlePanel;
@@ -572,14 +573,18 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private class MoreIcon implements Icon {
-    private Icon myLeft = IconLoader.getIcon("/general/comboArrowLeft.png");
-    private Icon myRight = IconLoader.getIcon("/general/comboArrowRight.png");
+
+    private ActiveIcon myLeft = new ActiveIcon(IconLoader.getIcon("/general/comboArrowLeft.png"), IconLoader.getIcon("/general/comboArrowLeftPassive.png"));
+    private ActiveIcon myRight = new ActiveIcon(IconLoader.getIcon("/general/comboArrowRight.png"), IconLoader.getIcon("/general/comboArrowRightPassive.png"));
 
     private int myGap = 2;
     private boolean myLeftPainted;
     private boolean myRightPainted;
 
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+      myLeft.setActive(myWindow.isActive());
+      myRight.setActive(myWindow.isActive());
+
       final Rectangle moreRect = myLastLayout.moreRect;
       int iconY = moreRect.height / 2 - myRight.getIconHeight() / 2 + TitlePanel.STRUT;
 
