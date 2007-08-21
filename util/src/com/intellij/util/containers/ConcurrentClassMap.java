@@ -15,46 +15,11 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.ReflectionCache;
-
-import java.util.Collection;
-import java.util.Map;
-
 /**
  * @author peter
  */
-public class ConcurrentClassMap<T> {
-  private final Map<Class, T> myMap = new ConcurrentHashMap<Class, T>();
-
-  public final void put(Class aClass, T value) {
-    myMap.put(aClass, value);
+public class ConcurrentClassMap<T> extends ClassMap<T> {
+  public ConcurrentClassMap() {
+    super(new ConcurrentHashMap<Class,T>());
   }
-
-  public final T get(Class aClass) {
-    T t = myMap.get(aClass);
-    if (t != null) {
-      return t;
-    }
-    for (final Class aClass1 : ReflectionCache.getInterfaces(aClass)) {
-      t = get(aClass1);
-      if (t != null) {
-        myMap.put(aClass, t);
-        return t;
-      }
-    }
-    final Class superclass = ReflectionCache.getSuperClass(aClass);
-    if (superclass != null) {
-      t = get(superclass);
-      if (t != null) {
-        myMap.put(aClass, t);
-        return t;
-      }
-    }
-    return null;
-  }
-
-  public final Collection<T> values() {
-    return myMap.values();
-  }
-
 }
