@@ -2,9 +2,8 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -66,6 +65,11 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
           final FileElement holderElement = holder.getTreeElement();
           ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager, refText,
                                                                                     holderElement.getCharTable());
+          if (ref == null) {
+            myCachedBaseType = PsiClassType.getJavaLangObject(getManager(), getResolveScope());
+            return myCachedBaseType;
+          }
+
           TreeUtil.addChildren(holderElement, (TreeElement)ref);
           ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
         }

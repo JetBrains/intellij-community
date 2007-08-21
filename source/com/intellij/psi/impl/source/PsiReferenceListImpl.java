@@ -88,6 +88,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
         }
 
         types = new PsiClassType[refTexts.length];
+        int nullcount = 0;
         for (int i = 0; i < types.length; i++) {
           final PsiElement parent = getParent();
           PsiElement context = this;
@@ -99,9 +100,24 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
           final PsiJavaCodeReferenceElementImpl ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager,
                                                                                                                           refTexts[i],
                                                                                                                           holderElement.getCharTable());
-          TreeUtil.addChildren(holderElement, ref);
-          ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
-          types[i] = factory.createType(ref);
+          if (ref != null) {
+            TreeUtil.addChildren(holderElement, ref);
+            ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
+            types[i] = factory.createType(ref);
+          }
+          else {
+            types[i] = null;
+            nullcount++;
+          }
+        }
+
+        if (nullcount > 0) {
+          PsiClassType[] newtypes = new PsiClassType[types.length - nullcount];
+          int cnt = 0;
+          for (PsiClassType type : types) {
+            if (type != null) newtypes[cnt++] = type;
+          }
+          types = newtypes;
         }
       }
       else {

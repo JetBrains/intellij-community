@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.Nullable;
 
 public class Parsing implements Constants{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
@@ -22,12 +23,14 @@ public class Parsing implements Constants{
     myContext = context;
   }
 
+  @Nullable
   public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, CharSequence buffer, CharTable table) {
     return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length(), table, false);
   }
 
   //Since we are to parse greedily (up to the end) in case eatAll=true,
   //  we are not guaranteed to return reference actually
+  @Nullable
   public static TreeElement parseJavaCodeReferenceText(PsiManager manager,
                                                        CharSequence buffer,
                                                        int startOffset,
