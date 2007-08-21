@@ -33,10 +33,10 @@ import java.util.*;
 import java.util.List;
 
 public class MultipleChangeListBrowser extends ChangesBrowser {
-  private ChangeListChooser myChangeListChooser;
-  private ChangeListListener myChangeListListener = new MyChangeListListener();
-  private boolean myShowingAllChangeLists;
-  private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
+  private final ChangeListChooser myChangeListChooser;
+  private final ChangeListListener myChangeListListener = new MyChangeListListener();
+  private final boolean myShowingAllChangeLists;
+  private final EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
   private Collection<Change> myAllChanges;
   private Map<Change, LocalChangeList> myChangeListsMap;
 
@@ -174,11 +174,15 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   private class ChangeListChooser extends JPanel {
-    private JComboBox myChooser;
+    private final JComboBox myChooser;
 
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout());
-      myChooser = new JComboBox();
+      myChooser = new JComboBox() {
+        public Dimension getMinimumSize() {
+          return new Dimension(0, 0);
+        }
+      };
       myChooser.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final LocalChangeList l = ((LocalChangeList)value);
@@ -197,12 +201,12 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
       updateLists(lists);
       myChooser.setEditable(false);
-      add(myChooser, BorderLayout.EAST);
+      add(myChooser, BorderLayout.CENTER);
 
       JLabel label = new JLabel(VcsBundle.message("commit.dialog.changelist.label"));
       label.setDisplayedMnemonic('l');
       label.setLabelFor(myChooser);
-      add(label, BorderLayout.CENTER);
+      add(label, BorderLayout.WEST);
     }
 
     public void updateLists(List<? extends ChangeList> lists) {

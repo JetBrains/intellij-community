@@ -23,14 +23,14 @@ import java.util.List;
  * @author max
  */
 public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
-  protected ChangesTreeList<Change> myViewer;
+  protected final ChangesTreeList<Change> myViewer;
   protected ChangeList mySelectedChangeList;
   protected Collection<Change> myChangesToDisplay;
-  protected Project myProject;
+  protected final Project myProject;
   private final boolean myCapableOfExcludingChanges;
-  protected JPanel myHeaderPanel;
+  protected final JPanel myHeaderPanel;
   private DefaultActionGroup myToolBarGroup;
-  private JPanel myListPanel;
+  private final JPanel myListPanel;
   private ShowDiffAction.DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
 
   public void setChangesToDisplay(final List<Change> changes) {
@@ -74,7 +74,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     add(myListPanel, BorderLayout.CENTER);
 
     myHeaderPanel = new JPanel(new BorderLayout());
-    myHeaderPanel.add(createToolbar(), BorderLayout.WEST);
+    myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     add(myHeaderPanel, BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
