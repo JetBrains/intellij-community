@@ -59,6 +59,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myProject = project;
 
     Disposer.register(project, this);
+    Disposer.register(this, contentUI);
   }
 
   public boolean canCloseContents() {

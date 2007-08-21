@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class InfoAndProgressPanel extends JPanel {
     myProgressIcon.setOpaque(true);
     myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.text"));
     new BaseButtonBehavior(myProgressIcon) {
-      protected void execute() {
+      protected void execute(final MouseEvent e) {
         triggerPopupShowing();
       }
     };
@@ -258,7 +259,7 @@ public class InfoAndProgressPanel extends JPanel {
 
     if (compact) {
       new BaseButtonBehavior(inline.getComponent()) {
-        protected void execute() {
+        protected void execute(final MouseEvent e) {
           triggerPopupShowing();
         }
       };

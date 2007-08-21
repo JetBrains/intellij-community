@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 
 public final class InplaceButton extends JComponent implements ActiveComponent {
 
@@ -31,7 +32,7 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
 
   public InplaceButton(IconButton source, final ActionListener listener) {
     myBehavior = new BaseButtonBehavior(this) {
-      protected void execute() {
+      protected void execute(final MouseEvent e) {
         listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "execute"));
       }
     };

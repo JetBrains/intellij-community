@@ -57,5 +57,8 @@ public class ComponentContentUI implements ContentUI {
   public boolean isToSelectAddedContent() {
     return true;
   }
+
+  public void dispose() {
+  }
 }
 

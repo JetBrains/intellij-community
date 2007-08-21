@@ -1,7 +1,6 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.WatermarkIcon;
@@ -9,6 +8,7 @@ import com.intellij.util.ui.WatermarkIcon;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 class ContentTabLabel extends BaseLabel {
 
@@ -21,7 +21,7 @@ class ContentTabLabel extends BaseLabel {
     update();
 
     myBehavior = new BaseButtonBehavior(this) {
-      protected void execute() {
+      protected void execute(final MouseEvent e) {
         myUi.myWindow.getContentManager().setSelectedContent(myContent, true);
       }
     };

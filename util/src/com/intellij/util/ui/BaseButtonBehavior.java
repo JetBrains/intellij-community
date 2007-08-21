@@ -77,10 +77,10 @@ public abstract class BaseButtonBehavior {
       if (point.x < 0 || point.x > myComponent.getWidth()) return;
       if (point.y < 0 || point.y > myComponent.getHeight()) return;
 
-      execute();
+      execute(e);
     }
   }
 
-  protected abstract void execute();
+  protected abstract void execute(final MouseEvent e);
 
 }

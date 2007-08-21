@@ -285,4 +285,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   public boolean isToSelectAddedContent() {
     return false;
   }
+
+  public void dispose() {
+  }
 }

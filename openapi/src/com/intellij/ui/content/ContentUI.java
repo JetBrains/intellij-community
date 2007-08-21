@@ -15,9 +15,11 @@
 */
 package com.intellij.ui.content;
 
+import com.intellij.openapi.Disposable;
+
 import javax.swing.*;
 
-public interface ContentUI {
+public interface ContentUI extends Disposable {
   JComponent getComponent();
   void setManager(ContentManager manager);
   
