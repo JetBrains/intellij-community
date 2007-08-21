@@ -960,7 +960,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         string = sb.append("...").toString();
       }
 
-      g2.drawString(string, offset + 2, fm.getAscent() + (SystemInfo.isMac ? fm.getDescent() : 0)); //fm.getHeight());
+      g2.drawString(string, offset + 2, fm.getAscent() + fm.getDescent());
 
       g2.setFont(oldFont);
     }
