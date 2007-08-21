@@ -8,12 +8,14 @@ import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -29,10 +31,14 @@ import java.util.ArrayList;
 
 public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JLabel myMatchInfoLabel;
-  private Project myProject;
-  private Editor myEditor;
+  private final Project myProject;
+  private final Editor myEditor;
   private final JTextField mySearchField;
   private final Color myDefaultBackground;
+
+  private static final Color GRADIENT_C1 = new Color(0xe8, 0xe8, 0xe8);
+  private static final Color GRADIENT_C2 = new Color(0xD0, 0xD0, 0xD0);
+  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -76,9 +82,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     leadPanel.add(cbWholeWords);
 
     cbMatchCase.setSelected(isCaseSensitive());
-    cbMatchCase.setOpaque(false);
     cbWholeWords.setSelected(isWholeWords());
-    cbWholeWords.setOpaque(false);
 
     cbMatchCase.setMnemonic('C');
     cbWholeWords.setMnemonic('M');
@@ -88,14 +92,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        FindManager.getInstance(myProject).getFindInFileModel().setCaseSensitive(cbMatchCase.isSelected());
+        final boolean b = cbMatchCase.isSelected();
+        FindManager.getInstance(myProject).getFindInFileModel().setCaseSensitive(b);
+        FindSettings.getInstance().setLocalCaseSensitive(b);
         updateResults();
       }
     });
 
     cbWholeWords.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        FindManager.getInstance(myProject).getFindInFileModel().setWholeWordsOnly(cbWholeWords.isSelected());
+        final boolean b = cbWholeWords.isSelected();
+        FindManager.getInstance(myProject).getFindInFileModel().setWholeWordsOnly(b);
+        FindSettings.getInstance().setLocalWholeWordsOnly(b);
         updateResults();
       }
     });
@@ -143,13 +151,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        FindUtil.searchAgain(myProject, myEditor);
+        searchForward();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
 
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        FindUtil.searchBack(myProject, myEditor);
+        searchBackward();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), JComponent.WHEN_FOCUSED);
 
@@ -162,9 +170,38 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     });
   }
 
+  private void searchBackward() {
+    if (mySearchField.getText().length() > 0) {
+      final SelectionModel model = myEditor.getSelectionModel();
+      if (model.hasSelection()) {
+        if (mySearchField.getText().equals(model.getSelectedText()) && myEditor.getCaretModel().getOffset() == model.getSelectionEnd()) {
+          myEditor.getCaretModel().moveToOffset(model.getSelectionStart());
+        }
+      }
+
+      FindUtil.searchBack(myProject, myEditor);
+    }
+  }
+
+  private void searchForward() {
+    if (mySearchField.getText().length() > 0) {
+      final SelectionModel model = myEditor.getSelectionModel();
+      if (model.hasSelection()) {
+        if (mySearchField.getText().equals(model.getSelectedText()) && myEditor.getCaretModel().getOffset() == model.getSelectionStart()) {
+          myEditor.getCaretModel().moveToOffset(model.getSelectionEnd());
+        }
+      }
+
+      FindUtil.searchAgain(myProject, myEditor);
+    }
+  }
+
   private static void setSmallerFont(final JComponent component) {
-    Font f = component.getFont();
-    component.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+    if (SystemInfo.isMac) {
+      Font f = component.getFont();
+      component.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+    }
+    component.setOpaque(false);
   }
 
   public void requestFocus() {
@@ -293,7 +330,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      FindUtil.searchBack(myProject, myEditor);
+      searchBackward();
     }
 
     public void update(final AnActionEvent e) {
@@ -308,7 +345,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      FindUtil.searchAgain(myProject, myEditor);
+      searchForward();
     }
 
     public void update(final AnActionEvent e) {
@@ -316,19 +353,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
-  public final static Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
-  public final static Color BND_ACTIVE_COLOR = new Color(0xefefef);
-
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
 
-    g.setColor(new Color(0x87, 0x87, 0x87));
+    g.setColor(BORDER_COLOR);
     g.drawLine(0, 0, getWidth(), 0);
-//    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-    g2d.setPaint(new GradientPaint(0, 0, new Color(0xe8, 0xe8, 0xe8), 0, getHeight(), new Color(0xD0, 0xD0, 0xD0)));
+    g.drawLine(0, 0, 0, getHeight());
 
-    g2d.fillRect(0, 1, getWidth(), getHeight() - 1);
+//    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+    g2d.setPaint(new GradientPaint(0, 0, GRADIENT_C1, 0, getHeight(), GRADIENT_C2));
+
+    g2d.fillRect(1, 1, getWidth(), getHeight() - 1);
   }  
 }

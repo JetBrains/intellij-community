@@ -42,6 +42,10 @@ public abstract class FindSettings{
 
   public abstract void setCaseSensitive(boolean caseSensitiveSearch);
 
+  public abstract boolean isLocalCaseSensitive();
+
+  public abstract void setLocalCaseSensitive(boolean caseSensitiveSearch);
+
   public abstract boolean isPreserveCase();
 
   public abstract void setPreserveCase(boolean preserveCase);
@@ -49,6 +53,10 @@ public abstract class FindSettings{
   public abstract boolean isWholeWordsOnly();
 
   public abstract void setWholeWordsOnly(boolean wholeWordsOnly);
+
+  public abstract boolean isLocalWholeWordsOnly();
+
+  public abstract void setLocalWholeWordsOnly(boolean wholeWordsOnly);
 
   public abstract boolean isRegularExpressions();
 

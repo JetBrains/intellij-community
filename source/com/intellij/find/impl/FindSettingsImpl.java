@@ -1,14 +1,14 @@
 package com.intellij.find.impl;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.find.FindBundle;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.*;
-import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.properties.PropertiesFileType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +47,10 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   @SuppressWarnings({"WeakerAccess"}) public String FIND_CUSTOM_SCOPE = null;
 
   @SuppressWarnings({"WeakerAccess"}) public boolean CASE_SENSITIVE_SEARCH = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_CASE_SENSITIVE_SEARCH = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean PRESERVE_CASE_REPLACE = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean WHOLE_WORDS_ONLY = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_WHOLE_WORDS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean WITH_SUBDIRECTORIES = true;
 
@@ -139,6 +141,22 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
 
   public void setCaseSensitive(boolean caseSensitiveSearch){
     CASE_SENSITIVE_SEARCH = caseSensitiveSearch;
+  }
+
+  public boolean isLocalCaseSensitive() {
+    return LOCAL_CASE_SENSITIVE_SEARCH;
+  }
+
+  public boolean isLocalWholeWordsOnly() {
+    return LOCAL_WHOLE_WORDS_ONLY;
+  }
+
+  public void setLocalCaseSensitive(final boolean caseSensitiveSearch) {
+    LOCAL_CASE_SENSITIVE_SEARCH = caseSensitiveSearch;
+  }
+
+  public void setLocalWholeWordsOnly(final boolean wholeWordsOnly) {
+    LOCAL_WHOLE_WORDS_ONLY = wholeWordsOnly;
   }
 
   public boolean isPreserveCase() {

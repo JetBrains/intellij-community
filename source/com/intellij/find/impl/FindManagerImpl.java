@@ -65,6 +65,9 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     findSettings.initModelBySetings(myFindInFileModel);
     findSettings.initModelBySetings(myFindInProjectModel);
 
+    myFindInFileModel.setCaseSensitive(findSettings.isLocalCaseSensitive());
+    myFindInFileModel.setWholeWordsOnly(findSettings.isLocalWholeWordsOnly());
+
     myFindUsagesManager = new FindUsagesManager(myProject, anotherManager);
     myFindInProjectModel.setMultipleFiles(true);
   }
