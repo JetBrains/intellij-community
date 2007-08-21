@@ -17,16 +17,17 @@ package com.intellij.usages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -101,6 +102,7 @@ public class UsageInfoToUsageConverter {
 
   }
 
+  @NotNull
   public static Usage convert(TargetElementsDescriptor descriptor, UsageInfo usageInfo) {
     Usage usage = _convert(descriptor, usageInfo);
     final UsageConvertor[] convertors = ApplicationManager.getApplication().getComponents(UsageConvertor.class);
@@ -110,6 +112,7 @@ public class UsageInfoToUsageConverter {
     return usage;
   }
 
+  @NotNull
   private static Usage _convert(final TargetElementsDescriptor descriptor, final UsageInfo usageInfo) {
     final PsiElement[] primaryElements = descriptor.getPrimaryElements();
 
