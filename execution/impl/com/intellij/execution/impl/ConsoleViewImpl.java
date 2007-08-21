@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -134,8 +135,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
 
-    addMessageFilter(new ExceptionFilter(myProject));//TEMP!
-    addMessageFilter(new YourkitFilter(myProject));//TEMP!
+    final ConsoleFilterProvider[] filterProviders = Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS);
+    for (ConsoleFilterProvider filterProvider : filterProviders) {
+      final Filter[] defaultFilters = filterProvider.getDefaultFilters(project);
+      for (Filter filter : defaultFilters) {
+        addMessageFilter(filter);
+      }
+    }
   }
 
   public void attachToProcess(final ProcessHandler processHandler){
