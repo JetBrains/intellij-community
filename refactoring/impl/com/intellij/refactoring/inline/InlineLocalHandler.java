@@ -35,6 +35,9 @@ class InlineLocalHandler {
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
 
+  private InlineLocalHandler() {
+  }
+
   /**
    * should be called in AtomicAction
    */
@@ -106,6 +109,10 @@ class InlineLocalHandler {
       }
     }
 
+    if (checkRefsInAugmentedAssignment(refsToInline, project, editor, localName)) {
+      return;
+    }
+
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       // TODO : check if initializer uses fieldNames that possibly will be hidden by other
       // locals with the same names after inlining
@@ -172,6 +179,26 @@ class InlineLocalHandler {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
     }, RefactoringBundle.message("inline.command", localName), null);
+  }
+
+  private static boolean checkRefsInAugmentedAssignment(final PsiElement[] refsToInline, final Project project, final Editor editor,
+                                                        final String localName) {
+    for(PsiElement element: refsToInline) {
+      if (element.getParent() instanceof PsiAssignmentExpression) {
+        PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) element.getParent();
+        if (element == assignmentExpression.getLExpression()) {
+          EditorColorsManager manager = EditorColorsManager.getInstance();
+          final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+          HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{element}, writeAttributes, true, null);
+
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isSameDefinition(final PsiElement def, final PsiExpression defToInline) {

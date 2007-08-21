@@ -65,6 +65,17 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testAugmentedAssignment() throws Exception {
+    String expectedException = null;
+    try {
+      doTest(false);
+    }
+    catch(RuntimeException ex) {
+      expectedException = ex.getMessage();
+    }
+    assertEquals("Cannot perform refactoring.\nVariable 'text' is accessed for writing. ", expectedException);
+  }
+
   private void doTest(final boolean inlineDef) throws Exception {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
