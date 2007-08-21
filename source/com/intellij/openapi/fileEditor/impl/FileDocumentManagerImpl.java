@@ -562,7 +562,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       }
     };
 
-    if (ApplicationManager.getApplication().isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || (ApplicationManager.getApplication().isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL)) {
       fireRunnable.run();
     }
     else {
