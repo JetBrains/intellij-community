@@ -8,8 +8,8 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,15 +42,15 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
   private BaseLabel myIdLabel = new BaseLabel(this, false);
-  private Rectangle myMoreRect;
 
   private MoreIcon myMoreIcon = new MoreIcon();
 
-  private ArrayList<ContentTabLabel> myToDrop;
   private JPopupMenu myPopup;
   private PopupMenuListener myPopupListener;
 
   private static final int MORE_ICON_BORDER = 6;
+
+  private LayoutData myLastLayout;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -64,8 +64,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     new BaseButtonBehavior(this) {
       protected void execute(final MouseEvent e) {
-        if (myMoreRect != null && myMoreRect.contains(e.getPoint())) {
-          showPopup();
+        if (myLastLayout != null) {
+          final Rectangle moreRect = myLastLayout.moreRect;
+          if (moreRect != null && moreRect.contains(e.getPoint())) {
+            showPopup();
+          }
         }
       }
     };
@@ -166,13 +169,33 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
   }
 
-  public void doLayout() {
-    int eachX = 0;
-    int eachY = TitlePanel.STRUT;
+  private class LayoutData {
+    int toFitWidth;
+    int requiredWidth;
+    Dimension layoutSize = getSize();
+    boolean fullLayout = true;
 
-    myIdLabel.setBounds(eachX, eachY, myIdLabel.getPreferredSize().width, getHeight());
-    eachX += myIdLabel.getPreferredSize().width;
-    int tabsStart = eachX;
+    int moreRectWidth;
+
+    ArrayList<ContentTabLabel> toLayout = new ArrayList<ContentTabLabel>();
+    ArrayList<ContentTabLabel> toDrop = new ArrayList<ContentTabLabel>();
+
+    Rectangle moreRect;
+
+    public int eachX;
+    public int eachY;
+    public int contentCount = myManager.getContentCount();
+  }
+
+  public void doLayout() {
+    LayoutData data = new LayoutData();
+
+    data.eachX = 0;
+    data.eachY = TitlePanel.STRUT;
+
+    myIdLabel.setBounds(data.eachX, data.eachY, myIdLabel.getPreferredSize().width, getHeight());
+    data.eachX += myIdLabel.getPreferredSize().width;
+    int tabsStart = data.eachX;
 
     if (myManager.getContentCount() == 0) return;
 
@@ -181,77 +204,76 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       selected = myManager.getContents()[0];
     }
 
-    int requiredWidth = 0;
-    ArrayList<ContentTabLabel> toLayout = new ArrayList<ContentTabLabel>();
-    myToDrop = new ArrayList<ContentTabLabel>();
-    for (ContentTabLabel eachTab : myTabs) {
-      final Dimension eachSize = eachTab.getPreferredSize();
-      requiredWidth += eachSize.width;
-      requiredWidth++;
-      toLayout.add(eachTab);
-    }
-
-
-    final int moreRectWidth = myMoreIcon.getIconWidth() + MORE_ICON_BORDER * 2;
-    int toFitWidth = getSize().width - eachX;
-
-    final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
-    while (true) {
-      if (requiredWidth <= toFitWidth) break;
-      if (toLayout.size() <= 1) break;
-
-      if (toLayout.get(0) != selectedTab) {
-        final ContentTabLabel toDropLabel = toLayout.remove(0);
-        requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
-        myToDrop.add(toDropLabel);
-        if (myToDrop.size() == 1) {
-          toFitWidth -= moreRectWidth;
+    if (myLastLayout != null && myLastLayout.layoutSize.equals(getSize()) && myLastLayout.contentCount == myManager.getContentCount()) {
+      for (ContentTabLabel each : myTabs) {
+        if (each.myContent == selected && each.getBounds().width != 0) {
+          data = myLastLayout;
+          data.fullLayout = false;
         }
-      } else if (toLayout.get(toLayout.size() - 1) != selectedTab) {
-        final ContentTabLabel toDropLabel = toLayout.remove(toLayout.size() - 1);
-        requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
-        myToDrop.add(toDropLabel);
-        if (myToDrop.size() == 1) {
-          toFitWidth -= moreRectWidth;
-        }
-      } else {
-        break;
       }
     }
 
 
-    boolean reachedBounds = false;
-    myMoreRect = null;
-    for (ContentTabLabel each : toLayout) {
-      if (isToDrawTabs()) {
-        eachY = 0;
-      } else {
-        eachY = TitlePanel.STRUT;
+    if (data.fullLayout) {
+      for (ContentTabLabel eachTab : myTabs) {
+        final Dimension eachSize = eachTab.getPreferredSize();
+        data.requiredWidth += eachSize.width;
+        data.requiredWidth++;
+        data.toLayout.add(eachTab);
       }
-      final Dimension eachSize = each.getPreferredSize();
-        if (eachX + eachSize.width < toFitWidth + tabsStart) {
-          each.setBounds(eachX, eachY, eachSize.width, getHeight() - eachY);
-          eachX += eachSize.width;
-          eachX++;
+
+
+      data.moreRectWidth = myMoreIcon.getIconWidth() + MORE_ICON_BORDER * 2;
+      data.toFitWidth = getSize().width - data.eachX;
+
+      final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
+      while (true) {
+        if (data.requiredWidth <= data.toFitWidth) break;
+        if (data.toLayout.size() <= 1) break;
+
+        if (data.toLayout.get(0) != selectedTab) {
+          dropTab(data, data.toLayout.remove(0));
+        } else if (data.toLayout.get(data.toLayout.size() - 1) != selectedTab) {
+          dropTab(data, data.toLayout.remove(data.toLayout.size() - 1));
         } else {
-          if (!reachedBounds) {
-            final int width = getWidth() - eachX - moreRectWidth;
-            each.setBounds(eachX, eachY, width, getHeight() - eachY);
-            eachX += width;
-            eachX ++;
-          } else {
-            each.setBounds(0, 0, 0, 0);
-          }
-          reachedBounds = true;
+          break;
         }
+      }
+
+
+      boolean reachedBounds = false;
+      data.moreRect = null;
+      for (ContentTabLabel each : data.toLayout) {
+        if (isToDrawTabs()) {
+          data.eachY = 0;
+        } else {
+          data.eachY = TitlePanel.STRUT;
+        }
+        final Dimension eachSize = each.getPreferredSize();
+          if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
+            each.setBounds(data.eachX, data.eachY, eachSize.width, getHeight() - data.eachY);
+            data.eachX += eachSize.width;
+            data.eachX++;
+          } else {
+            if (!reachedBounds) {
+              final int width = getWidth() - data.eachX - data.moreRectWidth;
+              each.setBounds(data.eachX, data.eachY, width, getHeight() - data.eachY);
+              data.eachX += width;
+              data.eachX ++;
+            } else {
+              each.setBounds(0, 0, 0, 0);
+            }
+            reachedBounds = true;
+          }
+      }
+
+      for (ContentTabLabel each : data.toDrop) {
+        each.setBounds(0, 0, 0, 0);
+      }
     }
 
-    for (ContentTabLabel each : myToDrop) {
-      each.setBounds(0, 0, 0, 0);
-    }
-
-    if (myToDrop.size() > 0) {
-      myMoreRect = new Rectangle(eachX + MORE_ICON_BORDER, TitlePanel.STRUT, myMoreIcon.getIconWidth(), getHeight() - TitlePanel.STRUT);
+    if (data.toDrop.size() > 0) {
+      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, myMoreIcon.getIconWidth(), getHeight());
       final int selectedIndex = myManager.getIndexOfContent(myManager.getSelectedContent());
       if (selectedIndex == 0) {
         myMoreIcon.setPaintedIcons(false, true);
@@ -261,7 +283,17 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myMoreIcon.setPaintedIcons(true, true);
       }
     } else {
-      myMoreRect = null;
+      data.moreRect = null;
+    }
+    
+    myLastLayout = data;
+  }
+
+  private void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
+    data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
+    data.toDrop.add(toDropLabel);
+    if (data.toDrop.size() == 1) {
+      data.toFitWidth -= data.moreRectWidth;
     }
   }
 
@@ -322,8 +354,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     c.restore();
 
-    if (myMoreRect != null) {
-      myMoreIcon.paintIcon(this, g, myMoreRect.x, myMoreRect.y);
+    if (myLastLayout != null && myLastLayout.moreRect != null) {
+      myMoreIcon.paintIcon(this, g, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
     }
   }
 
@@ -517,7 +549,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       });
       myPopup.add(item);
     }
-    myPopup.show(ToolWindowContentUi.this, myMoreRect.x, myMoreRect.y);
+    myPopup.show(this, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
   }
 
   public void dispose() {
@@ -548,15 +580,16 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     private boolean myRightPainted;
 
     public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      int iconY = myMoreRect.height / 2 - myRight.getIconHeight() / 2;
+      final Rectangle moreRect = myLastLayout.moreRect;
+      int iconY = moreRect.height / 2 - myRight.getIconHeight() / 2 + TitlePanel.STRUT;
 
       if (myLeftPainted && myRightPainted) {
-        myLeft.paintIcon(c, g, myMoreRect.x, iconY);
-        myRight.paintIcon(c, g, myMoreRect.x + myLeft.getIconWidth() + myGap, iconY);
+        myLeft.paintIcon(c, g, moreRect.x, iconY);
+        myRight.paintIcon(c, g, moreRect.x + myLeft.getIconWidth() + myGap, iconY);
       } else {
         Icon toPaint = myLeftPainted ? myLeft : (myRightPainted ? myRight : null);
         if (toPaint != null) {
-          toPaint.paintIcon(c, g, myMoreRect.x + getIconWidth() / 2 - myGap - 1, iconY);
+          toPaint.paintIcon(c, g, moreRect.x + getIconWidth() / 2 - myGap - 1, iconY);
         }
       }
     }
