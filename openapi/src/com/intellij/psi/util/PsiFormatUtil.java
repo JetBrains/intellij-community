@@ -40,6 +40,7 @@ public class PsiFormatUtil {
   public static final int SHOW_FQ_CLASS_NAMES = 0x2000; // variable, method, class
   public static final int JAVADOC_MODIFIERS_ONLY = 0x4000; // field, method, class
   public static final int SHOW_ANONYMOUS_CLASS_VERBOSE = 0x8000; // class
+  public static final int SHOW_RAW_TYPE = 0x10000; //type
   public static final int MAX_PARAMS_TO_SHOW = 7;
 
   public static String formatVariable(PsiVariable variable, int options, PsiSubstitutor substitutor){
@@ -388,6 +389,9 @@ public class PsiFormatUtil {
 
   public static String formatType(PsiType type, int options, PsiSubstitutor substitutor){
     type = substitutor.substitute(type);
+    if ((options & SHOW_RAW_TYPE) != 0) {
+      type = TypeConversionUtil.erasure(type);
+    }
     if ((options & SHOW_FQ_CLASS_NAMES) != 0){
       return type.getInternalCanonicalText();
     }
