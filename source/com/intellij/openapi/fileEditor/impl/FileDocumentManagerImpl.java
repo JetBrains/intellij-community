@@ -556,10 +556,17 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final Runnable fireRunnable = new Runnable() {
       public void run() {
         myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
       }
-    }, ModalityState.NON_MODAL);
+    };
+
+    if (ApplicationManager.getApplication().isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL) {
+      fireRunnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(fireRunnable, ModalityState.NON_MODAL);
+    }
   }
 }
