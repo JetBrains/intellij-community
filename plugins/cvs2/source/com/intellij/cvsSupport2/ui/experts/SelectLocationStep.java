@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -20,7 +21,7 @@ import java.io.File;
  * author: lesya
  */
 public abstract class SelectLocationStep extends WizardStep{
-  protected FileSystemTree myFileSystemTree;
+  protected final FileSystemTree myFileSystemTree;
   private ActionToolbar myFileSystemToolBar;
 
   private final TreeSelectionListener myTreeSelectionListener = new TreeSelectionListener() {
@@ -68,6 +69,7 @@ public abstract class SelectLocationStep extends WizardStep{
 
   protected void dispose() {
     myFileSystemTree.getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
+    Disposer.dispose(myFileSystemTree);
   }
 
   public boolean nextIsEnabled() {
@@ -85,8 +87,8 @@ public abstract class SelectLocationStep extends WizardStep{
 
     if (actions.length > 0) group.addSeparator();
 
-    for (int i = 0; i < actions.length; i++) {
-      group.add(actions[i]);
+    for (AnAction action : actions) {
+      group.add(action);
     }
 
     return group;
