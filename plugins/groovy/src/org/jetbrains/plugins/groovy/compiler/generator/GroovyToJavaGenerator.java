@@ -5,23 +5,21 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -91,7 +89,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     GenerationItem item;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
       final GroovyFileBase psiFile = findPsiFile(file);
-      boolean isInTestSources = ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(file);
+      boolean isInTestSources = ModuleRootManager.getInstance(getModuleByFile(context, file)).getFileIndex().isInTestSourceContent(file);
 
       GrTopStatement[] statements = getTopStatementsInReadAction(psiFile);
 
@@ -103,6 +101,17 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
 
       final Module module = getModuleByFile(context, file);
+
+//      GrMembersDeclaration[] topLevelClassMembersDeclarations = psiFile.getMemberDeclarations();
+//
+//      List<String> topLevelClassMembers = new LinkedList<String>();
+//      for (GrMembersDeclaration membersDeclaration : topLevelClassMembersDeclarations) {
+//        GrMember[] grMembers = membersDeclaration.getMembers();
+//
+//        for (GrMember grMember : grMembers) {
+//          topLevelClassMembers.add(grMember.getName());
+//        }
+//      }
 
       //top level class
       if (needCreateTopLevelClass) {
@@ -118,6 +127,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
 //        GrMembersDeclaration[] membersDeclarations = typeDefinition.getMemberDeclarations();
 //
+//        List<String> members = new LinkedList<String>();
 //        for (GrMembersDeclaration membersDeclaration : membersDeclarations) {
 //          GrMember[] grMembers = membersDeclaration.getMembers();
 //
@@ -125,7 +135,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 //            members.add(grMember.getName());
 //          }
 //        }
-//
+
 //        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TopLevelDependencyValidityState(file.getTimeStamp(), members), isInTestSources, file);
         item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file);
         generationItems.add(item);
@@ -354,6 +364,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     Map<String, String> gettersNames = new HashMap<String, String>();
     Map<String, String> settersNames = new HashMap<String, String>();
 
+    List<Pair<String, MethodSignature>> methods = new ArrayList<Pair<String, MethodSignature>>();
+
     for (GrMembersDeclaration declaration : membersDeclarations) {
       if (declaration instanceof GrMethod) {
         final GrMethod method = (GrMethod) declaration;
@@ -361,7 +373,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           writeConstructor(text, method);
         }
 
-        writeMethod(text, method);
+        Pair<String, MethodSignature> methodNameSignature = new Pair<String, MethodSignature>(method.getName(), method.getSignature(PsiSubstitutor.EMPTY));
+        if (!methods.contains(methodNameSignature)) {
+          methods.add(methodNameSignature);
+          writeMethod(text, method);
+        }
 
         getDefinedGetters(gettersNames, method);
         getDefinedSetters(settersNames, method);
@@ -835,6 +851,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   public ValidityState createValidityState(DataInputStream is) throws IOException {
+//    return TopLevelDependencyValidityState.load(is);
     return TimestampValidityState.load(is);
   }
 
@@ -877,27 +894,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     public VirtualFile getVFile() {
       return myVFile;
-    }
-  }
-
-  class TopLevelDependencyValidityState implements ValidityState {
-    private long myTimestamp;
-    private List<String> members;  //fields
-
-    TopLevelDependencyValidityState(long timestamp, List<String> members) {
-      //use signature of method and access modifiers
-      this.members = members;
-      myTimestamp = timestamp;
-    }
-
-    public boolean equalsTo(ValidityState validityState) {
-      if (!(validityState instanceof TopLevelDependencyValidityState)) return false;
-
-      return ((TopLevelDependencyValidityState) validityState).myTimestamp == this.myTimestamp
-          && members.equals(((TopLevelDependencyValidityState) validityState).members);
-    }
-
-    public void save(DataOutputStream dataOutputStream) throws IOException {
     }
   }
 }
