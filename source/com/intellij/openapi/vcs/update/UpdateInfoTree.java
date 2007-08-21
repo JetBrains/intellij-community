@@ -39,6 +39,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -77,27 +78,27 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.UpdateInfoTree");
 
   private VirtualFile mySelectedFile;
-  protected JTree myTree = new Tree();
-  protected final Project myProject;
-  protected final UpdatedFiles myUpdatedFiles;
+  private final JTree myTree = new Tree();
+  @NotNull private final Project myProject;
+  private final UpdatedFiles myUpdatedFiles;
   private UpdateRootNode myRoot;
   private DefaultTreeModel myTreeModel;
-  protected FileStatusListener myFileStatusListener;
-  protected final FileStatusManager myFileStatusManager;
+  private final FileStatusListener myFileStatusListener;
+  private final FileStatusManager myFileStatusManager;
   private final String myRootName;
   private final ActionInfo myActionInfo;
   private boolean myCanGroupByChangeList = false;
   private boolean myGroupByChangeList = false;
   private JLabel myLoadingChangeListsLabel;
   private List<CommittedChangeList> myCommittedChangeLists;
-  private JPanel myCenterPanel = new JPanel(new CardLayout());
+  private final JPanel myCenterPanel = new JPanel(new CardLayout());
   @NonNls private static final String CARD_STATUS = "Status";
   @NonNls private static final String CARD_CHANGES = "Changes";
   private CommittedChangesTreeBrowser myTreeBrowser;
-  private TreeExpander myTreeExpander;
+  private final TreeExpander myTreeExpander;
 
   public UpdateInfoTree(ContentManager contentManager,
-                        Project project,
+                        @NotNull Project project,
                         UpdatedFiles updatedFiles,
                         String rootName,
                         ActionInfo actionInfo) {
@@ -127,6 +128,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   protected void dispose() {
     super.dispose();
+    Disposer.dispose(myRoot);
     myFileStatusManager.removeFileStatusListener(myFileStatusListener);
   }
 
@@ -161,7 +163,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return myCenterPanel;
   }
 
-  protected void createTree() {
+  private void createTree() {
     UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
     uiHelper.installSmartExpander(myTree);
     uiHelper.installSelectionSaver(myTree);
@@ -199,7 +201,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private void refreshTree() {
-    LOG.assertTrue(myProject != null);
     myRoot = new UpdateRootNode(myUpdatedFiles, myProject, myRootName, myActionInfo);
     myRoot.rebuild(VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES);
     myTreeModel = new DefaultTreeModel(myRoot);

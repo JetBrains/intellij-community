@@ -3,30 +3,28 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.update.AbstractTreeNode;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * author: lesya
  */
-public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implements VirtualFilePointerListener {
-  private final static Map myFileStatusToAttributeMap = new com.intellij.util.containers.HashMap();
-  protected final SimpleTextAttributes myInvalidAttributes;
-  protected final Project myProject;
+public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implements VirtualFilePointerListener, Disposable {
+  private final static Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new com.intellij.util.containers.HashMap<FileStatus, SimpleTextAttributes>();
+  private final SimpleTextAttributes myInvalidAttributes;
+  private final Project myProject;
   protected final File myFile;
-  private final String myParentPath;
   private final String myName;
 
   public FileOrDirectoryTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
@@ -38,8 +36,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     myFile = new File(getFilePath());
     myInvalidAttributes = invalidAttributes;
     myProject = project;
-    myParentPath = parentPath;
-    myName = myParentPath == null ? myFile.getAbsolutePath() : myFile.getName();
+    myName = parentPath == null ? myFile.getAbsolutePath() : myFile.getName();
   }
 
   public String getName() {
@@ -80,19 +77,23 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     return getAttributesFor(status);
   }
 
-  private SimpleTextAttributes getAttributesFor(FileStatus status) {
+  private static SimpleTextAttributes getAttributesFor(FileStatus status) {
     Color color = status.getColor();
     if (color == null) color = Color.black;
 
     if (!myFileStatusToAttributeMap.containsKey(status)) {
       myFileStatusToAttributeMap.put(status, new SimpleTextAttributes(Font.PLAIN, color));
     }
-    return (SimpleTextAttributes)myFileStatusToAttributeMap.get(status);
+    return myFileStatusToAttributeMap.get(status);
   }
 
   public boolean getSupportsDeletion() {
     AbstractTreeNode parent = ((AbstractTreeNode)getParent());
     if (parent == null) return false;
     return parent.getSupportsDeletion();
+  }
+
+  public void dispose() {
+    VirtualFilePointerManager.getInstance().kill((VirtualFilePointer) getUserObject(), this);
   }
 }

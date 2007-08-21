@@ -1,6 +1,8 @@
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
@@ -8,13 +10,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.io.File;
 import java.util.*;
 
 /**
  * author: lesya
  */
-public class GroupTreeNode extends AbstractTreeNode {
+public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final String myName;
   private final boolean mySupportsDeletion;
   private final List<String> myFilePaths = new ArrayList<String>();
@@ -95,6 +98,12 @@ public class GroupTreeNode extends AbstractTreeNode {
   }
 
   private void rebuildFiles(boolean groupByPackages) {
+    for (int i = getChildCount()-1; i >= 0; i--) {
+      final TreeNode node = getChildAt(i);
+      if (node instanceof Disposable) {
+        Disposer.dispose((Disposable)node);
+      }
+    }
     removeAllChildren();
 
     if (groupByPackages) {
@@ -141,6 +150,7 @@ public class GroupTreeNode extends AbstractTreeNode {
       FileOrDirectoryTreeNode child = files.contains(root)
                                       ? new FileTreeNode(root.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
                                       : new DirectoryTreeNode(root.getAbsolutePath(), myProject, parentPath);
+      Disposer.register(((Disposable) parentNode), child);
       parentNode.add(child);
       addFiles(child, groupByPackages.getChildren(root), files, groupByPackages, child.getFilePath());
     }
@@ -160,5 +170,8 @@ public class GroupTreeNode extends AbstractTreeNode {
 
   private boolean containsGroups(){
     return myFilePaths.isEmpty();
+  }
+
+  public void dispose() {
   }
 }
