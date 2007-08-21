@@ -407,7 +407,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
       if (scope != null) {
         final NamedScope newScope = scope.createCopy();
         final ScopeConfigurable configurable = (ScopeConfigurable)((MyNode)myTree.getSelectionPath().getLastPathComponent()).getConfigurable();
-        addNewScope(newScope, configurable.getHolder() == myLocalScopesManager);
+        addNewScope(new NamedScope(createUniqueName(), newScope.getValue()), configurable.getHolder() == myLocalScopesManager);
       }
     }
 
