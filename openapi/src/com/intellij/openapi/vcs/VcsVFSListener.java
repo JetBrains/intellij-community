@@ -191,7 +191,8 @@ public abstract class VcsVFSListener {
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
     public void fileCreated(final VirtualFileEvent event) {
-      if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(event.getFile())) {
+      if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(event.getFile()) &&
+           (isDirectoryVersioningSupported() || !event.getFile().isDirectory())) {
         myAddedFiles.add(event.getFile());              
       }
     }
