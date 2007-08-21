@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -76,7 +77,8 @@ public class GroovyAnnotator implements Annotator {
       checkTypeDefinitionModifiers(holder, (GrTypeDefinition) element);
       checkDuplicateMethod(((GrTypeDefinition) element).getBody().getMethods(), holder);
     } else if (element instanceof GrMethod) {
-      checkMethodDefinition(holder, (GrMethod) element);
+      checkMethodDefinitionModifiers(holder, (GrMethod) element);
+      checkInnerMethod(holder, (GrMethod) element);
     } else if (element instanceof GrVariableDeclaration) {
       checkVariableDeclaration(holder, (GrVariableDeclaration) element);
     } else if (element instanceof GrVariable) {
@@ -100,6 +102,10 @@ public class GroovyAnnotator implements Annotator {
     } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) {
       GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
     }
+  }
+
+  private void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
+    if (grMethod.getParent() instanceof GrOpenBlock) holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.support"));
   }
 
   private void checkDomainClass(GroovyFile file, AnnotationHolder holder) {
@@ -137,7 +143,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkMethodDefinition(AnnotationHolder holder, GrMethod grMethod) {
+  private void checkMethodDefinitionModifiers(AnnotationHolder holder, GrMethod grMethod) {
     checkAccessModifiers(holder, ((GrModifierListImpl) grMethod.getModifierList()));
 
     GrModifierListImpl modifiersList = (GrModifierListImpl) grMethod.getModifierList();
