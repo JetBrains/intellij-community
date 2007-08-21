@@ -7,6 +7,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +23,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -294,9 +296,30 @@ class JavaDocInfoGenerator {
       generateDeprecatedSection(buffer, comment);
       generateSinceSection(buffer, comment);
       generateSeeAlsoSection(buffer, comment);
+      generateTypeParametersSection(buffer, aClass);
     }
-
     generateEpilogue(buffer);
+  }
+
+  private void generateTypeParametersSection(final StringBuilder buffer, final PsiClass aClass) {
+    final PsiDocComment docComment = aClass.getDocComment();
+    if (docComment == null) return;
+    PsiDocTag[] parmTag = docComment.findTagsByName("param");
+    final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> result = new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
+    final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      final String paramName = "<" + typeParameter.getName() + ">";
+      for (PsiDocTag docTag : parmTag) {
+        final PsiDocTagValue value = docTag.getValueElement();
+        if (value != null) {
+          final String tagName = value.getText();
+          if (Comparing.strEqual(tagName, paramName)) {
+            result.add(Pair.<PsiDocTag, InheritDocProvider<PsiDocTag>>create(docTag, null));
+          }
+        }
+      }
+    }
+    generateTypeParametersSection(buffer, result);
   }
 
   private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
@@ -627,6 +650,7 @@ class JavaDocInfoGenerator {
     }
 
     generateParametersSection(buffer, method, comment);
+    generateTypeParametersSection(buffer, method);
     generateReturnsSection(buffer, method, comment);
     generateThrowsSection(buffer, method, comment);
 
@@ -1042,6 +1066,36 @@ class JavaDocInfoGenerator {
     }
   }
 
+  private void generateTypeParametersSection(final StringBuilder buffer, final PsiMethod method) {
+    final PsiDocComment docComment = method.getDocComment();
+    if (docComment == null) return;
+    final PsiDocTag[] localTags = docComment.findTagsByName("param");
+    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags = new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      final String paramName = "<" + typeParameter.getName() + ">";
+      Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = findDocTag(localTags, paramName, method);
+
+      if (parmTag != null) {
+        collectedTags.addLast(parmTag);
+      }
+    }
+    generateTypeParametersSection(buffer, collectedTags);
+  }
+
+  private void generateTypeParametersSection(final StringBuilder buffer, final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags) {
+    if (collectedTags.size() > 0) {
+      buffer.append("<DD><DL>");
+      buffer.append("<DT><b>").append(CodeInsightBundle.message("javadoc.type.parameters")).append("</b>");
+      for (Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag : collectedTags) {
+        PsiElement[] elements = tag.first.getDataElements();
+        if (elements.length == 0) continue;
+        generateOneParameter(elements, buffer, tag);
+      }
+      buffer.append("</DD></DL></DD>");
+    }
+  }
+
   @Nullable private Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findDocTag(final PsiDocTag[] localTags,
                                                                                          final String paramName,
                                                                                          final PsiMethod method) {
@@ -1088,7 +1142,7 @@ class JavaDocInfoGenerator {
     }
     String parmName = text.substring(0, spaceIndex);
     buffer.append("<code>");
-    buffer.append(parmName);
+    buffer.append(XmlUtil.escape(parmName));
     buffer.append("</code>");
     buffer.append(" - ");
     buffer.append(text.substring(spaceIndex));
