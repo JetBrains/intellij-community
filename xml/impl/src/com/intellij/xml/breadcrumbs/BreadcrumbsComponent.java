@@ -960,7 +960,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         string = sb.append("...").toString();
       }
 
-      g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 2);// fm.getHeight() - fm.getDescent() + (SystemInfo.isMac ? 0 : 0));
+      g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 2);
 
       g2.setFont(oldFont);
     }
@@ -968,7 +968,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
       final int width = fm.stringWidth(s) + (ROUND_VALUE * 2);
-      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() + 2); //(SystemInfo.isMac ? 0 : 0));
+      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() + 4);
     }
   }
 
