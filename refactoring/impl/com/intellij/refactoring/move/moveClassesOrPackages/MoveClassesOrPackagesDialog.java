@@ -1,6 +1,5 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +18,7 @@ import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.ClassNameReferenceEditor;
-import com.intellij.ui.RecentsManager;
-import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.*;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -158,19 +154,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
     final ReferenceEditorComboWithBrowseButton packageChooser =
-      new ReferenceEditorComboWithBrowseButton(null, "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
-    packageChooser.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
-        chooser.selectPackage(packageChooser.getText());
-        chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          packageChooser.setText(aPackage.getQualifiedName());
-          validateButtons();
-        }
-      }
-    });
+      new PackageNameReferenceEditorCombo("", myProject, false, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     packageChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();
