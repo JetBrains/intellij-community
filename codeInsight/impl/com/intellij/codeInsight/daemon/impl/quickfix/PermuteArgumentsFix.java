@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +39,7 @@ public class PermuteArgumentsFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return "Permute arguments";
+    return QuickFixBundle.message("permute.arguments");
   }
 
 
@@ -47,11 +48,11 @@ public class PermuteArgumentsFix implements IntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return !project.isDisposed() && myCall.isValid() && myCall.getManager().isInProject(myCall);
   }                               
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     myCall.getArgumentList().replace(myPermutation.getArgumentList());
   }
 
@@ -145,8 +146,8 @@ public class PermuteArgumentsFix implements IntentionAction {
   private static void registerSwapFixes(final PsiExpression[] expressions, final PsiCall callExpression, final List<PsiCall> permutations,
                                         MethodCandidateInfo candidate, final int incompatibilitiesCount, final int minIncompatibleIndex,
                                         final int maxIncompatibleIndex) throws IncorrectOperationException {
-      PsiMethod method = candidate.getElement();
-      PsiSubstitutor substitutor = candidate.getSubstitutor();
+    PsiMethod method = candidate.getElement();
+    PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (incompatibilitiesCount >= 3) return; // no way we can fix it by swapping
 
     for (int i = minIncompatibleIndex; i < maxIncompatibleIndex; i++) {

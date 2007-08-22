@@ -374,13 +374,7 @@ public class HighlightMethodUtil {
         }
       }
     }
-    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
-
-    for (JavaResolveResult result : resolveResults) {
-      if (!(result instanceof MethodCandidateInfo)) continue;
-      MethodCandidateInfo candidate = (MethodCandidateInfo)result;
-      if (candidate.isAccessible()) candidateList.add(candidate);
-    }
+    MethodCandidateInfo[] candidates = toMethodCandidates(resolveResults);
 
     String description;
     String toolTip;
@@ -413,7 +407,7 @@ public class HighlightMethodUtil {
       else {
         String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
         description = JavaErrorMessages.message("cannot.resolve.method", methodName);
-        if (candidateList.isEmpty()) {
+        if (candidates.length == 0) {
           elementToHighlight = referenceToMethod.getReferenceNameElement();
           highlightInfoType = HighlightInfoType.WRONG_REF;
         }
@@ -434,13 +428,24 @@ public class HighlightMethodUtil {
       HighlightUtil.registerStaticProblemQuickFixAction(element, highlightInfo, referenceToMethod);
     }
 
-    MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
     TextRange fixRange = getFixRange(elementToHighlight);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, highlightInfo, fixRange);
     PermuteArgumentsFix.registerFix(highlightInfo, methodCall, candidates, fixRange);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
     return highlightInfo;
+  }
+
+  private static MethodCandidateInfo[] toMethodCandidates(JavaResolveResult[] resolveResults) {
+    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
+
+    for (JavaResolveResult result : resolveResults) {
+      if (!(result instanceof MethodCandidateInfo)) continue;
+      MethodCandidateInfo candidate = (MethodCandidateInfo)result;
+      if (candidate.isAccessible()) candidateList.add(candidate);
+    }
+    MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
+    return candidates;
   }
 
   private static void registerMethodCallIntentions(HighlightInfo highlightInfo,
@@ -1070,6 +1075,7 @@ public class HighlightMethodUtil {
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null);
         if (classReference != null) {
           CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
+          PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
         }
         WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
         info.navigationShift = +1;
@@ -1097,6 +1103,7 @@ public class HighlightMethodUtil {
           if (classReference != null) {
             CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info, getFixRange(infoElement));
             ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
+            PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
           }
           info.navigationShift = +1;
           return info;

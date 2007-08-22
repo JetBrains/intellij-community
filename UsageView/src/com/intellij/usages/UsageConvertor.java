@@ -17,12 +17,13 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.components.ApplicationComponent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public interface UsageConvertor extends ApplicationComponent{
 
-  Usage convert(Usage usage);
+  @NotNull Usage convert(@NotNull Usage usage);
 
 }
