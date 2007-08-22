@@ -201,7 +201,7 @@ public interface PsiClass
    * @return the field instance, or null if the field cannot be found.
    */
   @Nullable
-  PsiField findFieldByName(String name, boolean checkBases);
+  PsiField findFieldByName(@NonNls String name, boolean checkBases);
 
   /**
    * Searches the class (and optionally its superclasses) for the method with
@@ -245,7 +245,7 @@ public interface PsiClass
    * @return the found methods and their substitutors, or an empty list if no methods are found.
    */
   @NotNull
-  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases);
+  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases);
 
   /**
    * Returns the list of methods in the class and all its superclasses, along with their
@@ -264,7 +264,7 @@ public interface PsiClass
    * @return the inner class instance, or null if the inner class cannot be found.
    */
   @Nullable
-  PsiClass findInnerClassByName(String name, boolean checkBases);
+  PsiClass findInnerClassByName(@NonNls String name, boolean checkBases);
 
   /**
    * Returns the token representing the opening curly brace of the class.
