@@ -25,6 +25,9 @@ public class VisibilityUtil  {
     PsiModifier.PUBLIC
   };
 
+  private VisibilityUtil() {
+  }
+
   public static String getHighestVisibility(String v1, String v2) {
     if(v1.equals(v2)) return v1;
 
@@ -36,8 +39,7 @@ public class VisibilityUtil  {
     return PsiModifier.PUBLIC;
   }
 
-  public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place)
-          throws IncorrectOperationException {
+  public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place) throws IncorrectOperationException {
     final String visibilityModifier = getVisibilityModifier(modifierListOwner.getModifierList());
     int index;
     for (index = 0; index < visibilityModifiers.length; index++) {
@@ -69,14 +71,6 @@ public class VisibilityUtil  {
       }
     }
     return PsiModifier.PACKAGE_LOCAL;
-  }
-
-  public static boolean isVisibilityModifier(String s) {
-    for (String modifier : visibilityModifiers) {
-      if (modifier.equals(s)) return true;
-    }
-
-    return false;
   }
 
   public static String getVisibilityString(String visibilityModifier) {

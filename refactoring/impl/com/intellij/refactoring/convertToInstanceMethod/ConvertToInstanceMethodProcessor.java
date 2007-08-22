@@ -166,7 +166,12 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private void addInaccessibilityConflicts(final UsageInfo[] usages, final ArrayList<String> conflicts) throws IncorrectOperationException {
     final PsiModifierList copy = (PsiModifierList)myMethod.getModifierList().copy();
     if (myNewVisibility != null) {
-      RefactoringUtil.setVisibility(copy, myNewVisibility);
+      if (myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)) {
+        RefactoringUtil.setVisibility(copy, PsiModifier.PUBLIC);
+      }
+      else {
+        RefactoringUtil.setVisibility(copy, myNewVisibility);
+      }
     }
 
     for (UsageInfo usage : usages) {
@@ -229,17 +234,37 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     myTargetParameter.delete();
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     if (!myTargetClass.isInterface()) {
-      addMethodToClass(myTargetClass);
+      PsiMethod method = addMethodToClass(myTargetClass);
+      fixVisibility(method, usages);
     }
     else {
       final PsiMethod interfaceMethod = addMethodToClass(myTargetClass);
       RefactoringUtil.abstractizeMethod(myTargetClass, interfaceMethod);
       for (final PsiClass psiClass : inheritors) {
         final PsiMethod newMethod = addMethodToClass(psiClass);
-        newMethod.getModifierList().setModifierProperty((myNewVisibility != null ? myNewVisibility : PsiModifier.PUBLIC), true);
+        newMethod.getModifierList().setModifierProperty((myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)
+                                                         ? myNewVisibility
+                                                         : PsiModifier.PUBLIC), true);
       }
     }
     myMethod.delete();
+  }
+
+  private void fixVisibility(final PsiMethod method, final UsageInfo[] usages) throws IncorrectOperationException {
+    final PsiModifierList modifierList = method.getModifierList();
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
+      for (UsageInfo usage : usages) {
+        if (usage instanceof MethodCallUsageInfo) {
+          final PsiElement place = usage.getElement();
+          if (place != null) {
+            VisibilityUtil.escalateVisibility(method, place);
+          }
+        }
+      }
+    }
+    else if (myNewVisibility != null && myNewVisibility != myOldVisibility) {
+      modifierList.setModifierProperty(myNewVisibility, true);
+    }
   }
 
   private void prepareTypeParameterReplacement() throws IncorrectOperationException {
@@ -264,9 +289,6 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final PsiMethod newMethod = (PsiMethod)targetClass.add(myMethod);
     final PsiModifierList modifierList = newMethod.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, false);
-    if (myNewVisibility != null && myNewVisibility != myOldVisibility) {
-      modifierList.setModifierProperty(myNewVisibility, true);
-    }
     ChangeContextUtil.decodeContextInfo(newMethod, null, null);
     if (myTypeParameterReplacements == null) return newMethod;
     final Map<PsiTypeParameter, PsiTypeParameter> additionalReplacements;

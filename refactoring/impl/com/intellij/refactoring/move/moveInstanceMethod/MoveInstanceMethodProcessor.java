@@ -164,10 +164,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
-  private void addInheritorUsages(PsiClass aClass,
-                                  final PsiSearchHelper searchHelper,
-                                  final GlobalSearchScope searchScope,
-                                  final List<UsageInfo> usages) {
+  private static void addInheritorUsages(PsiClass aClass,
+                                         final PsiSearchHelper searchHelper,
+                                         final GlobalSearchScope searchScope,
+                                         final List<UsageInfo> usages) {
     final PsiClass[] inheritors = searchHelper.findInheritors(aClass, searchScope, false);
     for (PsiClass inheritor : inheritors) {
       if (!inheritor.isInterface()) {
@@ -324,7 +324,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return expression;
   }
 
-  private PsiExpression createThisExpr(final PsiManager manager)  {
+  private static PsiExpression createThisExpr(final PsiManager manager)  {
     try {
       return manager.getElementFactory().createExpressionFromText("this", null);
     }
@@ -334,7 +334,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private PsiMethod addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
+  private static PsiMethod addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
     try {
       final PsiMethod method = (PsiMethod)aClass.add(patternMethod);
       ChangeContextUtil.decodeContextInfo(method, null, null);
@@ -468,9 +468,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private String getParameterNameToCreate(PsiClass aClass) {
-    LOG.assertTrue(aClass != null);
-    final String paramName = myOldClassParameterNames.get(aClass);
-    return paramName;
+  private String getParameterNameToCreate(@NotNull PsiClass aClass) {
+    return myOldClassParameterNames.get(aClass);
   }
 }

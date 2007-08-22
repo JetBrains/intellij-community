@@ -36,7 +36,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   public MoveInstanceMethodDialog(final PsiMethod method,
                                   final PsiVariable[] variables) {
-    super(method, variables, MoveInstanceMethodHandler.REFACTORING_NAME);
+    super(method, variables, MoveInstanceMethodHandler.REFACTORING_NAME, false);
+    init();
   }
 
   protected String getDimensionServiceKey() {
@@ -110,14 +111,13 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected void doAction() {
     Map<PsiClass, String> parameterNames = new LinkedHashMap<PsiClass, String>();
-    final Iterator<PsiClass>       classesIterator = myThisClassesMap.keySet().iterator();
-    for (; classesIterator.hasNext();) {
-      final PsiClass aClass = classesIterator.next();
+    for (final PsiClass aClass : myThisClassesMap.keySet()) {
       EditorTextField field = myOldClassParameterNameFields.get(aClass);
       if (field.isEnabled()) {
         String parameterName = field.getText().trim();
         if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
-          Messages.showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
+          Messages
+            .showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
           return;
         }
         parameterNames.put(aClass, parameterName);

@@ -17,7 +17,8 @@ import javax.swing.*;
 public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog");
   public ConvertToInstanceMethodDialog(final PsiMethod method, final PsiParameter[] variables) {
-    super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME);
+    super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME, true);
+    init();
   }
 
   protected void doAction() {
