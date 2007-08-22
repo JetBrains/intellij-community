@@ -23,17 +23,19 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
-public class NameSuggestionsField implements Focusable {
+public class NameSuggestionsField extends JPanel {
   private final JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
   private final MyComboBoxModel myComboBoxModel;
   private final Project myProject;
 
   public NameSuggestionsField(Project project) {
+    super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     final ComboBox comboBox = new ComboBox(myComboBoxModel,-1);
     myComponent = comboBox;
+    add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
   }
 
@@ -42,6 +44,7 @@ public class NameSuggestionsField implements Focusable {
   }
 
   public NameSuggestionsField(String[] nameSuggestions, Project project, FileType fileType) {
+    super(new BorderLayout());
     myProject = project;
     if (nameSuggestions == null || nameSuggestions.length <= 1) {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
@@ -52,6 +55,7 @@ public class NameSuggestionsField implements Focusable {
       setupComboBox(combobox, fileType);
       myComponent = combobox;
     }
+    add(myComponent, BorderLayout.CENTER);
     myComboBoxModel = null;
   }
 
@@ -104,8 +108,8 @@ public class NameSuggestionsField implements Focusable {
     }
   }
 
-  public JComponent getComponent(){
-    return myComponent;
+  public JComponent getComponent() {
+    return this;
   }
 
   public Component getFocusableComponent() {
@@ -229,12 +233,12 @@ public class NameSuggestionsField implements Focusable {
     }
   }
 
-  public void requestFocusInWindow() {
+  public boolean requestFocusInWindow() {
     if(myComponent instanceof JComboBox) {
-      ((JComboBox) myComponent).getEditor().getEditorComponent().requestFocusInWindow();
+      return ((JComboBox) myComponent).getEditor().getEditorComponent().requestFocusInWindow();
     }
     else {
-      myComponent.requestFocusInWindow();
+      return myComponent.requestFocusInWindow();
     }
   }
 
