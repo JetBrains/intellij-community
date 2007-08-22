@@ -154,7 +154,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
     final ReferenceEditorComboWithBrowseButton packageChooser =
-      new PackageNameReferenceEditorCombo("", myProject, false, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
+      new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     packageChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();

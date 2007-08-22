@@ -14,9 +14,8 @@ import java.awt.event.ActionListener;
  */
 public class PackageNameReferenceEditorCombo extends ReferenceEditorComboWithBrowseButton {
   public PackageNameReferenceEditorCombo(final String text, @NotNull final Project project,
-                                         boolean toAcceptClasses,
                                          final String recentsKey, final String chooserTitle) {
-    super(null, text, PsiManager.getInstance(project), toAcceptClasses, recentsKey);
+    super(null, text, PsiManager.getInstance(project), false, recentsKey);
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PackageChooserDialog chooser = new PackageChooserDialog(chooserTitle, project);
