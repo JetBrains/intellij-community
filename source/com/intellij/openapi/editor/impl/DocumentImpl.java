@@ -29,22 +29,22 @@ import java.util.*;
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
-  private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private final WeakHashMap<RangeMarkerEx,String> myRangeMarkers = new WeakHashMap<RangeMarkerEx, String>();
-  private List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
+  private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
 
-  private LineSet myLineSet = new LineSet();
+  private final LineSet myLineSet = new LineSet();
   private CharArray myText;
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
   private long myModificationStamp;
-  private HashMap<Project, MarkupModel> myProjectToMarkupModelMap = new HashMap<Project, MarkupModel>();
-  private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final HashMap<Project, MarkupModel> myProjectToMarkupModelMap = new HashMap<Project, MarkupModel>();
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private MarkupModelEx myMarkupModel;
   private DocumentListener[] myCachedDocumentListeners;
-  private List<EditReadOnlyListener> myReadOnlyListeners = new ArrayList<EditReadOnlyListener>(1);
+  private final List<EditReadOnlyListener> myReadOnlyListeners = new ArrayList<EditReadOnlyListener>(1);
 
   private static final Comparator<? super DocumentListener> ourListenersComparator = new Comparator<Object>() {
     public int compare(Object o1, Object o2) {
@@ -249,10 +249,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     else {
       return new RangeMarkerImpl(this, startOffset, endOffset);
     }
-  }
-
-  public PersistentLineMarker createPersistentLineMarker(int offset) {
-    return new PersistentLineMarker(this, offset);
   }
 
   public long getModificationStamp() {
