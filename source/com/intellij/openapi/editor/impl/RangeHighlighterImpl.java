@@ -13,9 +13,9 @@ import java.awt.*;
  * @author max
  */
 public class RangeHighlighterImpl implements RangeHighlighterEx {
-  private MarkupModel myModel;
-  private int myLayer;
-  private HighlighterTargetArea myTargetArea;
+  private final MarkupModel myModel;
+  private final int myLayer;
+  private final HighlighterTargetArea myTargetArea;
   private TextAttributes myTextAttributes;
   private LineMarkerRenderer myLineMarkerRenderer;
   private Color myErrorStripeColor;
