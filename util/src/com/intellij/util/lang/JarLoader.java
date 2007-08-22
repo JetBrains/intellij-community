@@ -148,6 +148,9 @@ class JarLoader extends Loader {
       try {
 
         final InputStream inputStream = file.getInputStream(myEntry);
+        if (inputStream == null) {
+          return null; // if entry was not found
+        }
         return new FilterInputStream(inputStream) {
           private boolean myClosed = false;
 
