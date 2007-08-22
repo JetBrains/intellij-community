@@ -176,47 +176,47 @@ public final class PsiUtil {
         return null;
       }
 
-      public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+      public PsiElement add(@NotNull PsiElement element) {
         return null;
       }
 
-      public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+      public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
         return null;
       }
 
-      public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+      public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
         return null;
       }
 
-      public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+      public void checkAdd(@NotNull PsiElement element) {
 
       }
 
-      public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+      public PsiElement addRange(PsiElement first, PsiElement last) {
         return null;
       }
 
-      public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException {
+      public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
         return null;
       }
 
-      public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException {
+      public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
         return null;
       }
 
-      public void delete() throws IncorrectOperationException {
+      public void delete() {
 
       }
 
-      public void checkDelete() throws IncorrectOperationException {
+      public void checkDelete() {
 
       }
 
-      public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+      public void deleteChildRange(PsiElement first, PsiElement last) {
 
       }
 
-      public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+      public PsiElement replace(@NotNull PsiElement newElement) {
         return null;
       }
 
@@ -1005,12 +1005,12 @@ public final class PsiUtil {
 
   public static PsiType captureToplevelWildcards(final PsiType type, final PsiElement context) {
     if (type instanceof PsiClassType) {
-      Map<PsiTypeParameter, PsiType> substitutionMap = null;
       final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
       final PsiClass aClass = result.getElement();
       if (aClass != null) {
         Iterator<PsiTypeParameter> iterator = typeParametersIterator(aClass);
         final PsiSubstitutor substitutor = result.getSubstitutor();
+        Map<PsiTypeParameter, PsiType> substitutionMap = null;
         while(iterator.hasNext()) {
           final PsiTypeParameter typeParameter = iterator.next();
           final PsiType substituted = substitutor.substitute(typeParameter);
@@ -1137,10 +1137,7 @@ public final class PsiUtil {
       final PsiMetaDataBase data = ((PsiMetaBaseOwner) element).getMetaData();
       if (data != null) return name.equals(data.getName(element));
     }
-    if (element instanceof PsiNamedElement) {
-      return name.equals(((PsiNamedElement) element).getName());
-    }
-    return false;
+    return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }
 
   public static boolean isRawSubstitutor (PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {

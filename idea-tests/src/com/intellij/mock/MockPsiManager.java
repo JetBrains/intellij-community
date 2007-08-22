@@ -365,6 +365,7 @@ public class MockPsiManager extends PsiManagerEx {
     PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }
 
+  @NotNull
   public List<LanguageInjector> getLanguageInjectors() {
     return Collections.emptyList();
   }

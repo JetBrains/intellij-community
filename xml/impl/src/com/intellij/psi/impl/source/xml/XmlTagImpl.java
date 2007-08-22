@@ -50,7 +50,6 @@ import java.util.*;
 
 public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType/*, ModificationTracker */{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
-  private static final Class ourReferenceClass = XmlTag.class;
 
   private volatile String myName = null;
   private volatile XmlAttribute[] myAttributes = null;
@@ -88,7 +87,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
-    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
+    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, XmlTag.class);
 
     if (endTagName != null){
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];

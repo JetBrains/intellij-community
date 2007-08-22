@@ -32,10 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -60,11 +57,11 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     public String toString() { return myId; }
   }
 
-  public static ReferenceProviderType PROPERTIES_FILE_KEY_PROVIDER = new ReferenceProviderType("Properties File Key Provider");
-  public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
-  public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
-  public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
-  public static ReferenceProviderType SCHEMA_PROVIDER = new ReferenceProviderType("Schema references provider");
+  public static final ReferenceProviderType PROPERTIES_FILE_KEY_PROVIDER = new ReferenceProviderType("Properties File Key Provider");
+  public static final ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
+  public static final ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
+  private static final ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
+  private static final ReferenceProviderType SCHEMA_PROVIDER = new ReferenceProviderType("Schema references provider");
 
   public static ReferenceProvidersRegistry getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReferenceProvidersRegistry.class);
@@ -309,11 +306,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider);
   }
 
-  public void registerDocTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
-                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
-    registerNamedReferenceProvider(names, elementFilter, PsiDocTagProviderBinding.class, PsiDocTag.class, caseSensitive, provider);
-  }
-
   private void registerNamedReferenceProvider(
     @Nullable @NonNls String[] names,
     @Nullable ElementFilter elementFilter,
@@ -372,22 +364,20 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   }
 
   @NotNull
-  public PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  public List<PsiReferenceProvider> getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
 
-    List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
-    PsiElement current;
-    do {
-      current = element;
-
-      final ProviderBinding providerBinding = myBindingsMap.get(clazz);
-      if (providerBinding != null) providerBinding.addAcceptableReferenceProviders(current, ret);
-
-      element = ResolveUtil.getContext(element);
+    final ProviderBinding providerBinding = myBindingsMap.get(clazz);
+    if (providerBinding != null) {
+      List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
+      for (PsiElement current = element; current != null; current = ResolveUtil.getContext(current)) {
+        providerBinding.addAcceptableReferenceProviders(current, ret);
+        if (isScopeFinal(current.getClass())) break;
+      }
+      return ret;
     }
-    while (!isScopeFinal(current.getClass()));
 
-    return ret.isEmpty() ? PsiReferenceProvider.EMPTY_ARRAY : ret.toArray(new PsiReferenceProvider[ret.size()]);
+    return Collections.emptyList();
   }
 
   @Nullable

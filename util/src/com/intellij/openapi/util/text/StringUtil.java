@@ -1059,16 +1059,48 @@ public class StringUtil {
     return string.substring(0, range.getStartOffset()) + replacement + string.substring(range.getEndOffset());
   }
 
-  public static boolean startsWith(final CharSequence s1, final CharSequence s2) {
-    int l1 = s1.length();
-    int l2 = s2.length();
+  public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
+    int l1 = text.length();
+    int l2 = prefix.length();
     if (l1 < l2) return false;
 
     for (int i = 0; i < l2; i++) {
-      if (s1.charAt(i) != s2.charAt(i)) return false;
+      if (text.charAt(i) != prefix.charAt(i)) return false;
     }
 
     return true;
+  }
+  public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1-1; i >= l1-l2; i++) {
+      if (text.charAt(i) != suffix.charAt(i+l2-l1)) return false;
+    }
+
+    return true;
+  }
+  @NotNull
+  public static String commonPrefix(@NotNull String s1, @NotNull String s2) {
+    int i;
+    for (i = 0; i<s1.length() && i<s2.length(); i++) {
+      if (s1.charAt(i) != s2.charAt(i)) {
+        break;
+      }
+    }
+    return s1.substring(0, i);
+  }
+  @NotNull
+  public static String commonSuffix(@NotNull String s1, @NotNull String s2) {
+    if (s1.length() == 0 || s2.length() == 0) return "";
+    int i;
+    for (i = s1.length()-1; i>=0 && i>=s1.length() - s2.length(); i--) {
+      if (s1.charAt(i) != s2.charAt(i+s2.length()-s1.length())) {
+        break;
+      }
+    }
+    return s1.substring(i, s1.length());
   }
 
 

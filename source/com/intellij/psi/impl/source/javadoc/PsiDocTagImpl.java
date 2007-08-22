@@ -19,7 +19,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
-  private static final Class ourReferenceClass = PsiDocTag.class;
 
   private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
     JAVA_CODE_REFERENCE,
@@ -86,7 +85,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
+    return ResolveUtil.getReferencesFromProviders(this, PsiDocTag.class);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

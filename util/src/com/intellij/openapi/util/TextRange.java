@@ -61,30 +61,36 @@ public class TextRange {
     return myStartOffset <= offset && offset < myEndOffset;
   }
 
-  public String substring(String str) {
+  @NotNull
+  public String substring(@NotNull String str) {
     return str.substring(myStartOffset, myEndOffset);
   }
 
-  public TextRange cutOut(TextRange subRange) {
+  @NotNull
+  public TextRange cutOut(@NotNull TextRange subRange) {
     assert subRange.getStartOffset() <= getLength() : subRange + "; this="+this;
     assert subRange.getEndOffset() <= getLength() : subRange + "; this="+this;
     return new TextRange(myStartOffset + subRange.getStartOffset(), Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
   }
 
+  @NotNull
   public TextRange shiftRight(int offset) {
     if (offset == 0) return this;
     return new TextRange(myStartOffset + offset, myEndOffset + offset);
   }
 
+  @NotNull
   public TextRange grown(int lengthDelta) {
     return from(myStartOffset, getLength() + lengthDelta);
   }
 
+  @NotNull
   public static TextRange from(int offset, int length) {
     return new TextRange(offset, offset + length);
   }
 
-  public String replace(String original, String replacement) {
+  @NotNull
+  public String replace(@NotNull String original, @NotNull String replacement) {
     String beginning = original.substring(0, getStartOffset());
     String ending = original.substring(getEndOffset(), original.length());
     return beginning + replacement + ending;
@@ -93,12 +99,12 @@ public class TextRange {
   public boolean intersects(@NotNull TextRange textRange) {
     return Math.max(myStartOffset, textRange.getStartOffset()) <= Math.min(myEndOffset, textRange.getEndOffset());
   }
-  public boolean intersectsStrict(TextRange textRange) {
+  public boolean intersectsStrict(@NotNull TextRange textRange) {
     return Math.max(myStartOffset, textRange.getStartOffset()) < Math.min(myEndOffset, textRange.getEndOffset());
   }
 
   @Nullable
-  public TextRange intersection(final TextRange range) {
+  public TextRange intersection(@NotNull TextRange range) {
     if (!intersects(range)) return null;
     return new TextRange(Math.max(myStartOffset, range.getStartOffset()), Math.min(myEndOffset, range.getEndOffset()));
   }

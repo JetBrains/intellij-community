@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ik
  */
 public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable {
-  private static final Class<XmlToken> ourHintClazz = XmlToken.class;
 
   public XmlTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     super(type, buffer, startOffset, endOffset, table);
@@ -54,7 +53,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     if (elementType == XmlTokenType.XML_DATA_CHARACTERS ||
         elementType == XmlTokenType.XML_CHAR_ENTITY_REF
       ) {
-      return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
+      return ResolveUtil.getReferencesFromProviders(this, XmlToken.class);
     } else if (elementType == XmlTokenType.XML_NAME && getParent() instanceof PsiErrorElement) {
       final PsiElement element = getPrevSibling();
       

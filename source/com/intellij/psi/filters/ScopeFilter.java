@@ -18,10 +18,7 @@ public class ScopeFilter extends PositionElementFilter{
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
-    if(context != null){
-      return getFilter().isAcceptable(context, context);
-    }
-    return false;
+    return context != null && getFilter().isAcceptable(context, context);
   }
 
   public String toString(){

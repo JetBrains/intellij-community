@@ -66,7 +66,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private VirtualFileManager myVirtualFileManager;
   private MessageBus myBus;
 
-  private final static Object lock = new Object();
+  private static final Object lock = new Object();
 
   public FileDocumentManagerImpl(VirtualFileManager virtualFileManager) {
     myVirtualFileManager = virtualFileManager;
@@ -90,7 +90,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
-    if (document == null){
+    if (document == null) {
       if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
       final CharSequence text = LoadTextUtil.loadText(file);
 
@@ -121,12 +121,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
           document.addEditReadOnlyListener(myReadOnlyListener);
         }
 
-        try {
-          fireFileContentLoaded(file, document);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+        fireFileContentLoaded(file, document);
       }
     }
 
