@@ -1,11 +1,15 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
@@ -29,11 +33,12 @@ public class KeyboardShortcutDialog extends DialogWrapper {
   private String myActionId;
   private Group myMainGroup;
 
-  public KeyboardShortcutDialog(Component component, String actionId, Group mainGroup) {
+  public KeyboardShortcutDialog(Component component, String actionId, final QuickList[] quickLists) {
     super(component, true);
     setTitle(KeyMapBundle.message("keyboard.shortcut.dialog.title"));
     myActionId = actionId;
-    myMainGroup = mainGroup;
+    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
+    myMainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, quickLists, null, false, null); //without current filter
     myEnableSecondKeystroke = new JCheckBox(KeyMapBundle.message("enable.second.keystroke.check.box"));
     myEnableSecondKeystroke.setFocusable(false);
     myKeystrokePreview = new JLabel(" ");

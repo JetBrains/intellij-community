@@ -478,8 +478,7 @@ public class KeymapPanel extends JPanel {
       return;
     }
 
-    Group group = myActionsTree.getMainGroup();
-    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(this, actionId, group);
+    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(this, actionId, myQuickListsPanel.getCurrentQuickListIds());
 
     Shortcut selected = (Shortcut)myShortcutsList.getSelectedValue();
     KeyboardShortcut selectedKeyboardShortcut = selected instanceof KeyboardShortcut ? (KeyboardShortcut)selected : null;
