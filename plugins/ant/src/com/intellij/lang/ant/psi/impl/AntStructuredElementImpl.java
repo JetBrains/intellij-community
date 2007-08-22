@@ -1,12 +1,13 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.misc.AntStringInterner;
-import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
+import com.intellij.lang.ant.misc.PsiElementWithValueSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -280,16 +281,16 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             }
             myComputingAttrValue.add(value);
             try {
-              final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+              final Set<Pair<PsiElement,String>> set = PsiElementWithValueSetSpinAllocator.alloc();
               try {
                 return computeAttributeValue(value, set);
               }
               finally {
-                PsiElementSetSpinAllocator.dispose(set);
+                PsiElementWithValueSetSpinAllocator.dispose(set);
               }
             }
             catch (SpinAllocator.AllocatorExhaustedException e) {
-              return computeAttributeValue(value, new HashSet<PsiElement>());
+              return computeAttributeValue(value, new HashSet<Pair<PsiElement, String>>());
             }
           }
           finally {
@@ -491,8 +492,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
    * @param elementStack
    * @return
    */
-  private String computeAttributeValue(String value, final Set<PsiElement> elementStack) {
-    elementStack.add(this);
+  private String computeAttributeValue(String value, final Set<Pair<PsiElement, String>> elementStack) {
+    final Pair<PsiElement, String> pair = new Pair<PsiElement, String>(this, value);
+    elementStack.add(pair);
     int startProp = 0;
     final AntFile antFile = getAntFile();
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
@@ -508,7 +510,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       }
       final String prop = value.substring(startProp + 2, endProp);
       final AntProperty propElement = antFile.getProperty(prop);
-      if (elementStack.contains(propElement)) {
+      if (elementStack.contains(new Pair<PsiElement, String>(propElement, value))) {
         return value;
       }
       String resolvedValue = null;
