@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -235,15 +236,15 @@ public class DirectoryChooser extends DialogWrapper {
     return myView.getComponent();
   }
 
-  public void fillList(PsiDirectory[] directories, PsiDirectory defaultSelection, Project project, String postfixToShow) {
+  public void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, String postfixToShow) {
     fillList(directories, defaultSelection, project, postfixToShow, null);
   }
 
-  public void fillList(PsiDirectory[] directories, PsiDirectory defaultSelection, Project project, Map<PsiDirectory,String> postfixes) {
+  public void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, Map<PsiDirectory,String> postfixes) {
     fillList(directories, defaultSelection, project, null, postfixes);
   }
 
-  void fillList(PsiDirectory[] directories, PsiDirectory defaultSelection, Project project, String postfixToShow, Map<PsiDirectory,String> postfixes) {
+  private void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, String postfixToShow, Map<PsiDirectory,String> postfixes) {
     if (myView.getItemsSize() > 0){
       myView.clearItems();
     }

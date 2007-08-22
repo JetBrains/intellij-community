@@ -6,27 +6,34 @@ package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.PackageNameReferenceEditorCombo;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MoveInnerDialog extends RefactoringDialog {
   private final Project myProject;
@@ -40,8 +47,12 @@ public class MoveInnerDialog extends RefactoringDialog {
   private JPanel myPanel;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchForTextOccurences;
+  private PackageNameReferenceEditorCombo myPackageNameField;
+  private JLabel myPackageNameLabel;
   private SuggestedNameInfo mySuggestedNameInfo;
   private PsiClass myOuterClass;
+
+  @NonNls private static final String RECENTS_KEY = "MoveInnerDialog.RECENTS_KEY";
 
   public MoveInnerDialog(Project project, PsiClass innerClass, MoveInnerProcessor processor, final PsiElement targetContainer) {
     super(project, true);
@@ -115,6 +126,11 @@ public class MoveInnerDialog extends RefactoringDialog {
       }
     });
 
+    if (!(myTargetContainer instanceof PsiDirectory)) {
+      myPackageNameField.setVisible(false);
+      myPackageNameLabel.setVisible(false);
+    }
+
     super.init();
   }
 
@@ -134,8 +150,49 @@ public class MoveInnerDialog extends RefactoringDialog {
     return null;
   }
 
-  @NotNull
-  public PsiElement getTargetContainer() {
+  @Nullable
+  private PsiElement getTargetContainer() {
+    if (myTargetContainer instanceof PsiDirectory) {
+      final PsiDirectory psiDirectory = (PsiDirectory)myTargetContainer;
+      PsiPackage oldPackage = getTargetPackage();
+      String name = oldPackage == null ? "" : oldPackage.getName();
+      if (name == null) name = "";
+      final String targetName = myPackageNameField.getText();
+      if (!Comparing.equal(name, targetName)) {
+        final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
+        final VirtualFile[] contentSourceRoots = projectRootManager.getContentSourceRoots();
+        final PackageWrapper newPackage = new PackageWrapper(PsiManager.getInstance(myProject), targetName);
+        final VirtualFile targetSourceRoot;
+        if (contentSourceRoots.length > 1) {
+          PsiDirectory initialDir = null;
+          if (oldPackage != null) {
+            final PsiDirectory[] directories = oldPackage.getDirectories();
+            final VirtualFile root = projectRootManager.getFileIndex().getContentRootForFile(psiDirectory.getVirtualFile());
+            for(PsiDirectory dir: directories) {
+              if (projectRootManager.getFileIndex().getContentRootForFile(dir.getVirtualFile()) == root) {
+                initialDir = dir;
+              }
+            }
+          }
+          final VirtualFile sourceRoot = MoveClassesOrPackagesUtil.chooseSourceRoot(newPackage, contentSourceRoots, initialDir);
+          if (sourceRoot == null) return null;
+          targetSourceRoot = sourceRoot;
+        }
+        else {
+          targetSourceRoot = contentSourceRoots [0];
+        }
+        PsiDirectory dir = RefactoringUtil.findPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
+        if (dir == null) {
+          try {
+            dir = RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
+          }
+          catch (IncorrectOperationException e) {
+            return null;
+          }
+        }
+        return dir;
+      }
+    }
     return myTargetContainer;
   }
 
@@ -190,8 +247,10 @@ public class MoveInnerDialog extends RefactoringDialog {
       mySuggestedNameInfo.nameChoosen(getParameterName());
     }
 
+    final PsiElement target = getTargetContainer();
+    if (target == null) return;
     myProcessor.setup(getInnerClass(), className, isPassOuterClass(), parameterName,
-                      isSearchInComments(), isSearchInNonJavaFiles(), getTargetContainer());
+                      isSearchInComments(), isSearchInNonJavaFiles(), target);
     invokeRefactoring(myProcessor);
   }
 
@@ -212,5 +271,20 @@ public class MoveInnerDialog extends RefactoringDialog {
       myParameterField.getComponent().setEnabled(false);
     }
 
+    myPackageNameField = new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY,
+                                                             RefactoringBundle.message("choose.destination.package"));
+    PsiPackage psiPackage = getTargetPackage();
+    if (psiPackage != null) {
+      myPackageNameField.prependItem(psiPackage.getName());
+    }
+  }
+
+  @Nullable
+  private PsiPackage getTargetPackage() {
+    if (myTargetContainer instanceof PsiDirectory) {
+      final PsiDirectory directory = (PsiDirectory)myTargetContainer;
+      return directory.getPackage();
+    }
+    return null;
   }
 }

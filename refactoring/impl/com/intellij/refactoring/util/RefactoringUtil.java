@@ -1217,6 +1217,7 @@ public class RefactoringUtil {
   }
 
 
+  @Nullable
   public static PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {

@@ -311,8 +311,8 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static @Nullable PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
-                                                                                 PsiDirectory initialDirectory, Project project,
-                                                                                 Map<PsiDirectory, String> relativePathsToCreate) {
+                                                       @Nullable PsiDirectory initialDirectory, Project project,
+                                                       Map<PsiDirectory, String> relativePathsToCreate) {
     final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
     chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
     chooser.fillList(
