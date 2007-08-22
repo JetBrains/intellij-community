@@ -24,6 +24,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private boolean myIsTask;
   private boolean myIsProperty;
   private PsiElement myDefiningElement;
+  private boolean myIsOutdated = false;
   /**
    * Attribute names to their types.
    */
@@ -76,6 +77,14 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     myAttributes = attributes;
     myNestedClassNames = nestedElements;
     myDefiningElement = definingElement;
+  }
+
+  public boolean isOutdated() {
+    return myIsOutdated;
+  }
+
+  public void setOutdated(final boolean isOutdated) {
+    myIsOutdated = isOutdated;
   }
 
   public final AntTypeId getTypeId() {

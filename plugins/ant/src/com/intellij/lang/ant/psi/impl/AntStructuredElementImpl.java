@@ -168,17 +168,27 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public AntTypeDefinition getTypeDefinition() {
-    return myDefinition;
+    synchronized (PsiLock.LOCK) {
+      if (myDefinition != null && !myDefinitionCloned && myDefinition.isOutdated()) {
+        final AntTypeDefinition currentDef = getAntFile().getBaseTypeDefinition(myDefinition.getClassName());
+        if (currentDef != null) {
+          myDefinition = currentDef;
+        }
+      }
+      return myDefinition;
+    }
   }
 
   public void registerCustomType(final AntTypeDefinition def) {
     synchronized (PsiLock.LOCK) {
-      if (myDefinition != null) {
+      AntTypeDefinition definition = getTypeDefinition();
+      if (definition != null) {
         if (!myDefinitionCloned) {
-          myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
+          definition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)definition);
+          myDefinition = definition;
           myDefinitionCloned = true;
         }
-        myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
+        definition.registerNestedType(def.getTypeId(), def.getClassName());
       }
       getAntFile().registerCustomType(def);
     }
@@ -326,11 +336,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public boolean isTypeDefined() {
-    return myDefinition != null && myDefinition.getDefiningElement() instanceof AntTypeDefImpl;
+    final AntTypeDefinition def = getTypeDefinition();
+    return def != null && def.getDefiningElement() instanceof AntTypeDefImpl;
   }
 
   public boolean isPresetDefined() {
-    return myDefinition != null && myDefinition.getClassName().startsWith(AntPresetDefImpl.ANT_PRESETDEF_NAME);
+    final AntTypeDefinition def = getTypeDefinition();
+    return def != null && def.getClassName().startsWith(AntPresetDefImpl.ANT_PRESETDEF_NAME);
   }
 
   public void clearCaches() {

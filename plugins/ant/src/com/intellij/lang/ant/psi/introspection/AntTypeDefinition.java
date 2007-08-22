@@ -36,4 +36,8 @@ public interface AntTypeDefinition {
   void unregisterNestedType(final AntTypeId typeId);
 
   PsiElement getDefiningElement();
+
+  boolean isOutdated();
+
+  void setOutdated(boolean isOutdated);
 }

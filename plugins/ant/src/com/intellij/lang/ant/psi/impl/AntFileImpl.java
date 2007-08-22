@@ -683,7 +683,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   private void removeTypeDefinition(final AntTypeDefinition def) {
-    myTypeDefinitions.remove(def.getClassName());
+    final AntTypeDefinition definition = myTypeDefinitions.remove(def.getClassName());
+    if (definition != null) {
+      definition.setOutdated(true);
+    }
     myTypeDefinitionArray = null;
   }
 

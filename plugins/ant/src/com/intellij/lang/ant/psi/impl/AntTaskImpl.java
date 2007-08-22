@@ -52,6 +52,7 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
   }
 
   public boolean isMacroDefined() {
-    return myDefinition != null && myDefinition.getClassName().startsWith(AntMacroDefImpl.ANT_MACRODEF_NAME);
+    final AntTypeDefinition def = getTypeDefinition();
+    return def != null && def.getClassName().startsWith(AntMacroDefImpl.ANT_MACRODEF_NAME);
   }
 }
