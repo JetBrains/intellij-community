@@ -48,10 +48,12 @@ import java.util.List;
  * @author yole
  */
 public class SvnCommittedChangesProvider implements CachingCommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
-  private Project myProject;
+  private final Project myProject;
+  private final SvnVcs myVcs;
 
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
+    myVcs = SvnVcs.getInstance(myProject);
   }
 
   public ChangeBrowserSettings createDefaultSettings() {
@@ -65,7 +67,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   public RepositoryLocation getLocationFor(final FilePath root) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), root.getIOFile(), progress);
+    String[] urls = SvnUtil.getLocationsForModule(myVcs, root.getIOFile(), progress);
     if (urls.length == 1) {
       return new SvnRepositoryLocation(root, urls [0]);
     }
@@ -81,8 +83,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
     try {
-      SVNLogClient logger = SvnVcs.getInstance(myProject).createLogClient();
-      final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(svnLocation.getURL());
+      SVNLogClient logger = myVcs.createLogClient();
+      final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
       final String repositoryRoot = repository.getRepositoryRoot(true).toString();
       repository.closeSession();
 
@@ -122,7 +124,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          progress.checkCanceled();
                        }
                        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                         result.add(new SvnChangeList(SvnVcs.getInstance(myProject), svnLocation, logEntry, repositoryRoot));
+                         result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
                        }
                      }
                    });
@@ -150,7 +152,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public SvnChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
-    return new SvnChangeList(SvnVcs.getInstance(myProject), (SvnRepositoryLocation) location, stream);
+    return new SvnChangeList(myVcs, (SvnRepositoryLocation) location, stream);
   }
 
   public boolean isMaxCountSupported() {
