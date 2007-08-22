@@ -29,14 +29,15 @@ import java.awt.event.ItemListener;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveInnerDialog extends RefactoringDialog {
-  private Project myProject;
-  private PsiClass myInnerClass;
+  private final Project myProject;
+  private final PsiClass myInnerClass;
   private final PsiElement myTargetContainer;
-  private MoveInnerProcessor myProcessor;
+  private final MoveInnerProcessor myProcessor;
 
-  private EditorTextField myClassNameField = new EditorTextField("");
+  private EditorTextField myClassNameField;
   private NameSuggestionsField myParameterField;
   private JCheckBox myCbPassOuterClass;
+  private JPanel myPanel;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchForTextOccurences;
   private SuggestedNameInfo mySuggestedNameInfo;
@@ -84,17 +85,10 @@ public class MoveInnerDialog extends RefactoringDialog {
   }
 
   protected void init() {
-    final PsiManager manager = myInnerClass.getManager();
     myClassNameField.setText(myInnerClass.getName());
     myClassNameField.selectAll();
 
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiType outerType = manager.getElementFactory().createType(myInnerClass.getContainingClass());
-      mySuggestedNameInfo =
-      CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
-      String[] variants = mySuggestedNameInfo.names;
-      myParameterField = new NameSuggestionsField(variants, myProject);
-      myCbPassOuterClass = new NonFocusableCheckBox();
       myCbPassOuterClass.setSelected(true);
       myCbPassOuterClass.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
@@ -103,18 +97,24 @@ public class MoveInnerDialog extends RefactoringDialog {
       });
     }
     else {
-      myParameterField = new NameSuggestionsField(new String[]{""}, myProject);
-      myParameterField.getComponent().setEnabled(false);
-      myCbPassOuterClass = new NonFocusableCheckBox();
       myCbPassOuterClass.setSelected(false);
       myCbPassOuterClass.setEnabled(false);
       myParameterField.setEnabled(false);
     }
-    myCbPassOuterClass.setText(RefactoringBundle.message("pass.outer.class.instance.as.parameter"));
-    myCbSearchInComments = new NonFocusableCheckBox();
-    myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
-    myCbSearchForTextOccurences = new NonFocusableCheckBox();
-    myCbSearchForTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
+
+    if (myCbPassOuterClass.isEnabled()) {
+      final boolean thisNeeded = MoveInstanceMembersUtil.getThisClassesToMembers(myInnerClass).containsKey(myOuterClass);
+      myCbPassOuterClass.setSelected(thisNeeded);
+      myParameterField.setEnabled(thisNeeded);
+    }
+
+    myCbPassOuterClass.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        boolean selected = myCbPassOuterClass.isSelected();
+        myParameterField.getComponent().setEnabled(selected);
+      }
+    });
+
     super.init();
   }
 
@@ -127,55 +127,7 @@ public class MoveInnerDialog extends RefactoringDialog {
   }
 
   protected JComponent createNorthPanel() {
-    Box options = Box.createVerticalBox();
-
-    JPanel panel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel();
-    label.setText(RefactoringBundle.message("class.name.prompt"));
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(myClassNameField, BorderLayout.CENTER);
-    options.add(panel);
-
-    options.add(Box.createVerticalStrut(10));
-
-    panel = new JPanel(new BorderLayout());
-    label = new JLabel();
-    label.setText(RefactoringBundle.message("parameter.name.prompt"));
-
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(myParameterField.getComponent(), BorderLayout.CENTER);
-    options.add(panel);
-
-    JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(myCbPassOuterClass, BorderLayout.NORTH);
-    _panel.add(panel, BorderLayout.CENTER);
-    _panel.add(Box.createHorizontalStrut(15), BorderLayout.WEST);
-    options.add(_panel);
-    options.add(Box.createVerticalStrut(10));
-
-    if (myCbPassOuterClass.isEnabled()) {
-      final boolean thisNeeded = MoveInstanceMembersUtil.getThisClassesToMembers(myInnerClass).containsKey(myOuterClass);
-      myCbPassOuterClass.setSelected(thisNeeded);
-      myParameterField.setEnabled(thisNeeded);
-    }
-
-    final Box searchOptions = Box.createHorizontalBox();
-    searchOptions.add(myCbSearchInComments);
-    searchOptions.add(Box.createHorizontalStrut(10));
-    searchOptions.add(myCbSearchForTextOccurences);
-    searchOptions.add(Box.createHorizontalGlue());
-    options.add(searchOptions);
-
-    myCbPassOuterClass.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        boolean selected = myCbPassOuterClass.isSelected();
-        myParameterField.getComponent().setEnabled(selected);
-      }
-    });
-
-    panel = new JPanel(new BorderLayout());
-    panel.add(options, BorderLayout.CENTER);
-    return panel;
+    return myPanel;
   }
 
   protected JComponent createCenterPanel() {
@@ -245,5 +197,20 @@ public class MoveInnerDialog extends RefactoringDialog {
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MOVE_INNER_UPPER);
+  }
+
+  private void createUIComponents() {
+    if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiManager manager = myInnerClass.getManager();
+      PsiType outerType = manager.getElementFactory().createType(myInnerClass.getContainingClass());
+      mySuggestedNameInfo =  CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
+      String[] variants = mySuggestedNameInfo.names;
+      myParameterField = new NameSuggestionsField(variants, myProject);
+    }
+    else {
+      myParameterField = new NameSuggestionsField(new String[]{""}, myProject);
+      myParameterField.getComponent().setEnabled(false);
+    }
+
   }
 }
