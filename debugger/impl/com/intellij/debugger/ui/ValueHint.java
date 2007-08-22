@@ -75,7 +75,7 @@ public class ValueHint {
 
   private final Project myProject;
   private final Editor myEditor;
-  private final Point myPoint;
+  private Point myPoint;
 
   private LightweightHint myCurrentHint = null;
   private JBPopup myPopup = null;
@@ -505,6 +505,15 @@ public class ValueHint {
       return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
     }
 
+    private void shiftLocation() {
+      if (myPopup != null) {
+        final Window window = SwingUtilities.getWindowAncestor(myPopup.getContent());
+        if (window != null) {
+          myPoint = new RelativePoint(window, new Point(2, 2)).getPoint(myEditor.getContentComponent());
+        }
+      }
+    }
+
     private AnAction createGoForwardAction(){
       return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, ICON_FWD){
         public void actionPerformed(AnActionEvent e) {
@@ -539,6 +548,7 @@ public class ValueHint {
     }
 
     private void updateHintAccordingToHistory(Pair<NodeDescriptorImpl, String> descriptorWithTitle){
+      shiftLocation();
       final NodeDescriptorImpl descriptor = descriptorWithTitle.first;
       final String title = descriptorWithTitle.second;
       final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myProject)).getContext();
@@ -559,6 +569,7 @@ public class ValueHint {
           if (path == null) return;
           final Object node = path.getLastPathComponent();
           if (node instanceof DebuggerTreeNodeImpl) {
+            shiftLocation();
             final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
             final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myProject)).getContext();
             context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
