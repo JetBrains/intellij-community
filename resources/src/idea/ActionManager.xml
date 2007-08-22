@@ -13,7 +13,8 @@
     <action id="IncrementalSearch" class="com.intellij.openapi.editor.actions.IncrementalFindAction"/>
 
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
-    <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"/>
+    <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"
+      icon="/_cvs/showAsTree.png"/>
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>

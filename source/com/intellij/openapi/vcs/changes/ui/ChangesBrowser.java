@@ -205,14 +205,19 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   private JComponent createToolbar() {
+    DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     myToolBarGroup = new DefaultActionGroup();
+    toolbarGroups.add(myToolBarGroup);
     buildToolBar(myToolBarGroup);
 
+    toolbarGroups.addSeparator();
+    DefaultActionGroup treeActionsGroup = new DefaultActionGroup();
+    toolbarGroups.add(treeActionsGroup);
     for(AnAction action: myViewer.getTreeActions()) {
-      myToolBarGroup.add(action);
+      treeActionsGroup.add(action);
     }
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroups, true).getComponent();
   }
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {

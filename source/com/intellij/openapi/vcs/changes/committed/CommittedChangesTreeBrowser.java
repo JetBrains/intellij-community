@@ -66,12 +66,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private CommittedChangeList mySelectedChangeList;
   private ChangeListGroupingStrategy myGroupingStrategy = ChangeListGroupingStrategy.DATE;
   private ChangeListFilteringStrategy myFilteringStrategy = ChangeListFilteringStrategy.NONE;
-  private Splitter myFilterSplitter;
-  private JPanel myLeftPanel;
-  private FilterChangeListener myFilterChangeListener = new FilterChangeListener();
+  private final Splitter myFilterSplitter;
+  private final JPanel myLeftPanel;
+  private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
   private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
-  private CopyProvider myCopyProvider;
-  private TreeExpander myTreeExpander;
+  private final CopyProvider myCopyProvider;
+  private final TreeExpander myTreeExpander;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
@@ -134,6 +134,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);
+    myChangesView.addToolbarAction(ActionManager.getInstance().getAction("Vcs.ShowTabbedFileHistory"));
   }
 
   private TreeModel buildTreeModel() {
@@ -308,9 +309,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
-    private DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+    private final DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
-    private IssueLinkRenderer myRenderer;
+    private final IssueLinkRenderer myRenderer;
 
     public CommittedChangeListRenderer(final Project project) {
       myRenderer = new IssueLinkRenderer(project, this);
