@@ -356,10 +356,14 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   public void includeChange(final T change) {
     myIncludedChanges.add(change);
+    myTree.repaint();
+    myList.repaint();
   }
 
   public void excludeChange(final T change) {
     myIncludedChanges.remove(change);
+    myTree.repaint();
+    myList.repaint();
   }
 
   public boolean isIncluded(final T change) {
