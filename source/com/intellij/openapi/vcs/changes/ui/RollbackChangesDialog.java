@@ -11,7 +11,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,8 +87,9 @@ public class RollbackChangesDialog extends DialogWrapper {
     }
     if (affectedVcs.size() == 1) {
       AbstractVcs vcs = (AbstractVcs)affectedVcs.toArray()[0];
-      if (vcs.getCheckinEnvironment() != null) {
-        final String rollbackOperationName = vcs.getRollbackEnvironment().getRollbackOperationName();
+      final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+      if (rollbackEnvironment != null) {
+        final String rollbackOperationName = rollbackEnvironment.getRollbackOperationName();
         setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
         setOKButtonText(rollbackOperationName);
       }
@@ -191,7 +194,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous) {
     final LocalHistoryAction action = LocalHistory.startAction(project, VcsBundle.message("changes.action.rollback.text"));
-    VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
+    RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, true, new Runnable() {
       public void run() {
         action.finish();
         if (!project.isDisposed()) {
@@ -201,6 +204,16 @@ public class RollbackChangesDialog extends DialogWrapper {
         }
       }
     });
+    for(FilePath path: pathsToRefresh) {
+      VirtualFile vFile = path.getVirtualFile();
+      if (vFile == null) {
+        vFile = path.getVirtualFileParent();
+      }
+      if (vFile != null) {
+        session.addFile(vFile);
+      }
+    }
+    session.launch();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -208,6 +221,6 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   protected String getDimensionServiceKey() {
-    return "RollbackCahgnesDialog";
+    return "RollbackChangesDialog";
   }
 }
