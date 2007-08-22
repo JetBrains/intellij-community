@@ -1,6 +1,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
@@ -25,7 +26,6 @@ import java.io.File;
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  @NonNls private static final String PROJECT_FILE_EXTENSION = ".ipr";
   @NonNls private static final String MODULE_FILE_EXTENSION = ".iml";
 
   private final JPanel myPanel;
@@ -45,12 +45,12 @@ public class ProjectNameStep extends ModuleWizardStep {
       'a', 'l', IdeBundle.message("title.select.project.file.directory", wizardContext.getPresentationName()),
       IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(wizardContext.getPresentationName()))
     );
-    //noinspection HardCodedStringLiteral
     final String baseDir = myWizardContext.getProject() == null
                            ? myWizardContext.getProjectFileDirectory()
                            : FileUtil.toSystemDependentName(myWizardContext.getProject().getBaseDir().getPath());
-    final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
-    myNamePathComponent.setPath(baseDir + File.separator + initialProjectName);
+    final String projectName = myWizardContext.getProjectName();
+    final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
+    myNamePathComponent.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
     myNamePathComponent.setNameValue(initialProjectName);
     myNamePathComponent.getNameComponent().setSelectionStart(0);
     myNamePathComponent.getNameComponent().setSelectionEnd(initialProjectName.length());
@@ -91,8 +91,8 @@ public class ProjectNameStep extends ModuleWizardStep {
   }
 
   public String getProjectFilePath() {
-    return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ +
-           (myWizardContext.getProject() == null ? PROJECT_FILE_EXTENSION : MODULE_FILE_EXTENSION);
+    return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue() +
+           (myWizardContext.getProject() == null ? ProjectFileType.DOT_DEFAULT_EXTENSION : MODULE_FILE_EXTENSION);
   }
 
   public String getProjectFileDirectory() {

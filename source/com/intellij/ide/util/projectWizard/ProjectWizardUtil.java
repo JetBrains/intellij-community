@@ -1,9 +1,10 @@
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.ide.IdeBundle;
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -11,7 +12,10 @@ import java.io.File;
  * @author cdr
  */
 public class ProjectWizardUtil {
-  public static String findNonExistingFileName(String searchDirectory, String preferredName, String extension){
+  private ProjectWizardUtil() {
+  }
+
+  public static String findNonExistingFileName(String searchDirectory, @NonNls String preferredName, String extension){
     for (int idx = 0; ; idx++){
       final String fileName = (idx > 0? preferredName + idx : preferredName) + extension;
       if(!new File(searchDirectory + File.separator + fileName).exists()) {

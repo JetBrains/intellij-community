@@ -4,7 +4,6 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -29,10 +28,11 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   private final List<WizardMode> myModes;
   private final WizardContext myWizardContext;
 
-  public ProjectCreateModeStep(List<WizardMode> modes, final WizardContext wizardContext) {
+  public ProjectCreateModeStep(final List<WizardMode> modes, final WizardMode selection, final WizardContext wizardContext) {
     myModes = modes;
     myWizardContext = wizardContext;
     myWholePanel = new JPanel(new GridBagLayout());
+    myMode = selection;
     final Insets insets = new Insets(0, 0, 0, 0);
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.HORIZONTAL, insets, 0, 0);
@@ -40,12 +40,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     for (final WizardMode mode : modes) {
       insets.top = 15;
       insets.left = 5;
-      boolean selected = false;
-      if (mode instanceof CreateFromScratchMode) {
-        myMode = mode;
-        selected = true;
-      }
-      final JRadioButton rb = new JRadioButton(mode.getDisplayName(wizardContext), selected);
+      final JRadioButton rb = new JRadioButton(mode.getDisplayName(wizardContext), mode == selection);
       rb.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
       rb.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
