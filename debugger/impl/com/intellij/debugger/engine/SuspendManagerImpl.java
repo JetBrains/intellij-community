@@ -181,10 +181,7 @@ public class SuspendManagerImpl implements SuspendManager {
       LOG.debug("popContext, suspends = " + suspends);
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final boolean removed = myEventContexts.remove(suspendContext);
-    if (!removed) {
-      LOG.assertTrue(false, suspendContext);
-    }
+    myEventContexts.remove(suspendContext);
     myPausedContexts.remove(suspendContext);
   }
 
