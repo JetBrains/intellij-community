@@ -126,7 +126,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myWithBrowseButtonReference.getChildComponent();
+    return myHavePackages ? myWithBrowseButtonReference.getChildComponent() : myClassPackageChooser.getChildComponent();
   }
 
   protected JComponent createCenterPanel() {
@@ -289,6 +289,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return myHavePackages ? myWithBrowseButtonReference.getText() : myClassPackageChooser.getText();
   }
 
+  @Nullable
   private static String verifyDestinationForElement(final PsiElement element, final MoveDestination moveDestination) {
     final String message;
     if (element instanceof PsiDirectory) {
