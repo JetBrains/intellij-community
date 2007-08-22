@@ -61,6 +61,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("C", "B", 0);
   }
 
+  public void testOtherPackageImport() throws Exception {
+    doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
+  }
+
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }

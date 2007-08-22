@@ -112,6 +112,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     }
   }
 
+  public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+    return isSearchInModuleContent(aModule) && (myIncludeTests || !testSources);
+  }
+
   public boolean isSearchInLibraries() {
     return myIncludeLibraries;
   }

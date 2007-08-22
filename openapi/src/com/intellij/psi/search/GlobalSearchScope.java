@@ -53,6 +53,10 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   public abstract boolean isSearchInModuleContent(@NotNull Module aModule);
 
+  public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
+    return isSearchInModuleContent(aModule);
+  }
+
   public abstract boolean isSearchInLibraries();
 
   private static final String ALL_SCOPE_NAME = PsiBundle.message("psi.search.scope.project.and.libraries");
@@ -189,12 +193,10 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final GlobalSearchScope myScope2;
     private String myDisplayName;
 
-    public IntersectionScope(GlobalSearchScope scope1, GlobalSearchScope scope2, String displayName) {
+    public IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
-      LOG.assertTrue(myScope1 != null);
-      LOG.assertTrue(myScope2 != null);
     }
 
     public String getDisplayName() {
@@ -224,6 +226,10 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope1.isSearchInModuleContent(aModule) && myScope2.isSearchInModuleContent(aModule);
+    }
+
+    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+      return myScope1.isSearchInModuleContent(aModule, testSources) && myScope2.isSearchInModuleContent(aModule, testSources);
     }
 
     public boolean isSearchInLibraries() {
@@ -272,6 +278,10 @@ public abstract class GlobalSearchScope extends SearchScope {
       return myScope1.isSearchInModuleContent(aModule) || myScope2.isSearchInModuleContent(aModule);
     }
 
+    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+      return myScope1.isSearchInModuleContent(aModule, testSources) || myScope2.isSearchInModuleContent(aModule, testSources);
+    }
+
     public boolean isSearchInLibraries() {
       return myScope1.isSearchInLibraries() || myScope2.isSearchInLibraries();
     }
@@ -299,6 +309,10 @@ public abstract class GlobalSearchScope extends SearchScope {
       return true;
     }
 
+    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+      return !testSources;
+    }
+
     public boolean isSearchInLibraries() {
       return false;
     }
@@ -324,6 +338,10 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
+    }
+
+    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+      return testSources;
     }
 
     public boolean isSearchInLibraries() {

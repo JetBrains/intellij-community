@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -1359,6 +1360,7 @@ public class RefactoringUtil {
       });
     }
 
+    boolean isInTestSources = ModuleRootManager.getInstance(targetModule).getFileIndex().isInTestSourceContent(vFile);
     NextUsage:
     for (UsageInfo usage : usages) {
       if (usage instanceof MoveRenameUsageInfo) {
@@ -1371,7 +1373,7 @@ public class RefactoringUtil {
           }
 
           final GlobalSearchScope resolveScope1 = element.getResolveScope();
-          if (!resolveScope1.isSearchInModuleContent(targetModule)) {
+          if (!resolveScope1.isSearchInModuleContent(targetModule, isInTestSources)) {
             final PsiFile usageFile = element.getContainingFile();
             PsiElement container;
             if (usageFile instanceof PsiJavaFile) {
@@ -1386,12 +1388,21 @@ public class RefactoringUtil {
             if (usageVFile != null) {
               Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
               if (module != null) {
-                final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2",
-                                                                 ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
-                                                                   ConflictsUtil.getDescription(moveRenameUsageInfo.getReferencedElement(),
-                                                                                                true))), scopeDescription,
-                                                                                                         CommonRefactoringUtil.htmlEmphasize(
-                                                                                                           module.getName()));
+                final String message;
+                if (module == targetModule && isInTestSources) {
+                  message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
+                                                      ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
+                                                        ConflictsUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
+                                                      scopeDescription,
+                                                      CommonRefactoringUtil.htmlEmphasize(module.getName()));
+                }
+                else {
+                  message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", 
+                                                      ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(
+                                                        ConflictsUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
+                                                      scopeDescription,
+                                                      CommonRefactoringUtil.htmlEmphasize(module.getName()));
+                }
                 conflicts.add(message);
               }
             }
