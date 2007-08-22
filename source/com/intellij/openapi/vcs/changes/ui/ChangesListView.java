@@ -264,7 +264,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
   private VirtualFile[] getSelectedFiles() {
     final Change[] changes = getSelectedChanges();
-    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    Collection<VirtualFile> files = new HashSet<VirtualFile>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
