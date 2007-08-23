@@ -15,14 +15,19 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CaughtExceptionImmediatelyRethrownInspection 
         extends BaseInspection {
@@ -38,6 +43,72 @@ public class CaughtExceptionImmediatelyRethrownInspection
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "caught.exception.immediately.rethrown.problem.descriptor");
+    }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new DeleteCatchSectionFix(true);
+    }
+
+    private static class DeleteCatchSectionFix extends InspectionGadgetsFix {
+
+        private final boolean removeTryCatch;
+
+        DeleteCatchSectionFix(boolean removeTryCatch) {
+            this.removeTryCatch = removeTryCatch;
+        }
+
+        @NotNull
+        public String getName() {
+            if (removeTryCatch) {
+                return InspectionGadgetsBundle.message(
+                        "remove.try.catch.quickfix");
+            } else {
+            return InspectionGadgetsBundle.message(
+                    "delete.catch.section.quickfix");
+            }
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiParameter)) {
+                return;
+            }
+            final PsiParameter parameter = (PsiParameter)parent;
+            final PsiElement grandParent = parameter.getParent();
+            if (!(grandParent instanceof PsiCatchSection)) {
+                return;
+            }
+            final PsiCatchSection catchSection = (PsiCatchSection)grandParent;
+            final PsiTryStatement tryStatement = catchSection.getTryStatement();
+            final PsiCatchSection[] catchSections =
+                    tryStatement.getCatchSections();
+            if (catchSections.length > 1) {
+                catchSection.delete();
+            } else {
+                final PsiCodeBlock codeBlock = tryStatement.getTryBlock();
+                if (codeBlock == null) {
+                    return;
+                }
+                final PsiStatement[] statements = codeBlock.getStatements();
+                if (statements.length == 0) {
+                    tryStatement.delete();
+                }
+                final PsiStatement firstStatement = statements[0];
+                final PsiElement newElement =
+                        tryStatement.replace(firstStatement);
+                final PsiElement target = newElement.getParent();
+                for (int i = 1; i < statements.length; i++) {
+                    target.addAfter(statements[i], newElement);
+                }
+            }
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -65,6 +136,11 @@ public class CaughtExceptionImmediatelyRethrownInspection
             if (!(declarationScope instanceof PsiCatchSection)) {
                 return;
             }
+            final PsiCatchSection catchSection =
+                    (PsiCatchSection)declarationScope;
+            if (isSuperClassExceptionCaughtLater(parameter, catchSection)) {
+                return;
+            }
             final Query<PsiReference> query =
                     ReferencesSearch.search(parameter);
             for (PsiReference reference : query) {
@@ -74,6 +150,48 @@ public class CaughtExceptionImmediatelyRethrownInspection
                 }
             }
             registerVariableError(parameter);
+        }
+
+        private static boolean isSuperClassExceptionCaughtLater(
+                PsiVariable parameter, PsiCatchSection catchSection) {
+            final PsiTryStatement tryStatement = catchSection.getTryStatement();
+            final PsiCatchSection[] catchSections =
+                    tryStatement.getCatchSections();
+            int index = 0;
+            while (catchSections[index] != catchSection &&
+                   index < catchSections.length) {
+                index++;
+            }
+            final PsiType type = parameter.getType();
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType)type;
+            final PsiClass parameterClass = classType.resolve();
+            if (parameterClass == null) {
+                return false;
+            }
+            for (int i = index; i < catchSections.length; i++){
+                final PsiCatchSection nextCatchSection = catchSections[i];
+                final PsiParameter nextParameter =
+                        nextCatchSection.getParameter();
+                if (nextParameter == null) {
+                    continue;
+                }
+                final PsiType nextType = nextParameter.getType();
+                if (!(nextType instanceof PsiClassType)) {
+                    continue;
+                }
+                final PsiClassType nextClassType = (PsiClassType)nextType;
+                final PsiClass aClass = nextClassType.resolve();
+                if (aClass == null) {
+                    continue;
+                }
+                if (parameterClass.isInheritor(aClass, true)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
