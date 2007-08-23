@@ -43,6 +43,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private final boolean myIsInvokedOnDeclaration;
   private final PsiMethod myMethodToSearchFor;
   private final PsiMethod myMethodToReplaceIn;
+  private final boolean myMustBeFinal;
   private final PsiParameter[] myParametersToRemove;
   private final boolean[] myParametersToRemoveChecked;
   private PsiExpression myExpression;
@@ -77,7 +78,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                            @NotNull TypeSelectorManager typeSelectorManager,
                            @NotNull PsiMethod methodToSearchFor,
                            @NotNull PsiMethod methodToReplaceIn,
-                           @NotNull TIntArrayList parametersToRemove) {
+                           @NotNull TIntArrayList parametersToRemove,
+                           final boolean mustBeFinal) {
     super(project, true);
     myProject = project;
     myClassMembersList = classMembersList;
@@ -85,6 +87,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myExpression = onExpression;
     myLocalVar = onLocalVariable;
     myMethodToReplaceIn = methodToReplaceIn;
+    myMustBeFinal = mustBeFinal;
     myIsInvokedOnDeclaration = onExpression == null;
     myMethodToSearchFor = methodToSearchFor;
     myIsLocalVariable = onLocalVariable != null;
@@ -237,6 +240,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                                  CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS :
                                  settingsFinals.booleanValue());
     panel.add(myCbDeclareFinal, gbConstraints);
+    if (myMustBeFinal) {
+      myCbDeclareFinal.setSelected(true);
+      myCbDeclareFinal.setEnabled(false);
+    }
 
 
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
@@ -372,7 +379,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     final RefactoringSettings settings = RefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
             getReplaceFieldsWithGetters();
-    if (myCbDeclareFinal != null) settings.INTRODUCE_PARAMETER_CREATE_FINALS = Boolean.valueOf(myCbDeclareFinal.isSelected());
+    if (myCbDeclareFinal != null && !myMustBeFinal) {
+      settings.INTRODUCE_PARAMETER_CREATE_FINALS = Boolean.valueOf(myCbDeclareFinal.isSelected());
+    }
 
     if(myCbDeleteLocalVariable != null) {
       settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE =

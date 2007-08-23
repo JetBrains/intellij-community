@@ -13,8 +13,11 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import gnu.trove.TIntArrayList;
 
 public class IntroduceParameterTest extends CodeInsightTestCase {
@@ -173,6 +176,17 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
   public void testVarargs() throws Exception {   // IDEADEV-16828
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+  }
+
+  public void testUseInInnerClass() throws Exception {
+    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+    new IntroduceParameterHandler().invoke(myProject, myEditor, myFile, new DataContext() {
+      @Nullable
+      public Object getData(@NonNls final String dataId) {
+        return null;
+      }
+    });
+    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   private boolean perform(boolean replaceAllOccurences,

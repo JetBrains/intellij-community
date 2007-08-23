@@ -143,6 +143,16 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
+    boolean mustBeFinal = false;
+    if (localVar != null) {
+      for(PsiExpression occurrence: occurences) {
+        if (PsiTreeUtil.getParentOfType(occurrence, PsiClass.class, PsiMethod.class) != method) {
+          mustBeFinal = true;
+          break;
+        }
+      }
+    }
+
     List<UsageInfo> localVars = new ArrayList<UsageInfo>();
     List<UsageInfo> classMemberRefs = new ArrayList<UsageInfo>();
     List<UsageInfo> params = new ArrayList<UsageInfo>();
@@ -164,8 +174,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       @NonNls String parameterName = "anObject";
       boolean replaceAllOccurences = true;
       boolean isDeleteLocalVariable = true;
-      new IntroduceParameterProcessor(myProject, method, methodToSearchFor, expr, expr, localVar, isDeleteLocalVariable, parameterName,
-                                      replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null,
+      PsiExpression initializer = localVar != null && expr == null ? localVar.getInitializer() : expr;
+      new IntroduceParameterProcessor(myProject, method, methodToSearchFor, initializer, expr, localVar, isDeleteLocalVariable, parameterName,
+                                      replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal, null,
                                       parametersToRemove).run();
     }
     else {
@@ -189,7 +200,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         }
       };
       new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, localVar, expr, nameSuggestionsGenerator,
-                                   typeSelectorManager, methodToSearchFor, method, parametersToRemove).show();
+                                   typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
     }
     return true;
   }
