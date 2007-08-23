@@ -142,7 +142,7 @@ public class PluginManager {
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      if (!shouldSkipPlugin(descriptor)) {
+      if (!shouldSkipPlugin(descriptor, pluginDescriptors)) {
         result.add(descriptor);
       } else {
         descriptor.setEnabled(false);
@@ -230,14 +230,22 @@ public class PluginManager {
   }
 
   public static boolean shouldSkipPlugin(final IdeaPluginDescriptor descriptor) {
+    return shouldSkipPlugin(descriptor, ourPlugins);
+  }
+
+  private static boolean shouldSkipPlugin(final IdeaPluginDescriptor descriptor, IdeaPluginDescriptor[] loaded) {
     final String idString = descriptor.getPluginId().getIdString();
     if (idString.equals(CORE_PLUGIN_ID)) {
       return false;
     }
 
-    if (descriptor instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)descriptor).isEnabled()) return true;
+    //noinspection HardCodedStringLiteral
+    final String pluginId = System.getProperty("idea.load.plugins.id");
+    if (pluginId == null) {
+      if (descriptor instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)descriptor).isEnabled()) return true;
 
-    if (!shouldLoadPlugins()) return true;
+      if (!shouldLoadPlugins()) return true;
+    }
 
     boolean shouldLoad;
     //noinspection HardCodedStringLiteral
@@ -246,11 +254,22 @@ public class PluginManager {
       shouldLoad = loadPluginCategory.equals(descriptor.getCategory());
     }
     else {
-      //noinspection HardCodedStringLiteral
-      final String pluginId = System.getProperty("idea.load.plugins.id");
-      shouldLoad = pluginId == null || (descriptor.getPluginId() != null &&
-                                  pluginId.equals(idString));
-      if (shouldLoad) {
+      if (pluginId != null) {
+        shouldLoad = pluginId.equals(idString);
+        if (!shouldLoad) {
+          for (IdeaPluginDescriptor plugin : loaded) {
+            if (plugin.getPluginId().getIdString().equals(pluginId)) {
+              for (PluginId id: plugin.getDependentPluginIds()) {
+                if (id.equals(descriptor.getPluginId())) {
+                  shouldLoad = true;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+        }
+      } else {
         shouldLoad = !getDisabledPlugins().contains(idString);
       }
       if (shouldLoad && descriptor instanceof IdeaPluginDescriptorImpl) {
