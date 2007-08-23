@@ -222,7 +222,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.PLAIN));
     String text = mySearchField.getText();
     if (text.length() == 0) {
-      mySearchField.setBackground(myDefaultBackground);
+      setRegularBackground();
       myMatchInfoLabel.setText("");
     }
     else {
@@ -258,7 +258,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         highlightResults(text, results);
 
         if (count > 0) {
-          mySearchField.setBackground(myDefaultBackground);
+          setRegularBackground();
           if (count > 1) {
             myMatchInfoLabel.setText("" + count + " matches");
           }
@@ -267,12 +267,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           }
         }
         else {
-          mySearchField.setBackground(LightColors.RED);
+          setNotFoundBackground();
           myMatchInfoLabel.setText("No matches");
         }
       }
       else {
-        mySearchField.setBackground(myDefaultBackground);
+        setRegularBackground();
         myMatchInfoLabel.setText("More than 100 matches");
         myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.BOLD));
       }
@@ -280,6 +280,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       findManager.setFindWasPerformed();
       findManager.setFindNextModel(model);
     }
+  }
+
+  private void setRegularBackground() {
+    mySearchField.setBackground(myDefaultBackground);
+    mySearchField.setOpaque(false);
+  }
+
+  private void setNotFoundBackground() {
+    mySearchField.setBackground(LightColors.RED);
+    mySearchField.setOpaque(true);
   }
 
   private boolean isWholeWords() {
