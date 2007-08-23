@@ -184,15 +184,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
             }
           }
         }
-        {
-          final PomModelListener[] listeners = getListeners();
-          for (final PomModelListener listener : listeners) {
-            final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-            for (PomModelAspect modelAspect : changedAspects) {
-              if (listener.isAspectChangeInteresting(modelAspect)) {
-                listener.modelChanged(event);
-                break;
-              }
+        final PomModelListener[] listeners = getListeners();
+        for (final PomModelListener listener : listeners) {
+          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+          for (PomModelAspect modelAspect : changedAspects) {
+            if (listener.isAspectChangeInteresting(modelAspect)) {
+              listener.modelChanged(event);
+              break;
             }
           }
         }
@@ -252,12 +250,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
     final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myPomProject.getPsiProject());
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
-    Document document = null;
     final PsiElement changeScope = transaction.getChangeScope();
     sendPsiBeforeEvent(transaction.getChangeScope());
     LOG.assertTrue(changeScope != null);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 
+    Document document = null;
     if(containingFileByTree != null) {
       document = manager.getCachedDocument(containingFileByTree);
     }
