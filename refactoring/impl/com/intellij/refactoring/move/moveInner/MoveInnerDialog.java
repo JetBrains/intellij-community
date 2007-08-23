@@ -155,8 +155,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     if (myTargetContainer instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)myTargetContainer;
       PsiPackage oldPackage = getTargetPackage();
-      String name = oldPackage == null ? "" : oldPackage.getName();
-      if (name == null) name = "";
+      String name = oldPackage == null ? "" : oldPackage.getQualifiedName();
       final String targetName = myPackageNameField.getText();
       if (!Comparing.equal(name, targetName)) {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -275,7 +274,7 @@ public class MoveInnerDialog extends RefactoringDialog {
                                                              RefactoringBundle.message("choose.destination.package"));
     PsiPackage psiPackage = getTargetPackage();
     if (psiPackage != null) {
-      myPackageNameField.prependItem(psiPackage.getName());
+      myPackageNameField.prependItem(psiPackage.getQualifiedName());
     }
   }
 
