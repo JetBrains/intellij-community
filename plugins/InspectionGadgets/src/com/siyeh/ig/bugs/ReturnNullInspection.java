@@ -23,12 +23,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ReturnNullInspection extends BaseInspection {
 
@@ -56,9 +58,10 @@ public class ReturnNullInspection extends BaseInspection {
     }
 
     @Nullable
-    protected LocalQuickFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
         if (AnnotationUtil.isAnnotatingApplicable(location)) {
-            return new AnnotateMethodFix(AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL);
+            return new DelegatingFix(new AnnotateMethodFix(
+                    AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL));
         } else {
             return null;
         }
