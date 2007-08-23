@@ -69,7 +69,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   public static List<LocalQuickFix> registerFixes(@Nullable HighlightInfo info, final PsiJavaReference reference) {
     final PsiElement psiElement = reference.getElement();
     @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
-    if (referenceName == null) return null;
 
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
@@ -98,7 +97,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
-        public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
           boolean isJunit4 = !referenceName.equals("TestCase");
           String jarPath = isJunit4 ? PathUtilEx.getJunit4JarPath() : PathUtilEx.getJunit3JarPath();
           addBundledJarToRoots(project, editor, currentModule, reference,
@@ -125,7 +124,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           return !project.isDisposed() && !currentModule.isDisposed();
         }
 
-        public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               final LocateLibraryDialog dialog = new LocateLibraryDialog(currentModule, PathManager.getLibPath(), "annotations.jar",
@@ -173,8 +172,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             return !project.isDisposed() && !classModule.isDisposed() && !currentModule.isDisposed();
           }
 
-          public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file)
-            throws IncorrectOperationException {
+          public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
             final Runnable doit = new Runnable() {
               public void run() {
                 ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
@@ -222,7 +220,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
               return !project.isDisposed() && !currentModule.isDisposed() && libraryEntry.isValid();
             }
 
-            public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) throws IncorrectOperationException {
+            public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
               OrderEntryUtil.addLibraryToRoots(libraryEntry, currentModule);
               if (editor != null) {
                 new AddImportAction(project, reference, editor, aClass).execute();
