@@ -64,6 +64,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final Action[] myExecutorActions;
   private final boolean myShowVcsCommit;
   private ChangeList myLastSelectedChangeList = null;
+  private Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = new HashMap<AbstractVcs, JPanel>();
 
   private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
                              final List<CommitExecutor> executors, boolean showVcsCommit) {
@@ -145,6 +146,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.addSelectedListChangeListener(new MultipleChangeListBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();
+        updateVcsOptionsVisibility();
       }
     });
     myBrowser.setDiffExtendUIFactory(new ShowDiffAction.DiffExtendUIFactory() {
@@ -196,6 +198,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
           vcsOptions.add(SeparatorFactory.createSeparator(vcs.getDisplayName(), null), BorderLayout.NORTH);
           vcsCommitOptions.add(vcsOptions);
+          myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
           hasVcsOptions = true;
         }
@@ -268,9 +271,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     
     init();
     updateButtons();
+    updateVcsOptionsVisibility();
     myCommitMessageArea.requestFocusInMessage();
   }
 
+  private void updateVcsOptionsVisibility() {
+    final List<AbstractVcs> affectedVcses = getAffectedVcses(myBrowser.getSelectedChangeList().getChanges());
+    for(Map.Entry<AbstractVcs, JPanel> entry: myPerVcsOptionsPanels.entrySet()) {
+      entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
+    }
+  }
 
   protected Action[] createActions() {
     Action[] result;
@@ -537,8 +547,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!myShowVcsCommit) {
       return Collections.emptyList();
     }
+    return getAffectedVcses(myBrowser.getAllChanges());
+  }
+
+  private List<AbstractVcs> getAffectedVcses(final Collection<Change> changes) {
     Set<AbstractVcs> result = new HashSet<AbstractVcs>();
-    for (Change change : myBrowser.getAllChanges()) {
+    for (Change change : changes) {
       final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
       if (vcs != null) {
         result.add(vcs);
