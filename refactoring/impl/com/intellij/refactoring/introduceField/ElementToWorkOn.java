@@ -5,8 +5,9 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 /**
  * @author dsl
@@ -60,6 +61,12 @@ public class ElementToWorkOn {
       startOffset = editor.getSelectionModel().getSelectionStart();
       endOffset = editor.getSelectionModel().getSelectionEnd();
       expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+      if (expr == null) {
+        PsiIdentifier ident = CodeInsightUtil.findElementInRange(file, startOffset, endOffset, PsiIdentifier.class);
+        if (ident != null) {
+          localVar = PsiTreeUtil.getParentOfType(ident, PsiLocalVariable.class);
+        }
+      }
     }
 
     if (expr == null && localVar == null) {

@@ -179,6 +179,14 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
   }
 
   public void testUseInInnerClass() throws Exception {
+    doTestThroughHandler();
+  }
+
+  public void testLocalVarSelection() throws Exception {
+    doTestThroughHandler();
+  }
+
+  private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     new IntroduceParameterHandler().invoke(myProject, myEditor, myFile, new DataContext() {
       @Nullable
