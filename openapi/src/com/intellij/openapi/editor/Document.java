@@ -314,4 +314,6 @@ public interface Document extends UserDataHolder {
   void setText(final CharSequence text);
 
   RangeMarker createRangeMarker(final TextRange textRange);
+
+  int getLineSeparatorLength(int line);
 }

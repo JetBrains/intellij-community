@@ -18,7 +18,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 
-public class TextStartAction extends EditorAction {
+public class TextStartAction extends TextComponentEditorAction {
   public TextStartAction() {
     super(new Handler());
   }

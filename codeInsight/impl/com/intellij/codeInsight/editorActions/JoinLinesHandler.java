@@ -42,6 +42,10 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
+    if (!(editor.getDocument() instanceof DocumentEx)) {
+      myOriginalHandler.execute(editor, dataContext);
+      return;
+    }
     final DocumentEx doc = (DocumentEx) editor.getDocument();
     final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
 

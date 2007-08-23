@@ -19,7 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectWordAtCaretAction extends EditorAction {
+public class SelectWordAtCaretAction extends TextComponentEditorAction {
   public SelectWordAtCaretAction() {
     super(new Handler());
     setInjectedContext(true);

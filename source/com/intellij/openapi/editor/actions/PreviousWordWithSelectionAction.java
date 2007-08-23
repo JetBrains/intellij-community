@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 
 
-public class PreviousWordWithSelectionAction extends EditorAction {
+public class PreviousWordWithSelectionAction extends TextComponentEditorAction {
   public PreviousWordWithSelectionAction() {
     super(new Handler());
   }

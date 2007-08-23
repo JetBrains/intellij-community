@@ -13,7 +13,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
 
 public class BackspaceAction extends EditorAction {
   public BackspaceAction() {
@@ -73,7 +72,7 @@ public class BackspaceAction extends EditorAction {
       }
     }
     else if(lineNumber > 0) {
-      int separatorLength = ((DocumentEx) document).getLineSeparatorLength(lineNumber - 1);
+      int separatorLength = document.getLineSeparatorLength(lineNumber - 1);
       int lineEnd = document.getLineEndOffset(lineNumber - 1) + separatorLength;
       editor.getCaretModel().moveToOffset(lineEnd - separatorLength);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

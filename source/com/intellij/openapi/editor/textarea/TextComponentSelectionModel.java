@@ -20,16 +20,16 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   public int getSelectionStart() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myTextComponent.getSelectionStart();
   }
 
   public int getSelectionEnd() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myTextComponent.getSelectionEnd();
   }
 
   @Nullable
   public String getSelectedText() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myTextComponent.getSelectedText();
   }
 
   public int getLeadSelectionOffset() {
@@ -40,11 +40,12 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   public boolean hasSelection() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
   }
 
   public void setSelection(final int startOffset, final int endOffset) {
-    throw new UnsupportedOperationException("Not implemented");
+    myTextComponent.setCaretPosition(startOffset);
+    myTextComponent.moveCaretPosition(endOffset);
   }
 
   public void removeSelection() {

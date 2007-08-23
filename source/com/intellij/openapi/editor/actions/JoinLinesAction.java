@@ -9,21 +9,20 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
 
-public class JoinLinesAction extends EditorAction {
+public class JoinLinesAction extends TextComponentEditorAction {
   public JoinLinesAction() {
     super(new Handler());
   }
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      final DocumentEx doc = (DocumentEx) editor.getDocument();
+      final Document doc = editor.getDocument();
 
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       int startLine = caretPosition.line;

@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 
-public class PreviousWordAction extends EditorAction {
+public class PreviousWordAction extends TextComponentEditorAction {
   public PreviousWordAction() {
     super(new Handler());
   }

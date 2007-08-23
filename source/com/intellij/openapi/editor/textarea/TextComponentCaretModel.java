@@ -14,9 +14,11 @@ import javax.swing.*;
  */
 public class TextComponentCaretModel implements CaretModel {
   private JTextComponent myTextComponent;
+  private final TextComponentEditor myEditor;
 
-  public TextComponentCaretModel(final JTextComponent textComponent) {
+  public TextComponentCaretModel(final JTextComponent textComponent, TextComponentEditor editor) {
     myTextComponent = textComponent;
+    myEditor = editor;
   }
 
   public void moveCaretRelatively(final int columnShift,
@@ -26,7 +28,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   public void moveToLogicalPosition(final LogicalPosition pos) {
-    throw new UnsupportedOperationException("Not implemented");
+    moveToOffset(myEditor.logicalPositionToOffset(pos));
   }
 
   public void moveToVisualPosition(final VisualPosition pos) {
@@ -59,7 +61,8 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   public VisualPosition getVisualPosition() {
-    throw new UnsupportedOperationException("Not implemented");
+    LogicalPosition pos = getLogicalPosition();
+    return new VisualPosition(pos.line, pos.column);
   }
 
   public int getOffset() {

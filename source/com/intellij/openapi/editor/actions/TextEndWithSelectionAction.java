@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class TextEndWithSelectionAction extends EditorAction {
+public class TextEndWithSelectionAction extends TextComponentEditorAction {
   public TextEndWithSelectionAction() {
     super(new Handler());
   }

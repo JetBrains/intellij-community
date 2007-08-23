@@ -47,11 +47,9 @@ public class TextComponentScrollingModel implements ScrollingModel {
   }
 
   public void disableAnimation() {
-    throw new UnsupportedOperationException("Not implemented");
   }
 
   public void enableAnimation() {
-    throw new UnsupportedOperationException("Not implemented");
   }
 
   public int getVerticalScrollOffset() {

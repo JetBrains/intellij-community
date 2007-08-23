@@ -18,7 +18,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 
-public class DeleteLineAtCaretAction extends EditorAction {
+public class DeleteLineAtCaretAction extends TextComponentEditorAction {
   public DeleteLineAtCaretAction() {
     super(new Handler());
   }
@@ -40,7 +40,7 @@ public class DeleteLineAtCaretAction extends EditorAction {
     if (lineNumber == document.getLineCount() - 1){
       if (document.getLineCount() > 0 && lineNumber > 0){
         int start = document.getLineEndOffset(lineNumber - 1);
-        int end = document.getLineEndOffset(lineNumber) + ((DocumentEx) document).getLineSeparatorLength(lineNumber);
+        int end = document.getLineEndOffset(lineNumber) + document.getLineSeparatorLength(lineNumber);
         document.deleteString(start, end);
         LogicalPosition pos = new LogicalPosition(lineNumber - 1, logicalPosition.column);
         editor.getCaretModel().moveToLogicalPosition(pos);

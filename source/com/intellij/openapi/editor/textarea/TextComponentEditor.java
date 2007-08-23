@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -32,8 +33,13 @@ public class TextComponentEditor implements Editor {
   public TextComponentEditor(final Project project, final JTextComponent textComponent) {
     myProject = project;
     myTextComponent = textComponent;
-    myDocument = new TextComponentDocument(textComponent);
-    myCaretModel = new TextComponentCaretModel(textComponent);
+    if (textComponent instanceof JTextArea) {
+      myDocument = new TextAreaDocument((JTextArea) textComponent);
+    }
+    else {
+      myDocument = new TextComponentDocument(textComponent);
+    }
+    myCaretModel = new TextComponentCaretModel(textComponent, this);
     mySelectionModel = new TextComponentSelectionModel(textComponent);
     myScrollingModel = new TextComponentScrollingModel(textComponent);
   }
@@ -49,7 +55,7 @@ public class TextComponentEditor implements Editor {
 
   @NotNull
   public JComponent getComponent() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myTextComponent;
   }
 
   @NotNull
@@ -105,7 +111,16 @@ public class TextComponentEditor implements Editor {
   }
 
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
-    throw new UnsupportedOperationException("Not implemented");
+    if (myTextComponent instanceof JTextArea) {
+      final JTextArea textArea = (JTextArea)myTextComponent;
+      try {
+        return textArea.getLineStartOffset(pos.line) + pos.column;
+      }
+      catch (BadLocationException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return pos.column;
   }
 
   @NotNull
@@ -120,7 +135,7 @@ public class TextComponentEditor implements Editor {
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
-    throw new UnsupportedOperationException("Not implemented");
+    return new LogicalPosition(visiblePos.line, visiblePos.column);
   }
 
   @NotNull
@@ -173,11 +188,11 @@ public class TextComponentEditor implements Editor {
   }
 
   public boolean isColumnMode() {
-    throw new UnsupportedOperationException("Not implemented");
+    return false;
   }
 
   public boolean isOneLineMode() {
-    throw new UnsupportedOperationException("Not implemented");
+    return !(myTextComponent instanceof JTextArea);
   }
 
   @NotNull

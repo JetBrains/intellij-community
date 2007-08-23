@@ -7,8 +7,6 @@ public interface DocumentEx extends Document {
   void stripTrailingSpaces(boolean inChangedLinesOnly);
   void setStripTrailingSpacesEnabled(boolean isEnabled);
 
-  int getLineSeparatorLength(int line);
-
   LineIterator createLineIterator();
 
   void setModificationStamp(long modificationStamp);

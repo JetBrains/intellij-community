@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class NextWordAction extends EditorAction {
+public class NextWordAction extends TextComponentEditorAction {
   public NextWordAction() {
     super(new Handler());
   }

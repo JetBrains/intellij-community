@@ -11,7 +11,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.beans.PropertyChangeListener;
@@ -43,36 +42,28 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   }
 
   public int getLineCount() {
-    if (myTextComponent instanceof JTextArea) {
-      final JTextArea textArea = (JTextArea)myTextComponent;
-      return textArea.getLineCount();
-    }
     return 1;
   }
 
   public int getLineNumber(final int offset) {
-    throw new UnsupportedOperationException("Not implemented");
+    return 0;
   }
 
   public int getLineStartOffset(final int line) {
-    throw new UnsupportedOperationException("Not implemented");
+    return 0;
   }
 
   public int getLineEndOffset(final int line) {
-    if (myTextComponent instanceof JTextArea) {
-      JTextArea textArea = (JTextArea) myTextComponent;
-      try {
-        return textArea.getLineEndOffset(line);
-      }
-      catch (BadLocationException e) {
-        throw new RuntimeException(e);
-      }
-    }
     return getTextLength();
   }
 
   public void insertString(final int offset, final CharSequence s) {
-    throw new UnsupportedOperationException("Not implemented");
+    try {
+      myTextComponent.getDocument().insertString(offset, s.toString(), null);
+    }
+    catch (BadLocationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void deleteString(final int startOffset, final int endOffset) {
@@ -85,7 +76,14 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   }
 
   public void replaceString(final int startOffset, final int endOffset, final CharSequence s) {
-    throw new UnsupportedOperationException("Not implemented");
+    final javax.swing.text.Document document = myTextComponent.getDocument();
+    try {
+      document.remove(startOffset, endOffset-startOffset);
+      document.insertString(startOffset, s.toString(), null);
+    }
+    catch (BadLocationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public boolean isWritable() {
@@ -175,5 +173,9 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
     throw new UnsupportedOperationException("Not implemented");
+  }
+
+  public int getLineSeparatorLength(final int line) {
+    return 0;
   }
 }
