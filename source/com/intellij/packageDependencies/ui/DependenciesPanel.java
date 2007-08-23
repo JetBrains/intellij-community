@@ -265,10 +265,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private ActionGroup createTreePopupActions(boolean isRightTree) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
-    group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
+    final ActionManager actionManager = ActionManager.getInstance();
+    group.add(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
+    group.add(actionManager.getAction(IdeActions.GROUP_VERSION_CONTROLS));
 
     if (isRightTree) {
+      group.add(actionManager.getAction(IdeActions.GROUP_ANALYZE));
       group.add(new SelectInLeftTreeAction());
     }
 
@@ -337,6 +339,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   @Nullable
   @NonNls
   public Object getData(@NonNls String dataId) {
+    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+      final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
+      if (selectedNode != null) {
+        return selectedNode.getPsiElement();
+      }
+    }
     if (dataId.equals(DataConstants.HELP_ID)) {
       return "dependency.viewer.tool.window";
     }
@@ -496,7 +504,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           final AnalysisScope scope = myBuilder.getScope();
           scope.invalidate();
           if (myBuilder.isBackward()) {
-            new BackwardDependenciesHandler(myProject, scope).analyze();
+            new BackwardDependenciesHandler(myProject, scope, myBuilder.getScopeOfInterest()).analyze();
           }
           else {
             new AnalyzeDependenciesHandler(myProject, scope).analyze();

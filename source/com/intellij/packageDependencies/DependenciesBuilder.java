@@ -19,13 +19,19 @@ import java.util.Set;
 public abstract class DependenciesBuilder {
   private Project myProject;
   private final AnalysisScope myScope;
+  private final AnalysisScope myScopeOfInterest;
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
 
   protected DependenciesBuilder(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+    this(project, scope, null);
+  }
+
+  public DependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
     myProject = project;
     myScope = scope;
+    myScopeOfInterest = scopeOfInterest;
     myTotalFileCount = scope.getFileCount();
   }
 
@@ -47,6 +53,10 @@ public abstract class DependenciesBuilder {
 
   public AnalysisScope getScope() {
     return myScope;
+  }
+
+  public AnalysisScope getScopeOfInterest() {
+    return myScopeOfInterest;
   }
 
   public Project getProject() {

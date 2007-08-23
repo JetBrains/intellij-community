@@ -22,6 +22,10 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     super(project, scope);
   }
 
+  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
+    super(project, scope, scopeOfInterest);
+  }
+
   public String getRootNodeNameInUsageView(){
     return AnalysisScopeBundle.message("forward.dependencies.usage.view.root.node.text");
   }
@@ -43,6 +47,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
         public void visitFile(final PsiFile file) {
           final FileViewProvider viewProvider = file.getViewProvider();
           if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
+
+          if (getScopeOfInterest() != null && !getScopeOfInterest().contains(file)) return;
 
           ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (indicator != null) {

@@ -22,14 +22,16 @@ import javax.swing.*;
 public class BackwardDependenciesHandler {
   private Project myProject;
   private AnalysisScope myScope;
+  private final AnalysisScope myScopeOfInterest;
 
-  public BackwardDependenciesHandler(Project project, AnalysisScope scope) {
+  public BackwardDependenciesHandler(Project project, AnalysisScope scope, final AnalysisScope selectedScope) {
     myProject = project;
     myScope = scope;
+    myScopeOfInterest = selectedScope;
   }
 
   public void analyze() {
-    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, myScope);
+    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, myScope, myScopeOfInterest);
     final Runnable process = new Runnable() {
       public void run() {
         builder.analyze();

@@ -24,7 +24,11 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
   private final AnalysisScope[] myForwardScopes;
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope) {
-    super(project, scope);
+    this(project, scope, null);
+  }
+
+  public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
+    super(project, scope, scopeOfInterest);
     myForwardScopes = getScope().getNarrowedComplementaryScope(getProject());
     int totalCount = 0;
     for (AnalysisScope forwardScope : myForwardScopes) {
@@ -51,7 +55,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     int totalCount = 0;
     for (int i = 0; i < myForwardScopes.length; i++) {
       AnalysisScope scope = myForwardScopes[i];
-      builders[i] = new ForwardDependenciesBuilder(getProject(), scope);
+      builders[i] = new ForwardDependenciesBuilder(getProject(), scope, getScopeOfInterest());
       builders[i].setInitialFileCount(totalCount);
       builders[i].setTotalFileCount(myTotalFileCount);
       builders[i].analyze();
