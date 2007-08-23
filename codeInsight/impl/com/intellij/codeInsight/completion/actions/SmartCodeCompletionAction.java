@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.lang.StdLanguages;
 
 /**
  *
@@ -30,7 +31,7 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
       public void invoke(Project project, Editor editor, PsiFile file) {
         try {
           ourDoingSmartCodeCompleteAction = true;
-          if (file instanceof PsiJavaFile) {
+          if (file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) {
             FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
             new SmartCodeCompletionHandler().invoke(project, editor, file);
           } else {
