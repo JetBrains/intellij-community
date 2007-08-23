@@ -12,11 +12,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.StringBuilderSpinAllocator;
 
-public class ToggleCaseAction extends EditorAction {
+public class ToggleCaseAction extends TextComponentEditorAction {
   public ToggleCaseAction() {
     super(new Handler());
   }

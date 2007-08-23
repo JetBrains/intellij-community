@@ -78,7 +78,6 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   public void removeBlockSelection() {
-    throw new UnsupportedOperationException("Not implemented");
   }
 
   public boolean hasBlockSelection() {
