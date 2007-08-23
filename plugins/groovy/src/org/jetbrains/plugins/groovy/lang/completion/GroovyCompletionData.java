@@ -57,9 +57,7 @@ public class GroovyCompletionData extends CompletionData {
 
   public GroovyCompletionData() {
     registerAllCompletions();
-
   }
-
 
   /**
    * Registers completions on top level of Groovy script file
@@ -117,7 +115,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerBuiltInTypeCompletion() {
     String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
-    registerStandardCompletion(new AndFilter (new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), builtInTypes);
+    registerStandardCompletion(new AndFilter(new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), builtInTypes);
   }
 
   private void registerSimpleExprsCompletion() {
@@ -130,7 +128,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerFinalCompletion() {
-    registerStandardCompletion(new AndFilter (new FinalFilter(), new NotFilter(new ThrowsFilter())), "final");
+    registerStandardCompletion(new AndFilter(new FinalFilter(), new NotFilter(new ThrowsFilter())), "final");
   }
 
   private void registerSynchronizedCompletion() {
@@ -160,13 +158,14 @@ public class GroovyCompletionData extends CompletionData {
 
 
   private static CompletionVariant ourReferenceVariant;
+
   static {
     ourReferenceVariant = new CompletionVariant() {
       public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
         addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
       }
     };
-    
+
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandler());
 
     DefaultCharFilter.registerFilter(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new CharFilter() {
@@ -202,13 +201,13 @@ public class GroovyCompletionData extends CompletionData {
 
 
   public String findPrefix(PsiElement insertedElement, int offset) {
-    if(insertedElement == null) return "";
+    if (insertedElement == null) return "";
     final String text = insertedElement.getText();
     final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
     int start = offsetInElement - 1;
-    while(start >=0 ) {
+    while (start >= 0) {
       final char c = text.charAt(start);
-      if(!Character.isJavaIdentifierPart(c) && c != '\'') break;
+      if (!Character.isJavaIdentifierPart(c) && c != '\'') break;
       --start;
     }
 

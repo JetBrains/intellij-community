@@ -15,10 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
@@ -42,12 +44,14 @@ public class PackageFilter implements ElementFilter {
       }
       return false;
     }
-    if (context.getTextRange().getStartOffset() == 0) {
+    ASTNode astNode = context.getNode();
+    if (context.getTextRange().getStartOffset() == 0 && astNode != null &&
+        !(GspTokenTypesEx.GSP_TEMPLATE_DATA == astNode.getElementType())) {
       return true;
     }
 
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
-    if (leaf != null){
+    if (leaf != null) {
       PsiElement parent = leaf.getParent();
       if (parent instanceof GroovyFile) {
         GroovyFile groovyFile = (GroovyFile) parent;

@@ -37,7 +37,10 @@ public class TypesUtil {
       int lRank = TYPE_TO_RANK.get(lCanonical);
       int rRank = TYPE_TO_RANK.get(rCanonical);
       int resultRank = Math.max(lRank, rRank);
-      return binaryExpression.getManager().getElementFactory().createTypeByFQClassName(RANK_TO_TYPE.get(resultRank), binaryExpression.getResolveScope());
+      String qName = RANK_TO_TYPE.get(resultRank);
+      GlobalSearchScope scope = binaryExpression.getResolveScope();
+      if (qName == null) return null;
+      return binaryExpression.getManager().getElementFactory().createTypeByFQClassName(qName, scope);
     }
 
     return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
@@ -68,7 +71,7 @@ public class TypesUtil {
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
 
-  static  {
+  static {
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, "plus");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, "minus");
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, "and");
@@ -82,6 +85,7 @@ public class TypesUtil {
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
+
   static {
     TYPE_TO_RANK.put("java.lang.Byte", 1);
     TYPE_TO_RANK.put("java.lang.Short", 2);
@@ -107,6 +111,7 @@ public class TypesUtil {
 
 
   private static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<String>();
+
   static {
     RANK_TO_TYPE.put(1, "java.lang.Integer");
     RANK_TO_TYPE.put(2, "java.lang.Integer");
@@ -149,7 +154,7 @@ public class TypesUtil {
     }
 
     return type instanceof PsiPrimitiveType &&
-           TypeConversionUtil.isNumericType(type);
+        TypeConversionUtil.isNumericType(type);
   }
 
   public static PsiType unboxPrimitiveTypeWraperAndEraseGenerics(PsiType result) {
