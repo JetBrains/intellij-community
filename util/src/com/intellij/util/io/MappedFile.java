@@ -41,6 +41,9 @@ public class MappedFile {
   private void map() throws IOException {
     myHolder = new ReadWriteMappedBufferWrapper(myFile);
     myRealSize = myFile.length();
+    if (LOG.isDebugEnabled()) {
+      LOG.assertTrue(myPosition >= 0L && myPosition < myRealSize, "myPosition=" + myPosition + ", myRealSize=" + myRealSize);
+    }
     myHolder.buf().position((int)myPosition);
   }
 
