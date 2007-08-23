@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorAction extends AnAction {
   private EditorActionHandler myHandler;
@@ -40,8 +41,13 @@ public abstract class EditorAction extends AnAction {
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = getEditor(dataContext);
     actionPerformed(editor, dataContext);
+  }
+
+  @Nullable
+  protected Editor getEditor(final DataContext dataContext) {
+    return DataKeys.EDITOR.getData(dataContext);
   }
 
   public final void actionPerformed(final Editor editor, final DataContext dataContext) {
@@ -67,7 +73,7 @@ public abstract class EditorAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = getEditor(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
     }

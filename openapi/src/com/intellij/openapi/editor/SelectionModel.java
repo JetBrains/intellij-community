@@ -56,8 +56,8 @@ public interface SelectionModel {
   String getSelectedText();
 
   /**
-   * Returns the offset from which the user started to extend the selection (the selection end
-   * if the selection was extended in forward direction, or the selection start if it was
+   * Returns the offset from which the user started to extend the selection (the selection start
+   * if the selection was extended in forward direction, or the selection end if it was
    * extended backward).
    *
    * @return the offset from which the selection was started, or the caret offset if there is

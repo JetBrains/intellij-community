@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
 
-public class DeleteToWordStartAction extends EditorAction {
+public class DeleteToWordStartAction extends TextComponentEditorAction {
   public DeleteToWordStartAction() {
     super(new Handler());
   }

@@ -12,10 +12,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
-public class DeleteToWordEndAction extends EditorAction {
+public class DeleteToWordEndAction extends TextComponentEditorAction {
   public DeleteToWordEndAction() {
     super(new Handler());
   }

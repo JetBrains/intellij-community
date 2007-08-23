@@ -9,18 +9,19 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.Nullable;
 
 public class SettingsImpl implements EditorSettings {
-  private EditorEx myEditor;
+  @Nullable private final EditorEx myEditor;
   private Boolean myIsCamelWords;
 
-  public SettingsImpl(EditorEx editor) {
+  public SettingsImpl(@Nullable EditorEx editor) {
     myEditor = editor;
   }
 
@@ -136,8 +137,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public boolean isUseTabCharacter(Project project) {
-    VirtualFile file = myEditor.getVirtualFile();
-    FileType fileType = file == null ? null : file.getFileType();
+    FileType fileType = getFileType();
     return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleSettingsManager.getSettings(project)
       .useTabCharacter(fileType);
   }
@@ -155,11 +155,16 @@ public class SettingsImpl implements EditorSettings {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
 
-    VirtualFile file = myEditor.getVirtualFile();
-    FileType fileType = file == null ? null : file.getFileType();
+    FileType fileType = getFileType();
     int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(fileType);
     myCachedTabSize = new Integer(tabSize);
     return tabSize;
+  }
+
+  @Nullable
+  private FileType getFileType() {
+    VirtualFile file = myEditor == null ? null : myEditor.getVirtualFile();
+    return file == null ? null : file.getFileType();
   }
 
   public void setTabSize(int tabSize) {
@@ -179,7 +184,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public boolean isVirtualSpace() {
-    if (myEditor.isColumnMode()) return true;
+    if (myEditor != null && myEditor.isColumnMode()) return true;
     return myIsVirtualSpace != null
            ? myIsVirtualSpace.booleanValue()
            : EditorSettingsExternalizable.getInstance().isVirtualSpace();
@@ -201,7 +206,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public boolean isCaretInsideTabs() {
-    if (myEditor.isColumnMode()) return true;
+    if (myEditor != null && myEditor.isColumnMode()) return true;
     return myIsCaretInsideTabs != null
            ? myIsCaretInsideTabs.booleanValue()
            : EditorSettingsExternalizable.getInstance().isCaretInsideTabs();
@@ -322,6 +327,8 @@ public class SettingsImpl implements EditorSettings {
   }
 
   private void fireEditorRefresh() {
-    myEditor.reinitSettings();
+    if (myEditor != null) {
+      myEditor.reinitSettings();
+    }
   }
 }
