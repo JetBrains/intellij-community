@@ -80,7 +80,7 @@ public class ContentEntryTreeEditor {
     myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup), BorderLayout.CENTER);
 
     myTreePanel.setVisible(false);
-    myDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    myDescriptor = new FileChooserDescriptor(false, true, false, false, false, true);
     myDescriptor.setShowFileSystemRoots(false);
   }
 

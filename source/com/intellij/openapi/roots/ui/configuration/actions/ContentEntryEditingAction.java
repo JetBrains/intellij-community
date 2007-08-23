@@ -5,11 +5,14 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
+import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,31 +32,36 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);
-    final VirtualFile file = getSelectedFile();
-    if (file == null) {
+    final VirtualFile[] files = getSelectedFiles();
+    if (files == null || files.length == 0) {
       presentation.setEnabled(false);
       return;
     }
-    if (!file.isDirectory()) {
-      presentation.setEnabled(false);
+    for (VirtualFile file : files) {
+      if (!file.isDirectory()) {
+        presentation.setEnabled(false);
+        break;
+      }
     }
   }
 
-  protected final VirtualFile getSelectedFile() {
-    final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath == null) {
+  @Nullable
+  protected final VirtualFile[] getSelectedFiles() {
+    final TreePath[] selectionPaths = myTree.getSelectionPaths();
+    if (selectionPaths == null) {
       return null;
     }
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-    final Object nodeDescriptor = node.getUserObject();
-    if (!(nodeDescriptor instanceof FileNodeDescriptor)) {
-      return null;
+    final VirtualFile[] selected = new VirtualFile[selectionPaths.length];
+    for (int i = 0; i < selectionPaths.length; i++) {
+      TreePath treePath = selectionPaths[i];
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+      final Object nodeDescriptor = node.getUserObject();
+      if (!(nodeDescriptor instanceof FileNodeDescriptor)) {
+        return null;
+      }
+      selected[i] = ((FileNodeDescriptor)nodeDescriptor).getElement().getFile();
     }
-    final Object element = ((FileNodeDescriptor)nodeDescriptor).getElement();
-    if (!(element instanceof FileElement)) {
-      return null;
-    }
-    return ((FileElement)element).getFile();
+    return selected;
   }
 
   public JComponent createCustomComponent(Presentation presentation) {

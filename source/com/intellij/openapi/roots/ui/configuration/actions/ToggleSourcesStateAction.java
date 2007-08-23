@@ -37,35 +37,35 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
   }
 
   public boolean isSelected(AnActionEvent e) {
-    final VirtualFile selectedFile = getSelectedFile();
-    if (selectedFile == null) {
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    if (selectedFiles == null || selectedFiles.length == 0) {
       return false;
     }
     final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    return myEditTestSources? contentEntryEditor.isTestSource(selectedFile) : contentEntryEditor.isSource(selectedFile);
+    return myEditTestSources? contentEntryEditor.isTestSource(selectedFiles[0]) : contentEntryEditor.isSource(selectedFiles[0]);
   }
 
   public void setSelected(AnActionEvent e, boolean isSelected) {
-    final VirtualFile selectedFile = getSelectedFile();
-    if (selectedFile == null) {
-      return;
-    }
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    assert selectedFiles != null && selectedFiles.length != 0;
     final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
-    if (isSelected) {
-      if (sourceFolder == null) { // not marked yet
-        contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
-      }
-      else {
-        if (myEditTestSources? !sourceFolder.isTestSource() : sourceFolder.isTestSource()) {
-          contentEntryEditor.removeSourceFolder(sourceFolder);
+    for (VirtualFile selectedFile : selectedFiles) {
+      final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
+      if (isSelected) {
+        if (sourceFolder == null) { // not marked yet
           contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
         }
+        else {
+          if (myEditTestSources? !sourceFolder.isTestSource() : sourceFolder.isTestSource()) {
+            contentEntryEditor.removeSourceFolder(sourceFolder);
+            contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
+          }
+        }
       }
-    }
-    else {
-      if (sourceFolder != null) { // already marked
-        contentEntryEditor.removeSourceFolder(sourceFolder);
+      else {
+        if (sourceFolder != null) { // already marked
+          contentEntryEditor.removeSourceFolder(sourceFolder);
+        }
       }
     }
   }

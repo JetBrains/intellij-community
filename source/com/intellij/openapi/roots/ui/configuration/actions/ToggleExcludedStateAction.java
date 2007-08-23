@@ -28,25 +28,28 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   }
 
   public boolean isSelected(AnActionEvent e) {
-    final VirtualFile selectedFile = getSelectedFile();
-    if (selectedFile == null) {
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    if (selectedFiles == null || selectedFiles.length == 0) {
       return false;
     }
     final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    return contentEntryEditor.isExcluded(selectedFile) || contentEntryEditor.isUnderExcludedDirectory(selectedFile);
+    return contentEntryEditor.isExcluded(selectedFiles[0]) || contentEntryEditor.isUnderExcludedDirectory(selectedFiles[0]);
   }
 
   public void setSelected(AnActionEvent e, boolean isSelected) {
-    final VirtualFile selectedFile = getSelectedFile();
-    final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedFile);
-    if (isSelected) {
-      if (excludeFolder == null) { // not excluded yet
-        myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedFile);
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    assert selectedFiles != null && selectedFiles.length > 0;
+    for (VirtualFile selectedFile : selectedFiles) {
+      final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedFile);
+      if (isSelected) {
+        if (excludeFolder == null) { // not excluded yet
+          myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedFile);
+        }
       }
-    }
-    else {
-      if (excludeFolder != null) {
-        myEntryTreeEditor.getContentEntryEditor().removeExcludeFolder(excludeFolder);
+      else {
+        if (excludeFolder != null) {
+          myEntryTreeEditor.getContentEntryEditor().removeExcludeFolder(excludeFolder);
+        }
       }
     }
   }
