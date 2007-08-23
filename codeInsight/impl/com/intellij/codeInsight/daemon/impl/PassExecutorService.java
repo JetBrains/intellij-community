@@ -200,10 +200,10 @@ public abstract class PassExecutorService {
     return predecessor;
   }
 
-  private static TextEditorHighlightingPass findPassById(final int predecessorId, final List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
+  private static TextEditorHighlightingPass findPassById(final int id, final List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
     TextEditorHighlightingPass textEditorPass = null;
     for (TextEditorHighlightingPass found : textEditorHighlightingPasses) {
-      if (found.getId() == predecessorId) {
+      if (found.getId() == id) {
         textEditorPass = found;
         break;
       }

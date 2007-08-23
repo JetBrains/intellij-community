@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import java.util.ArrayList;
 
 public class TemplateSegments {
-  private ArrayList<RangeMarker> mySegments = new ArrayList<RangeMarker>();
-  private Editor myEditor;
+  private final ArrayList<RangeMarker> mySegments = new ArrayList<RangeMarker>();
+  private final Editor myEditor;
 
   public TemplateSegments(Editor editor) {
     myEditor = editor;
@@ -34,7 +34,7 @@ public class TemplateSegments {
   }
 
   public void addSegment(int start, int end) {
-    RangeMarker rangeMarker = (myEditor.getDocument()).createRangeMarker(start, end);
+    RangeMarker rangeMarker = myEditor.getDocument().createRangeMarker(start, end);
     mySegments.add(rangeMarker);
   }
 

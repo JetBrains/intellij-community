@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.find.EditorSearchComponent;
-import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,9 +120,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static final Runnable EMPTY_HIGHLIGHT_RUNNABLE = EmptyRunnable.getInstance();
 
   private static class DoHighlightExitPointsRunnable implements Runnable {
-    private Project myProject;
-    private Editor myEditor;
-    private PsiElement[] myExitStatements;
+    private final Project myProject;
+    private final Editor myEditor;
+    private final PsiElement[] myExitStatements;
 
     public DoHighlightExitPointsRunnable(Project project, Editor editor, PsiElement[] exitStatements) {
       myProject = project;
@@ -142,11 +141,11 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   private static class DoHighlightRunnable implements Runnable {
-    private Collection<PsiReference> myRefs;
-    private Project myProject;
-    private PsiElement myTarget;
-    private Editor myEditor;
-    private PsiFile myFile;
+    private final Collection<PsiReference> myRefs;
+    private final Project myProject;
+    private final PsiElement myTarget;
+    private final Editor myEditor;
+    private final PsiFile myFile;
 
     public DoHighlightRunnable(@NotNull Collection<PsiReference> refs, @NotNull Project project, @NotNull PsiElement target, Editor editor, PsiFile file) {
       myRefs = refs;
@@ -160,22 +159,16 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile);
 
       setStatusText(myTarget, myRefs.size(), myProject);
-
-      FindUsagesOptions options = new FindUsagesOptions(myProject);
-      options.isUsages = true;
-      options.isReadAccess = true;
-      options.isWriteAccess = true;
-      //FindManager.getInstance(myProject).setLastSearchOperation(myTarget, options);
     }
   }
 
   private class ChooseExceptionClassAndDoHighlightRunnable implements Runnable {
-    private PsiClass[] myExceptionClasses;
-    private PsiElement myHighlightInPlace;
-    private Project myProject;
-    private PsiElement myTarget;
-    private Editor myEditor;
-    private PsiFile myFile;
+    private final PsiClass[] myExceptionClasses;
+    private final PsiElement myHighlightInPlace;
+    private final Project myProject;
+    private final PsiElement myTarget;
+    private final Editor myEditor;
+    private final PsiFile myFile;
     private JList myList;
     private TypeFilter myTypeFilter = ANY_TYPE;
 

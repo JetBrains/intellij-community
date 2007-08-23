@@ -35,7 +35,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
   private volatile int myDisabledCounter = 0;
-  private Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
+  private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
     myPsiManager = psiManager;
@@ -101,7 +101,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       if(changeSet == null) return;
       final PsiElement psiElement = changeSet.getRootElement().getPsi();
       if(psiElement == null) return;
-      final FileViewProvider viewProvider = psiElement.getContainingFile().getViewProvider();
+      PsiFile containingFile = psiElement.getContainingFile();
+      PsiElement host = containingFile.getContext();
+      if (host != null) containingFile = host.getContainingFile();
+      final FileViewProvider viewProvider = containingFile.getViewProvider();
+
       if(!viewProvider.isEventSystemEnabled()) return;
       myUpdatedProviders.add(viewProvider);
       for (final ASTNode node : changeSet.getChangedElements()) {
@@ -168,7 +172,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private void postponeFormatting(final FileViewProvider viewProvider, final ASTNode child) {
-    if (!CodeEditUtil.isNodeGenerated(child) && child.getElementType() != ElementType.WHITE_SPACE) {
+    if (!CodeEditUtil.isNodeGenerated(child) && child.getElementType() != TokenType.WHITE_SPACE) {
       final int oldIndent = CodeEditUtil.getOldIndentation(child);
       LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element=" + child + ", text=" + child.getText());
     }
@@ -182,7 +186,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   private void doPostponedFormattingInner(final FileViewProvider key) {
     final List<ASTNode> astNodes = myReformatElements.remove(key);
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
     if (document == null /*|| documentManager.isUncommited(document) TODO */) return;
@@ -327,7 +330,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
             inGeneratedContext = true;
           }
           if(!currentNodeGenerated && inGeneratedContext){
-            if(current.getElementType() == ElementType.WHITE_SPACE) return false;
+            if(current.getElementType() == TokenType.WHITE_SPACE) return false;
             final int oldIndent = CodeEditUtil.getOldIndentation(current);
             LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined");
             rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReindentAction(oldIndent));
@@ -430,7 +433,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
 
   private static class ReindentAction implements PostponedAction {
-    private int myOldIndent;
+    private final int myOldIndent;
 
     public ReindentAction(final int oldIndent) {
       myOldIndent = oldIndent;

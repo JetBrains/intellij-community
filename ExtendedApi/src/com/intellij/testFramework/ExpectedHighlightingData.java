@@ -44,9 +44,9 @@ public class ExpectedHighlightingData {
     public final String marker;
     private final boolean endOfLine;
     final boolean enabled;
-    Set<HighlightInfo> infos;
-    HighlightInfoType defaultErrorType;
-    HighlightSeverity severity;
+    final Set<HighlightInfo> infos;
+    final HighlightInfoType defaultErrorType;
+    final HighlightSeverity severity;
 
     public ExpectedHighlightingSet(String marker, HighlightInfoType defaultErrorType,HighlightSeverity severity, boolean endOfLine, boolean enabled) {
       this.marker = marker;
@@ -57,7 +57,7 @@ public class ExpectedHighlightingData {
       this.severity = severity;
     }
   }
-  protected Map<String,ExpectedHighlightingSet> highlightingTypes;
+  private final Map<String,ExpectedHighlightingSet> highlightingTypes;
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);

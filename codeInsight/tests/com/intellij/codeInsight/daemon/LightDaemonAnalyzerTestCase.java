@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
