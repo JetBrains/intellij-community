@@ -16,6 +16,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.actions.BackAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ForwardAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Splitter;
@@ -321,10 +325,21 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public ActionCallback select(Sdk sdk, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myJdkListConfig);
-    place.putPath(BaseStructureConfigurable.TREE_OBJECT, sdk);
+    place.putPath(BaseStructureConfigurable.TREE_NAME, sdk.getName());
     return navigateTo(place, requestFocus);
   }
 
+  public ActionCallback select(LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
+    final Library lib = libraryOrderEntry.getLibrary();
+    if (lib != null && lib.getTable() == null) {
+      Place place = new Place().putPath(CATEGORY, myModulesConfig);
+      place.putPath(BaseStructureConfigurable.TREE_OBJECT, libraryOrderEntry.getOwnerModule());
+      return navigateTo(place, requestFocus);
+    }
+    Place place = new Place().putPath(CATEGORY, getConfigurableFor(lib));
+    place.putPath(BaseStructureConfigurable.TREE_NAME, libraryOrderEntry.getLibraryName());
+    return navigateTo(place, requestFocus);
+  }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     final Configurable toSelect = (Configurable)place.getPath(CATEGORY);

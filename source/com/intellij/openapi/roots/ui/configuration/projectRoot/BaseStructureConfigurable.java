@@ -73,12 +73,21 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     if (place == null) return new ActionCallback.Done();
 
     final Object object = place.getPath(TREE_OBJECT);
-    if (object == null) return new ActionCallback.Done();
+    final String byName = (String)place.getPath(TREE_NAME);
 
-    final MyNode node = findNodeByObject(myRoot, object);
-    if (node == null) return new ActionCallback.Done();
+    if (object == null && byName == null) return new ActionCallback.Done();
 
-    final NamedConfigurable config = node.getConfigurable();
+    final MyNode node = object == null ? null : findNodeByObject(myRoot, object);
+    final MyNode nodeByName = byName == null ? null : findNodeByName(myRoot, byName);
+
+    if (node == null && nodeByName == null) return new ActionCallback.Done();
+
+    final NamedConfigurable config;
+    if (node != null) {
+      config = node.getConfigurable();
+    } else {
+      config = nodeByName.getConfigurable();
+    }
 
     final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
       public void run() {
@@ -88,7 +97,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
-    selectNodeInTree(node).doWhenDone(new Runnable() {
+    selectNodeInTree(node != null ? node : nodeByName).doWhenDone(new Runnable() {
       public void run() {
         updateSelection(config);
         Place.goFurther(config, place, requestFocus).markDone(result);

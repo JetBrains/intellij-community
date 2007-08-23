@@ -54,6 +54,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
 
   @NonNls public static final String TREE_OBJECT = "treeObject";
+  @NonNls public static final String TREE_NAME = "treeName";
 
   protected History myHistory = new History(new Place.Navigator() {
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {

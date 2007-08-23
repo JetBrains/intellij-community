@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -127,6 +128,9 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     throw new UnsupportedOperationException();
   }
 
+  public Module getModule() {
+    return myRootModel.getModule();
+  }
 
 
   private static class ModuleLibraryOrderEntryCondition implements Condition<OrderEntry> {

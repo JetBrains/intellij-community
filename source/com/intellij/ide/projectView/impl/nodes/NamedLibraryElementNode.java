@@ -11,13 +11,20 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -98,5 +105,24 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   protected String getToolTip() {
     OrderEntry orderEntry = getValue().getOrderEntry();
     return orderEntry instanceof JdkOrderEntry ? IdeBundle.message("node.projectview.jdk") : StringUtil.capitalize(IdeBundle.message("node.projectview.library", ((LibraryOrderEntry)orderEntry).getLibraryLevel()));
+  }
+
+  public void navigate(final boolean requestFocus) {
+    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(getProject());
+    ShowSettingsUtil.getInstance().editConfigurable(getProject(), config, new Runnable() {
+      public void run() {
+        final NamedLibraryElement element = getValue();
+        final OrderEntry orderEntry = element.getOrderEntry();
+        if (orderEntry instanceof JdkOrderEntry) {
+          config.select(((JdkOrderEntry)orderEntry).getJdk(), true);
+        } else {
+          config.select((LibraryOrderEntry)orderEntry, true);
+        }
+      }
+    });
+  }
+
+  public boolean canNavigate() {
+    return true;
   }
 }

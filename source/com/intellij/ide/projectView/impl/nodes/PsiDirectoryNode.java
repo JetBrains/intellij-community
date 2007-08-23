@@ -84,7 +84,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
 
   public boolean canNavigate() {
     VirtualFile virtualFile = getVirtualFile();
-    return virtualFile != null && PackageUtil.isSourceOrTestRoot(virtualFile, getProject());
+    return virtualFile != null && (PackageUtil.isSourceOrTestRoot(virtualFile, getProject()) || PackageUtil.isLibraryRoot(virtualFile, getProject()));
   }
 
   public boolean canNavigateToSource() {
