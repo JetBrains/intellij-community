@@ -7,15 +7,22 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
+import com.intellij.ide.structureView.impl.java.KindSorter;
+import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
+import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -36,6 +43,8 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -47,7 +56,9 @@ public class FileStructureDialog extends DialogWrapper {
   private final Project myProject;
   private MyCommanderPanel myCommanderPanel;
   private final StructureViewModel myTreeModel;
-  private final Disposable myAuxDisposable;
+  private final StructureViewModel myBaseTreeModel;
+  private SmartTreeStructure myTreeStructure;
+  private final MyTreeActionsOwner myTreeActionsOwner;
 
   @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
@@ -56,13 +67,21 @@ public class FileStructureDialog extends DialogWrapper {
                              @Nullable Editor editor,
                              Project project,
                              Navigatable navigatable,
-                             @NotNull final Disposable auxDisposable) {
+                             @NotNull final Disposable auxDisposable,
+                             final boolean applySortAndFilter) {
     super(project, true);
     myProject = project;
     myEditor = editor;
     myNavigatable = navigatable;
-    myTreeModel = structureViewModel;
-    myAuxDisposable = auxDisposable;
+    myBaseTreeModel = structureViewModel;
+    if (applySortAndFilter) {
+      myTreeActionsOwner = new MyTreeActionsOwner();
+      myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
+    }
+    else {
+      myTreeActionsOwner = null;
+      myTreeModel = structureViewModel;
+    }
 
     PsiFile psiFile = getPsiFile(project);
 
@@ -80,13 +99,14 @@ public class FileStructureDialog extends DialogWrapper {
       }
     }
 
-    Disposer.register(myDisposable, myAuxDisposable);
+    Disposer.register(myDisposable, auxDisposable);
   }
 
   protected PsiFile getPsiFile(final Project project) {
     return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
 
+  @Nullable
   protected Border createContentPaneBorder() {
     return null;
   }
@@ -150,19 +170,19 @@ public class FileStructureDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     myCommanderPanel = new MyCommanderPanel(myProject);
-
-    AbstractTreeStructure treeStructure = new MyStructureTreeStructure();
+    myTreeStructure = new MyStructureTreeStructure();
 
     PsiFile psiFile = getPsiFile(myProject);
     StructureViewBuilder viewBuilder = psiFile.getLanguage().getStructureViewBuilder(psiFile);
     boolean showRoot =
       viewBuilder instanceof TreeBasedStructureViewBuilder && ((TreeBasedStructureViewBuilder)viewBuilder).isRootNodeShown();
-    ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, treeStructure, null, showRoot) {
+    ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, myTreeStructure, null, showRoot) {
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
 
       protected void refreshSelection() {
+        myCommanderPanel.scrollSelectionInView();
         if (myShouldNarrowDown) {
           myCommanderPanel.updateSpeedSearch();
         }
@@ -191,6 +211,29 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel.setPreferredSize(new Dimension(400, 500));
 
     JPanel panel = new JPanel(new GridBagLayout());
+
+    addNarrowDownCheckbox(panel);
+
+    if (myTreeActionsOwner != null && isInheritorFilterAvailable()) {
+      addShowInheritedCheckbox(panel);
+    }
+
+    panel.add(myCommanderPanel,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+
+    return panel;
+  }
+
+  private boolean isInheritorFilterAvailable() {
+    for(Filter filter: myBaseTreeModel.getFilters()) {
+      if (filter instanceof InheritedMembersFilter) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void addNarrowDownCheckbox(final JPanel panel) {
     final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.the.list.on.typing"));
     checkBox.setSelected(PropertiesComponent.getInstance().isTrueValue(ourPropertyKey));
     checkBox.addChangeListener(new ChangeListener() {
@@ -207,15 +250,39 @@ public class FileStructureDialog extends DialogWrapper {
     });
 
     checkBox.setFocusable(false);
-
     panel.add(checkBox,
-              new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
-    panel.add(myCommanderPanel,
-              new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-
-    return panel;
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
+  private void addShowInheritedCheckbox(final JPanel panel) {
+    final JCheckBox chkIncludeInherited = new JCheckBox();
+    chkIncludeInherited.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        myTreeActionsOwner.setIncludeInherited(chkIncludeInherited.isSelected());
+        myTreeStructure.rebuildTree();
+        ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
+        if (builder != null) {
+          builder.updateList(true);
+        }
+      }
+    });
+    chkIncludeInherited.setFocusable(false);
+    String text = IdeBundle.message("file.structure.toggle.show.inherited");
+    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
+    if (shortcuts.length > 0) {
+      text += " (" + KeymapUtil.getShortcutText(shortcuts [0]) + ")";
+      new AnAction() {
+        public void actionPerformed(final AnActionEvent e) {
+          chkIncludeInherited.doClick();
+        }
+      }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), panel);
+    }
+    chkIncludeInherited.setText(text);
+    panel.add(chkIncludeInherited,
+                new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
+  }
+
+  @Nullable
   protected JComponent createSouthPanel() {
     return null;
   }
@@ -291,6 +358,13 @@ public class FileStructureDialog extends DialogWrapper {
     public void updateSpeedSearch() {
       myListSpeedSearch.refreshSelection();
     }
+
+    public void scrollSelectionInView() {
+      int selectedIndex = myList.getSelectedIndex();
+      if (selectedIndex >= 0) {
+        ListScrollingUtil.ensureIndexIsVisible(myList, selectedIndex, 0);
+      }
+    }
   }
 
   private class MyStructureTreeStructure extends SmartTreeStructure {
@@ -331,6 +405,10 @@ public class FileStructureDialog extends DialogWrapper {
       return filteredElements.toArray(new Object[filteredElements.size()]);
     }
 
+    public void rebuildTree() {
+      getChildElements(getRootElement());   // for some reason necessary to rebuild tree correctly
+      super.rebuildTree();
+    }
   }
 
   private static SpeedSearchBase.SpeedSearchComparator createSpeedSearchComparator() {
@@ -347,5 +425,21 @@ public class FileStructureDialog extends DialogWrapper {
         }
       }
     };
+  }
+
+  private static class MyTreeActionsOwner implements TreeActionsOwner {
+    private boolean myIncludeInherited = false;
+
+    public void setIncludeInherited(final boolean includeInherited) {
+      myIncludeInherited = includeInherited;
+    }
+
+    public void setActionActive(String name, boolean state) {
+    }
+
+    public boolean isActionActive(String name) {
+      return (!myIncludeInherited && InheritedMembersFilter.ID.equals(name)) ||
+             KindSorter.ID.equals(name) || Sorter.ALPHA_SORTER_ID.equals(name);
+    }
   }
 }

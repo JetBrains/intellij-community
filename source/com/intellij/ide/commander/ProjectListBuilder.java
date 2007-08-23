@@ -98,10 +98,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
             myUpdateAlarm.addRequest(this, 300, ModalityState.stateForComponent(myList));
             return;
           }
-          updateList();
-          if ( shouldRefreshSelection ) {
-            refreshSelection ();
-          }
+          updateList(shouldRefreshSelection);
         }
       }
     };
@@ -112,6 +109,13 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
     else {
       request.run();
+    }
+  }
+
+  public void updateList(final boolean shouldRefreshSelection) {
+    updateList();
+    if (shouldRefreshSelection) {
+      refreshSelection();
     }
   }
 

@@ -33,16 +33,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  *
  */
-public class ViewStructureAction extends AnAction implements TreeActionsOwner {
+public class ViewStructureAction extends AnAction {
   public ViewStructureAction() {
     setEnabledInModalContext(true);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
-    final FileEditor fileEditor = DataKeys.FILE_EDITOR.getData(dataContext);
+    Project project = e.getData(DataKeys.PROJECT);
+    final Editor editor = e.getData(DataKeys.EDITOR);
+    final FileEditor fileEditor = e.getData(DataKeys.FILE_EDITOR);
     if (editor == null) return;
     if (fileEditor == null) return;
 
@@ -53,7 +52,7 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    Navigatable navigatable = DataKeys.NAVIGATABLE.getData(dataContext);
+    Navigatable navigatable = e.getData(DataKeys.NAVIGATABLE);
     DialogWrapper dialog = createDialog(psiFile, editor, project, navigatable, fileEditor);
     if (dialog != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -100,12 +99,12 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner {
     return createStructureViewBasedDialog(structureViewModel, editor, project, navigatable, auxDisposable);
   }
 
-  public FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
-                                                            final Editor editor,
-                                                            final Project project,
-                                                            final Navigatable navigatable,
-                                                            final @NotNull Disposable alternativeDisposable) {
-    return new FileStructureDialog(new TreeModelWrapper(structureViewModel, this), editor, project, navigatable, alternativeDisposable);
+  public static FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
+                                                                   final Editor editor,
+                                                                   final Project project,
+                                                                   final Navigatable navigatable,
+                                                                   final @NotNull Disposable alternativeDisposable) {
+    return new FileStructureDialog(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
   }
 
   public void update(AnActionEvent event) {
@@ -135,13 +134,5 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner {
     }
     presentation.setEnabled(
       virtualFile.getFileType().getStructureViewBuilder(virtualFile, project) != null );
-  }
-
-  public void setActionActive(String name, boolean state) {
-
-  }
-
-  public boolean isActionActive(String name) {
-    return InheritedMembersFilter.ID.equals(name) || KindSorter.ID.equals(name) || Sorter.ALPHA_SORTER_ID.equals(name);
   }
 }

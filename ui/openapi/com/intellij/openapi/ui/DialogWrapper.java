@@ -183,6 +183,7 @@ public abstract class DialogWrapper {
    * retirn <code>null</code> in overridden methods. In this case there will be no
    * any border in the content pane.
    */
+  @Nullable
   protected Border createContentPaneBorder() {
     return ourDefaultBorder;
   }
@@ -192,6 +193,7 @@ public abstract class DialogWrapper {
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
    * and <code>createJButtonForAction(Action)</code> methods to construct the panel.
    */
+  @Nullable
   protected JComponent createSouthPanel() {
     Action[] actions = createActions();
     Action[] leftSideActions = createLeftSideActions();

@@ -138,7 +138,8 @@ public class OpenFileDescriptor implements Navigatable {
     DataContext ctx = DataManager.getInstance().getDataContext();
     Editor e = NAVIGATE_IN_EDITOR.getData(ctx);
     if (e == null) return false;
-
+    if (FileDocumentManager.getInstance().getFile(e.getDocument()) != myFile) return false;
+    
     navigateIn(e);
     return true;
   }
