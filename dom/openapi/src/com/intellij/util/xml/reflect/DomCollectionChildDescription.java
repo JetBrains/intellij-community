@@ -5,6 +5,7 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JavaMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -23,10 +24,10 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
   @Nullable
   JavaMethod getAdderMethod();
 
-  DomElement addValue(DomElement parent);
-  DomElement addValue(DomElement parent, int index);
-  DomElement addValue(DomElement parent, Type type);
-  DomElement addValue(DomElement parent, Type type, int index);
+  DomElement addValue(@NotNull DomElement parent);
+  DomElement addValue(@NotNull DomElement parent, int index);
+  DomElement addValue(@NotNull DomElement parent, Type type);
+  DomElement addValue(@NotNull DomElement parent, Type type, int index);
 
   @Nullable
   JavaMethod getClassAdderMethod();

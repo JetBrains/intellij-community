@@ -73,7 +73,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return getFirst(myAdderMethods);
   }
 
-  public DomElement addValue(DomElement element) {
+  public DomElement addValue(@NotNull DomElement element) {
     return addChild(element, getType(), Integer.MAX_VALUE);
   }
 
@@ -88,15 +88,15 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     }
   }
 
-  public DomElement addValue(DomElement element, int index) {
+  public DomElement addValue(@NotNull DomElement element, int index) {
     return addChild(element, getType(), index);
   }
 
-  public DomElement addValue(DomElement parent, Type type) {
+  public DomElement addValue(@NotNull DomElement parent, Type type) {
     return addValue(parent, type, Integer.MAX_VALUE);
   }
 
-  public final DomElement addValue(DomElement parent, Type type, int index) {
+  public final DomElement addValue(@NotNull DomElement parent, Type type, int index) {
     return addChild(parent, type, index);
   }
 
