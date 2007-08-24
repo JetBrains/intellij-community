@@ -241,7 +241,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return nodeForElement != null && isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
   }
 
-  protected static void assertListsEqual(DefaultListModel model, String expected) {
+  protected static void assertListsEqual(ListModel model, String expected) {
     assertEquals(expected, IdeaTestUtil.print(model));
   }
 

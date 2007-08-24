@@ -61,7 +61,7 @@ public class CommanderPanel extends JPanel {
   private JPanel myTitlePanel;
   private JLabel myParentTitle;
   protected final JList myList;
-  private final DefaultListModel myModel;
+  private final MyModel myModel;
 
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
   protected final ListSpeedSearch myListSpeedSearch;
@@ -79,7 +79,7 @@ public class CommanderPanel extends JPanel {
   public CommanderPanel(final Project project, final boolean enablePopupMenu) {
     super(new BorderLayout());
     myProject = project;
-    myModel = new DefaultListModel();
+    myModel = new MyModel();
     myList = new JList(myModel);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -186,7 +186,7 @@ public class CommanderPanel extends JPanel {
     return myList;
   }
 
-  public final DefaultListModel getModel() {
+  public final AbstractListBuilder.Model getModel() {
     return myModel;
   }
 
@@ -590,6 +590,45 @@ public class CommanderPanel extends JPanel {
 
     public PsiDirectory getOrChooseDirectory() {
       return PackageUtil.getOrChooseDirectory(this);
+    }
+  }
+  
+  private static final class MyModel extends AbstractListBuilder.Model {
+    final List myElements = new ArrayList();
+    public void removeAllElements() {
+      int index1 = myElements.size()-1;
+      myElements.clear();
+      if (index1 >= 0) {
+          fireIntervalRemoved(this, 0, index1);
+      }
+    }
+
+    public void addElement(final Object obj) {
+      int index = myElements.size();
+      myElements.add(obj);
+      fireIntervalAdded(this, index, index);
+    }
+
+    public void replaceElements(final List newElements) {
+      removeAllElements();
+      myElements.addAll(newElements);
+      fireIntervalAdded(this, 0, newElements.size());
+    }
+
+    public Object[] toArray() {
+      return myElements.toArray(new Object[myElements.size()]);
+    }
+
+    public int indexOf(final Object o) {
+      return myElements.indexOf(o);
+    }
+
+    public int getSize() {
+      return myElements.size();
+    }
+
+    public Object getElementAt(final int index) {
+      return myElements.get(index);
     }
   }
 }

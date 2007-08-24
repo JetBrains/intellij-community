@@ -22,7 +22,7 @@ import java.util.List;
 public abstract class AbstractListBuilder {
   protected final Project myProject;
   protected final JList myList;
-  private final DefaultListModel myModel;
+  private final Model myModel;
   protected final AbstractTreeStructure myTreeStructure;
   private final Comparator myComparator;
 
@@ -31,10 +31,22 @@ public abstract class AbstractListBuilder {
   private AbstractTreeNode myCurrentParent = null;
   private final AbstractTreeNode myShownRoot;
 
+  public static abstract class Model extends AbstractListModel {
+    public abstract void removeAllElements();
+
+    public abstract void addElement(final Object node);
+    
+    public abstract void replaceElements(final List newElements);
+
+    public abstract Object[] toArray();
+
+    public abstract int indexOf(final Object o);
+  }
+  
   AbstractListBuilder(
     final Project project,
     final JList list,
-    final DefaultListModel model,
+    final Model model,
     final AbstractTreeStructure treeStructure,
     final Comparator comparator,
     final boolean showRoot
@@ -91,7 +103,7 @@ public abstract class AbstractListBuilder {
 
       buildList(element);
 
-      for (int i = 0; i < myModel.size(); i++) {
+      for (int i = 0; i < myModel.getSize(); i++) {
         if (myModel.getElementAt(i) instanceof NodeDescriptor) {
           final NodeDescriptor desc = (NodeDescriptor)myModel.getElementAt(i);
           final Object elem = desc.getElement();
@@ -120,7 +132,7 @@ public abstract class AbstractListBuilder {
 
       buildList(parentElement);
 
-      for (int i = 0; i < myModel.size(); i++) {
+      for (int i = 0; i < myModel.getSize(); i++) {
         if (myModel.getElementAt(i) instanceof AbstractTreeNode) {
           final AbstractTreeNode desc = (AbstractTreeNode)myModel.getElementAt(i);
           if (desc.getValue() instanceof StructureViewTreeElement) {
@@ -146,8 +158,7 @@ public abstract class AbstractListBuilder {
 
   public final void enterElement(final PsiElement element, VirtualFile file) {
     try {
-      AbstractTreeNode lastPathNode = null;
-      lastPathNode = goDownToElement(element, file);
+      AbstractTreeNode lastPathNode = goDownToElement(element, file);
       if (lastPathNode == null) return;
       buildList(lastPathNode);
       ListScrollingUtil.ensureSelectionExists(myList);
@@ -202,8 +213,8 @@ public abstract class AbstractListBuilder {
   }
 
   private AbstractTreeNode performDeepSearch(Object[] nodes, Object element) {
-    for (int i = 0; i < nodes.length; i++) {
-      AbstractTreeNode node = (AbstractTreeNode)nodes[i];
+    for (Object node1 : nodes) {
+      AbstractTreeNode node = (AbstractTreeNode)node1;
       if (nodeIsAcceptableForElement(node, element)) return node;
       AbstractTreeNode nodeResult = performDeepSearch(getChildren(node), element);
       if (nodeResult != null) {
@@ -216,15 +227,6 @@ public abstract class AbstractListBuilder {
   protected abstract boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element);
 
   protected abstract List<AbstractTreeNode> getAllAcceptableNodes(Object[] childElements, VirtualFile file);
-
-  private NodeDescriptor createDescriptor(final Object element) {
-    final Object parent = myTreeStructure.getParentElement(element);
-    NodeDescriptor parentDescriptor = null;
-    if (parent != null) {
-      parentDescriptor = createDescriptor(parent);
-    }
-    return myTreeStructure.createDescriptor(element, parentDescriptor);
-  }
 
   public void dispose() {
     myIsDisposed = true;
@@ -344,15 +346,17 @@ public abstract class AbstractListBuilder {
     else {
       Collections.sort(resultDescriptors, IndexComparator.INSTANCE);
     }
-
-    myModel.removeAllElements();
+    
     if (shouldAddTopElement()) {
-      myModel.addElement(new TopLevelNode(myProject, parentDescriptor.getValue()));
+      final List elems = new ArrayList();
+      elems.add(new TopLevelNode(myProject, parentDescriptor.getValue()));
+      elems.addAll(resultDescriptors);
+      myModel.replaceElements(elems);
     }
-    for (int i = 0; i < resultDescriptors.size(); i++) {
-      final NodeDescriptor descriptor = (NodeDescriptor)resultDescriptors.get(i);
-      myModel.addElement(descriptor);
+    else {
+      myModel.replaceElements(resultDescriptors);
     }
+    
     restoreSelection(selection);
     updateParentTitle();
   }
@@ -378,7 +382,7 @@ public abstract class AbstractListBuilder {
     for (int i = 0; i < selectedIndices.length; i++) {
       final int index = selectedIndices[i];
       if (index < myList.getModel().getSize()) {
-        final Object o = myModel.get(index);
+        final Object o = myModel.getElementAt(index);
         selectedObjects.add(o);
         if (index == leadSelectionIndex) {
           leadSelection = o;
@@ -408,7 +412,7 @@ public abstract class AbstractListBuilder {
       }
 
       if (selectionModel.getMinSelectionIndex() == -1) {
-        final int toSelect = Math.min(selection.myLeadSelectionIndex, myModel.size() - 1);
+        final int toSelect = Math.min(selection.myLeadSelectionIndex, myModel.getSize() - 1);
         if (toSelect >= 0) {
           myList.setSelectedIndex(toSelect);
         }
