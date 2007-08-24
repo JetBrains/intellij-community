@@ -53,6 +53,7 @@ import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.ui.errorView.impl.ErrorViewFactoryImpl;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.Function;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -152,6 +153,10 @@ public class PeerFactoryImpl extends PeerFactory {
 
     public void installListSpeedSearch(JList list) {
       new ListSpeedSearch(list);
+    }
+
+    public void installListSpeedSearch(final JList list, final Function<Object, String> elementTextDelegate) {
+      new ListSpeedSearch(list, elementTextDelegate);
     }
 
     public void installEditSourceOnEnterKeyHandler(JTree tree) {

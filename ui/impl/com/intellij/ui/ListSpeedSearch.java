@@ -1,10 +1,19 @@
 package com.intellij.ui;
 
+import com.intellij.util.Function;
+
 import javax.swing.*;
 
 public class ListSpeedSearch extends SpeedSearchBase<JList> {
+  private Function<Object, String> myElementTextDelegate;
+
   public ListSpeedSearch(JList list) {
     super(list);
+  }
+
+  public ListSpeedSearch(final JList component, final Function<Object, String> elementTextDelegate) {
+    super(component);
+    myElementTextDelegate = elementTextDelegate;
   }
 
   protected void selectElement(Object element, String selectedText) {
@@ -30,6 +39,9 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
   }
 
   protected String getElementText(Object element) {
+    if (myElementTextDelegate != null) {
+      return myElementTextDelegate.fun(element);
+    }
     return element.toString();
   }
 }

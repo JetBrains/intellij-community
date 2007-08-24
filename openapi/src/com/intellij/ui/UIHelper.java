@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.treetable.TreeTable;
 
@@ -48,6 +49,8 @@ public interface UIHelper {
   void installTreeSpeedSearch(JTree tree);
 
   void installListSpeedSearch(JList list);
+
+  void installListSpeedSearch(JList list, Function<Object, String> elementTextDelegate);
 
   void installEditSourceOnEnterKeyHandler(JTree tree);
 
