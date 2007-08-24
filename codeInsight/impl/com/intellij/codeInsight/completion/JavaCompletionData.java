@@ -32,6 +32,7 @@ public class JavaCompletionData extends CompletionData{
     variant.includeScopeClass(PsiVariable.class);
     variant.includeScopeClass(PsiClass.class);
     variant.includeScopeClass(PsiFile.class);
+    variant.includeScopeClass(PsiParameterList.class);
 
     variant.addCompletion(new ModifierChooser());
 
@@ -265,11 +266,10 @@ public class JavaCompletionData extends CompletionData{
     {
 // parameters list completion
       final CompletionVariant variant = new CompletionVariant(
-        new LeftNeighbour(new OrFilter(new TextFilter(new String[]{"(", ",", PsiKeyword.FINAL}),
+        new LeftNeighbour(new OrFilter(new TextFilter("(", ",", PsiKeyword.FINAL),
                                        new SuperParentFilter(new ClassFilter(PsiAnnotation.class)))));
       variant.includeScopeClass(PsiParameterList.class, true);
       addPrimitiveTypes(variant);
-      variant.addCompletion(PsiKeyword.FINAL);
       variant.addCompletionFilterOnElement(new ClassFilter(PsiClass.class));
       registerVariant(variant);
     }
@@ -402,7 +402,7 @@ public class JavaCompletionData extends CompletionData{
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, true);
       variant.addCompletion(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH);
-      variant.addCompletion(PsiKeyword.FINALLY, TailType.createSimpleTailType('{'));
+      variant.addCompletion(PsiKeyword.FINALLY, TailTypes.FINALLY_LBRACE);
       variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
@@ -421,7 +421,7 @@ public class JavaCompletionData extends CompletionData{
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, false);
       variant.addCompletion(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH);
-      variant.addCompletion(PsiKeyword.FINALLY, TailType.createSimpleTailType('{'));
+      variant.addCompletion(PsiKeyword.FINALLY, TailTypes.FINALLY_LBRACE);
       //variant.addCompletionFilter(new FalseFilter());
       registerVariant(variant);
     }
@@ -434,7 +434,7 @@ public class JavaCompletionData extends CompletionData{
       )));
       variant.includeScopeClass(PsiParameter.class);
 
-      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
+      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)));
       variant.addCompletionFilterOnElement(new ClassFilter(PsiPackage.class));
 
       registerVariant(variant);

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.simple.BracesTailType;
 import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
@@ -96,6 +97,11 @@ public class TailTypes {
 
     protected boolean isSpaceWithinParentheses(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
       return styleSettings.SPACE_WITHIN_FOR_PARENTHESES;
+    }
+  };
+  public static final TailType FINALLY_LBRACE = new BracesTailType() {
+    protected boolean isSpaceBeforeLBrace(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_FINALLY_LBRACE;
     }
   };
 
