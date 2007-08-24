@@ -112,9 +112,9 @@ public class NameSuggestionsField extends JPanel {
     return this;
   }
 
-  public Component getFocusableComponent() {
+  public JComponent getFocusableComponent() {
     if(myComponent instanceof JComboBox) {
-      return ((JComboBox) myComponent).getEditor().getEditorComponent();
+      return (JComponent) ((JComboBox) myComponent).getEditor().getEditorComponent();
     } else {
       return myComponent;
     }
