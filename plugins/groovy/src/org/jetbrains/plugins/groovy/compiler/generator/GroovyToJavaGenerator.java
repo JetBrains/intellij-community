@@ -18,6 +18,9 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -609,8 +612,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     /************* body **********/
     text.append("{\n");
-    PsiParameterList list = constructor.getParameterList();
-    PsiParameter[] parameters = list.getParameters();
 
     GrConstructorInvocation grConstructorInvocation = constrDefinition.getConstructorInvocation();
     if (grConstructorInvocation != null && grConstructorInvocation.isSuperCall()) {
@@ -618,27 +619,63 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("super");
       text.append("(");
 
-      int i1 = 0;
-      while (i1 < parameters.length) {
+      //TODO: check NamedArguments
+      GrArgumentList grArgumentList = grConstructorInvocation.getArgumentList();
 
-        if (i1 > 0) text.append(", ");
+      String initValueToText;
+      if (grArgumentList != null) {
+        GrExpression[] expressions = grArgumentList.getExpressionArguments();
 
-        PsiParameter grParameter = parameters[i1];
-        PsiType type = grParameter.getType();
-        String initValueToText;
+        for (int i1 = 0; i1 < expressions.length; i1++) {
+          if (i1 > 0) text.append(", ");
 
-        String typeText = computeTypeText(type);
-        if (typesToInitialValues.containsKey(typeText))
-          initValueToText = typesToInitialValues.get(typeText);
-        else
-          initValueToText = "null";
+          GrExpression expression = expressions[i1];
+          PsiType argType = expression.getType();
 
-        text.append(initValueToText);
-        i1++;
+          String typeText = computeTypeText(argType);
+          if (typesToInitialValues.containsKey(typeText))
+            initValueToText = typesToInitialValues.get(typeText);
+          else
+            initValueToText = "null";
+
+          text.append(initValueToText);
+          i1++;
+        }
       }
       text.append(")");
       text.append(";");
     }
+
+//      PsiClassType[] extendsListTypes = constructor.getContainingClass().getExtendsListTypes();
+//      assert extendsListTypes.length == 1;
+//
+//      PsiClassType superType = extendsListTypes[0];
+//      PsiClass superClass = superType.resolve();
+//      if (superClass != null) {
+//        superClass.getConstructors();
+//      }
+
+//      int i1 = 0;
+//      while (i1 < parameters.length) {
+//
+//        if (i1 > 0) text.append(", ");
+//
+//        PsiParameter grParameter = parameters[i1];
+//        PsiType type = grParameter.getType();
+//        String initValueToText;
+//
+//        String typeText = computeTypeText(type);
+//        if (typesToInitialValues.containsKey(typeText))
+//          initValueToText = typesToInitialValues.get(typeText);
+//        else
+//          initValueToText = "null";
+//
+//        text.append(initValueToText);
+//        i1++;
+//      }
+//      text.append(")");
+//      text.append(";");
+//    }
     text.append("\n}");
     text.append("\n");
   }
