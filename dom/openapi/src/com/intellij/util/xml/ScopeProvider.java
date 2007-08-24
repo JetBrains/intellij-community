@@ -24,12 +24,14 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class ScopeProvider {
+
   /**
    * @param element element
    * @return scope to search within.
    * For uniqueness checking should return element, whose direct children names will be compared. Basically it's parameter element's parent: ParentScopeProvider.
    * For resolving should return element, whose all children will be searched  
    */
-  public abstract @Nullable DomElement getScope(@NotNull DomElement element);
+  @Nullable
+  public abstract DomElement getScope(@NotNull DomElement element);
 
 }

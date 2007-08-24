@@ -17,6 +17,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
@@ -24,10 +26,15 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SoftFactoryMap;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -103,6 +110,74 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     final DomElement reference = context.getInvocationElement();
     final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
     return (Collection<T>)myResolveCache.get(scope).getValue().values();
+  }
+
+  @Nullable
+  protected DomCollectionChildDescription getChildDescription(final List<DomElement> contexts) {
+
+    if (contexts.size() == 0) {
+        return null;
+    }
+    final DomElement context = contexts.get(0);
+    final DomGenericInfo genericInfo = context.getGenericInfo();
+    final List<? extends DomCollectionChildDescription> descriptions = genericInfo.getCollectionChildrenDescriptions();
+    for (DomCollectionChildDescription description : descriptions) {
+      final Type type = description.getType();
+      if (type.equals(myClass)) {
+        return description;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  protected DomElement chooseParent(final List<DomElement> contexts) {
+    if (contexts.size() == 0) {
+        return null;
+    }
+    return contexts.get(0);
+  }
+
+  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+    final DomElement element = context.getInvocationElement();
+    final GenericDomValue value = ((GenericDomValue)element).createStableCopy();
+    final String newName = value.getStringValue();
+    assert newName != null;
+    final DomElement scope = value.getManager().getResolvingScope(value);
+    final List<DomElement> contexts = ModelMergerUtil.getImplementations(scope);
+    final LocalQuickFix fix = createFix(newName, contexts);
+    if (fix != null) {
+      return new LocalQuickFix[] { fix };
+    }
+    return LocalQuickFix.EMPTY_ARRAY;
+
+  }
+
+  @Nullable
+  public LocalQuickFix createFix(final String newName, final List<DomElement> parents) {
+    final DomCollectionChildDescription childDescription = getChildDescription(parents);
+    if (newName.length() > 0 && childDescription != null) {
+      return new LocalQuickFix() {
+        @NotNull
+        public String getName() {
+          return DomBundle.message("create.new.element", ElementPresentationManager.getTypeName(myClass), newName);
+        }
+
+        @NotNull
+        public String getFamilyName() {
+          return DomBundle.message("quick.fixes.family");
+        }
+
+        public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+          final DomElement parent = chooseParent(parents);
+          final DomElement domElement = childDescription.addValue(parent);
+          final GenericDomValue nameDomElement = domElement.getGenericInfo().getNameDomElement(domElement);
+          assert nameDomElement != null;
+          nameDomElement.setStringValue(newName);
+        }
+      };
+    }
+    return null;
   }
 
 }
