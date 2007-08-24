@@ -215,6 +215,7 @@ public class ValueHint {
   private void resize(final TreePath path, DebuggerTree tree) {
     if (myPopup == null || !myPopup.isVisible()) return;
     final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
+    if (popupWindow == null) return;
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
