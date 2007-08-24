@@ -110,12 +110,14 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
     c = (c == null) ? Color.GRAY : c;
 
     final Color color = ColorChooser.chooseColor(editor.getComponent(), CodeInsightBundle.message("intention.color.chooser.dialog"), c);
-    final PsiManager manager = expression.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
-    final PsiExpression newCall = factory.createExpressionFromText(
-      "new java.awt.Color(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")", expression);
-    final PsiElement insertedElement = expression.replace(newCall);
-    final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-    codeStyleManager.reformat(insertedElement);
+    if (color != null) {
+      final PsiManager manager = expression.getManager();
+      final PsiElementFactory factory = manager.getElementFactory();
+      final PsiExpression newCall = factory.createExpressionFromText(
+        "new java.awt.Color(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")", expression);
+      final PsiElement insertedElement = expression.replace(newCall);
+      final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      codeStyleManager.reformat(insertedElement);
+    }
   }
 }
