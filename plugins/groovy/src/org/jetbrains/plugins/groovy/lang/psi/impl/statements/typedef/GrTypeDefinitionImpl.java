@@ -124,9 +124,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         PsiFile file = getContainingFile();
         if (file instanceof GroovyFile) {
           GroovyFile groovyFile = (GroovyFile) file;
-          
-          return groovyFile.getPackageName().length() >0 ?
-              "(" + groovyFile.getPackageName() +")" :
+
+          return groovyFile.getPackageName().length() > 0 ?
+              "(" + groovyFile.getPackageName() + ")" :
               "";
         }
         return "";
@@ -167,8 +167,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       GroovyFileImpl file = (GroovyFileImpl) parent;
       if (file.getTypeDefinitions().length == 1 && !file.isScript()) {
         file.delete();
-      }else {
-        file.getNode().removeChild(getNode());
+      } else {
+        ASTNode astNode = file.getNode();
+        if (astNode != null) {
+          astNode.removeChild(getNode());
+        }
       }
       return;
     }
@@ -203,14 +206,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       if (name == null) {
         for (List<PsiMethod> list : methodsMap.values()) {
           for (PsiMethod method : list) {
-            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY)) return false;
+            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
+              return false;
           }
         }
       } else {
         List<PsiMethod> byName = methodsMap.get(name);
         if (byName != null) {
           for (PsiMethod method : byName) {
-            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY)) return false;
+            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
+              return false;
           }
         }
 
@@ -627,8 +632,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @Nullable
-  public Icon getIcon(int flags)
-  {
+  public Icon getIcon(int flags) {
     Icon icon = getIconInner();
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
     return ElementBase.createLayeredIcon(icon, ElementBase.getFlags(this, isLocked));

@@ -225,12 +225,12 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
 
     // GSP-specific Element types
-    if (GROOVY_EXPR_CODE.equals(elem)) return new GrExprInjectionImpl();
-    if (GROOVY_DECLARATION.equals(elem)) return new GrDeclarationImpl();
+    if (GROOVY_EXPR_CODE.equals(elem)) return new GrGspExprInjectionImpl();
+    if (GROOVY_DECLARATION.equals(elem)) return new GrGspDeclarationHolderImpl();
 
-    if (GSP_CLASS.equals(elem)) return new GspClassImpl(node);
-    if (GSP_RUN_METHOD.equals(elem)) return new GspRunMethodImpl(node);
-    if (GSP_RUN_BLOCK.equals(elem)) return new GspRunBlockImpl(node);
+    if (GSP_CLASS.equals(elem)) return new GrGspClassImpl(node);
+    if (GSP_RUN_METHOD.equals(elem)) return new GrGspRunMethodImpl(node);
+    if (GSP_RUN_BLOCK.equals(elem)) return new GrGspRunBlockImpl(node);
 
 
     return new ASTWrapperPsiElement(node);
