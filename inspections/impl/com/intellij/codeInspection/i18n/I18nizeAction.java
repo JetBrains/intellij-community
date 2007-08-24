@@ -10,6 +10,7 @@ import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +34,12 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
 
   public void update(AnActionEvent e) {
     boolean active = getHandler(e) != null;
-    e.getPresentation().setEnabled(active);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(active);
+    }
+    else {
+      e.getPresentation().setEnabled(active);
+    }
   }
 
   @Nullable
