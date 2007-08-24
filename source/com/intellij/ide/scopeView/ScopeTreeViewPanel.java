@@ -19,6 +19,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -347,13 +348,20 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           setIcon(node.getClosedIcon());
         }
         final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        TextAttributes textAttributes = null;
+        TextAttributes textAttributes = regularAttributes.toTextAttributes();
         final String locationString;
         final PsiElement psiElement = node.getPsiElement();
+        final boolean isCut = CopyPasteManager.getInstance().isCutElement(psiElement);
         final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProject);
         if (node instanceof DirectoryNode) {
           final DirectoryNode directoryNode = (DirectoryNode)node;
-          append(directoryNode.getDirName(), regularAttributes);
+          if (!isCut) {
+            append(directoryNode.getDirName(), regularAttributes);
+          }
+          else {
+            textAttributes.setForegroundColor(CopyPasteManager.CUT_COLOR);
+            append(directoryNode.getDirName(), SimpleTextAttributes.fromTextAttributes(textAttributes));
+          }
           final String informationString =
             psiElement != null ? coverageDataManager.getDirCoverageInformationString((PsiDirectory)psiElement) : null;
           locationString = informationString != null ? informationString : directoryNode.getLocationString();
@@ -363,10 +371,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
             textAttributes =
               EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
           }
-          if (textAttributes == null) {
-            textAttributes = regularAttributes.toTextAttributes();
-          }
-          textAttributes.setForegroundColor(node.getStatus().getColor());
+          textAttributes.setForegroundColor(isCut ? CopyPasteManager.CUT_COLOR : node.getStatus().getColor());
           append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
           if (psiElement instanceof PsiClass) {
             locationString = coverageDataManager.getClassCoverageInformationString(((PsiClass)psiElement).getQualifiedName());
@@ -508,7 +513,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
 
     private void processRenamed(final NamedScope scope, final PsiFile file) {
-      if (!file.isValid()) return;
+      if (!file.isValid() || !file.isPhysical()) return;
       final PackageSet packageSet = scope.getValue();
       LOG.assertTrue(packageSet != null);
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
