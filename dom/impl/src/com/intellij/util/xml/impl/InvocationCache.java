@@ -29,13 +29,13 @@ public class InvocationCache {
     addCoreInvocations(Object.class);
     try {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
-        public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
           return handler.getXmlElement();
         }
       });
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttributeValue")), new Invocation() {
         @Nullable
-        public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
           final XmlAttribute attribute = (XmlAttribute)handler.getXmlElement();
           return attribute != null ? attribute.getValueElement() : null;
         }
@@ -43,7 +43,7 @@ public class InvocationCache {
       final JavaMethod javaMethod =
               JavaMethod.getMethod(GenericValue.class, JavaMethodSignature.getSignature(DomUIFactory.GET_VALUE_METHOD));
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericDomValue.class.getMethod("getConverter")), new Invocation() {
-        public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
           try {
             return handler.getScalarConverter(javaMethod);
           }
@@ -66,7 +66,7 @@ public class InvocationCache {
     for (final Method method : aClass.getDeclaredMethods()) {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
-          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
+          public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
             return _equals(handler.getProxy(), args[0]);
           }
           private boolean _equals(final DomElement proxy, final Object o) {
@@ -84,14 +84,14 @@ public class InvocationCache {
       }
       else if ("hashCode".equals(method.getName())) {
         ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
-          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
+          public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
             return handler.hashCode();
           }
         });
       }
       else {
         ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
-          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
+          public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
             return method.invoke(handler, args);
           }
         });

@@ -1,19 +1,11 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -23,8 +15,6 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.URL;
 
 /**
  * @author cdr
@@ -59,9 +49,10 @@ public class LineTooltipRenderer implements TooltipRenderer {
           return;
         } 
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          if (e.getURL() == null) {
-            showDescription(e.getDescription(), editor, pane);
-          } else {
+          for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
+            if (handlerEP.handleLink(e.getDescription(), editor, pane)) return;
+          }
+          if (e.getURL() != null) {
             BrowserUtil.launchBrowser(e.getURL().toString());
           }
         }
@@ -123,7 +114,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return hint;
   }
 
-  private static JEditorPane initPane(@NonNls String text) {
+  static JEditorPane initPane(@NonNls String text) {
     text = "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
     final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, text);
     pane.setEditable(false);
@@ -137,38 +128,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
     pane.setBackground(HintUtil.INFORMATION_COLOR);
     pane.setOpaque(true);
     return pane;
-  }
-
-  private static void showDescription(final String shortName, final Editor editor, final JEditorPane tooltip) {
-    final InspectionProfileEntry tool =
-      ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName);
-    if (tool == null) return;
-    final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
-    String description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
-    if (descriptionUrl != null) {
-      try {
-        description = ResourceUtil.loadText(descriptionUrl);
-      }
-      catch (IOException e) {
-        //show under construction
-      }
-    }
-    final JEditorPane pane = initPane(description);
-    pane.select(0, 0);
-    pane.setPreferredSize(new Dimension(3 * tooltip.getPreferredSize().width /2, 200));
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
-    scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, scrollPane).createPopup();
-    pane.addMouseListener(new MouseAdapter(){
-      public void mousePressed(final MouseEvent e) {
-        final Component contentComponent = editor.getContentComponent();
-        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
-        popup.cancel();
-        contentComponent.dispatchEvent(newMouseEvent);
-      }
-    });
-    popup.showUnderneathOf(tooltip);
   }
 
   public void addBelow(String text) {

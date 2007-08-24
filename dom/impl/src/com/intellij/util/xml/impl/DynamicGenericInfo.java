@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.XmlName;
@@ -128,19 +129,31 @@ public class DynamicGenericInfo implements DomGenericInfo {
     return myStaticGenericInfo.getNameDomElement(element);
   }
 
+  @Nullable
+  public CustomDomChildrenDescriptionImpl getCustomNameChildrenDescription() {
+    r.lock();
+    try {
+      checkInitialized();
+      return myStaticGenericInfo.getCustomDescription();
+    } finally{
+      r.unlock();
+    }
+  }
+
   public String getElementName(DomElement element) {
     return myStaticGenericInfo.getElementName(element);
   }
 
   @NotNull
-  public List<DomChildDescriptionImpl> getChildrenDescriptions() {
+  public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     r.lock();
     try {
       _checkInitialized();
-      final ArrayList<DomChildDescriptionImpl> list = new ArrayList<DomChildDescriptionImpl>();
+      final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
       list.addAll(myAttributes.getDescriptions());
       list.addAll(myFixeds.getDescriptions());
       list.addAll(myCollections.getDescriptions());
+      ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomDescription(), list);
       return list;
     }
     finally {
@@ -296,18 +309,18 @@ public class DynamicGenericInfo implements DomGenericInfo {
   }
 
   @Nullable
-  public final DomChildDescriptionImpl findChildrenDescription(DomInvocationHandler handler, final String localName, String namespace,
+  public final AbstractDomChildDescriptionImpl findChildrenDescription(DomInvocationHandler handler, final String localName, String namespace,
                                                                boolean attribute,
                                                                final String qName) {
-    for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
-      if (description instanceof AttributeChildDescriptionImpl == attribute) {
-        final EvaluatedXmlName xmlName = handler.createEvaluatedXmlName(description.getXmlName());
+    for (final AbstractDomChildDescriptionImpl description : getChildrenDescriptions()) {
+      if (description instanceof DomChildDescriptionImpl && description instanceof AttributeChildDescriptionImpl == attribute) {
+        final EvaluatedXmlName xmlName = handler.createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName());
         if (DomImplUtil.isNameSuitable(xmlName, localName, qName, namespace, handler)) {
           return description;
         }
       }
     }
-    return null;
+    return attribute ? null : getCustomNameChildrenDescription();
   }
 
   private static class MyCachedValueProvider implements CachedValueProvider<Object> {

@@ -23,7 +23,7 @@ class PropertyAccessorInvocation implements Invocation {
     myLastElement = myMethods.length - 1;
   }
 
-  public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     return invoke(0, handler.getProxy());
   }
 

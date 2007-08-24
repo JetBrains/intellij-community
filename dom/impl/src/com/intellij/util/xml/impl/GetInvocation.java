@@ -27,7 +27,7 @@ public class GetInvocation implements Invocation {
     myConverter = converter;
   }
 
-  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     assert handler.isValid();
     FactoryMap<Converter,CachedValue> map = handler.getUserData(DOM_VALUE_KEY);
     if (map == null) {
@@ -47,7 +47,7 @@ public class GetInvocation implements Invocation {
   }
 
   @Nullable
-  private static Object getValueInner(final DomInvocationHandler handler, Converter converter) {
+  private static Object getValueInner(final DomInvocationHandler<?> handler, Converter converter) {
     final XmlTag tag = handler.getXmlTag();
     final boolean tagNotNull = tag != null;
     final SubTag annotation = handler.getAnnotation(SubTag.class);

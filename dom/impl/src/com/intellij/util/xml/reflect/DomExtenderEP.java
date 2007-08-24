@@ -3,21 +3,19 @@
  */
 package com.intellij.util.xml.reflect;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 /**
  * @author peter
  */
-public class DomExtenderEP implements PluginAware {
+public class DomExtenderEP extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.reflect.DomExtenderEP");
   public static final ExtensionPointName<DomExtenderEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.extender");
 
@@ -28,18 +26,14 @@ public class DomExtenderEP implements PluginAware {
 
   private Class<?> myDomClass;
   private DomExtender myExtender;
-  private PluginDescriptor myPluginDescriptor;
 
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
-    myPluginDescriptor = pluginDescriptor;
-  }
 
   @Nullable
   public DomExtensionsRegistrarImpl extend(@NotNull final Project project, @NotNull final DomElement element, @Nullable DomExtensionsRegistrarImpl registrar) {
     if (myExtender == null) {
       try {
         myDomClass = findClass(domClassName);
-        myExtender = (DomExtender<?>) new ConstructorInjectionComponentAdapter(extenderClassName, findClass(extenderClassName)).getComponentInstance(project.getPicoContainer());
+        myExtender = instantiate(extenderClassName, project.getPicoContainer());
       }
       catch(Exception e) {
         LOG.error(e);
@@ -54,11 +48,5 @@ public class DomExtenderEP implements PluginAware {
     }
     return registrar;
   }
-
-  private Class<?> findClass(final String className) throws ClassNotFoundException {
-    return Class.forName(className, true,
-                                          myPluginDescriptor == null ? getClass().getClassLoader()  : myPluginDescriptor.getPluginClassLoader());
-  }
-
 
 }

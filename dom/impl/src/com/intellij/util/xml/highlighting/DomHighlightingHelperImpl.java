@@ -11,9 +11,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
@@ -32,7 +32,7 @@ import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.impl.GenericDomValueReference;
 import com.intellij.util.xml.impl.GenericValueReferenceProvider;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.xml.XmlBundle;
@@ -86,13 +86,13 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (element.getXmlElement() != null) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       final DomGenericInfo info = element.getGenericInfo();
-      for (final DomChildrenDescription description : info.getChildrenDescriptions()) {
+      for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
         if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
           final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
             list.add(holder.createProblem(element, childDescription,
-                                          IdeBundle.message("child.tag.0.should.be.defined", description.getXmlElementName())));
+                                          IdeBundle.message("child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
           }
         }
       }

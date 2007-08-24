@@ -15,7 +15,7 @@ public class GetFixedChildInvocation implements Invocation {
     myPair = pair;
   }
 
-  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     DomInvocationHandler.r.lock();
     try {
       handler._checkInitialized(myPair.first);

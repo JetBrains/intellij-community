@@ -7,10 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NullableFactory;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -18,18 +15,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.*;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.events.TagValueChangeEvent;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -49,7 +43,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author peter                  
  */
-public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
+public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl> extends UserDataHolderBase implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -59,14 +53,14 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   private final EvaluatedXmlName myTagName;
-  private final DomChildDescriptionImpl myChildDescription;
+  private final T myChildDescription;
   private final Converter myGenericConverter;
   private XmlTag myXmlTag;
 
   private XmlFile myFile;
   private DomFileElementImpl myRoot;
   private final DomElement myProxy;
-  private final Set<DomChildDescriptionImpl> myInitializedChildren = new THashSet<DomChildDescriptionImpl>();
+  private final Set<AbstractDomChildDescriptionImpl> myInitializedChildren = new THashSet<AbstractDomChildDescriptionImpl>();
   private final Map<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler> myFixedChildren =
     new THashMap<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler>();
   private final Map<AttributeChildDescriptionImpl, AttributeChildInvocationHandler> myAttributeChildren = new THashMap<AttributeChildDescriptionImpl, AttributeChildInvocationHandler>();
@@ -80,7 +74,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       return myGenericConverter;
     }
   };
-  private final ConcurrentFactoryMap<JavaMethod, Converter> myScalarConverters = new ConcurrentFactoryMap<JavaMethod, Converter>() {
+  private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
     protected Converter create(final JavaMethod method) {
       final Type returnType = method.getGenericReturnType();
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
@@ -100,7 +94,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
                                  final XmlTag tag,
                                  final DomInvocationHandler parent,
                                  final EvaluatedXmlName tagName,
-                                 final DomChildDescriptionImpl childDescription,
+                                 final T childDescription,
                                  final DomManagerImpl manager) {
     myManager = manager;
     myParent = parent;
@@ -288,7 +282,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   protected final XmlTag createChildTag(final EvaluatedXmlName tagName) {
-    final String localName = tagName.getLocalName();
+    final String localName = tagName.getXmlName().getLocalName();
     if (localName.contains(":")) {
       try {
         return myXmlTag.getManager().getElementFactory().createTagFromText("<" + localName + "/>");
@@ -368,7 +362,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   protected abstract XmlTag setEmptyXmlTag();
 
   protected void addRequiredChildren() {
-    for (final DomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
+    for (final AbstractDomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
       if (description instanceof DomAttributeChildDescription) {
         final Required required = description.getAnnotation(Required.class);
 
@@ -395,7 +389,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   @NotNull
   public final String getXmlElementName() {
-    return myTagName.getLocalName();
+    return myTagName.getXmlName().getLocalName();
   }
 
   @NotNull
@@ -410,7 +404,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   public void acceptChildren(DomElementVisitor visitor) {
     final DomElement element = getProxy();
-    for (final DomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
+    for (final AbstractDomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
       for (final DomElement value : description.getValues(element)) {
         value.accept(visitor);
       }
@@ -436,8 +430,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myScalarConverters.get(method);
   }
 
-  @Nullable
-  protected final DomChildDescriptionImpl getChildDescription() {
+  protected final T getChildDescription() {
     return myChildDescription;
   }
 
@@ -623,7 +616,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myType.toString() + " @" + hashCode();
   }
 
-  final void _checkInitialized(final DomChildDescriptionImpl description) {
+  final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
     if (myInitializedChildren.contains(description)) return;
 
     if (!isValid()) {
@@ -635,22 +628,25 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     try {
       if (myInitializedChildren.contains(description)) return;
 
-      final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
       if (description instanceof AttributeChildDescriptionImpl) {
         final AttributeChildDescriptionImpl attributeChildDescription = (AttributeChildDescriptionImpl)description;
+        final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(attributeChildDescription.getXmlName());
         myAttributeChildren.put(attributeChildDescription, new AttributeChildInvocationHandler(description.getType(), myXmlTag, this,
                                                                                       evaluatedXmlName, attributeChildDescription, myManager));
       }
       else if (description instanceof FixedChildDescriptionImpl) {
         final FixedChildDescriptionImpl fixedChildDescription = (FixedChildDescriptionImpl)description;
+        final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(fixedChildDescription.getXmlName());
         final int count = fixedChildDescription.getCount();
         for (int i = 0; i < count; i++) {
           getOrCreateIndexedChild(findSubTag(myXmlTag, evaluatedXmlName, i), evaluatedXmlName, Pair.create(fixedChildDescription, i));
         }
       }
-      else if (myXmlTag != null && description instanceof CollectionChildDescriptionImpl) {
-        for (XmlTag subTag : DomImplUtil.findSubTags(myXmlTag, evaluatedXmlName, this)) {
-          new CollectionElementInvocationHandler(description.getType(), evaluatedXmlName, subTag, (CollectionChildDescriptionImpl)description, this);
+      else if (myXmlTag != null && description instanceof AbstractCollectionChildDescription) {
+        final AbstractCollectionChildDescription childDescription = (AbstractCollectionChildDescription)description;
+        for (XmlTag subTag : childDescription.getSubTags(this)) {
+          new CollectionElementInvocationHandler(description.getType(), subTag,
+                                                 childDescription, this);
         }
       }
       myInitializedChildren.add(description);
@@ -764,7 +760,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     checkInitialized(description);
     final EvaluatedXmlName name = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = addEmptyTag(name, index);
-    final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, name, tag, description, this);
+    final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this);
     final DomElement element = handler.getProxy();
     myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
     handler.addRequiredChildren();
@@ -814,7 +810,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
-  public final boolean isInitialized(final DomChildDescriptionImpl qname) {
+  public final boolean isInitialized(final AbstractDomChildDescriptionImpl qname) {
     r.lock();
     try {
       return myInitializedChildren.contains(qname);
@@ -839,14 +835,10 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   @NotNull
   public final EvaluatedXmlName createEvaluatedXmlName(final XmlName xmlName) {
-    String namespaceKey = xmlName.getNamespaceKey();
-    if (namespaceKey == null) {
-      namespaceKey = getXmlName().getNamespaceKey();
-    }
-    return new EvaluatedXmlName(xmlName, namespaceKey);
+    return getXmlName().evaluateChildName(xmlName);
   }
 
-  final List<? extends DomElement> getCollectionChildren(final CollectionChildDescriptionImpl description) {
+  public List<? extends DomElement> getCollectionChildren(final AbstractDomChildDescriptionImpl description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
     assert isValid() : "dom element is not valid";
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
@@ -854,8 +846,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     r.lock();
     try {
       _checkInitialized(description);
-      final EvaluatedXmlName xmlName = createEvaluatedXmlName(description.getXmlName());
-      final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, xmlName, this);
+
+      final List<XmlTag> subTags = tagsGetter.fun(this);
       if (subTags.isEmpty()) return Collections.emptyList();
 
       List<DomElement> elements = new ArrayList<DomElement>(subTags.size());

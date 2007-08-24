@@ -13,7 +13,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -173,7 +173,7 @@ public class ModelMergerImpl implements ModelMerger {
       public Object invokeMethod(final JavaMethod method, final DomElement proxy, final Object[] args, final List<DomElement> implementations)
         throws IllegalAccessException, InvocationTargetException {
         final DomElementVisitor visitor = (DomElementVisitor)args[0];
-        for (final DomChildrenDescription description : implementations.get(0).getGenericInfo().getChildrenDescriptions()) {
+        for (final AbstractDomChildrenDescription description : implementations.get(0).getGenericInfo().getChildrenDescriptions()) {
           for (final DomElement value : description.getValues(proxy)) {
             value.accept(visitor);
           }

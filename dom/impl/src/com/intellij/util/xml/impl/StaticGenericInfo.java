@@ -39,6 +39,7 @@ public class StaticGenericInfo {
   @Nullable private JavaMethod myNameValueGetter;
   private boolean myValueElement;
   private boolean myInitialized;
+  private CustomDomChildrenDescriptionImpl myCustomDescription;
 
   public StaticGenericInfo(final Class aClass, final DomManagerImpl domManager) {
     myClass = aClass;
@@ -48,6 +49,11 @@ public class StaticGenericInfo {
   public final synchronized void buildMethodMaps() {
     if (!myInitialized) {
       final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myDomManager, myClass);
+      final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
+      if (customChildrenGetter != null) {
+        myCustomDescription = new CustomDomChildrenDescriptionImpl(customChildrenGetter);
+      }
+
       myAttributeChildrenMethods = builder.getAttributes();
       myAttributes.addDescriptions(myAttributeChildrenMethods.values());
 
@@ -120,6 +126,15 @@ public class StaticGenericInfo {
       return new GetCompositeCollectionInvocation(qnames);
     }
 
+    if (myCustomDescription != null && myCustomDescription.getGetterMethod().equals(method)) {
+      return new Invocation() {
+        @Nullable
+        public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+          return myCustomDescription.getValues(handler);
+        }
+      };
+    }
+
     final Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>> pair = myCompositeCollectionAdditionMethods.get(signature);
     if (pair != null) {
       return new AddToCompositeCollectionInvocation(pair.first, pair.second, method.getGenericReturnType());
@@ -129,7 +144,7 @@ public class StaticGenericInfo {
     if (description != null) {
       return new GetCollectionChildInvocation(description);
     }
-
+                                                      
     description = myCollectionChildrenAdditionMethods.get(signature);
     if (description != null) {
       return new AddChildInvocation(getTypeGetter(method), getIndexGetter(method), description, description.getType());
@@ -206,6 +221,11 @@ public class StaticGenericInfo {
   public GenericDomValue getNameDomElement(DomElement element) {
     Object o = getNameObject(element);
     return o instanceof GenericDomValue ? (GenericDomValue)o : null;
+  }
+
+  @Nullable
+  public final CustomDomChildrenDescriptionImpl getCustomDescription() {
+    return myCustomDescription;
   }
 
   @Nullable

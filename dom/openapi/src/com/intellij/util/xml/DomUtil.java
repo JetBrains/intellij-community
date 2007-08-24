@@ -177,6 +177,18 @@ public class DomUtil {
     return result;
   }
 
+  public static <T> List<T> getDefinedChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
+    final List<T> result = new SmartList<T>();
+    parent.acceptChildren(new DomElementVisitor() {
+      public void visitDomElement(final DomElement element) {
+        if (type.isInstance(element) && element.getXmlElement() != null) {
+          result.add((T)element);
+        }
+      }
+    });
+    return result;
+  }
+
   @Nullable
   public static DomElement findDuplicateNamedValue(DomElement element, String newName) {
     return ElementPresentationManager.findByName(getIdentitySiblings(element), newName);

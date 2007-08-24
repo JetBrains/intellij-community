@@ -16,15 +16,13 @@ import java.util.List;
 /**
  * @author peter
  */
-public class CollectionElementInvocationHandler extends DomInvocationHandler{
+public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl>{
   private final String myNamespace;
 
-  public CollectionElementInvocationHandler(final Type type,
-                                            final EvaluatedXmlName name,
-                                            @NotNull final XmlTag tag,
-                                            final CollectionChildDescriptionImpl childDescription,
+  public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
+                                            final AbstractCollectionChildDescription description,
                                             final DomInvocationHandler parent) {
-    super(type, tag, parent, name, childDescription, parent.getManager());
+    super(type, tag, parent, description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager());
     myNamespace = tag.getNamespace();
   }
 
@@ -53,6 +51,8 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   public final void undefineInternal() {
     final DomElement parent = getParent();
     final XmlTag tag = getXmlTag();
+    if (tag == null) return;
+
     final String namespace = tag.getNamespace();
     detach(true);
     deleteTag(tag);
@@ -60,21 +60,21 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   }
 
   public DomElement createPathStableCopy() {
+    final AbstractDomChildDescriptionImpl description = getChildDescription();
     final DomElement parent = getParent();
+    assert parent != null;
     final DomElement parentCopy = parent.createStableCopy();
-    final EvaluatedXmlName tagName = getXmlName();
-    final int index = DomImplUtil.findSubTags(parent.getXmlTag(), tagName, this).indexOf(getXmlTag());
+    final int index = description.getValues(parent).indexOf(getProxy());
     return getManager().createStableValue(new Factory<DomElement>() {
       @Nullable
       public DomElement create() {
-        if (!parentCopy.isValid()) return null;
-        final XmlTag tag = parentCopy.getXmlTag();
-        if (tag == null) return null;
-        final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, DomManagerImpl.getDomInvocationHandler(parentCopy));
-        if (subTags.size() <= index) {
-          return null;
+        if (parentCopy.isValid()) {
+          final List<? extends DomElement> list = description.getValues(parentCopy);
+          if (list.size() > index) {
+            return list.get(index);
+          }
         }
-        return getManager().getDomElement(subTags.get(index));
+        return null;
       }
     });
   }

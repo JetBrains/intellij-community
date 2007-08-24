@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class IndexedElementInvocationHandler extends DomInvocationHandler{
+public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
 
@@ -37,7 +37,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
 
   protected XmlTag setEmptyXmlTag() {
     final DomInvocationHandler parent = getParentHandler();
-    final FixedChildDescriptionImpl description = (FixedChildDescriptionImpl)getChildDescription();
+    final FixedChildDescriptionImpl description = getChildDescription();
     parent.createFixedChildrenTags(getXmlName(), description, myIndex);
     final XmlTag[] newTag = new XmlTag[1];
     getManager().runChange(new Runnable() {
@@ -46,7 +46,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
           final XmlTag parentTag = parent.getXmlTag();
           newTag[0] = (XmlTag)parentTag.add(parent.createChildTag(getXmlName()));
           if (getParentHandler().getFixedChildrenClass(description) != null) {
-            getManager().getTypeChooserManager().getTypeChooser(getChildDescription().getType()).distinguishTag(newTag[0], getDomElementType());
+            getManager().getTypeChooserManager().getTypeChooser(description.getType()).distinguishTag(newTag[0], getDomElementType());
           }
         }
         catch (IncorrectOperationException e) {
@@ -63,9 +63,10 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     if (parentTag == null) return;
 
     final EvaluatedXmlName xmlElementName = getXmlName();
-    parent.checkInitialized(getChildDescription());
+    final FixedChildDescriptionImpl description = getChildDescription();
+    parent.checkInitialized(description);
 
-    final int totalCount = ((FixedChildDescriptionImpl)getChildDescription()).getCount();
+    final int totalCount = description.getCount();
 
     final List<XmlTag> subTags = DomImplUtil.findSubTags(parentTag, xmlElementName, this);
     if (subTags.size() <= myIndex) {
@@ -98,14 +99,14 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    final T annotation = ((FixedChildDescriptionImpl)getChildDescription()).getAnnotation(myIndex, annotationClass);
+    final T annotation = getChildDescription().getAnnotation(myIndex, annotationClass);
     if (annotation != null) return annotation;
 
     return getRawType().getAnnotation(annotationClass);
   }
 
   public final DomElement createPathStableCopy() {
-    final DomFixedChildDescription description = (DomFixedChildDescription)getChildDescription();
+    final DomFixedChildDescription description = getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
     return getManager().createStableValue(new Factory<DomElement>() {
       public DomElement create() {

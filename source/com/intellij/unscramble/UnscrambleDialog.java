@@ -32,6 +32,7 @@ import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -155,18 +156,22 @@ public class UnscrambleDialog extends DialogWrapper{
   private void pasteTextFromClipboard() {
     String text = getTextInClipboard();
     if (text != null) {
-      final String text1 = text;
-      Runnable runnable = new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              myEditor.getDocument().insertString(0, StringUtil.convertLineSeparators(text1));
-            }
-          });
-        }
-      };
-      CommandProcessor.getInstance().executeCommand(myProject, runnable, "", this);
+      setText(text);
     }
+  }
+
+  public final void setText(@NotNull final String text) {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final Document document = myEditor.getDocument();
+            document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
+          }
+        });
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, runnable, "", this);
   }
 
   public static String getTextInClipboard() {

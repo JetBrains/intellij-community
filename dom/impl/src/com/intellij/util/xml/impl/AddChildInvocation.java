@@ -28,7 +28,7 @@ public class AddChildInvocation implements Invocation{
     myType = type;
   }
 
-  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     final Type type = myClassGetter.fun(args);
     final DomElement domElement = handler.addCollectionChild(myDescription, type, myIndexGetter.fun(args));
     final DomManagerImpl manager = handler.getManager();

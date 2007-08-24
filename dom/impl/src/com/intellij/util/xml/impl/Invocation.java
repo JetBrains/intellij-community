@@ -10,6 +10,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Invocation {
   @Nullable
-  Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable;
+  Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable;
 
 }

@@ -14,6 +14,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,10 +57,10 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       }
     }, this);
 
-    for (final DomChildrenDescription description : domElement.getGenericInfo().getChildrenDescriptions()) {
+    for (final AbstractDomChildrenDescription description : domElement.getGenericInfo().getChildrenDescriptions()) {
       final JComponent boundComponent = getBoundComponent(description);
       if (boundComponent != null) {
-        if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
+        if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(((DomFixedChildDescription)description).getType())) {
           if ((description.getValues(domElement)).size() == 1) {
             final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
               public GenericDomValue create() {
@@ -87,14 +88,16 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     addComponent(control);
   }
 
-  private JComponent getBoundComponent(final DomChildrenDescription description) {
+  private JComponent getBoundComponent(final AbstractDomChildrenDescription description) {
     for (Field field : getClass().getDeclaredFields()) {
       try {
         field.setAccessible(true);
 
-        if (convertFieldName(field.getName(), description).equals(description.getXmlElementName()) && field.get(this) instanceof JComponent)
-        {
-          return (JComponent)field.get(this);
+        if (description instanceof DomChildrenDescription) {
+          final DomChildrenDescription childrenDescription = (DomChildrenDescription)description;
+          if (convertFieldName(field.getName(), childrenDescription).equals(childrenDescription.getXmlElementName()) && field.get(this) instanceof JComponent) {
+            return (JComponent)field.get(this);
+          }
         }
       }
       catch (IllegalAccessException e) {

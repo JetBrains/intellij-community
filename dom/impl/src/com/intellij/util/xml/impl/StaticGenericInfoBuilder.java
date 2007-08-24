@@ -50,6 +50,7 @@ public class StaticGenericInfoBuilder {
 
   private boolean myValueElement;
   private JavaMethod myNameValueGetter;
+  private JavaMethod myCustomChildrenGetter;
 
   public StaticGenericInfoBuilder(final DomManagerImpl domManager, final Class<? extends DomElement> aClass) {
     final DomManagerImpl domManager1 = domManager;
@@ -240,6 +241,12 @@ public class StaticGenericInfoBuilder {
 
     final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
     if (isDomElement(type)) {
+      final CustomChildren customChildren = method.getAnnotation(CustomChildren.class);
+      if (customChildren != null) {
+        myCustomChildrenGetter = method;
+        return true;
+      }
+
       final SubTagsList subTagsList = method.getAnnotation(SubTagsList.class);
       if (subTagsList != null) {
         myCompositeCollectionGetters.put(signature, subTagsList.value());
@@ -300,6 +307,10 @@ public class StaticGenericInfoBuilder {
   private DomNameStrategy getNameStrategy(boolean isAttribute) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myClass), isAttribute);
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
+  }
+
+  final JavaMethod getCustomChildrenGetter() {
+    return myCustomChildrenGetter;
   }
 
   final Map<JavaMethodSignature, AttributeChildDescriptionImpl> getAttributes() {

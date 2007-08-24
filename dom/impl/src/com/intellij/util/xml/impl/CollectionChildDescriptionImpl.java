@@ -7,9 +7,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,13 +25,19 @@ import java.util.List;
 /**
  * @author peter
  */
-public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription {
+public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription, AbstractCollectionChildDescription {
   private final Collection<JavaMethod> myGetterMethods;
   private final Collection<JavaMethod> myAdderMethods;
   private final Collection<JavaMethod> myIndexedAdderMethods;
   private final Collection<JavaMethod> myClassAdderMethods;
   private final Collection<JavaMethod> myIndexedClassAdderMethods;
   private final Collection<JavaMethod> myInvertedIndexedClassAdderMethods;
+  private final NotNullFunction<DomInvocationHandler, List<XmlTag>> myTagsGetter = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
+    @NotNull
+    public List<XmlTag> fun(final DomInvocationHandler handler) {
+      return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler);
+    }
+  };
   @NonNls private static final String ES = "es";
 
   public CollectionChildDescriptionImpl(final XmlName tagName,
@@ -51,6 +59,10 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   public JavaMethod getClassAdderMethod() {
     return getFirst(myClassAdderMethods);
+  }
+
+  public NotNullFunction<DomInvocationHandler, List<XmlTag>> getTagsGetter() {
+    return myTagsGetter;
   }
 
   @Nullable
@@ -114,7 +126,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
-      return handler.getCollectionChildren(this);
+      return handler.getCollectionChildren(this, myTagsGetter);
     }
     final JavaMethod getterMethod = getGetterMethod();
     if (getterMethod == null) {
@@ -123,7 +135,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
         public Collection<? extends DomElement> fun(final DomElement domElement) {
           final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
           assert handler != null : domElement;
-          return handler.getCollectionChildren(CollectionChildDescriptionImpl.this);
+          return handler.getCollectionChildren(CollectionChildDescriptionImpl.this, myTagsGetter);
         }
       });
     }
@@ -208,5 +220,13 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   public Collection<JavaMethod> getInvertedIndexedClassAdderMethods() {
     return myInvertedIndexedClassAdderMethods;
+  }
+
+  public List<XmlTag> getSubTags(final DomInvocationHandler handler) {
+    return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler);
+  }
+
+  public EvaluatedXmlName createEvaluatedXmlName(final DomInvocationHandler parent, final XmlTag childTag) {
+    return parent.createEvaluatedXmlName(getXmlName());
   }
 }

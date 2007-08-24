@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +117,7 @@ public class DomImplUtil {
     });
   }
 
-  private static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler) {
+  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler) {
     return isNameSuitable(handler.createEvaluatedXmlName(name), tag, handler);
   }
 
@@ -129,7 +130,7 @@ public class DomImplUtil {
                                         final String qName,
                                         final String namespace,
                                         final DomInvocationHandler handler) {
-    final String localName1 = evaluatedXmlName.getLocalName();
+    final String localName1 = evaluatedXmlName.getXmlName().getLocalName();
     return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(handler, namespace);
   }
 
@@ -213,5 +214,26 @@ public class DomImplUtil {
   @Nullable
   public static XmlName createXmlName(@NotNull final String name, final JavaMethod method) {
     return createXmlName(name, method.getGenericReturnType(), method);
+  }
+
+  public static List<XmlTag> getCustomSubTags(final XmlTag tag, final DomInvocationHandler handler) {
+    final DynamicGenericInfo info = handler.getGenericInfo();
+    final Set<XmlName> usedNames = new THashSet<XmlName>();
+    for (final CollectionChildDescriptionImpl description : info.getCollectionChildrenDescriptions()) {
+      usedNames.add(description.getXmlName());
+    }
+    for (final FixedChildDescriptionImpl description : info.getFixedChildrenDescriptions()) {
+      usedNames.add(description.getXmlName());
+    }
+    return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
+      public boolean value(final XmlTag tag) {
+        for (final XmlName name : usedNames) {
+          if (isNameSuitable(name, tag, handler)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 }

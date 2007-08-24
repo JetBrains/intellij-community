@@ -23,7 +23,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public class AttributeChildInvocationHandler extends DomInvocationHandler {
+public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
   private boolean myWasDefined;
 

@@ -4,8 +4,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.xml.XmlTag;
 
 import java.lang.reflect.Type;
@@ -25,7 +23,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
     myType = type;
   }
 
-  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       handler.checkInitialized(qname);
     }
@@ -64,7 +62,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
         newTag = (XmlTag)tag.addAfter(emptyTag, lastTag);
       }
 
-      return new CollectionElementInvocationHandler(myType, evaluatedXmlName, newTag, myMainDescription, handler).getProxy();
+      return new CollectionElementInvocationHandler(myType, newTag, myMainDescription, handler).getProxy();
     }
     finally {
       manager.setChanging(b);

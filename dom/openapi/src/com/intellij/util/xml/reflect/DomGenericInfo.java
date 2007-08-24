@@ -22,7 +22,7 @@ public interface DomGenericInfo {
   String getElementName(DomElement element);
 
   @NotNull
-  List<? extends DomChildrenDescription> getChildrenDescriptions();
+  List<? extends AbstractDomChildrenDescription> getChildrenDescriptions();
 
   @NotNull
   List<? extends DomFixedChildDescription> getFixedChildrenDescriptions();
@@ -66,4 +66,6 @@ public interface DomGenericInfo {
   @Nullable
   GenericDomValue getNameDomElement(DomElement element);
 
+  @Nullable
+  CustomDomChildrenDescription getCustomNameChildrenDescription();
 }

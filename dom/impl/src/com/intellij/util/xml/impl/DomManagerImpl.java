@@ -36,7 +36,7 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -488,7 +488,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (parent == null) return null;
 
     final DynamicGenericInfo info = parent.getGenericInfo();
-    final DomChildrenDescription childDescription = info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
+    final AbstractDomChildrenDescription childDescription = info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
     if (childDescription == null) return null;
 
     childDescription.getValues(parent.getProxy());

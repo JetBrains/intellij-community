@@ -61,6 +61,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     }
 
     @Nullable
+    public CustomDomChildrenDescription getCustomNameChildrenDescription() {
+      return null;
+    }
+
+    @Nullable
     public String getElementName(DomElement element) {
       return null;
     }
@@ -125,7 +130,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
-  private final EvaluatedXmlName myRootTagName;
+  private final EvaluatedXmlNameImpl myRootTagName;
   private final DomManagerImpl myManager;
   private WeakReference<DomRootInvocationHandler> myRootHandler;
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
@@ -138,7 +143,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
-                               final EvaluatedXmlName rootTagName,
+                               final EvaluatedXmlNameImpl rootTagName,
                                final DomManagerImpl manager) {
     myFile = file;
     myRootElementClass = rootElementClass;
@@ -165,7 +170,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     final XmlDocument document = myFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
-      if (tag != null && myRootTagName.getLocalName().equals(tag.getLocalName()) && myRootTagName.isNamespaceAllowed(this, tag.getNamespace())) {
+      if (tag != null && myRootTagName.getXmlName().getLocalName().equals(tag.getLocalName()) && myRootTagName.isNamespaceAllowed(this, tag.getNamespace())) {
         return tag;
       }
     }
