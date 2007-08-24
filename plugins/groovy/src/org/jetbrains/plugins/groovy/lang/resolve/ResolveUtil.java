@@ -22,6 +22,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -48,15 +50,23 @@ public class ResolveUtil {
       if (!run.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
       lastParent = run;
       run = run.getParent();
+
+      // Little hack for GSP declaration holders
+      if (run instanceof GrGspDeclarationHolder) {
+        while (run != null && !(run instanceof GrGspClass)) {
+          run = run.getParent();
+          lastParent = run;
+        }
+      }
     }
 
     return true;
   }
-                                  
+
   public static boolean processChildren(PsiElement element, PsiScopeProcessor processor,
                                         PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
-    while(run != null) {
+    while (run != null) {
       if (!run.processDeclarations(processor, substitutor, null, place)) return false;
       run = run.getPrevSibling();
     }
@@ -78,7 +88,7 @@ public class ResolveUtil {
     if (element instanceof PsiVariable) return PROPERTY;
     if (element instanceof GrReferenceExpression) return PROPERTY;
 
-    else if (element instanceof PsiMethod) return  METHOD;
+    else if (element instanceof PsiMethod) return METHOD;
 
     else return CLASS_OR_PACKAGE;
   }
@@ -116,7 +126,7 @@ public class ResolveUtil {
     return processDefaultMethods(type, processor, project, new HashSet<String>());
   }
 
-  private static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project,  Set<String> visited) {
+  private static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project, Set<String> visited) {
     String qName = rawCanonicalText(type);
 
     if (qName != null) {
@@ -157,7 +167,7 @@ public class ResolveUtil {
   }
 
   public static PsiClass findListClass(PsiManager manager, GlobalSearchScope resolveScope) {
-      return manager.findClass("java.util.List", resolveScope);
+    return manager.findClass("java.util.List", resolveScope);
   }
 
   public static GrVariable resolveDuplicateLocalVariable(GrVariable variable) {

@@ -50,7 +50,7 @@ public class CompleteReferenceExpression {
     } else {
       type = qualifier.getType();
     }
-    
+
     if (type instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType) type).resolve();
       if (clazz != null) {

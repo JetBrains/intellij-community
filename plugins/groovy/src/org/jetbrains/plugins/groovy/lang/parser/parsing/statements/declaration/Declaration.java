@@ -103,6 +103,7 @@ public class Declaration implements GroovyElementTypes {
           && Character.isLowerCase(builder.getTokenText().charAt(0)) &&
           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
         //call expression
+        declMarker.rollbackTo();
         return WRONGWAY;
       }
 
