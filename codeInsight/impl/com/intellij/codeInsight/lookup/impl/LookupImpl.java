@@ -40,7 +40,7 @@ import java.util.*;
 import java.util.List;
 
 public class LookupImpl extends LightweightHint implements Lookup {
-  private static final int MAX_PREFERRED_COUNT = 7;
+  private static final int MAX_PREFERRED_COUNT = 5;
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
   static final Object ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
