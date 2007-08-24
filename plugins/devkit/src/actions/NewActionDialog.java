@@ -28,6 +28,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.peer.PeerFactory;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,6 +123,11 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
           }
           myActionList.setListData(realActions.toArray());
         }
+      }
+    });
+    PeerFactory.getInstance().getUIHelper().installListSpeedSearch(myGroupList, new Function<Object, String>() {
+      public String fun(final Object o) {
+        return ActionManager.getInstance().getId((AnAction) o);
       }
     });
 
