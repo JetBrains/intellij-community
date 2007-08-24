@@ -28,6 +28,10 @@ public class SafeDeleteAction extends BaseRefactoringAction {
     return true;
   }
 
+  protected boolean isAvailableOnElementInEditor(final PsiElement element) {
+    return SafeDeleteProcessor.validElement(element);
+  }
+
   public RefactoringActionHandler getHandler(DataContext dataContext) {
     return new SafeDeleteHandler();
   }
