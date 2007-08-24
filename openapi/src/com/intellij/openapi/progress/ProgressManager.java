@@ -60,7 +60,7 @@ public abstract class ProgressManager {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(Runnable process,
-                                                              String progressTitle,
+                                                              @Nls String progressTitle,
                                                               boolean canBeCanceled,
                                                               Project project);
 

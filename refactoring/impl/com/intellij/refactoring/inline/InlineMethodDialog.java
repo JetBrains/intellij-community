@@ -15,14 +15,17 @@ public class InlineMethodDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
   private PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
+  private final boolean myAllowInlineThisOnly;
 
   private final PsiMethod myMethod;
 
-  public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor) {
+  public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor,
+                            final boolean allowInlineThisOnly) {
     super(project, true, method);
     myMethod = method;
     myReferenceElement = ref;
     myEditor = editor;
+    myAllowInlineThisOnly = allowInlineThisOnly;
     myInvokedOnReference = ref != null;
 
     setTitle(REFACTORING_NAME);
@@ -64,7 +67,7 @@ public class InlineMethodDialog extends InlineOptionsDialog {
   }
 
   protected boolean canInlineThisOnly() {
-    return InlineMethodHandler.checkRecursive(myMethod);
+    return InlineMethodHandler.checkRecursive(myMethod) || myAllowInlineThisOnly;
   }
 
   protected boolean isInlineThis() {

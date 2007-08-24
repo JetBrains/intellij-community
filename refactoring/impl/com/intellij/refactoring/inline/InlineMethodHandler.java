@@ -3,17 +3,27 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.Processor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 class InlineMethodHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
+
+  private InlineMethodHandler() {
+  }
 
   public static void invoke(final Project project, Editor editor, PsiMethod method) {
     method = (PsiMethod)method.getNavigationElement();
@@ -29,13 +39,19 @@ class InlineMethodHandler {
       return;
     }
 
-    if (InlineMethodProcessor.checkBadReturns(method)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
-      return;
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    boolean allowInlineThisOnly = false;
+    if (InlineMethodProcessor.checkBadReturns(method) && !allUsagesAreTailCalls(method)) {
+      if (reference != null && isTailCall(reference)) {
+        allowInlineThisOnly = true;
+      }
+      else {
+        String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+        return;
+      }
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference == null && checkRecursive(method)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
@@ -70,8 +86,43 @@ class InlineMethodHandler {
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFile);
     }
     PsiJavaCodeReferenceElement refElement = reference != null ? (PsiJavaCodeReferenceElement)reference.getElement() : null;
-    InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor);
+    InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
     dialog.show();
+  }
+
+  private static boolean allUsagesAreTailCalls(final PsiMethod method) {
+    final List<PsiReference> nonTailCallUsages = new ArrayList<PsiReference>();
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
+          public boolean process(final PsiReference psiReference) {
+            ProgressManager.getInstance().checkCanceled();
+            if (!isTailCall(psiReference)) {
+              nonTailCallUsages.add(psiReference);
+              return false;
+            }
+            return true;
+          }
+        });
+      }
+    }, RefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
+    return result && nonTailCallUsages.isEmpty();
+  }
+
+  private static boolean isTailCall(final PsiReference psiReference) {
+    PsiElement element = psiReference.getElement();
+    PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    if (methodCall == null) return false;
+    if (methodCall.getParent() instanceof PsiReturnStatement) return true;
+    if (methodCall.getParent() instanceof PsiExpressionStatement) {
+      PsiStatement callStatement = (PsiStatement) methodCall.getParent();
+      PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
+      if (callerMethod != null) {
+        final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
+        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1];
+      }
+    }
+    return false;
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {
