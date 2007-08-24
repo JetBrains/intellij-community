@@ -252,6 +252,8 @@
         </group>
         <separator/>
         <action id="$SelectAll" class="com.intellij.ide.actions.SelectAllAction"/>
+        <reference ref="EditorSelectWord"/>
+        <reference ref="EditorUnSelectWord"/>
         <separator/>
         <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
         <action id="$Delete" class="com.intellij.ide.actions.DeleteAction"/>
