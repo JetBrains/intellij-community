@@ -92,11 +92,13 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
       }
 
-      private boolean isSafeToFlatten(PsiCall callExpression,
-                                      PsiMethod oldRefMethod,
-                                      PsiExpression[] arrayElements) {
-        if (arrayElements.length == 1 && PsiType.NULL.equals(arrayElements[0].getType())) return false;
-        PsiCall copy = (PsiCall) callExpression.copy();
+      private boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
+        if (arrayElements.length == 1) {
+          PsiType type = arrayElements[0].getType();
+          // change foo(new Object[]{array}) to foo(array) is not safe
+          if (PsiType.NULL.equals(type) || type instanceof PsiArrayType) return false;
+        }
+        PsiCall copy = (PsiCall)callExpression.copy();
         PsiExpressionList copyArgumentList = copy.getArgumentList();
         LOG.assertTrue(copyArgumentList != null);
         PsiExpression[] args = copyArgumentList.getExpressions();
@@ -107,7 +109,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           }
           final JavaResolveResult resolveResult = copy.resolveMethodGenerics();
           return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
-        } catch (IncorrectOperationException e) {
+        }
+        catch (IncorrectOperationException e) {
           return false;
         }
       }

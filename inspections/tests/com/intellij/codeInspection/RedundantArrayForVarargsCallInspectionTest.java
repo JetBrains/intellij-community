@@ -12,7 +12,6 @@ public class RedundantArrayForVarargsCallInspectionTest extends InspectionTestCa
     doTest("redundantArrayForVarargs/" + getTestName(true), new LocalInspectionToolWrapper(new RedundantArrayForVarargsCallInspection()),"java 1.5");
   }
 
-  public void testIDEADEV15215() throws Exception {
-    doTest();
-  }
+  public void testIDEADEV15215() throws Exception { doTest(); }
+  public void testNestedArray() throws Exception { doTest(); }
 }
