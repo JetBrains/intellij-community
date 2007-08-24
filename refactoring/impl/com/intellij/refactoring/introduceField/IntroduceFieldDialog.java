@@ -542,7 +542,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameField.getComponent();
+    return myNameField.getFocusableComponent();
   }
 
   protected void doHelpAction() {

@@ -56,7 +56,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameField.getComponent();
+    return myNameField.getFocusableComponent();
   }
 
   public String getTargetClassName() {

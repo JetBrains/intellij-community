@@ -267,7 +267,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameSuggestionsField.getComponent();
+    return myNameSuggestionsField.getFocusableComponent();
   }
 
   protected JComponent createCenterPanel() {

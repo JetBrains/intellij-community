@@ -434,7 +434,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameField.getComponent();
+    return myNameField.getFocusableComponent();
   }
 
   private class ChooseClassAction implements ActionListener {

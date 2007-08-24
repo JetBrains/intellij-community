@@ -146,7 +146,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myParameterNameField.getComponent();
+    return myParameterNameField.getFocusableComponent();
   }
 
   private PsiType getSelectedType() {
