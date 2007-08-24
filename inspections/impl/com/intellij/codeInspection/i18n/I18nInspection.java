@@ -413,7 +413,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
         if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing() &&
             manager.findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
           for(PsiModifierListOwner element: nonNlsTargets) {
-            fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
+              fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+            }
           }
         }
 

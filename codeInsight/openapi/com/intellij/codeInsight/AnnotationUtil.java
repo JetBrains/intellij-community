@@ -48,6 +48,7 @@ public class AnnotationUtil {
    * @since 5.0.1
    */
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
+  public static final String NLS = "org.jetbrains.annotations.Nls";
   public static final String PROPERTY_KEY = "org.jetbrains.annotations.PropertyKey";
   @NonNls public static final String PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER = "resourceBundle";
 
