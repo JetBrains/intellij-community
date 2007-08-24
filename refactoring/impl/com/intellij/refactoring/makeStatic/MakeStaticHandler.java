@@ -23,6 +23,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MakeStaticHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("make.method.static.title");
@@ -55,39 +56,9 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return;
 
-    final PsiClass containingClass;
-
-
-    // Checking various preconditions
-    if(member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("constructor.cannot.be.made.static"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
-      return;
-    }
-
-    if(member.getContainingClass() == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("this.member.does.not.seem.to.belong.to.any.class"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
-      return;
-    }
-    containingClass = member.getContainingClass();
-
-    if(member.hasModifierProperty(PsiModifier.STATIC)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("member.is.already.static"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
-      return;
-    }
-
-    if(member instanceof PsiMethod && member.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
-      return;
-    }
-
-    if(containingClass.getContainingClass() != null
-       && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
+    String error = validateTarget(member);
+    if (error != null) {
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, error, HelpID.MAKE_METHOD_STATIC, project);
       return;
     }
 
@@ -103,7 +74,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
       if (classRefsInMember.length > 0) {
         final PsiType type =
-                containingClass.getManager().getElementFactory().createType(containingClass);
+                member.getManager().getElementFactory().createType(member.getContainingClass());
         //TODO: callback
         String[] nameSuggestions =
                 CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;
@@ -120,5 +91,33 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
       dialog.show();
     }
+  }
+
+  @Nullable
+  public static String validateTarget(final PsiTypeParameterListOwner member) {
+    final PsiClass containingClass = member.getContainingClass();
+
+    // Checking various preconditions
+    if(member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("constructor.cannot.be.made.static"));
+    }
+
+    if(member.getContainingClass() == null) {
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("this.member.does.not.seem.to.belong.to.any.class"));
+    }
+
+    if(member.hasModifierProperty(PsiModifier.STATIC)) {
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("member.is.already.static"));
+    }
+
+    if(member instanceof PsiMethod && member.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
+    }
+
+    if(containingClass.getContainingClass() != null
+       && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
+    }
+    return null;
   }
 }

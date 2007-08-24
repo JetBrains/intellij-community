@@ -22,6 +22,10 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isEnabledOnElements(PsiElement[] elements);
 
+  protected boolean isAvailableOnElementInEditor(final PsiElement element) {
+    return true;
+  }
+
   @Nullable
   protected abstract RefactoringActionHandler getHandler(DataContext dataContext);
 
@@ -51,10 +55,12 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    presentation.setVisible(true);
+    presentation.setEnabled(true);
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(DataKeys.PROJECT);
     if (project == null) {
-      presentation.setEnabled(false);
+      disableAction(e);
       return;
     }
 
@@ -62,7 +68,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     PsiFile file = e.getData(DataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
-        presentation.setEnabled(false);
+        disableAction(e);
         return;
       }
     }
@@ -71,7 +77,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       PsiElement element = e.getData(DataKeys.PSI_ELEMENT);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
-          presentation.setEnabled(false);
+          disableAction(e);
           return;
         }
         final int offset = editor.getCaretModel().getOffset();
@@ -84,21 +90,32 @@ public abstract class BaseRefactoringAction extends AnAction {
           element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
         }
       }
-      presentation.setEnabled(element != null && !isSyntheticJsp(element) && isAvailableForLanguage(element.getLanguage()));
+      final boolean isEnabled = element != null && !isSyntheticJsp(element) && isAvailableForLanguage(element.getLanguage()) &&
+        isAvailableOnElementInEditor(element);
+      if (!isEnabled) {
+        disableAction(e);
+      }
 
     }
     else {
       if (isAvailableInEditorOnly()) {
-        presentation.setEnabled(false);
+        disableAction(e);
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
-      if (isEnabledOnDataContext(dataContext)) {
-        presentation.setEnabled(true);
+      final boolean isEnabled = isEnabledOnDataContext(dataContext) || (elements.length != 0 && isEnabledOnElements(elements));
+      if (!isEnabled) {
+        disableAction(e);
       }
-      else {
-        presentation.setEnabled(elements.length != 0 && isEnabledOnElements(elements));
-      }
+    }
+  }
+
+  private static void disableAction(final AnActionEvent e) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(false);
+    }
+    else {
+      e.getPresentation().setEnabled(false);
     }
   }
 
