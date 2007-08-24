@@ -17,6 +17,10 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiClass);
   }
 
+  protected boolean isAvailableOnElementInEditor(final PsiElement element) {
+    return element instanceof PsiMethod || element instanceof PsiClass;
+  }
+
   public RefactoringActionHandler getHandler(DataContext dataContext) {
     return new ChangeSignatureHandler();
   }

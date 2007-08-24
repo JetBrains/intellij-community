@@ -8,12 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -24,6 +22,7 @@ import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -45,7 +44,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    if (elements != null && elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
+    if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
       invoke(project, (PsiAnonymousClass)elements[0]);
     }
   }
@@ -165,7 +164,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     newExpr.replace(newClassExpression);
   }
 
-  private static PsiAnonymousClass findAnonymousClass(PsiFile file, int offset) {
+  @Nullable
+  public static PsiAnonymousClass findAnonymousClass(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     while (element != null) {
       if (element instanceof PsiAnonymousClass) {
