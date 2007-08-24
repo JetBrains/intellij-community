@@ -185,7 +185,19 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         }
 
         PsiMethod method = (PsiMethod) enclosingContext;
-        return method.hasModifierProperty(PsiModifier.STATIC);
+        if (PsiTreeUtil.isAncestor(targetClass, method, false)) {
+          do {
+            if (method.hasModifierProperty(PsiModifier.STATIC)) {
+              return true;
+            }
+            if (method.getContainingClass() == targetClass) break;
+            method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
+          }
+          while(method != null);
+        }
+        else {
+          return method.hasModifierProperty(PsiModifier.STATIC);
+        }
       } else if (enclosingContext instanceof PsiField) {
         PsiField field = (PsiField) enclosingContext;
         return field.hasModifierProperty(PsiModifier.STATIC);
