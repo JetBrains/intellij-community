@@ -1,16 +1,17 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -21,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +33,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
   private String myName = "";
 
+  @Nullable
   private static PsiType getType(final PsiParameter parameter) {
     if (parameter == null) return null;
     PsiType type = parameter.getType();
@@ -43,7 +46,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return CodeInsightBundle.message("intention.create.field.from.parameter.text", myName);
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = findParameterAtCursor(file, editor);
     if (myParameter == null) return false;
     myName = myParameter.getName();
@@ -80,6 +83,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return false;
   }
 
+  @Nullable
   static PsiParameter findParameterAtCursor(final PsiFile file, final Editor editor) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiParameterList parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameterList.class, false);
@@ -175,55 +179,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           if (methodBody == null) return;
           PsiStatement[] statements = methodBody.getStatements();
 
-          int i = 0;
-
-          Pair<PsiField, Boolean> fieldAnchor = null;
-
-          for (; i < statements.length; i++) {
-            PsiStatement psiStatement = statements[i];
-
-            if (psiStatement instanceof PsiExpressionStatement) {
-              PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
-              PsiExpression expression = expressionStatement.getExpression();
-
-              if (expression instanceof PsiMethodCallExpression) {
-                PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-                @NonNls String text = methodCallExpression.getMethodExpression().getText();
-
-                if (text.equals("super") || text.equals("this")) {
-                  continue;
-                }
-              }
-              else if (expression instanceof PsiAssignmentExpression) {
-                PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-                PsiExpression lExpression = assignmentExpression.getLExpression();
-                PsiExpression rExpression = assignmentExpression.getRExpression();
-
-                if (!(lExpression instanceof PsiReferenceExpression)) break;
-                if (!(rExpression instanceof PsiReferenceExpression)) break;
-
-                PsiReferenceExpression lReference = (PsiReferenceExpression)lExpression;
-                PsiReferenceExpression rReference = (PsiReferenceExpression)rExpression;
-
-                PsiElement lElement = lReference.resolve();
-                PsiElement rElement = rReference.resolve();
-
-                if (!(lElement instanceof PsiField) || ((PsiField)lElement).getContainingClass() != targetClass) break;
-                if (!(rElement instanceof PsiParameter)) break;
-
-                if (myParameter.getTextRange().getStartOffset() < rElement.getTextRange().getStartOffset()) {
-                  fieldAnchor = Pair.create((PsiField)lElement, Boolean.TRUE);
-                  break;
-                }
-
-                fieldAnchor = Pair.create((PsiField)lElement, Boolean.FALSE);
-
-                continue;
-              }                                       
-            }
-
-            break;
-          }
+          Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<Pair<PsiField, Boolean>>();
+          int i = findFieldAssignmentAnchor(statements, anchorRef, targetClass, myParameter);
+          Pair<PsiField, Boolean> fieldAnchor = anchorRef.get();
 
           String stmtText = fieldName + " = " + parameterName + ";";
           if (fieldName.equals(parameterName)) {
@@ -276,6 +234,60 @@ public class CreateFieldFromParameterAction implements IntentionAction {
         }
       }
     });
+  }
+
+  static int findFieldAssignmentAnchor(final PsiStatement[] statements, @Nullable final Ref<Pair<PsiField, Boolean>> anchorRef,
+                                       final PsiClass targetClass, final PsiParameter myParameter) {
+    int i = 0;
+    for (; i < statements.length; i++) {
+      PsiStatement psiStatement = statements[i];
+
+      if (psiStatement instanceof PsiExpressionStatement) {
+        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
+        PsiExpression expression = expressionStatement.getExpression();
+
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+          @NonNls String text = methodCallExpression.getMethodExpression().getText();
+
+          if (text.equals("super") || text.equals("this")) {
+            continue;
+          }
+        }
+        else if (expression instanceof PsiAssignmentExpression) {
+          PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+          PsiExpression lExpression = assignmentExpression.getLExpression();
+          PsiExpression rExpression = assignmentExpression.getRExpression();
+
+          if (!(lExpression instanceof PsiReferenceExpression)) break;
+          if (!(rExpression instanceof PsiReferenceExpression)) break;
+
+          PsiReferenceExpression lReference = (PsiReferenceExpression)lExpression;
+          PsiReferenceExpression rReference = (PsiReferenceExpression)rExpression;
+
+          PsiElement lElement = lReference.resolve();
+          PsiElement rElement = rReference.resolve();
+
+          if (!(lElement instanceof PsiField) || ((PsiField)lElement).getContainingClass() != targetClass) break;
+          if (!(rElement instanceof PsiParameter)) break;
+
+          if (myParameter.getTextRange().getStartOffset() < rElement.getTextRange().getStartOffset()) {
+            if (anchorRef != null) {
+              anchorRef.set(Pair.create((PsiField)lElement, Boolean.TRUE));
+            }
+            break;
+          }
+
+          if (anchorRef != null) {
+            anchorRef.set(Pair.create((PsiField)lElement, Boolean.FALSE));
+          }
+          continue;
+        }
+      }
+
+      break;
+    }
+    return i;
   }
 
   public boolean startInWriteAction() {

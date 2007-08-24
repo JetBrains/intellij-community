@@ -2,7 +2,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -17,10 +16,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AssignFieldFromParameterAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction");
 
+  @Nullable
   private static PsiType getType(final PsiParameter myParameter) {
     if (myParameter == null) return null;
     PsiType type = myParameter.getType();
@@ -28,7 +29,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return type;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     final PsiType type = getType(myParameter);
     PsiClass targetClass = myParameter == null ? null : PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
@@ -56,7 +57,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return CodeInsightBundle.message("intention.assign.field.from.parameter.family");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
 
@@ -93,12 +94,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
     assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(project).reformat(assignmentStmt);
     PsiStatement[] statements = methodBody.getStatements();
-    int i;
-    for (i = 0; i < statements.length; i++) {
-      PsiStatement psiStatement = statements[i];
-      if (isSuperOrThis(psiStatement)) continue;
-      break;
-    }
+    int i = CreateFieldFromParameterAction.findFieldAssignmentAnchor(statements, null, targetClass, parameter);
     PsiElement inserted;
     if (i == statements.length) {
       inserted = methodBody.add(assignmentStmt);
@@ -110,15 +106,8 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  private static boolean isSuperOrThis(final PsiStatement psiStatement) {
-    if (psiStatement instanceof PsiExpressionStatement) {
-      PsiExpression expression = ((PsiExpressionStatement)psiStatement).getExpression();
-      return HighlightUtil.isSuperOrThisMethodCall(expression);
-    }
-    return false;
-  }
-
-  private PsiField findFieldToAssign(final PsiParameter myParameter) {
+  @Nullable
+  private static PsiField findFieldToAssign(final PsiParameter myParameter) {
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(myParameter.getProject());
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
