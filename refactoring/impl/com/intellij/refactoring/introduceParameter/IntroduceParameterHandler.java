@@ -176,7 +176,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       boolean isDeleteLocalVariable = true;
       PsiExpression initializer = localVar != null && expr == null ? localVar.getInitializer() : expr;
       new IntroduceParameterProcessor(myProject, method, methodToSearchFor, initializer, expr, localVar, isDeleteLocalVariable, parameterName,
-                                      replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal, null,
+                                      replaceAllOccurences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
+                                      false, null,
                                       parametersToRemove).run();
     }
     else {

@@ -34,102 +34,103 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     super.tearDown();
   }
 
-  private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal) throws Exception {
+  private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal,
+                      final boolean generateDelegate) throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters);
+    perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   public void testNoUsages() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testSimpleUsage() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testMethodWithoutParams() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testParameterSubstitution() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testThisSubstitution() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testThisSubstitutionInQualifier() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testFieldAccess() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testMethodAccess() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testStaticFieldAccess() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testFieldWithGetterReplacement() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false, false, false);
   }
 
   public void testFieldWithInaccessibleGetterReplacement() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testWeirdQualifier() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testSuperInExpression() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testNull() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testWeirdQualifierAndParameter() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testImplicitSuperCall() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testImplicitDefaultConstructor() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testLocalVarDeclaration() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testInternalSideEffect() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testQualifiedNew() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testAnonymousClass() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testSuperWithSideEffect() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
   public void testConflictingField() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, false, false);
   }
 
   public void testParameterInFor() throws Exception {
@@ -139,43 +140,43 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
   }
 
   public void testParameterJavaDoc1() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
   }
 
   public void testParameterJavaDoc2() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
   }
 
   public void testParameterJavaDoc3() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
   }
 
   public void testParameterJavaDocBeforeVararg() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
   }
 
   public void testIncorrectScope() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, true, false);
   }
 
   public void testExpectedType() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
   }
 
   public void testRemoveParameter() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
   }
 
   public void testRemoveParameterInHierarchy() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
   }
 
   public void testRemoveParameterWithJavadoc() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
   }
 
   public void testVarargs() throws Exception {   // IDEADEV-16828
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
   public void testUseInInnerClass() throws Exception {
@@ -184,6 +185,18 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
   public void testLocalVarSelection() throws Exception {
     doTestThroughHandler();
+  }
+
+  public void testGenerateDelegate() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, true);
+  }
+
+  public void testGenerateDelegateRemoveParameter() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, true);
+  }
+
+  public void testGenerateDelegateNoArgs() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, true);
   }
 
   private void doTestThroughHandler() throws Exception {
@@ -200,7 +213,10 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
   private boolean perform(boolean replaceAllOccurences,
                           int replaceFieldsWithGetters,
                           @NonNls String parameterName,
-                          boolean searchForSuper, boolean declareFinal, final boolean removeUnusedParameters) {
+                          boolean searchForSuper,
+                          boolean declareFinal,
+                          final boolean removeUnusedParameters,
+                          final boolean generateDelegate) {
     int startOffset = myEditor.getSelectionModel().getSelectionStart();
     int endOffset = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -222,7 +238,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     new IntroduceParameterProcessor(
       myProject, method, methodToSearchFor, expr, expr, null, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
-      declareFinal, null, parametersToRemove).run();
+      declareFinal, generateDelegate, null, parametersToRemove).run();
 
     myEditor.getSelectionModel().removeSelection();
     return true;
@@ -253,6 +269,6 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
       parameterInitializer, null, localVariable, removeLocalVariable,
       localVariable.getName(), replaceAllOccurences,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
-      declareFinal, null, parametersToRemove).run();
+      declareFinal, false, null, parametersToRemove).run();
   }
 }

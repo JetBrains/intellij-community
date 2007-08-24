@@ -543,8 +543,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     final PsiMethod delegate = (PsiMethod)myChangeInfo.getMethod().copy();
     final PsiClass targetClass = myChangeInfo.getMethod().getContainingClass();
     LOG.assertTrue(!targetClass.isInterface());
-    makeEmptyBody(delegate);
-    final PsiCallExpression callExpression = addDelegatingCallTemplate(delegate);
+    makeEmptyBody(myFactory, delegate);
+    final PsiCallExpression callExpression = addDelegatingCallTemplate(delegate, myChangeInfo.newName);
     addDelegateArguments(callExpression);
     targetClass.addBefore(delegate, myChangeInfo.getMethod());
   }
@@ -564,36 +564,38 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void makeEmptyBody(final PsiMethod delegate) throws IncorrectOperationException {
+  public static void makeEmptyBody(final PsiElementFactory factory, final PsiMethod delegate) throws IncorrectOperationException {
     PsiCodeBlock body = delegate.getBody();
     if (body != null) {
-      body.replace(myFactory.createCodeBlock());
+      body.replace(factory.createCodeBlock());
     }
     else {
-      delegate.add(myFactory.createCodeBlock());
+      delegate.add(factory.createCodeBlock());
     }
     delegate.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
   }
 
-  private PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate) throws IncorrectOperationException {
+  public static PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate, final String newName) throws IncorrectOperationException {
+    Project project = delegate.getProject();
+    PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     PsiCodeBlock body = delegate.getBody();
     assert body != null;
     final PsiCallExpression callExpression;
     if (delegate.isConstructor()) {
-      PsiElement callStatement = myFactory.createStatementFromText("this();", null);
-      callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
+      PsiElement callStatement = factory.createStatementFromText("this();", null);
+      callStatement = CodeStyleManager.getInstance(project).reformat(callStatement);
       callStatement = body.add(callStatement);
       callExpression = (PsiCallExpression)((PsiExpressionStatement) callStatement).getExpression();
     } else {
       if (PsiType.VOID.equals(delegate.getReturnType())) {
-        PsiElement callStatement = myFactory.createStatementFromText(myChangeInfo.newName + "();", null);
-        callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
+        PsiElement callStatement = factory.createStatementFromText(newName + "();", null);
+        callStatement = CodeStyleManager.getInstance(project).reformat(callStatement);
         callStatement = body.add(callStatement);
         callExpression = (PsiCallExpression)((PsiExpressionStatement) callStatement).getExpression();
       }
       else {
-        PsiElement callStatement = myFactory.createStatementFromText("return " + myChangeInfo.newName + "();", null);
-        callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
+        PsiElement callStatement = factory.createStatementFromText("return " + newName + "();", null);
+        callStatement = CodeStyleManager.getInstance(project).reformat(callStatement);
         callStatement = body.add(callStatement);
         callExpression = (PsiCallExpression)((PsiReturnStatement) callStatement).getReturnValue();
       }

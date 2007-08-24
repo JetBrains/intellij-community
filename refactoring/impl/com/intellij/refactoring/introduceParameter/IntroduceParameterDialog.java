@@ -55,6 +55,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private NameSuggestionsField myParameterNameField;
   private JCheckBox myCbReplaceAllOccurences = null;
   private JCheckBox myCbDeclareFinal = null;
+  private JCheckBox myCbGenerateDelegate = null;
   private StateRestoringCheckBox myCbDeleteLocalVariable = null;
   private StateRestoringCheckBox myCbUseInitializer = null;
 
@@ -124,6 +125,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if(myIsInvokedOnDeclaration)
       return myHasInitializer;
     return myCbUseInitializer != null && myCbUseInitializer.isSelected();
+  }
+
+  private boolean isGenerateDelegate() {
+    return myCbGenerateDelegate != null && myCbGenerateDelegate.isSelected();
   }
 
   private String getParameterName() {
@@ -232,8 +237,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     RefactoringSettings settings = RefactoringSettings.getInstance();
 
     gbConstraints.gridy++;
-    myCbDeclareFinal = new NonFocusableCheckBox();
-    myCbDeclareFinal.setText(RefactoringBundle.message("declare.final"));
+    myCbDeclareFinal = new NonFocusableCheckBox(RefactoringBundle.message("declare.final"));
 
     final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myCbDeclareFinal.setSelected(settingsFinals == null ?
@@ -266,6 +270,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
         panel.add(myCbUseInitializer, gbConstraints);
       }
     }
+
+    gbConstraints.gridy++;
+    myCbGenerateDelegate = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
+    panel.add(myCbGenerateDelegate, gbConstraints);
 
     for (int i = 0; i < myParametersToRemove.length; i++) {
       PsiParameter parameter = myParametersToRemove[i];
@@ -404,8 +412,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       parameterInitializer, myExpression,
       myLocalVar, isDeleteLocalVariable,
       getParameterName(), isReplaceAllOccurences(),
-      getReplaceFieldsWithGetters(), isDeclareFinal(),
-      getSelectedType(), getParametersToRemove());
+      getReplaceFieldsWithGetters(), isDeclareFinal(), isGenerateDelegate(), getSelectedType(), getParametersToRemove());
     invokeRefactoring(processor);
     myParameterNameField.requestFocusInWindow();
   }

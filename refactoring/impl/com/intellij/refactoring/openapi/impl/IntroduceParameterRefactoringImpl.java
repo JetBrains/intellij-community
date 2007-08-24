@@ -25,7 +25,7 @@ public class IntroduceParameterRefactoringImpl extends RefactoringImpl<Introduce
     super(
       new IntroduceParameterProcessor(project, methodToReplaceIn, methodToSearchFor,
                                       parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, replaceAllOccurences,
-                                      REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, declareFinal, null, null));
+                                      REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, declareFinal, false, null, null));
   }
 
   IntroduceParameterRefactoringImpl(Project project,

@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
@@ -58,6 +59,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   private int myReplaceFieldsWithGetters;
   private final boolean myDeclareFinal;
+  private final boolean myGenerateDelegate;
   private PsiType myForcedType;
   private final TIntArrayList myParametersToRemove;
   private final PsiManager myManager;
@@ -76,6 +78,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
                                      boolean replaceAllOccurences,
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
+                                     boolean generateDelegate,
                                      PsiType forcedType,
                                      @NotNull TIntArrayList parametersToRemove) {
     super(project);
@@ -91,6 +94,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     myReplaceAllOccurences = replaceAllOccurences;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myDeclareFinal = declareFinal;
+    myGenerateDelegate = generateDelegate;
     myForcedType = forcedType;
     myManager = PsiManager.getInstance(project);
 
@@ -333,12 +337,17 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
                 changeMethodSignatureAndResolveFieldConflicts((PsiMethod)element, initializerType);
               }
             }
-            else {
+            else if (!myGenerateDelegate) {
               changeExternalUsage(usage);
             }
           }
         }
       }
+
+      if (myGenerateDelegate) {
+        generateDelegate();
+      }
+
       // Changing signature of initial method
       // (signature of myMethodToReplaceIn will be either changed now or have already been changed)
       LOG.assertTrue(initializerType.isValid());
@@ -380,6 +389,35 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException ex) {
       LOG.error(ex);
     }
+  }
+
+  private void generateDelegate() throws IncorrectOperationException {
+    final PsiMethod delegate = (PsiMethod)myMethodToReplaceIn.copy();
+    final PsiElementFactory elementFactory = myManager.getElementFactory();
+    ChangeSignatureProcessor.makeEmptyBody(elementFactory, delegate);
+    final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, delegate.getName());
+    final PsiExpressionList argumentList = callExpression.getArgumentList();
+    assert argumentList != null;
+    final PsiParameter[] psiParameters = myMethodToReplaceIn.getParameterList().getParameters();
+
+    final PsiParameter anchorParameter = getAnchorParameter(myMethodToReplaceIn);
+    if (psiParameters.length == 0) {
+      argumentList.add(myParameterInitializer);
+    }
+    else {
+      for (int i = 0; i < psiParameters.length; i++) {
+        PsiParameter psiParameter = psiParameters[i];
+        if (!myParametersToRemove.contains(i)) {
+          final PsiExpression expression = elementFactory.createExpressionFromText(psiParameter.getName(), delegate);
+          argumentList.add(expression);
+        }
+        if (psiParameter == anchorParameter) {
+          argumentList.add(myParameterInitializer);
+        }
+      }
+    }
+
+    myMethodToReplaceIn.getContainingClass().addBefore(delegate, myMethodToReplaceIn);
   }
 
   private void addDefaultConstructor(PsiClass aClass) throws IncorrectOperationException {
