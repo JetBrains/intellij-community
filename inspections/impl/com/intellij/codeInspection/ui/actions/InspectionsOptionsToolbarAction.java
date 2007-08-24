@@ -91,9 +91,9 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     final List<AnAction> result = new ArrayList<AnAction>();
     final InspectionTree tree = myView.getTree();
     final InspectionTool tool = tree.getSelectedTool();
-    LOG.assertTrue(tool != null);
+    if (tool == null) return result;
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-    LOG.assertTrue(key != null);
+    if (key == null) return result;
 
     result.add(new DisableInspectionAction(key));
 
