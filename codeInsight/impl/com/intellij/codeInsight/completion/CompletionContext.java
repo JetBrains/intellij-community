@@ -3,6 +3,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.patterns.impl.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.html.HtmlTag;
@@ -13,6 +15,8 @@ import com.intellij.psi.xml.XmlTokenType;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public class CompletionContext implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
@@ -95,13 +99,17 @@ public class CompletionContext implements Cloneable {
     if (element instanceof PsiJavaToken
         && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LPARENTH){
 
-      if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())){
+      if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())
+        || StandardPatterns.psiElement().afterLeaf(StandardPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
         lparenthOffset = element.getTextRange().getStartOffset();
         PsiElement list = element.getParent();
         PsiElement last = list.getLastChild();
         if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH){
           rparenthOffset = last.getTextRange().getStartOffset();
         }
+
+
+
         argListEndOffset = list.getTextRange().getEndOffset();
         if(element instanceof PsiExpressionList)
           hasArgs = ((PsiExpressionList)element).getExpressions().length > 0;

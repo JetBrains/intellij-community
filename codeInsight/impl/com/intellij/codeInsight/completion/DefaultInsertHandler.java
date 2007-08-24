@@ -659,11 +659,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    boolean insertSpace = endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset));
-
-    if (insertSpace){
-      document.insertString(endOffset, " ");
-    }
+    final RangeMarker toDelete = insertSpace(endOffset, document);
     String name = aClass.getName();
     document.replaceString(startOffset, endOffset, name);
     endOffset = startOffset + name.length();
@@ -695,11 +691,27 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    if (insertSpace){
-      document.deleteString(endOffset, endOffset + 1);
-    }
+    document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
 
     return newStartOffset;
+  }
+
+  public static RangeMarker insertSpace(final int endOffset, final Document document) {
+    final CharSequence chars = document.getCharsSequence();
+    final int length = chars.length();
+    final RangeMarker toDelete;
+    if (endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
+      document.insertString(endOffset, " ");
+      toDelete = document.createRangeMarker(endOffset, endOffset + 1);
+      toDelete.setGreedyToLeft(true);
+      toDelete.setGreedyToRight(true);
+    } else if (endOffset >= length) {
+      toDelete = document.createRangeMarker(length - 1, length - 1);
+    }
+    else {
+      toDelete = document.createRangeMarker(endOffset, endOffset);
+    }
+    return toDelete;
   }
 
   public static class InsertHandlerState{

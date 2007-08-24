@@ -3,20 +3,22 @@
  */
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInsight.TailType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.codeInsight.TailType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
@@ -45,9 +47,14 @@ public abstract class RParenthTailType extends TailType {
       return moveCaret(editor, tailOffset, 1);
     }
     if (spaceWithinParens && tailOffset == existingRParenthOffset) {
-      tailOffset = insertChar(editor, tailOffset, ' ');
+      insertChar(editor, tailOffset, ' ');
     }
-    return moveCaret(editor, tailOffset, 1);
+    return moveCaret(editor, existingRParenthOffset, 1);
+  }
+
+  @NonNls
+  public String toString() {
+    return "RParenth";
   }
 
   private static int getExistingRParenthOffset(final Editor editor, final int tailOffset) {

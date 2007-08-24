@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
@@ -12,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.psi.*;
@@ -61,10 +63,7 @@ public class AllClassesGetter implements ContextGetter{
 
 
       boolean insertFqn = true;
-      boolean insertSpace = endOffset < document.getTextLength() && Character.isJavaIdentifierPart(document.getCharsSequence().charAt(endOffset));
-      if (insertSpace){
-        document.insertString(endOffset, " ");
-      }
+      final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
       if (psiReference != null) {
@@ -86,9 +85,7 @@ public class AllClassesGetter implements ContextGetter{
           }
         }
       }
-      if (insertSpace){
-        document.deleteString(endOffset, endOffset + 1);
-      }
+      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
 
       if (insertFqn) {
         int i = endOffset - 1;
