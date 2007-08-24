@@ -56,6 +56,9 @@ public class LaterInvocator {
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
+
+  private static ArrayList<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
+
   public static void addModalityStateListener(ModalityStateListener listener){
     ourModalityStateMulticaster.addListener(listener);
   }
@@ -171,6 +174,7 @@ public class LaterInvocator {
         if (runnableInfo.modalityState instanceof ModalityStateEx) {
           ModalityStateEx stateEx = (ModalityStateEx) runnableInfo.modalityState;
           if (stateEx.contains(modalEntity)) {
+            ourForcedFlushQueue.add(runnableInfo);
             iterator.remove();
           }
         }
@@ -221,6 +225,13 @@ public class LaterInvocator {
   @Nullable
   private static Runnable pollNext() {
     synchronized (LOCK) {
+      if (ourForcedFlushQueue.size() > 0) {
+        final RunnableInfo toRun = ourForcedFlushQueue.get(0);
+        ourForcedFlushQueue.remove(0);
+        return toRun.runnable;
+      }
+
+
       ModalityStateEx currentModality = (ModalityStateEx)(ourModalEntities.size() > 0
                                         ? new ModalityStateEx(ourModalEntities.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY))
                                         : ApplicationManager.getApplication().getNoneModalityState());
