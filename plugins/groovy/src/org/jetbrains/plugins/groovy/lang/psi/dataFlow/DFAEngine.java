@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -41,7 +41,7 @@ public class DFAEngine<E> {
 
       Stack<CallInstruction> callStack = new Stack<CallInstruction>();
 
-      Queue<Instruction> worklist = new ArrayDeque<Instruction>(myFlow.length);
+      Queue<Instruction> worklist = new LinkedList<Instruction>();
 
       worklist.add(instr);
       visited[instr.num()] = true;
