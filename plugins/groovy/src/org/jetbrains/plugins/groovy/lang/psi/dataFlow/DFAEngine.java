@@ -50,8 +50,12 @@ public class DFAEngine<E> {
         final Instruction curr = worklist.element();
         final int num = curr.num();
         final E oldE = info.get(num);
-        final E newE = mySemilattice.cap(myDfa.fun(curr), oldE);
-        if (!mySemilattice.eq(newE, oldE)) {
+        E newE = myDfa.fun(curr);
+        if (newE == null) continue;
+
+        if (oldE != null) newE = mySemilattice.cap(newE, oldE);
+
+        if (oldE == null || !mySemilattice.eq(newE, oldE)) {
           info.set(num, newE);
           for (Instruction next : getNext(curr, callStack)) {
             worklist.add(next);

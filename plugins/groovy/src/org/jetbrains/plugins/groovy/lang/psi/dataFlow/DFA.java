@@ -11,7 +11,7 @@ public interface DFA<E> {
   @Nullable
   E fun(Instruction instruction);
 
-  @NotNull
+  @Nullable
   E initial();
 
   boolean isForward();
