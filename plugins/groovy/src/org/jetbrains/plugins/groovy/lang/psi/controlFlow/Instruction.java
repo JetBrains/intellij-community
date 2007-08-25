@@ -8,4 +8,6 @@ import java.util.Stack;
 public interface Instruction {
   Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack);
   Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack);
+
+  int num();
 }

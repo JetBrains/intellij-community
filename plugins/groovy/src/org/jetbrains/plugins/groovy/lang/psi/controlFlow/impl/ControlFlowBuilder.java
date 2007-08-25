@@ -483,7 +483,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     private RetInstruction myReturnInsn;
 
     public String toString() {
-      return super.toString() + " CALL " + myCallee.getNumber(); 
+      return super.toString() + " CALL " + myCallee.num();
     }
 
     public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {

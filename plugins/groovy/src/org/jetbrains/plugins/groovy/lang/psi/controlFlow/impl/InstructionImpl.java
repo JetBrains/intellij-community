@@ -54,7 +54,7 @@ class InstructionImpl implements Instruction {
     return "element: " + myPsiElement;
   }
 
-  public int getNumber() {
+  public int num() {
     return myNumber;
   }
 }
