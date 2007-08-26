@@ -305,16 +305,16 @@ public class MatchingVisitor extends PsiElementVisitor {
 
   private final boolean compareClasses(final PsiClass clazz,final PsiClass clazz2) {
     PsiClass saveClazz = this.clazz;
-    Handler.UnmatchedElementsListener listener = Handler.getUnmatchedElementsListener();
+    MatchContext.UnmatchedElementsListener listener = matchContext.getUnmatchedElementsListener();
 
     this.clazz = clazz2;
     final PsiElement allRemainingClassContentElement = clazz.getUserData(CompiledPattern.ALL_CLASS_CONTENT_VAR_KEY);
-    Handler.UnmatchedElementsListener mylistener = null;
+    MatchContext.UnmatchedElementsListener mylistener = null;
     boolean result = false;
 
     if (allRemainingClassContentElement!=null) {
-      Handler.setUnmatchedElementsListener(
-        mylistener = new Handler.UnmatchedElementsListener() {
+      matchContext.setUnmatchedElementsListener(
+        mylistener = new MatchContext.UnmatchedElementsListener() {
           private List<PsiElement> myUnmatchedList;
 
           public void matchedElements(List<PsiElement> elementList) {
@@ -415,7 +415,7 @@ public class MatchingVisitor extends PsiElementVisitor {
     } finally {
       if (result && mylistener!=null) mylistener.commitUnmatched();
       this.clazz = saveClazz;
-      Handler.setUnmatchedElementsListener(listener);
+      matchContext.setUnmatchedElementsListener(listener);
     }
   }
 
@@ -626,6 +626,13 @@ public class MatchingVisitor extends PsiElementVisitor {
                    var2Initializer == null &&
                    allowsAbsenceOfMatch(var.getInitializer())
                  );
+      }
+
+      if (result && var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection) {
+        result = match(
+          ((PsiCatchSection)var.getParent()).getCatchBlock(),
+          ((PsiCatchSection)var2.getParent()).getCatchBlock()
+        );
       }
 
       if (result && isTypedVar) {
@@ -897,6 +904,13 @@ public class MatchingVisitor extends PsiElementVisitor {
     }
   }
 
+  public void visitCatchSection(final PsiCatchSection section) {
+    final PsiCatchSection section2 = (PsiCatchSection) element;
+    final PsiParameter parameter = section.getParameter();
+    if (parameter != null) result = match(parameter, section2.getParameter());
+    else result = match(section.getCatchBlock(), section2.getCatchBlock());
+  }
+
   public void visitTryStatement(final PsiTryStatement try1) {
     final PsiTryStatement try2 = (PsiTryStatement) element;
 
@@ -904,12 +918,10 @@ public class MatchingVisitor extends PsiElementVisitor {
 
     if (!result) return;
 
-    final PsiCodeBlock[] catches1 = try1.getCatchBlocks();
-    final PsiParameter[] catchesArgs1 = try1.getCatchBlockParameters();
+    final PsiCatchSection[] catches1 = try1.getCatchSections();
     final PsiCodeBlock finally1 = try1.getFinallyBlock();
 
-    final PsiCodeBlock[] catches2 = try2.getCatchBlocks();
-    final PsiParameter[] catchesArgs2 = try2.getCatchBlockParameters();
+    final PsiCatchSection[] catches2 = try2.getCatchSections();
     final PsiCodeBlock finally2 = try2.getFinallyBlock();
 
     if (!matchContext.getOptions().isLooseMatching() &&
@@ -923,30 +935,31 @@ public class MatchingVisitor extends PsiElementVisitor {
        ) {
       result = false;
     } else {
-      List<PsiCodeBlock> unmatchedCatchBlocks = new ArrayList<PsiCodeBlock>();
-      List<PsiParameter> unmatchedCatchParams = new ArrayList<PsiParameter>();
+      List<PsiCatchSection> unmatchedCatchSections = new ArrayList<PsiCatchSection>();
 
       for(int j = 0;j < catches2.length;++j) {
-        unmatchedCatchBlocks.add(catches2[j]);
-        unmatchedCatchParams.add(catchesArgs2[j]);
+        unmatchedCatchSections.add(catches2[j]);
       }
 
       for(int i = 0, j; i < catches1.length; ++i) {
-        for(j = 0; j < unmatchedCatchBlocks.size(); ++j) {
+        Handler handler = matchContext.getPattern().getHandler(catches1[i]);
+        final PsiElement pinnedNode = handler.getPinnedNode(null);
 
-          if (i < catchesArgs1.length &&
-              match(catchesArgs1[i],unmatchedCatchParams.get(j)) &&
-              match(catches1[i],unmatchedCatchBlocks.get(j))
-             ) {
-            unmatchedCatchBlocks.remove(j);
-            unmatchedCatchParams.remove(j);
-            break;
+        if (pinnedNode != null) {
+          result = handler.match(catches1[i], pinnedNode, matchContext);
+          if (!result) return;
+        } else {
+          for(j = 0; j < unmatchedCatchSections.size(); ++j) {
+            if (handler.match(catches1[i],unmatchedCatchSections.get(j), matchContext)) {
+              unmatchedCatchSections.remove(j);
+              break;
+            }
           }
-        }
 
-        if (j==catches2.length) {
-          result = false;
-          return;
+          if (j==catches2.length) {
+            result = false;
+            return;
+          }
         }
       }
 
@@ -954,9 +967,8 @@ public class MatchingVisitor extends PsiElementVisitor {
         result = matchSons(finally1,finally2);
       }
 
-      if (result && unmatchedCatchBlocks.size() > 0 && !matchContext.getOptions().isLooseMatching()) {
-        try2.putUserData(MatcherImplUtil.UNMATCHED_CATCH_BLOCK_CONTENT_VAR_KEY,unmatchedCatchBlocks);
-        try2.putUserData(MatcherImplUtil.UNMATCHED_CATCH_PARAM_CONTENT_VAR_KEY,unmatchedCatchParams);
+      if (result && unmatchedCatchSections.size() > 0 && !matchContext.getOptions().isLooseMatching()) {
+        try2.putUserData(MatcherImplUtil.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY,unmatchedCatchSections);
       }
     }
   }
@@ -1159,7 +1171,7 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   private void dispathMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    if(!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result)) return;
+    if(!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result, result)) return;
 
     // There is no substitutions so show the context
 
@@ -1167,15 +1179,16 @@ public class MatchingVisitor extends PsiElementVisitor {
     matchContext.getSink().newMatch(result);
   }
 
-  private boolean doDispatch(final MatchResultImpl result) {
+  private boolean doDispatch(final MatchResultImpl result, MatchResultImpl context) {
     boolean ret = false;
 
     for(MatchResult _r:result.getAllSons()) {
       final MatchResultImpl r = (MatchResultImpl)_r;
 
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r);
+        ret |= doDispatch(r, context);
       } else if (r.isTarget()) {
+        r.setContext(context);
         matchContext.getSink().newMatch(r);
         ret = true;
       }

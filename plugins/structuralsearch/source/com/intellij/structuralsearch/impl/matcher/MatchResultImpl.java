@@ -27,6 +27,7 @@ public final class MatchResultImpl extends MatchResult {
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
   @NonNls private static final String NULL = "null";
+  private MatchResultImpl myContext;
 
   MatchResultImpl() {
   }
@@ -186,6 +187,14 @@ public final class MatchResultImpl extends MatchResult {
 
   public void setEnd(int end) {
     this.end = end;
+  }
+
+  public void setContext(final MatchResultImpl context) {
+    myContext = context;
+  }
+
+  public MatchResultImpl getContext() {
+    return myContext;
   }
 }
 

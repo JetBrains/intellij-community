@@ -275,13 +275,12 @@ public class ReplacerImpl {
           replacement = handleSymbolReplacemenent(replacement, el, context);
 
           if (replacement instanceof PsiTryStatement) {
-            final List<PsiCodeBlock> unmatchedCatchBlocks = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_BLOCK_CONTENT_VAR_KEY);
-            final List<PsiParameter> unmatchedCatchParams = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_PARAM_CONTENT_VAR_KEY);
+            final List<PsiCatchSection> unmatchedCatchSections = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY);
             final PsiCatchSection[] catches = ((PsiTryStatement)replacement).getCatchSections();
 
-            if (unmatchedCatchBlocks!=null && unmatchedCatchParams!=null) {
-              for(int i = unmatchedCatchBlocks.size()-1; i >= 0; --i) {
-                final PsiParameter parameter = unmatchedCatchParams.get(i);
+            if (unmatchedCatchSections!=null) {
+              for(int i = unmatchedCatchSections.size()-1; i >= 0; --i) {
+                final PsiParameter parameter = unmatchedCatchSections.get(i).getParameter();
                 final PsiCatchSection catchSection = PsiManager.getInstance(project).getElementFactory().createCatchSection(
                   (PsiClassType)parameter.getType(),
                   parameter.getName(),
@@ -289,7 +288,7 @@ public class ReplacerImpl {
                 );
 
                 catchSection.getCatchBlock().replace(
-                  unmatchedCatchBlocks.get(i)
+                  unmatchedCatchSections.get(i).getCatchBlock()
                 );
                 replacement.addAfter(
                   catchSection, catches[catches.length-1]

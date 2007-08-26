@@ -2,8 +2,10 @@ package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResultSink;
+import com.intellij.psi.PsiElement;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Global context of matching process
@@ -15,6 +17,13 @@ public class MatchContext {
   private CompiledPattern pattern;
   private MatchOptions options;
   private MatchingVisitor matcher;
+
+  public interface UnmatchedElementsListener {
+    void matchedElements(List<PsiElement> elementList);
+    void commitUnmatched();
+  }
+
+  private UnmatchedElementsListener unmatchedElementsListener;
 
   public void setMatcher(MatchingVisitor matcher) {
     this.matcher = matcher;
@@ -90,5 +99,13 @@ public class MatchContext {
   void clearResult() {
     pattern.clearHandlersState();
     result.clear();
+  }
+
+  public void setUnmatchedElementsListener(UnmatchedElementsListener _unmatchedElementsListener) {
+    unmatchedElementsListener = _unmatchedElementsListener;
+  }
+
+  public UnmatchedElementsListener getUnmatchedElementsListener() {
+    return unmatchedElementsListener;
   }
 }

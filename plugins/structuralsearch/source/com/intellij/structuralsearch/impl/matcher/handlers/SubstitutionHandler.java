@@ -445,6 +445,7 @@ public class SubstitutionHandler extends Handler {
   }
 
   public void reset() {
+    super.reset();
     totalMatchedOccurs = -1;
   }
 

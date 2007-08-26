@@ -10,7 +10,6 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * Class to hold compiled pattern information
@@ -187,12 +186,8 @@ public abstract class CompiledPattern {
   }
 
   void clearHandlersState() {
-    for(Iterator i=handlers.values().iterator();i.hasNext();) {
-      Handler h = (Handler)i.next();
-
-      if (h instanceof SubstitutionHandler) {
-        ((SubstitutionHandler)h).reset();
-      }
+    for (final Handler h : handlers.values()) {
+      if (h != null) h.reset();
     }
   }
 }

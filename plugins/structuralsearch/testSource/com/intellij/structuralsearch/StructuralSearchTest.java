@@ -8,11 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 3, 2004
- * Time: 5:45:17 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class StructuralSearchTest extends StructuralSearchTestCase {
@@ -2453,10 +2449,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s1 = "class A {\n" +
                 "  int bbb(int c, int ddd, int eee) {\n" +
                 "    int a = 1;\n" +
-                "    try { int b = 1; } catch(Type t) {}\n" +
+                "    try { int b = 1; } catch(Type t) { a = 2; } catch(Type2 t2) { a = 3; }\n" +
                 "  }\n" +
                 "}";
-    String s2 = "try  { '_st*; } catch('_Type 't) { '_st2*; }";
+    String s2 = "try  { '_st*; } catch('_Type 't+) { '_st2*; }";
 
     final List<PsiVariable> vars = new ArrayList<PsiVariable>();
     final PsiFile file = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("_.java", s1);
@@ -2468,7 +2464,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       }
     });
 
-    assertEquals(6, vars.size());
+    assertEquals(7, vars.size());
     List<MatchResult> results = new ArrayList<MatchResult>();
 
     Matcher testMatcher = new Matcher(myProject);
@@ -2486,8 +2482,33 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       );
     }
 
-    assertEquals(1, results.size());
+    assertEquals(2, results.size());
     MatchResult result = results.get(0);
     assertEquals("t", result.getMatchImage());
+
+    result = results.get(1);
+    assertEquals("t2", result.getMatchImage());
+
+    results.clear();
+    String s2_2 = "try  { '_st*; } catch('Type:Type2 '_t) { '_st2*; }";
+
+    options.clearVariableConstraints();
+    options.setSearchPattern(s2_2);
+    MatcherImplUtil.transform(options);
+
+    for(PsiVariable var:vars) {
+      final PsiTypeElement typeElement = var.getTypeElement();
+      final MatchResult matchResult = testMatcher.isMatchedByDownUp(typeElement, options);
+      if (matchResult != null) results.add(matchResult);
+      assertTrue(
+        (var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && matchResult != null) ||
+        matchResult == null
+      );
+    }
+
+    assertEquals(1, results.size());
+
+    result = results.get(0);
+    assertEquals("Type2", result.getMatchImage());
   }
 }

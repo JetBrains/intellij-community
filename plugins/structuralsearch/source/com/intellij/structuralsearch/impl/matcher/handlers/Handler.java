@@ -19,6 +19,7 @@ import java.util.LinkedList;
  */
 public abstract class Handler {
   protected NodeFilter filter;
+  private PsiElement pinnedElement;
 
   public void setFilter(NodeFilter filter) {
     this.filter = filter;
@@ -81,14 +82,6 @@ public abstract class Handler {
     return false;
   }
 
-  public static void setUnmatchedElementsListener(UnmatchedElementsListener _unmatchedElementsListener) {
-    unmatchedElementsListener = _unmatchedElementsListener;
-  }
-
-  public static UnmatchedElementsListener getUnmatchedElementsListener() {
-    return unmatchedElementsListener;
-  }
-
   private static Handler findRegExpPredicate(Handler start) {
     if (start==null) return null;
     if (start instanceof RegExpPredicate) return start;
@@ -140,12 +133,6 @@ public abstract class Handler {
   }
 
   protected static ClearStateVisitor clearingVisitor = new ClearStateVisitor();
-  public static interface UnmatchedElementsListener {
-    void matchedElements(List<PsiElement> elementList);
-    void commitUnmatched();
-  }
-
-  private static UnmatchedElementsListener unmatchedElementsListener;
 
   public boolean matchInAnyOrder(NodeIterator nodes, NodeIterator nodes2, final MatchContext context) {
     MatchResultImpl saveResult = context.hasResult()?context.getResult():null;
@@ -164,14 +151,15 @@ public abstract class Handler {
 
         final PsiElement startMatching = nodes2.current();
         do {
-          final PsiElement el2 = nodes2.current();
+          final Handler handler = context.getPattern().getHandler(el);
+          final PsiElement element = handler.getPinnedNode(null);
+          final PsiElement el2 = element != null ? element:nodes2.current();
 
-          nodes2.advance();
+          if (element == null) nodes2.advance();
           if (!nodes2.hasNext()) nodes2.reset();
 
           if (usedVars== null ||
               usedVars.indexOf(el2)==-1) {
-            final Handler handler = context.getPattern().getHandler(el);
             final boolean matched = handler.match(el,el2,context);
 
             if (matched) {
@@ -180,6 +168,8 @@ public abstract class Handler {
               if (context.getMatcher().shouldAdvanceThePattern(el, el2)) {
                 break;
               }
+            } else if (element != null) {
+              return false;
             }
 
             // clear state of dependent objects
@@ -189,8 +179,8 @@ public abstract class Handler {
           // passed of elements and does not found the match
           if (startMatching == nodes2.current()) {
             boolean result = validateSatisfactionOfHandlers(nodes,context);
-            if (result && unmatchedElementsListener!=null) {
-              unmatchedElementsListener.matchedElements(usedVars);
+            if (result && context.getUnmatchedElementsListener() != null) {
+              context.getUnmatchedElementsListener().matchedElements(usedVars);
             }
             return result;
           }
@@ -202,8 +192,8 @@ public abstract class Handler {
       }
 
       boolean result = validateSatisfactionOfHandlers(nodes,context);
-      if (result && unmatchedElementsListener!=null) {
-        unmatchedElementsListener.matchedElements(usedVars);
+      if (result && context.getUnmatchedElementsListener()!=null) {
+        context.getUnmatchedElementsListener().matchedElements(usedVars);
       }
       return result;
     } finally {
@@ -244,5 +234,17 @@ public abstract class Handler {
 
   public boolean shouldAdvanceTheMatchFor(PsiElement patternElement, PsiElement matchedElement) {
     return true;
+  }
+
+  public void reset() {
+    //pinnedElement = null;
+  }
+
+  public PsiElement getPinnedNode(PsiElement context) {
+    return pinnedElement;
+  }
+
+  public void setPinnedElement(final PsiElement pinnedElement) {
+    this.pinnedElement = pinnedElement;
   }
 }

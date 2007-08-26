@@ -26,6 +26,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -562,12 +563,19 @@ public class MatcherImpl {
 
     PsiElement targetNode = compiledPattern.getTargetNode();
     assert targetNode != null : "Could not match down up when no target node";
-    if (targetNode instanceof PsiIdentifier) targetNode = targetNode.getParent();
+    if (targetNode instanceof PsiIdentifier) {
+      targetNode = targetNode.getParent();
+      final PsiElement parent = targetNode.getParent();
+      if (parent instanceof PsiTypeElement) targetNode = parent;
+    }
+    
     PsiElement lastElement = null;
 
     while (element.getClass() == targetNode.getClass() ||
            (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
           ) {
+      Handler handler = compiledPattern.getHandler(targetNode);
+      handler.setPinnedElement(element);
       lastElement = element;
       element = element.getParent();
       targetNode = targetNode.getParent();

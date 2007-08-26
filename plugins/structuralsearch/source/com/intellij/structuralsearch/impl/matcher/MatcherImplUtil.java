@@ -23,8 +23,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class MatcherImplUtil {
-  public static final Key<List<PsiCodeBlock>> UNMATCHED_CATCH_BLOCK_CONTENT_VAR_KEY = Key.create("UnmatchedCatchBlock");
-  public static final Key<List<PsiParameter>> UNMATCHED_CATCH_PARAM_CONTENT_VAR_KEY = Key.create("UnmatchedCatchParam");
+  public static final Key<List<PsiCatchSection>> UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY = Key.create("UnmatchedCatchSection");
 
   public static void transform(MatchOptions options) {
     if (options.hasVariableConstraints()) return;
