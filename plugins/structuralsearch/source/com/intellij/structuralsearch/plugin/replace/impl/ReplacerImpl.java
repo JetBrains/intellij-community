@@ -131,7 +131,7 @@ public class ReplacerImpl {
 
   protected void replaceAll(final List<ReplacementInfo> resultPtrList) {
     PsiElement lastAffectedElement = null;
-    PsiElement currentAffectedElement = null;
+    PsiElement currentAffectedElement;
 
     for (final ReplacementInfo aResultPtrList : resultPtrList) {
       currentAffectedElement = doReplace(aResultPtrList);
@@ -182,49 +182,50 @@ public class ReplacerImpl {
 
   private void reformatAndShortenRefs(final PsiElement elementParent) {
     if (elementParent == null) return;
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          try {
-            CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
-            final PsiFile containingFile = elementParent.getContainingFile();
+    final Runnable action = new Runnable() {
+      public void run() {
+        try {
+          CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
+          final PsiFile containingFile = elementParent.getContainingFile();
 
-            if (containingFile !=null) {
+          if (containingFile != null) {
 
-              if (options.isToShortenFQN()) {
-                if (containingFile.getVirtualFile() != null) {
-                  PsiDocumentManager.getInstance(project).commitDocument(
-                    FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-                  );
-                }
-
-                codeStyleManager.shortenClassReferences(
-                  elementParent, 0, elementParent.getTextLength()
-                );
+            if (options.isToShortenFQN()) {
+              if (containingFile.getVirtualFile() != null) {
+                PsiDocumentManager.getInstance(project)
+                  .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
               }
 
-              if (options.isToReformatAccordingToStyle()) {
-                if (containingFile.getVirtualFile() != null) {
-                  PsiDocumentManager.getInstance(project).commitDocument(
-                    FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-                  );
-                }
-
-                final int paretOffset = elementParent.getTextRange().getStartOffset();
-
-                codeStyleManager.reformatRange(
-                  containingFile,
-                  paretOffset,
-                  paretOffset + elementParent.getTextLength(),
-                  true
-                );
-              }
+              codeStyleManager.shortenClassReferences(elementParent, 0, elementParent.getTextLength());
             }
-          } catch(IncorrectOperationException ex) {
-            ex.printStackTrace();
+
+            if (options.isToReformatAccordingToStyle()) {
+              if (containingFile.getVirtualFile() != null) {
+                PsiDocumentManager.getInstance(project)
+                  .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
+              }
+
+              final int paretOffset = elementParent.getTextRange().getStartOffset();
+
+              codeStyleManager.reformatRange(containingFile, paretOffset, paretOffset + elementParent.getTextLength(), true);
+            }
           }
         }
+        catch (IncorrectOperationException ex) {
+          ex.printStackTrace();
+        }
       }
+    };
+
+    CommandProcessor.getInstance().executeCommand(
+      project,
+      new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(action);
+        }
+      },
+      "reformat and shorten refs after ssr",
+      "test"
     );
   }
 
