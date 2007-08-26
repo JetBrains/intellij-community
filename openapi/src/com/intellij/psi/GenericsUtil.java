@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -32,7 +31,6 @@ import java.util.Set;
  * @author ven
  */
 public class GenericsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.GenericsUtil");
 
   private GenericsUtil() {}
 
