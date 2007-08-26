@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.Collections;
 
 /**
  * @author ven
@@ -35,7 +36,15 @@ class InstructionImpl implements Instruction {
   }
 
   public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
-    return myPred;
+    if (myPred.size() > 0) {
+      return myPred;
+    }
+
+    if (!callStack.isEmpty()) {
+      return callStack.pop().pred(callStack);
+    }
+
+    return Collections.emptyList();
   }
 
   public String toString() {

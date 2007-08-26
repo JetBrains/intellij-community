@@ -520,10 +520,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     protected String getElementPresentation() { return ""; }
 
-    public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
-      return ((CallInstructionImpl) callStack.pop()).myPred;
-    }
-
     public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
       return ((CallInstructionImpl) callStack.pop()).mySucc;
    }
