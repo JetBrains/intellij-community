@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -18,16 +19,21 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
     myManager = manager;
   }
 
-  public Map<String, PsiType> cap(Map<String, PsiType> e1, Map<String, PsiType> e2) {
-    Map<String, PsiType> result = new HashMap<String, PsiType>();
-    for (Map.Entry<String, PsiType> entry : e1.entrySet()) {
-      final String name = entry.getKey();
-      final PsiType t1 = entry.getValue();
-      if (e2.containsKey(name)) {
-        final PsiType t2 = e2.get(name);
-        if (t1.isAssignableFrom(t2)) result.put(name, t1);
-        else if (t2.isAssignableFrom(t1)) result.put(name, t2);
-        else result.put(name, GenericsUtil.getLeastUpperBound(t1, t2, myManager));
+  public Map<String, PsiType> join(ArrayList<Map<String, PsiType>> ins) {
+    Map<String, PsiType> result = new HashMap<String, PsiType>(ins.get(0));
+
+    for (int i = 1; i < ins.size(); i++) {
+      Map<String, PsiType> map = ins.get(i);
+
+      for (Map.Entry<String, PsiType> entry : map.entrySet()) {
+        final String name = entry.getKey();
+        final PsiType t1 = entry.getValue();
+        if (result.containsKey(name)) {
+          final PsiType t2 = result.get(name);
+          if (t1.isAssignableFrom(t2)) result.put(name, t1);
+          else if (t2.isAssignableFrom(t1)) result.put(name, t2);
+          else result.put(name, GenericsUtil.getLeastUpperBound(t1, t2, myManager));
+        }
       }
     }
 

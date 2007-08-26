@@ -7,11 +7,10 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 /**
  * @author ven
  */
-public interface DFA<E> {
-  @Nullable
-  E fun(Instruction instruction);
+public interface DfaInstance<E> {
+  void fun(E e, Instruction instruction);
 
-  @Nullable
+  @NotNull
   E initial();
 
   boolean isForward();

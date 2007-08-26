@@ -14,11 +14,11 @@ import java.util.Stack;
 public class DFAEngine<E> {
   private Instruction[] myFlow;
 
-  private DFA<E> myDfa;
+  private DfaInstance<E> myDfa;
   private Semilattice<E> mySemilattice;
 
   public DFAEngine(Instruction[] flow,
-                   DFA<E> dfa,
+                   DfaInstance<E> dfa,
                    Semilattice<E> semilattice
   ) {
     myFlow = flow;
@@ -50,12 +50,9 @@ public class DFAEngine<E> {
         final Instruction curr = worklist.element();
         final int num = curr.num();
         final E oldE = info.get(num);
-        E newE = myDfa.fun(curr);
-        if (newE == null) continue;
-
-        if (oldE != null) newE = mySemilattice.cap(newE, oldE);
-
-        if (oldE == null || !mySemilattice.eq(newE, oldE)) {
+        E newE = join(curr, info, callStack);
+        myDfa.fun(newE, curr);
+        if (!mySemilattice.eq(newE, oldE)) {
           info.set(num, newE);
           for (Instruction next : getNext(curr, callStack)) {
             worklist.add(next);
@@ -71,6 +68,15 @@ public class DFAEngine<E> {
 
 
     return info;
+  }
+
+  private E join(Instruction instruction, ArrayList<E> info, Stack<CallInstruction> callStack) {
+    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(callStack) : instruction.succ(callStack);
+    ArrayList<E> prevInfos = new ArrayList<E>();
+    for (Instruction i : prev) {
+      prevInfos.add(info.get(i.num()));
+    }
+    return mySemilattice.join(prevInfos);
   }
 
   private Iterable<? extends Instruction> getNext(Instruction curr, Stack<CallInstruction> callStack) {
