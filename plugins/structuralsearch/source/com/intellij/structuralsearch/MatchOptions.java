@@ -29,7 +29,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private int maxMatches = DEFAULT_MAX_MATCHES_COUNT;
   public final static int DEFAULT_MAX_MATCHES_COUNT = 1000;
 
-  private SearchScope scope;
+  private SearchScope scope, downUpMatchScope;
   private String searchCriteria = "";
   private HashMap<String,MatchVariableConstraint> variableConstraints;
 
@@ -160,6 +160,14 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   public void setScope(SearchScope scope) {
     this.scope = scope;
+  }
+
+  public SearchScope getDownUpMatchScope() {
+    return downUpMatchScope;
+  }
+
+  public void setDownUpMatchScope(final SearchScope downUpMatchScope) {
+    this.downUpMatchScope = downUpMatchScope;
   }
 
   public void writeExternal(Element element) {

@@ -1,7 +1,9 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -50,5 +52,17 @@ public class Matcher extends MatcherImpl {
     throws MalformedPatternException, UnsupportedPatternException {
 
     super.testFindMatches(sink,options);
+  }
+
+  /**
+   * Tests if given element is matched by given pattern starting from target variable. If matching succeeds
+   * then not null match result is returned.
+   * @throws MalformedPatternException
+   * @throws UnsupportedPatternException
+   */
+  public @Nullable MatchResult isMatchedByDownUp(PsiElement element,MatchOptions options) throws
+    MalformedPatternException, UnsupportedPatternException
+  {
+    return super.isMatchedByDownUp(element, options);
   }
 }

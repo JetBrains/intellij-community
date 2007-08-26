@@ -22,6 +22,7 @@ public abstract class CompiledPattern {
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;
+  private PsiElement targetNode;
 
   // @todo support this property during matching (how many nodes should be advanced)
   // when match is not successfull (or successful partially)
@@ -29,6 +30,14 @@ public abstract class CompiledPattern {
 
   public abstract String getTypedVarPrefix();
   public abstract boolean isTypedVar(String str);
+
+  public void setTargetNode(final PsiElement element) {
+    targetNode = element;
+  }
+
+  public PsiElement getTargetNode() {
+    return targetNode;
+  }
 
   public static class JavaCompiledPattern extends CompiledPattern {
     public String getTypedVarPrefix() {

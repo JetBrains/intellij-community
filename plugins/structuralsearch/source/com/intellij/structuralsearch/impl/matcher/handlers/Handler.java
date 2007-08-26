@@ -44,7 +44,11 @@ public abstract class Handler {
     if (patternNode == null) {
       return matchedNode == null;
     }
-    
+
+    return canMatch(patternNode, matchedNode);
+  }
+
+  public boolean canMatch(final PsiElement patternNode, final PsiElement matchedNode) {
     if (filter!=null) {
       if (!filter.accepts(matchedNode)) return false;
       return true;

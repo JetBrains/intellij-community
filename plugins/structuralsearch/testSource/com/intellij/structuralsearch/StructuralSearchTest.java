@@ -1,5 +1,12 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.*;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -2440,5 +2447,47 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Static / instance initializers", 2, findMatchesCount(s1,s2));
     assertEquals("Static / instance initializers", 1, findMatchesCount(s1,s2_3));
     assertEquals("Static / instance initializers", 3, findMatchesCount(s1,s2_2));
+  }
+
+  public void testDownUpMatch() {
+    String s1 = "class A {\n" +
+                "  int bbb(int c, int ddd, int eee) {\n" +
+                "    int a = 1;\n" +
+                "    try { int b = 1; } catch(Type t) {}\n" +
+                "  }\n" +
+                "}";
+    String s2 = "try  { '_st*; } catch('_Type 't) { '_st2*; }";
+
+    final List<PsiVariable> vars = new ArrayList<PsiVariable>();
+    final PsiFile file = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("_.java", s1);
+
+    file.acceptChildren(new PsiRecursiveElementVisitor() {
+      public void visitVariable(final PsiVariable variable) {
+        super.visitVariable(variable);
+        vars.add(variable);
+      }
+    });
+
+    assertEquals(6, vars.size());
+    List<MatchResult> results = new ArrayList<MatchResult>();
+
+    Matcher testMatcher = new Matcher(myProject);
+    MatchOptions options = new MatchOptions();
+    options.setSearchPattern(s2);
+    MatcherImplUtil.transform(options);
+    options.setFileType(StdFileTypes.JAVA);
+
+    for(PsiVariable var:vars) {
+      final MatchResult matchResult = testMatcher.isMatchedByDownUp(var, options);
+      if (matchResult != null) results.add(matchResult);
+      assertTrue(
+        (var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && matchResult != null) ||
+        matchResult == null
+      );
+    }
+
+    assertEquals(1, results.size());
+    MatchResult result = results.get(0);
+    assertEquals("t", result.getMatchImage());
   }
 }

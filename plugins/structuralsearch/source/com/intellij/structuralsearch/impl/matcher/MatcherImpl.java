@@ -1,5 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.jsp.JspxFileViewProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectRootType;
@@ -7,34 +14,28 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
-import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
-import com.intellij.lang.jsp.JspxFileViewProvider;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.lang.ref.SoftReference;
+import java.util.*;
 
 /**
  * This class makes program structure tree matching:
@@ -140,15 +141,19 @@ public class MatcherImpl {
   public Collection<Pair<MatchResult, Configuration>> findMatchesInFile(CompiledOptions compiledOptions, PsiFile psiFile) {
     LocalSearchScope scope = new LocalSearchScope(psiFile);
     List<Pair<MatchResult, Configuration>> result = new ArrayList<Pair<MatchResult, Configuration>>();
+
     for (int i = 0; i < compiledOptions.matchContexts.size(); i++) {
       MatchContext context = compiledOptions.matchContexts.get(i);
       Configuration configuration = compiledOptions.myConfigurations.get(i);
+
       matchContext.clear();
       matchContext.setMatcher(visitor);
+
       MatchOptions options = context.getOptions();
       matchContext.setOptions(options);
       matchContext.setPattern(context.getPattern());
       visitor.setMatchContext(matchContext);
+
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matchContext.setSink(
         new MatchConstraintsSink(
@@ -171,11 +176,13 @@ public class MatcherImpl {
 
   public CompiledOptions precompileOptions(List<Configuration> configurations) {
     List<MatchContext> contexts = new ArrayList<MatchContext>();
+
     for (Configuration configuration : configurations) {
       MatchContext matchContext = new MatchContext();
       matchContext.setMatcher(visitor);
       MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
+
       CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
       matchContext.setPattern(compiledPattern);
       contexts.add(matchContext);
@@ -185,47 +192,18 @@ public class MatcherImpl {
 
   /**
    * Finds the matches of given pattern starting from given tree element.
-   * @throws com.intellij.structuralsearch.MalformedPatternException
-   * @throws com.intellij.structuralsearch.UnsupportedPatternException
+   * @throws MalformedPatternException
+   * @throws UnsupportedPatternException
    */
   protected void findMatches(MatchResultSink sink, final MatchOptions options) throws MalformedPatternException, UnsupportedPatternException
   {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    matchContext.clear();
-    matchContext.setSink(
-      new MatchConstraintsSink(
-        sink,
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
-      )
-    );
-    matchContext.setOptions(options);
-    matchContext.setMatcher(visitor);
-
-    CompiledPattern compiledPattern = null;
-
-    synchronized(getClass()) {
-      final LastMatchData data = lastMatchData != null ? lastMatchData.get():null;
-      if (data != null && options == data.lastOptions) {
-        compiledPattern = data.lastPattern;
-      }
-      lastMatchData = null;
-    }
-
-    if (compiledPattern==null) {
-      compiledPattern =  PatternCompiler.compilePattern(project,options);
-    }
-
+    CompiledPattern compiledPattern = prepareMatching(sink, options);
     if (compiledPattern== null) {
       return;
     }
-    matchContext.setPattern(compiledPattern);
     matchContext.getSink().setMatchingProcess( scheduler );
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
-    visitor.setMatchContext(matchContext);
 
     if(isTesting) {
       // testing mode;
@@ -340,6 +318,40 @@ public class MatcherImpl {
     }
 
     scheduler.executeNext();
+  }
+
+  private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    matchContext.clear();
+    matchContext.setSink(
+      new MatchConstraintsSink(
+        sink,
+        options.getMaxMatchesCount(),
+        options.isDistinct(),
+        options.isCaseSensitiveMatch()
+      )
+    );
+    matchContext.setOptions(options);
+    matchContext.setMatcher(visitor);
+    visitor.setMatchContext(matchContext);
+
+    CompiledPattern compiledPattern = null;
+
+    synchronized(getClass()) {
+      final LastMatchData data = lastMatchData != null ? lastMatchData.get():null;
+      if (data != null && options == data.lastOptions) {
+        compiledPattern = data.lastPattern;
+      }
+      lastMatchData = null;
+    }
+
+    if (compiledPattern==null) {
+      compiledPattern =  PatternCompiler.compilePattern(project,options);
+    }
+
+    matchContext.setPattern(compiledPattern);
+    return compiledPattern;
   }
 
   /**
@@ -537,5 +549,35 @@ public class MatcherImpl {
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
       match(el);
     }
+  }
+
+  protected @Nullable MatchResult isMatchedByDownUp(PsiElement element, final MatchOptions options) {
+    final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+    CompiledPattern compiledPattern = prepareMatching(sink, options);
+
+    if (compiledPattern== null) {
+      assert false;
+      return null;
+    }
+
+    PsiElement targetNode = compiledPattern.getTargetNode();
+    assert targetNode != null : "Could not match down up when no target node";
+    if (targetNode instanceof PsiIdentifier) targetNode = targetNode.getParent();
+    PsiElement lastElement = null;
+
+    while (element.getClass() == targetNode.getClass() ||
+           (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
+          ) {
+      lastElement = element;
+      element = element.getParent();
+      targetNode = targetNode.getParent();
+    }
+
+    if (!(targetNode instanceof PsiBlockStatement) || !(targetNode.getParent() instanceof PsiFile)) return null;
+    match(lastElement);
+    matchContext.getSink().matchingFinished();
+    final int matchCount = sink.getMatches().size();
+    assert matchCount <= 1;
+    return matchCount > 0 ? sink.getMatches().get(0) : null;
   }
 }

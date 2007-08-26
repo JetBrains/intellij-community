@@ -122,6 +122,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
       if (handler !=null && context.options.getVariableConstraint(handler.getName()).isPartOfSearchResults()) {
         handler.setTarget(true);
+        context.pattern.setTargetNode(element);
       }
     }
   }

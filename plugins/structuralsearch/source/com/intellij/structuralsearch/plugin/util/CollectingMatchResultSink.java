@@ -1,13 +1,14 @@
 package com.intellij.structuralsearch.plugin.util;
 
-import com.intellij.structuralsearch.MatchResultSink;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.MatchingProcess;
-import com.intellij.psi.PsiFile;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.psi.PsiFile;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.MatchResultSink;
+import com.intellij.structuralsearch.MatchingProcess;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
 
 public class CollectingMatchResultSink implements MatchResultSink {
   private List<MatchResult> matches = new LinkedList<MatchResult>();
@@ -32,7 +33,7 @@ public class CollectingMatchResultSink implements MatchResultSink {
   public void setMatchingProcess(MatchingProcess process) {
   }
 
-  public List<MatchResult> getMatches() {
+  public @NotNull List<MatchResult> getMatches() {
     return matches;
   }
 }
