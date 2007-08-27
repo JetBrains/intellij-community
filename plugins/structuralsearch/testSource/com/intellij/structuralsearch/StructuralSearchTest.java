@@ -1203,8 +1203,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
 
     options.setDistinct(false);
-    options.setCaseSensitiveMatch(false);
 
+    final String s133 = "class C { int a; int A() { a = 1; }} void c(int a) { a = 2; }";
+    final String s133_2 = "class C { int a() {} int A() { a(1); }}";
+    final String s134 = "a";
+
+    List<MatchResult> results = findMatches(s133, s134);
+    assertEquals(
+      "find sym finds declaration",
+      4, results.size()
+    );
+
+    assertEquals(
+      "find sym finds declaration",
+      2,
+      findMatchesCount(s133_2,s134)
+    );
   }
 
   public void testSearchGenerics() {

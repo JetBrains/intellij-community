@@ -411,7 +411,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
     Handler handler = context.pattern.getHandler(reference);
 
-    // We want to merge qname related to class to find
+    // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();
 
     if (!typedVarProcessed &&
@@ -419,7 +419,10 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       final PsiElement resolve = reference.resolve();
 
       if (resolve instanceof PsiClass ||
-          ( resolve == null && referencedName != null && Character.isUpperCase(referencedName.charAt(0))
+          ( resolve == null &&
+            ( (referencedName != null && Character.isUpperCase(referencedName.charAt(0))) ||
+              reference.getQualifier() == null
+            )
           )
         ) {
         boolean hasNoNestedSubstitutionHandlers = false;
@@ -448,7 +451,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   private void handleReference(PsiJavaCodeReferenceElement reference) {
     handleReferenceText(reference.getReferenceName());
   }
-  // structural search
+
   private void handleReferenceText(String refname) {
     if (refname==null) return;
 
