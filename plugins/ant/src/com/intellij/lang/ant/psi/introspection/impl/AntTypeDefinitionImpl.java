@@ -144,22 +144,38 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     return myNestedClassNames;
   }
 
-  public boolean isExtensionPointType(final Class<?> aClass) {
-    if (aClass == null || "java.lang.Object".equals(aClass.getName())) {
+  public boolean isExtensionPointType(final ClassLoader loader, final String className) {
+    if ("java.lang.Object".equals(className)) {
       return false;
     }
-    if (myExtensionPoints.contains(aClass.getName())) {
+    if (myExtensionPoints.contains(className)) {
       return true;
     }
-    final Class[] interfaces = aClass.getInterfaces();
-    for (Class iface : interfaces) {
-      if (isExtensionPointType(iface)) {
-        return true;
-      }
+    try {
+      return isExtensionPointType(loader.loadClass(className));
     }
-    return isExtensionPointType(aClass.getSuperclass());
+    catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 
+  private boolean isExtensionPointType(final Class<?> aClass) {
+     if (aClass == null || "java.lang.Object".equals(aClass.getName())) {
+       return false;
+     }
+     if (myExtensionPoints.contains(aClass.getName())) {
+       return true;
+     }
+     final Class[] interfaces = aClass.getInterfaces();
+     for (Class iface : interfaces) {
+       if (isExtensionPointType(iface)) {
+         return true;
+       }
+     }
+     return isExtensionPointType(aClass.getSuperclass());
+   }
+  
+  
   @Nullable
   public final String getNestedClassName(final AntTypeId id) {
     final String nsPrefix = id.getNamespacePrefix();

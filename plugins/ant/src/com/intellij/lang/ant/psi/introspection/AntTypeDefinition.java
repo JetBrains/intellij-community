@@ -29,7 +29,7 @@ public interface AntTypeDefinition {
   @Nullable
   String getNestedClassName(final AntTypeId id);
 
-  boolean isExtensionPointType(Class<?> aClass);
+  boolean isExtensionPointType(ClassLoader aClass, final String className);
   
   void registerNestedType(final AntTypeId typeId, final String className);
 

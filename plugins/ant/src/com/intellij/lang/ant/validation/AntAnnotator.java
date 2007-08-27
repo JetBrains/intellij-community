@@ -80,15 +80,7 @@ public class AntAnnotator implements Annotator {
 
   private static boolean isExtensionPointType(final AntStructuredElement parent, final AntTypeDefinition maybeNested) {
     final AntTypeDefinition parentDef = parent.getTypeDefinition();
-    if (parentDef == null) {
-      return false;
-    }
-    try {
-      return parentDef.isExtensionPointType(parent.getAntFile().getClassLoader().loadClass(maybeNested.getClassName()));
-    }
-    catch (ClassNotFoundException e) {
-      return false;
-    }
+    return parentDef != null && parentDef.isExtensionPointType(parent.getAntFile().getClassLoader(), maybeNested.getClassName());
   }
 
   private static boolean isSuccessorOfUndefinedElement(AntElement element) {
