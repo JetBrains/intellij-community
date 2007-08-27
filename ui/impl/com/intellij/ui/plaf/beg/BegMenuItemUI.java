@@ -4,6 +4,7 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
@@ -18,8 +19,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Belyaev
@@ -61,6 +60,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   public void paint(Graphics g, JComponent comp) {
+    UIUtil.applyRenderingHints(g);
     JMenuItem jmenuitem = (JMenuItem)comp;
     ButtonModel buttonmodel = jmenuitem.getModel();
     int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
