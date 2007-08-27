@@ -102,7 +102,7 @@ public final class GridChangeUtil {
    * @param isRow if true, row is deleted, otherwise column
    * @return whether the specified column can be deleted
    */
- public static CellStatus canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
+ public static CellStatus canDeleteCell(@NotNull final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
 
     // Do not allow to delete the single row/column
