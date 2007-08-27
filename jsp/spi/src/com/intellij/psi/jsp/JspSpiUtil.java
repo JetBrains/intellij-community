@@ -8,6 +8,12 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,10 +29,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URL;
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author peter
  */
 public abstract class JspSpiUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.jsp.tagLibrary.JspTagInfoImpl");
+  @NonNls private static final String JAR_EXTENSION = "jar";
 
   @Nullable
   private static JspSpiUtil getJspSpiUtil() {
@@ -128,5 +141,77 @@ public abstract class JspSpiUtil {
   public static boolean isJavaContext(PsiElement position) {
     if(PsiTreeUtil.getContextOfType(position, JspClass.class, false) != null) return true;
     return false;
+  }
+
+  public static boolean isJarFile(@Nullable VirtualFile file) {
+    if (file != null){
+      final String ext = file.getExtension();
+      if(ext != null && ext.equalsIgnoreCase(JAR_EXTENSION)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module) {
+    List<URL> urls = new ArrayList<URL>();
+
+    if (isJarFile(virtualFile)){
+      addUrl(urls, virtualFile);
+    }
+
+    if (module != null) {
+      final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
+      for (VirtualFile file1 : files) {
+        final VirtualFile file;
+        if (file1.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL)) {
+          file = JarFileSystem.getInstance().getVirtualFileForJar(file1);
+        }
+        else {
+          file = file1;
+        }
+        addUrl(urls, file);
+      }
+    }
+    return urls;
+  }
+
+  private static void addUrl(List<URL> urls, VirtualFile file) {
+    if (file == null || !file.isValid()) return;
+    final URL url = getUrl(file);
+    if (url != null) {
+      urls.add(url);
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
+  private static URL getUrl(VirtualFile file) {
+    if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) return null;
+
+    String path = file.getPath();
+    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+      path = path.substring(0, path.length() - 2);
+    }
+
+    String url;
+    if (SystemInfo.isWindows) {
+      url = "file:/" + path;
+    }
+    else {
+      url = "file://" + path;
+    }
+
+    if (file.isDirectory() && !(file.getFileSystem() instanceof JarFileSystem)) url += "/";
+
+
+    try {
+      return new URL(url);
+    }
+    catch (MalformedURLException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 }
