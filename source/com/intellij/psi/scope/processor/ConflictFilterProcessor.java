@@ -23,11 +23,14 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   protected final PsiConflictResolver[] myResolvers;
   private JavaResolveResult[] myCachedResult = null;
   protected String myName;
+  protected final PsiElement myPlace;
 
-  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container){
+  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container,
+                                 final PsiElement place){
     super(filter, container);
     myResolvers = resolvers;
     myName = name;
+    myPlace = place;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor){
@@ -35,7 +38,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
       return false;
     }
 
-    if(myName == null || PsiUtil.checkName(element, myName)){
+    if(myName == null || PsiUtil.checkName(element, myName, myPlace)){
       return super.execute(element, substitutor);
     }
     return true;

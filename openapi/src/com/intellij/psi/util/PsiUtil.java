@@ -1132,10 +1132,10 @@ public final class PsiUtil {
     return parent;
   }
 
-  public static boolean checkName(PsiElement element, String name) {
+  public static boolean checkName(PsiElement element, String name, final PsiElement context) {
     if (element instanceof PsiMetaBaseOwner) {
       final PsiMetaDataBase data = ((PsiMetaBaseOwner) element).getMetaData();
-      if (data != null) return name.equals(data.getName(element));
+      if (data != null) return name.equals(data.getName(context));
     }
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }

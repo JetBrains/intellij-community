@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -38,7 +39,7 @@ public abstract class GenericReference extends CachingReference {
 
   @Nullable
   public PsiElement resolveInner(){
-    final List resultSet = new ArrayList();
+    final List<CandidateInfo> resultSet = new ArrayList<CandidateInfo>();
     final ConflictFilterProcessor processor;
     try{
       processor = ProcessorRegistry.getProcessorByType(getType(), resultSet, needToCheckAccessibility() ? getElement() : null);
@@ -60,7 +61,7 @@ public abstract class GenericReference extends CachingReference {
   }
 
   public Object[] getVariants(){
-    final List ret = new ArrayList();
+    final List<CandidateInfo> ret = new ArrayList<CandidateInfo>();
     final FilterScopeProcessor proc;
     try{
       proc = ProcessorRegistry.getProcessorByType(getSoftenType(), ret, needToCheckAccessibility() ? getElement() : null);

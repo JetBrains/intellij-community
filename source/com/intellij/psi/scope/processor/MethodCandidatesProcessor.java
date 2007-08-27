@@ -18,17 +18,14 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class MethodCandidatesProcessor extends MethodsProcessor{
-  private final PsiElement myPlace;
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
   protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, List<CandidateInfo> container){
-    super(resolvers, container);
-    myPlace = place;
+    super(resolvers, container, place);
   }
 
   public MethodCandidatesProcessor(PsiElement place){
-    super(new PsiConflictResolver[]{new DuplicateConflictResolver()}, new SmartList<CandidateInfo>());
-    myPlace = place;
+    super(new PsiConflictResolver[]{new DuplicateConflictResolver()}, new SmartList<CandidateInfo>(), place);
   }
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {

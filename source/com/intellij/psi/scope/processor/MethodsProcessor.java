@@ -24,8 +24,8 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
 
-  public MethodsProcessor(PsiConflictResolver[] resolvers, List<CandidateInfo> container) {
-    super(null, ourFilter, resolvers, container);
+  public MethodsProcessor(PsiConflictResolver[] resolvers, List<CandidateInfo> container, final PsiElement place) {
+    super(null, ourFilter, resolvers, container, place);
   }
 
   public PsiExpressionList getArgumentList() {

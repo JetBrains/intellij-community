@@ -18,23 +18,16 @@ import com.intellij.util.SmartList;
 public class VariableResolverProcessor extends ConflictFilterProcessor implements ElementClassHint {
   private static final ClassFilter ourFilter = new ClassFilter(PsiVariable.class);
 
-  private final PsiElement myFromElement;
   private boolean myStaticScopeFlag = false;
   private PsiClass myAccessClass = null;
   private PsiElement myCurrentFileContext = null;
 
-  public VariableResolverProcessor(String name, PsiElement place, PsiClass accessClass){
-    super(name, ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>());
-    myFromElement = place;
-    myAccessClass = accessClass;
-  }
+  public VariableResolverProcessor(PsiJavaCodeReferenceElement place) {
+    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(),
+          place);
 
-  public VariableResolverProcessor(PsiJavaCodeReferenceElement fromElement) {
-    super(fromElement.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>());
-    myFromElement = fromElement;
-
-    PsiElement qualifier = fromElement.getQualifier();
-    PsiElement referenceName = fromElement.getReferenceNameElement();
+    PsiElement qualifier = place.getQualifier();
+    PsiElement referenceName = place.getReferenceNameElement();
 
     if (referenceName instanceof PsiIdentifier){
       setName(referenceName.getText());
@@ -70,7 +63,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     final boolean staticProblem = myStaticScopeFlag && !((PsiVariable)element).hasModifierProperty(PsiModifier.STATIC);
-    super.add(new CandidateInfo(element, substitutor, myFromElement, myAccessClass, staticProblem, myCurrentFileContext));
+    super.add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
   public boolean shouldProcess(Class elementClass) {
@@ -78,7 +71,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName))) {
+    if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName, myPlace))) {
       super.execute(element, substitutor);
       return myResults.isEmpty();
     }

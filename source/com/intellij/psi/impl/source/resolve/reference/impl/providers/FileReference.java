@@ -152,7 +152,7 @@ public class FileReference
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     try {
-      final List ret = new ArrayList();
+      final List<CandidateInfo> ret = new ArrayList<CandidateInfo>();
       final List<Class> allowedClasses = new ArrayList<Class>();
       allowedClasses.add(PsiFile.class);
       for (final FileReferenceHelper helper : getHelpers()) {
@@ -167,12 +167,13 @@ public class FileReference
           }
         }
       }
-      final Object[] variants = ret.toArray();
+      final CandidateInfo[] candidates = ret.toArray(new CandidateInfo[ret.size()]);
+      final Object[] variants = candidates;
       if (myFileReferenceSet.isUrlEncoded()) {
-        for (int i = 0; i < variants.length; i++) {
-          if (variants[i] instanceof CandidateInfo && ((CandidateInfo)variants[i]).getElement() instanceof PsiNamedElement) {
-            final PsiNamedElement psiElement = (PsiNamedElement)((CandidateInfo)variants[i]).getElement();
-            assert psiElement != null;
+        for (int i = 0; i < candidates.length; i++) {
+          final PsiElement element = candidates[i].getElement();
+          if (element instanceof PsiNamedElement) {
+            final PsiNamedElement psiElement = (PsiNamedElement)element;
             String name = psiElement.getName();
             final String encoded = encode(name);
             if (!encoded.equals(name)) {
