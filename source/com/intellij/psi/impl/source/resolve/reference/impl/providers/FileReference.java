@@ -168,7 +168,8 @@ public class FileReference
         }
       }
       final CandidateInfo[] candidates = ret.toArray(new CandidateInfo[ret.size()]);
-      final Object[] variants = candidates;
+      final Object[] variants = new Object[candidates.length];
+      System.arraycopy(candidates, 0, variants, 0, candidates.length);
       if (myFileReferenceSet.isUrlEncoded()) {
         for (int i = 0; i < candidates.length; i++) {
           final PsiElement element = candidates[i].getElement();
