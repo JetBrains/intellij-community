@@ -496,7 +496,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         if (file != null) {
           PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
           if (stmt != null) {
-            list.add(stmt.getAnnotationList());
+            final PsiModifierList modifierList = stmt.getAnnotationList();
+            if (modifierList != null) {
+              list.add(modifierList);
+            }
           }
         }
       }
