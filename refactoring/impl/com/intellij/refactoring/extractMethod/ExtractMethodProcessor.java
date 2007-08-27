@@ -449,12 +449,18 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean shouldBeStatic() {
-    PsiElement codeFragementMember = myCodeFragmentMember;
-    while (codeFragementMember != null && PsiTreeUtil.isAncestor(myTargetClass, codeFragementMember, true)) {
-      if (((PsiModifierListOwner)codeFragementMember).hasModifierProperty(PsiModifier.STATIC)) {
+    for(PsiElement element: myElements) {
+      final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class);
+      if (statement != null && RefactoringUtil.isSuperOrThisCall(statement, true, true)) {
         return true;
       }
-      codeFragementMember = PsiTreeUtil.getParentOfType(codeFragementMember, PsiModifierListOwner.class, true);
+    }
+    PsiElement codeFragmentMember = myCodeFragmentMember;
+    while (codeFragmentMember != null && PsiTreeUtil.isAncestor(myTargetClass, codeFragmentMember, true)) {
+      if (((PsiModifierListOwner)codeFragmentMember).hasModifierProperty(PsiModifier.STATIC)) {
+        return true;
+      }
+      codeFragmentMember = PsiTreeUtil.getParentOfType(codeFragmentMember, PsiModifierListOwner.class, true);
     }
     return false;
   }

@@ -269,6 +269,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testThisCall() throws Exception {
+    doTest();
+  }
+
   public void testReassignedVarAfterCall() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
