@@ -42,7 +42,7 @@ public class FilteredQuery<T> implements Query<T> {
     return processor.getFoundValue();
   }
 
-  public boolean forEach(final Processor<T> consumer) {
+  public boolean forEach(@NotNull final Processor<T> consumer) {
     myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
         if (!myFilter.value(t)) return true;

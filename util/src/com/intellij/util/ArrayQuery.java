@@ -41,7 +41,7 @@ public class ArrayQuery<T> implements Query<T> {
     return myArray.length > 0 ? myArray[0] : null;
   }
 
-  public boolean forEach(final Processor<T> consumer) {
+  public boolean forEach(@NotNull final Processor<T> consumer) {
     for (T t : myArray) {
       if (!consumer.process(t)) return false;
     }

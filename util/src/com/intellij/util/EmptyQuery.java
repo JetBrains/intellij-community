@@ -24,7 +24,7 @@ public class EmptyQuery<R> implements Query<R> {
     return null;
   }
 
-  public boolean forEach(final Processor<R> consumer) {
+  public boolean forEach(@NotNull final Processor<R> consumer) {
     return true;
   }
 

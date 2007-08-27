@@ -174,11 +174,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    Collections.sort(newExpressions, new Comparator<PsiElement>() {
-      public int compare(final PsiElement o1, final PsiElement o2) {
-        return PsiUtil.compareElementsByPosition(o1, o2);
-      }
-    });
+    Collections.sort(newExpressions, PsiUtil.BY_POSITION);
     for(PsiNewExpression newExpression: newExpressions) {
       replaceNewOrType(newExpression, superType);
     }

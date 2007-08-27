@@ -41,7 +41,7 @@ public class CollectionQuery<T> implements Query<T> {
     return i.hasNext() ? i.next() : null;
   }
 
-  public boolean forEach(final Processor<T> consumer) {
+  public boolean forEach(@NotNull final Processor<T> consumer) {
     for (T t : myCollection) {
       if (!consumer.process(t)) return false;
     }
