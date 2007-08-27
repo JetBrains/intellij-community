@@ -8,11 +8,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -22,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class CreateHtmlAction extends CreateElementActionBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateHtmlAction");
+
   private final FileType myFileType;
   private final String myTemplateName;
 
@@ -81,14 +85,28 @@ public class CreateHtmlAction extends CreateElementActionBase {
 
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
-    PsiFile file = directory.createFile(getName(newName));
+    final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(myTemplateName);
 
-    final FileTemplate fileTemplate = FileTemplateManager.getInstance().getInternalTemplate(myTemplateName);
-    VfsUtil.saveText(file.getVirtualFile(), fileTemplate.getText(FileTemplateManager.getInstance().getDefaultProperties()));
+    PsiElement element;
+    try {
+      element = FileTemplateUtil
+        .createFromTemplate(template, getName(newName), FileTemplateManager.getInstance().getDefaultProperties(), directory);
+      final PsiFile psiFile = element.getContainingFile();
 
-    FileEditorManager.getInstance(directory.getProject()).openFile(file.getVirtualFile(), true);
-    return new PsiElement[]{file};
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) {
+        FileEditorManager.getInstance(directory.getProject()).openFile(virtualFile, true);
+        return new PsiElement[]{psiFile};
+      }
+    }
+    catch (IncorrectOperationException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
 
+    return new PsiElement[0];
   }
 
   protected String getErrorTitle() {
