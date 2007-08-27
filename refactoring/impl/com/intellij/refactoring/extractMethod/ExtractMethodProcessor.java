@@ -92,6 +92,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private boolean myShowErrorDialogs = true;
   private boolean myCanBeStatic;
+  private boolean myCanBeChainedConstructor;
+  private boolean myIsChainedConstructor;
   private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
   private String myMethodVisibility = PsiModifier.PRIVATE;
@@ -157,6 +159,10 @@ public class ExtractMethodProcessor implements MatchProvider {
    */
   public void setShowErrorDialogs(boolean showErrorDialogs) {
     myShowErrorDialogs = showErrorDialogs;
+  }
+
+  public void setChainedConstructor(final boolean isChainedConstructor) {
+    myIsChainedConstructor = isChainedConstructor;
   }
 
   private boolean areExitStatementsTheSame() {
@@ -357,6 +363,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       checkLocalClasses((PsiMethod) container);
     }
 
+    checkCanBeChainedConstructor();
+
     if (myExpression != null) {
       myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
@@ -367,6 +375,22 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return true;
+  }
+
+  private void checkCanBeChainedConstructor() {
+    if (!(myCodeFragmentMember instanceof PsiMethod)) {
+      return;
+    }
+    final PsiMethod method = (PsiMethod)myCodeFragmentMember;
+    if (!method.isConstructor() || myReturnType != PsiType.VOID) {
+      return;
+    }
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) return;
+    final PsiStatement[] psiStatements = body.getStatements();
+    if (psiStatements.length > 0 && myElements [0] == psiStatements [0]) {
+      myCanBeChainedConstructor = true;
+    }
   }
 
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
@@ -467,7 +491,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean showDialog(final boolean direct) {
     ExtractMethodDialog dialog = new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                                         myThrownExceptions, myStatic, myCanBeStatic, myInitialMethodName,
+                                                         myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor, myInitialMethodName,
                                                          myRefactoringName, myHelpId, myElements) {
       protected boolean areTypesDirected() {
         return direct;
@@ -475,9 +499,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     };
     dialog.show();
     if (!dialog.isOK()) return false;
-    myMethodName = dialog.getChoosenMethodName();
-    myVariableDatum = dialog.getChoosenParameters();
+    myMethodName = dialog.getChosenMethodName();
+    myVariableDatum = dialog.getChosenParameters();
     myStatic |= dialog.isMakeStatic();
+    myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
 
     return true;
@@ -851,9 +876,15 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
-    PsiMethod newMethod = myElementFactory.createMethod(myMethodName, myReturnType);
+    PsiMethod newMethod;
+    if (myIsChainedConstructor) {
+      newMethod = myElementFactory.createConstructor();      
+    }
+    else {
+      newMethod = myElementFactory.createMethod(myMethodName, myReturnType);
+      newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
+    }
     newMethod.getModifierList().setModifierProperty(myMethodVisibility, true);
-    newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
     if (myTypeParameterList != null) {
       newMethod.getTypeParameterList().replace(myTypeParameterList);
     }
@@ -899,32 +930,39 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
 
-    final boolean skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
-    if (skipInstanceQualifier) {
-      if (myNeedChangeContext) {
-        boolean needsThisQualifier = false;
-        PsiElement parent = myCodeFragmentMember;
-        while (!myTargetClass.equals(parent)) {
-          if (parent instanceof PsiMethod) {
-            String methodName = ((PsiMethod)parent).getName();
-            if (methodName.equals(myMethodName)) {
-              needsThisQualifier = true;
-              break;
-            }
-          }
-          parent = parent.getParent();
-        }
-        if (needsThisQualifier) {
-          buffer.append(myTargetClass.getName());
-          buffer.append(".this.");
-        }
-      }
+    final boolean skipInstanceQualifier;
+    if (myIsChainedConstructor) {
+      skipInstanceQualifier = true;
+      buffer.append(PsiKeyword.THIS);
     }
     else {
-      buffer.append("qqq.");
-    }
+      skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
+      if (skipInstanceQualifier) {
+        if (myNeedChangeContext) {
+          boolean needsThisQualifier = false;
+          PsiElement parent = myCodeFragmentMember;
+          while (!myTargetClass.equals(parent)) {
+            if (parent instanceof PsiMethod) {
+              String methodName = ((PsiMethod)parent).getName();
+              if (methodName.equals(myMethodName)) {
+                needsThisQualifier = true;
+                break;
+              }
+            }
+            parent = parent.getParent();
+          }
+          if (needsThisQualifier) {
+            buffer.append(myTargetClass.getName());
+            buffer.append(".this.");
+          }
+        }
+      }
+      else {
+        buffer.append("qqq.");
+      }
 
-    buffer.append(myMethodName);
+      buffer.append(myMethodName);
+    }
     buffer.append("(");
     int count = 0;
     for (ParameterTablePanel.VariableData data : myVariableDatum) {

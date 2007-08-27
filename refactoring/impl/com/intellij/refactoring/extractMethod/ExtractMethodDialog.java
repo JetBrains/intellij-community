@@ -47,16 +47,21 @@ class ExtractMethodDialog extends DialogWrapper {
   private final JTextArea mySignatureArea;
   private final JCheckBox myCbMakeStatic;
   private JCheckBox myCbMakeVarargs;
+  private JCheckBox myCbChainedConstructor;
 
   private final ParameterTablePanel.VariableData[] myVariableData;
   private final PsiClass myTargetClass;
   private VisibilityPanel myVisibilityPanel;
   private boolean myWasStatic;
+  private boolean myDefaultVisibility = true;
+  private boolean myChangingVisibility;
 
 
   public ExtractMethodDialog(Project project,
                              PsiClass targetClass, final PsiVariable[] inputVariables, PsiType returnType,
-                             PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic, String initialMethodName,
+                             PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
+                             final boolean canBeChainedConstructor,
+                             String initialMethodName,
                              String title,
                              String helpId,
                              final PsiElement[] elementsToExtract) {
@@ -112,9 +117,11 @@ class ExtractMethodDialog extends DialogWrapper {
     mySignatureArea = new JTextArea(height, 30);
     myCbMakeStatic = new NonFocusableCheckBox();
     myCbMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
+    if (canBeChainedConstructor) {
+      myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
+    }
     if (canBeVarargs) {
-      myCbMakeVarargs = new NonFocusableCheckBox();
-      myCbMakeVarargs.setText(RefactoringBundle.message("declare.varargs.checkbox"));
+      myCbMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
     }
 
     // Initialize UI
@@ -132,6 +139,10 @@ class ExtractMethodDialog extends DialogWrapper {
     return myCbMakeStatic.isSelected();
   }
 
+  public boolean isChainedConstructor() {
+    return myCbChainedConstructor != null && myCbChainedConstructor.isSelected();  
+  }
+
   protected Action[] createActions() {
     if (myHelpId != null) {
       return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
@@ -140,11 +151,11 @@ class ExtractMethodDialog extends DialogWrapper {
     }
   }
 
-  public String getChoosenMethodName() {
+  public String getChosenMethodName() {
     return myNameField.getText();
   }
 
-  public ParameterTablePanel.VariableData[] getChoosenParameters() {
+  public ParameterTablePanel.VariableData[] getChosenParameters() {
     return myVariableData;
   }
 
@@ -211,6 +222,28 @@ class ExtractMethodDialog extends DialogWrapper {
       myCbMakeVarargs.setSelected(myWasStatic);
       panel.add(myCbMakeVarargs);
     }
+    if (myCbChainedConstructor != null) {
+      panel.add(myCbChainedConstructor);
+      myCbChainedConstructor.addItemListener(new ItemListener() {
+        public void itemStateChanged(final ItemEvent e) {
+          if (myDefaultVisibility) {
+            myChangingVisibility = true;
+            try {
+              if (isChainedConstructor()) {
+                myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myTargetClass.getModifierList()));
+              }
+              else {
+                myVisibilityPanel.setVisibility(PsiModifier.PRIVATE);
+              }
+            }
+            finally {
+              myChangingVisibility = false;
+            }
+          }
+          update();
+        }
+      });
+    }
     setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
 
     return panel;
@@ -223,8 +256,13 @@ class ExtractMethodDialog extends DialogWrapper {
   }
 
   private void update() {
+    myNameField.setEnabled(!isChainedConstructor());
+    if (myCbMakeStatic != null) {
+      myCbMakeStatic.setEnabled(!isChainedConstructor());
+    }
     updateSignature();
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
+    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
+                       isChainedConstructor());
   }
 
   public String getVisibility() {
@@ -238,6 +276,9 @@ class ExtractMethodDialog extends DialogWrapper {
     myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
       public void visibilityChanged(String newVisibility) {
         updateSignature();
+        if (!myChangingVisibility) {
+          myDefaultVisibility = false;
+        }
       }
     });
     JPanel panel = new JPanel(new BorderLayout());
@@ -293,7 +334,7 @@ class ExtractMethodDialog extends DialogWrapper {
     if (buffer.length() > 0) {
       buffer.append(" ");
     }
-    if (isMakeStatic()) {
+    if (isMakeStatic() && !isChainedConstructor()) {
       buffer.append("static ");
     }
     if (myTypeParameterList != null) {
@@ -301,9 +342,14 @@ class ExtractMethodDialog extends DialogWrapper {
       buffer.append(" ");
     }
 
-    buffer.append(PsiFormatUtil.formatType(myReturnType, 0, PsiSubstitutor.EMPTY));
-    buffer.append(" ");
-    buffer.append(myNameField.getText());
+    if (isChainedConstructor()) {
+      buffer.append(myTargetClass.getName());
+    }
+    else {
+      buffer.append(PsiFormatUtil.formatType(myReturnType, 0, PsiSubstitutor.EMPTY));
+      buffer.append(" ");
+      buffer.append(myNameField.getText());
+    }
     buffer.append("(");
     int count = 0;
     final String INDENT = "    ";

@@ -273,6 +273,13 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testChainedConstructor() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    boolean success = performExtractMethod(true, false, getEditor(), getFile(), getProject(), true);
+    assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testReassignedVarAfterCall() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
@@ -323,6 +330,12 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project)
     throws PrepareFailedException, IncorrectOperationException {
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, false);
+  }
+
+  public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project,
+                                             final boolean extractChainedConstructor)
+    throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -339,6 +352,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     final ExtractMethodProcessor processor =
       new ExtractMethodProcessor(project, editor, elements, null, "Extract Method", "newMethod", null);
     processor.setShowErrorDialogs(false);
+    processor.setChainedConstructor(extractChainedConstructor);
 
     if (!processor.prepare()) {
       return false;
