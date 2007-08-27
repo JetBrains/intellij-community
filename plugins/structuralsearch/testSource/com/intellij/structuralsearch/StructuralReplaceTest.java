@@ -1842,4 +1842,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
+
+  public void testLeastSurprise2() {
+    String s1 = "class B { int s(int a) { a = 1; a = 2; c(a); } }";
+    String s2 = "a";
+    String replacement = "a2";
+    String expected = "class B { int s(int a2) { a2 = 1; a2 = 2; c(a2); } }";
+
+    actualResult = replacer.testReplace(s1,s2,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+  }
 }

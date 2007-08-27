@@ -454,6 +454,11 @@ public class ReplacerImpl {
                ) {
               firstToDelete = prevSibling;
             }
+          } else if (element instanceof PsiParameter &&
+                     prevSibling instanceof PsiJavaToken &&
+                ((PsiJavaToken)prevSibling).getTokenType() == ElementType.COMMA
+            ) {
+            firstToDelete = prevSibling;
           }
 
           element.getParent().deleteChildRange(firstToDelete,lastToDelete);
