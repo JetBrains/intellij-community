@@ -8,12 +8,11 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class LineStartAction extends EditorAction {
+public class LineStartAction extends TextComponentEditorAction {
   public LineStartAction() {
     super(new Handler());
   }

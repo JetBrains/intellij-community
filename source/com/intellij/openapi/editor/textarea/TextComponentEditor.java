@@ -8,20 +8,19 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
  * @author yole
  */
-public class TextComponentEditor implements Editor {
+public class TextComponentEditor extends UserDataHolderBase implements Editor {
   private Project myProject;
   private JTextComponent myTextComponent;
   private TextComponentDocument myDocument;
@@ -111,21 +110,12 @@ public class TextComponentEditor implements Editor {
   }
 
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
-    if (myTextComponent instanceof JTextArea) {
-      final JTextArea textArea = (JTextArea)myTextComponent;
-      try {
-        return textArea.getLineStartOffset(pos.line) + pos.column;
-      }
-      catch (BadLocationException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return pos.column;
+    return myDocument.getLineStartOffset(pos.line) + pos.column;
   }
 
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition logicalPos) {
-    throw new UnsupportedOperationException("Not implemented");
+    return new VisualPosition(logicalPos.line, logicalPos.column);
   }
 
   @NotNull
@@ -145,7 +135,9 @@ public class TextComponentEditor implements Editor {
 
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
-    throw new UnsupportedOperationException("Not implemented");
+    int line = myDocument.getLineNumber(offset);
+    final int lineStartOffset = myDocument.getLineStartOffset(line);
+    return new VisualPosition(line, offset - lineStartOffset);
   }
 
   @NotNull
@@ -211,13 +203,5 @@ public class TextComponentEditor implements Editor {
 
   public boolean hasHeaderComponent() {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  public <T> T getUserData(final Key<T> key) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  public <T> void putUserData(final Key<T> key, final T value) {
-    throw new UnsupportedOperationException("Not implemented");
   }
 }

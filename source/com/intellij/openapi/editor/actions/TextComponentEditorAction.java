@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -22,7 +21,12 @@ public abstract class TextComponentEditorAction extends EditorAction {
 
   @Nullable
   protected Editor getEditor(final DataContext dataContext) {
-    final Editor editor = super.getEditor(dataContext);
+    return getEditorFromContext(dataContext);
+  }
+
+  @Nullable
+  public static Editor getEditorFromContext(final DataContext dataContext) {
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null) return editor;
     final Object data = DataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof JTextComponent) {
