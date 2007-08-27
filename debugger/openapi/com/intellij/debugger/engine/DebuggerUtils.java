@@ -30,8 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -354,7 +354,47 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     VirtualMachine machine = typeComponent.virtualMachine();
     return machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic();
   }
-  
+
+  public static boolean isSimpleGetter(PsiMethod method){
+    final PsiCodeBlock body = method.getBody();
+    if(body == null){
+      return false;
+    }
+
+    final PsiStatement[] statements = body.getStatements();
+    if(statements.length != 1){
+      return false;
+    }
+    
+    final PsiStatement statement = statements[0];
+    if(!(statement instanceof PsiReturnStatement)){
+      return false;
+    }
+    
+    final PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
+    if(!(value instanceof PsiReferenceExpression)){
+      return false;
+    }
+    
+    final PsiReferenceExpression reference = (PsiReferenceExpression)value;
+    final PsiExpression qualifier = reference.getQualifierExpression();
+    //noinspection HardCodedStringLiteral
+    if(qualifier != null && !"this".equals(qualifier.getText())) {
+      return false;
+    }
+    
+    final PsiElement referent = reference.resolve();
+    if(referent == null) {
+      return false;
+    }
+    
+    if(!(referent instanceof PsiField)) {
+      return false;
+    }
+    
+    return ((PsiField)referent).getContainingClass().equals(method.getContainingClass());
+  }
+
   protected static class ArrayClass {
     public String className;
     public int dims;

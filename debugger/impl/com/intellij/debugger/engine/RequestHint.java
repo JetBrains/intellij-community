@@ -16,7 +16,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Location;
@@ -194,7 +194,7 @@ public class RequestHint {
             boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
               public Boolean compute() {
                 final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class);
-                return (psiMethod != null && isSimpleGetter(psiMethod))? Boolean.TRUE : Boolean.FALSE;
+                return (psiMethod != null && DebuggerUtils.isSimpleGetter(psiMethod))? Boolean.TRUE : Boolean.FALSE;
               }
             }).booleanValue();
 
@@ -235,43 +235,4 @@ public class RequestHint {
     return STOP;
   }
 
-  private static boolean isSimpleGetter(PsiMethod method){
-    final PsiCodeBlock body = method.getBody();
-    if(body == null){
-      return false;
-    }
-
-    final PsiStatement[] statements = body.getStatements();
-    if(statements.length != 1){
-      return false;
-    }
-    
-    final PsiStatement statement = statements[0];
-    if(!(statement instanceof PsiReturnStatement)){
-      return false;
-    }
-    
-    final PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
-    if(!(value instanceof PsiReferenceExpression)){
-      return false;
-    }
-    
-    final PsiReferenceExpression reference = (PsiReferenceExpression)value;
-    final PsiExpression qualifier = reference.getQualifierExpression();
-    //noinspection HardCodedStringLiteral
-    if(qualifier != null && !"this".equals(qualifier.getText())) {
-      return false;
-    }
-    
-    final PsiElement referent = reference.resolve();
-    if(referent == null) {
-      return false;
-    }
-    
-    if(!(referent instanceof PsiField)) {
-      return false;
-    }
-    
-    return ((PsiField)referent).getContainingClass().equals(method.getContainingClass());
-  }
 }

@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.impl;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -336,6 +337,14 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
     }
 
+    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+      final PsiMethod psiMethod = expression.resolveMethod();
+      if (psiMethod != null && !hasSideEffects(expression)) {
+        myExpressions.add(new TextWithImportsImpl(expression));
+      }
+      super.visitMethodCallExpression(expression);
+    }
+
     public void visitReferenceExpression(final PsiReferenceExpression reference) {
       if (myLineRange.intersects(reference.getTextRange())) {
         final PsiElement psiElement = reference.resolve();
@@ -397,6 +406,12 @@ public class FrameDebuggerTree extends DebuggerTree {
               rv.set(true);
             }
           }
+          else if (psiElement instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod)psiElement;
+            if (!DebuggerUtils.isSimpleGetter(method)) {
+              rv.set(true);
+            }
+          }
           if (!rv.get()) {
             super.visitReferenceExpression(expression);
           }
@@ -417,7 +432,10 @@ public class FrameDebuggerTree extends DebuggerTree {
         }
 
         public void visitCallExpression(final PsiCallExpression callExpression) {
-          rv.set(true);
+          final PsiMethod method = callExpression.resolveMethod();
+          if (method == null || !DebuggerUtils.isSimpleGetter(method)) {
+            rv.set(true);
+          }
         }
       });
       return rv.get();
