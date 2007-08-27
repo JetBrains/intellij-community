@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
 public class MoveHandler implements RefactoringActionHandler {
@@ -436,6 +438,8 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
       gr.add(myRbMovePackage);
       gr.add(myRbRearrangePackage);
 
+      new RadioUpDownListener(myRbMovePackage, myRbRearrangePackage);
+
       Box box = Box.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbMovePackage);
@@ -486,6 +490,8 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
       gr.add(myRbMoveInner);
       gr.add(myRbMoveMembers);
 
+      new RadioUpDownListener(myRbMoveInner, myRbMoveMembers);
+
       Box box = Box.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbMoveInner);
@@ -502,6 +508,31 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
         return MoveType.MEMBERS;
       }
       return MoveType.NOT_SUPPORTED;
+    }
+  }
+
+  private static class RadioUpDownListener extends KeyAdapter {
+    private JRadioButton myRadioButton1;
+    private JRadioButton myRadioButton2;
+
+    private RadioUpDownListener(final JRadioButton radioButton1, final JRadioButton radioButton2) {
+      myRadioButton1 = radioButton1;
+      myRadioButton2 = radioButton2;
+      myRadioButton1.addKeyListener(this);
+      myRadioButton2.addKeyListener(this);
+    }
+
+    public void keyPressed(final KeyEvent e) {
+      if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
+        if (myRadioButton1.isSelected()) {
+          myRadioButton2.requestFocus();
+          myRadioButton2.doClick();
+        }
+        else {
+          myRadioButton1.requestFocus();
+          myRadioButton1.doClick();
+        }
+      }
     }
   }
 
