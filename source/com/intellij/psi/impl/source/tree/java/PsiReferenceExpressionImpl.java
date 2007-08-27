@@ -398,17 +398,8 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     PsiManager manager = getManager();
     if (element instanceof PsiClass) {
       String qName = ((PsiClass)element).getQualifiedName();
-      if (qName == null) {
-        qName = ((PsiClass)element).getName();
-        final PsiClass psiClass = getManager().getResolveHelper().resolveReferencedClass(qName, this);
-        if (!getManager().areElementsEquivalent(psiClass, element)) {
-          throw new IncorrectOperationException();
-        }
-      }
-      else {
-        if (getManager().findClass(qName, getResolveScope()) == null) {
-          return this;
-        }
+      if (qName != null && getManager().findClass(qName, getResolveScope()) == null) {
+        return this;
       }
       boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);
       final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
