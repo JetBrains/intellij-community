@@ -97,7 +97,7 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static ChangeList getChangeListIfOnlyOne(final Project project, @Nullable Change[] changes) {
+  public static ChangeList getChangeListIfOnlyOne(@NotNull final Project project, @Nullable Change[] changes) {
     if (changes == null || changes.length == 0) {
       return null;
     }

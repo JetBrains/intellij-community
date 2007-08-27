@@ -27,13 +27,15 @@ public class CommitAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
-    final ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(project, changes);
     boolean enabled = false;
-    if (changes != null && changeList != null) {
-      for(Change c: changes) {
-        final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
-        if (vcs != null && vcs.getCheckinEnvironment() != null) {
-          enabled = true;
+    if (project != null) {
+      final ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(project, changes);
+      if (changes != null && changeList != null) {
+        for(Change c: changes) {
+          final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
+          if (vcs != null && vcs.getCheckinEnvironment() != null) {
+            enabled = true;
+          }
         }
       }
     }
