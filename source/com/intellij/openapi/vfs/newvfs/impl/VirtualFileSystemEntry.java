@@ -25,7 +25,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile int myId;
 
   public VirtualFileSystemEntry(final String name, final VirtualDirectoryImpl parent, int id) {
-    myName = name;
+    myName = name.replace('\\', '/');
     myParent = parent;
     myId = id;
   }
@@ -188,7 +188,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   public void setName(final String newName) {
     myParent.removeChild(this);
-    myName = newName;
+    myName = newName != null? newName.replace('\\', '/') : null;
     myParent.addChild(this);
   }
 
