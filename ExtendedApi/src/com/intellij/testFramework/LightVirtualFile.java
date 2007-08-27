@@ -24,6 +24,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   private String myName = "";
   private long myModStamp = LocalTimeCounter.currentTime();
   private boolean myIsWritable = true;
+  private Language myLanguage;
   private VirtualFileListener myListener = null;
 
   public LightVirtualFile() {
@@ -57,20 +58,21 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   public LightVirtualFile(final String name, final Language language, final String text) {
     myName = name;
     final Language typeLanguage = language instanceof LanguageDialect? ((LanguageDialect)language).getBaseLanguage() : language;
-    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    for (final FileType fileType : fileTypes) {
-      if (fileType instanceof LanguageFileType) {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
-        if (languageFileType.getLanguage() == typeLanguage) {
-          myFileType = languageFileType;
-          break;
-        }
+    for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == typeLanguage) {
+        myFileType = fileType;
+        break;
       }
     }
     if (myFileType == null) myFileType = language.getAssociatedFileType();
     if (myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
     myContent = text;
     myModStamp = LocalTimeCounter.currentTime();
+    myLanguage = language;
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
   }
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {

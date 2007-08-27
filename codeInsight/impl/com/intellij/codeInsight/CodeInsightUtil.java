@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +42,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -256,15 +258,18 @@ public class CodeInsightUtil {
     return commonParent;
   }
 
-  private static PsiElement findElementAtInRoot(final PsiElement root, final int startOffset) {
-    final PsiElement left;
+  @Nullable
+  private static PsiElement findElementAtInRoot(final PsiElement root, final int offset) {
     if (root instanceof PsiFile) {
-      left = ((PsiFile)root).getViewProvider().findElementAt(startOffset, root.getLanguage());
+      final PsiFile file = (PsiFile)root;
+      final LanguageDialect dialect = file.getLanguageDialect();
+      if (dialect != null) {
+        final PsiElement element = file.getViewProvider().findElementAt(offset, dialect);
+        if (element != null) return element;
+      }
+      return file.getViewProvider().findElementAt(offset, root.getLanguage());
     }
-    else {
-      left = root.findElementAt(startOffset);
-    }
-    return left;
+    return root.findElementAt(offset);
   }
 
   public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiElement context) {

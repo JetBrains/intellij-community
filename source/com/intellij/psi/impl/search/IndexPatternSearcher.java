@@ -13,7 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
@@ -49,7 +49,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       return true;
     }
 
-    final CacheManager cacheManager = ((PsiManagerImpl)file.getManager()).getCacheManager();
+    final CacheManager cacheManager = ((PsiManagerEx)file.getManager()).getCacheManager();
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
     if (patternProvider != null) {
       if (cacheManager.getTodoCount(file.getVirtualFile(), patternProvider) == 0)
