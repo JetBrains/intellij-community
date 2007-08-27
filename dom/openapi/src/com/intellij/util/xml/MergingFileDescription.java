@@ -44,22 +44,20 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
-    return getMergedRoot(reference.getRoot());
+    return getMergedRoot(reference.<T>getRoot());
   }
 
-  protected final DomElement getMergedRoot(DomFileElement element) {
+  public final T getMergedRoot(DomFileElement<T> element) {
     final DomManager domManager = element.getManager();
 
     XmlFile xmlFile = element.getFile();
     Set<XmlFile> files = new HashSet<XmlFile>();
-    if (xmlFile != null) {
-      files.add(xmlFile);
-      final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
-      if (originalFile != null) {
-        final DomFileElement originalElement = domManager.getFileElement(originalFile);
-        if (originalElement != null) {
-          element = originalElement;
-        }
+    files.add(xmlFile);
+    final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
+    if (originalFile != null) {
+      final DomFileElement originalElement = domManager.getFileElement(originalFile);
+      if (originalElement != null) {
+        element = originalElement;
       }
     }
 
@@ -92,7 +90,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final List<JavaMethod> methods = DomUtil.getFixedPath(element.getParent());
     if (methods == null) return super.getIdentityScope(element);
 
-    Object o = getMergedRoot(element.getRoot());
+    Object o = getMergedRoot(element.<T>getRoot());
     for (final JavaMethod method : methods) {
       o = method.invoke(o, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }

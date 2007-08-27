@@ -587,21 +587,23 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   }
 
-  @Nullable
-  private DomFileDescription findFileDescription(DomElement element) {
-    return getOrCreateCachedValueProvider(element.getRoot().getFile()).getFileDescription();
+  @NotNull
+  public DomFileDescription<?> getFileDescription(@NotNull DomElement element) {
+    final DomFileDescription<DomElement> description = getOrCreateCachedValueProvider(element.getRoot().getFile()).getFileDescription();
+    assert description != null;
+    return description;
   }
 
   @NotNull
   public final DomElement getResolvingScope(GenericDomValue element) {
-    final DomFileDescription description = findFileDescription(element);
-    return description == null ? element.getRoot() : description.getResolveScope(element);
+    final DomFileDescription description = getFileDescription(element);
+    return description.getResolveScope(element);
   }
 
   @Nullable
   public final DomElement getIdentityScope(DomElement element) {
-    final DomFileDescription description = findFileDescription(element);
-    return description == null ? element.getParent() : description.getIdentityScope(element);
+    final DomFileDescription description = getFileDescription(element);
+    return description.getIdentityScope(element);
   }
 
   public TypeChooserManager getTypeChooserManager() {
