@@ -20,9 +20,7 @@ Groovy script
       Argument label
         PsiElement(identifier)('f')
       PsiElement(:)(':')
-      PsiErrorElement:Expression expected
-        <empty list>
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       Literal
         PsiElement(Integer)('5')
     PsiElement(,)(',')

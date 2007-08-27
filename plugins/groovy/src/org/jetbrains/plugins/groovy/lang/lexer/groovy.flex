@@ -45,11 +45,14 @@ import org.jetbrains.annotations.NotNull;
 
   private int afterComment = YYINITIAL;
   private int afterNls = YYINITIAL;
+  private int afterBrace = YYINITIAL;
 
   private void clearStacks(){
     gStringStack.clear();
     blockStack.clear();
   }
+
+  private int braceCount = 0;
 
 %}
 
@@ -227,6 +230,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 // Special hacks for IDEA formatter
 %xstate NLS_AFTER_LBRACE
 %xstate NLS_AFTER_NLS
+
+%state BRACE_COUNT
 
 %%
 <NLS_AFTER_COMMENT>{
@@ -466,7 +471,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 {mWS}                                     {  return mWS; }
 {mNLS}                                    {  yybegin(NLS_AFTER_NLS);
                                              afterComment = WAIT_FOR_REGEX;
-                                             return mNLS; }
+                                             return braceCount > 0 ? mWS : mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
@@ -510,6 +515,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 | \"\"\"[^"$"]
 | {mWRONG_TRIPLE_GSTRING}                                  {  return mWRONG_GSTRING_LITERAL; }
 
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -519,12 +526,16 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 "/"                                       {  return(mDIV);  } 
 "/="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mDIV_ASSIGN);  }
-"("                                       {  yybegin(NLS_AFTER_LBRACE);
+"("                                       {  yybegin(WAIT_FOR_REGEX);
+                                             braceCount++;
                                              return(mLPAREN);  }
-")"                                       {  return(mRPAREN);  }
-"["                                       {  yybegin(NLS_AFTER_LBRACE);
+")"                                       {  if (braceCount > 0 ) braceCount--;
+                                             return(mRPAREN);  }
+"["                                       {  yybegin(WAIT_FOR_REGEX);
+                                             braceCount++;
                                              return(mLBRACK);  }
-"]"                                       {  return(mRBRACK);  }
+"]"                                       {  if (braceCount > 0 ) braceCount--;
+                                             return(mRBRACK);  }
 "{"                                       {  yybegin(NLS_AFTER_LBRACE);
                                              return(mLCURLY);  }
 ":"                                       {  yybegin(WAIT_FOR_REGEX);

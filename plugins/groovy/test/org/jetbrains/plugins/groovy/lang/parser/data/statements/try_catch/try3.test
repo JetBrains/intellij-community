@@ -25,15 +25,10 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement({)('{')
     PsiElement(})('}')
-  PsiElement(new line)('\n')
-  PsiErrorElement:'finally' without 'try'
+    PsiWhiteSpace('\n')
     PsiElement(finally)('finally')
-  Closable block
     PsiElement({)('{')
     PsiWhiteSpace(' ')
-    Parameter list
-      <empty list>
-    Reference expression
-      PsiElement(identifier)('doNothing')
+    PsiElement(identifier)('doNothing')
     PsiWhiteSpace(' ')
     PsiElement(})('}')

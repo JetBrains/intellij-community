@@ -12,5 +12,5 @@ Groovy script
         <empty list>
       PsiWhiteSpace('\n')
       PsiElement(,)(',')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       PsiElement())(')')

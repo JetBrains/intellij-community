@@ -27,7 +27,8 @@
     <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"/>
-    <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
+    <fileEditorProvider
+        implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
   </extensions>
 
   <project-components>
@@ -153,6 +154,10 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider
+      </implementation-class>
     </component>
   </application-components>
 

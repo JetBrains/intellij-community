@@ -10,5 +10,5 @@ Groovy script
       Generalized list
         PsiElement([)('[')
         PsiElement(])(']')
-      PsiElement(new line)('\n')
+      PsiWhiteSpace('\n')
       PsiElement())(')')
