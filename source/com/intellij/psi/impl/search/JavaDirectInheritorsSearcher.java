@@ -39,7 +39,12 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     });
 
-    if ("java.lang.Object".equals(aClass.getQualifiedName())) {
+    String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return aClass.getQualifiedName();
+      }
+    });
+    if ("java.lang.Object".equals(qualifiedName)) {
       return psiManager.getSearchHelper().processAllClasses(
         new PsiElementProcessor<PsiClass>() {
           public boolean execute(final PsiClass psiClass) {
