@@ -1,14 +1,13 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.popup.ActiveIcon;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.TitlePanel;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.tabs.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +43,19 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   private BaseLabel myIdLabel = new BaseLabel(this, false);
 
-  private MoreIcon myMoreIcon = new MoreIcon();
+  private MoreIcon myMoreIcon = new MoreIcon() {
+    protected Rectangle getIconRec() {
+      return myLastLayout.moreRect;
+    }
+
+    protected boolean isActive() {
+      return myWindow.isActive();
+    }
+
+    protected int getIconY(final Rectangle iconRec) {
+      return iconRec.height / 2 - getIconHeight() / 2 + TitlePanel.STRUT;
+    }
+  };
 
   private JPopupMenu myPopup;
   private PopupMenuListener myPopupListener;
@@ -356,7 +367,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     c.restore();
 
     if (myLastLayout != null && myLastLayout.moreRect != null) {
-      myMoreIcon.paintIcon(this, g, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
+      myMoreIcon.paintIcon(this, g);
     }
   }
 
@@ -572,44 +583,4 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
   }
 
-  private class MoreIcon implements Icon {
-
-    private ActiveIcon myLeft = new ActiveIcon(IconLoader.getIcon("/general/comboArrowLeft.png"), IconLoader.getIcon("/general/comboArrowLeftPassive.png"));
-    private ActiveIcon myRight = new ActiveIcon(IconLoader.getIcon("/general/comboArrowRight.png"), IconLoader.getIcon("/general/comboArrowRightPassive.png"));
-
-    private int myGap = 2;
-    private boolean myLeftPainted;
-    private boolean myRightPainted;
-
-    public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-      myLeft.setActive(myWindow.isActive());
-      myRight.setActive(myWindow.isActive());
-
-      final Rectangle moreRect = myLastLayout.moreRect;
-      int iconY = moreRect.height / 2 - myRight.getIconHeight() / 2 + TitlePanel.STRUT;
-
-      if (myLeftPainted && myRightPainted) {
-        myLeft.paintIcon(c, g, moreRect.x, iconY);
-        myRight.paintIcon(c, g, moreRect.x + myLeft.getIconWidth() + myGap, iconY);
-      } else {
-        Icon toPaint = myLeftPainted ? myLeft : (myRightPainted ? myRight : null);
-        if (toPaint != null) {
-          toPaint.paintIcon(c, g, moreRect.x + getIconWidth() / 2 - myGap - 1, iconY);
-        }
-      }
-    }
-
-    private void setPaintedIcons(boolean left, boolean right) {
-      myLeftPainted = left;
-      myRightPainted = right;
-    }
-
-    public int getIconWidth() {
-      return myLeft.getIconWidth() + myRight.getIconWidth() + myGap;
-    }
-
-    public int getIconHeight() {
-      return myLeft.getIconHeight();
-    }
-  }
 }
