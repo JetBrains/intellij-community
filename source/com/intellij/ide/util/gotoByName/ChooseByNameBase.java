@@ -1,6 +1,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -872,6 +873,11 @@ public abstract class ChooseByNameBase{
     @Nullable
     public Point getBestPopupPosition() {
       return new Point(myTextFieldPanel.getWidth(), getHeight());
+    }
+
+    protected void paintComponent(final Graphics g) {
+      UISettings.setupAntialiasing(g);
+      super.paintComponent(g);
     }
   }
 
