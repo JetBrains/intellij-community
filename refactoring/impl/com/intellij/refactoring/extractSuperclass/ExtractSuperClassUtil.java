@@ -31,9 +31,7 @@ public class ExtractSuperClassUtil {
                                            final MemberInfo[] selectedMemberInfos,
                                            final JavaDocPolicy javaDocPolicy)
     throws IncorrectOperationException {
-    PsiClass superclass;
-    PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
-    superclass = targetDirectory.createClass(superclassName);
+    PsiClass superclass = targetDirectory.createClass(superclassName);
     final PsiModifierList superClassModifierList = superclass.getModifierList();
     assert superClassModifierList != null;
     superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
@@ -77,11 +75,11 @@ public class ExtractSuperClassUtil {
       superCallText.append("super(");
       for (int i = 0; i < baseParams.length; i++) {
         PsiParameter baseParam = baseParams[i];
-        paramList.add(baseParam);
+        final PsiParameter newParam = (PsiParameter)paramList.add(baseParam);
         if (i > 0) {
           superCallText.append(",");
         }
-        superCallText.append(baseParam.getName());
+        superCallText.append(newParam.getName());
       }
       superCallText.append(");");
       PsiStatement statement = factory.createStatementFromText(superCallText.toString(), null);

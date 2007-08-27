@@ -4,21 +4,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -109,7 +109,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       PsiClass superClass = extractSuper(superClassName);
       for (final UsageInfo usage : usages) {
         if (usage instanceof BindToOldUsageInfo) {
-          final PsiReference reference = ((BindToOldUsageInfo)usage).getReference();
+          final PsiReference reference = usage.getReference();
           if (reference != null && reference.getElement().isValid()) {
             reference.bindToElement(myClass);
           }
@@ -117,6 +117,10 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       }
       if (!Comparing.equal(oldQualifiedName, superClass.getQualifiedName())) {
         processTurnToSuperRefs(usages, superClass);
+      }
+      final PsiFile containingFile = myClass.getContainingFile();
+      if (containingFile instanceof PsiJavaFile) {
+        CodeStyleManager.getInstance(myManager).removeRedundantImports((PsiJavaFile) containingFile);
       }
     }
     catch (IncorrectOperationException e) {

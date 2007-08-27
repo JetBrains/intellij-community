@@ -33,6 +33,10 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     doTest(new Pair<String, Class<? extends PsiMember>>("a", PsiField.class));
   }
 
+  public void testExtendsLibraryClass() throws Exception {
+    doTest();
+  }
+
   private String getRoot() {
     return PathManagerEx.getTestDataPath()+ "/refactoring/extractSuperClass/" + getTestName(true);
   }
