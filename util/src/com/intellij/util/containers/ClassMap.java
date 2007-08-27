@@ -25,7 +25,7 @@ import java.util.Map;
  * @author peter
  */
 public class ClassMap<T> {
-  private final Map<Class, T> myMap;
+  protected final Map<Class, T> myMap;
 
   public ClassMap() {
     this(new THashMap<Class, T>());
@@ -34,11 +34,14 @@ public class ClassMap<T> {
     myMap = map;
   }
 
-  public final void put(Class aClass, T value) {
+  public void put(Class aClass, T value) {
     myMap.put(aClass, value);
   }
+  public void remove(Class aClass) {
+    myMap.remove(aClass);
+  }
 
-  public final T get(Class aClass) {
+  public T get(Class aClass) {
     T t = myMap.get(aClass);
     if (t != null) {
       return t;
@@ -60,7 +63,7 @@ public class ClassMap<T> {
     }
     return null;
   }
-  
+
   public final Collection<T> values() {
     return myMap.values();
   }

@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
+import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -80,7 +80,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public Module getModuleForFile(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileDelegate) file = ((VirtualFileDelegate)file).getDelegate();
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
     DirectoryIndex directoryIndex = myDirectoryIndex;

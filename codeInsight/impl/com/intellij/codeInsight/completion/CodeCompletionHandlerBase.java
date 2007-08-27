@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -400,11 +400,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(oldEditor, fileCopy, context.startOffset);
     if (injectedEditor != oldEditor) {
       // newly inserted identifier can well end up in the injected language region
-      final EditorDelegate editorDelegate = (EditorDelegate)injectedEditor;
-      int newOffset1 =
-        editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
-      int newOffset2 = editorDelegate
-        .logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
+      final EditorWindow editorDelegate = (EditorWindow)injectedEditor;
+      int newOffset1 = editorDelegate.logicalPositionToOffset(editorDelegate.hostToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
+      int newOffset2 = editorDelegate.logicalPositionToOffset(editorDelegate.hostToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
       PsiFile injectedFile = editorDelegate.getInjectedFile();
       CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
       newContext.offset = newContext.startOffset;

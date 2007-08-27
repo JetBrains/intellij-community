@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -166,8 +166,8 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
   private static void setupEditorForInjectedLanguage() {
     Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
-    if (editor instanceof EditorDelegate) {
-      myFile = ((EditorDelegate)editor).getInjectedFile();
+    if (editor instanceof EditorWindow) {
+      myFile = ((EditorWindow)editor).getInjectedFile();
       myEditor = editor;
     }
   }
@@ -372,7 +372,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_FILE))) {
       Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(getEditor(), getFile());
-      return editor instanceof EditorDelegate ? ((EditorDelegate)editor).getInjectedFile() : getFile();
+      return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
     return super.getData(dataId);
   }
@@ -397,10 +397,10 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
   protected static void bringRealEditorBack() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    if (myEditor instanceof EditorDelegate) {
-      DocumentEx document = ((DocumentRange)myEditor.getDocument()).getDelegate();
+    if (myEditor instanceof EditorWindow) {
+      DocumentEx document = ((DocumentWindow)myEditor.getDocument()).getDelegate();
       myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      myEditor = ((EditorDelegate)myEditor).getDelegate();
+      myEditor = ((EditorWindow)myEditor).getDelegate();
       myVFile = myFile.getVirtualFile();
     }
   }

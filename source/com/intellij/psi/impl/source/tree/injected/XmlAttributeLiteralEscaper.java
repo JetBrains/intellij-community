@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,12 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
     int displayStart = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset());
 
-    return myXmlAttribute.displayToPhysical(offsetInDecoded+displayStart-valueTextRange.getStartOffset()) 
-           + valueTextRange.getStartOffset();
+    int dp = myXmlAttribute.displayToPhysical(offsetInDecoded + displayStart - valueTextRange.getStartOffset());
+    if (dp == -1) return -1;
+    return dp + valueTextRange.getStartOffset();
+  }
+
+  public boolean isOneLine() {
+    return true;
   }
 }

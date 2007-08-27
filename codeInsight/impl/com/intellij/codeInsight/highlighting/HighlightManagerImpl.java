@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -103,6 +103,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     return map;
   }
 
+  @NotNull
   public RangeHighlighter[] getHighlighters(Editor editor) {
     Map<RangeHighlighter, HighlightInfo> highlightersMap = getHighlightInfoMap(editor, false);
     if (highlightersMap == null) return new RangeHighlighter[0];
@@ -114,10 +115,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     return set.toArray(new RangeHighlighter[set.size()]);
   }
 
-  public RangeHighlighter addSegmentHighlighter(Editor editor, int startOffset, int endOffset, TextAttributes attributes, int flags) {
+  private RangeHighlighter addSegmentHighlighter(Editor editor, int startOffset, int endOffset, TextAttributes attributes, int flags) {
     RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, HighlighterTargetArea.EXACT_RANGE);
-    HighlightInfo info = new HighlightInfo(editor instanceof EditorDelegate ? ((EditorDelegate)editor).getDelegate() : editor, flags);
+    HighlightInfo info = new HighlightInfo(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
     map.put(highlighter, info);
     return highlighter;

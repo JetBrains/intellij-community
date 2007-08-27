@@ -1,7 +1,6 @@
-package com.intellij.psi.impl.source.tree.injected;
+package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,7 +19,7 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
    * 
    * @param offsetInDecoded offset in the parsed injected file
    * @param rangeInsideHost
-   * @return offset in the host PSI element
+   * @return offset in the host PSI element, or -1 if offset is out of host range
    */
   public abstract int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost);
 
@@ -28,4 +27,6 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
   public TextRange getRelevantTextRange() {
     return TextRange.from(0, myHost.getTextLength());
   }
+
+  public abstract boolean isOneLine();
 }

@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.xml.XmlTextImpl;
+import com.intellij.psi.LiteralTextEscaper;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,5 +32,9 @@ public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
   @NotNull
   public TextRange getRelevantTextRange() {
     return myHost.getCDATAInterior();
+  }
+
+  public boolean isOneLine() {
+    return false;
   }
 }

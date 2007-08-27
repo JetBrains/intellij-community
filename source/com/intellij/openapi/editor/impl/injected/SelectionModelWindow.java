@@ -5,17 +5,18 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
-public class SelectionModelDelegate implements SelectionModel {
+public class SelectionModelWindow implements SelectionModel {
   private final SelectionModel myHostModel;
-  private final DocumentRange myDocument;
-  private final EditorDelegate myInjectedEditor;
+  private final DocumentWindow myDocument;
+  private final EditorWindow myInjectedEditor;
 
-  public SelectionModelDelegate(final EditorEx delegate, final DocumentRange document, EditorDelegate injectedEditor) {
+  public SelectionModelWindow(final EditorEx delegate, final DocumentWindow document, EditorWindow injectedEditor) {
     myDocument = document;
     myInjectedEditor = injectedEditor;
     myHostModel = delegate.getSelectionModel();
@@ -42,7 +43,8 @@ public class SelectionModelDelegate implements SelectionModel {
   }
 
   public void setSelection(final int startOffset, final int endOffset) {
-    myHostModel.setSelection(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset));
+    TextRange hostRange = myDocument.injectedToHost(new TextRange(startOffset, endOffset));
+    myHostModel.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
   public void removeSelection() {
@@ -70,7 +72,7 @@ public class SelectionModelDelegate implements SelectionModel {
   }
 
   public void setBlockSelection(final LogicalPosition blockStart, final LogicalPosition blockEnd) {
-    myHostModel.setBlockSelection(myInjectedEditor.injectedToParent(blockStart), myInjectedEditor.injectedToParent(blockEnd));
+    myHostModel.setBlockSelection(myInjectedEditor.injectedToHost(blockStart), myInjectedEditor.injectedToHost(blockEnd));
   }
 
   public void removeBlockSelection() {
@@ -100,11 +102,11 @@ public class SelectionModelDelegate implements SelectionModel {
   }
 
   public LogicalPosition getBlockStart() {
-    return myInjectedEditor.parentToInjected(myHostModel.getBlockStart());
+    return myInjectedEditor.hostToInjected(myHostModel.getBlockStart());
   }
 
   public LogicalPosition getBlockEnd() {
-    return myInjectedEditor.parentToInjected(myHostModel.getBlockEnd());
+    return myInjectedEditor.hostToInjected(myHostModel.getBlockEnd());
   }
 
   public boolean isBlockSelectionGuarded() {

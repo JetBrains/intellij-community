@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -132,7 +132,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   private Editor createEditor(@NotNull Document document, boolean isViewer, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Document hostDocument = document instanceof DocumentRange ? ((DocumentRange)document).getDelegate() : document;
+    Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project);
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);

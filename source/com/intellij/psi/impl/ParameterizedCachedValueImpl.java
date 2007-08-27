@@ -10,6 +10,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
@@ -17,8 +18,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.TimedReference;
@@ -32,12 +34,12 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class CachedValueImpl<T> implements CachedValue<T> {
+public class ParameterizedCachedValueImpl<T> implements ParameterizedCachedValue<T> {
   private static final Object NULL = new Object();
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
-  
+
   private final PsiManager myManager;
-  private final CachedValueProvider<T> myProvider;
+  private final ParameterizedCachedValueProvider<T> myProvider;
   private final boolean myTrackValue;
 
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
@@ -48,7 +50,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   private Lock r = rw.readLock();
   private Lock w = rw.writeLock();
 
-  public CachedValueImpl(PsiManager manager, CachedValueProvider<T> provider, boolean trackValue) {
+  public ParameterizedCachedValueImpl(PsiManager manager, ParameterizedCachedValueProvider<T> provider, boolean trackValue) {
     myManager = manager;
     myProvider = provider;
     myTrackValue = trackValue;
@@ -72,9 +74,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
   }
 
-  @Nullable
-  public T getValue() {
 
+  @Nullable
+  public T getValue(Object param) {
     r.lock();
 
     T value;
@@ -95,7 +97,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
         return value == NULL ? null : value;
       }
 
-      CachedValueProvider.Result<T> result = myProvider.compute();
+      CachedValueProvider.Result<T> result = myProvider.compute(param);
       value = result == null ? null : result.getValue();
 
       setValue(value, result);
@@ -206,7 +208,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
       if(original == null) return -1;
       return getTimeStamp(original);
     }
-    
+
     if (dependency instanceof Ref) {
       final Object original = ((Ref)dependency).get();
       if(original == null) return -1;
@@ -220,7 +222,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     if (dependency instanceof PsiDirectory) {
       return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
     }
-    
+
     if (dependency instanceof PsiElement) {
       PsiElement element = (PsiElement)dependency;
       if (!element.isValid()) return -1;
@@ -234,14 +236,17 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
     else if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
-    } 
+    }
+    else if (dependency instanceof Document) {
+      return ((Document)dependency).getModificationStamp();
+    }
     else {
       LOG.error("Wrong dependency type: " + dependency.getClass());
       return -1;
     }
   }
 
-  public CachedValueProvider<T> getValueProvider() {
+  public ParameterizedCachedValueProvider<T> getValueProvider() {
     return myProvider;
   }
 

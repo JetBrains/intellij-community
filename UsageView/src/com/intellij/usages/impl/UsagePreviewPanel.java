@@ -15,7 +15,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.lang.injection.InjectedManager;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +44,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return;
 
-    PsiLanguageInjectionHost host = InjectedManager.getInstance().getInjectionHost(psiFile);
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance().getInjectionHost(psiFile);
     if (host != null) {
       psiFile = host.getContainingFile();
       if (psiFile == null) return;
@@ -98,7 +98,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
         }
       }
       // highlight injected element in host document textrange
-      textRange = InjectedManager.getInstance().injectedToHost(psiElement, textRange);
+      textRange = InjectedLanguageManager.getInstance().injectedToHost(psiElement, textRange);
       
       myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                     HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);

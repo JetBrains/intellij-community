@@ -8,15 +8,15 @@ import com.intellij.openapi.editor.ex.EditorEx;
 /**
  * @author Alexey
  */
-public class CaretModelDelegate implements CaretModel {
+public class CaretModelWindow implements CaretModel {
   private final CaretModel myDelegate;
   private final EditorEx myHostEditor;
-  private final EditorDelegate myEditorDelegate;
+  private final EditorWindow myEditorWindow;
 
-  public CaretModelDelegate(CaretModel delegate, EditorDelegate editorDelegate) {
+  public CaretModelWindow(CaretModel delegate, EditorWindow editorWindow) {
     myDelegate = delegate;
-    myHostEditor = (EditorEx)editorDelegate.getDelegate();
-    myEditorDelegate = editorDelegate;
+    myHostEditor = (EditorEx)editorWindow.getDelegate();
+    myEditorWindow = editorWindow;
   }
 
   public void moveCaretRelatively(final int columnShift,
@@ -28,39 +28,39 @@ public class CaretModelDelegate implements CaretModel {
   }
 
   public void moveToLogicalPosition(final LogicalPosition pos) {
-    LogicalPosition hostPos = myEditorDelegate.injectedToParent(pos);
+    LogicalPosition hostPos = myEditorWindow.injectedToHost(pos);
     myDelegate.moveToLogicalPosition(hostPos);
   }
 
   public void moveToVisualPosition(final VisualPosition pos) {
-    LogicalPosition hostPos = myEditorDelegate.injectedToParent(myEditorDelegate.visualToLogicalPosition(pos));
+    LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     myDelegate.moveToLogicalPosition(hostPos);
   }
 
   public void moveToOffset(final int offset) {
-    int hostOffset = myEditorDelegate.getDocument().injectedToHost(offset);
+    int hostOffset = myEditorWindow.getDocument().injectedToHost(offset);
     myDelegate.moveToOffset(hostOffset);
   }
 
   public LogicalPosition getLogicalPosition() {
-    return myEditorDelegate.parentToInjected(myHostEditor.offsetToLogicalPosition(myDelegate.getOffset()));
+    return myEditorWindow.hostToInjected(myHostEditor.offsetToLogicalPosition(myDelegate.getOffset()));
   }
 
   public VisualPosition getVisualPosition() {
     LogicalPosition logicalPosition = getLogicalPosition();
-    return myEditorDelegate.logicalToVisualPosition(logicalPosition);
+    return myEditorWindow.logicalToVisualPosition(logicalPosition);
   }
 
   public int getOffset() {
-    return myEditorDelegate.getDocument().hostToInjected(myDelegate.getOffset());
+    return myEditorWindow.getDocument().hostToInjected(myDelegate.getOffset());
   }
 
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<CaretListener>();
   public void addCaretListener(final CaretListener listener) {
     CaretListener wrapper = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        CaretEvent event = new CaretEvent(myEditorDelegate, myEditorDelegate.parentToInjected(e.getOldPosition()),
-                                          myEditorDelegate.parentToInjected(e.getNewPosition()));
+        CaretEvent event = new CaretEvent(myEditorWindow, myEditorWindow.hostToInjected(e.getOldPosition()),
+                                          myEditorWindow.hostToInjected(e.getNewPosition()));
         listener.caretPositionChanged(event);
       }
     };

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,11 @@ public class StringLiteralEscaper extends LiteralTextEscaper<PsiLiteralExpressio
   }
 
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-    return outSourceOffsets[offsetInDecoded + rangeDisplayStart];
+    int off = offsetInDecoded + rangeDisplayStart;
+    return off < myHost.getTextLength() ? outSourceOffsets[off] : -1;
+  }
+
+  public boolean isOneLine() {
+    return true;
   }
 }

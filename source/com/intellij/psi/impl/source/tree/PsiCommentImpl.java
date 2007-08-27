@@ -6,6 +6,7 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.CommentLiteralEscaper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.ide.util.EditSourceUtil;
@@ -33,10 +34,10 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, null);
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public void fixText(final String text) {
+  public void fixText(@NotNull final String text) {
     ChangeUtil.changeElementInPlace(this, new ChangeUtil.ChangeAction() {
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         setText(text);
@@ -54,5 +55,14 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
 
   public boolean canNavigateToSource() {
     return canNavigate();
+  }
+
+  @NotNull
+  public LiteralTextEscaper createLiteralTextEscaper() {
+    return new CommentLiteralEscaper(this);
+  }
+
+  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor, true);
   }
 }

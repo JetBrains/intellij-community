@@ -8,34 +8,34 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public class VirtualFileDelegate extends LightVirtualFile {
+public class VirtualFileWindow extends LightVirtualFile {
   private final VirtualFile myDelegate;
-  private final DocumentRange myDocumentRange;
+  private final DocumentWindow myDocumentWindow;
 
-  public VirtualFileDelegate(@NotNull VirtualFile delegate, @NotNull DocumentRange window, @NotNull Language language, @NotNull String text) {
+  public VirtualFileWindow(@NotNull VirtualFile delegate, @NotNull DocumentWindow window, @NotNull Language language, @NotNull String text) {
     super(delegate.getName(), language, text);
     setCharset(delegate.getCharset());
     myDelegate = delegate;
-    myDocumentRange = window;
+    myDocumentWindow = window;
   }
 
   public VirtualFile getDelegate() {
     return myDelegate;
   }
 
-  public DocumentRange getDocumentRange() {
-    return myDocumentRange;
+  public DocumentWindow getDocumentWindow() {
+    return myDocumentWindow;
   }
 
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    VirtualFileDelegate that = (VirtualFileDelegate)o;
+    VirtualFileWindow that = (VirtualFileWindow)o;
 
     if (myDelegate != that.myDelegate) return false;
     if (!getContent().equals(that.getContent())) return false;
-    return myDocumentRange.equalsTo(that.myDocumentRange);
+    return myDocumentWindow.equals(that.myDocumentWindow);
   }
 
   public int hashCode() {

@@ -4,10 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -27,7 +24,6 @@ import java.util.List;
  */
 public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeValueImpl");
-  private static final Class ourReferenceClass = XmlAttributeValue.class;
   private volatile PsiReference[] myCachedReferences;
   private volatile long myModCount;
 
@@ -66,7 +62,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     if (cachedReferences != null && myModCount == curModCount) {
       return cachedReferences;
     }
-    cachedReferences = ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
+    cachedReferences = ResolveUtil.getReferencesFromProviders(this, XmlAttributeValue.class);
     myCachedReferences = cachedReferences;
     myModCount = curModCount;
     return cachedReferences;
@@ -98,12 +94,12 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
     PsiElement parent = getParent();
     if (parent instanceof XmlAttributeImpl) {
-      return InjectedLanguageUtil.getInjectedPsiFiles(this, new XmlAttributeLiteralEscaper(this));
+      return InjectedLanguageUtil.getInjectedPsiFiles(this);
     }
     return null;
   }
 
-  public void fixText(String text) {
+  public void fixText(@NotNull String text) {
     try {
       String contents = StringUtil.trimEnd(StringUtil.trimStart(text, "\""), "\"");
       XmlAttribute newAttribute = getManager().getElementFactory().createXmlAttribute("q", contents);
@@ -115,5 +111,13 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @NotNull
+  public LiteralTextEscaper createLiteralTextEscaper() {
+    return new XmlAttributeLiteralEscaper(this);
+  }
+  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor, true);
   }
 }

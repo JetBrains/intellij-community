@@ -1,8 +1,9 @@
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -24,9 +25,19 @@ public interface PsiLanguageInjectionHost extends PsiElement {
    * @return injected PSI element and text range inside host element where injection occurs.
    * For example, in string literals we might want to inject something inside double quotes.
    * To express this, use <code>return Pair.create(injectedPsi, new TextRange(1, textLength+1))</code>.
+   * @see #processInjectedPsi(InjectedPsiVisitor) instead
    */
-  @Nullable
+  @Nullable @Deprecated
   List<Pair<PsiElement,TextRange>> getInjectedPsi();
 
-  void fixText(String text);
+  void processInjectedPsi(@NotNull InjectedPsiVisitor visitor);
+
+  void fixText(@NotNull String text);
+  
+  @NotNull
+  LiteralTextEscaper createLiteralTextEscaper();
+
+  interface InjectedPsiVisitor {
+    void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places);
+  }
 }

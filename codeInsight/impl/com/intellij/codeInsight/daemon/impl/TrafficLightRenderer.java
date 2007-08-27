@@ -252,10 +252,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       }
     }
     Icon icon = status.errorAnalyzingFinished ? HighlightDisplayLevel.DO_NOT_SHOW.getIcon() : IN_PROGRESS_ICON;
+    String sev = status.errorAnalyzingFinished ? "green" : "---";
     if (atLeastOnePassFinished) {
+      SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] != 0) {
-          icon = SeverityRegistrar.getInstance(myProject).getRendererIconByIndex(i);
+          icon = severityRegistrar.getRendererIconByIndex(i);
+          sev = severityRegistrar.getSeverityByIndex(i).toString();
           break;
         }
       }

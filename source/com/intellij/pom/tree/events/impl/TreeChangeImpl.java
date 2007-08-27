@@ -104,7 +104,7 @@ public class TreeChangeImpl implements TreeChange {
     }
     myChanges.put(child, info);
   }
-
+  
   private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
     int index = 0;
     for (Pair<ASTNode, Integer> pair : myOffsets) {

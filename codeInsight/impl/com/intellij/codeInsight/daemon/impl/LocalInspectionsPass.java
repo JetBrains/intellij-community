@@ -16,17 +16,19 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -171,15 +173,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void inspectInjectedPsi(final PsiElement[] elements) {
     myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
-    for (PsiElement element : elements) {
-      if (element instanceof PsiLanguageInjectionHost) {
-        final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            myInjectedPsiInspectionResults.addAll(InjectedPsiInspectionUtil.inspectInjectedPsi(host));
-          }
-        });
+    final Set<PsiFile> injected = new THashSet<PsiFile>();
+    PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places) {
+        injected.add(injectedPsi);
       }
+    };
+    for (PsiElement element : elements) {
+      InjectedLanguageUtil.enumerate(element, injectedPsiVisitor, false);
+    }
+    for (PsiFile injectedPsi : injected) {
+      InjectedPsiInspectionUtil.inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults);
     }
   }
 
@@ -275,7 +279,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
 
       PsiElement injectedPsi = result.injectedPsi;
-      DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
+      DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument((PsiFile)injectedPsi);
       if (documentRange == null) continue;
       //noinspection ForLoopReplaceableByForEach
       for (int j = 0; j < result.foundProblems.size(); j++) {
@@ -287,7 +291,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (info == null) continue;
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable == null) continue;
-        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
+        TextRange hostRange = documentRange.injectedToHost(editable);
+        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
         if (patched != null) {
           registerQuickFixes(tool, descriptor, patched,emptyActionRegistered);
           infos.add(patched);

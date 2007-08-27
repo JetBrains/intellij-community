@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -46,7 +46,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if (psiFile == null || psiFile.getNode() == null) return;
 
     DocumentEx document = getCachedDocument(psiFile);
-    if (document == null || document instanceof DocumentRange) return;
+    if (document == null || document instanceof DocumentWindow) return;
 
     TextBlock textBlock = getTextBlock(document, psiFile);
 
@@ -148,11 +148,13 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   public void startTransaction(Document doc, PsiElement scope) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
-    if(pair == null) {
+    if (pair == null) {
       final PsiFile psiFile = scope != null ? scope.getContainingFile() : null;
       pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope != null ? psiFile : null), 0);
     }
-    else pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
+    else {
+      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
+    }
     myTransactionsMap.put(doc, pair);
   }
 
@@ -184,7 +186,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     doCommitTransaction(document, getTransaction(document));
   }
 
-  private void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {
+  private static void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {
     DocumentEx ex = (DocumentEx) document;
     ex.suppressGuardedExceptions();
     try {
@@ -259,68 +261,55 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return myChangeScope;
     }
 
-    public void replace(int start, int length, String str){
-      final int startInFragment;
-      final StringBuffer fragmentReplaceText;
+    public void replace(int start, int length, String str) {
+      // calculating fragment
+      // minimize replace
+      final int oldStart = start;
+      int end = start + length;
 
-      { // calculating fragment
-        { // minimize replace
-          final int oldStart = start;
-          int end = start + length;
+      final int newStringLength = str.length();
+      final String chars = getText(start, end);
+      if (chars.equals(str)) return;
 
-          final int newStringLength = str.length();
-          final String chars = getText(start, end);
-          if(chars.equals(str)) return;
+      int newStartInString = 0;
+      int newEndInString = newStringLength;
+      while (newStartInString < newStringLength && start < end && str.charAt(newStartInString) == chars.charAt(start - oldStart)) {
+        start++;
+        newStartInString++;
+      }
 
-          int newStartInString = 0;
-          int newEndInString = newStringLength;
-          while (newStartInString < newStringLength &&
-                 start < end &&
-                 str.charAt(newStartInString) == chars.charAt(start - oldStart)) {
-            start++;
-            newStartInString++;
-          }
+      while (end > start && newEndInString > newStartInString && str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
+        newEndInString--;
+        end--;
+      }
 
-          while (end > start &&
-                 newEndInString > newStartInString &&
-                 str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
-            newEndInString--;
-            end--;
-          }
+      //[mike] dirty hack for xml:
+      //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
+      //which is perfectly valid but invalidates range markers
+      final CharSequence charsSequence = myDocument.getCharsSequence();
+      while (start < charsSequence.length() && end < charsSequence.length() && start > 0 &&
+             charsSequence.subSequence(start, end).toString().endsWith("><") && charsSequence.charAt(start - 1) == '<') {
+        start--;
+        newStartInString--;
+        end--;
+        newEndInString--;
+      }
 
-          //[mike] dirty hack for xml:
-          //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
-          //which is perfectly valid but invalidates range markers
-          final CharSequence charsSequence = myDocument.getCharsSequence();
-          while (start < charsSequence.length() &&
-                 end < charsSequence.length() &&
-                 start > 0 &&
-                 charsSequence.subSequence(start, end).toString().endsWith("><") &&
-                 charsSequence.charAt(start - 1) == '<') {
-            start--;
-            newStartInString--;
-            end--;
-            newEndInString--;
-          }
+      str = str.substring(newStartInString, newEndInString);
+      length = end - start;
 
-          str = str.substring(newStartInString, newEndInString);
-          length = end - start;
-        }
+      final Pair<MutableTextRange, StringBuffer> fragment = getFragmentByRange(start, length);
+      final StringBuffer fragmentReplaceText = fragment.getSecond();
+      final int startInFragment = start - fragment.getFirst().getStartOffset();
 
-        final Pair<MutableTextRange, StringBuffer> fragment = getFragmentByRange(start, length);
-        fragmentReplaceText = fragment.getSecond();
-        startInFragment = start - fragment.getFirst().getStartOffset();
-        { // text range adjustment
-          final int lengthDiff = str.length() - length;
-          final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-          boolean adjust = false;
-          while (iterator.hasNext()) {
-            final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
-            if(adjust) pair.getFirst().shift(lengthDiff);
-            if(pair == fragment)
-              adjust = true;
-          }
-        }
+      // text range adjustment
+      final int lengthDiff = str.length() - length;
+      final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
+      boolean adjust = false;
+      while (iterator.hasNext()) {
+        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
+        if (adjust) pair.getFirst().shift(lengthDiff);
+        if (pair == fragment) adjust = true;
       }
 
       fragmentReplaceText.replace(startInFragment, startInFragment + length, str);
@@ -329,7 +318,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     private String getText(final int start, final int end) {
       int currentOldDocumentOffset = 0;
       int currentNewDocumentOffset = 0;
-      StringBuffer text = new StringBuffer();
+      StringBuilder text = new StringBuilder();
       Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
       while (iterator.hasNext() && currentNewDocumentOffset < end) {
         final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
@@ -369,47 +358,44 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       final StringBuffer fragmentBuffer = new StringBuffer();
       int end = start + length;
 
-      {
-        // restoring buffer and remove all subfragments from the list
-        int documentOffset = 0;
-        int effectiveOffset = 0;
+      // restoring buffer and remove all subfragments from the list
+      int documentOffset = 0;
+      int effectiveOffset = 0;
 
-        Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-        while (iterator.hasNext() && effectiveOffset <= end) {
-          final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
-          final MutableTextRange range = pair.getFirst();
-          final StringBuffer buffer = pair.getSecond();
-          int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
+      Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
+      while (iterator.hasNext() && effectiveOffset <= end) {
+        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
+        final MutableTextRange range = pair.getFirst();
+        final StringBuffer buffer = pair.getSecond();
+        int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
 
-          if(range.getStartOffset() <= start && effectiveFragmentEnd >= end) return pair;
+        if(range.getStartOffset() <= start && effectiveFragmentEnd >= end) return pair;
 
-          if(effectiveFragmentEnd >= start){
-            final int effectiveStart = Math.max(effectiveOffset, start);
-            if(range.getStartOffset() > start){
-              fragmentBuffer.append(myDocument.getCharsSequence(),
-                                    effectiveStart - effectiveOffset + documentOffset,
-                                    Math.min(range.getStartOffset(), end)- effectiveOffset + documentOffset);
-            }
-            if(end >= range.getStartOffset()){
-              fragmentBuffer.append(buffer);
-              end = end > effectiveFragmentEnd ? end - (buffer.length() - range.getLength()) : range.getEndOffset();
-              effectiveFragmentEnd = range.getEndOffset();
-              start = Math.min(start, range.getStartOffset());
-              iterator.remove();
-            }
-          }
-
-          documentOffset += range.getEndOffset() - effectiveOffset;
-          effectiveOffset = effectiveFragmentEnd;
-        }
-
-        if(effectiveOffset < end){
+        if(effectiveFragmentEnd >= start){
           final int effectiveStart = Math.max(effectiveOffset, start);
-          fragmentBuffer.append(myDocument.getCharsSequence(),
-                                effectiveStart - effectiveOffset + documentOffset,
-                                end- effectiveOffset + documentOffset);
+          if(range.getStartOffset() > start){
+            fragmentBuffer.append(myDocument.getCharsSequence(),
+                                  effectiveStart - effectiveOffset + documentOffset,
+                                  Math.min(range.getStartOffset(), end)- effectiveOffset + documentOffset);
+          }
+          if(end >= range.getStartOffset()){
+            fragmentBuffer.append(buffer);
+            end = end > effectiveFragmentEnd ? end - (buffer.length() - range.getLength()) : range.getEndOffset();
+            effectiveFragmentEnd = range.getEndOffset();
+            start = Math.min(start, range.getStartOffset());
+            iterator.remove();
+          }
         }
 
+        documentOffset += range.getEndOffset() - effectiveOffset;
+        effectiveOffset = effectiveFragmentEnd;
+      }
+
+      if(effectiveOffset < end){
+        final int effectiveStart = Math.max(effectiveOffset, start);
+        fragmentBuffer.append(myDocument.getCharsSequence(),
+                              effectiveStart - effectiveOffset + documentOffset,
+                              end- effectiveOffset + documentOffset);
       }
 
       final Pair<MutableTextRange, StringBuffer> pair = new Pair<MutableTextRange, StringBuffer>(new MutableTextRange(start, end), fragmentBuffer);

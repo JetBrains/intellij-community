@@ -18,11 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost {
-  private static final @NonNls String QUOT = "&quot;";
-  private static final @NonNls String HEXPREFIX = "0x";
-  private static final @NonNls String HEXPREFIX2 = "0X";
-  private static final @NonNls String LHEX_PREFIX = "0xl";
-  private static final Class<PsiLiteralExpression> ourHintClazz = PsiLiteralExpression.class;
+  @NonNls private static final String QUOT = "&quot;";
+  @NonNls private static final String HEXPREFIX = "0x";
+  @NonNls private static final String HEXPREFIX2 = "0X";
+  @NonNls private static final String LHEX_PREFIX = "0xl";
 
   public PsiLiteralExpressionImpl() {
     super(JavaElementType.LITERAL_EXPRESSION);
@@ -57,9 +56,9 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     return null;
   }
 
-  private static final @NonNls String _2_IN_63 = Long.toString(-1L << 63).substring(1);
-  private static final @NonNls String _2_IN_31 = Long.toString(-1L << 31).substring(1);
-  private static final @NonNls String _2_IN_63_L = _2_IN_63 + "l";
+  @NonNls private static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+  @NonNls private static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
+  @NonNls private static final String _2_IN_63_L = _2_IN_63 + "l";
 
   public Object getValue() {
     String text = getFirstChildNode().getText();
@@ -71,18 +70,18 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           // should fit in 32 bits
           if (textLength <= 9) return Integer.valueOf(text.substring(2), 16);
           final Long value = parseDigits(text.substring(2), 4, 32);
-          return value == null ? null : new Integer(value.intValue());
+          return value == null ? null : Integer.valueOf(value.intValue());
         }
         if (StringUtil.startsWithChar(text, '0')) {
           // should fit in 32 bits
           if (textLength <= 12) return Integer.valueOf(text, 8);
           final Long value = parseDigits(text, 3, 32);
-          return value == null ? null : new Integer(value.intValue());
+          return value == null ? null : Integer.valueOf(value.intValue());
         }
         final long l = Long.parseLong(text, 10);
-        if (text.equals(_2_IN_31)) return new Integer((int)l);
+        if (text.equals(_2_IN_31)) return Integer.valueOf((int)l);
         long converted = (int)l;
-        return l == converted ? new Integer((int)l) : null;
+        return l == converted ? Integer.valueOf((int)l) : null;
       }
       catch (Exception e) {
         return null;
@@ -103,7 +102,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           if (textLength <= 23) return Long.valueOf(text, 8);
           return parseDigits(text, 3, 64);
         }
-        if (_2_IN_63.equals(text)) return new Long(-1L << 63);
+        if (_2_IN_63.equals(text)) return Long.valueOf(-1L << 63);
         return Long.valueOf(text, 10);
       }
       catch (Exception e) {
@@ -176,7 +175,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     if ((integer & (-1L << maxBits - 4)) != 0) return null;
     integer <<= bitsInRadix;
     integer |= lastDigit;
-    return new Long(integer);
+    return Long.valueOf(integer);
   }
 
   public String getParsingError() {
@@ -287,19 +286,19 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
       if (sourceOffsets != null) {
-        for (int i = 0; i < chars.length() + 1; i++) {
+        for (int i = 0; i < sourceOffsets.length; i++) {
           sourceOffsets[i] = i;
         }
       }
       return true;
     }
     int index = 0;
-    int outStartIndex = outChars.length();
+    final int outOffset = outChars.length();
     while (index < chars.length()) {
       char c = chars.charAt(index++);
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outStartIndex] = index - 1;
-        sourceOffsets[outChars.length() + 1 -outStartIndex] = index;
+        sourceOffsets[outChars.length()-outOffset] = index - 1;
+        sourceOffsets[outChars.length() + 1 -outOffset] = index;
       }
       if (c != '\\') {
         outChars.append(c);
@@ -398,7 +397,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           return false;
       }
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outStartIndex] = index;
+        sourceOffsets[outChars.length()-outOffset] = index;
       }
     }
     return true;
@@ -414,18 +413,17 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
+    return ResolveUtil.getReferencesFromProviders(this, PsiLiteralExpression.class);
   }
 
   @Nullable
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
-    Object value = getValue();
-    if (!(value instanceof String)) return null;
+    if (!(getValue() instanceof String)) return null;
 
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, new StringLiteralEscaper(this));
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public void fixText(final String text) {
+  public void fixText(@NotNull final String text) {
     ChangeUtil.changeElementInPlace(this, new ChangeUtil.ChangeAction() {
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         TreeElement valueNode = getFirstChildNode();
@@ -433,6 +431,15 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         ((LeafPsiElement)valueNode).setText(text);
       }
     });
+  }
+
+  @NotNull
+  public LiteralTextEscaper createLiteralTextEscaper() {
+    return new StringLiteralEscaper(this);
+  }
+
+  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor, true);
   }
 }
 

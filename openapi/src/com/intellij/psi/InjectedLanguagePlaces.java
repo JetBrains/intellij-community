@@ -2,9 +2,9 @@ package com.intellij.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Storage for places where PSI language being injected to.

@@ -13,24 +13,20 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,81 +38,78 @@ import java.util.Iterator;
 /**
  * @author Alexey
  */
-public class EditorDelegate implements EditorEx, UserDataHolderEx {
-  private final DocumentRange myDocument;
+public class EditorWindow implements EditorEx, UserDataHolderEx {
+  private final DocumentWindow myDocumentWindow;
   private final EditorImpl myDelegate;
   private PsiFile myInjectedFile;
-  private final CaretModelDelegate myCaretModelDelegate;
-  private final SelectionModelDelegate mySelectionModelDelegate;
-  private final MarkupModelDelegate myMarkupModelDelegate;
-  private static final WeakList<EditorDelegate> allEditors = new WeakList<EditorDelegate>();
+  private final boolean myOneLine;
+  private final CaretModelWindow myCaretModelDelegate;
+  private final SelectionModelWindow mySelectionModelDelegate;
+  private static final WeakList<EditorWindow> allEditors = new WeakList<EditorWindow>();
   private boolean myDisposed;
+  private final MarkupModelWindow myMarkupModelDelegate;
 
-  public static Editor create(@NotNull final DocumentRange documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
-    for (EditorDelegate editorDelegate : allEditors) {
-      if (editorDelegate.getDocument() == documentRange && editorDelegate.getDelegate() == editor) {
-        editorDelegate.myInjectedFile = injectedFile;
-        if (editorDelegate.isValid()) {
-          return editorDelegate;
+  public static Editor create(@NotNull final DocumentWindow documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
+    for (EditorWindow editorWindow : allEditors) {
+      if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
+        editorWindow.myInjectedFile = injectedFile;
+        if (editorWindow.isValid()) {
+          return editorWindow;
         }
       }
     }
-    return new EditorDelegate(documentRange, editor, injectedFile);
+    return new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
   }
 
-  private EditorDelegate(@NotNull DocumentRange document, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile) {
-    myDocument = document;
+  private EditorWindow(@NotNull DocumentWindow documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile,
+                       boolean oneLine) {
+    myDocumentWindow = documentWindow;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
-    myCaretModelDelegate = new CaretModelDelegate(myDelegate.getCaretModel(), this);
-    mySelectionModelDelegate = new SelectionModelDelegate(myDelegate, myDocument,this);
-    myMarkupModelDelegate = new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument);
+    myOneLine = oneLine;
+    myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
+    mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
+    myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
 
     disposeInvalidEditors();
     allEditors.add(this);
   }
 
   private void disposeInvalidEditors() {
-    Iterator<EditorDelegate> iterator = allEditors.iterator();
+    Iterator<EditorWindow> iterator = allEditors.iterator();
     while (iterator.hasNext()) {
-      EditorDelegate editorDelegate = iterator.next();
-      if (!editorDelegate.isValid() || textRangeIntersectsWith(editorDelegate)) {
-        editorDelegate.disposeModel();
+      EditorWindow editorWindow = iterator.next();
+      if (!editorWindow.isValid() || myDocumentWindow.intersects(editorWindow.myDocumentWindow)) {
+        editorWindow.disposeModel();
 
-        InjectedLanguageUtil.clearCaches(editorDelegate.getInjectedFile(), editorDelegate.getDocument());
+        InjectedLanguageUtil.clearCaches(editorWindow.getInjectedFile(), editorWindow.getDocument());
         iterator.remove();
       }
     }
   }
 
-  private boolean textRangeIntersectsWith(final EditorDelegate editorDelegate) {
-    TextRange myTextRange = new TextRange(myDocument.getTextRange().getStartOffset(), myDocument.getTextRange().getEndOffset());
-    TextRange hisTextRange = new TextRange(editorDelegate.getDocument().getTextRange().getStartOffset(), editorDelegate.getDocument().getTextRange().getEndOffset());
-    return myTextRange.intersects(hisTextRange);
-  }
-
   private boolean isValid() {
-    return !isDisposed() && myInjectedFile.isValid() && myDocument.getTextRange().isValid();
+    return !isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
   }
 
   public PsiFile getInjectedFile() {
     return myInjectedFile;
   }
-  public LogicalPosition parentToInjected(LogicalPosition pos) {
+  public LogicalPosition hostToInjected(LogicalPosition pos) {
     assert isValid();
-    int offsetInInjected = myDocument.hostToInjected(myDelegate.logicalPositionToOffset(pos));
+    int offsetInInjected = myDocumentWindow.hostToInjected(myDelegate.logicalPositionToOffset(pos));
     return offsetToLogicalPosition(offsetInInjected);
   }
 
-  public VisualPosition parentToInjected(VisualPosition pos) {
+  public VisualPosition hostToInjected(VisualPosition pos) {
     assert isValid();
-    LogicalPosition logical = parentToInjected(myDelegate.visualToLogicalPosition(pos));
+    LogicalPosition logical = hostToInjected(myDelegate.visualToLogicalPosition(pos));
     return logicalToVisualPosition(logical);
   }
-  public LogicalPosition injectedToParent(LogicalPosition pos) {
+  public LogicalPosition injectedToHost(LogicalPosition pos) {
     assert isValid();
-    int offsetInParent = myDocument.injectedToHost(logicalPositionToOffset(pos));
-    return myDelegate.offsetToLogicalPosition(offsetInParent);
+    int offsetInHost = myDocumentWindow.injectedToHost(logicalPositionToOffset(pos));
+    return myDelegate.offsetToLogicalPosition(offsetInHost);
   }
 
   private void disposeModel() {
@@ -148,6 +141,14 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
 
   public void setFile(final VirtualFile vFile) {
     myDelegate.setFile(vFile);
+  }
+
+  public void setHeaderComponent(@Nullable JComponent header) {
+
+  }
+
+  public boolean hasHeaderComponent() {
+    return false;
   }
 
   @NotNull
@@ -245,8 +246,8 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
     assert isValid();
-    int lineNumber = myDocument.getLineNumber(offset);
-    int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
+    int lineNumber = myDocumentWindow.getLineNumber(offset);
+    int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
     int column = calcColumnNumber(offset-lineStartOffset, lineNumber);
     return new LogicalPosition(lineNumber, column);
   }
@@ -255,15 +256,15 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     assert isValid();
     LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
-    return parentToInjected(hostPos);
+    return hostToInjected(hostPos);
   }
 
   private LogicalPosition fitInsideEditor(LogicalPosition pos) {
-    int lineCount = myDocument.getLineCount();
+    int lineCount = myDocumentWindow.getLineCount();
     if (pos.line >= lineCount) {
       pos = new LogicalPosition(lineCount-1, pos.column);
     }
-    int lineLength = myDocument.getLineEndOffset(pos.line) - myDocument.getLineStartOffset(pos.line);
+    int lineLength = myDocumentWindow.getLineEndOffset(pos.line) - myDocumentWindow.getLineStartOffset(pos.line);
     if (pos.column >= lineLength) {
       pos = new LogicalPosition(pos.line, lineLength-1);
     }
@@ -273,7 +274,7 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     assert isValid();
-    return myDelegate.logicalPositionToXY(injectedToParent(fitInsideEditor(pos)));
+    return myDelegate.logicalPositionToXY(injectedToHost(fitInsideEditor(pos)));
   }
 
   @NotNull
@@ -284,12 +285,12 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
 
   public void repaint(final int startOffset, final int endOffset) {
     assert isValid();
-    myDelegate.repaint(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset));
+    myDelegate.repaint(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset));
   }
 
   @NotNull
-  public DocumentRange getDocument() {
-    return myDocument;
+  public DocumentWindow getDocument() {
+    return myDocumentWindow;
   }
 
   @NotNull
@@ -302,23 +303,23 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
     assert isValid();
     EditorMouseListener wrapper = new EditorMouseListener() {
       public void mousePressed(EditorMouseEvent e) {
-        listener.mousePressed(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mousePressed(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
       public void mouseClicked(EditorMouseEvent e) {
-        listener.mouseClicked(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseClicked(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
       public void mouseReleased(EditorMouseEvent e) {
-        listener.mouseReleased(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseReleased(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
       public void mouseEntered(EditorMouseEvent e) {
-        listener.mouseEntered(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseEntered(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
       public void mouseExited(EditorMouseEvent e) {
-        listener.mouseExited(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseExited(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
     };
     myEditorMouseListeners.registerWrapper(listener, wrapper);
@@ -339,11 +340,11 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
     assert isValid();
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       public void mouseMoved(EditorMouseEvent e) {
-        listener.mouseMoved(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseMoved(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
 
       public void mouseDragged(EditorMouseEvent e) {
-        listener.mouseDragged(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseDragged(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
       }
     };
     myEditorMouseMotionListeners.registerWrapper(listener, wrapper);
@@ -390,16 +391,16 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
   }
 
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
-    return myDocument.getLineStartOffset(pos.line) + calcColumnNumber(pos.column, pos.line);
+    return myDocumentWindow.getLineStartOffset(pos.line) + calcColumnNumber(pos.column, pos.line);
   }
   private int calcColumnNumber(int offset, int lineIndex) {
-    if (myDocument.getTextLength() == 0) return 0;
+    if (myDocumentWindow.getTextLength() == 0) return 0;
 
-    CharSequence text = myDocument.getCharsSequence();
-    int start = myDocument.getLineStartOffset(lineIndex);
+    CharSequence text = myDocumentWindow.getCharsSequence();
+    int start = myDocumentWindow.getLineStartOffset(lineIndex);
 
     if (offset==0) return 0;
-    int end = myDocument.getLineEndOffset(lineIndex);
+    int end = myDocumentWindow.getLineEndOffset(lineIndex);
     if (offset > end-start) offset = end - start;
     return EditorUtil.calcColumnNumber(this, text, start, start+offset, myDelegate.getTabSize());
   }
@@ -448,7 +449,11 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
   }
 
   public boolean isOneLineMode() {
-    return myDelegate.isOneLineMode();
+    return myOneLine;
+  }
+
+  public void setOneLineMode(final boolean isOneLineMode) {
+    throw new UnsupportedOperationException();
   }
 
   public boolean isEmbeddedIntoDialogWrapper() {
@@ -461,10 +466,6 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
 
   public VirtualFile getVirtualFile() {
     return myDelegate.getVirtualFile();
-  }
-
-  public void setOneLineMode(final boolean isOneLineMode) {
-    myDelegate.setOneLineMode(isOneLineMode);
   }
 
   public void stopOptimizedScrolling() {
@@ -534,17 +535,14 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final EditorDelegate that = (EditorDelegate)o;
+    final EditorWindow that = (EditorWindow)o;
 
-    RangeMarker range = myDocument.getTextRange();
-    RangeMarker thatRange = that.myDocument.getTextRange();
-    return myDelegate.equals(that.myDelegate)
-           && range.getStartOffset() == thatRange.getStartOffset()
-           && range.getEndOffset() == thatRange.getEndOffset();
+    DocumentWindow thatWindow = that.getDocument();
+    return myDelegate.equals(that.myDelegate) && myDocumentWindow.equals(thatWindow);
   }
 
   public int hashCode() {
-    return myDocument.getTextRange().getStartOffset();
+    return myDocumentWindow.hashCode();
   }
 
   public Editor getDelegate() {
@@ -553,8 +551,8 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
 
   public int calcColumnNumber(final CharSequence text, final int start, final int offset, final int tabSize) {
     String hostText = getDocument().getPrefix() + text + getDocument().getSuffix();
-    int hostStart = myDocument.injectedToHost(start);
-    int hostOffset = myDocument.injectedToHost(offset);
+    int hostStart = myDocumentWindow.injectedToHost(start);
+    int hostOffset = myDocumentWindow.injectedToHost(offset);
     return myDelegate.calcColumnNumber(hostText, hostStart, hostOffset, tabSize);
   }
 }

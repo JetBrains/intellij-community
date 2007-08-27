@@ -14,7 +14,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
+import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -646,9 +646,9 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   @NotNull
   public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertThread();
-    if (descriptor.getFile() instanceof VirtualFileDelegate) {
-      VirtualFileDelegate delegate = (VirtualFileDelegate)descriptor.getFile();
-      int hostOffset = delegate.getDocumentRange().injectedToHost(descriptor.getOffset());
+    if (descriptor.getFile() instanceof VirtualFileWindow) {
+      VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
+      int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
       OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
       return openEditor(realDescriptor, focusEditor);
     }

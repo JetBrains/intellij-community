@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl.injected;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.HighlighterList;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -7,22 +8,23 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
 */
-class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
-  private final DocumentRange myDocument;
+class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
+  private final DocumentWindow myDocument;
   private final MarkupModelEx myHostModel;
 
-  public MarkupModelDelegate(MarkupModelEx editorMarkupModel, final DocumentRange document) {
+  public MarkupModelWindow(MarkupModelEx editorMarkupModel, final DocumentWindow document) {
     myDocument = document;
     myHostModel = editorMarkupModel;
   }
 
   @NotNull
-  public DocumentRange getDocument() {
+  public Document getDocument() {
     return myDocument;
   }
 
@@ -32,8 +34,8 @@ class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
                                               final int layer,
                                               final TextAttributes textAttributes,
                                               final HighlighterTargetArea targetArea) {
-    return myHostModel.addRangeHighlighter(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset), layer,
-                                           textAttributes, targetArea);
+    TextRange hostRange = myDocument.injectedToHost(new TextRange(startOffset, endOffset));
+    return myHostModel.addRangeHighlighter(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, targetArea);
   }
 
   @NotNull

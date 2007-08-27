@@ -332,7 +332,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, new XmlTextLiteralEscaper(this));
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
   public TextRange getCDATAInterior() {
@@ -355,7 +355,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return new TextRange(start, end);
   }
 
-  public void fixText(final String text) {
+  public void fixText(@NotNull final String text) {
     try {
       doSetValue(text, new DefaultXmlPsiPolicy());
     }
@@ -365,7 +365,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Nullable
-  protected XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
+  private XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
     final XmlTag xmlTag = (XmlTag)getParent();
     if(displayOffset == 0) return this;
     final int length = getValue().length();
@@ -457,7 +457,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return transaction.getResult();
   }
 
-  protected PomModelEvent createEvent(final XmlChange...events) {
+  private PomModelEvent createEvent(final XmlChange...events) {
     final PomModelEvent event = new PomModelEvent(getProject().getModel());
 
     final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(getProject().getModel(), (XmlFile)getContainingFile());
@@ -469,5 +469,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     event.registerChangeSet(getProject().getModel().getModelAspect(XmlAspect.class), xmlAspectChangeSet);
 
     return event;
+  }
+
+  @NotNull
+  public LiteralTextEscaper createLiteralTextEscaper() {
+    return new XmlTextLiteralEscaper(this);
+  }
+  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor, true);
   }
 }

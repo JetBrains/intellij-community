@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +31,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
-  private final Set<Document> myUncommittedDocuments = new HashSet<Document>();
+  private final Set<Document> myUncommittedDocuments = new HashSet<Document>(); 
 
   private final BlockSupportImpl myBlockSupport;
   private boolean myIsCommitInProgress;
@@ -56,7 +57,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   private final List<Listener> myListeners = new ArrayList<Listener>();
   private Listener[] myCachedListeners = null;
-  private SmartPointerManagerImpl mySmartPointerManager;
+  private final SmartPointerManagerImpl mySmartPointerManager;
 
   public PsiDocumentManagerImpl(Project project,
                                 PsiManager psiManager,
@@ -178,7 +179,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void commitDocument(final Document doc) {
-    final Document document = doc instanceof DocumentRange ? ((DocumentRange)doc).getDelegate() : doc;
+    final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (isUncommited(document)) {
       doCommit(document, null);
     }
@@ -497,7 +498,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     char[] fileText = psiFile.textToCharArray();
-    StringBuilder error = new StringBuilder();
+    @NonNls StringBuilder error = new StringBuilder();
     error.append("File text mismatch after reparse. File length="+fileText.length+"; Doc length="+documentLength+"\n");
     int i = 0;
     for(; i < documentLength; i++){
@@ -522,9 +523,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       error.append("Equal part end:\n" + editorText.subSequence(i - 200, i)+"\n");
     }
     error.append("*********************************************"+"\n");
-    error.append("Editor Text tail:\n" + editorText.subSequence(i, Math.min(i + 300, documentLength))+"\n");
+    error.append("Editor Text tail:("+(documentLength-i)+")\n" + editorText.subSequence(i, Math.min(i + 300, documentLength))+"\n");
     error.append("*********************************************"+"\n");
-    error.append("Psi Text tail:\n" + new String(fileText, i, Math.min(i + 300, fileText.length) - i)+"\n");
+    error.append("Psi Text tail:("+(fileText.length-i)+")\n" + new String(fileText, i, Math.min(i + 300, fileText.length) - i)+"\n");
     error.append("*********************************************"+"\n");
     LOG.error(error.toString());
     document.replaceString(0, documentLength, psiFile.getText());
@@ -539,10 +540,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public void clearUncommitedDocuments() {
     myUncommittedDocuments.clear();
-  }
-
-  public boolean isDocumentCommitted(Document doc) {
-    return myIsCommitInProgress || !myUncommittedDocuments.contains(doc);
   }
 
   public PsiToDocumentSynchronizer getSynchronizer() {
