@@ -44,11 +44,12 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     IElementType opToken = getOperationTokenType();
     GrExpression operand = getOperand();
     if (operand == null) return null;
-    PsiType opType = operand.getType();
     if (opToken == GroovyTokenTypes.mINC || opToken == GroovyTokenTypes.mDEC) {
       return TypesUtil.getTypeForIncOrDecExpression(this);
     }
-    
+    PsiType opType = operand.getType();
+    if (opType == null) return null;
+
     if (opToken == GroovyTokenTypes.mBNOT) {
       if (opType.equalsToText("java.lang.String")) {
         return getTypeByFQName(PATTERN_FQ_NAME);
