@@ -18,8 +18,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public class AntSupport implements ApplicationComponent, InspectionToolProvider {
 
@@ -89,21 +88,23 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   // Managing ant files dependencies via the <import> task.
   //
 
-  public static synchronized AntFile[] getImpotingFiles(final AntFile imported) {
+  public static synchronized List<AntFile> getImpotingFiles(final AntFile imported) {
     checkDependenciesCache();
     final WeakHashMap<AntFile, Boolean> files = ourFileDependencies.get(imported);
     if (files != null) {
       final int size = files.size();
       if (size > 0) {
-        final AntFile[] result = new AntFile[size];
+        final List<AntFile> result = new ArrayList<AntFile>(size);
         int i = 0;
         for (final AntFile file : files.keySet()) {
-          result[i++] = file;
+          if (file != null) {
+            result.add(file);
+          }
         }
         return result;
       }
     }
-    return AntFile.NO_FILES;
+    return Collections.emptyList();
   }
 
   public static synchronized void registerDependency(final AntFile importing, final AntFile imported) {
