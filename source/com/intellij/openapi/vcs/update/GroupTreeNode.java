@@ -164,7 +164,9 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     });
 
     for (final String filePath : myFilePaths) {
-      add(new FileTreeNode(filePath, myInvalidAttributes, myProject, null));
+      final FileTreeNode child = new FileTreeNode(filePath, myInvalidAttributes, myProject, null);
+      add(child);
+      Disposer.register(this, child);
     }
   }
 

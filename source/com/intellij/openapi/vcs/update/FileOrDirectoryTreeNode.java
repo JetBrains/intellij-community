@@ -27,7 +27,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   protected final File myFile;
   private final String myName;
 
-  public FileOrDirectoryTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
+  protected FileOrDirectoryTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
                                  Project project, String parentPath) {
     String preparedPath = path.replace(File.separatorChar, '/');
     String url = VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(),
