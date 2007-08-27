@@ -72,7 +72,10 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return myDelimiters.charAt(0);
   }
 
-  public List<T> fromString(final String str, final ConvertContext context) {
+  public List<T> fromString(@Nullable final String str, final ConvertContext context) {
+    if (str == null) {
+      return null;
+    }
     List<T> values = new ArrayList<T>();
 
     for (String s : StringUtil.tokenize(str, myDelimiters)) {
