@@ -45,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 
 import java.util.ArrayList;
@@ -68,6 +70,13 @@ public class GroovyPsiManager implements ProjectComponent {
   private GrTypeDefinition myArrayClass;
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+
+  public TypeInferenceHelper getTypeInferenceHelper() {
+    return myTypeInferenceHelper;
+  }
+
+  private TypeInferenceHelper myTypeInferenceHelper;
+
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { int length }";
   public Runnable myUpdateRunnable;
 
@@ -103,6 +112,8 @@ public class GroovyPsiManager implements ProjectComponent {
         myCalculatedTypes.clear();
       }
     });
+
+    myTypeInferenceHelper = new  TypeInferenceHelper(myProject);
 
     myRootConnection = myProject.getMessageBus().connect();
     ModuleRootListener moduleRootListener = new ModuleRootListener() {
@@ -346,14 +357,14 @@ public class GroovyPsiManager implements ProjectComponent {
     return myArrayClass;
   }
 
-  ThreadLocal<List<PsiElement>> myElementsWithInferredTypes = new ThreadLocal<List<PsiElement>>(){
+  ThreadLocal<List<PsiElement>> myElementsWithTypesBeingInferred = new ThreadLocal<List<PsiElement>>(){
     protected List<PsiElement> initialValue() {
       return new ArrayList<PsiElement>();
     }
   };
 
   public PsiType inferType(PsiElement element, Computable<PsiType> computable) {
-    final List<PsiElement> curr = myElementsWithInferredTypes.get();
+    final List<PsiElement> curr = myElementsWithTypesBeingInferred.get();
     try{
       curr.add(element);
       return computable.compute();
@@ -363,6 +374,10 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public boolean isTypeBeingInferred(PsiElement element) {
-    return myElementsWithInferredTypes.get().contains(element);
+    return myElementsWithTypesBeingInferred.get().contains(element);
+  }
+
+  public Map<GrReferenceExpression, PsiType> inferTypesForScope(GrCodeBlock block) {
+    return null;
   }
 }

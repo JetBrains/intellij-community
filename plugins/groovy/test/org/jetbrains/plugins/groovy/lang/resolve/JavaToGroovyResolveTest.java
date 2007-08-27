@@ -28,6 +28,12 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof GrField);
   }
 
+  public void testAccessorRefToProperty() throws Exception {
+    PsiReference ref = configureByFile("accessorRefToProperty/A.java");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrField && ((GrField) resolved).isProperty());
+  }
+
   public void testMethod1() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("method1/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);

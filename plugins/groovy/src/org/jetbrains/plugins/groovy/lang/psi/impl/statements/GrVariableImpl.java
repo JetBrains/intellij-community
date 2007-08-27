@@ -69,6 +69,14 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   @Nullable
+  public PsiType getDeclaredType() {
+    GrTypeElement typeElement = getTypeElementGroovy();
+    if (typeElement != null) return typeElement.getType();
+
+    return null;
+  }
+
+  @Nullable
   public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;

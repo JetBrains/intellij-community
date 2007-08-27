@@ -1,12 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.PomField;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -19,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GrFieldImpl extends GrVariableImpl implements GrField {
+public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner, PsiMetaData {
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -66,5 +70,46 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getUseScope(this);
+  }
+
+  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place) {
+    return false;
+  }
+
+  public PsiElement getDeclaration() {
+    return this;
+  }
+
+  @NonNls
+  public String getName(PsiElement context) {
+    final String name = getName();
+    if (isProperty()) {
+      if (context  instanceof PsiMethodCallExpression) {
+        final String refName = ((PsiMethodCallExpression) context).getMethodExpression().getReferenceName();
+        if (name != null && refName != null) {
+          if (refName.startsWith("get") || refName.startsWith("set")) {
+            return refName.substring(0, 3) + StringUtil.capitalize(name);
+          }
+        }
+      }
+    }
+
+    return name;
+  }
+
+  public void init(PsiElement element) {
+  }
+
+  public Object[] getDependences() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Nullable
+  public PsiMetaData getMetaData() {
+    return this;
+  }
+
+  public boolean isMetaEnough() {
+    return true;
   }
 }

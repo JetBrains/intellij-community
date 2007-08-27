@@ -77,6 +77,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myIsInScope = startInScope == null;
 
     final InstructionImpl first = startNode(null);
+    if (scope instanceof GrClosableBlock) {
+      PsiElement child = scope.getFirstChild();
+      while (child != null) {
+        if (child instanceof GroovyPsiElement) {
+          ((GroovyPsiElement) child).accept(this);
+        }
+        child = child.getNextSibling();
+      }
+    }
     scope.accept(this);
 
     if (myHead == first) {

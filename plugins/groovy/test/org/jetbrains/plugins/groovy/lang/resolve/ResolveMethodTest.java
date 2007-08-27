@@ -298,4 +298,22 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals(parameters[0].getType().getCanonicalText(), "java.lang.Class");
   }
 
+  public void testReassigned1() throws Exception {
+    PsiReference ref = configureByFile("reassigned1/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    final GrParameter[] parameters = ((GrMethod) resolved).getParameters();
+    assertEquals(parameters.length, 1);
+    assertEquals(parameters[0].getType().getCanonicalText(), "java.lang.String");
+  }
+
+  public void testReassigned2() throws Exception {
+    PsiReference ref = configureByFile("reassigned2/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrMethod);
+    final GrParameter[] parameters = ((GrMethod) resolved).getParameters();
+    assertEquals(parameters.length, 1);
+    assertEquals(parameters[0].getType().getCanonicalText(), "int");
+  }
+
 }

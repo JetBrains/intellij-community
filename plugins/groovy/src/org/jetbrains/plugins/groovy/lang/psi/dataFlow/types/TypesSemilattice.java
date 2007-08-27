@@ -20,6 +20,8 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
   }
 
   public Map<String, PsiType> join(ArrayList<Map<String, PsiType>> ins) {
+    if (ins.size() == 0) return new HashMap<String, PsiType>();
+    
     Map<String, PsiType> result = new HashMap<String, PsiType>(ins.get(0));
 
     for (int i = 1; i < ins.size(); i++) {

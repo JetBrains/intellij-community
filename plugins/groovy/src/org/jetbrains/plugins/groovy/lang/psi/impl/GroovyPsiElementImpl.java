@@ -30,7 +30,7 @@ import java.util.Iterator;
 /**
  * @author ilyas
  */
-public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
+public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
 
   public GroovyPsiElementImpl(@NotNull ASTNode node) {
     super(node);
@@ -46,9 +46,7 @@ public class GroovyPsiElementImpl extends ASTWrapperPsiElement implements Groovy
   }
 
   public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) throws IncorrectOperationException {
-    if (getParent() == null ||
-        getParent().getNode() == null ||
-        newStmt.getNode() == null) {
+    if (getParent() == null || getParent().getNode() == null) {
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = getParent().getNode();

@@ -18,7 +18,12 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
     if (element instanceof GrVariable) {
       GrVariable variable = (GrVariable) element;
       StringBuffer buffer = new StringBuffer();
-      buffer.append(variable.getType().getCanonicalText());
+      final PsiType type = variable.getDeclaredType();
+      if (type != null) {
+        buffer.append(type.getCanonicalText());
+      } else {
+        buffer.append("def");
+      }
       buffer.append(" ");
       buffer.append(variable.getName());
       return buffer.toString();

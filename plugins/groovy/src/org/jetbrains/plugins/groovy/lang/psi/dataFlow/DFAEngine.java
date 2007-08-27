@@ -29,7 +29,7 @@ public class DFAEngine<E> {
   public ArrayList<E> performDFA() {
     ArrayList<E> info = new ArrayList<E>(myFlow.length);
     for (int i = 0; i < myFlow.length; i++) {
-      info.set(i, myDfa.initial());
+      info.add(myDfa.initial());
     }
 
     boolean[] visited = new boolean[myFlow.length];
@@ -37,31 +37,32 @@ public class DFAEngine<E> {
     final boolean forward = myDfa.isForward();
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
       Instruction instr = myFlow[i];
-      if (visited[instr.num()]) continue;
 
-      Stack<CallInstruction> callStack = new Stack<CallInstruction>();
+      if (!visited[instr.num() - 1]) {
+        Stack<CallInstruction> callStack = new Stack<CallInstruction>();
 
-      Queue<Instruction> worklist = new LinkedList<Instruction>();
+        Queue<Instruction> worklist = new LinkedList<Instruction>();
 
-      worklist.add(instr);
-      visited[instr.num()] = true;
+        worklist.add(instr);
+        visited[instr.num() - 1] = true;
 
-      while (!worklist.isEmpty()) {
-        final Instruction curr = worklist.element();
-        final int num = curr.num();
-        final E oldE = info.get(num);
-        E newE = join(curr, info, callStack);
-        myDfa.fun(newE, curr);
-        if (!mySemilattice.eq(newE, oldE)) {
-          info.set(num, newE);
-          for (Instruction next : getNext(curr, callStack)) {
-            worklist.add(next);
-            visited[next.num()] = true;
+        while (!worklist.isEmpty()) {
+          final Instruction curr = worklist.remove();
+          final int num = curr.num() - 1;
+          final E oldE = info.get(num);
+          E newE = join(curr, info, callStack);
+          myDfa.fun(newE, curr);
+          if (!mySemilattice.eq(newE, oldE)) {
+            info.set(num, newE);
+            for (Instruction next : getNext(curr, callStack)) {
+              worklist.add(next);
+              visited[next.num() - 1] = true;
+            }
           }
         }
-      }
 
-      assert callStack.isEmpty();
+        assert callStack.isEmpty();
+      }
 
       if (forward) i++; else i--;
     }
@@ -74,7 +75,7 @@ public class DFAEngine<E> {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(callStack) : instruction.succ(callStack);
     ArrayList<E> prevInfos = new ArrayList<E>();
     for (Instruction i : prev) {
-      prevInfos.add(info.get(i.num()));
+      prevInfos.add(info.get(i.num() - 1));
     }
     return mySemilattice.join(prevInfos);
   }

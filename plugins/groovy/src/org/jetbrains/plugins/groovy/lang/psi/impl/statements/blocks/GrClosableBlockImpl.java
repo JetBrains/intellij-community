@@ -90,6 +90,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
 
   public void subtreeChanged() {
+    super.subtreeChanged();
     mySyntheticItParameter = null;
   }
 
