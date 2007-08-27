@@ -289,7 +289,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         for (final int row : rows) {
           myShouldRename[row] = valueToBeSet;
         }
-        fireTableDataChanged();
+        fireDataChanged();
       }
     }
   }
