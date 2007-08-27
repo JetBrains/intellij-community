@@ -97,11 +97,6 @@ public class XmlUtil {
   @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   @NonNls public static final String STRUTS_HTML_URI2 = "http://jakarta.apache.org/struts/tags-html";
 
-  @NonNls private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
-  @NonNls private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
-  @NonNls private static final String SPRING_CORE_URI3 = "http://www.springframework.org/dtd/spring-beans-2.0.dtd";
-  @NonNls public static final String[] SPRING_CORE_URIS = {SPRING_CORE_URI, SPRING_CORE_URI2, SPRING_CORE_URI3, "-//SPRING//DTD BEAN 2.0//EN", "-//SPRING//DTD BEAN//EN"};
-
   @NonNls public static final String[] HIBERNATE_URIS = {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
 
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
