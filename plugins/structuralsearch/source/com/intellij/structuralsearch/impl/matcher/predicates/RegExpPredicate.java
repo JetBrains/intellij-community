@@ -2,20 +2,19 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import org.jetbrains.annotations.NonNls;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.regex.Matcher;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
@@ -102,6 +101,7 @@ public final class RegExpPredicate extends Handler {
     boolean result = doMatch(text, start, end, context, matchedNode);
 
     if (!result) {
+      if(matchedNode instanceof PsiIdentifier) matchedNode = matchedNode.getParent();
       // Short class name is matched with fully qualified name
       if(matchedNode instanceof PsiJavaCodeReferenceElement || matchedNode instanceof PsiClass) {
         PsiElement element = (matchedNode instanceof PsiJavaCodeReferenceElement)?
@@ -109,7 +109,9 @@ public final class RegExpPredicate extends Handler {
                              matchedNode;
 
         if (element instanceof PsiClass) {
+          String previousText = text;
           text = ((PsiClass)element).getQualifiedName();
+          if (text != null && text.equals(previousText)) text = ((PsiClass)element).getName();
 
           if (text!=null) {
             result = doMatch(text, start, end, context, matchedNode);
@@ -128,8 +130,15 @@ public final class RegExpPredicate extends Handler {
     if (matchedNode instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)matchedNode).getQualifierExpression()!=null
        ) {
+      final PsiElement element = ((PsiReferenceExpression)matchedNode).resolve();
+      if (element instanceof PsiClass) return matchedNode.getText();
+
       final PsiElement referencedElement = ((PsiReferenceExpression)matchedNode).getReferenceNameElement();
       text = referencedElement != null ? referencedElement.getText():"";
+
+      if (element == null && text.length() > 0 && Character.isUpperCase(text.charAt(0))) {
+        return matchedNode.getText();
+      }
     } else if (matchedNode instanceof PsiLiteralExpression) {
       text = matchedNode.getText();
       //if (text.length()>2 && text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') {

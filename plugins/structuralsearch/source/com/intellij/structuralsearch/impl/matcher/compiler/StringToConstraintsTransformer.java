@@ -1,13 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.structuralsearch.*;
 import com.intellij.openapi.util.text.StringUtil;
-
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.util.StringTokenizer;
-
+import com.intellij.structuralsearch.*;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.

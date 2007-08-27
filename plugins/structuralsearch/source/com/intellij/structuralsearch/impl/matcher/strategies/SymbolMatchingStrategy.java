@@ -10,6 +10,22 @@ public class SymbolMatchingStrategy extends ExprMatchingStrategy {
     result = true;
   }
 
+  public void visitAnnotation(final PsiAnnotation annotation) {
+    result = true;
+  }
+
+  public void visitAnnotationParameterList(final PsiAnnotationParameterList list) {
+    result = true;
+  }
+
+  public void visitModifierList(final PsiModifierList list) {
+    result = true;
+  }
+
+  public void visitNameValuePair(final PsiNameValuePair pair) {
+    result = true;
+  }
+
   public void visitTypeParameterList(PsiTypeParameterList psiTypeParameterList) {
     result = true;
   }

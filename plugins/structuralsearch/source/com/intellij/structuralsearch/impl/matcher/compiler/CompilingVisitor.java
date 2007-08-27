@@ -391,31 +391,57 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
   public void visitReferenceExpression(PsiReferenceExpression reference) {
     visitElement(reference);
+
+    boolean typedVarProcessed = false;
+    final PsiElement referenceParent = reference.getParent();
+    
     if ((context.pattern.isRealTypedVar(reference)) &&
         reference.getQualifierExpression() == null &&
-        !(reference.getParent() instanceof PsiExpressionStatement)
+        !(referenceParent instanceof PsiExpressionStatement)
        ) {
       // typed var for expression (but not top level)
       Handler handler = context.pattern.getHandler(reference);
       setFilter( handler, ExpressionFilter.getInstance() );
+      typedVarProcessed = true;
     }
 
-    if (!(reference.getParent() instanceof PsiMethodCallExpression)) {
+    if (!(referenceParent instanceof PsiMethodCallExpression)) {
       handleReference(reference);
+    }
+
+    Handler handler = context.pattern.getHandler(reference);
+
+    // We want to merge qname related to class to find
+    final String referencedName = reference.getReferenceName();
+
+    if (!typedVarProcessed &&
+        !(handler instanceof SubstitutionHandler)) {
+      final PsiElement resolve = reference.resolve();
+
+      if (resolve instanceof PsiClass ||
+          ( resolve == null && referencedName != null && Character.isUpperCase(referencedName.charAt(0))
+          )
+        ) {
+        boolean hasNoNestedSubstitutionHandlers = false;
+        PsiExpression qualifier;
+        PsiReferenceExpression currentReference = reference;
+
+        while((qualifier = currentReference.getQualifierExpression()) != null) {
+          if (!(qualifier instanceof PsiReferenceExpression) ||
+              context.pattern.getHandler(qualifier) instanceof SubstitutionHandler
+             ) {
+            hasNoNestedSubstitutionHandlers = true;
+            break;
+          }
+          currentReference = (PsiReferenceExpression)qualifier;
+        }
+        if (!hasNoNestedSubstitutionHandlers) createAndSetSubstitutionHandlerFromReference(reference, reference);
+      }
     }
   }
 
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     handleReference(expression.getMethodExpression());
-    final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
-
-    if (qualifier instanceof PsiJavaReference) {
-      PsiElement element = ((PsiJavaReference)qualifier).resolve();
-
-      if (element instanceof PsiClass) {
-        expression.putUserData(CompiledPattern.FQN,((PsiClass)element).getQualifiedName());
-      }
-    }
     super.visitMethodCallExpression(expression);
   }
 
@@ -659,26 +685,26 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   public void visitExpressionStatement(PsiExpressionStatement expr) {
     handle(expr);
 
+    super.visitExpressionStatement(expr);
+    
     if (!(expr.getLastChild() instanceof PsiJavaToken)) {
       // search for expression or symbol
       final PsiElement reference = expr.getFirstChild();
+      Handler referenceHandler = context.pattern.getHandler(reference);
 
-      if ((context.pattern.isRealTypedVar(expr)) &&
-          (reference instanceof PsiReferenceExpression) &&
-          ((PsiReferenceExpression)reference).getQualifierExpression() == null
+      if (referenceHandler instanceof SubstitutionHandler &&
+          (reference instanceof PsiReferenceExpression)
          ) {
         // symbol
-        handle(reference);
-        Handler handler = context.pattern.getHandler(reference);
-        if (handler instanceof SubstitutionHandler) {
-          handler.setFilter(
-            SymbolNodeFilter.getInstance()
-          );
-          setHandler(expr,new SymbolHandler((SubstitutionHandler)handler));
-        }
+        context.pattern.setHandler(expr, referenceHandler);
+        referenceHandler.setFilter(
+          SymbolNodeFilter.getInstance()
+        );
+
+        setHandler(expr,new SymbolHandler((SubstitutionHandler)referenceHandler));
       } else if (reference instanceof PsiLiteralExpression) {
-        Handler handler = (Handler)reference.getUserData(CompiledPattern.HANDLER_KEY);
-        setHandler(expr,(handler !=null) ? handler: (handler = new ExpressionHandler()));
+        Handler handler = new ExpressionHandler();
+        setHandler(expr,handler);
         handler.setFilter( ConstantFilter.getInstance() );
       }  else {
         // just expression
@@ -697,16 +723,14 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         handler.setMatchHandler( new StatementHandler() );
       }
     }
+  }
 
-    super.visitExpressionStatement(expr);
-
-    //if (expr.getExpression() instanceof PsiReferenceExpression &&
-    //    (context.pattern.isRealTypedVar(expr.getExpression()))) {
-    //  // search for statement
-    //  SubstitutionHandler handler = (SubstitutionHandler) context.pattern.getHandler(expr.getExpression());
-    //  handler.setFilter( new StatementFilter() );
-    //  handler.setMatchHandler( new StatementHandler() );
-    //}
+  private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final PsiElement reference) {
+    final String referenceText = reference.getText();
+    final SubstitutionHandler substitutionHandler = new SubstitutionHandler("__"+ referenceText.replace('.','_'), false, 1, 1, false);
+    substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.","\\\\."),true, null, false,false));
+    context.pattern.setHandler(expr,substitutionHandler);
+    return substitutionHandler;
   }
 
   public void visitElement(PsiElement element) {

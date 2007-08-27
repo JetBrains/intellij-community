@@ -220,8 +220,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s67 = " buf.append((VirtualFile)a);";
   private static final String s68 = " (VirtualFile)'T";
 
-  private static final String s69 = " System.getProperties(); System.out.println(); ";
+  private static final String s69 = " System.getProperties(); System.out.println(); java.lang.System.out.println(); some.other.System.out.println();";
   private static final String s70 = " System.out ";
+  private static final String s70_2 = " java.lang.System.out ";
 
   private static final String s71 = " class A { " +
                                     "class D { D() { c(); } }" +
@@ -1180,8 +1181,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "symbol match",
-      findMatchesCount(s131,s132),
-      2
+      2,
+      findMatchesCount(s131,s132)
     );
 
     final String s129 = "A a = new A();";
@@ -1499,8 +1500,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "searching for static field in static call",
-      findMatchesCount(s69,s70),
-      1
+      2,
+      findMatchesCount(s69,s70)
+    );
+
+    assertEquals(
+      "searching for static field in static call, 2",
+      2,
+      findMatchesCount(s69,s70_2)
     );
 
     assertEquals(
@@ -1805,8 +1812,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "fields of class",
-      findMatchesCount(s117,s118),
-      4
+      4,
+      findMatchesCount(s117,s118)
     );
 
     assertEquals(
@@ -2423,9 +2430,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   //              "} finally {\n" +
   //              "  int a = 1;\n" +
   //              "}";
-  //  String s2 = "try { '_StatementBefore*; '_Dcl:[ regex(conn = 1)]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.*) ]; }";
-  //  assertEquals("FindTryWithoutProperFinally", 1, findMatchesCount(s1,s2));
+  //  String s2 = "try { '_StatementBefore*; '_Dcl:[regex( conn = 1 )]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.* ) ]; }";
+  //  assertEquals("FindTryWithoutProperFinally", 2, findMatchesCount(s1,s2));
   //}
+
   public void testBug() {
     String s1 = "public class DiallingNumber extends DataGroup\n" + "{\n" + "    protected static byte [] CLEAR = { };\n" + "\n" +
                 "    private static DataItemTemplate template;\n" + "\n" + "\tprotected DataTemplate createDefaultTemplate()\n" + "\t{\n" +
@@ -2434,6 +2442,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "    '_RetType createDefaultTemplate() { '_Statements*; }\n" + "\t'_Content*\n" + "}";
     assertEquals("Bug in class matching", 1, findMatchesCount(s1,s2));
   }
+
+  //public void testFindFieldUsageByQName() {
+  //  String s1 = "{ class A { int b; { b = 1; } } class B extends A { { this.b = 2} } { B i; i.b = 3; } }";
+  //  String s2 = "A.b";
+  //  assertEquals( 3, findMatchesCount(s1,s2));
+  //}
+  //
+  //public void testFindMethodUsageByQName() {
+  //  String s1 = "{ class A { void b(int a) {} { b(1); } } class B extends A { { this.b(2); } } { B i; i.b(3); } }";
+  //  String s2 = "A.b";
+  //  assertEquals( 3, findMatchesCount(s1,s2));
+  //}
 
   public void testStaticInstanceInitializers() {
     String s1 = "public class DiallingNumber {\n static { int a = 1; } static { int b = 1; } { int c = 2; }}";

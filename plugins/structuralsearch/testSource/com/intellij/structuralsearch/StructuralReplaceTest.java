@@ -1794,4 +1794,52 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       throw new RuntimeException(e);
     }
   }
+
+  public void testLeastSurprise() {
+    String s1 = "@Nullable (a=String.class) @String class Test {\n" +
+                "  void aaa(String t) {\n" +
+                "    String a = String.valueOf(' ');" +
+                "    String2 a2 = String2.valueOf(' ');" +
+                "  }\n" +
+                "}";
+    String s2 = "'String:String";
+    String s2_2 = "String";
+    String s2_3 = "'String:java\\.lang\\.String";
+    String s2_4 = "java.lang.String";
+    String replacement = "java.util.List";
+    String expected = "@Nullable (a=java.util.List.class) @java.util.List class Test {\n" +
+                "  void aaa(java.util.List t) {\n" +
+                "    java.util.List a = java.util.List.valueOf(' ');" +
+                "    String2 a2 = String2.valueOf(' ');" +
+                "  }\n" +
+                "}";
+
+    actualResult = replacer.testReplace(s1,s2,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+
+    actualResult = replacer.testReplace(s1,s2_2,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+
+    actualResult = replacer.testReplace(s1,s2_3,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+
+    actualResult = replacer.testReplace(s1,s2_4,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+  }
 }

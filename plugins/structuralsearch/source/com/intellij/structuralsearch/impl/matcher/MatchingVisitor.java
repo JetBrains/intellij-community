@@ -492,27 +492,32 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitReferenceExpression(final PsiReferenceExpression reference) {
-    if (reference.getQualifier()==null) {
-      final PsiElement nameElement = reference.getReferenceNameElement();
+    final PsiExpression qualifier = reference.getQualifierExpression();
 
-      if(nameElement != null && matchContext.getPattern().isTypedVar(nameElement)) {
-        if (element instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression psiReferenceExpression = ((PsiReferenceExpression)element);
+    final PsiElement nameElement = reference.getReferenceNameElement();
+    Handler _handler = nameElement != null ? matchContext.getPattern().getHandlerSimple(nameElement):null;
+    if (!(_handler instanceof SubstitutionHandler)) _handler = matchContext.getPattern().getHandlerSimple(reference);
 
-          if (psiReferenceExpression.getQualifierExpression()==null) {
-            element = psiReferenceExpression.getReferenceNameElement();
-          }
+    if(_handler instanceof SubstitutionHandler &&
+       !(matchContext.getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
+       !(qualifier instanceof PsiThisExpression)
+      ) {
+      if (element instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression psiReferenceExpression = ((PsiReferenceExpression)element);
+
+        if (psiReferenceExpression.getQualifierExpression()==null) {
+          element = psiReferenceExpression.getReferenceNameElement();
         }
-
-        final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(nameElement);
-        if (handler.isSubtype() || handler.isStrictSubtype()) {
-          result = checkMatchWithingHierarchy(element,handler, reference);
-        } else {
-          result = handler.handle(element,matchContext);
-        }
-
-        return;
       }
+
+      final SubstitutionHandler handler = (SubstitutionHandler) _handler;
+      if (handler.isSubtype() || handler.isStrictSubtype()) {
+        result = checkMatchWithingHierarchy(element,handler, reference);
+      } else {
+        result = handler.handle(element,matchContext);
+      }
+
+      return;
     }
 
     if (!(element instanceof PsiReferenceExpression)) {
@@ -523,19 +528,17 @@ public class MatchingVisitor extends PsiElementVisitor {
     final PsiReferenceExpression reference2 = (PsiReferenceExpression) element;
 
     // just variable
-    if (reference.getQualifier()==null &&
-        reference2.getQualifier() == null
-       ) {
+    final PsiExpression reference2Qualifier = reference2.getQualifierExpression();
+    if (qualifier ==null && reference2Qualifier == null) {
       result = reference.getReferenceNameElement().textMatches(reference2.getReferenceNameElement());
       return;
     }
 
     // handle field selection
     if ( !(element.getParent() instanceof PsiMethodCallExpression) && // element is not a method) &&
-         reference.getQualifierExpression()!=null &&
-         ( reference2.getQualifierExpression()!=null ||
-           ( reference.getQualifierExpression() instanceof PsiThisExpression &&
-             reference2.getQualifierExpression() == null &&
+         qualifier !=null &&
+         ( reference2Qualifier !=null ||
+           ( qualifier instanceof PsiThisExpression &&
              MatchUtils.getReferencedElement(element) instanceof PsiField
            )
          )
@@ -551,10 +554,9 @@ public class MatchingVisitor extends PsiElementVisitor {
       }
 
       if (result &&
-          reference.getQualifierExpression()!=null &&
-          reference2.getQualifierExpression()!=null
+          reference2Qualifier !=null
          ) {
-        result = match(reference.getQualifierExpression(), reference2.getQualifierExpression());
+        result = match(qualifier, reference2Qualifier);
       }
 
       return;
@@ -653,76 +655,57 @@ public class MatchingVisitor extends PsiElementVisitor {
     final String mcallname2 = mcallRef2.getReferenceName();
     boolean isTypedVar = matchContext.getPattern().isTypedVar(mcallRef1.getReferenceNameElement());
 
-    if (!mcallname1.equals(mcallname2) && !isTypedVar) {
+    if (mcallname1 != null && !mcallname1.equals(mcallname2) && !isTypedVar) {
       result = false;
       return;
     }
 
-    if (mcallRef1.getQualifierExpression()!=null) {
-      String FQN = mcall.getUserData(CompiledPattern.FQN);
-      boolean processedFQN =  false;
+    final PsiExpression qualifier = mcallRef1.getQualifierExpression();
+    final PsiExpression elementQualfier = mcallRef2.getQualifierExpression();
+    if (qualifier !=null) {
 
-      if (FQN!=null) {
-        PsiElement element = mcallRef2.getQualifierExpression();
-        if (element instanceof PsiJavaReference) {
-          PsiElement clazz = ((PsiJavaReference)element).resolve();
-
-          if (clazz instanceof PsiClass) {
-            result = ((PsiClass)clazz).getQualifiedName().equals(FQN);
-            if (!result) return;
-            processedFQN = true;
-          }
-        }
-      }
-
-      if (!processedFQN) {
-        // @todo this branching could be even better
-        if (mcallRef2.getQualifierExpression()!=null) {
-          result = match(
-            mcallRef1.getQualifierExpression(),
-            mcallRef2.getQualifierExpression()
-          );
-          if (!result) return;
+      if (elementQualfier !=null) {
+        result = match(qualifier, elementQualfier);
+        if (!result) return;
+      } else {
+        Handler handler = matchContext.getPattern().getHandler(qualifier);
+        if (!(handler instanceof SubstitutionHandler) ||
+            ((SubstitutionHandler)handler).getMinOccurs()!=0) {
+          result = false;
+          return;
         } else {
-          Handler handler = matchContext.getPattern().getHandler(mcallRef1.getQualifierExpression());
-          if (!(handler instanceof SubstitutionHandler) ||
-              ((SubstitutionHandler)handler).getMinOccurs()!=0) {
-            result = false;
-            return;
-          } else {
-            // we may have not ? expr_type constraint set on qualifier expression so validate it
-            SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+          // we may have not ? expr_type constraint set on qualifier expression so validate it
+          SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
 
-            if (substitutionHandler.getPredicate()!=null) {
-              boolean isnot = false;
-              Handler _predicate = substitutionHandler.getPredicate();
-              ExprTypePredicate predicate = null;
+          if (substitutionHandler.getPredicate()!=null) {
+            boolean isnot = false;
+            Handler _predicate = substitutionHandler.getPredicate();
+            ExprTypePredicate predicate = null;
 
-              if (_predicate instanceof NotPredicate) {
-                isnot = true;
-                _predicate = ((NotPredicate)_predicate).getHandler();
+            if (_predicate instanceof NotPredicate) {
+              isnot = true;
+              _predicate = ((NotPredicate)_predicate).getHandler();
+            }
+
+            if (_predicate instanceof ExprTypePredicate) {
+              predicate = (ExprTypePredicate)_predicate;
+            }
+
+            if (predicate != null) {
+              PsiMethod method = (PsiMethod)mcallRef2.resolve();
+              if (method != null) {
+                result = predicate.checkClass(method.getContainingClass(),matchContext);
+                if (isnot) result = !result;
+              } else {
+                result = false;
               }
 
-              if (_predicate instanceof ExprTypePredicate) {
-                predicate = (ExprTypePredicate)_predicate;
-              }
-
-              if (predicate != null) {
-                PsiMethod method = (PsiMethod)mcallRef2.resolve();
-                if (method != null) {
-                  result = predicate.checkClass(method.getContainingClass(),matchContext);
-                  if (isnot) result = !result;
-                } else {
-                  result = false;
-                }
-
-                if (!result) return;
-              }
+              if (!result) return;
             }
           }
         }
       }
-    } else if (mcallRef2.getQualifierExpression()!=null) {
+    } else if (elementQualfier !=null) {
       result = false;
       return;
     }

@@ -14,6 +14,18 @@ public class SymbolNodeFilter extends NodeFilter {
     result = true;
   }
 
+  public void visitAnnotation(final PsiAnnotation annotation) {
+    result = true;
+  }
+
+  public void visitAnnotationMethod(final PsiAnnotationMethod method) {
+    result = true;
+  }
+
+  public void visitNameValuePair(final PsiNameValuePair pair) {
+    result = true;
+  }
+
   public void visitMethod(PsiMethod psiMethod) {
     result = true;
   }

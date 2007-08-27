@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -244,7 +245,7 @@ public class ReplacerImpl {
 
   private void doReplacement(final ReplacementInfoImpl info,
                              final PsiElement elementToReplace,
-                             final String replacementToMake,
+                             String replacementToMake,
                              final PsiElement elementParent) {
     boolean listContext = false;
 
@@ -254,6 +255,10 @@ public class ReplacerImpl {
 
       PsiElement el = findRealSubstitutionElement(elementToReplace);
       listContext = isListContext(el);
+
+      if (el instanceof PsiAnnotation && !StringUtil.startsWithChar(replacementToMake, '@'))  {
+        replacementToMake = "@" + replacementToMake;
+      }
 
       PsiElement[] statements = MatcherImplUtil.createTreeFromText(
         replacementToMake,

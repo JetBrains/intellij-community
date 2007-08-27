@@ -65,7 +65,7 @@ public abstract class CompiledPattern {
   private static final String TYPED_VAR_PREFIX = "__$_";
   private static final String XML_TYPED_VAR_PREFIX = "__";
   public static final Key<PsiElement> ALL_CLASS_CONTENT_VAR_KEY = Key.create("AllClassContent");
-  public static final Key<String> FQN = Key.create("FQN");
+  
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
 
   MatchingStrategy getStrategy() {
@@ -131,6 +131,7 @@ public abstract class CompiledPattern {
   }
 
   public void setHandler(PsiElement node, Handler handler) {
+    last = null;
     handlers.put(node,handler);
   }
 
