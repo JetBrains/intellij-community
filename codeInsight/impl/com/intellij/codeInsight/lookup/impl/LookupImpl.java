@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -40,6 +41,7 @@ import java.util.*;
 import java.util.List;
 
 public class LookupImpl extends LightweightHint implements Lookup {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
   static final Object ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
@@ -469,7 +471,11 @@ public class LookupImpl extends LightweightHint implements Lookup {
       return null;
     }
     Rectangle listBounds=myList.getBounds();
-    JLayeredPane layeredPane=myList.getRootPane().getLayeredPane();
+    final JRootPane pane = myList.getRootPane();
+    if (pane == null) {
+      LOG.assertTrue(false, Arrays.toString(myItems));
+    }
+    JLayeredPane layeredPane= pane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(myList,listBounds.x,listBounds.y,layeredPane);
     itmBounds.x = layeredPanePoint.x;
     itmBounds.y = layeredPanePoint.y;
