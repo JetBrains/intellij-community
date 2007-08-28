@@ -364,6 +364,8 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       mySettingsStack.dispose();
       mySettingsStack = null;
     }
+
+    myGlassPanel = null;
   }
 
   public String getHelpTopic() {
