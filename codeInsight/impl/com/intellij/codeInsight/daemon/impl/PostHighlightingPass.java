@@ -234,7 +234,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       info = processField(psiField, unusedSymbolInspection, identifier);
     }
     else if (parent instanceof PsiParameter && unusedSymbolInspection.PARAMETER) {
-      info = processParameter((PsiParameter)parent);
+      info = processParameter((PsiParameter)parent, unusedSymbolInspection);
     }
     else if (parent instanceof PsiMethod && unusedSymbolInspection.METHOD) {
       info = processMethod((PsiMethod)parent, unusedSymbolInspection);
@@ -382,12 +382,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processParameter(PsiParameter parameter) {
+  private HighlightInfo processParameter(PsiParameter parameter, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
       if (PsiUtil.hasErrorElementChild(method)) return null;
-      if ((method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.ABSTRACT) && !isOverriddenOrOverrides(method))
+      if ((method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.ABSTRACT) && unusedSymbolInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS && !isOverriddenOrOverrides(method))
           && !method.hasModifierProperty(PsiModifier.NATIVE)
           && !HighlightMethodUtil.isSerializationRelatedMethod(method)
           && !isMainMethod(method)

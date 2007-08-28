@@ -4,18 +4,17 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,6 +43,7 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
   public boolean METHOD = true;
   public boolean CLASS = true;
   public boolean PARAMETER = true;
+  public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
   public JDOMExternalizableStringList INJECTION_ANNOS = new JDOMExternalizableStringList();
 
   @NotNull
@@ -69,47 +69,54 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     return ID;
   }
 
+  public class OptionsPanel {
+    private JCheckBox myCheckLocalVariablesCheckBox;
+    private JCheckBox myCheckClassesCheckBox;
+    private JCheckBox myCheckFieldsCheckBox;
+    private JCheckBox myCheckMethodsCheckBox;
+    private JCheckBox myCheckParametersCheckBox;
+    private JCheckBox myReportUnusedParametersInPublics;
+    private JPanel myAnnos;
+    private JPanel myPanel;
+
+    public OptionsPanel() {
+      myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
+      myCheckClassesCheckBox.setSelected(CLASS);
+      myCheckFieldsCheckBox.setSelected(FIELD);
+      myCheckMethodsCheckBox.setSelected(METHOD);
+      myCheckParametersCheckBox.setSelected(PARAMETER);
+      myReportUnusedParametersInPublics.setSelected(REPORT_PARAMETER_FOR_PUBLIC_METHODS);
+      final ActionListener listener = new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
+          CLASS = myCheckClassesCheckBox.isSelected();
+          FIELD = myCheckFieldsCheckBox.isSelected();
+          PARAMETER = myCheckParametersCheckBox.isSelected();
+          METHOD = myCheckMethodsCheckBox.isSelected();
+          REPORT_PARAMETER_FOR_PUBLIC_METHODS = myReportUnusedParametersInPublics.isSelected();
+        }
+      };
+      myCheckLocalVariablesCheckBox.addActionListener(listener);
+      myCheckFieldsCheckBox.addActionListener(listener);
+      myCheckMethodsCheckBox.addActionListener(listener);
+      myCheckClassesCheckBox.addActionListener(listener);
+      myCheckParametersCheckBox.addActionListener(listener);
+      myReportUnusedParametersInPublics.addActionListener(listener);
+
+      String title = InspectionsBundle.message("dependency.injection.annotations.list");
+      final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(INJECTION_ANNOS, title);
+
+      myAnnos.add(listPanel, BorderLayout.CENTER);
+    }
+
+    public JComponent getPanel() {
+      return myPanel;
+    }
+  }
+
   @Nullable
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));
-    final JCheckBox local = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option"), LOCAL_VARIABLE);
-    final JCheckBox field = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option1"), FIELD);
-    final JCheckBox method = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option2"), METHOD);
-    final JCheckBox classes = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option3"), CLASS);
-    final JCheckBox parameters = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option4"), PARAMETER);
-
-    final ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        LOCAL_VARIABLE = local.isSelected();
-        CLASS = classes.isSelected();
-        FIELD = field.isSelected();
-        PARAMETER = parameters.isSelected();
-        METHOD = method.isSelected();
-      }
-    };
-    local.addActionListener(listener);
-    field.addActionListener(listener);
-    method.addActionListener(listener);
-    classes.addActionListener(listener);
-    parameters.addActionListener(listener);
-    panel.add(local);
-    panel.add(field);
-    panel.add(method);
-    panel.add(classes);
-    panel.add(parameters);
-
-    String title = InspectionsBundle.message("dependency.injection.annotations.list");
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(INJECTION_ANNOS, title);
-
-    JPanel doNotExpand = new JPanel(new BorderLayout());
-    final JPanel north = new JPanel(new BorderLayout(2, 2));
-    north.add(panel, BorderLayout.NORTH);
-    north.add(listPanel, BorderLayout.SOUTH);
-    doNotExpand.add(north, BorderLayout.NORTH);
-
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(doNotExpand);
-    scrollPane.setBorder(BorderFactory.createEtchedBorder());
-    return scrollPane;
+    return new OptionsPanel().getPanel();
   }
 
   public IntentionAction createQuickFix(final String qualifiedName, final PsiElement context) {
