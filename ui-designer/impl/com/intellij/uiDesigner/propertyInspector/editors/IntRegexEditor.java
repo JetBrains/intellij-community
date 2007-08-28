@@ -29,11 +29,11 @@ public class IntRegexEditor<T> extends AbstractTextFieldEditor<T> {
     myValueClass = valueClass;
     myRenderer = renderer;
 
-    @NonNls StringBuilder regexBuilder = new StringBuilder("\\[(-?\\d+)");
+    @NonNls StringBuilder regexBuilder = new StringBuilder("\\[?(-?\\d+)");
     for(int i=1; i<myMinValues.length; i++) {
       regexBuilder.append(",\\s*(-?\\d+)");
     }
-    regexBuilder.append("\\]");
+    regexBuilder.append("\\]?");
     myPattern = Pattern.compile(regexBuilder.toString());
   }
 
