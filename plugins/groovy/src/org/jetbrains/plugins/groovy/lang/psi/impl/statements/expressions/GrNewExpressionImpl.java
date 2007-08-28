@@ -116,11 +116,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   @Nullable
   public PsiMethod resolveMethod() {
-    final GrCodeReferenceElement referenceElement = getReferenceElement();
-    if (referenceElement == null) return null;
-
-    final PsiElement resolved = referenceElement.resolve();
-    return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
+    return resolveConstructor();
   }
 
   @NotNull
