@@ -51,7 +51,7 @@ public class RenameFavoritesListAction extends AnAction {
                                                           }
                                                         });
 
-    if (listName != null) {
+    if (listName != null && newName != null) {
       favoritesManager.renameFavoritesList(listName, newName);
     }
   }
