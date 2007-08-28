@@ -15,6 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -23,6 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  */
 public interface GrNewExpression extends GrCallExpression {
   GrCodeReferenceElement getReferenceElement();
+
+  GroovyResolveResult[] multiResolveConstructor();
+
+  PsiMethod resolveConstructor();
 
   int getArrayCount();
 }

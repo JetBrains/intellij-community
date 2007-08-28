@@ -42,11 +42,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceEl
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -108,7 +106,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   enum ReferenceKind {
-    CONSTRUCTOR,
     CLASS,
     CLASS_OR_PACKAGE,
     PACKAGE_FQ,
@@ -127,7 +124,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     if (parent instanceof GrCodeReferenceElement) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind();
       if (parentKind == CLASS ||
-          parentKind == CONSTRUCTOR ||
           parentKind == STATIC_MEMBER_FQ) return CLASS_OR_PACKAGE;
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
@@ -139,8 +135,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       }
 
       return STATIC_MEMBER_FQ;
-    } else if (parent instanceof GrNewExpression) {
-      return CONSTRUCTOR;
     }
 
     return CLASS;
@@ -177,7 +171,36 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   public Object[] getVariants() {
+    if (getParent() instanceof GrNewExpression) {
+      return getVariantsForNewExpression();
+    }
+
     return getVariantsImpl(getKind());
+  }
+
+  private Object[] getVariantsForNewExpression() {
+    final Object[] classVariants = getVariantsImpl(ReferenceKind.CLASS);
+    List<Object> result = new ArrayList<Object>();
+    for (Object variant : classVariants) {
+      if (variant instanceof PsiClass) {
+        final PsiClass clazz = (PsiClass) variant;
+        final LookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
+        GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement);
+        result.add(lookupElement);
+      }
+      else if (variant instanceof LookupElement) {
+        final LookupElement lookupElement = (LookupElement) variant;
+        final Object obj = lookupElement.getObject();
+        if (obj instanceof PsiClass) {
+          GroovyCompletionUtil.setTailTypeForConstructor((PsiClass) obj, lookupElement);
+        }
+        result.add(lookupElement);
+      }
+      else {
+        result.add(variant);
+      }
+    }
+    return result.toArray(new Object[result.size()]);
   }
 
   private Object[] getVariantsImpl(ReferenceKind kind) {
@@ -231,31 +254,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         }
       }
 
-      case CONSTRUCTOR: {
-        final Object[] classVariants = getVariantsImpl(CLASS);
-        List<Object> result = new ArrayList<Object>();
-        for (Object variant : classVariants) {
-          if (variant instanceof PsiClass) {
-            final PsiClass clazz = (PsiClass) variant;
-            final LookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
-            GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement);
-            result.add(lookupElement);
-          }
-          else if (variant instanceof LookupElement) {
-            final LookupElement lookupElement = (LookupElement) variant;
-            final Object obj = lookupElement.getObject();
-            if (obj instanceof PsiClass) {
-              GroovyCompletionUtil.setTailTypeForConstructor((PsiClass) obj, lookupElement);
-            }
-            result.add(lookupElement);
-          }
-          else {
-            result.add(variant);
-          }
-        }
-        return result.toArray(new Object[result.size()]);
-      }
-
       case CLASS: {
         GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
@@ -284,11 +282,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
     public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
-      return _resolve(reference, reference.getManager(), reference.getKind(), !incompleteCode);
+      return _resolve(reference, reference.getManager(), reference.getKind());
     }
 
     private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,
-                                           ReferenceKind kind, boolean checkArguments) {
+                                           ReferenceKind kind) {
       final String refName=ref.getReferenceName();
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ: {
@@ -347,26 +345,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
           break;
         }
-        case CONSTRUCTOR:
-          final GroovyResolveResult[] classResults = _resolve(ref, manager, CLASS, true);
-          if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
-
-          final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(ref, true) : null;
-          List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
-          for (GroovyResolveResult classResult : classResults) {
-            final PsiElement element = classResult.getElement();
-            if (element instanceof PsiClass) {
-              final GrImportStatement statement = classResult.getImportStatementContext();
-              String className = ((PsiClass) element).getName();
-              final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, argTypes);
-              processor.setImportStatementContext(statement);
-              final boolean toBreak = element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref);
-              constructorResults.addAll(Arrays.asList(processor.getCandidates()));
-              if (!toBreak) break;
-            }
-          }
-
-          return constructorResults.isEmpty() ? classResults : constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
 
         case STATIC_MEMBER_FQ:
         {

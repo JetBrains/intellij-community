@@ -16,20 +16,25 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -58,7 +63,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     }
 
     if (type != null) {
-      for(int i = 0; i < getArrayCount(); i++) {
+      for (int i = 0; i < getArrayCount(); i++) {
         type = type.createArrayType();
       }
       return type;
@@ -69,6 +74,38 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   public GrCodeReferenceElement getReferenceElement() {
     return findChildByClass(GrCodeReferenceElement.class);
+  }
+
+  public GroovyResolveResult[] multiResolveConstructor() {
+    GrCodeReferenceElement ref = getReferenceElement();
+    if (ref == null) return null;
+
+    final GroovyResolveResult[] classResults = ref.multiResolve(false);
+    if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
+
+    final PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, true);
+    List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
+    for (GroovyResolveResult classResult : classResults) {
+      final PsiElement element = classResult.getElement();
+      if (element instanceof PsiClass) {
+        final GrImportStatement statement = classResult.getImportStatementContext();
+        String className = ((PsiClass) element).getName();
+        final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, argTypes);
+        processor.setImportStatementContext(statement);
+        final boolean toBreak = element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref);
+        constructorResults.addAll(Arrays.asList(processor.getCandidates()));
+        if (!toBreak) break;
+      }
+    }
+
+    return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
+  }
+
+  public PsiMethod resolveConstructor() {
+    final GroovyResolveResult[] results = multiResolveConstructor();
+    if (results.length != 1) return null;
+    final PsiElement element = results[0].getElement();
+    return element instanceof PsiMethod ? (PsiMethod)element : null;
   }
 
   public int getArrayCount() {

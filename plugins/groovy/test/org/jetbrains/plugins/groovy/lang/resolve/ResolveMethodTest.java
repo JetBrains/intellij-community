@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -189,25 +190,23 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testConstructor() throws Exception {
     PsiReference ref = configureByFile("constructor/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(((PsiMethod) resolved).isConstructor());
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(resolved);
+    assertTrue(resolved.isConstructor());
   }
 
   public void testConstructor1() throws Exception {
     PsiReference ref = configureByFile("constructor1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    final PsiMethod method = (PsiMethod) resolved;
+    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(method);
     assertTrue(method.isConstructor());
     assertEquals(0, method.getParameterList().getParameters().length);
   }
 
   public void testConstructor2() throws Exception {
     PsiReference ref = configureByFile("constructor2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    final PsiMethod method = (PsiMethod) resolved;
+    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(method);
     assertTrue(method.isConstructor());
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     assertEquals(1, parameters.length);
@@ -217,9 +216,8 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   //grvy-101
   public void testConstructor3() throws Exception {
     PsiReference ref = configureByFile("constructor3/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    final PsiMethod method = (PsiMethod) resolved;
+    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(method);
     assertTrue(method.isConstructor());
     assertEquals(0, method.getParameterList().getParameters().length);
   }
@@ -262,9 +260,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testEmptyVsMap() throws Exception {
     PsiReference ref = configureByFile("emptyVsMap/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals(0, ((PsiMethod) resolved).getParameterList().getParametersCount());
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(resolved);
+    assertEquals(0, resolved.getParameterList().getParametersCount());
   }
 
   public void testGrvy179() throws Exception {
@@ -274,16 +272,16 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testAliasedConstructor() throws Exception {
     PsiReference ref = configureByFile("aliasedConstructor/A.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals("JFrame", ((PsiMethod) resolved).getName());
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(resolved);
+    assertEquals("JFrame", resolved.getName());
   }
 
 
   public void testFixedVsVarargs1() throws Exception {
     PsiReference ref = configureByFile("fixedVsVarargs1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrMethod);
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    assertNotNull(resolved);
     final GrParameter[] parameters = ((GrMethod) resolved).getParameters();
     assertEquals(parameters.length, 1);
     assertEquals(parameters[0].getType().getCanonicalText(), "int");

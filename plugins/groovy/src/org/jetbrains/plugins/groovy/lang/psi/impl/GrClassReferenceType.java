@@ -38,17 +38,12 @@ public class GrClassReferenceType extends PsiClassType {
   @Nullable
   public PsiClass resolve() {
     ResolveResult[] results = multiResolve();
-    if (results.length == 0) return null;
     if (results.length == 1) {
       PsiElement only = results[0].getElement();
-      return only instanceof PsiClass ? (PsiClass) only :
-          only instanceof PsiMethod ? //constructor
-              ((PsiMethod) only).getContainingClass() : null;
+      return only instanceof PsiClass ? (PsiClass) only : null;
     }
 
-    PsiElement first = results[0].getElement();
-    return first instanceof PsiMethod ? //constructor
-              ((PsiMethod) first).getContainingClass() : null;
+    return null;
   }
 
   //reference resolve is cached
