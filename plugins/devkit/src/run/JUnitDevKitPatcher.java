@@ -17,13 +17,18 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * User: anna
@@ -37,7 +42,29 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
     if (jdk == null) return;
 
     @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
-    javaParameters.getVMParametersList().add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
+    
+    final ParametersList vm = javaParameters.getVMParametersList();
+    vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
+    if (!vm.hasProperty("idea.load.plugins.id") && PluginModuleType.isOfType(module)) {
+      final String id = DescriptorUtil.getPluginId(module);
+      if (id != null) {
+        vm.defineProperty("idea.load.plugins.id", id);
+      }
+    }
+
+    if (!vm.hasProperty("idea.home.path")) {
+      String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+      if (sandboxHome != null) {
+        try {
+          sandboxHome = new File(sandboxHome).getCanonicalPath();
+        }
+        catch (IOException e) {
+          sandboxHome = new File(sandboxHome).getAbsolutePath();
+        }
+        vm.defineProperty("idea.home.path", sandboxHome + File.separator + "test");
+      }
+    }
+
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
     javaParameters.getClassPath().addFirst(jdk.getToolsPath());
