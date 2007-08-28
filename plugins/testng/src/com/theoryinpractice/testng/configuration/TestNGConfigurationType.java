@@ -9,7 +9,6 @@ package com.theoryinpractice.testng.configuration;
 import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,10 +44,6 @@ public class TestNGConfigurationType implements LocatableConfigurationType
     }
 
     public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-      for (TestNGConfigurationProducer producer : TestNGConfigurationProducer.PROTOTYPES) {
-        final RunnerAndConfigurationSettingsImpl settings = producer.createProducer(location, null).getConfiguration();
-        if (settings != null) return settings;
-      }
       return null;
     }
 

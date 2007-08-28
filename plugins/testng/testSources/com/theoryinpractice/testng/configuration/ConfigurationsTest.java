@@ -7,6 +7,7 @@ package com.theoryinpractice.testng.configuration;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.PathManager;
@@ -24,6 +25,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.TestType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -48,7 +50,9 @@ public class ConfigurationsTest {
                      new File(myFixture.getTempDirPath()), false);
 
     myProjectFixture = testFixtureBuilder.getFixture();
-    testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class).addContentRoot(myFixture.getTempDirPath()).addSourceRoot("src");
+    final JavaModuleFixtureBuilder javaModuleFixtureBuilder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
+    javaModuleFixtureBuilder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("src");
+    javaModuleFixtureBuilder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
     myProjectFixture.setUp();
     ((RunManagerImpl)RunManagerEx.getInstanceEx(myProjectFixture.getProject())).installRefactoringListener();
   }
@@ -155,6 +159,17 @@ public class ConfigurationsTest {
     Assert.assertFalse(type.isConfigurationByElement(configuration, project, psiClass));
   }
 
+  @Test
+  public void testCreateFromContext() {
+    final Project project = myProjectFixture.getProject();
+    final PsiClass psiClass = findTestClass(project);
+    final TestNGInClassConfigurationProducer producer = new TestNGInClassConfigurationProducer();
+    final RunnerAndConfigurationSettingsImpl config = producer.createConfigurationByElement(new PsiLocation<PsiClass>(project, psiClass), null);
+    assert config != null;
+    final RunConfiguration runConfiguration = config.getConfiguration();
+    Assert.assertTrue(runConfiguration instanceof TestNGConfiguration);
+    Assert.assertTrue(((TestNGConfigurationType)runConfiguration.getType()).isConfigurationByElement(runConfiguration, project, psiClass));
+  }
 
   private PsiClass findTestClass(final Project project) {
     final PsiClass psiClass = PsiManager.getInstance(project).findClass("Testt");

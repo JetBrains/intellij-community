@@ -46,11 +46,6 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
   }
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(final Location location) {
-    for (final RuntimeConfigurationProducer producer : JUnitConfigurationProducer.PROTOTYPES) {
-      final RuntimeConfigurationProducer configurationProducer = producer.createProducer(location, null);
-      final RunnerAndConfigurationSettings configuration = configurationProducer.getConfiguration();
-      if (configuration != null) return configuration;
-    }
     return null;
   }
 
