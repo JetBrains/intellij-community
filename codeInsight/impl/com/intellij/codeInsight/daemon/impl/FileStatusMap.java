@@ -178,7 +178,6 @@ public class FileStatusMap {
 
   @NotNull
   public RefCountHolder getRefCountHolder(@NotNull PsiFile file, @NotNull ProgressIndicator daemonProgressIndicator) {
-    assert !daemonProgressIndicator.isCanceled();
     RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
     UserDataHolderEx holder = (UserDataHolderEx)file;
     if (refCountHolder != null && !refCountHolder.isValid()) {
@@ -189,7 +188,6 @@ public class FileStatusMap {
     if (refCountHolder == null) {
       refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file, daemonProgressIndicator));
     }
-    assert refCountHolder.isValid();
     return refCountHolder;
   }
 
