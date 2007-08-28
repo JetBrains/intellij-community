@@ -37,7 +37,22 @@ public interface PsiLanguageInjectionHost extends PsiElement {
   @NotNull
   LiteralTextEscaper createLiteralTextEscaper();
 
+  
   interface InjectedPsiVisitor {
-    void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places);
+    void visit(@NotNull PsiFile injectedPsi, @NotNull List<Shred> places);
+  }
+
+  class Shred {
+    public final PsiLanguageInjectionHost host;
+    public final TextRange rangeInsideHost;
+    public final String prefix;
+    public final String suffix;
+
+    public Shred(PsiLanguageInjectionHost host, TextRange rangeInsideHost, String prefix, String suffix) {
+      this.host = host;
+      this.rangeInsideHost = rangeInsideHost;
+      this.prefix = prefix;
+      this.suffix = suffix;
+    }
   }
 }

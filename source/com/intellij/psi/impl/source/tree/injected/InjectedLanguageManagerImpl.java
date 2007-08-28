@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -67,7 +66,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         PsiManagerEx psiManager = (PsiManagerEx)context.getManager();
         InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
           public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix) {
-            injectionPlacesRegistrar.addPlaces(language, prefix, suffix, Collections.singletonList(Pair.create(host, rangeInsideHost)));
+            injectionPlacesRegistrar
+              .startInjecting(language)
+              .addPlace(prefix, suffix, host, rangeInsideHost)
+              .doneInjecting();
           }
         };
         for (LanguageInjector injector : psiManager.getLanguageInjectors()) {

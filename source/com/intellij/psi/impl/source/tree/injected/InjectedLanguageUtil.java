@@ -63,93 +63,15 @@ public class InjectedLanguageUtil {
   public static <T extends PsiLanguageInjectionHost> List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final T host) {
     final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places) {
-        for (Pair<PsiLanguageInjectionHost, TextRange> place : places) {
-          if (place.getFirst() == host) {
-            result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getSecond()));
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        for (PsiLanguageInjectionHost.Shred place : places) {
+          if (place.host == host) {
+            result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.rangeInsideHost));
           }
         }
       }
     }, true);
     return result.isEmpty() ? null : result;
-  }
-
-  private static Place parseInjectedPsiFile(@NotNull final Language language,
-                                            @NotNull final VirtualFile hostVirtualFile,
-                                            @NotNull final DocumentEx hostDocument,
-                                            @NotNull String prefix,
-                                            @NotNull String suffix,
-                                            @NotNull List<Pair</*@NotNull*/PsiLanguageInjectionHost, /*@NotNull*/TextRange>> hosts) {
-    final ParserDefinition parserDefinition = language.getParserDefinition();
-    if (parserDefinition == null) return null;
-
-    StringBuilder outChars = new StringBuilder();
-    outChars.append(prefix);
-
-    TextRange[] rangeInsideHosts = new TextRange[hosts.size()];
-    TextRange[] rangesInsideHostDocument = new TextRange[hosts.size()];
-    PsiLanguageInjectionHost[] injectionHosts = new PsiLanguageInjectionHost[hosts.size()];
-    LiteralTextEscaper<PsiLanguageInjectionHost>[] escapers = new LiteralTextEscaper[hosts.size()];
-    List<Pair<PsiLanguageInjectionHost, TextRange>> resultHosts = new ArrayList<Pair<PsiLanguageInjectionHost, TextRange>>(hosts.size());
-    boolean isOneLineEditor = false;
-    for (int i = 0; i < hosts.size(); i++) {
-      Pair<PsiLanguageInjectionHost, TextRange> hostInfo = hosts.get(i);
-      PsiLanguageInjectionHost host = injectionHosts[i] = hostInfo.getFirst();
-      TextRange rangeInsideHost = hostInfo.getSecond();
-      LiteralTextEscaper textEscaper = escapers[i] = host.createLiteralTextEscaper();
-      isOneLineEditor |= textEscaper.isOneLine();
-      TextRange relevantRange = textEscaper.getRelevantTextRange().intersection(rangeInsideHost);
-      if (relevantRange == null) return null;
-      boolean result = textEscaper.decode(relevantRange, outChars);
-      if (!result) return null;
-      rangeInsideHosts[i] = relevantRange;
-      rangesInsideHostDocument[i] = relevantRange.shiftRight(host.getTextRange().getStartOffset());
-      resultHosts.add(new Pair<PsiLanguageInjectionHost, TextRange>(host, relevantRange));
-    }
-    outChars.append(suffix);
-
-    DocumentWindow documentWindow = new DocumentWindow(hostDocument, isOneLineEditor, prefix, suffix, rangesInsideHostDocument);
-    PsiManagerEx psiManager = (PsiManagerEx)hosts.get(0).getFirst().getManager();
-    final Project project = psiManager.getProject();
-    VirtualFileWindow virtualFile = InjectedLanguageManagerImpl.getInstance().createVirtualFile(language, hostVirtualFile, documentWindow, outChars, project);
-
-    DocumentImpl decodedDocument = new DocumentImpl(outChars);
-    FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
-
-    SingleRootFileViewProvider viewProvider = new MyFileViewProvider(project, virtualFile, injectionHosts);
-    PsiFile psiFile = parserDefinition.createFile(viewProvider);
-    assert psiFile.getViewProvider() instanceof MyFileViewProvider : psiFile.getViewProvider();
-
-    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts[0]);
-    psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
-    psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT,language instanceof LanguageDialect ? (LanguageDialect)language:null);
-
-    final ASTNode parsedNode = psiFile.getNode();
-    if (!(parsedNode instanceof FileElement)) return null;
-
-    List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(language, outChars, escapers, injectionHosts, rangeInsideHosts, virtualFile,
-                                                                                documentWindow, project);
-
-    assert outChars.toString().equals(parsedNode.getText()) : outChars + "\n---\n" + parsedNode.getText() + "\n---\n";
-    String documentText = documentWindow.getText();
-    patchLeafs(parsedNode, escapers, injectionHosts, rangeInsideHosts, prefix.length(), suffix.length());
-    assert parsedNode.getText().equals(documentText) : documentText + "\n---\n" + parsedNode.getText() + "\n---\n";
-
-    parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
-    virtualFile.setContent(null, documentWindow.getText(), false);
-    FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
-    synchronized (PsiLock.LOCK) {
-      psiFile = registerDocument(documentWindow, psiFile);
-      MyFileViewProvider myFileViewProvider = (MyFileViewProvider)psiFile.getViewProvider();
-      myFileViewProvider.setVirtualFile(virtualFile);
-      myFileViewProvider.forceCachedPsi(psiFile);
-    }
-
-    psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
-
-    PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
-
-    return new Place(psiFile, resultHosts);
   }
 
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
@@ -158,9 +80,7 @@ public class InjectedLanguageUtil {
 
   private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> obtainHighlightTokensFromLexer(Language language,
                                                                                                                  StringBuilder outChars,
-                                                                                                                 LiteralTextEscaper<PsiLanguageInjectionHost>[] textEscapers,
-                                                                                                                 PsiLanguageInjectionHost[] injectionHosts,
-                                                                                                                 TextRange[] hostRanges,
+                                                                                                                 List<PsiLanguageInjectionHost> injectionHosts,
                                                                                                                  VirtualFileWindow virtualFile,
                                                                                                                  DocumentWindow documentWindow,
                                                                                                                  Project project) {
@@ -174,26 +94,23 @@ public class InjectedLanguageUtil {
       if (editable == null || editable.getLength() == 0) continue;
       int i = documentWindow.getHostNumber(textRange.getStartOffset());
       if (i == -1) continue;
-      int prevHostsCombinedLength = documentWindow.getPrevHostsCombinedLength(i);
-      LiteralTextEscaper<PsiLanguageInjectionHost> textEscaper = textEscapers[i];
+      PsiLanguageInjectionHost host = injectionHosts.get(i);
 
-      TextRange rangeInHost;
-      if (textEscaper == null) {
-        rangeInHost = textRange.shiftRight(hostRanges[i].getStartOffset()-documentWindow.getPrefix().length() - prevHostsCombinedLength);
-      }
-      else {
-        int startInHost = textEscaper.getOffsetInHost(editable.getStartOffset() - documentWindow.getPrefix().length() - prevHostsCombinedLength, hostRanges[i]);
-        int endInHost = textEscaper.getOffsetInHost(editable.getEndOffset() - documentWindow.getPrefix().length() - prevHostsCombinedLength, hostRanges[i]);
-        rangeInHost = new TextRange(startInHost, endInHost);
-      }
-      tokens.add(Trinity.create(tokenType, injectionHosts[i], rangeInHost));
+      TextRange hostRange = documentWindow.injectedToHost(editable);
+      TextRange rangeInHost = hostRange.shiftRight(-host.getTextRange().getStartOffset());
+
+      tokens.add(Trinity.create(tokenType, host, rangeInHost));
     }
     return tokens;
   }
 
-  private static class Place extends Pair<PsiFile, List<Pair<PsiLanguageInjectionHost, TextRange>>>{
-    public Place(PsiFile first, List<Pair<PsiLanguageInjectionHost, TextRange>> second) {
-      super(first, second);
+  private static class Place {
+    PsiFile myInjectedPsi;
+    List<PsiLanguageInjectionHost.Shred> myShreds;
+
+    public Place(PsiFile injectedPsi, List<PsiLanguageInjectionHost.Shred> shreds) {
+      myShreds = shreds;
+      myInjectedPsi = injectedPsi;
     }
   }
   private static interface Places extends List<Place> {}
@@ -203,8 +120,9 @@ public class InjectedLanguageUtil {
     Places places = probeElementsUp(host, probeUp);
     if (places == null) return;
     for (Place place : places) {
-      PsiFile injectedPsi = place.getFirst();
-      List<Pair<PsiLanguageInjectionHost, TextRange>> pairs = place.getSecond();
+      PsiFile injectedPsi = place.myInjectedPsi;
+      List<PsiLanguageInjectionHost.Shred> pairs = place.myShreds;
+
       visitor.visit(injectedPsi, pairs);
     }
   }
@@ -212,9 +130,9 @@ public class InjectedLanguageUtil {
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
     private final PsiLanguageInjectionHost[] myHosts;
 
-    private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileWindow virtualFile, PsiLanguageInjectionHost[] hosts) {
+    private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
       super(PsiManager.getInstance(project), virtualFile);
-      myHosts = hosts;
+      myHosts = hosts.toArray(new PsiLanguageInjectionHost[hosts.size()]);
     }
 
     public void rootChanged(PsiFile psiFile) {
@@ -231,8 +149,8 @@ public class InjectedLanguageUtil {
           PsiLanguageInjectionHost host = myHosts[i];
           RangeMarker hostRange = hostRanges[i];
           TextRange hostTextRange = host.getTextRange();
-          TextRange range = hostTextRange.intersection(new TextRange(hostRange.getStartOffset(), hostRange.getEndOffset())).shiftRight(-hostTextRange.getStartOffset());
-          String newHostText = StringUtil.replaceSubstring(host.getText(), range, change);
+          TextRange rangeInsideHost = hostTextRange.intersection(new TextRange(hostRange.getStartOffset(), hostRange.getEndOffset())).shiftRight(-hostTextRange.getStartOffset());
+          String newHostText = StringUtil.replaceSubstring(host.getText(), rangeInsideHost, change);
           host.fixText(newHostText);
         }
       }
@@ -250,7 +168,7 @@ public class InjectedLanguageUtil {
       assert newHost != null;
       final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
       enumerate(newHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places) {
+        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           Document document = documentManager.getCachedDocument(injectedPsi);
           if (document instanceof DocumentWindow && oldDocumentRange.areRangesEqual((DocumentWindow)document)) {
             provider.set(injectedPsi.getViewProvider());
@@ -268,21 +186,17 @@ public class InjectedLanguageUtil {
     }
   }
 
-  private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
-                                                                      final LiteralTextEscaper<T>[] escapers,
-                                                                      final T[] injectionHosts,
-                                                                      final TextRange[] rangeInsideHosts,
-                                                                      final int prefixLength,
-                                                                      final int suffixLength) {
-    final TextRange contentsRange = new TextRange(prefixLength, parsedNode.getTextLength() - suffixLength);
-
+  private static void patchLeafs(final ASTNode parsedNode,
+                                 final List<LiteralTextEscaper<PsiLanguageInjectionHost>> escapers,
+                                 final List<PsiLanguageInjectionHost.Shred> shreds) {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
       int currentHostNum = 0;
-      int currentInHostOffset = rangeInsideHosts[0].getStartOffset();
+      int currentInHostOffset = shreds.get(0).rangeInsideHost.getStartOffset();
       LeafElement prevElement;
       String prevElementTail;
       int prevHostsCombinedLength = 0;
+      TextRange contentsRange = TextRange.from(shreds.get(0).prefix.length(), shreds.get(0).rangeInsideHost.getLength());
 
       protected boolean visitNode(TreeElement element) {
         return true;
@@ -290,6 +204,7 @@ public class InjectedLanguageUtil {
 
       public void visitLeaf(LeafElement leaf) {
         TextRange range = leaf.getTextRange();
+        int prefixLength = contentsRange.getStartOffset();
         if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
           LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
                     "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
@@ -305,18 +220,20 @@ public class InjectedLanguageUtil {
         int endOffsetInHost;
         String leafEncodedText = "";
         while (true) {
+          TextRange rangeInsideHost = shreds.get(currentHostNum).rangeInsideHost;
           int end = range.getEndOffset() - prefixLength - prevHostsCombinedLength;
-          endOffsetInHost = escapers[currentHostNum] == null ? end + rangeInsideHosts[currentHostNum].getStartOffset() : escapers[currentHostNum].getOffsetInHost(end, rangeInsideHosts[currentHostNum]);
-          String hostText = injectionHosts[currentHostNum].getText();
+          endOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(end, rangeInsideHost);
+          String hostText = shreds.get(currentHostNum).host.getText();
           if (endOffsetInHost != -1) {
             leafEncodedText += hostText.substring(startOffsetInHost, endOffsetInHost);
             break;
           }
-          String rest = hostText.substring(startOffsetInHost, rangeInsideHosts[currentHostNum].getEndOffset());
+          String rest = hostText.substring(startOffsetInHost, rangeInsideHost.getEndOffset());
           leafEncodedText += rest;
-          prevHostsCombinedLength += escapers[currentHostNum] == null ? rangeInsideHosts[currentHostNum].getLength() : escapers[currentHostNum].getOffsetInHost(rangeInsideHosts[currentHostNum].getLength(), rangeInsideHosts[currentHostNum]) - escapers[currentHostNum].getOffsetInHost(0, rangeInsideHosts[currentHostNum]);
+          prevHostsCombinedLength += escapers.get(currentHostNum).getOffsetInHost(rangeInsideHost.getLength(), rangeInsideHost) - escapers.get(currentHostNum).getOffsetInHost(0, rangeInsideHost);
           currentHostNum++;
-          currentInHostOffset = startOffsetInHost = rangeInsideHosts[currentHostNum].getStartOffset();
+          currentInHostOffset = startOffsetInHost = rangeInsideHost.getStartOffset();
+          contentsRange = TextRange.from(shreds.get(currentHostNum).prefix.length(), shreds.get(currentHostNum).rangeInsideHost.getLength());
         }
         if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
           // optimization: put all garbage into whitespace
@@ -408,9 +325,8 @@ public class InjectedLanguageUtil {
         ((ParameterizedCachedValueImpl<Places>)cachedValue).setValue(result);
         Places places = result.getValue();
         for (Place place : places) {
-          for (Pair<PsiLanguageInjectionHost, TextRange> pair : place.getSecond()) {
-            PsiLanguageInjectionHost host = pair.getFirst();
-            host.putUserData(INJECTED_PSI_KEY, cachedValue);
+          for (PsiLanguageInjectionHost.Shred pair : place.myShreds) {
+            pair.host.putUserData(INJECTED_PSI_KEY, cachedValue);
           }
         }
         current.putUserData(INJECTED_PSI_KEY, cachedValue);
@@ -440,11 +356,10 @@ public class InjectedLanguageUtil {
   private static PsiElement findInside(PsiElement element, final int offset, @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<PsiElement>();
     enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places) {
-        for (Pair<PsiLanguageInjectionHost, TextRange> place : places) {
-          TextRange rangeInsideHost = place.getSecond();
-          TextRange hostRange = place.getFirst().getTextRange();
-          if (hostRange.cutOut(rangeInsideHost).grown(1).contains(offset)) {
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        for (PsiLanguageInjectionHost.Shred place : places) {
+          TextRange hostRange = place.host.getTextRange();
+          if (hostRange.cutOut(place.rangeInsideHost).grown(1).contains(offset)) {
             DocumentWindow document = (DocumentWindow)documentManager.getCachedDocument(injectedPsi);
             int injectedOffset = document.hostToInjected(offset);
             PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
@@ -483,13 +398,7 @@ public class InjectedLanguageUtil {
       PsiFile hostPsiFile = element.getContainingFile();
       if (hostPsiFile == null) return null;
       FileViewProvider viewProvider = hostPsiFile.getViewProvider();
-      VirtualFile virtualFile /*= hostPsiFile.getVirtualFile();
-      if (virtualFile == null) {
-        PsiFile originalFile = hostPsiFile.getOriginalFile();
-        if (originalFile != null) virtualFile = originalFile.getVirtualFile();
-      }
-      if (virtualFile == null) virtualFile*/ = viewProvider.getVirtualFile();
-      final VirtualFile hostVirtualFile = virtualFile;
+      final VirtualFile hostVirtualFile = viewProvider.getVirtualFile();
       final DocumentEx hostDocument = (DocumentEx)viewProvider.getDocument();
       if (hostDocument == null) return null;
 
@@ -499,12 +408,121 @@ public class InjectedLanguageUtil {
       injectedManager.processInPlaceInjectorsFor(element, new Processor<InjectedLanguageManager.MultiPlaceInjector>() {
         public boolean process(InjectedLanguageManager.MultiPlaceInjector injector) {
           injector.getLanguagesToInject(element, new InjectedLanguageManager.MultiPlaceRegistrar() {
-            public void addPlaces(@NotNull Language language, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix,
-                                  @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> hosts) {
-              Place place = parseInjectedPsiFile(language, hostVirtualFile, hostDocument, prefix == null ? "" : prefix,
-                                                    suffix == null ? "" : suffix, hosts);
-              if (place != null) {
+            private Language myLanguage;
+            private final List<TextRange> rangesInsideHostDocument = new SmartList<TextRange>();
+            private final List<String> prefixes = new SmartList<String>();
+            private final List<String> suffixes = new SmartList<String>();
+            private final List<PsiLanguageInjectionHost> injectionHosts = new SmartList<PsiLanguageInjectionHost>();
+            private final List<LiteralTextEscaper<PsiLanguageInjectionHost>> escapers = new SmartList<LiteralTextEscaper<PsiLanguageInjectionHost>>();
+            private final List<PsiLanguageInjectionHost.Shred> shreds = new SmartList<PsiLanguageInjectionHost.Shred>();
+            private final StringBuilder outChars = new StringBuilder();
+            boolean isOneLineEditor = false;
+            boolean cleared = true;
+            @NotNull
+            public InjectedLanguageManager.MultiPlaceRegistrar startInjecting(@NotNull Language language) {
+              if (!cleared) {
+                throw new IllegalStateException("Seems you haven't called doneInjecting()");
+              }
+              ParserDefinition parserDefinition = language.getParserDefinition();
+              if (parserDefinition == null) {
+                throw new UnsupportedOperationException("Cannot inject language '"+language+"' since its getParserDefinition() returns null");
+              }
+              myLanguage = language;
+              return this;
+            }
+
+            private void clear() {
+              rangesInsideHostDocument.clear();
+              prefixes.clear();
+              suffixes.clear();
+              injectionHosts.clear();
+              escapers.clear();
+              shreds.clear();
+              outChars.setLength(0);
+              isOneLineEditor = false;
+              myLanguage = null;
+              cleared = true;
+            }
+
+            @NotNull
+            public InjectedLanguageManager.MultiPlaceRegistrar addPlace(@NonNls @Nullable String prefix,
+                                                                        @NonNls @Nullable String suffix,
+                                                                        @NotNull PsiLanguageInjectionHost host,
+                                                                        @NotNull TextRange rangeInsideHost) {
+              if (myLanguage == null) {
+                throw new IllegalStateException("Seems you haven't called startInjecting()");
+              }
+              if (prefix == null) prefix = "";
+              if (suffix == null) suffix = "";
+              prefixes.add(prefix);
+              suffixes.add(suffix);
+              cleared = false;
+              injectionHosts.add(host);
+              outChars.append(prefix);
+              LiteralTextEscaper<PsiLanguageInjectionHost> textEscaper = host.createLiteralTextEscaper();
+              escapers.add(textEscaper);
+              isOneLineEditor |= textEscaper.isOneLine();
+              TextRange relevantRange = textEscaper.getRelevantTextRange().intersection(rangeInsideHost);
+              if (relevantRange == null) return this;
+              boolean result = textEscaper.decode(relevantRange, outChars);
+              if (!result) return this;
+              rangesInsideHostDocument.add(relevantRange.shiftRight(host.getTextRange().getStartOffset()));
+              shreds.add(new PsiLanguageInjectionHost.Shred(host, relevantRange, prefix, suffix));
+              outChars.append(suffix);
+              return this;
+            }
+
+            public void doneInjecting() {
+              try {
+                DocumentWindow documentWindow = new DocumentWindow(hostDocument, isOneLineEditor, prefixes, suffixes, rangesInsideHostDocument);
+                PsiManagerEx psiManager = (PsiManagerEx)element.getManager();
+                final Project project = psiManager.getProject();
+                VirtualFileWindow virtualFile = InjectedLanguageManagerImpl.getInstance().createVirtualFile(myLanguage, hostVirtualFile, documentWindow, outChars, project);
+
+                DocumentImpl decodedDocument = new DocumentImpl(outChars);
+                FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
+
+                SingleRootFileViewProvider viewProvider = new MyFileViewProvider(project, virtualFile, injectionHosts);
+                ParserDefinition parserDefinition = myLanguage.getParserDefinition();
+                assert parserDefinition != null;
+                PsiFile psiFile = parserDefinition.createFile(viewProvider);
+                assert psiFile.getViewProvider() instanceof MyFileViewProvider : psiFile.getViewProvider();
+
+                SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
+                psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
+                psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT,myLanguage instanceof LanguageDialect ? (LanguageDialect)myLanguage:null);
+
+                final ASTNode parsedNode = psiFile.getNode();
+                assert parsedNode instanceof FileElement : parsedNode;
+
+                assert outChars.toString().equals(parsedNode.getText()) : outChars + "\n---\n" + parsedNode.getText() + "\n---\n";
+                String documentText = documentWindow.getText();
+                patchLeafs(parsedNode, escapers, shreds);
+                assert parsedNode.getText().equals(documentText) : documentText + "\n---\n" + parsedNode.getText() + "\n---\n";
+
+                parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
+                virtualFile.setContent(null, documentWindow.getText(), false);
+                FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
+                synchronized (PsiLock.LOCK) {
+                  psiFile = registerDocument(documentWindow, psiFile);
+                  MyFileViewProvider myFileViewProvider = (MyFileViewProvider)psiFile.getViewProvider();
+                  myFileViewProvider.setVirtualFile(virtualFile);
+                  myFileViewProvider.forceCachedPsi(psiFile);
+                }
+
+                List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars,
+                                                                                                                         injectionHosts,
+                                                                                                                         virtualFile,
+                                                                                            documentWindow, project);
+                psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
+
+                PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
+
+                Place place = new Place(psiFile, new ArrayList<PsiLanguageInjectionHost.Shred>(shreds));
                 result.add(place);
+              }
+              finally {
+                clear();
               }
             }
           });
@@ -560,7 +578,7 @@ public class InjectedLanguageUtil {
       }
       // it is here reparse happens and old file contents replaced
       enumerate(injectionHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places) {
+        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           PsiDocumentManagerImpl.checkConsistency(injectedPsi, injectedPsi.getViewProvider().getDocument());
         }
       }, true);

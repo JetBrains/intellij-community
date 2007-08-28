@@ -228,6 +228,6 @@ public class SegmentArray {
   private int[] myEnds;
 
   protected int mySegmentCount = 0;
-  protected final static int INITIAL_SIZE = 64;
+  protected static final int INITIAL_SIZE = 64;
 }
 

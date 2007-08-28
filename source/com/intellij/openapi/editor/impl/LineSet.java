@@ -217,16 +217,11 @@ public class LineSet{
     processMultilineChange(e);
     mySegments = data;
 
-    if (workingCopySegmentsForTesting.getSegmentCount() != segments.getSegmentCount()) {
-      assert false;
-    }
+    assert workingCopySegmentsForTesting.getSegmentCount() == segments.getSegmentCount();
     for(int i =0; i < segments.getSegmentCount();++i) {
-
-      if (workingCopySegmentsForTesting.getSegmentStart(i) != segments.getSegmentStart(i) ||
-          workingCopySegmentsForTesting.getSegmentEnd(i) != segments.getSegmentEnd(i) ||
-          workingCopySegmentsForTesting.getSegmentData(i) != segments.getSegmentData(i)) {
-        assert false;
-      }
+      assert workingCopySegmentsForTesting.getSegmentStart(i) == segments.getSegmentStart(i);
+      assert workingCopySegmentsForTesting.getSegmentEnd(i) == segments.getSegmentEnd(i);
+      assert workingCopySegmentsForTesting.getSegmentData(i) == segments.getSegmentData(i);
     }
 
     processMultilineChange(e);

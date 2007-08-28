@@ -124,7 +124,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       if (myUpdateAll) {
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        refCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myDocument, myFile);
+        refCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myFile, progress);
         setRefCountHolders(refCountHolder, highlightVisitors);
 
         PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
@@ -195,7 +195,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Map<TextRange,Collection<HighlightInfo>> result = new THashMap<TextRange, Collection<HighlightInfo>>(hosts.size());
     for (PsiElement element : hosts) {
       InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<Pair<PsiLanguageInjectionHost, TextRange>> places) {
+        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           injectedFiles.add(injectedPsi);
         }
       }, false);
@@ -325,7 +325,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
     collection.addAll(myHighlights);
     myInjectedPsiHighlights.put(range, collection);
-    UpdateHighlightersUtil.setAndGetHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
   }
 
   public Collection<LineMarkerInfo> queryLineMarkers() {

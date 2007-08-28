@@ -531,6 +531,10 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.putUserDataIfAbsent(key, value);
   }
 
+  //public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
+  //  return myDelegate.replace(key, oldValue, newValue);
+  //}
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -550,9 +554,8 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   }
 
   public int calcColumnNumber(final CharSequence text, final int start, final int offset, final int tabSize) {
-    String hostText = getDocument().getPrefix() + text + getDocument().getSuffix();
     int hostStart = myDocumentWindow.injectedToHost(start);
     int hostOffset = myDocumentWindow.injectedToHost(offset);
-    return myDelegate.calcColumnNumber(hostText, hostStart, hostOffset, tabSize);
+    return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);
   }
 }
