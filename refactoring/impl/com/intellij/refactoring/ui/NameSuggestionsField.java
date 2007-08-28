@@ -185,6 +185,8 @@ public class NameSuggestionsField extends JPanel {
     combobox.setEditable(true);
     combobox.setMaximumRowCount(8);
 
+    comboEditor.selectAll();
+
     combobox.addItemListener(
       new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
