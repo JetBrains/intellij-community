@@ -1,8 +1,8 @@
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -564,13 +564,22 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     final MyDiffAction diffAction = new MyDiffAction();
-    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     result.add(diffAction);
-    MyDiffWithCurrentAction diffWithCurrent = new MyDiffWithCurrentAction();
     if (!popup) {
-      myDualView.installDoubleClickHandler(diffWithCurrent);
+      diffAction.registerCustomShortcutSet(new CustomShortcutSet(
+        new Shortcut[] {
+          CommonShortcuts.getDiff().getShortcuts() [0],
+          CommonShortcuts.DOUBLE_CLICK_1.getShortcuts() [0]
+        }), myDualView.getFlatView());
+      diffAction.registerCustomShortcutSet(new CustomShortcutSet(
+        new Shortcut[] {
+          CommonShortcuts.getDiff().getShortcuts() [0],
+          CommonShortcuts.DOUBLE_CLICK_1.getShortcuts() [0]
+        }), myDualView.getTreeView());
     }
-    result.add(diffWithCurrent);
+    else {
+      diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
+    }
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
     AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
@@ -636,42 +645,53 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     protected void actionPerformed() {
-      try {
+      final int selectionSize = getSelection().size();
+      if (selectionSize == 2) {
         showDifferences(myProject, (VcsFileRevision)getSelection().get(0), (VcsFileRevision)getSelection().get(1));
       }
-      catch (Exception e) {
-        LOG.error(e);
+      else if (selectionSize == 1) {
+        final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
+        if (currentRevisionNumber != null) {
+          showDifferences(myProject, getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
+        }
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final int selectionSize = getSelection().size();
+      if (selectionSize == 1) {
+        e.getPresentation().setText(VcsBundle.message("action.name.compare.with.local"));
+        e.getPresentation().setDescription(VcsBundle.message("action.description.compare.with.local"));
+      }
+      else {
+        e.getPresentation().setText(VcsBundle.message("action.name.compare"));
+        e.getPresentation().setDescription(VcsBundle.message("action.description.compare"));
       }
     }
 
     public boolean isEnabled() {
-      if (!super.isEnabled()) return false;
+      final int selectionSize = getSelection().size();
+      if (selectionSize == 1) {
+        return isDiffWithCurrentEnabled();
+      }
+      else if (selectionSize == 2) {
+        return isDiffEnabled();
+      }
+      return false;
+    }
+
+    private boolean isDiffEnabled() {
       if (!myHistorySession.isContentAvailable(getSelectedRevision(0)) || !myHistorySession.isContentAvailable(getSelectedRevision(1))) {
         return false;
       }
       return true;
     }
-  }
 
-  private class MyDiffWithCurrentAction extends AbstractActionForSomeSelection {
-    public MyDiffWithCurrentAction() {
-      super(VcsBundle.message("action.name.compare.with.local"), VcsBundle.message("action.description.compare.with.local"),
-            "diffWithCurrent", 1, FileHistoryPanelImpl.this);
-    }
-
-    protected void actionPerformed() {
-      final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
-      if (currentRevisionNumber != null) {
-        showDifferences(myProject, getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
-      }
-    }
-
-    public boolean isEnabled() {
+    private boolean isDiffWithCurrentEnabled() {
       if (myHistorySession.getCurrentRevisionNumber() == null) return false;
       if (myFilePath.getVirtualFile() == null) return false;
       if (!myHistorySession.isContentAvailable(getFirstSelectedRevision())) return false;
-      if (!super.isEnabled()) return false;
-      //if (CvsEntriesManager.getInstance().getEntryFor(myVirtualFile) == null) return false;
       return true;
     }
   }
