@@ -363,16 +363,18 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public void setEnabled(boolean enabled) {
-    super.setEnabled(enabled);
-    myIsViewer = !enabled;
-    if (myEditor == null) {
-      return;
+    if (isEnabled() != enabled) {
+      super.setEnabled(enabled);
+      myIsViewer = !enabled;
+      if (myEditor == null) {
+        return;
+      }
+      Editor editor = myEditor;
+      releaseEditor(editor);
+      myEditor = createEditor();
+      add(myEditor.getComponent(), BorderLayout.CENTER);
+      revalidate();
     }
-    Editor editor = myEditor;
-    releaseEditor(editor);
-    myEditor = createEditor();
-    add(myEditor.getComponent(), BorderLayout.CENTER);
-    revalidate();
   }
 
   private Color getBackgroundColor(boolean enabled){
