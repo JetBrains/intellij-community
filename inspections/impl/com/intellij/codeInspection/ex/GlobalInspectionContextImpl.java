@@ -933,29 +933,29 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
     if (RUN_WITH_EDITOR_PROFILE) {
       final Set<String> profiles = scope.getActiveInspectionProfiles();
-      for (String profile : profiles) {
-        InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile);
-        if (inspectionProfile == null){
-          inspectionProfile = new InspectionProfileWrapper((InspectionProfile)profileManager.getProfile(profile));
-          final InspectionProfileWrapper profileWrapper = inspectionProfile;
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              profileWrapper.init(getProject()); //offline inspections only
-            }
-          });
-        }
-        processProfileTools(inspectionProfile, tools, localTools);
+      for (String profileName : profiles) {
+        initializeTools(tools, localTools, profileManager, (InspectionProfile)profileManager.getProfile(profileName));
       }
     }
     else {
-      final InspectionProfileWrapper profile = new InspectionProfileWrapper(getCurrentProfile());
-      processProfileTools(profile, tools, localTools);
+      initializeTools(tools, localTools, profileManager, getCurrentProfile());
+    }
+  }
+
+  private void initializeTools(final Map<String, Set<InspectionTool>> tools,
+                              final Map<String, Set<InspectionTool>> localTools,
+                              final InspectionProjectProfileManager profileManager, final InspectionProfile profile) {
+    InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile.getName());
+    if (inspectionProfile == null){
+      inspectionProfile = new InspectionProfileWrapper(profile);
+      final InspectionProfileWrapper profileWrapper = inspectionProfile;
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          profile.init(getProject());  //offline inspections only
+          profileWrapper.init(getProject()); //offline inspections only
         }
       });
     }
+    processProfileTools(inspectionProfile, tools, localTools);
   }
 
   private void processProfileTools(final InspectionProfileWrapper inspectionProfile,
