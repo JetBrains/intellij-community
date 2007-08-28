@@ -75,6 +75,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("grvy104/Test.groovy");
   }
 
+  public void testGrvy270() throws Exception {
+    PsiReference ref = configureByFile("grvy270/Test.groovy");
+    assertNull(ref.resolve());
+  }
+
   public void testField3() throws Exception {
     GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy");
     GroovyResolveResult resolveResult = ref.advancedResolve();

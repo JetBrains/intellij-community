@@ -58,7 +58,7 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     GrForClause forClause = getClause();
-    if (forClause != null) {
+    if (forClause != null && !forClause.equals(lastParent)) {
       GrVariable[] vars = forClause.getDeclaredVariables();
       for (final GrVariable var : vars) {
         if (!ResolveUtil.processElement(processor, var)) return false;
