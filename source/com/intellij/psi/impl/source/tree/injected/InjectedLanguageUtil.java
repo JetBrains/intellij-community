@@ -164,10 +164,10 @@ public class InjectedLanguageUtil {
       PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
 
       RangeMarker firstTextRange = oldDocumentRange.getFirstTextRange();
-      PsiLanguageInjectionHost newHost = findInjectionHost(hostPsiFileCopy.findElementAt(firstTextRange.getStartOffset()));
-      assert newHost != null;
+      PsiElement element = hostPsiFileCopy.findElementAt(firstTextRange.getStartOffset());
+      assert element != null;
       final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
-      enumerate(newHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           Document document = documentManager.getCachedDocument(injectedPsi);
           if (document instanceof DocumentWindow && oldDocumentRange.areRangesEqual((DocumentWindow)document)) {
@@ -311,6 +311,8 @@ public class InjectedLanguageUtil {
 
   private static Places probeElementsUp(PsiElement element, boolean probeUp) {
     for (PsiElement current = element; current != null; current = ResolveUtil.getContext(current)) {
+      if ("EL".equals(element.getLanguage().getID())) return null;
+
       ParameterizedCachedValue<Places> data = current.getUserData(INJECTED_PSI_KEY);
       if (data != null) {
         Places value = data.getValue(current);
@@ -369,27 +371,6 @@ public class InjectedLanguageUtil {
       }
     }, true);
     return out.get();
-  }
-
-  @Nullable
-  public static PsiLanguageInjectionHost findInjectionHost(PsiElement element) {
-    if (element == null || element instanceof PsiFile) return null;
-    if ("EL".equals(element.getLanguage().getID())) return null;
-
-    if (element instanceof PsiLanguageInjectionHost) {
-      return (PsiLanguageInjectionHost)element;
-    }
-    element = element.getParent();
-    if (element == null || element instanceof PsiFile) return null;
-    if (element instanceof PsiLanguageInjectionHost) {
-      return (PsiLanguageInjectionHost)element;
-    }
-    element = element.getParent();
-    if (element == null || element instanceof PsiFile) return null;
-    if (element instanceof PsiLanguageInjectionHost) {
-      return (PsiLanguageInjectionHost)element;
-    }
-    return null;
   }
 
   private static class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places> {
@@ -571,13 +552,12 @@ public class InjectedLanguageUtil {
       }
       RangeMarker rangeMarker = injDocument.getFirstTextRange();
       PsiElement element = hostPsiFile.findElementAt(rangeMarker.getStartOffset());
-      PsiLanguageInjectionHost injectionHost = findInjectionHost(element);
-      if (injectionHost == null) {
+      if (element == null) {
         injected.remove(injDocument);
         continue;
       }
       // it is here reparse happens and old file contents replaced
-      enumerate(injectionHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           PsiDocumentManagerImpl.checkConsistency(injectedPsi, injectedPsi.getViewProvider().getDocument());
         }
