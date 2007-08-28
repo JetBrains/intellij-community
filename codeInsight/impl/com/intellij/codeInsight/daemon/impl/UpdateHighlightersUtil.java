@@ -65,13 +65,13 @@ public class UpdateHighlightersUtil {
                                              int endOffset,
                                              @NotNull Collection<HighlightInfo> highlights,
                                              int group) {
-    setAndGetHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
+    setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
   }
 
-  public static HighlightInfo[] setAndGetHighlightersToEditor(@NotNull Project project,
-                                                              @NotNull Document document,
-                                                              @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
-                                                              final int group) {
+  public static void setHighlightersToEditor(@NotNull Project project,
+                                             @NotNull Document document,
+                                             @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
+                                             final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //serialized implicitly by the dispatch thread
                               
@@ -139,6 +139,9 @@ public class UpdateHighlightersUtil {
           layer = HighlighterLayer.ADDITIONAL_SYNTAX;
         }
 
+        if (infoEndOffset == infoStartOffset) {
+          infoEndOffset++; //show something in case of empty highlightinfo
+        }
         final int docLength = document.getTextLength();
         if (infoEndOffset > docLength) {
           if (LOG.isDebugEnabled()) {
@@ -218,7 +221,6 @@ public class UpdateHighlightersUtil {
     HighlightInfo[] newHighlights = result.toArray(new HighlightInfo[result.size()]);
     DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
     clearWhiteSpaceOptimizationFlag(document);
-    return newHighlights;
   }
 
   public static void setLineMarkersToEditor(@NotNull Project project,
