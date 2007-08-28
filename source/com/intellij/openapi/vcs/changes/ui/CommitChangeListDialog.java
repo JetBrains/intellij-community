@@ -258,7 +258,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setTitle(myActionName);
     }
     else {
-      setTitle(myExecutors.get(0).getActionText());
+      setTitle(trimEllipsis(myExecutors.get(0).getActionText()));
     }
 
     restoreState();
@@ -689,6 +689,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     else {
       myBrowser.calcData(key, sink);
+    }
+  }
+
+  static String trimEllipsis(final String title) {
+    if (title.endsWith("...")) {
+      return title.substring(0, title.length() - 3);
+    }
+    else {
+      return title;
     }
   }
 
