@@ -128,7 +128,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     }
     final AntTypeId definedTypeId = new AntTypeId(getName());
     if (myMacroDefinition == null) {
-      myMacroDefinition = new AntTypeDefinitionImpl(definedTypeId, thisClassName, true, attributes, nestedElements, this);
+      myMacroDefinition = new AntTypeDefinitionImpl(definedTypeId, thisClassName, true, false, attributes, nestedElements, this);
     }
     else {
       myMacroDefinition.setTypeId(definedTypeId);

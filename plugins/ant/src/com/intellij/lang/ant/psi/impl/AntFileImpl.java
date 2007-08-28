@@ -36,6 +36,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.TaskContainer;
 import org.apache.tools.ant.taskdefs.Property;
 import org.apache.tools.ant.types.DataType;
 import org.jetbrains.annotations.NonNls;
@@ -771,7 +772,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     if (def != null) {
       myProjectElements.put(def.getTypeId(), def.getClassName());
     }
-    return new AntTypeDefinitionImpl(new AntTypeId(PROJECT_TAG), Project.class.getName(), false, projectAttrs, myProjectElements);
+    return new AntTypeDefinitionImpl(new AntTypeId(PROJECT_TAG), Project.class.getName(), false, false, projectAttrs, myProjectElements);
   }
 
   @Nullable
@@ -796,8 +797,16 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         nestedDefinitions.put(new AntTypeId(nestedElement), className);
       }
     }
-
-    return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions, helper.getExtensionPointTypes(), null);
+    
+    boolean isAllTasksContainer = false;
+    final ClassLoader loader = typeClass.getClassLoader();
+    try {
+      final Class<?> containerClass = loader.loadClass(TaskContainer.class.getName());
+      isAllTasksContainer = containerClass.isAssignableFrom(typeClass);
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, isAllTasksContainer, attributes, nestedDefinitions, helper.getExtensionPointTypes(), null);
   }
   
   @Nullable

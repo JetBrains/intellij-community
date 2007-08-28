@@ -15,6 +15,8 @@ public interface AntTypeDefinition {
   String getClassName();
 
   boolean isTask();
+  
+  boolean isAllTaskContainer();
 
   boolean isProperty();
   

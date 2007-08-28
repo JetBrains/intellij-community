@@ -77,12 +77,12 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
     if (extented != null) {
       final AntTypeDefinitionImpl extentedDef = (AntTypeDefinitionImpl)extented.getTypeDefinition();
       if (extentedDef != null) {
-        myPresetDefinition = new AntTypeDefinitionImpl(typeId, thisClassName, extentedDef.isTask(), extentedDef.getAttributesMap(),
+        myPresetDefinition = new AntTypeDefinitionImpl(typeId, thisClassName, extentedDef.isTask(), false, extentedDef.getAttributesMap(),
                                                        extentedDef.getNestedElementsMap(), this);
       }
     }
     if (myPresetDefinition == null) {
-      myPresetDefinition = new AntTypeDefinitionImpl(typeId, thisClassName, false, new HashMap<String, AntAttributeType>(),
+      myPresetDefinition = new AntTypeDefinitionImpl(typeId, thisClassName, false, false, new HashMap<String, AntAttributeType>(),
                                                      new HashMap<AntTypeId, String>(), this);
     }
     final AntStructuredElement parent = getAntProject();

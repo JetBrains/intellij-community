@@ -133,6 +133,9 @@ public class AntElementFactory {
         if (typeDef.isProperty()) {
           result = new AntPropertyImpl(parent, tag, typeDef);
         }
+        else if (typeDef.isAllTaskContainer()) {
+          result = new AntAllTasksContainerImpl(parent, tag, typeDef);
+        }
         else {
           result = new AntTaskImpl(parent, tag, typeDef);
         }

@@ -22,6 +22,7 @@ import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.lang.UrlClassLoader;
 import org.apache.tools.ant.PathTokenizer;
 import org.apache.tools.ant.Task;
+import org.apache.tools.ant.TaskContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -381,14 +382,14 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     final AntTypeId id = (nsPrefix == null) ? new AntTypeId(name) : new AntTypeId(name, nsPrefix);
     AntTypeDefinitionImpl def = null;
     if (clazz == null) {
-      def = new AntTypeDefinitionImpl(id, classname, isTask());
+      def = new AntTypeDefinitionImpl(id, classname, isTask(), false);
     }
     else {
       myClassesLoaded = true;
       final boolean isTask = isTask(clazz);
       def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, isTask);
       if (def == null) { // can be null if failed to introspect the class for some reason
-        def = new AntTypeDefinitionImpl(id, classname, isTask);
+        def = new AntTypeDefinitionImpl(id, classname, isTask, isAssignableFrom(TaskContainer.class.getName(), clazz));
       }
       def.setIsProperty(isAssignableFrom(org.apache.tools.ant.taskdefs.Property.class.getName(), clazz));
       if (newlyLoaded) {

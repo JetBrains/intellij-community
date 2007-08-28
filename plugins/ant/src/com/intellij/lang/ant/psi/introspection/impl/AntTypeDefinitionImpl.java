@@ -22,6 +22,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private final Set<String> myExtensionPoints;
   private String myClassName;
   private boolean myIsTask;
+  private boolean myIsAllTaskContainer;
   private boolean myIsProperty;
   private PsiElement myDefiningElement;
   private boolean myIsOutdated = false;
@@ -37,35 +38,32 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private AntTypeId[] myNestedElementsArray;
 
   public AntTypeDefinitionImpl(final AntTypeDefinitionImpl base) {
-    this(base.getTypeId(), base.getClassName(), base.isTask(), new HashMap<String, AntAttributeType>(base.myAttributes),
+    this(base.getTypeId(), base.getClassName(), base.isTask(), base.isAllTaskContainer(), new HashMap<String, AntAttributeType>(base.myAttributes),
          new HashMap<AntTypeId, String>(base.myNestedClassNames));
   }
 
-  public AntTypeDefinitionImpl(final AntTypeId id, final String className, final boolean isTask) {
-    this(id, className, isTask, new HashMap<String, AntAttributeType>(), new HashMap<AntTypeId, String>());
+  public AntTypeDefinitionImpl(final AntTypeId id, final String className, final boolean isTask, final boolean isAllTaskContainer) {
+    this(id, className, isTask, isAllTaskContainer, new HashMap<String, AntAttributeType>(), new HashMap<AntTypeId, String>());
   }
 
   public AntTypeDefinitionImpl(final AntTypeId id,
                                final String className,
-                               final boolean isTask,
-                               @NonNls @NotNull final Map<String, AntAttributeType> attributes,
+                               final boolean isTask, final boolean isAllTaskContainer, @NonNls @NotNull final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements) {
-    this(id, className, isTask, attributes, nestedElements, null);
+    this(id, className, isTask, isAllTaskContainer, attributes, nestedElements, null);
   }
 
   public AntTypeDefinitionImpl(final AntTypeId id,
                                final String className,
-                               final boolean isTask,
-                               @NonNls @NotNull final Map<String, AntAttributeType> attributes,
+                               final boolean isTask, final boolean allTaskContainer, @NonNls @NotNull final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements,
                                final PsiElement definingElement) {
-    this(id, className, isTask, attributes, nestedElements, Collections.<String>emptySet(), definingElement);
+    this(id, className, isTask, allTaskContainer, attributes, nestedElements, Collections.<String>emptySet(), definingElement);
   }
   
   public AntTypeDefinitionImpl(final AntTypeId id,
                                final String className,
-                               final boolean isTask,
-                               @NonNls @NotNull final Map<String, AntAttributeType> attributes,
+                               final boolean isTask, final boolean isAllTaskContainer, @NonNls @NotNull final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements,
                                final Set<String> extensionPoints,
                                final PsiElement definingElement) {
@@ -73,6 +71,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     myExtensionPoints = extensionPoints;
     setClassName(className);
     myIsTask = isTask;
+    myIsAllTaskContainer = isAllTaskContainer;
     attributes.put(AntFileImpl.ID_ATTR, AntAttributeType.STRING);
     myAttributes = attributes;
     myNestedClassNames = nestedElements;
@@ -101,6 +100,10 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public final boolean isTask() {
     return myIsTask;
+  }
+
+  public boolean isAllTaskContainer() {
+    return myIsAllTaskContainer;
   }
 
   public boolean isProperty() {
