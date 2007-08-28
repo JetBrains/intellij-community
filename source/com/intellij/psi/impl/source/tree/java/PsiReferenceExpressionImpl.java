@@ -423,6 +423,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return SourceTreeToPsiMap.treeElementToPsi(ref);
     }
     else if ((element instanceof PsiField || element instanceof PsiMethod) && ((PsiMember) element).hasModifierProperty(PsiModifier.STATIC)) {
+      if (!isPhysical()) {
+        // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
+        return this;
+      }
       PsiMember member = (PsiMember) element;
       final PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();

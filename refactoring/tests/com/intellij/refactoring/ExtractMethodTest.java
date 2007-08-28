@@ -265,7 +265,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doPrepareErrorTest("Cannot extract method because the selected code fragment defines local classes used outside of the fragment");
   }
 
-  public void _testStaticImport() throws Exception {
+  public void testStaticImport() throws Exception {
     doTest();
   }
 
