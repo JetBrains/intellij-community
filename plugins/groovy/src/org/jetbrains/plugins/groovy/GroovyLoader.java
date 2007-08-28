@@ -15,8 +15,8 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -35,6 +35,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
@@ -42,9 +43,7 @@ import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoProvider;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
-import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -94,9 +93,7 @@ public class GroovyLoader implements ApplicationComponent {
         }
     );
 
-    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE,
-        new GroovyCompletionData());
-
+    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new GroovyCompletionData());
 
     ShowParameterInfoHandler.register(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), GroovyParameterInfoProvider.INSTANCE);
 
