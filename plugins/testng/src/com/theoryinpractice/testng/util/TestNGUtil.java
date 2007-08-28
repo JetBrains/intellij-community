@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -29,6 +30,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
@@ -384,6 +386,29 @@ public class TestNGUtil implements TestFramework
 
   public boolean isTestKlass(PsiClass psiClass) {
     return hasTest(psiClass, true, false);
+  }
+
+  public PsiMethod findSetUpMethod(final PsiClass psiClass) throws IncorrectOperationException {
+    final PsiManager manager = psiClass.getManager();
+    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiMethod patternMethod = factory.createMethodFromText("@org.testng.annotations.BeforeMethod\n protected void setUp() throws Exception {}", null);
+    final PsiMethod[] psiMethods = psiClass.getMethods();
+    PsiMethod inClass = null;
+    for (PsiMethod psiMethod : psiMethods) {
+      if (AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), false)) {
+        inClass = psiMethod;
+        break;
+      }
+    }
+    if (inClass == null) {
+      final PsiMethod psiMethod = (PsiMethod)psiClass.add(patternMethod);
+      CodeStyleManager.getInstance(psiClass.getProject()).shortenClassReferences(psiClass);
+      return psiMethod;
+    }
+    else if (inClass.getBody() == null) {
+      return (PsiMethod)inClass.replace(patternMethod);
+    }
+    return inClass;
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {
