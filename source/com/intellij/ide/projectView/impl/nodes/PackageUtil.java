@@ -38,6 +38,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -47,16 +48,14 @@ import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Icons;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PackageUtil {
   static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode");
@@ -186,7 +185,7 @@ public class PackageUtil {
   private static boolean isModuleContentRoot(VirtualFile directoryFile, Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
-    return directoryFile.equals(contentRootForFile) || directoryFile.getParent() == project.getBaseDir();
+    return directoryFile.equals(contentRootForFile);
   }
 
 
@@ -285,7 +284,9 @@ public class PackageUtil {
       parentPackage = null;
     }
 
-    final String name = getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
+      final String name = parentValue instanceof Project ?
+      psiDirectory.getVirtualFile().getPresentableUrl() :
+      getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
 
     final String packagePrefix = isSourceRoot(psiDirectory) && aPackage != null ? aPackage.getQualifiedName() : "";
 
@@ -482,10 +483,6 @@ public class PackageUtil {
     }
     if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && projectFileIndex.isJavaSourceFile(vFile)) {
       return; // skip java sources in classpath
-    }
-
-    if (moduleFileIndex == null && projectFileIndex.isInContent(vFile)) {
-      return;
     }
 
     try {
