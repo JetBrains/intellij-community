@@ -29,67 +29,61 @@ import org.jetbrains.plugins.groovy.Icons;
 
 import java.util.Properties;
 
-public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent
-{
+public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory, ApplicationComponent {
   @NonNls
   public static final String[] TEMPLATES = {
-          "GroovyClass.groovy",
-          "GroovyScript.groovy",
-          "GrailsDomainClass.groovy",
-          "GrailsController.groovy",
-          "GrailsTests.groovy",
+      "GroovyClass.groovy",
+      "GroovyScript.groovy",
+      "GrailsDomainClass.groovy",
+      "GrailsController.groovy",
+      "GrailsTests.groovy",
   };
+
+  public static final String GSP_TEMPLATE = "GroovyServerPage.gsp";
   @NonNls
   static final String NAME_TEMPLATE_PROPERTY = "NAME";
   static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
 
-  public FileTemplateGroupDescriptor getFileTemplatesDescriptor()
-  {
+  public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"),
-            Icons.SMALLEST);
+        Icons.SMALLEST);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    for (String template : TEMPLATES)
-    {
+    for (String template : TEMPLATES) {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));
     }
+    //add GSP Template
+    group.addTemplate(new FileTemplateDescriptor(GSP_TEMPLATE, fileTypeManager.getFileTypeByFileName(GSP_TEMPLATE).getIcon()));
     return group;
   }
 
   @NonNls
   @NotNull
-  public String getComponentName()
-  {
+  public String getComponentName() {
     return "GroovyTemplatesFactory";
   }
 
-  public void initComponent()
-  {
+  public void initComponent() {
   }
 
-  public void disposeComponent()
-  {
+  public void disposeComponent() {
   }
 
   public static PsiFile createFromTemplate(final PsiDirectory directory, final String name, String fileName, String templateName,
-                                           @NonNls String... parameters) throws IncorrectOperationException
-  {
+                                           @NonNls String... parameters) throws IncorrectOperationException {
     final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
 
     Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
     FileTemplateUtil.setPackageNameAttribute(properties, directory);
     properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
     properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, name.substring(0, 1).toLowerCase() + name.substring(1));
-    for (int i = 0; i < parameters.length; i += 2)
-    {
+    for (int i = 0; i < parameters.length; i += 2) {
       properties.setProperty(parameters[i], parameters[i + 1]);
     }
     String text;
-    try
-    {
+    try {
       text = template.getText(properties);
     }
-    catch (Exception e)
-    {
+    catch (Exception e) {
       throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
     }
 

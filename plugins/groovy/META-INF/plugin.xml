@@ -119,6 +119,9 @@
       </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
+    <action id="Grails.Grails" class="org.jetbrains.plugins.grails.actions.NewGspAction"
+            text="GSP" description="Create new Groovy Server Page">
+    </action>
   </actions>
 
 
