@@ -1092,10 +1092,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void invokePopup(MouseEvent e) {
+    final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
       actionGroup.add(new CloseAnnotationsAction());
-      JPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", actionGroup).getComponent();
+      JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
       menu.show(this, e.getX(), e.getY());
     }
     else {
@@ -1103,11 +1104,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (renderer != null) {
         ActionGroup actionGroup = renderer.getPopupMenuActions();
         if (actionGroup != null) {
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN,
+          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
                                                                                         actionGroup);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
           e.consume();
         }
+      }
+      else {
+        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
+                                                                        (ActionGroup) actionManager.getAction("EditorGutterPopupMenu"));
+        popupMenu.getComponent().show(this, e.getX(), e.getY());
+        e.consume();
       }
     }
   }

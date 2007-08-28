@@ -1494,5 +1494,10 @@
       icon="/actions/prevfile.png" use-shortcut-of="PreviousTab"/>
     <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
       icon="/actions/nextfile.png" use-shortcut-of="NextTab"/>
+
+    <group id="EditorGutterPopupMenu">
+      <reference ref="EditorToggleShowLineNumbers"/>
+      <reference ref="Annotate"/>
+    </group>
   </actions>
 </component>
