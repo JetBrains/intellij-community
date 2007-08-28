@@ -106,47 +106,41 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    myRefCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myDocument, myFile);
+    myRefCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myFile, progress);
     myRefCountHolder.assertIsTouched();
-    try {
-      myRefCountHolder.setLocked(true);
-      List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
-      final FileViewProvider viewProvider = myFile.getViewProvider();
-      final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
-      Set<PsiElement> elementSet = new THashSet<PsiElement>();
-      for (Language language : relevantLanguages) {
-        PsiElement psiRoot = viewProvider.getPsi(language);
-        if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
-        List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-        elementSet.addAll(elements);
-      }
-      collectHighlights(elementSet, highlights);
-
-      boolean doubleCheckUsages = false;
-      if (PsiUtil.isInJspFile(myFile)) {
-        final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(myFile));
-        doubleCheckUsages = includingFiles.length > 1 || includingFiles.length == 1 && includingFiles[0] != myFile;
-      }
-
-      List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
-      for (PsiNamedElement unusedDcl : unusedDcls) {
-        if (doubleCheckUsages) {
-          if (ReferencesSearch.search(unusedDcl).findFirst() != null) continue;
-        }
-        
-        String dclType = StringUtil.capitalize(UsageViewUtil.getType(unusedDcl));
-        if (dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
-        String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
-
-        HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), message);
-        highlights.add(highlightInfo);
-      }
-
-      myHighlights = highlights;
+    List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+    Set<PsiElement> elementSet = new THashSet<PsiElement>();
+    for (Language language : relevantLanguages) {
+      PsiElement psiRoot = viewProvider.getPsi(language);
+      if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
+      List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+      elementSet.addAll(elements);
     }
-    finally {
-      myRefCountHolder.setLocked(false);
+    collectHighlights(elementSet, highlights);
+
+    boolean doubleCheckUsages = false;
+    if (PsiUtil.isInJspFile(myFile)) {
+      final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(myFile));
+      doubleCheckUsages = includingFiles.length > 1 || includingFiles.length == 1 && includingFiles[0] != myFile;
     }
+
+    List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
+    for (PsiNamedElement unusedDcl : unusedDcls) {
+      if (doubleCheckUsages) {
+        if (ReferencesSearch.search(unusedDcl).findFirst() != null) continue;
+      }
+
+      String dclType = StringUtil.capitalize(UsageViewUtil.getType(unusedDcl));
+      if (dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
+      String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
+
+      HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), message);
+      highlights.add(highlightInfo);
+    }
+
+    myHighlights = highlights;
   }
 
   public void doApplyInformationToEditor() {

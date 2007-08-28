@@ -531,9 +531,9 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.putUserDataIfAbsent(key, value);
   }
 
-  //public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
-  //  return myDelegate.replace(key, oldValue, newValue);
-  //}
+  public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
+    return myDelegate.replace(key, oldValue, newValue);
+  }
 
   public boolean equals(final Object o) {
     if (this == o) return true;

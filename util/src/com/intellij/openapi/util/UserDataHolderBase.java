@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -164,6 +165,36 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       else {
         return prev;
       }
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
+    w.lock();
+    try {
+      if (myUserMap == null) {
+        if (newValue != null) {
+          myUserMap = new THashMap<Key, Object>(2, 0.9f);
+          myUserMap.put(key, newValue);
+        }
+        return true;
+      }
+      T prev = (T)myUserMap.get(key);
+      if (prev == null || prev.equals(oldValue)) {
+        if (newValue != null) {
+          myUserMap.put(key, newValue);
+        }
+        else {
+          myUserMap.remove(key);
+          if (myUserMap.isEmpty()) {
+            myUserMap = null;
+          }
+        }
+        return true;
+      }
+      return false;
     }
     finally {
       w.unlock();

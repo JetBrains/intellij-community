@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -23,9 +25,7 @@ public class FileStatusMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
-  private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY");
-  private final Map<Document,Object> myDocumentsWithRefCountHolders = new WeakHashMap<Document, Object>(); // Document --> null
-  private final Object myRefCountHolderLock = new Object();
+  private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_FILE_KEY");
 
   static TextRange getDirtyTextRange(Editor editor, int part) {
     Document document = editor.getDocument();
@@ -73,13 +73,6 @@ public class FileStatusMap {
   public void markAllFilesDirty() {
     synchronized(myDocumentToStatusMap){
       myDocumentToStatusMap.clear();
-    }
-
-    synchronized(myRefCountHolderLock){
-      for (Document document : myDocumentsWithRefCountHolders.keySet()) {
-        document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, null);
-      }
-      myDocumentsWithRefCountHolders.clear();
     }
   }
 
@@ -184,19 +177,22 @@ public class FileStatusMap {
   }
 
   @NotNull
-  public RefCountHolder getRefCountHolder(@NotNull Document document, @NotNull PsiFile file) {
-    synchronized (myRefCountHolderLock) {
-      RefCountHolder refCountHolder = document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
-      if (refCountHolder == null
-          // PostHighlighting pass is still mumbling with old refCounterHolder. Let it be, it'll be canceled soon anyway
-          || refCountHolder.isLocked()) {
-        refCountHolder = new RefCountHolder(file);
-        document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, refCountHolder);
-        myDocumentsWithRefCountHolders.put(document, null);
-      }
-      return refCountHolder;
+  public RefCountHolder getRefCountHolder(@NotNull PsiFile file, @NotNull ProgressIndicator daemonProgressIndicator) {
+    assert !daemonProgressIndicator.isCanceled();
+    RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
+    UserDataHolderEx holder = (UserDataHolderEx)file;
+    if (refCountHolder != null && !refCountHolder.isValid()) {
+      // PostHighlighting pass is still mumbling with old refCounterHolder. Let it be, it'll be canceled soon anyway
+      holder.replace(REF_COUND_HOLDER_IN_FILE_KEY, refCountHolder, null);
+      refCountHolder = null;
     }
+    if (refCountHolder == null) {
+      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file, daemonProgressIndicator));
+    }
+    assert refCountHolder.isValid();
+    return refCountHolder;
   }
+
   public boolean allDirtyScopesAreNull(final Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);

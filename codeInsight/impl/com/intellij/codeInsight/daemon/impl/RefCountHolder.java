@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -21,6 +22,7 @@ public class RefCountHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RefCountHolder");
 
   private final PsiFile myFile;
+  private final ProgressIndicator myProgressIndicator;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new THashMap<PsiNamedElement, Boolean>();
@@ -28,10 +30,10 @@ public class RefCountHolder {
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
   private volatile boolean myTouched;
-  private volatile boolean locked;
 
-  public RefCountHolder(PsiFile file) {
+  public RefCountHolder(@NotNull PsiFile file, @NotNull ProgressIndicator progressIndicator) {
     myFile = file;
+    myProgressIndicator = progressIndicator;
     LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
 
@@ -225,12 +227,7 @@ public class RefCountHolder {
     LOG.assertTrue(myTouched);
   }
 
-  public boolean isLocked() {
-    return locked;
-  }
-
-  public void setLocked(final boolean locked) {
-    LOG.assertTrue(this.locked != locked);
-    this.locked = locked;
+  public boolean isValid() {
+    return !myProgressIndicator.isCanceled();
   }
 }
