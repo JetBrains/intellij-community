@@ -128,13 +128,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         g2.setTransform(transform);
       }
 
+      UISettings.setupAntialiasing(g);
       paintLineNumbers(g, clip);
+      paintAnnotations(g, clip);
 
       Object antialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
-        paintAnnotations(g, clip);
         paintFoldingBackground(g);
         paintLineMarkers(g, clip);
         paintFoldingTree(g, clip);
@@ -254,7 +255,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (!isLineNumbersShown()) {
       return;
     }
-    UISettings.setupAntialiasing(g);
     Rectangle clip = g.getClipBounds();
     int lineHeight = myEditor.getLineHeight();
     int startLineNumber = clip.y / lineHeight;
