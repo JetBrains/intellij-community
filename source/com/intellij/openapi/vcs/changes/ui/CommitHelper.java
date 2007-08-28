@@ -147,6 +147,7 @@ public class CommitHelper {
           for (FilePath path : pathsToRefresh) {
             VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
           }
+          LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
         }
       });
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
