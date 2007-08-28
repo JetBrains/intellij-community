@@ -120,23 +120,23 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     result[4] = getExpectedTypeMatchingDegree(object, item);
 
 
+    result[5] = object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : object instanceof PsiEnumConstant ? 1 : 0;
+
     final String name = getName(object);
     if (name != null && myExpectedInfos != null) {
       if (myPrefix.equals(name)) {
-        result[5] = Integer.MAX_VALUE;
+        result[6] = Integer.MAX_VALUE;
       } else {
         final List<String> words = NameUtil.nameToWordsLowerCase(name);
         final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
         int max1 = calcMatch(words, 0);
         max1 = calcMatch(wordsNoDigits, max1);
-        result[5] = max1;
+        result[6] = max1;
       }
     }
 
-    if (object instanceof String) result[5] = 1;
-    else if (object instanceof PsiKeyword) result[5] = -1;
-
-    result[6] = object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : object instanceof PsiEnumConstant ? 1 : 0;
+    if (object instanceof String) result[6] = 1;
+    else if (object instanceof PsiKeyword) result[6] = -1;
 
     if (object instanceof PsiMember){
       final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
@@ -175,7 +175,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       result[10]= PropertyUtil.isSimplePropertyGetter(method) ? 3 : 2;
     }
 
-    if (name != null && myExpectedInfos != null && result[5] != 0) {
+    if (name != null && myExpectedInfos != null && result[6] != 0) {
       result[11] = 239 - NameUtil.nameToWords(name).length;
     }
 
@@ -427,13 +427,13 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   }
 
   private static String truncDigits(String name){
-    int count = 0;
-    while(true){
-      char c = name.charAt(name.length() - count - 1);
+    int count = name.length() - 1;
+    while (count >= 0) {
+      char c = name.charAt(count);
       if (!Character.isDigit(c)) break;
-      count++;
+      count--;
     }
-    return name.substring(0, name.length() - count);
+    return name.substring(0, count + 1);
   }
 
 }
