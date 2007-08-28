@@ -57,7 +57,8 @@ public class ExpectedHighlightingData {
       this.severity = severity;
     }
   }
-  private final Map<String,ExpectedHighlightingSet> highlightingTypes;
+  @SuppressWarnings("WeakerAccess")
+  protected final Map<String,ExpectedHighlightingSet> highlightingTypes;
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
