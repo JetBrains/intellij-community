@@ -111,6 +111,25 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final PsiElement resolved = resolve();
+    if (resolved instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) resolved;
+      final String oldName = getNameElement().getText();
+      if (!method.getName().equals(oldName)) { //was property reference to accessor
+        if (PropertyUtil.isSimplePropertySetter(method)) {
+          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+          if (newPropertyName != null) {
+            return doHandleElementRename(newPropertyName);
+          } else {
+            //todo encapsulate fields:)
+          }
+        }
+      }
+    }
+    return doHandleElementRename(newElementName);
+  }
+
+  private PsiElement doHandleElementRename(String newElementName) {
     PsiElement nameElement = getNameElement();
     ASTNode node = nameElement.getNode();
     ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
@@ -124,9 +143,9 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (!(element instanceof PsiMethod) && !(element instanceof PsiField)) return false;
+    return (element instanceof PsiMethod || element instanceof PsiField) &&
+        getManager().areElementsEquivalent(element, resolve());
 
-    return getManager().areElementsEquivalent(element, resolve());
   }
 
   public Object[] getVariants() {
