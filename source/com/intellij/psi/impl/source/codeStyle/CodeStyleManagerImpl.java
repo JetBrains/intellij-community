@@ -823,9 +823,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
       }
     }
 
-    List<String> suggestions = new ArrayList<String>();
+    Collection<String> suggestions = new LinkedHashSet<String>();
 
     suggestNamesForCollectionInheritors(type, variableKind, suggestions);
+    suggestNamesFromGenericParameters(type, variableKind, suggestions);
 
     String typeName = normalizeTypeName(getTypeName(type));
     if (typeName != null) {
@@ -835,9 +836,32 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     return suggestions.toArray(new String[suggestions.size()]);
   }
 
+  private void suggestNamesFromGenericParameters(final PsiType type,
+                                                 final VariableKind variableKind,
+                                                 final Collection<String> suggestions) {
+    if (!(type instanceof PsiClassType)) {
+      return;
+    }
+    StringBuilder fullNameBuilder = new StringBuilder();
+    final PsiType[] parameters = ((PsiClassType)type).getParameters();
+    for (PsiType parameter : parameters) {
+      if (parameter instanceof PsiClassType) {
+        final String typeName = normalizeTypeName(getTypeName(parameter));
+        if (typeName != null) {
+          fullNameBuilder.append(typeName);
+        }
+      }
+    }
+    String baseName = normalizeTypeName(getTypeName(type));
+    if (baseName != null) {
+      fullNameBuilder.append(baseName);
+      suggestions.addAll(Arrays.asList(getSuggestionsByName(fullNameBuilder.toString(), variableKind, false)));
+    }
+  }
+
   private void suggestNamesForCollectionInheritors(final PsiType type,
                                                    final VariableKind variableKind,
-                                                   List<String> suggestions) {
+                                                   Collection<String> suggestions) {
     if( !( type instanceof PsiClassType ) )
     {
       return;
