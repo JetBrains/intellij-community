@@ -226,6 +226,9 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
       ApplicationManager.getApplication().invokeLater(new Runnable(){
         public void run() {
           if (myContentManager == null) return; //was not initialized yet
+
+          if (myProject.isDisposed()) return; //already disposed
+
           final AbstractVcs[] vcss = myVCSManager.getAllActiveVcss();
           if (myIsVisible && vcss.length == 0) {
             myContentManager.removeContent(myChangeListTodosContent, false);
