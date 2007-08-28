@@ -1,6 +1,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,8 +18,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -249,17 +250,12 @@ public class LocalToFieldHandler {
 
   private void addInitializationToSetUp(final PsiLocalVariable local, final PsiField field, final PsiElementFactory factory)
                                                                                                                              throws IncorrectOperationException {
-    final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();}", null);
-    PsiMethod inClass = field.getContainingClass().findMethodBySignature(patternMethod, false);
-    if (inClass == null) {
-      inClass = (PsiMethod)field.getContainingClass().add(patternMethod);
-    }
-    else if (inClass.getBody() == null) {
-      inClass.replace(patternMethod);
-    }
-
+    PsiMethod inClass = TestUtil.findSetUpMethod(field.getContainingClass());
+    assert inClass != null;
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
-    inClass.getBody().add(assignment);
+    final PsiCodeBlock body = inClass.getBody();
+    assert body != null;
+    body.add(assignment);
     if (!PsiTreeUtil.isAncestor(inClass, local, true)) local.delete();
   }
 

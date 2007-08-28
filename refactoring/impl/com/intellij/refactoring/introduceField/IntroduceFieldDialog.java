@@ -1,5 +1,6 @@
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
@@ -19,8 +20,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -120,7 +121,7 @@ class IntroduceFieldDialog extends DialogWrapper {
       } else {
         selectInCurrentMethod();
       }
-    } else if (ourLastInitializerPlace == IN_SETUP_METHOD && isTestClass() && myRbInSetUp.isEnabled()) {
+    } else if (ourLastInitializerPlace == IN_SETUP_METHOD && TestUtil.isTestClass(myParentClass) && myRbInSetUp.isEnabled()) {
       myRbInSetUp.setSelected(true);
     } else {
       selectInCurrentMethod();
@@ -421,7 +422,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     initializationPanel.add(myRbInFieldDeclaration);
     initializationPanel.add(myRbInConstructor);
 
-    if (isTestClass()) {
+    if (TestUtil.isTestClass(myParentClass)) {
       myRbInSetUp = new JRadioButton();
       myRbInSetUp.setText(RefactoringBundle.message("setup.method.radio"));
       initializationPanel.add(myRbInSetUp);
@@ -453,12 +454,6 @@ class IntroduceFieldDialog extends DialogWrapper {
     mainPanel.add(myCbFinal, BorderLayout.SOUTH);
 
     return mainPanel;
-  }
-
-  private boolean isTestClass() {
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiClass testCaseClass = manager.findClass("junit.framework.TestCase", myParentClass.getResolveScope());
-    return testCaseClass != null && myParentClass.isInheritor(testCaseClass, true);
   }
 
   private void updateCbFinal() {

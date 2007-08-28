@@ -9,6 +9,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -22,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
@@ -30,8 +30,8 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -365,32 +365,25 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   private void addInitializationToSetUp(final PsiExpression initializer,
                                         final PsiField field,
                                         final OccurenceManager occurenceManager, final boolean replaceAll) throws IncorrectOperationException {
-    final PsiManager manager = myParentClass.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
-    final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
-    PsiMethod inClass = field.getContainingClass().findMethodBySignature(patternMethod, false);
+    final PsiMethod setupMethod = TestUtil.findSetUpMethod(myParentClass);
+
+    assert setupMethod != null;
+
     PsiElement anchor = null;
-    if (inClass == null) {
-      inClass = (PsiMethod)field.getContainingClass().add(patternMethod);
-    }
-    else if (inClass.getBody() == null) {
-      inClass = (PsiMethod)inClass.replace(patternMethod);
-    } else {
-      if (PsiTreeUtil.isAncestor(inClass, initializer, true)) {
-        anchor = replaceAll ?
-                 occurenceManager.getAnchorStatementForAllInScope(inClass) :
-                 PsiTreeUtil.getParentOfType(initializer, PsiStatement.class);
-      }
+    if (PsiTreeUtil.isAncestor(setupMethod, initializer, true)) {
+      anchor = replaceAll
+               ? occurenceManager.getAnchorStatementForAllInScope(setupMethod)
+               : PsiTreeUtil.getParentOfType(initializer, PsiStatement.class);
     }
 
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + "= expr;",
-                                                                                                               null);
+    final PsiExpressionStatement expressionStatement =
+      (PsiExpressionStatement)myParentClass.getManager().getElementFactory().createStatementFromText(field.getName() + "= expr;", null);
     PsiAssignmentExpression expr = (PsiAssignmentExpression)expressionStatement.getExpression();
     final PsiExpression rExpression = expr.getRExpression();
     LOG.assertTrue(rExpression != null);
     rExpression.replace(initializer);
 
-    final PsiCodeBlock body = inClass.getBody();
+    final PsiCodeBlock body = setupMethod.getBody();
     assert body != null;
     body.addBefore(expressionStatement, anchor);
   }
