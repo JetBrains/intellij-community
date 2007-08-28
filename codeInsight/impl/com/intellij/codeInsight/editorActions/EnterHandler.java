@@ -36,7 +36,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -698,16 +697,9 @@ public class EnterHandler extends EditorWriteActionHandler {
         PsiElement element = myFile.findElementAt(myOffset);
         if (element == null) return false;
 
-        PsiComment comment = null;
-        if (element.getParent() instanceof PsiDocComment) {
-          comment = (PsiDocComment)element.getParent();
-        }
-        else if (element.getParent() instanceof PsiDocTag && element.getParent().getParent() instanceof PsiDocComment) {
-          comment = (PsiDocComment)element.getParent().getParent();
-        } else if (element instanceof PsiComment) {
-          comment = (PsiComment)element;
-        }
-
+        PsiComment comment = (element instanceof PsiComment)
+                             ? (PsiComment) element
+                             : PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
         if (comment != null) {
           int commentEnd = comment.getTextRange().getEndOffset();
           if (myOffset >= commentEnd) {
