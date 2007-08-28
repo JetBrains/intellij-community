@@ -85,6 +85,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public void cleanup() {
+    myContext = null;
   }
 
   public void finalCleanup(){
