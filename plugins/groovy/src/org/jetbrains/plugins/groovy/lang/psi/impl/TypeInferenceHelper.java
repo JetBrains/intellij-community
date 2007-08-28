@@ -9,12 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
@@ -34,8 +36,8 @@ public class TypeInferenceHelper {
     });
   }
 
-  private final ConcurrentWeakHashMap<GrCodeBlock, Map<GrReferenceExpression, PsiType>> myCalculatedTypeInferences =
-      new ConcurrentWeakHashMap<GrCodeBlock, Map<GrReferenceExpression, PsiType>>();
+  private final ConcurrentWeakHashMap<GroovyPsiElement, Map<GrReferenceExpression, PsiType>> myCalculatedTypeInferences =
+      new ConcurrentWeakHashMap<GroovyPsiElement, Map<GrReferenceExpression, PsiType>>();
 
   @Nullable
   public PsiType getInferredType(GrReferenceExpression refExpr) {
@@ -43,19 +45,16 @@ public class TypeInferenceHelper {
       return getTypeBinding(refExpr);
     }
     
-    final GrParametersOwner context = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class);
-    GrCodeBlock block = null;
-    if (context instanceof GrMethod) {
-      block = ((GrMethod) context).getBlock();
-    } else if (context instanceof GrClosableBlock) {
-      block = (GrCodeBlock) context;
+    GroovyPsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GroovyFileBase.class);
+    if (scope instanceof GrMethod) {
+      scope = ((GrMethod) scope).getBlock();
     }
 
-    if (block != null) {
-      Map<GrReferenceExpression, PsiType> map = myCalculatedTypeInferences.get(block);
+    if (scope != null) {
+      Map<GrReferenceExpression, PsiType> map = myCalculatedTypeInferences.get(scope);
       if (map == null) {
-        map = inferTypes(block);
-        myCalculatedTypeInferences.put(block, map);
+        map = inferTypes(scope);
+        myCalculatedTypeInferences.put(scope, map);
       }
       return map.get(refExpr);
     }
@@ -85,8 +84,13 @@ public class TypeInferenceHelper {
     return null;
   }
 
-  private Map<GrReferenceExpression, PsiType> inferTypes(GrCodeBlock scope) {
-    final Instruction[] flow = scope.getControlFlow();
+  private Map<GrReferenceExpression, PsiType> inferTypes(GroovyPsiElement scope) {
+    final Instruction[] flow;
+    if (scope instanceof GrCodeBlock) {
+      flow = ((GrCodeBlock) scope).getControlFlow();
+    } else {
+      flow = new ControlFlowBuilder().buildControlFlow(scope, null, null); //no need to cache
+    }
     final TypeDfaInstance dfaInstance = new TypeDfaInstance();
     final TypesSemilattice semilattice = new TypesSemilattice(scope.getManager());
     final DFAEngine<Map<String, PsiType>> engine = new DFAEngine<Map<String, PsiType>>(flow, dfaInstance, semilattice);
