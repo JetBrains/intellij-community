@@ -11,10 +11,7 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -35,10 +32,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
   }
 
   private class MyProcessor implements Runnable {
-    private GroovyFileBase myFile;
+    private GroovyFile myFile;
 
     public MyProcessor(PsiFile file) {
-      myFile = (GroovyFileBase) file;
+      myFile = (GroovyFile) file;
     }
 
     public void run() {

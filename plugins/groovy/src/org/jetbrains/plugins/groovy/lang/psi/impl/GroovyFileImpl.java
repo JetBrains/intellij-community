@@ -143,6 +143,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
+  public GrImportStatement[] getImportStatements() {
+    return findChildrenByClass(GrImportStatement.class);
+  }
+
   @Nullable
   public Icon getIcon(int flags) {
     return GroovyFileType.GROOVY_LOGO;

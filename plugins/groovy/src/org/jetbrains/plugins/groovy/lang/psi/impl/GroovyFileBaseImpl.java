@@ -73,10 +73,6 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return findChildrenByClass(GrTopStatement.class);
   }
 
-  public GrImportStatement[] getImportStatements() {
-    return findChildrenByClass(GrImportStatement.class);
-  }
-
   public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
     PsiElement next = PsiTreeUtil.skipSiblingsForward(importStatement, PsiWhiteSpace.class);
     while (next != null && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mSEMI) {

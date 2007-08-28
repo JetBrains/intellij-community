@@ -17,12 +17,15 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 /**
  * @author ven
  */
 public interface GroovyFile extends GroovyFileBase {
+
+  GrImportStatement[] getImportStatements();
 
   @NotNull
   String getPackageName();
