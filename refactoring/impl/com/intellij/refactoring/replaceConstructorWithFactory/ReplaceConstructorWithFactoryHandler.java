@@ -31,6 +31,22 @@ public class ReplaceConstructorWithFactoryHandler
         return;
       }
 
+      if (element instanceof PsiReferenceExpression) {
+        final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
+        if (psiElement instanceof PsiMethod && ((PsiMethod) psiElement).isConstructor()) {
+          invoke(project, new PsiElement[] { psiElement }, dataContext);
+          return;
+        }
+      }
+      else if (element instanceof PsiConstructorCall) {
+        final PsiConstructorCall constructorCall = (PsiConstructorCall)element;
+        final PsiMethod method = constructorCall.resolveConstructor();
+        if (method != null) {
+          invoke(project, new PsiElement[] { method }, dataContext);
+          return;
+        }
+      }
+
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)
           && ((PsiClass) element).getConstructors().length == 0) {
         invoke(project, new PsiElement[]{element}, dataContext);
