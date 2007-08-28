@@ -529,12 +529,16 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 "("                                       {  yybegin(WAIT_FOR_REGEX);
                                              braceCount++;
                                              return(mLPAREN);  }
-")"                                       {  if (braceCount > 0 ) braceCount--;
+")"                                       {  if (braceCount > 0 ) {
+                                               braceCount--; 
+                                             } else braceCount = 0;
                                              return(mRPAREN);  }
 "["                                       {  yybegin(WAIT_FOR_REGEX);
                                              braceCount++;
                                              return(mLBRACK);  }
-"]"                                       {  if (braceCount > 0 ) braceCount--;
+"]"                                       {  if (braceCount > 0 )  {
+                                               braceCount--; 
+                                             } else braceCount = 0;
                                              return(mRBRACK);  }
 "{"                                       {  yybegin(NLS_AFTER_LBRACE);
                                              return(mLCURLY);  }
