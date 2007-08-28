@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -78,7 +80,7 @@ public class LineStatusTracker {
           });
         }
       }, null, null);
-      
+
       myUpToDateDocument.setReadOnly(true);
       reinstallRanges();
 
@@ -630,6 +632,21 @@ public class LineStatusTracker {
     }
   }
 
+  public class CopyAction extends MyAction {
+    protected CopyAction(LineStatusTracker lineStatusTracker, Range range) {
+      super(VcsBundle.message("action.name.copy.old.text"), IconLoader.getIcon("/actions/copy.png"), lineStatusTracker, range);
+    }
+
+    public boolean isEnabled() {
+      return myRange.getType() == Range.DELETED || myRange.getType() == Range.MODIFIED;
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final String content = myLineStatusTracker.getUpToDateContent(myRange);
+      CopyPasteManager.getInstance().setContents(new StringSelection(content));
+    }
+  }
+
   private TextRange getCurrentTextRange(Range range) {
     return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument);
   }
@@ -684,8 +701,9 @@ public class LineStatusTracker {
     localShowNextAction.copyFrom(globalShowNextAction);
     localShowPrevAction.copyFrom(globalShowPrevAction);
 
-    group.add(new LineStatusTracker.RollbackAction(this, range, editor));
-    group.add(new LineStatusTracker.ShowDiffAction(this, range, editor));
+    group.add(new RollbackAction(this, range, editor));
+    group.add(new ShowDiffAction(this, range, editor));
+    group.add(new CopyAction(this, range));
 
     final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
 
