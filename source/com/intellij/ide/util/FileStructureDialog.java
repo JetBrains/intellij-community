@@ -226,7 +226,7 @@ public class FileStructureDialog extends DialogWrapper {
 
   private boolean isInheritorFilterAvailable() {
     for(Filter filter: myBaseTreeModel.getFilters()) {
-      if (filter instanceof InheritedMembersFilter) {
+      if (filter.getName().equals(InheritedMembersFilter.ID)) {
         return true;
       }
     }
