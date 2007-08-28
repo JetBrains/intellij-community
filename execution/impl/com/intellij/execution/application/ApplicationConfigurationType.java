@@ -51,7 +51,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
   }
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(final Location location) {
-    return ApplicationConfigurationProducer.PROTOTYPE.createProducer(location, null).getConfiguration();
+    return null;
   }
 
   public boolean isConfigurationByElement(final RunConfiguration configuration, final Project project, final PsiElement element) {
