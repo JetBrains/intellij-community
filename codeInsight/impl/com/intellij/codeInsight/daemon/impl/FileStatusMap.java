@@ -20,12 +20,14 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileStatusMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
   private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_FILE_KEY");
+  private final AtomicInteger myClearModificationCount = new AtomicInteger();
 
   static TextRange getDirtyTextRange(Editor editor, int part) {
     Document document = editor.getDocument();
@@ -74,6 +76,7 @@ public class FileStatusMap {
     synchronized(myDocumentToStatusMap){
       myDocumentToStatusMap.clear();
     }
+    myClearModificationCount.incrementAndGet();
   }
 
   public void markFileUpToDate(@NotNull Document document, int passId) {
@@ -177,7 +180,7 @@ public class FileStatusMap {
   }
 
   @NotNull
-  public RefCountHolder getRefCountHolder(@NotNull PsiFile file, @NotNull ProgressIndicator daemonProgressIndicator) {
+  public RefCountHolder getRefCountHolder(@NotNull PsiFile file, boolean lockunlock) {
     RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
     UserDataHolderEx holder = (UserDataHolderEx)file;
     if (refCountHolder != null && !refCountHolder.isValid()) {
@@ -186,8 +189,9 @@ public class FileStatusMap {
       refCountHolder = null;
     }
     if (refCountHolder == null) {
-      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file, daemonProgressIndicator));
+      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file, myClearModificationCount));
     }
+    refCountHolder.setLocked(lockunlock);
     return refCountHolder;
   }
 

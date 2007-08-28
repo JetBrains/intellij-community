@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -17,12 +16,13 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RefCountHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RefCountHolder");
 
   private final PsiFile myFile;
-  private final ProgressIndicator myProgressIndicator;
+  private final AtomicInteger myModificationCountRef;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new THashMap<PsiNamedElement, Boolean>();
@@ -30,10 +30,13 @@ public class RefCountHolder {
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
   private volatile boolean myTouched;
+  private volatile boolean myLocked;
+  private final int myInitialModificationCount;
 
-  public RefCountHolder(@NotNull PsiFile file, @NotNull ProgressIndicator progressIndicator) {
+  public RefCountHolder(@NotNull PsiFile file, @NotNull AtomicInteger modificationCount) {
     myFile = file;
-    myProgressIndicator = progressIndicator;
+    myModificationCountRef = modificationCount;
+    myInitialModificationCount = modificationCount.get();
     LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
 
@@ -227,7 +230,12 @@ public class RefCountHolder {
     LOG.assertTrue(myTouched);
   }
 
+  void setLocked(final boolean locked) {
+    myLocked = locked;
+  }
+
   public boolean isValid() {
-    return !myProgressIndicator.isCanceled();
+    if (myLocked) return true;
+    return myModificationCountRef.get() == myInitialModificationCount;
   }
 }
