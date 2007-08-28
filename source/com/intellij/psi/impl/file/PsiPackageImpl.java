@@ -31,6 +31,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -504,17 +505,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
       }
 
-      final PsiClass[] classes = getManager().findClasses(getQualifiedName() + ".package-info", getProject().getAllScope());
-      for (PsiClass aClass : classes) {
-        list.add(aClass.getModifierList());
+      for (PsiClass aClass : getManager().findClasses(getQualifiedName() + ".package-info", getProject().getAllScope())) {
+        ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
       }
 
-      if (list.isEmpty()) {
-        return new Result<PsiModifierList>(null, OOCB_DEPENDENCY );
-      }
-      else {
-        return new Result<PsiModifierList>(new PsiCompositeModifierList(getManager(), list), OOCB_DEPENDENCY);
-      }
+      return new Result<PsiModifierList>(list.isEmpty() ? null : new PsiCompositeModifierList(getManager(), list), OOCB_DEPENDENCY);
     }
   }
 
