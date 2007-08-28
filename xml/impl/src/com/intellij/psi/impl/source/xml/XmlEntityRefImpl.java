@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +171,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         if (rootTag != null) {
           final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
-            if (descriptor != null) {
+            if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
               final XmlFile descriptorFile = (XmlFile)descriptor.getDeclaration().getContainingFile();
 
               if (descriptorFile != null &&

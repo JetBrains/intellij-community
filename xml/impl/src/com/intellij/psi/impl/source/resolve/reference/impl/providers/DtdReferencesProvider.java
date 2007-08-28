@@ -251,6 +251,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
     if (containingFile instanceof JspFile ||
         containingFile.getFileType() == StdFileTypes.HTML ||
+        containingFile.getFileType() == StdFileTypes.JSP ||
         containingFile.getFileType() == StdFileTypes.XHTML
       ) {
       return false;
