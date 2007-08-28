@@ -18,12 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.annotator.DuplicableElement;
 
 /**
  * @author ilyas
  */
-public interface GrNamedArgument extends GroovyPsiElement, DuplicableElement<GrArgumentLabel> {
+public interface GrNamedArgument extends GroovyPsiElement {
   public static final GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
 
   @Nullable

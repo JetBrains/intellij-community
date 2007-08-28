@@ -54,6 +54,10 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return this;
   }
 
+  public String getName() {
+    return getNameElement().getText();
+  }
+
   public PsiElement getElement() {
     return this;
   }
@@ -178,10 +182,5 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     return null;
-  }
-  
-  public int compareTo(GrArgumentLabel grArgumentLabel) {
-    if (this.equals(grArgumentLabel)) return 0;
-    else return 1;
   }
 }

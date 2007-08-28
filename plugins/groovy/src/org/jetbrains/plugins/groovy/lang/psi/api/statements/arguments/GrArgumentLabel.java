@@ -23,8 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author ilyas
  */
-public interface GrArgumentLabel extends GroovyPsiElement, Comparable<GrArgumentLabel> {
+public interface GrArgumentLabel extends GroovyPsiElement {
   PsiElement getNameElement();
+
+  String getName();
 
   @Nullable
   PsiType getExpectedArgumentType();

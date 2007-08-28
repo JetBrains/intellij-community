@@ -17,14 +17,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.DuplicableElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
  * @author ilyas
  */
-public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement, Comparable<GrReferenceExpression>, DuplicableElement<GrReferenceExpression>{
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement {
   GrExpression getQualifierExpression();
 
   @Nullable
