@@ -91,6 +91,8 @@ public class GroovyAnnotator implements Annotator {
       checkReturnStatement((GrReturnStatement) element, holder);
     } else if (element instanceof GrListOrMap) {
       checkMap(((GrListOrMap) element).getNamedArguments(), holder);
+    } else if (element instanceof GrNewExpression) {
+      checkNewExpression(holder, (GrNewExpression) element);
     } else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile) element;
       if (file.isScript()) {
@@ -105,7 +107,8 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
-    if (grMethod.getParent() instanceof GrOpenBlock) holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.support"));
+    if (grMethod.getParent() instanceof GrOpenBlock)
+      holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.support"));
   }
 
   private void checkDomainClass(GroovyFile file, AnnotationHolder holder) {
@@ -444,10 +447,7 @@ public class GroovyAnnotator implements Annotator {
     registerUsedImport(refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
-      if (parent instanceof GrNewExpression) {
-        checkNewExpression(holder, (GrNewExpression) parent, resolveResult);
-        return;
-      }
+      if (parent instanceof GrNewExpression) return;
 
       if (parent instanceof GrImportStatement &&
           ((GrImportStatement) parent).isStatic() &&
@@ -479,26 +479,30 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkNewExpression(AnnotationHolder holder, GrNewExpression newExpression, GroovyResolveResult resolveResult) {
+  private void checkNewExpression(AnnotationHolder holder, GrNewExpression newExpression) {
     GrCodeReferenceElement refElement = newExpression.getReferenceElement();
     LOG.assertTrue(refElement != null);
-    final PsiElement resolved = resolveResult.getElement();
-    if (resolved instanceof PsiMethod) {
-      checkMethodApplicability((PsiMethod) resolved, refElement, holder);
-    } else if (resolved instanceof PsiClass) {
-      //default constructor invocation
-      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
-      if (argumentTypes != null && argumentTypes.length > 0) {
-        String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) resolved).getName());
-        holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
-      }
-    } else if (resolved == null && refElement.multiResolve(false).length > 0) {
+    final PsiMethod resolved = newExpression.resolveConstructor();
+    if (resolved != null) {
+      checkMethodApplicability(resolved, refElement, holder);
+    } else {
+      final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
       final GrArgumentList argList = newExpression.getArgumentList();
       PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
-      String message = GroovyBundle.message("ambiguous.constructor.call");
-      holder.createWarningAnnotation(toHighlight, message);
-    } else {
-      checkSingleResolvedElement(holder, refElement, resolveResult);
+      if (results.length > 0) {
+        String message = GroovyBundle.message("ambiguous.constructor.call");
+        holder.createWarningAnnotation(toHighlight, message);
+      } else {
+        final PsiElement element = refElement.resolve();
+        if (element instanceof PsiClass) {
+          //default constructor invocation
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
+          if (argumentTypes != null && argumentTypes.length > 0) {
+            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) element).getName());
+            holder.createWarningAnnotation(toHighlight, message);
+          }
+        }
+      }
     }
   }
 
