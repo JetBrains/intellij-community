@@ -45,8 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 
 import java.util.ArrayList;
@@ -152,9 +150,9 @@ public class GroovyPsiManager implements ProjectComponent {
     PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultMethodsClass != null) {
       final VirtualFile vFile = defaultMethodsClass.getContainingFile().getVirtualFile();
-      LOG.assertTrue(vFile != null && vFile.getFileSystem() == JarFileSystem.getInstance());
+      if(vFile == null || vFile.getFileSystem() != JarFileSystem.getInstance()) return false;
       final VirtualFile vRoot = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
-      LOG.assertTrue(vRoot != null);
+      if(vRoot == null) return false;
       final String url = vFile.getUrl();
       final long timeStamp = vFile.getTimeStamp();
       if (url.equals(myGroovyJarUrl) && timeStamp == myGroovyJarTimeStamp) return true;
@@ -375,9 +373,5 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public boolean isTypeBeingInferred(PsiElement element) {
     return myElementsWithTypesBeingInferred.get().contains(element);
-  }
-
-  public Map<GrReferenceExpression, PsiType> inferTypesForScope(GrCodeBlock block) {
-    return null;
   }
 }
