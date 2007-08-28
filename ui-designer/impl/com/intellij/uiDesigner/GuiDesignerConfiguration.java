@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.psi.PsiModifier;
 
 /**
  * @author Anton Katilin
@@ -31,6 +32,8 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
   public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;
 
   public String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
+
+  public String DEFAULT_FIELD_ACCESSIBILITY = PsiModifier.PRIVATE;
 
 
   public GuiDesignerConfiguration getState() {

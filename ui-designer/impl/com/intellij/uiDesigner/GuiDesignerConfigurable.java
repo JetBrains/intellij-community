@@ -74,6 +74,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
       return true;
     }
 
+    if (!Comparing.equal(configuration.DEFAULT_FIELD_ACCESSIBILITY, myGeneralUI.myDefaultFieldAccessibilityCombo.getSelectedItem())) {
+      return true;
+    }
+
     if (configuration.INSTRUMENT_CLASSES != myGeneralUI.myRbInstrumentClasses.isSelected()) {
       return true;
     }
@@ -86,6 +90,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
     configuration.COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
     configuration.DEFAULT_LAYOUT_MANAGER = (String)myGeneralUI.myLayoutManagerCombo.getSelectedItem();
     configuration.INSTRUMENT_CLASSES = myGeneralUI.myRbInstrumentClasses.isSelected();
+    configuration.DEFAULT_FIELD_ACCESSIBILITY = (String)myGeneralUI .myDefaultFieldAccessibilityCombo.getSelectedItem();
 
     if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
       final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
@@ -114,6 +119,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
         }
       });
     myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
+    myGeneralUI.myDefaultFieldAccessibilityCombo.setSelectedItem(configuration.DEFAULT_FIELD_ACCESSIBILITY);
   }
 
   public void disposeUIResources() {
@@ -126,6 +132,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
     public JRadioButton myRbInstrumentSources;
     public JCheckBox myChkCopyFormsRuntime;
     private JComboBox myLayoutManagerCombo;
+    private JComboBox myDefaultFieldAccessibilityCombo;
   }
 
   private final class MyApplyRunnable implements Runnable {
