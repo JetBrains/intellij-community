@@ -148,7 +148,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
 
   @Override
   public boolean canDrop(final ComponentDragObject dragObject) {
-    if (dragObject.getComponentCount() == 1 && myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
+    if (dragObject.getComponentCount() == 1 && (myContainer.getGridRowCount() == 0 || myContainer.getGridColumnCount() == 0)) {
       return true;
     }
     return super.canDrop(dragObject);

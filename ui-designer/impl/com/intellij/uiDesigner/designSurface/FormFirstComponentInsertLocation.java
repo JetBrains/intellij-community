@@ -4,16 +4,15 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.jgoodies.forms.layout.FormLayout;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.RowSpec;
 
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 
 /**
  * FirstComponentInsertLocation customized for JGoodies Forms.
@@ -39,9 +38,11 @@ public class FormFirstComponentInsertLocation extends FirstComponentInsertLocati
   public void processDrop(final GuiEditor editor, final RadComponent[] components, final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     RadAbstractGridLayoutManager gridLayout = myContainer.getGridLayoutManager();
-    if (myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
-      gridLayout.insertGridCells(myContainer, 0, false, true, true);
+    if (myContainer.getGridRowCount() == 0) {
       gridLayout.insertGridCells(myContainer, 0, true, true, true);
+    }
+    if (myContainer.getGridColumnCount() == 0) {
+      gridLayout.insertGridCells(myContainer, 0, false, true, true);
     }
     dropIntoGrid(myContainer, components, myRow, myColumn, dragObject);
 

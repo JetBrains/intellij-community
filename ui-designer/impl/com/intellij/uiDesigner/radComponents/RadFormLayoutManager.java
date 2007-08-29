@@ -273,7 +273,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   @NotNull @Override
   public ComponentDropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
     FormLayout formLayout = getFormLayout(container);
-    if (formLayout.getRowCount() == 0 && formLayout.getColumnCount() == 0) {
+    if (formLayout.getRowCount() == 0 || formLayout.getColumnCount() == 0) {
       if (location != null) {
         Rectangle rc = new Rectangle(new Point(), container.getDelegee().getSize());
         return new FormFirstComponentInsertLocation(container, location, rc);
