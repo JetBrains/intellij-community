@@ -1,0 +1,27 @@
+def a = "haha".replaceAll("\\\\", "/")
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Method call
+        Reference expression
+          Literal
+            PsiElement(Gstring)('"haha"')
+          PsiElement(.)('.')
+          PsiElement(identifier)('replaceAll')
+        Arguments
+          PsiElement(()('(')
+          Literal
+            PsiElement(Gstring)('"\\\\"')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Gstring)('"/"')
+          PsiElement())(')')

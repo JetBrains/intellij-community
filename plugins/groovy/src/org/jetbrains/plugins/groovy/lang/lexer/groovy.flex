@@ -133,7 +133,7 @@ mIDENT = {mLETTER} ({mLETTER} | {mDIGIT})*
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mSTRING_NL = {mONE_NL}
-mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | \\ \" | \\ \' | \\ \\ | \\ "$"
+mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\ \'
 | "\\""u"{mHEX_DIGIT}{4}
 | "\\" [0..3] ([0..7] ([0..7])?)?
 | "\\" [4..7] ([0..7])?
@@ -146,7 +146,7 @@ mREGEX_BEGIN = "/""$"
    |  "/" ([^"/""$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
 mREGEX_CONTENT = ({mSTRING_ESC}         
    | {ESCAPPED_REGEX_SEP}
-   | [^"/"\r\n"$"])*
+   | [^\\"/"\r\n"$"])*
 
 mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
 
@@ -154,7 +154,7 @@ mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mR
 
 mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
     | "\""
-    | [^\'\r\n]
+    | [^\\\'\r\n]
     | "$" )*
 mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
 mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
@@ -170,9 +170,10 @@ mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
 
 // Single-double-quoted GStrings
 mGSTRING_SINGLE_BEGIN = \""$"
-    |  \" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}"$"
+    |  \" ([^\\\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}"$"
+
 mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
-    | [^\"\r\n"$"]
+    | [^\\\"\r\n"$"]
     | "\'" )*
 
 // Triple-double-quoted GStrings
@@ -193,7 +194,7 @@ mGSTRING_TRIPLE_CTOR_END = ( {mSTRING_ESC}
 
 
 mGSTRING_LITERAL = \"\"
-    | \" ([^\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
+    | \" ([^\\\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
     | \"\"\" {mGSTRING_TRIPLE_CTOR_END}
 
 mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
@@ -511,7 +512,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
 
-\" ([^\""$"\n] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
+\" ([^\\\""$"\n] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
 | \"\"\"[^"$"]
 | {mWRONG_TRIPLE_GSTRING}                                  {  return mWRONG_GSTRING_LITERAL; }
 
