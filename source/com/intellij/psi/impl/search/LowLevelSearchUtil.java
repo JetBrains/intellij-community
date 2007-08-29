@@ -84,9 +84,11 @@ public class LowLevelSearchUtil {
         run = leafElement;
       }
       contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-      if (contains && !ignoreInjectedPsi) {
-        Boolean result = processInjectedFile(run, processor, searcher);
-        if (result != null) return result.booleanValue();
+      if (contains) {
+        if (!ignoreInjectedPsi) {
+          Boolean result = processInjectedFile(run, processor, searcher);
+          if (result != null) return result.booleanValue();
+        }
         if (!processor.execute(run, start)) return false;
       }
       if (useTree) {
