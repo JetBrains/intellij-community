@@ -93,51 +93,57 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
   }
 
   public static LwIntrospectedProperty propertyFromClass(final Class propertyType, final String name) {
+    LwIntrospectedProperty property = propertyFromClassName(propertyType.getName(), name);
+    if (property == null) {
+      if (Component.class.isAssignableFrom(propertyType)) {
+        property = new LwIntroComponentProperty(name, propertyType.getName());
+      }
+      else if (ListModel.class.isAssignableFrom(propertyType)) {
+        property = new LwIntroListModelProperty(name, propertyType.getName());
+      }
+      else if (propertyType.getSuperclass() != null && "java.lang.Enum".equals(propertyType.getSuperclass().getName())) {
+        property = new LwIntroEnumProperty(name, propertyType);
+      }
+    }
+    return property;
+  }
+
+  public static LwIntrospectedProperty propertyFromClassName(final String propertyClassName, final String name) {
     final LwIntrospectedProperty property;
-    if (int.class.equals(propertyType)) { // int
+    if (int.class.getName().equals(propertyClassName)) { // int
       property = new LwIntroIntProperty(name);
     }
-    else if (boolean.class.equals(propertyType)) { // boolean
+    else if (boolean.class.getName().equals(propertyClassName)) { // boolean
       property = new LwIntroBooleanProperty(name);
     }
-    else if (double.class.equals(propertyType)) { // double
+    else if (double.class.getName().equals(propertyClassName)) { // double
       property = new LwIntroPrimitiveTypeProperty(name, Double.class);
     }
-    else if (float.class.equals(propertyType)) { // double
+    else if (float.class.getName().equals(propertyClassName)) {
       property = new LwIntroPrimitiveTypeProperty(name, Float.class);
     }
-    else if (String.class.equals(propertyType)) { // java.lang.String
+    else if (String.class.getName().equals(propertyClassName)) { // java.lang.String
       property = new LwRbIntroStringProperty(name);
     }
-    else if (Insets.class.equals(propertyType)) { // java.awt.Insets
+    else if (Insets.class.getName().equals(propertyClassName)) { // java.awt.Insets
       property = new LwIntroInsetsProperty(name);
     }
-    else if (Dimension.class.equals(propertyType)) { // java.awt.Dimension
+    else if (Dimension.class.getName().equals(propertyClassName)) { // java.awt.Dimension
       property = new LwIntroDimensionProperty(name);
     }
-    else if (Rectangle.class.equals(propertyType)) { // java.awt.Rectangle
+    else if (Rectangle.class.getName().equals(propertyClassName)) { // java.awt.Rectangle
       property = new LwIntroRectangleProperty(name);
     }
-    else if (Color.class.equals(propertyType)) {
+    else if (Color.class.getName().equals(propertyClassName)) {
       property = new LwIntroColorProperty(name);
     }
-    else if (Font.class.equals(propertyType)) {
+    else if (Font.class.getName().equals(propertyClassName)) {
       property = new LwIntroFontProperty(name);
     }
-    else if (Icon.class.equals(propertyType)) {
+    else if (Icon.class.getName().equals(propertyClassName)) {
       property = new LwIntroIconProperty(name);
     }
-    else if (Component.class.isAssignableFrom(propertyType)) {
-      property = new LwIntroComponentProperty(name, propertyType.getName());
-    }
-    else if (ListModel.class.isAssignableFrom(propertyType)) {
-      property = new LwIntroListModelProperty(name, propertyType.getName());
-    }
-    else if (propertyType.getSuperclass() != null && "java.lang.Enum".equals(propertyType.getSuperclass().getName())) {
-      property = new LwIntroEnumProperty(name, propertyType);
-    }
     else {
-      // type is not supported
       property = null;
     }
     return property;

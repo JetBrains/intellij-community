@@ -64,41 +64,8 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
       final PsiType type = getter.getReturnType();
       final String propertyClassName = type.getCanonicalText();
 
-      final LwIntrospectedProperty property;
-      if (int.class.getName().equals(propertyClassName)) { // int
-        property = new LwIntroIntProperty(name);
-      }
-      else if (boolean.class.getName().equals(propertyClassName)) { // boolean
-        property = new LwIntroBooleanProperty(name);
-      }
-      else if (double.class.getName().equals(propertyClassName)) { // double
-        property = new LwIntroPrimitiveTypeProperty(name, Double.class);
-      }
-      else if (float.class.getName().equals(propertyClassName)) {
-        property = new LwIntroPrimitiveTypeProperty(name, Float.class);
-      }
-      else if (String.class.getName().equals(propertyClassName)) { // java.lang.String
-        property = new LwRbIntroStringProperty(name);
-      }
-      else if (Insets.class.getName().equals(propertyClassName)) { // java.awt.Insets
-        property = new LwIntroInsetsProperty(name);
-      }
-      else if (Dimension.class.getName().equals(propertyClassName)) { // java.awt.Dimension
-        property = new LwIntroDimensionProperty(name);
-      }
-      else if (Rectangle.class.getName().equals(propertyClassName)) { // java.awt.Rectangle
-        property = new LwIntroRectangleProperty(name);
-      }
-      else if (Color.class.getName().equals(propertyClassName)) {
-        property = new LwIntroColorProperty(name);
-      }
-      else if (Font.class.getName().equals(propertyClassName)) {
-        property = new LwIntroFontProperty(name);
-      }
-      else if (Icon.class.getName().equals(propertyClassName)) {
-        property = new LwIntroIconProperty(name);
-      }
-      else {
+      LwIntrospectedProperty property = CompiledClassPropertiesProvider.propertyFromClassName(propertyClassName, name);
+      if (property == null) {
         PsiClass propClass = psiManager.findClass(propertyClassName, scope);
         if (propClass == null) continue;
         if (propClass.isEnum()) {
