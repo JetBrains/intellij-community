@@ -7,8 +7,8 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -17,7 +17,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Processor;
 
-import java.awt.Point;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -76,6 +76,9 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
       final Point mousePosition = editor.getMainProcessor().getLastMousePosition();
       if (mousePosition != null) {
         RadContainer container = GridInsertProcessor.getDropTargetContainer(editor.getRootContainer(), mousePosition);
+        if (container == null) {
+          container = editor.getRootContainer();
+        }
         if (container instanceof RadRootContainer && container.getComponentCount() == 1 &&
           container.getComponent(0) instanceof RadContainer) {
           RadContainer childContainer = (RadContainer)container.getComponent(0);
@@ -86,7 +89,14 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
         }
       }
       else {
-        dropLocation = editor.getRootContainer().getDropLocation(null);
+        final RadRootContainer container = editor.getRootContainer();
+        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer) {
+          RadContainer childContainer = (RadContainer)container.getComponent(0);
+          dropLocation = childContainer.getDropLocation(null);
+        }
+        else {
+          dropLocation = container.getDropLocation(null);
+        }
       }
     }
     return dropLocation;
