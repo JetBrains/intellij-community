@@ -372,7 +372,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       if (nsDescriptor == null) {
         final XmlNSDescriptor[] descrs = new XmlNSDescriptor[1];
 
-        URIReferenceProvider.processWsdlSchemas(
+        URLReference.processWsdlSchemas(
           document.getRootTag(),
           new Processor<XmlTag>() {
             public boolean process(final XmlTag xmlTag) {

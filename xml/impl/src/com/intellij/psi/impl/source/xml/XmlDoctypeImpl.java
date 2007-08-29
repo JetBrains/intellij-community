@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -166,7 +166,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
 
     if (dtdUrlElement != null) {
       uriRefs = new PsiReference[1];
-      uriRefs[0] = new URIReferenceProvider.URLReference(XmlDoctypeImpl.this) {
+      uriRefs[0] = new URLReference(XmlDoctypeImpl.this) {
         public Object[] getVariants() {
           return (docTypePublic != null)?
                  super.getVariants(): PsiReference.EMPTY_ARRAY;

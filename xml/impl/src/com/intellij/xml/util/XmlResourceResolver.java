@@ -56,6 +56,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return myExternalResourcesMap.values().toArray(new String[myExternalResourcesMap.size()]);
   }
 
+  @Nullable
   public PsiFile resolve(final String baseSystemId, final String systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "," + super.toString() + "')");
@@ -102,10 +103,12 @@ public class XmlResourceResolver implements XMLEntityResolver {
         if (baseFile == null) {
           baseFile = myFile;
         }
+        PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(systemId, baseFile, null);
+        if (psiFile == null) {
+          psiFile = XmlUtil.findXmlFile(baseFile, systemId);
+        }
 
-        PsiFile psiFile = XmlUtil.findXmlFile(baseFile, systemId);
-
-        if (psiFile == null && baseSystemId!=null && baseFile!=null) {
+        if (psiFile == null && baseSystemId != null) {
           String fullUrl = baseSystemId.substring( 0, baseSystemId.lastIndexOf('/') + 1 ) + systemId;
           psiFile = XmlUtil.findXmlFile(baseFile,fullUrl);
         }
@@ -113,7 +116,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
         if (LOG.isDebugEnabled()) {
           LOG.debug("before relative file checking:"+psiFile+","+systemId+","+ baseSystemId+")");
         }
-        if (psiFile == null && systemId != null && baseSystemId == null) { // entity file
+        if (psiFile == null && baseSystemId == null) { // entity file
           File workingFile = new File("");
           String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/') + "/";
 

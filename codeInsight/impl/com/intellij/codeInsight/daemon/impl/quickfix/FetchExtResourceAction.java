@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -105,7 +106,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   @Nullable
   public static String findUri(PsiFile file, int offset) {
     PsiReference currentRef = file.findReferenceAt(offset);
-    if (( currentRef instanceof URIReferenceProvider.URLReference ||
+    if (( currentRef instanceof URLReference ||
           currentRef instanceof URIReferenceProvider.DependentNSReference
         ) &&
         currentRef.resolve() == null

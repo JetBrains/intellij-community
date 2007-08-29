@@ -244,7 +244,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
     registerXmlAttributeValueReferenceProvider(
       null,
-      uriProvider.getNamespaceAttributeFilter(),
+      URIReferenceProvider.ELEMENT_FILTER,
       uriProvider
     );
 
